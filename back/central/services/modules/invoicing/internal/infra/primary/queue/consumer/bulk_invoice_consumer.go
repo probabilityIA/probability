@@ -113,7 +113,7 @@ func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, ord
 	// Buscar invoice fallida en BD (puede existir con status "failed")
 	invoice, getErr := c.repo.GetInvoiceByOrderID(ctx, orderID)
 
-	// Publicar evento individual via RabbitMQ → events module → frontend SSE
+	// Publicar evento individual via RabbitMQ -> events module -> frontend SSE
 	invoiceID := uint(0)
 	if getErr == nil && invoice != nil {
 		invoiceID = invoice.ID
@@ -258,7 +258,7 @@ func (c *BulkInvoiceConsumer) checkJobCompletion(ctx context.Context, jobID stri
 			return
 		}
 
-		// Publicar evento de job completado via RabbitMQ → events module → frontend SSE
+		// Publicar evento de job completado via RabbitMQ -> events module -> frontend SSE
 		_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 			Type:       "bulk_job.completed",
 			Category:   "invoice",
@@ -283,7 +283,7 @@ func (c *BulkInvoiceConsumer) checkJobCompletion(ctx context.Context, jobID stri
 	}
 }
 
-// publishJobProgress obtiene el estado actual del job y publica progreso via RabbitMQ → events module
+// publishJobProgress obtiene el estado actual del job y publica progreso via RabbitMQ -> events module
 func (c *BulkInvoiceConsumer) publishJobProgress(ctx context.Context, jobID string) {
 	job, err := c.repo.GetJobByID(ctx, jobID)
 	if err != nil || job == nil {

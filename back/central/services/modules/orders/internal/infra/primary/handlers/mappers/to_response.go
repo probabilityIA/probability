@@ -9,7 +9,7 @@ import (
 )
 
 // OrderToResponse convierte DTO de dominio a HTTP response
-// ✅ Conversión: []byte → datatypes.JSON
+// ✅ Conversión: []byte -> datatypes.JSON
 func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 	// Convertir []byte a datatypes.JSON
 	var metadataJSON datatypes.JSON

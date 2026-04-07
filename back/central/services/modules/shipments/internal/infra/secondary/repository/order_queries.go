@@ -44,7 +44,7 @@ func (r *Repository) GetOrderBusinessID(ctx context.Context, orderUUID string) (
 }
 
 // GetShipmentBusinessIDByTracking resolves the business_id for a shipment via its tracking number.
-// Joins shipments → orders to get the business_id.
+// Joins shipments -> orders to get the business_id.
 func (r *Repository) GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`
@@ -74,7 +74,7 @@ func (r *Repository) GetShipmentBusinessIDByTracking(ctx context.Context, tracki
 }
 
 // GetShipmentBusinessIDByID resolves the business_id for a shipment via its DB ID.
-// Joins shipments → orders to get the business_id.
+// Joins shipments -> orders to get the business_id.
 func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`

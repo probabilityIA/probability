@@ -122,7 +122,6 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 	return logs, total, nil
 }
 
-// ─── Email Logs ────────────────────────────────────────────────
 
 // emailLogRow representa una fila del resultado de la query de email_logs
 type emailLogRow struct {
@@ -201,7 +200,6 @@ func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint
 	return logs, total, nil
 }
 
-// ─── Conversation List & Detail ────────────────────────────────
 
 // conversationSummaryRow representa una fila del resultado de ListConversations
 type conversationSummaryRow struct {
@@ -398,7 +396,6 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 	return conv, messages, nil
 }
 
-// ─── WhatsApp Stats ────────────────────────────────────────────
 
 // statsResult representa el resultado de la query de estadísticas
 type statsResult struct {

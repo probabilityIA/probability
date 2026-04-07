@@ -10,9 +10,7 @@ const (
 	CategoryPay         = "pay"
 )
 
-// ───────────────────────────────────────────
 // ORDER EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	OrderCreated         = "order.created"
@@ -32,9 +30,7 @@ const (
 	OrderNotificationFailed        = "order.notification_failed"
 )
 
-// ───────────────────────────────────────────
 // INVOICE EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	InvoiceCreated      = "invoice.created"
@@ -46,9 +42,7 @@ const (
 	InvoiceCompareReady = "invoice.compare_ready"
 )
 
-// ───────────────────────────────────────────
 // SHIPMENT EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	ShipmentQuoteReceived   = "shipment.quote_received"
@@ -61,9 +55,7 @@ const (
 	ShipmentCancelFailed    = "shipment.cancel_failed"
 )
 
-// ───────────────────────────────────────────
 // INTEGRATION / SYNC EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	IntegrationSyncOrderCreated  = "integration.sync.order.created"
@@ -74,9 +66,7 @@ const (
 	IntegrationSyncFailed        = "integration.sync.failed"
 )
 
-// ───────────────────────────────────────────
 // INVENTORY EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	InventorySyncStarted   = "inventory_sync_started"
@@ -95,9 +85,7 @@ const (
 	InventoryLowStock        = "inventory.low_stock"
 )
 
-// ───────────────────────────────────────────
 // WHATSAPP EVENT TYPES
-// ───────────────────────────────────────────
 
 const (
 	CategoryWhatsApp = "whatsapp"

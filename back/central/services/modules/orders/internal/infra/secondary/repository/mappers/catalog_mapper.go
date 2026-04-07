@@ -58,7 +58,7 @@ func ToDBClient(c *entities.Client) *models.Client {
 		},
 		BusinessID: c.BusinessID,
 		Name:       c.Name,
-		Email:      c.Email, // *string → *string
+		Email:      c.Email, // *string -> *string
 		Phone:      c.Phone,
 		Dni:        c.Dni,
 	}
@@ -80,7 +80,7 @@ func ToDomainClient(c *models.Client) *entities.Client {
 		DeletedAt:  deletedAt,
 		BusinessID: c.BusinessID,
 		Name:       c.Name,
-		Email:      c.Email, // *string → *string
+		Email:      c.Email, // *string -> *string
 		Phone:      c.Phone,
 		Dni:        c.Dni,
 	}

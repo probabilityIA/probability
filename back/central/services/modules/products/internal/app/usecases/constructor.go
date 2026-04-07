@@ -23,9 +23,7 @@ func New(repo domain.IRepository) *UseCases {
 	}
 }
 
-// ───────────────────────────────────────────
 // MÉTODOS DE COMPATIBILIDAD - Delegar al CRUD
-// ───────────────────────────────────────────
 
 // CreateProduct delega al caso de uso CRUD
 func (uc *UseCases) CreateProduct(ctx context.Context, req *domain.CreateProductRequest) (*domain.ProductResponse, error) {
@@ -52,9 +50,7 @@ func (uc *UseCases) DeleteProduct(ctx context.Context, businessID uint, id strin
 	return uc.ProductCRUD.DeleteProduct(ctx, businessID, id)
 }
 
-// ───────────────────────────────────────────
 // MÉTODOS DE INTEGRACIÓN - Delegar al CRUD
-// ───────────────────────────────────────────
 
 // AddProductIntegration delega al caso de uso CRUD
 func (uc *UseCases) AddProductIntegration(ctx context.Context, businessID uint, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {

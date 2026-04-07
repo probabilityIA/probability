@@ -57,7 +57,6 @@ const (
 	QueueInvoiceResponses = rabbitmq.QueueInvoicingResponses
 )
 
-// ─── Compare response types (local, no compartidos entre módulos) ───
 
 // compareProviderDocument documento retornado por el proveedor en comparación
 type compareProviderDocument struct {
@@ -456,7 +455,7 @@ func (c *ResponseConsumer) handleCancelSuccess(
 		}
 	}
 
-	// Publicar evento SSE via RabbitMQ → events module → frontend
+	// Publicar evento SSE via RabbitMQ -> events module -> frontend
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "invoice.cancelled",
 		Category:   "invoice",
@@ -603,7 +602,7 @@ func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID 
 		return
 	}
 
-	// Publicar progreso del job via RabbitMQ → events module → frontend SSE
+	// Publicar progreso del job via RabbitMQ -> events module -> frontend SSE
 	job, err := c.repo.GetJobByID(ctx, jobItem.JobID)
 	if err != nil || job == nil {
 		return
@@ -641,7 +640,7 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		return
 	}
 
-	// Publicar job completado via RabbitMQ → events module → frontend SSE
+	// Publicar job completado via RabbitMQ -> events module -> frontend SSE
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "bulk_job.completed",
 		Category:   "invoice",
@@ -751,7 +750,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		return fmt.Errorf("failed to get system invoices: %w", err)
 	}
 
-	// Construir mapa del sistema: invoiceNumber → invoice
+	// Construir mapa del sistema: invoiceNumber -> invoice
 	systemMap := make(map[string]*entities.Invoice, len(systemInvoices))
 	for _, inv := range systemInvoices {
 		if inv.InvoiceNumber != "" {
@@ -768,7 +767,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	}
 	orderDates, _ := c.repo.GetOrderCreatedAtsByIDs(ctx, orderIDs)
 
-	// Construir mapa del proveedor: documentNumber → document
+	// Construir mapa del proveedor: documentNumber -> document
 	providerMap := make(map[string]compareProviderDocument, len(msg.ProviderDocuments))
 	for _, doc := range msg.ProviderDocuments {
 		if doc.DocumentNumber != "" {
@@ -1034,7 +1033,6 @@ func (c *ResponseConsumer) calculateCheckBackoff(checkCount int) time.Time {
 	return time.Now().Add(delays[delayIndex])
 }
 
-// ─── List Items response types (local, no compartidos entre módulos) ───
 
 // listItemsProviderItem ítem del catálogo del proveedor
 type listItemsProviderItem struct {
@@ -1096,7 +1094,7 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		return fmt.Errorf("failed to get system products: %w", err)
 	}
 
-	// Construir mapa del proveedor: itemCode → providerItem
+	// Construir mapa del proveedor: itemCode -> providerItem
 	providerMap := make(map[string]listItemsProviderItem, len(msg.Items))
 	for _, item := range msg.Items {
 		if item.ItemCode != "" {
@@ -1104,7 +1102,7 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		}
 	}
 
-	// Construir mapa del sistema: sku → systemProduct
+	// Construir mapa del sistema: sku -> systemProduct
 	systemMap := make(map[string]dtos.SystemProduct, len(systemProducts))
 	for _, prod := range systemProducts {
 		if prod.SKU != "" {
@@ -1203,7 +1201,6 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 	return c.ssePublisher.PublishListItemsReady(ctx, responseData)
 }
 
-// ─── Bank Accounts response types (local, no compartidos entre módulos) ───
 
 // listBankAccountsResponseMessage mensaje de respuesta de list_bank_accounts del proveedor
 type listBankAccountsResponseMessage struct {

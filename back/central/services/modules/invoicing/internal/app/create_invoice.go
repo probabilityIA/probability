@@ -423,7 +423,7 @@ func (uc *useCase) parseFilterConfig(filtersMap map[string]interface{}) (*entiti
 
 // resolveProvider determina el proveedor de facturación según el tipo de integración
 // Consulta la tabla integrations para obtener el integration_type_id y mapea al proveedor
-// Mapa: 5 (Softpymes) → "softpymes", 6 (Factus) → "factus"
+// Mapa: 5 (Softpymes) -> "softpymes", 6 (Factus) -> "factus"
 // Default: "softpymes" para compatibilidad hacia atrás
 func (uc *useCase) resolveProvider(ctx context.Context, integrationID uint) (string, error) {
 	typeID, err := uc.repo.GetIntegrationTypeByIntegrationID(ctx, integrationID)

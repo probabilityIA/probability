@@ -109,7 +109,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	subModule := subscriptions.Setup(database)
 	subModule.RegisterRoutes(router)
 
-	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
+	// Inicializar módulo de monitoreo (alertas Grafana -> RabbitMQ)
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)
 	} else {

@@ -5,9 +5,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/payments/internal/app/usecases"
 )
 
-// ═══════════════════════════════════════════
 // INTERFACE
-// ═══════════════════════════════════════════
 
 // IHandlers define la interfaz de handlers del módulo payments
 type IHandlers interface {
@@ -38,9 +36,7 @@ type IHandlers interface {
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
-// ═══════════════════════════════════════════
 // CONSTRUCTOR
-// ═══════════════════════════════════════════
 
 type PaymentHandlers struct {
 	uc usecases.IUseCase

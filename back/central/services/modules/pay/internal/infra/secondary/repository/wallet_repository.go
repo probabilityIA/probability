@@ -10,9 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ──────────────────────────────────────────────────────
 // Wallet
-// ──────────────────────────────────────────────────────
 
 func (r *Repository) GetWalletByBusinessID(ctx context.Context, businessID uint) (*entities.Wallet, error) {
 	var m models.Wallet
@@ -69,9 +67,7 @@ func (r *Repository) GetAllWallets(ctx context.Context) ([]*entities.Wallet, err
 	return result, nil
 }
 
-// ──────────────────────────────────────────────────────
 // WalletTransactions
-// ──────────────────────────────────────────────────────
 
 func (r *Repository) CreateWalletTransaction(ctx context.Context, tx *entities.WalletTransaction) error {
 	m := walletTxToModel(tx)
@@ -151,9 +147,7 @@ func (r *Repository) DeleteAllTransactionsByWalletID(ctx context.Context, wallet
 		Delete(&models.WalletTransaction{}).Error
 }
 
-// ──────────────────────────────────────────────────────
 // Wallet Mappers
-// ──────────────────────────────────────────────────────
 
 func walletToModel(e *entities.Wallet) *models.Wallet {
 	return &models.Wallet{

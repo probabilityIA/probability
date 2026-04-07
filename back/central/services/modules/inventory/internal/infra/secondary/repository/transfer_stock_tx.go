@@ -18,7 +18,7 @@ func (r *Repository) TransferStockTx(ctx context.Context, params dtos.TransferSt
 
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		// Ordenar por WarehouseID para evitar deadlocks:
-		// Si dos requests concurrentes transfieren A→B y B→A, ambos bloquean
+		// Si dos requests concurrentes transfieren A->B y B->A, ambos bloquean
 		// en el mismo orden (menor ID primero), evitando circular wait.
 		firstWH, secondWH := params.FromWarehouseID, params.ToWarehouseID
 		firstLoc, secondLoc := params.FromLocationID, params.ToLocationID

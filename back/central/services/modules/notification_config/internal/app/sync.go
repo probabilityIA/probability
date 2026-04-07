@@ -92,7 +92,7 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		}
 	}
 
-	// 5. IDs existentes no presentes en incoming → delete
+	// 5. IDs existentes no presentes en incoming -> delete
 	var toDeleteIDs []uint
 	for id := range existingMap {
 		if !incomingIDs[id] {

@@ -29,9 +29,7 @@ func New(
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("invoicing")
 
-	// ═══════════════════════════════════════════════════════════════
 	// 1. INFRAESTRUCTURA SECUNDARIA (Adaptadores de salida)
-	// ═══════════════════════════════════════════════════════════════
 
 	// Servicio de caché para configuraciones de facturación
 	configCache := invoicingRedis.NewConfigCache(redisClient, config, moduleLogger)
@@ -54,9 +52,7 @@ func New(
 		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, redis.ChannelInvoicingEvents)
 		compareCache = invoicingRedis.NewCompareCache(redisClient, moduleLogger)
 
-		// ═══════════════════════════════════════════════════════════════
 		// REGISTRAR PREFIJOS DE CACHÉ Y CANALES PARA STARTUP LOGS
-		// ═══════════════════════════════════════════════════════════════
 		redisClient.RegisterCachePrefix("probability:invoicing:config:*")
 		redisClient.RegisterCachePrefix("invoicing:compare:*")
 		redisClient.RegisterChannel(redis.ChannelInvoicingEvents)
@@ -73,9 +69,7 @@ func New(
 	// TODO: Crear encryption service cuando esté disponible
 	// encryptionService := encryption.New(encryptionKey, moduleLogger)
 
-	// ═══════════════════════════════════════════════════════════════
 	// 2. CAPA DE APLICACIÓN (Casos de uso)
-	// ═══════════════════════════════════════════════════════════════
 
 	useCase := app.New(
 		repo,                    // IRepository único (implementa TODAS las interfaces)
@@ -87,9 +81,7 @@ func New(
 		moduleLogger,
 	)
 
-	// ═══════════════════════════════════════════════════════════════
 	// 2.1 CACHE WARMING (Pre-carga configuraciones activas)
-	// ═══════════════════════════════════════════════════════════════
 	go func() {
 		bgCtx := context.Background()
 		moduleLogger.Info(bgCtx).Msg("🔥 Starting invoicing config cache warming in background...")
@@ -100,9 +92,7 @@ func New(
 		}
 	}()
 
-	// ═══════════════════════════════════════════════════════════════
 	// 3. INFRAESTRUCTURA PRIMARIA (Adaptadores de entrada)
-	// ═══════════════════════════════════════════════════════════════
 
 	// HTTP Handlers
 	handler := handlers.New(useCase, repo, moduleLogger, config)

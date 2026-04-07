@@ -70,7 +70,7 @@ func NewOrderEventConsumer(
 func (c *OrderEventConsumer) Start(ctx context.Context) error {
 	c.logger.Info(ctx).
 		Str("queue", rabbitmq.QueueOrdersToEvents).
-		Msg("Iniciando consumer de eventos de órdenes (fanout → events dispatcher)")
+		Msg("Iniciando consumer de eventos de órdenes (fanout -> events dispatcher)")
 
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueOrdersToEvents, func(body []byte) error {
 		return c.handleMessage(ctx, body)

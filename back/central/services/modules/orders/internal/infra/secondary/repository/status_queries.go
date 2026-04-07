@@ -114,7 +114,7 @@ func (r *Repository) resolveOrderStatusByCode(ctx context.Context, orders []mode
 		return // No romper el flujo si falla
 	}
 
-	// Crear mapa code → OrderStatus
+	// Crear mapa code -> OrderStatus
 	statusMap := make(map[string]models.OrderStatus, len(statuses))
 	for _, s := range statuses {
 		statusMap[s.Code] = s

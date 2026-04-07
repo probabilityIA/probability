@@ -19,10 +19,10 @@ func CalculatePrice(basePrice float64, clientRule *entities.ClientPricingRule, q
 
 		switch clientRule.AdjustmentType {
 		case "percentage":
-			// value negativo = descuento (ej: -10 → price * 0.90)
+			// value negativo = descuento (ej: -10 -> price * 0.90)
 			result.AdjustedPrice = basePrice * (1 + clientRule.AdjustmentValue/100)
 		case "fixed":
-			// value negativo = descuento (ej: -500 → price - 500)
+			// value negativo = descuento (ej: -500 -> price - 500)
 			result.AdjustedPrice = basePrice + clientRule.AdjustmentValue
 		}
 

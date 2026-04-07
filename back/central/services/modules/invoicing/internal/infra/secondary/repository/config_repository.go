@@ -15,9 +15,7 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// ═══════════════════════════════════════════
 // INVOICING CONFIGS - Métodos del Repository
-// ═══════════════════════════════════════════
 
 // CreateInvoicingConfig crea una nueva configuración de facturación en la base de datos
 // y sus entradas en la tabla join invoicing_config_integrations.
@@ -90,7 +88,7 @@ func (r *Repository) GetInvoicingConfigByID(ctx context.Context, id uint) (*enti
 // GetConfigByIntegration obtiene una configuración por ID de integración de e-commerce
 // Implementa read-through cache: primero intenta desde Redis, luego desde BD via join table
 func (r *Repository) GetConfigByIntegration(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error) {
-	// 1. Intentar desde caché (cache HIT → retornar inmediatamente)
+	// 1. Intentar desde caché (cache HIT -> retornar inmediatamente)
 	cachedConfig, err := r.configCache.Get(ctx, integrationID)
 	if err != nil {
 		r.log.Warn(ctx).Err(err).Uint("integration_id", integrationID).Msg("Error al leer caché, consultando BD")

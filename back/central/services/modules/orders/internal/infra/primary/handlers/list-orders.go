@@ -177,7 +177,7 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir Domain response → HTTP response
+	// ✅ Convertir Domain response -> HTTP response
 	httpResp := mappers.OrdersListToResponse(domainResp)
 
 	c.JSON(http.StatusOK, gin.H{

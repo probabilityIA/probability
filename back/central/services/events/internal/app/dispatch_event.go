@@ -29,7 +29,7 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		return nil
 	}
 
-	// Si no hay configs → broadcast SSE por defecto (backward compatible)
+	// Si no hay configs -> broadcast SSE por defecto (backward compatible)
 	if len(configs) == 0 {
 		d.logger.Info(ctx).
 			Str("event_id", event.ID).
@@ -47,7 +47,7 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 		Int("configs_count", len(configs)).
 		Msg("Configs de notificación encontradas, ruteando por canal")
 
-	// Para cada config habilitada → validar condiciones → rutear por canal
+	// Para cada config habilitada -> validar condiciones -> rutear por canal
 	ssePublished := false
 	for _, config := range configs {
 		// Validar condiciones (OrderStatusCodes)
@@ -110,7 +110,7 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 // validateConditions valida si un evento cumple las condiciones de una config
 func (d *EventDispatcher) validateConditions(event entities.Event, config entities.CachedNotificationConfig) bool {
-	// Si no hay filtros de estado configurados → aceptar todo
+	// Si no hay filtros de estado configurados -> aceptar todo
 	if len(config.OrderStatusCodes) == 0 && len(config.OrderStatusIDs) == 0 {
 		return true
 	}
@@ -149,6 +149,6 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 		}
 	}
 
-	// Si no hay información de estado en el evento → no filtrar (backward compatible)
+	// Si no hay información de estado en el evento -> no filtrar (backward compatible)
 	return true
 }

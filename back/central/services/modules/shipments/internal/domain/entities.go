@@ -6,11 +6,9 @@ import (
 	"gorm.io/datatypes"
 )
 
-// ───────────────────────────────────────────
 //
 //	SHIPMENT DTOs
 //
-// ───────────────────────────────────────────
 
 // CreateShipmentRequest representa la solicitud para crear un envío
 type CreateShipmentRequest struct {

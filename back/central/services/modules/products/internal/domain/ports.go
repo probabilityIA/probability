@@ -4,11 +4,9 @@ import (
 	"context"
 )
 
-// ───────────────────────────────────────────
 //
 //	REPOSITORY INTERFACE
 //
-// ───────────────────────────────────────────
 
 // IRepository define todos los métodos de repositorio del módulo products
 type IRepository interface {

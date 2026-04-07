@@ -64,7 +64,7 @@ func (h *Handlers) resolveBusinessIDFromOrder(c *gin.Context) (uint, error) {
 // resolveBusinessIDFromShipment returns the business ID for track/cancel operations.
 // For normal users, it returns the business_id from the JWT.
 // For super admins, it looks up the shipment by tracking number or numeric ID
-// and resolves the business_id via shipment → order → business_id.
+// and resolves the business_id via shipment -> order -> business_id.
 func (h *Handlers) resolveBusinessIDFromShipment(c *gin.Context, identifier string) (uint, error) {
 	businessID, exists := middleware.GetBusinessID(c)
 	if !exists {

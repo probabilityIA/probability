@@ -39,7 +39,7 @@ type IRepository interface {
 // IOrderStatusQuerier define el contrato para consultar estados de orden
 // Replicado localmente (no compartir repositorios entre módulos)
 type IOrderStatusQuerier interface {
-	// GetOrderStatusCodesByIDs retorna un map de id→code para los IDs dados
+	// GetOrderStatusCodesByIDs retorna un map de id->code para los IDs dados
 	GetOrderStatusCodesByIDs(ctx context.Context, ids []uint) (map[uint]string, error)
 }
 

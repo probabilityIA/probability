@@ -11,9 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ──────────────────────────────────────────────────────
 // PaymentTransactions
-// ──────────────────────────────────────────────────────
 
 func (r *Repository) CreatePaymentTransaction(ctx context.Context, tx *entities.PaymentTransaction) error {
 	model := toModel(tx)
@@ -78,9 +76,7 @@ func (r *Repository) ListPaymentTransactions(ctx context.Context, businessID uin
 	return result, total, nil
 }
 
-// ──────────────────────────────────────────────────────
 // PaymentSyncLogs
-// ──────────────────────────────────────────────────────
 
 func (r *Repository) CreateSyncLog(ctx context.Context, log *entities.PaymentSyncLog) error {
 	model := toSyncLogModel(log)
@@ -143,9 +139,7 @@ func (r *Repository) GetSyncLogsByTransactionID(ctx context.Context, transaction
 	return result, nil
 }
 
-// ──────────────────────────────────────────────────────
 // Mappers
-// ──────────────────────────────────────────────────────
 
 func toModel(e *entities.PaymentTransaction) *models.PaymentTransaction {
 	m := &models.PaymentTransaction{

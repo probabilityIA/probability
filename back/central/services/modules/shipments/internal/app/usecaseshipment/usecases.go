@@ -9,11 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
-// ───────────────────────────────────────────
 //
 //	CREATE SHIPMENT
 //
-// ───────────────────────────────────────────
 
 // CreateShipment crea un nuevo envío
 func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.CreateShipmentRequest) (*domain.ShipmentResponse, error) {
@@ -95,11 +93,9 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 	return mapShipmentToResponse(shipment), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	GET SHIPMENT BY ID
 //
-// ───────────────────────────────────────────
 
 // GetShipmentByID obtiene un envío por su ID
 func (uc *UseCaseShipment) GetShipmentByID(ctx context.Context, id uint) (*domain.ShipmentResponse, error) {
@@ -119,11 +115,9 @@ func (uc *UseCaseShipment) GetShipmentByID(ctx context.Context, id uint) (*domai
 	return mapShipmentToResponse(shipment), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	LIST SHIPMENTS
 //
-// ───────────────────────────────────────────
 
 // ListShipments obtiene una lista paginada de envíos con filtros
 func (uc *UseCaseShipment) ListShipments(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.ShipmentsListResponse, error) {
@@ -159,11 +153,9 @@ func (uc *UseCaseShipment) ListShipments(ctx context.Context, page, pageSize int
 	}, nil
 }
 
-// ───────────────────────────────────────────
 //
 //	UPDATE SHIPMENT
 //
-// ───────────────────────────────────────────
 
 // UpdateShipment actualiza un envío existente
 func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *domain.UpdateShipmentRequest) (*domain.ShipmentResponse, error) {
@@ -285,11 +277,9 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 	return mapShipmentToResponse(shipment), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	DELETE SHIPMENT
 //
-// ───────────────────────────────────────────
 
 // DeleteShipment elimina (soft delete) un envío
 func (uc *UseCaseShipment) DeleteShipment(ctx context.Context, id uint) error {
@@ -315,11 +305,9 @@ func (uc *UseCaseShipment) DeleteShipment(ctx context.Context, id uint) error {
 	return nil
 }
 
-// ───────────────────────────────────────────
 //
 //	GET SHIPMENTS BY ORDER ID
 //
-// ───────────────────────────────────────────
 
 // GetShipmentsByOrderID obtiene todos los envíos de una orden
 func (uc *UseCaseShipment) GetShipmentsByOrderID(ctx context.Context, orderID string) ([]domain.Shipment, error) {
@@ -335,11 +323,9 @@ func (uc *UseCaseShipment) GetShipmentsByOrderID(ctx context.Context, orderID st
 	return shipments, nil
 }
 
-// ───────────────────────────────────────────
 //
 //	GET SHIPMENT BY TRACKING NUMBER
 //
-// ───────────────────────────────────────────
 
 // GetShipmentByTrackingNumber obtiene un envío por su número de tracking
 func (uc *UseCaseShipment) GetShipmentByTrackingNumber(ctx context.Context, trackingNumber string) (*domain.Shipment, error) {
@@ -359,11 +345,9 @@ func (uc *UseCaseShipment) GetShipmentByTrackingNumber(ctx context.Context, trac
 	return shipment, nil
 }
 
-// ───────────────────────────────────────────
 //
 //	HELPER FUNCTIONS
 //
-// ───────────────────────────────────────────
 
 // mapShipmentToResponse convierte un modelo Shipment a ShipmentResponse
 func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {

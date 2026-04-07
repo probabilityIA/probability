@@ -6,7 +6,7 @@ import (
 )
 
 // MapUpdateOrderRequestToDomain convierte HTTP update request a DTO de dominio
-// ✅ Conversión: datatypes.JSON → []byte, maneja snake_case JSON tags
+// ✅ Conversión: datatypes.JSON -> []byte, maneja snake_case JSON tags
 func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRequest {
 	if req == nil {
 		return nil
@@ -55,7 +55,7 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 		OrderTypeName:       req.OrderTypeName,
 		// Status, OriginalStatus y StatusID NO se mapean desde el handler HTTP.
 		// El cambio de estado solo se permite via PUT /orders/:id/status (usecaseupdatestatus).
-		// Las integraciones (Shopify webhooks) pasan por MapAndSaveOrder → UpdateOrder directamente.
+		// Las integraciones (Shopify webhooks) pasan por MapAndSaveOrder -> UpdateOrder directamente.
 		PaymentStatusID:     req.PaymentStatusID,
 		FulfillmentStatusID: req.FulfillmentStatusID,
 		Notes:               req.Notes,
@@ -79,7 +79,7 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 }
 
 // MapOrderRequestToDomain convierte HTTP request a DTO de dominio
-// ✅ Conversión: datatypes.JSON → []byte
+// ✅ Conversión: datatypes.JSON -> []byte
 func MapOrderRequestToDomain(req *request.MapOrder) *dtos.ProbabilityOrderDTO {
 	// Convertir datatypes.JSON ([]byte) a []byte para domain
 	var metadataBytes []byte

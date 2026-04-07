@@ -8,9 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // MÉTODOS DEPRECADOS - Migrados a integrations/core
-// ═══════════════════════════════════════════════════════════════
 // NOTA: Estos métodos están deprecados y retornan errores.
 // La gestión de proveedores de facturación ahora se realiza a través
 // del módulo integrations/core que proporciona un catálogo centralizado
@@ -18,7 +16,6 @@ import (
 //
 // Para gestionar proveedores de facturación, usar:
 // - integrations/core endpoints: GET /integrations?category=invoicing
-// ═══════════════════════════════════════════════════════════════
 
 var (
 	// ErrProviderManagementDeprecated indica que la gestión de proveedores está deprecada

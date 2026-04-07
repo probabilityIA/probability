@@ -102,9 +102,7 @@ func (c *CompareCache) GetCompareResult(ctx context.Context, correlationID strin
 	return &result, nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // ÍTEMS / PRODUCTOS
-// ═══════════════════════════════════════════════════════════════
 
 const (
 	itemCompareCachePrefix = "invoicing:items_compare"
@@ -170,9 +168,7 @@ func (c *CompareCache) GetItemCompareResult(ctx context.Context, correlationID s
 	return &result, nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CUENTAS BANCARIAS
-// ═══════════════════════════════════════════════════════════════
 
 const (
 	bankAccountsCachePrefix = "invoicing:bank_accounts"

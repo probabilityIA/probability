@@ -313,9 +313,7 @@ func (r *Repository) ShipmentExists(ctx context.Context, orderID string, trackin
 	return count > 0, nil
 }
 
-// ───────────────────────────────────────────
 // ORIGIN ADDRESSES
-// ───────────────────────────────────────────
 
 func (r *Repository) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
 	dbAddress := &models.OriginAddress{

@@ -32,8 +32,8 @@ func (h *handler) RetryInvoice(c *gin.Context) {
 	}
 
 	// Decidir acción según estado:
-	// - failed → RetryInvoice (re-envía POST con verificación de idempotencia)
-	// - pending → CheckPendingInvoice (solo busca documento, NO re-envía POST)
+	// - failed -> RetryInvoice (re-envía POST con verificación de idempotencia)
+	// - pending -> CheckPendingInvoice (solo busca documento, NO re-envía POST)
 	if invoice.Status == "pending" {
 		h.log.Info(ctx).Uint("invoice_id", uint(id)).Msg("Checking pending invoice status")
 		err = h.useCase.CheckPendingInvoice(ctx, uint(id))

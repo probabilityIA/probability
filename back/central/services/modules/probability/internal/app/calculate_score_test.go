@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// ─── Mocks ──────────────────────────────────────────────────────────────────
 
 type mockRepository struct {
 	mock.Mock
@@ -73,7 +72,6 @@ func (m *mockPublisher) PublishScoreCalculated(ctx context.Context, orderID, ord
 	return args.Error(0)
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 func newUC(repo *mockRepository, pub *mockPublisher) *UseCaseScore {
 	return &UseCaseScore{repo: repo, publisher: pub, log: log.New()}
@@ -125,7 +123,6 @@ func setupEnrichmentMocks(repoMock *mockRepository, ctx context.Context, custome
 	repoMock.On("GetPaymentMethodCategory", ctx, mock.AnythingOfType("uint")).Return("", nil).Maybe()
 }
 
-// ─── Tests: CalculateOrderScore ─────────────────────────────────────────────
 
 func TestCalculateOrderScore_OrdenPerfecta_Score100(t *testing.T) {
 	uc := newPureUC()
@@ -199,7 +196,6 @@ func TestCalculateOrderScore_Redondeo2Decimales(t *testing.T) {
 	assert.Equal(t, rounded, score)
 }
 
-// ─── Tests: GetStaticNegativeFactors ─────────────────────────────────────────
 
 func TestGetStaticNegativeFactors_EmailInvalido(t *testing.T) {
 	uc := newPureUC()
@@ -302,7 +298,6 @@ func TestGetStaticNegativeFactors_HistorialCompra_Mayor(t *testing.T) {
 	assert.NotContains(t, factors, "Historial de compra")
 }
 
-// ─── Tests: IsCODPayment ──────────────────────────────────────────────────────
 
 func TestIsCODPayment_GatewayConCod(t *testing.T) {
 	uc := newPureUC()
@@ -352,7 +347,6 @@ func TestIsCODPayment_SinIndicadores_False(t *testing.T) {
 	assert.False(t, uc.IsCODPayment(&entities.ScoreOrder{Payments: []entities.ScorePayment{{Gateway: &gw}}}))
 }
 
-// ─── Tests: RemoveAccents ────────────────────────────────────────────────────
 
 func TestRemoveAccents(t *testing.T) {
 	uc := newPureUC()
@@ -365,7 +359,6 @@ func TestRemoveAccents(t *testing.T) {
 	}
 }
 
-// ─── Tests: CalculateAndUpdateOrderScore ─────────────────────────────────────
 
 func TestCalculateAndUpdateOrderScore_Exitoso(t *testing.T) {
 	repoMock := new(mockRepository)

@@ -24,9 +24,7 @@ type IRepository interface {
 	CancelPendingSyncLogs(ctx context.Context, transactionID uint) error
 	GetSyncLogsByTransactionID(ctx context.Context, transactionID uint) ([]*entities.PaymentSyncLog, error)
 
-	// ──────────────────────────────────────────────────────
 	// Wallet
-	// ──────────────────────────────────────────────────────
 	GetWalletByBusinessID(ctx context.Context, businessID uint) (*entities.Wallet, error)
 	GetWalletByID(ctx context.Context, walletID uuid.UUID) (*entities.Wallet, error)
 	CreateWallet(ctx context.Context, wallet *entities.Wallet) error

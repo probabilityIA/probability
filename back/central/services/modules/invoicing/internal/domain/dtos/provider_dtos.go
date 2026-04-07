@@ -6,9 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // DTOs PARA COMUNICACIÓN CON PROVEEDORES DE FACTURACIÓN
-// ═══════════════════════════════════════════════════════════════
 
 // InvoiceRequest representa los datos necesarios para crear una factura en el proveedor
 type InvoiceRequest struct {
@@ -49,9 +47,7 @@ type CreditNoteResponse struct {
 	RawResponse      map[string]interface{}
 }
 
-// ═══════════════════════════════════════════════════════════════
 // DTOs PARA COMUNICACIÓN CON MÓDULO DE ÓRDENES
-// ═══════════════════════════════════════════════════════════════
 
 // OrderData representa los datos mínimos necesarios de una orden para facturación
 type OrderData struct {

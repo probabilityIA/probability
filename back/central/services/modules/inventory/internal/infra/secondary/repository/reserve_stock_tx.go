@@ -67,7 +67,7 @@ func (r *Repository) ReserveStockTx(ctx context.Context, params dtos.ReserveStoc
 			NewQty:         level.Quantity,
 			ReferenceType:  &refType,
 			ReferenceID:    &params.OrderID,
-			Notes:          fmt.Sprintf("Reservado: %d, Disponible: %d→%d", toReserve, result.PreviousAvailable, level.AvailableQty),
+			Notes:          fmt.Sprintf("Reservado: %d, Disponible: %d->%d", toReserve, result.PreviousAvailable, level.AvailableQty),
 		}
 		if err := r.createMovementTx(tx, movement); err != nil {
 			return fmt.Errorf("createMovementTx: %w", err)

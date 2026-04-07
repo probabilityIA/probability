@@ -7,9 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // HANDLERS DE ESTADÍSTICAS Y RESÚMENES
-// ═══════════════════════════════════════════════════════════════
 
 // GetSummary obtiene un resumen general de facturas con KPIs principales
 // @Summary Obtener resumen de facturas

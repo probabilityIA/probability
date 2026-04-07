@@ -38,13 +38,13 @@ func New(
 	// 2. Notification config cache reader (lee de Redis, no de BD)
 	configCache := cache.New(redisClient, logger)
 
-	// 3. Channel publishers (WhatsApp → RabbitMQ queue)
+	// 3. Channel publishers (WhatsApp -> RabbitMQ queue)
 	channelPub := channel.New(rabbitMQ, logger)
 
 	// 4. Event Dispatcher (capa de aplicación)
 	dispatcher := app.New(eventManager, configCache, channelPub, logger)
 
-	// 5. RabbitMQ consumers → background
+	// 5. RabbitMQ consumers -> background
 
 	// Consumer del exchange topic unificado (events.exchange)
 	eventConsumer := consumer.New(rabbitMQ, dispatcher, logger)
@@ -57,7 +57,7 @@ func New(
 		}
 	}()
 
-	// Consumer del fanout de órdenes (orders.events → orders.events.events)
+	// Consumer del fanout de órdenes (orders.events -> orders.events.events)
 	orderEventConsumer := consumer.NewOrderEventConsumer(rabbitMQ, dispatcher, logger)
 	go func() {
 		ctx := context.Background()

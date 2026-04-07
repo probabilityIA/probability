@@ -31,9 +31,7 @@ func (uc *UseCases) Repo() domain.IRepository {
 	return uc.repo
 }
 
-// ───────────────────────────────────────────
 // MÉTODOS DE COMPATIBILIDAD - Delegar al CRUD
-// ───────────────────────────────────────────
 
 // CreateShipment delega al caso de uso CRUD
 func (uc *UseCases) CreateShipment(ctx context.Context, req *domain.CreateShipmentRequest) (*domain.ShipmentResponse, error) {

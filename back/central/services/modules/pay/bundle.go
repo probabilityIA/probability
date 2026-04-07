@@ -29,9 +29,7 @@ func New(
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("pay")
 
-	// ═══════════════════════════════════════════════════════════════
 	// 1. INFRAESTRUCTURA SECUNDARIA
-	// ═══════════════════════════════════════════════════════════════
 
 	repo := repository.New(database, moduleLogger)
 	requestPublisher := payqueue.New(rabbitMQ, moduleLogger)
@@ -44,16 +42,12 @@ func New(
 		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE de pagos deshabilitado")
 	}
 
-	// ═══════════════════════════════════════════════════════════════
 	// 2. CAPA DE APLICACIÓN
-	// ═══════════════════════════════════════════════════════════════
 
 	useCase := app.New(repo, requestPublisher, ssePublisher, config, moduleLogger)
 	walletUC := app.NewWalletUseCase(repo, useCase, config, moduleLogger)
 
-	// ═══════════════════════════════════════════════════════════════
 	// 3. INFRAESTRUCTURA PRIMARIA
-	// ═══════════════════════════════════════════════════════════════
 
 	handler := handlers.New(useCase, moduleLogger)
 	handler.RegisterRoutes(router)

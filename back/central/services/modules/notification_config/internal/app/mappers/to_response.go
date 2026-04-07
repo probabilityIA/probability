@@ -8,7 +8,7 @@ import (
 // ToResponseDTO convierte una entidad a DTO de respuesta
 // NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas + datos relacionados
 func ToResponseDTO(entity *entities.IntegrationNotificationConfig) *dtos.NotificationConfigResponseDTO {
-	// Garantizar que OrderStatusIDs sea siempre un slice (nunca nil → evita null en JSON)
+	// Garantizar que OrderStatusIDs sea siempre un slice (nunca nil -> evita null en JSON)
 	orderStatusIDs := entity.OrderStatusIDs
 	if orderStatusIDs == nil {
 		orderStatusIDs = []uint{}

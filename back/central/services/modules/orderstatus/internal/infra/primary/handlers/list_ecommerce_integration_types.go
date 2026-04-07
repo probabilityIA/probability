@@ -17,7 +17,7 @@ import (
 // @Failure      500  {object}  map[string]string
 // @Router       /ecommerce-integration-types [get]
 func (h *handler) ListEcommerceIntegrationTypes(c *gin.Context) {
-	// businessID == 0 → super admin (ve todo); > 0 → scope de negocio
+	// businessID == 0 -> super admin (ve todo); > 0 -> scope de negocio
 	businessID, _ := middleware.GetBusinessID(c)
 
 	result, err := h.uc.ListEcommerceIntegrationTypes(c.Request.Context(), businessID)

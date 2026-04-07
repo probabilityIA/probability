@@ -14,9 +14,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // CONFIG CACHE SERVICE - Servicio de caché para configuraciones
-// ═══════════════════════════════════════════════════════════════
 
 // ConfigCache implementa el servicio de caché de configuraciones usando Redis
 type ConfigCache struct {
@@ -159,9 +157,7 @@ func (c *ConfigCache) Invalidate(ctx context.Context, integrationID uint) error 
 	return nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CACHE POR BUSINESS ID - Config activa de un negocio
-// ═══════════════════════════════════════════════════════════════
 
 // GetByBusinessID obtiene la configuración activa de un negocio desde Redis
 func (c *ConfigCache) GetByBusinessID(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error) {

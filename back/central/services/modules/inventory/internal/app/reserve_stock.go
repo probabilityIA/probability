@@ -51,7 +51,7 @@ func (uc *useCase) ReserveStockForOrder(ctx context.Context, orderID string, bus
 			continue
 		}
 		if !trackInventory {
-			// Producto sin tracking → skip (no afecta inventario)
+			// Producto sin tracking -> skip (no afecta inventario)
 			itemResult.Processed = item.Quantity
 			itemResult.Sufficient = true
 			result.ItemResults = append(result.ItemResults, itemResult)

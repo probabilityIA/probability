@@ -24,7 +24,6 @@ func handleDomainError(c *gin.Context, err error, code string) {
 func resolveInvoicingError(err error) (int, string) {
 	switch {
 
-	// ── 404 Not Found ─────────────────────────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrInvoiceNotFound):
 		return http.StatusNotFound, "Factura no encontrada"
 	case errors.Is(err, invoicingErrors.ErrConfigNotFound):
@@ -38,7 +37,6 @@ func resolveInvoicingError(err error) (int, string) {
 	case errors.Is(err, invoicingErrors.ErrCreditNoteNotFound):
 		return http.StatusNotFound, "Nota de crédito no encontrada"
 
-	// ── 409 Conflict ──────────────────────────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrConfigAlreadyExists):
 		return http.StatusConflict, "Ya existe una configuración de facturación para esta integración. Edítala para cambiar el proveedor, o elimínala para crear una nueva."
 	case errors.Is(err, invoicingErrors.ErrActiveInvoicingConfigExists):
@@ -56,7 +54,6 @@ func resolveInvoicingError(err error) (int, string) {
 	case errors.Is(err, invoicingErrors.ErrSyncInProgress):
 		return http.StatusConflict, "Ya hay una sincronización en progreso"
 
-	// ── 422 Unprocessable Entity (reglas de negocio) ───────────────────────────
 	case errors.Is(err, invoicingErrors.ErrInvoiceCannotBeCancelled):
 		return http.StatusUnprocessableEntity, "La factura no puede ser cancelada en su estado actual"
 	case errors.Is(err, invoicingErrors.ErrCancelNotImplemented):
@@ -117,7 +114,6 @@ func resolveInvoicingError(err error) (int, string) {
 	case errors.Is(err, invoicingErrors.ErrInsufficientQueryAttempts):
 		return http.StatusUnprocessableEntity, "La factura no tiene suficientes intentos de consulta (mínimo 3)"
 
-	// ── 400 Bad Request (datos inválidos) ─────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrInvalidInvoiceData):
 		return http.StatusBadRequest, "Datos de factura inválidos"
 	case errors.Is(err, invoicingErrors.ErrInvalidProviderConfig):
@@ -137,7 +133,6 @@ func resolveInvoicingError(err error) (int, string) {
 	case errors.Is(err, invoicingErrors.ErrInvalidFilterConfig):
 		return http.StatusBadRequest, "Configuración de filtros inválida"
 
-	// ── 401 Unauthorized ──────────────────────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrProviderUnauthorized):
 		return http.StatusUnauthorized, "No autorizado con el proveedor de facturación"
 	case errors.Is(err, invoicingErrors.ErrAuthenticationFailed):
@@ -147,11 +142,9 @@ func resolveInvoicingError(err error) (int, string) {
 	case errors.Is(err, invoicingErrors.ErrTokenRefreshFailed):
 		return http.StatusUnauthorized, "No se pudo renovar el token del proveedor de facturación"
 
-	// ── 429 Too Many Requests ─────────────────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrProviderRateLimitExceeded):
 		return http.StatusTooManyRequests, "Límite de solicitudes del proveedor de facturación excedido"
 
-	// ── 500 Internal Server Error (default) ───────────────────────────────────
 	default:
 		return http.StatusInternalServerError, "Error interno del servidor de facturación"
 	}

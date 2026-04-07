@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/payments/internal/domain/ports"
 )
 
-// ═══════════════════════════════════════════
 // INTERFACE
-// ═══════════════════════════════════════════
 
 // IUseCase define todos los casos de uso del módulo payments
 type IUseCase interface {
@@ -39,9 +37,7 @@ type IUseCase interface {
 	TogglePaymentMappingActive(ctx context.Context, id uint) (*dtos.PaymentMappingResponse, error)
 }
 
-// ═══════════════════════════════════════════
 // CONSTRUCTOR
-// ═══════════════════════════════════════════
 
 // UseCase contiene todos los casos de uso del módulo payments
 type UseCase struct {

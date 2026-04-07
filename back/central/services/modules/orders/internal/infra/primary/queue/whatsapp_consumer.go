@@ -160,7 +160,7 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento al fanout → SSE + otros consumers
+	// Publicar evento al fanout -> SSE + otros consumers
 	if c.rabbitPublisher != nil {
 		go func() {
 			bgCtx := context.Background()

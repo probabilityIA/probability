@@ -10,9 +10,7 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // INVOICING PROVIDER TYPE
-// ═══════════════════════════════════════════════════════════════
 
 func ProviderTypeToDomain(model *models.InvoicingProviderType) *entities.InvoicingProviderType {
 	if model == nil {
@@ -49,9 +47,7 @@ func ProviderTypeListToDomain(models []*models.InvoicingProviderType) []*entitie
 	return entities
 }
 
-// ═══════════════════════════════════════════════════════════════
 // INVOICING PROVIDER
-// ═══════════════════════════════════════════════════════════════
 
 func ProviderToDomain(model *models.InvoicingProvider) *entities.InvoicingProvider {
 	if model == nil {
@@ -143,9 +139,7 @@ func ProviderListToDomain(models []*models.InvoicingProvider) []*entities.Invoic
 	return entities
 }
 
-// ═══════════════════════════════════════════════════════════════
 // INVOICING CONFIG
-// ═══════════════════════════════════════════════════════════════
 
 func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 	if model == nil {

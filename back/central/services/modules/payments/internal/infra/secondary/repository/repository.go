@@ -12,9 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ═══════════════════════════════════════════
 // CONSTRUCTOR
-// ═══════════════════════════════════════════
 
 // Repository implementa ports.IRepository
 type Repository struct {
@@ -28,9 +26,7 @@ func New(database db.IDatabase) ports.IRepository {
 	}
 }
 
-// ═══════════════════════════════════════════
 // PAYMENT METHOD REPOSITORY
-// ═══════════════════════════════════════════
 
 func (r *Repository) CreatePaymentMethod(ctx context.Context, method *entities.PaymentMethod) error {
 	model := mappers.PaymentMethodToModel(method)
@@ -135,9 +131,7 @@ func (r *Repository) PaymentMethodHasActiveMappings(ctx context.Context, id uint
 	return count > 0, err
 }
 
-// ═══════════════════════════════════════════
 // PAYMENT MAPPING REPOSITORY
-// ═══════════════════════════════════════════
 
 func (r *Repository) CreatePaymentMapping(ctx context.Context, mapping *entities.PaymentMethodMapping) error {
 	model := mappers.PaymentMappingToModel(mapping)

@@ -10,9 +10,7 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // INVOICE ITEM
-// ═══════════════════════════════════════════════════════════════
 
 func InvoiceItemToDomain(model *models.InvoiceItem) *entities.InvoiceItem {
 	if model == nil {
@@ -99,9 +97,7 @@ func InvoiceItemListToDomain(models []*models.InvoiceItem) []*entities.InvoiceIt
 	return entities
 }
 
-// ═══════════════════════════════════════════════════════════════
 // INVOICE SYNC LOG
-// ═══════════════════════════════════════════════════════════════
 
 func SyncLogToDomain(model *models.InvoiceSyncLog) *entities.InvoiceSyncLog {
 	if model == nil {
@@ -282,9 +278,7 @@ func SyncLogListToDomain(models []*models.InvoiceSyncLog) []*entities.InvoiceSyn
 	return entities
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CREDIT NOTE
-// ═══════════════════════════════════════════════════════════════
 
 func CreditNoteToDomain(model *models.CreditNote) *entities.CreditNote {
 	if model == nil {

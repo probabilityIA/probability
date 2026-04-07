@@ -54,9 +54,7 @@ type ItemCompareResponseData struct {
 	Summary       ItemCompareSummary  `json:"summary"`
 }
 
-// ═══════════════════════════════════════════════════════════════
 // BANK ACCOUNTS
-// ═══════════════════════════════════════════════════════════════
 
 // ListBankAccountsRequestDTO datos para solicitar cuentas bancarias del proveedor
 type ListBankAccountsRequestDTO struct {

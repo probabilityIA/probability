@@ -5,11 +5,9 @@ import (
 	"time"
 )
 
-// ───────────────────────────────────────────
 //
 //	REPOSITORY INTERFACE
 //
-// ───────────────────────────────────────────
 
 // IRepository define todos los métodos de repositorio del módulo shipments
 type IRepository interface {
@@ -59,11 +57,9 @@ type IRepository interface {
 
 }
 
-// ───────────────────────────────────────────
 //
 //	CARRIER RESOLUTION
 //
-// ───────────────────────────────────────────
 
 // CarrierInfo holds the resolved carrier for a business
 type CarrierInfo struct {
@@ -80,11 +76,9 @@ type ICarrierResolver interface {
 	GetActiveShippingCarrier(ctx context.Context, businessID uint) (*CarrierInfo, error)
 }
 
-// ───────────────────────────────────────────
 //
 //	TRANSPORT REQUEST PUBLISHER
 //
-// ───────────────────────────────────────────
 
 // TransportRequestMessage is the message published to the transport queue
 type TransportRequestMessage struct {
@@ -106,11 +100,9 @@ type ITransportRequestPublisher interface {
 	PublishTransportRequest(ctx context.Context, request *TransportRequestMessage) error
 }
 
-// ───────────────────────────────────────────
 //
 //	SSE PUBLISHER
 //
-// ───────────────────────────────────────────
 
 // GuideNotificationData holds enriched data for guide_generated events (used for WhatsApp notifications)
 type GuideNotificationData struct {

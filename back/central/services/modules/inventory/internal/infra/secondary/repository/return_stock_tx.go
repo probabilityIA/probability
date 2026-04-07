@@ -42,7 +42,7 @@ func (r *Repository) ReturnStockTx(ctx context.Context, params dtos.ReturnStockT
 			NewQty:         level.Quantity,
 			ReferenceType:  &refType,
 			ReferenceID:    &params.OrderID,
-			Notes:          fmt.Sprintf("Devuelto: %d, Stock: %d→%d", params.Quantity, previousQty, level.Quantity),
+			Notes:          fmt.Sprintf("Devuelto: %d, Stock: %d->%d", params.Quantity, previousQty, level.Quantity),
 		}
 		if err := r.createMovementTx(tx, movement); err != nil {
 			return fmt.Errorf("createMovementTx: %w", err)

@@ -55,7 +55,7 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir Domain response → HTTP response ([]byte → datatypes.JSON)
+	// ✅ Convertir Domain response -> HTTP response ([]byte -> datatypes.JSON)
 	httpResp := mappers.OrderRawToResponse(domainResp)
 
 	c.JSON(http.StatusOK, gin.H{

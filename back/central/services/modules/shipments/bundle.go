@@ -28,7 +28,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 3. Transport Request Publisher (async via queue)
 	transportPub := queue.NewTransportRequestPublisher(rabbitMQ, logger)
 
-	// 4. Init SSE Publisher (RabbitMQ → central events dispatcher)
+	// 4. Init SSE Publisher (RabbitMQ -> central events dispatcher)
 	var ssePublisher domain.IShipmentSSEPublisher
 	if rabbitMQ != nil {
 		ssePublisher = queue.NewSSEPublisher(rabbitMQ, logger)

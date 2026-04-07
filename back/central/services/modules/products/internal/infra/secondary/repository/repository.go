@@ -231,11 +231,9 @@ func (r *Repository) ProductExists(ctx context.Context, businessID uint, sku str
 	return count > 0, nil
 }
 
-// ───────────────────────────────────────────
 //
 //	PRODUCT-INTEGRATION MANAGEMENT
 //
-// ───────────────────────────────────────────
 
 // AddProductIntegration asocia un producto con una integración
 func (r *Repository) AddProductIntegration(ctx context.Context, productID string, integrationID uint, externalProductID string) (*domain.ProductBusinessIntegration, error) {

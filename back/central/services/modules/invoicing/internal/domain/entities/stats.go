@@ -2,9 +2,7 @@ package entities
 
 import "time"
 
-// ═══════════════════════════════════════════════════════════════
 // ESTADÍSTICAS Y RESÚMENES - Entidades PURAS de dominio
-// ═══════════════════════════════════════════════════════════════
 
 // InvoiceSummary representa un resumen general de facturas con KPIs principales
 type InvoiceSummary struct {

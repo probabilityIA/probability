@@ -59,7 +59,7 @@ func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir HTTP request → Domain DTO (datatypes.JSON → []byte)
+	// ✅ Convertir HTTP request -> Domain DTO (datatypes.JSON -> []byte)
 	domainReq := mappers.MapOrderRequestToDomain(&req)
 
 	// Llamar al caso de uso de mapeo con DTO de dominio (SIN tags)
@@ -83,7 +83,7 @@ func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir Domain response → HTTP response ([]byte → datatypes.JSON)
+	// ✅ Convertir Domain response -> HTTP response ([]byte -> datatypes.JSON)
 	httpResp := mappers.OrderToResponse(domainResp)
 
 	c.JSON(http.StatusCreated, gin.H{

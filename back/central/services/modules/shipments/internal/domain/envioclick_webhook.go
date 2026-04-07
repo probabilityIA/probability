@@ -28,11 +28,11 @@ type EnvioClickWebhookEvent struct {
 
 // MapEnvioClickStatus convierte un estado de EnvioClick al estado interno de Probability.
 // Referencia de estados EnvioClick:
-//   - "Pendiente de Recolección"  → pending
-//   - "En tránsito" / "En Tránsito" → in_transit
-//   - "Entregado"                 → delivered
-//   - "Incidencia" / incidence=true → failed
-//   - Cualquier otro              → in_transit (por defecto seguro)
+//   - "Pendiente de Recolección"  -> pending
+//   - "En tránsito" / "En Tránsito" -> in_transit
+//   - "Entregado"                 -> delivered
+//   - "Incidencia" / incidence=true -> failed
+//   - Cualquier otro              -> in_transit (por defecto seguro)
 func MapEnvioClickStatus(statusStep string, incidence bool) string {
 	if incidence {
 		return "failed"

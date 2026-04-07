@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE MONTO
-// ═══════════════════════════════════════════════════════════════
 
 func TestMinAmountValidator(t *testing.T) {
 	validator := &MinAmountValidator{MinAmount: 100000}
@@ -56,9 +54,7 @@ func TestMaxAmountValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE PAGO
-// ═══════════════════════════════════════════════════════════════
 
 func TestPaymentStatusValidator(t *testing.T) {
 	validator := &PaymentStatusValidator{RequiredStatus: "paid"}
@@ -99,9 +95,7 @@ func TestPaymentMethodsValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE ORDEN
-// ═══════════════════════════════════════════════════════════════
 
 func TestOrderTypesValidator(t *testing.T) {
 	validator := &OrderTypesValidator{AllowedTypes: []string{"delivery", "pickup"}}
@@ -142,9 +136,7 @@ func TestExcludeStatusesValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE PRODUCTOS
-// ═══════════════════════════════════════════════════════════════
 
 func TestExcludeProductsValidator(t *testing.T) {
 	validator := &ExcludeProductsValidator{ExcludedSKUs: []string{"GIFT-CARD-001", "SKU-123"}}
@@ -252,9 +244,7 @@ func TestItemsCountValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE CLIENTE
-// ═══════════════════════════════════════════════════════════════
 
 func TestCustomerTypesValidator(t *testing.T) {
 	validator := &CustomerTypesValidator{AllowedTypes: []string{"natural", "juridica"}}
@@ -304,9 +294,7 @@ func TestExcludeCustomersValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE UBICACIÓN
-// ═══════════════════════════════════════════════════════════════
 
 func TestShippingRegionsValidator(t *testing.T) {
 	validator := &ShippingRegionsValidator{AllowedRegions: []string{"Bogotá", "Medellín", "Cali"}}
@@ -340,9 +328,7 @@ func TestShippingRegionsValidator(t *testing.T) {
 	})
 }
 
-// ═══════════════════════════════════════════════════════════════
 // TESTS DE VALIDADORES DE FECHA
-// ═══════════════════════════════════════════════════════════════
 
 func TestDateRangeValidator(t *testing.T) {
 	t.Run("Sin restricciones - siempre pasa", func(t *testing.T) {

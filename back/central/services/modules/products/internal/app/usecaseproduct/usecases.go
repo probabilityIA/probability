@@ -9,11 +9,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 )
 
-// ───────────────────────────────────────────
 //
 //	CREATE PRODUCT
 //
-// ───────────────────────────────────────────
 
 // CreateProduct crea un nuevo producto
 func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateProductRequest) (*domain.ProductResponse, error) {
@@ -88,11 +86,9 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 	return mapProductToResponse(product), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	GET PRODUCT BY ID
 //
-// ───────────────────────────────────────────
 
 // GetProductByID obtiene un producto por su ID, validando que pertenezca al negocio
 func (uc *UseCaseProduct) GetProductByID(ctx context.Context, businessID uint, id string) (*domain.ProductResponse, error) {
@@ -112,11 +108,9 @@ func (uc *UseCaseProduct) GetProductByID(ctx context.Context, businessID uint, i
 	return mapProductToResponse(product), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	LIST PRODUCTS
 //
-// ───────────────────────────────────────────
 
 // ListProducts obtiene una lista paginada de productos para un negocio específico
 func (uc *UseCaseProduct) ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) (*domain.ProductsListResponse, error) {
@@ -152,11 +146,9 @@ func (uc *UseCaseProduct) ListProducts(ctx context.Context, businessID uint, pag
 	}, nil
 }
 
-// ───────────────────────────────────────────
 //
 //	UPDATE PRODUCT
 //
-// ───────────────────────────────────────────
 
 // UpdateProduct actualiza un producto existente, validando que pertenezca al negocio
 func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
@@ -304,11 +296,9 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id
 	return mapProductToResponse(product), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	DELETE PRODUCT
 //
-// ───────────────────────────────────────────
 
 // DeleteProduct elimina un producto por su ID, validando que pertenezca al negocio
 func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, businessID uint, id string) error {
@@ -330,11 +320,9 @@ func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, businessID uint, id
 	return nil
 }
 
-// ───────────────────────────────────────────
 //
 //	HELPER FUNCTIONS
 //
-// ───────────────────────────────────────────
 
 // mapProductToResponse convierte un modelo Product a ProductResponse
 func mapProductToResponse(product *domain.Product) *domain.ProductResponse {

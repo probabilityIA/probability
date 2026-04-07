@@ -8,9 +8,7 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // IMPLEMENTACIÓN DE ESTADÍSTICAS Y RESÚMENES
-// ═══════════════════════════════════════════════════════════════
 
 // GetInvoiceSummary obtiene un resumen general de facturas con KPIs principales
 func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error) {
@@ -346,9 +344,7 @@ func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, star
 	return &trendData, nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // FUNCIONES AUXILIARES
-// ═══════════════════════════════════════════════════════════════
 
 // formatPeriodLabel genera una etiqueta legible para el período
 func formatPeriodLabel(start, end time.Time) string {

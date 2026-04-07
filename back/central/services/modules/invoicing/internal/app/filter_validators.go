@@ -12,9 +12,7 @@ type FilterValidator interface {
 	Validate(order *dtos.OrderData) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE MONEDA (hardcoded, siempre activos)
-// ═══════════════════════════════════════════════════════════════
 
 // CurrencyCOPValidator rechaza órdenes que no estén en COP.
 // La facturación electrónica colombiana (DIAN) solo acepta pesos colombianos.
@@ -28,9 +26,7 @@ func (v *CurrencyCOPValidator) Validate(order *dtos.OrderData) error {
 	return errors.ErrCurrencyNotAllowed
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE MONTO
-// ═══════════════════════════════════════════════════════════════
 
 type MinAmountValidator struct {
 	MinAmount float64
@@ -54,9 +50,7 @@ func (v *MaxAmountValidator) Validate(order *dtos.OrderData) error {
 	return nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE PAGO
-// ═══════════════════════════════════════════════════════════════
 
 type PaymentStatusValidator struct {
 	RequiredStatus string
@@ -86,9 +80,7 @@ func (v *PaymentMethodsValidator) Validate(order *dtos.OrderData) error {
 	return errors.ErrPaymentMethodNotAllowed
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE ORDEN
-// ═══════════════════════════════════════════════════════════════
 
 type OrderTypesValidator struct {
 	AllowedTypes []string
@@ -120,9 +112,7 @@ func (v *ExcludeStatusesValidator) Validate(order *dtos.OrderData) error {
 	return nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE PRODUCTOS
-// ═══════════════════════════════════════════════════════════════
 
 type ExcludeProductsValidator struct {
 	ExcludedSKUs []string
@@ -182,9 +172,7 @@ func (v *ItemsCountValidator) Validate(order *dtos.OrderData) error {
 	return nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE CLIENTE
-// ═══════════════════════════════════════════════════════════════
 
 type CustomerTypesValidator struct {
 	AllowedTypes []string
@@ -220,9 +208,7 @@ func (v *ExcludeCustomersValidator) Validate(order *dtos.OrderData) error {
 	return nil
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE UBICACIÓN
-// ═══════════════════════════════════════════════════════════════
 
 type ShippingRegionsValidator struct {
 	AllowedRegions []string
@@ -241,9 +227,7 @@ func (v *ShippingRegionsValidator) Validate(order *dtos.OrderData) error {
 	return errors.ErrShippingRegionNotAllowed
 }
 
-// ═══════════════════════════════════════════════════════════════
 // VALIDADORES DE FECHA
-// ═══════════════════════════════════════════════════════════════
 
 type DateRangeValidator struct {
 	StartDate *string

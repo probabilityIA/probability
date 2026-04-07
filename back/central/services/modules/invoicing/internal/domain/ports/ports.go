@@ -8,15 +8,11 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // REPOSITORIO (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IRepository define TODAS las operaciones de persistencia del módulo de facturación
 type IRepository interface {
-	// ═══════════════════════════════════════════
 	// INVOICES
-	// ═══════════════════════════════════════════
 	CreateInvoice(ctx context.Context, invoice *entities.Invoice) error
 	GetInvoiceByID(ctx context.Context, id uint) (*entities.Invoice, error)
 	GetInvoiceByOrderID(ctx context.Context, orderID string) (*entities.Invoice, error)
@@ -29,16 +25,12 @@ type IRepository interface {
 	GetInvoiceDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
 	GetInvoiceTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error)
 
-	// ═══════════════════════════════════════════
 	// INVOICE ITEMS
-	// ═══════════════════════════════════════════
 	CreateInvoiceItem(ctx context.Context, item *entities.InvoiceItem) error
 	GetInvoiceItemsByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceItem, error)
 	UpdateInvoiceItemsBatch(ctx context.Context, items []*entities.InvoiceItem) error
 
-	// ═══════════════════════════════════════════
 	// INVOICING PROVIDERS
-	// ═══════════════════════════════════════════
 	CreateInvoicingProvider(ctx context.Context, provider *entities.InvoicingProvider) error
 	GetInvoicingProviderByID(ctx context.Context, id uint) (*entities.InvoicingProvider, error)
 	GetProviderByBusinessAndType(ctx context.Context, businessID uint, providerTypeCode string) (*entities.InvoicingProvider, error)
@@ -47,16 +39,12 @@ type IRepository interface {
 	UpdateInvoicingProvider(ctx context.Context, provider *entities.InvoicingProvider) error
 	DeleteInvoicingProvider(ctx context.Context, id uint) error
 
-	// ═══════════════════════════════════════════
 	// INVOICING PROVIDER TYPES
-	// ═══════════════════════════════════════════
 	GetProviderTypeByCode(ctx context.Context, code string) (*entities.InvoicingProviderType, error)
 	ListProviderTypes(ctx context.Context) ([]*entities.InvoicingProviderType, error)
 	GetActiveProviderTypes(ctx context.Context) ([]*entities.InvoicingProviderType, error)
 
-	// ═══════════════════════════════════════════
 	// INVOICING CONFIGS
-	// ═══════════════════════════════════════════
 	CreateInvoicingConfig(ctx context.Context, config *entities.InvoicingConfig) error
 	GetInvoicingConfigByID(ctx context.Context, id uint) (*entities.InvoicingConfig, error)
 	GetConfigByIntegration(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
@@ -75,26 +63,20 @@ type IRepository interface {
 	// Usado para operaciones de auditoría como comparación de facturas.
 	GetAnyConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
 
-	// ═══════════════════════════════════════════
 	// INVOICE SYNC LOGS
-	// ═══════════════════════════════════════════
 	CreateInvoiceSyncLog(ctx context.Context, log *entities.InvoiceSyncLog) error
 	GetSyncLogsByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceSyncLog, error)
 	GetPendingSyncLogRetries(ctx context.Context, limit int) ([]*entities.InvoiceSyncLog, error)
 	UpdateInvoiceSyncLog(ctx context.Context, log *entities.InvoiceSyncLog) error
 
-	// ═══════════════════════════════════════════
 	// CREDIT NOTES
-	// ═══════════════════════════════════════════
 	CreateCreditNote(ctx context.Context, note *entities.CreditNote) error
 	GetCreditNoteByID(ctx context.Context, id uint) (*entities.CreditNote, error)
 	GetCreditNotesByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.CreditNote, error)
 	ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error)
 	UpdateCreditNote(ctx context.Context, note *entities.CreditNote) error
 
-	// ═══════════════════════════════════════════
 	// BULK INVOICE JOBS
-	// ═══════════════════════════════════════════
 	CreateJob(ctx context.Context, job *entities.BulkInvoiceJob) error
 	CreateJobItems(ctx context.Context, items []*entities.BulkInvoiceJobItem) error
 	GetJobByID(ctx context.Context, jobID string) (*entities.BulkInvoiceJob, error)
@@ -105,9 +87,7 @@ type IRepository interface {
 	ListJobs(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.BulkInvoiceJob, int64, error)
 	IncrementJobCounters(ctx context.Context, jobID string, processed, successful, failed int) error
 
-	// ═══════════════════════════════════════════
 	// ORDERS
-	// ═══════════════════════════════════════════
 	GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
 	UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
 	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
@@ -144,9 +124,7 @@ type IRepository interface {
 	ListProductsByBusinessID(ctx context.Context, businessID uint) ([]dtos.SystemProduct, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CLIENTE DE PROVEEDOR (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IInvoicingProviderClient define las operaciones que debe implementar un cliente de proveedor
 type IInvoicingProviderClient interface {
@@ -169,9 +147,7 @@ type IInvoicingProviderClient interface {
 	ValidateCredentials(ctx context.Context, credentials map[string]interface{}) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // SERVICIOS EXTERNOS (Secondary Ports - Driven Adapters)
-// ═══════════════════════════════════════════════════════════════
 
 // IEncryptionService define las operaciones de encriptación/desencriptación
 type IEncryptionService interface {
@@ -210,9 +186,7 @@ type IInvoiceRequestPublisher interface {
 	PublishInvoiceRequest(ctx context.Context, request *dtos.InvoiceRequestMessage) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CACHE DE RESULTADOS DE COMPARACIÓN (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // ICompareCache almacena y recupera resultados de comparación en Redis.
 // Los resultados se almacenan con TTL corto (5 min) como mecanismo de entrega alternativo a SSE.
@@ -228,9 +202,7 @@ type ICompareCache interface {
 	GetBankAccountsResult(ctx context.Context, correlationID string) (*dtos.BankAccountsResponseData, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CACHE DE CONFIGURACIONES (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IConfigCache define la interfaz para el servicio de caché de configuraciones
 type IConfigCache interface {
@@ -246,9 +218,7 @@ type IConfigCache interface {
 	InvalidateByBusinessID(ctx context.Context, businessID uint) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // REPOSITORIO DE ÓRDENES (Secondary Port - Dependencia externa)
-// ═══════════════════════════════════════════════════════════════
 
 // IOrderRepository define las operaciones para obtener datos de órdenes
 type IOrderRepository interface {
@@ -257,9 +227,7 @@ type IOrderRepository interface {
 	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // CASOS DE USO (Primary Port - Driver)
-// ═══════════════════════════════════════════════════════════════
 
 // IUseCase define todos los casos de uso del módulo de facturación
 type IUseCase interface {

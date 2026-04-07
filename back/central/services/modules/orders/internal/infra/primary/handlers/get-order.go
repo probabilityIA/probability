@@ -52,7 +52,7 @@ func (h *Handlers) GetOrderByID(c *gin.Context) {
 		return
 	}
 
-	// ✅ Convertir Domain response → HTTP response ([]byte → datatypes.JSON)
+	// ✅ Convertir Domain response -> HTTP response ([]byte -> datatypes.JSON)
 	httpResp := mappers.OrderToResponse(domainResp)
 
 	c.JSON(http.StatusOK, gin.H{

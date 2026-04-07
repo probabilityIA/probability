@@ -434,7 +434,7 @@ func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entit
 		statusMap[r.OrderID] = r.Status
 	}
 
-	// Asignar: si tiene factura → su status, si business tiene facturación pero no factura → "none", si no → ""
+	// Asignar: si tiene factura -> su status, si business tiene facturación pero no factura -> "none", si no -> ""
 	for i := range orders {
 		if status, ok := statusMap[orders[i].ID]; ok {
 			orders[i].InvoiceStatus = status

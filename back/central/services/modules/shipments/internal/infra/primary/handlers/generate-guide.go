@@ -120,7 +120,7 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		req.TotalCost = float64Ptr(v)
 	}
 
-	// destination → ClientName, DestinationAddress
+	// destination -> ClientName, DestinationAddress
 	if dest, ok := raw["destination"].(map[string]interface{}); ok {
 		firstName, _ := dest["firstName"].(string)
 		lastName, _ := dest["lastName"].(string)
@@ -129,7 +129,7 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		req.DestinationAddress = address
 	}
 
-	// packages[0] → dimensions
+	// packages[0] -> dimensions
 	if pkgs, ok := raw["packages"].([]interface{}); ok && len(pkgs) > 0 {
 		if pkg, ok := pkgs[0].(map[string]interface{}); ok {
 			if v, ok := pkg["weight"].(float64); ok {

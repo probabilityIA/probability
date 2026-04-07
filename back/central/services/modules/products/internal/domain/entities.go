@@ -6,11 +6,9 @@ import (
 	"gorm.io/datatypes"
 )
 
-// ───────────────────────────────────────────
 //
 //	PRODUCT DTOs
 //
-// ───────────────────────────────────────────
 
 // CreateProductRequest representa la solicitud para crear un producto
 type CreateProductRequest struct {
@@ -184,11 +182,9 @@ type ProductsListResponse struct {
 	TotalPages int               `json:"total_pages"`
 }
 
-// ───────────────────────────────────────────
 //
 //	PRODUCT INTEGRATION DTOs
 //
-// ───────────────────────────────────────────
 
 // AddProductIntegrationRequest representa la solicitud para asociar un producto con una integración
 type AddProductIntegrationRequest struct {

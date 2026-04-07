@@ -111,7 +111,7 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 	// Extraer items con ProductID
 	items := c.extractItems(msg.Order.Items)
 	if len(items) == 0 {
-		return // Sin items con ProductID → nada que hacer
+		return // Sin items con ProductID -> nada que hacer
 	}
 
 	businessID := uint(0)

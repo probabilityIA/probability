@@ -22,7 +22,7 @@ func NewOrderStatusQuerier(database db.IDatabase, logger log.ILogger) *orderStat
 	}
 }
 
-// GetOrderStatusCodesByIDs retorna un map de id→code para los IDs dados
+// GetOrderStatusCodesByIDs retorna un map de id->code para los IDs dados
 // Consulta la tabla order_statuses (gestionada por módulo orderstatus)
 func (q *orderStatusQuerier) GetOrderStatusCodesByIDs(ctx context.Context, ids []uint) (map[uint]string, error) {
 	if len(ids) == 0 {
