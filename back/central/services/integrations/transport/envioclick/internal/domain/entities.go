@@ -13,7 +13,7 @@ type QuoteRequest struct {
 	Description         string    `json:"description"`
 	ContentValue        float64   `json:"contentValue"`
 	CODValue            float64   `json:"codValue,omitempty"`
-	IncludeGuideCost    bool      `json:"includeGuideCost"`
+	IncludeGuideCost    bool      `json:"includeGuideCost,omitempty"`
 	CODPaymentMethod    string    `json:"codPaymentMethod,omitempty"`
 	Packages            []Package `json:"packages"`
 	Origin              Address   `json:"origin"`
