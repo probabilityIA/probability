@@ -341,7 +341,7 @@ func (g *RandomDataGenerator) GenerateDualCurrencyLineItems(count int, exchangeR
 		usdPrice := copPrice / exchangeRate
 		quantity := rand.Intn(3) + 1
 
-		// IVA 19% incluido en el precio COP → base = copPrice / 1.19
+		// IVA 19% incluido en el precio COP -> base = copPrice / 1.19
 		copBase := copPrice / 1.19
 		copTax := copPrice - copBase
 		usdTax := copTax / exchangeRate

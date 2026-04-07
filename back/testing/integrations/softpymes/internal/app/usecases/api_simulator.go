@@ -205,9 +205,9 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 
 // GetInvoiceByNumber busca una factura por su número.
 // Acepta múltiples formatos:
-//   - "0000001001" → padded 10 dígitos (formato listado, enviado por GetDocumentByNumber)
-//   - "FEV1001"    → combinado (formato retornado por creación)
-//   - "1001"       → bare sin ceros
+//   - "0000001001" -> padded 10 dígitos (formato listado, enviado por GetDocumentByNumber)
+//   - "FEV1001"    -> combinado (formato retornado por creación)
+//   - "1001"       -> bare sin ceros
 func (s *APISimulator) GetInvoiceByNumber(invoiceNumber string) (*InvoiceWithDetails, error) {
 	s.logger.Info().
 		Str("invoice_number", invoiceNumber).
@@ -217,7 +217,7 @@ func (s *APISimulator) GetInvoiceByNumber(invoiceNumber string) (*InvoiceWithDet
 	invoice, exists := s.Repository.GetInvoiceByNumber(invoiceNumber)
 
 	if !exists {
-		// 2. Formato combinado "FEV1001" → strip prefix → normalizar a padded
+		// 2. Formato combinado "FEV1001" -> strip prefix -> normalizar a padded
 		const prefix = "FEV"
 		candidate := invoiceNumber
 		if strings.HasPrefix(candidate, prefix) {

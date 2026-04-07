@@ -8,7 +8,7 @@ import (
 )
 
 // DeleteAllOrders hard-deletes all orders and related records for a business.
-// Deletion order: invoice children → invoices → order children → orders
+// Deletion order: invoice children -> invoices -> order children -> orders
 func (r *Repository) DeleteAllOrders(ctx context.Context, businessID uint) (int64, error) {
 	db := r.db.Conn(ctx)
 
