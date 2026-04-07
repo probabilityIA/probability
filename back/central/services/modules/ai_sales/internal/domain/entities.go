@@ -2,7 +2,6 @@ package domain
 
 import "time"
 
-// MessageRole representa el rol de un mensaje en la conversacion
 type MessageRole string
 
 const (
@@ -10,7 +9,6 @@ const (
 	RoleAssistant MessageRole = "assistant"
 )
 
-// ContentType representa el tipo de bloque de contenido
 type ContentType string
 
 const (
@@ -19,7 +17,6 @@ const (
 	ContentTypeToolResult ContentType = "toolResult"
 )
 
-// StopReason indica por que Bedrock dejo de generar
 type StopReason string
 
 const (
@@ -28,7 +25,6 @@ const (
 	StopReasonMaxToken StopReason = "max_tokens"
 )
 
-// AISession representa una sesion de chat activa en Redis
 type AISession struct {
 	ID          string
 	PhoneNumber string
@@ -39,13 +35,11 @@ type AISession struct {
 	ExpiresAt   time.Time
 }
 
-// AIMessage representa un mensaje individual en el historial
 type AIMessage struct {
 	Role    MessageRole
 	Content []ContentBlock
 }
 
-// ContentBlock representa un bloque de contenido dentro de un mensaje
 type ContentBlock struct {
 	Type      ContentType
 	Text      string
@@ -55,20 +49,17 @@ type ContentBlock struct {
 	Content   string // Para toolResult
 }
 
-// AIResponse representa la respuesta de Bedrock
 type AIResponse struct {
 	Content    []ContentBlock
 	StopReason StopReason
 }
 
-// ToolDefinition define una herramienta para Bedrock
 type ToolDefinition struct {
 	Name        string
 	Description string
 	InputSchema string // JSON Schema como string
 }
 
-// ProductSearchResult resultado de busqueda de producto
 type ProductSearchResult struct {
 	ID               string
 	SKU              string
@@ -85,7 +76,6 @@ type ProductSearchResult struct {
 	IsActive         bool
 }
 
-// CustomerSearchResult resultado de busqueda de cliente
 type CustomerSearchResult struct {
 	ID    uint
 	Name  string
@@ -94,7 +84,6 @@ type CustomerSearchResult struct {
 	DNI   string
 }
 
-// CustomerLastAddress ultima direccion de envio extraida de ordenes anteriores
 type CustomerLastAddress struct {
 	Street     string
 	City       string
@@ -104,7 +93,6 @@ type CustomerLastAddress struct {
 	OrderDate  string
 }
 
-// OrderResultDTO resultado del procesamiento de una orden AI recibido via queue
 type OrderResultDTO struct {
 	ExternalID   string `json:"external_id"`
 	PhoneNumber  string `json:"phone_number"`
@@ -115,7 +103,6 @@ type OrderResultDTO struct {
 	ErrorMessage string `json:"error_message"`
 }
 
-// AIConfig configuracion del agente de ventas IA leida de platform_creds
 type AIConfig struct {
 	Enabled           bool
 	ModelID           string

@@ -22,7 +22,6 @@ type createOrderItem struct {
 	Quantity   int    `json:"quantity"`
 }
 
-// executeCreateOrder valida productos, construye la orden canonica y la publica
 func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (string, error) {
 	var input createOrderInput
 	if err := parseToolInput(inputJSON, &input); err != nil {
@@ -33,7 +32,6 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 		return `{"error": "No se proporcionaron productos para el pedido"}`, nil
 	}
 
-	// Validar cada producto y calcular totales
 	type validatedItem struct {
 		Product  *domain.ProductSearchResult
 		Quantity int
@@ -53,7 +51,6 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 			return fmt.Sprintf(`{"error": "Producto no encontrado: %s"}`, item.ProductSKU), nil
 		}
 
-		// Solo validar stock si el producto trackea inventario
 		if product.TrackInventory && product.StockQuantity < item.Quantity {
 			return fmt.Sprintf(`{"error": "Stock insuficiente para %s. Disponible: %d, solicitado: %d"}`,
 				product.Name, product.StockQuantity, item.Quantity), nil
@@ -64,7 +61,6 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 		currency = product.Currency
 	}
 
-	// Construir orden canonica serializable
 	externalID := uuid.New().String()
 	orderNumber := fmt.Sprintf("AI-%s", externalID[:8])
 	now := time.Now().Format(time.RFC3339)
@@ -115,20 +111,17 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 		return "", fmt.Errorf("error publishing order: %w", err)
 	}
 
-	// Retornar confirmacion al AI
 	response, _ := json.Marshal(map[string]any{
 		"success":      true,
 		"order_number": orderNumber,
 		"total":        totalAmount,
 		"currency":     currency,
 		"items_count":  len(items),
-		"message":      fmt.Sprintf("Pedido %s creado exitosamente", orderNumber),
+		"message":      fmt.Sprintf("Pedido %s enviado. Te confirmaremos por este chat cuando este listo.", orderNumber),
 	})
-
 	return string(response), nil
 }
 
-// serializableOrder estructura con tags JSON para publicar a la cola canonical
 type serializableOrder struct {
 	BusinessID              *uint                 `json:"business_id"`
 	IntegrationID           uint                  `json:"integration_id"`

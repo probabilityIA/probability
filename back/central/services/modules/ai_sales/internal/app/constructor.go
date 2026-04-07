@@ -7,7 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IUseCase define la interfaz del caso de uso de AI Sales
 type IUseCase interface {
 	HandleIncoming(ctx context.Context, dto domain.IncomingMessageDTO) error
 }
@@ -25,7 +24,6 @@ type useCase struct {
 	log                  log.ILogger
 }
 
-// New crea un nuevo caso de uso de AI Sales
 func New(
 	aiProvider domain.IAIProvider,
 	sessionCache domain.ISessionCache,

@@ -17,9 +17,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// New inicializa el modulo ai_sales (solo queue-based, sin HTTP handlers)
 func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, bedrockClient bedrock.IBedrock) {
-	// 1. Infraestructura secundaria
 	aiProvider := ai_adapter.New(bedrockClient, logger)
 	sessionCache := aicache.New(redisClient, logger)
 	productRepo := repository.New(database, logger)
@@ -30,18 +28,24 @@ func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, re
 	persistencePublisher := queue.NewPersistencePublisher(rabbitMQ, logger)
 	pauseChecker := aicache.NewPauseChecker(redisClient)
 
-	// 2. Caso de uso
 	useCase := app.New(aiProvider, sessionCache, productRepo, customerRepo, responsePublisher, orderPublisher, configProvider, persistencePublisher, pauseChecker, logger)
 
-	// 3. Consumer (infraestructura primaria)
 	aiConsumer := consumer.New(rabbitMQ, useCase, logger)
 
-	// 4. Iniciar consumer en background
 	go func() {
 		if err := aiConsumer.Start(context.Background()); err != nil {
 			logger.Error(context.Background()).
 				Err(err).
 				Msg("Error iniciando AI Sales consumer")
+		}
+	}()
+
+	orderResultConsumer := consumer.NewOrderResultConsumer(rabbitMQ, responsePublisher, sessionCache, persistencePublisher, logger)
+	go func() {
+		if err := orderResultConsumer.Start(context.Background()); err != nil {
+			logger.Error(context.Background()).
+				Err(err).
+				Msg("Error iniciando AI Order Result consumer")
 		}
 	}()
 

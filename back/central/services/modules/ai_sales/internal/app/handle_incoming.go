@@ -89,10 +89,10 @@ func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessag
 	}
 
 	deps := &toolDeps{
-		productRepo:    uc.productRepo,
-		customerRepo:   uc.customerRepo,
-		orderPublisher: uc.orderPublisher,
-		businessID:     businessID,
+		productRepo:      uc.productRepo,
+		customerRepo:     uc.customerRepo,
+		orderPublisher:   uc.orderPublisher,
+		businessID:       businessID,
 	}
 
 	for i := 0; i < maxIterations; i++ {

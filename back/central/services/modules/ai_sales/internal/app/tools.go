@@ -8,7 +8,6 @@ import (
 	domain "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/domain"
 )
 
-// GetToolDefinitions retorna las definiciones de herramientas para Bedrock
 func GetToolDefinitions() []domain.ToolDefinition {
 	return []domain.ToolDefinition{
 		{
@@ -96,15 +95,13 @@ func GetToolDefinitions() []domain.ToolDefinition {
 	}
 }
 
-// toolDeps agrupa las dependencias necesarias para ejecutar tools
 type toolDeps struct {
-	productRepo    domain.IProductRepository
-	customerRepo   domain.ICustomerRepository
-	orderPublisher domain.IAIOrderPublisher
-	businessID     uint
+	productRepo      domain.IProductRepository
+	customerRepo     domain.ICustomerRepository
+	orderPublisher   domain.IAIOrderPublisher
+	businessID       uint
 }
 
-// DispatchTool ejecuta la herramienta solicitada por Bedrock y retorna el resultado como string JSON
 func DispatchTool(ctx context.Context, toolName string, inputJSON string, deps *toolDeps) (string, error) {
 	switch toolName {
 	case "SearchProducts":
@@ -120,7 +117,6 @@ func DispatchTool(ctx context.Context, toolName string, inputJSON string, deps *
 	}
 }
 
-// parseToolInput deserializa el input JSON de una herramienta
 func parseToolInput(inputJSON string, target any) error {
 	if err := json.Unmarshal([]byte(inputJSON), target); err != nil {
 		return fmt.Errorf("error parsing tool input: %w", err)
