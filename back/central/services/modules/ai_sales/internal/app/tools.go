@@ -30,17 +30,25 @@ func GetToolDefinitions() []domain.ToolDefinition {
 		},
 		{
 			Name:        "CreateOrder",
-			Description: "Crea un pedido para el cliente. Solo usar despues de que el cliente confirme los productos y cantidades que desea comprar.",
+			Description: "Crea un pedido para el cliente. NUNCA llamar sin tener nombre, telefono, direccion de envio y productos confirmados.",
 			InputSchema: `{
 				"type": "object",
 				"properties": {
 					"customer_name": {
 						"type": "string",
-						"description": "Nombre del cliente que hace el pedido"
+						"description": "Nombre completo del cliente"
 					},
 					"customer_phone": {
 						"type": "string",
-						"description": "Numero de telefono del cliente"
+						"description": "Numero de telefono del cliente (del chat de WhatsApp)"
+					},
+					"shipping_address": {
+						"type": "string",
+						"description": "Direccion de envio completa (calle, numero, barrio)"
+					},
+					"shipping_city": {
+						"type": "string",
+						"description": "Ciudad de envio"
 					},
 					"items": {
 						"type": "array",
@@ -61,7 +69,7 @@ func GetToolDefinitions() []domain.ToolDefinition {
 						}
 					}
 				},
-				"required": ["customer_name", "customer_phone", "items"]
+				"required": ["customer_name", "customer_phone", "shipping_address", "shipping_city", "items"]
 			}`,
 		},
 		{

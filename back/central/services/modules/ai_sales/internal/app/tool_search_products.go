@@ -11,7 +11,6 @@ type searchProductsInput struct {
 	Limit int    `json:"limit"`
 }
 
-// executeSearchProducts busca productos en el catalogo del negocio
 func executeSearchProducts(ctx context.Context, inputJSON string, deps *toolDeps) (string, error) {
 	var input searchProductsInput
 	if err := parseToolInput(inputJSON, &input); err != nil {

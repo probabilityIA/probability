@@ -12,9 +12,11 @@ import (
 )
 
 type createOrderInput struct {
-	CustomerName  string            `json:"customer_name"`
-	CustomerPhone string            `json:"customer_phone"`
-	Items         []createOrderItem `json:"items"`
+	CustomerName    string            `json:"customer_name"`
+	CustomerPhone   string            `json:"customer_phone"`
+	ShippingAddress string            `json:"shipping_address"`
+	ShippingCity    string            `json:"shipping_city"`
+	Items           []createOrderItem `json:"items"`
 }
 
 type createOrderItem struct {
@@ -95,6 +97,8 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 		TotalAmountPresentment: totalAmount,
 		CustomerName:    input.CustomerName,
 		CustomerPhone:   input.CustomerPhone,
+		ShippingAddress: input.ShippingAddress,
+		ShippingCity:    input.ShippingCity,
 		Status:          "pending",
 		OriginalStatus:  "pending",
 		OccurredAt:      now,
@@ -137,6 +141,8 @@ type serializableOrder struct {
 	TotalAmountPresentment  float64               `json:"total_amount_presentment"`
 	CustomerName            string                `json:"customer_name"`
 	CustomerPhone           string                `json:"customer_phone"`
+	ShippingAddress         string                `json:"shipping_address"`
+	ShippingCity            string                `json:"shipping_city"`
 	Status                  string                `json:"status"`
 	OriginalStatus          string                `json:"original_status"`
 	OccurredAt              string                `json:"occurred_at"`
