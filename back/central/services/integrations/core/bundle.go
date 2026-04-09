@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
@@ -105,8 +106,10 @@ type IIntegrationCore interface {
 // ============================================
 
 type integrationCore struct {
-	useCase domain.IIntegrationUseCase
-	cache   domain.IIntegrationCache
+	useCase    domain.IIntegrationUseCase
+	cache      domain.IIntegrationCache
+	repo       domain.IRepository
+	encryption domain.IEncryptionService
 }
 
 // ============================================
@@ -169,7 +172,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 		}
 	}()
 
-	return &integrationCore{useCase: integrationUseCase, cache: integrationCache}
+	return &integrationCore{useCase: integrationUseCase, cache: integrationCache, repo: repo, encryption: encryptionService}
 }
 
 // IIntegrationService pass-throughs
@@ -246,5 +249,25 @@ func (ic *integrationCore) DeleteWebhook(ctx context.Context, integrationID, web
 }
 
 func (ic *integrationCore) GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error) {
-	return ic.cache.GetPlatformCredentials(ctx, integrationTypeID)
+	creds, err := ic.cache.GetPlatformCredentials(ctx, integrationTypeID)
+	if err == nil {
+		return creds, nil
+	}
+
+	intType, err := ic.repo.GetIntegrationTypeByID(ctx, integrationTypeID)
+	if err != nil {
+		return nil, err
+	}
+	if len(intType.PlatformCredentialsEncrypted) == 0 {
+		return nil, fmt.Errorf("no platform credentials for integration type %d", integrationTypeID)
+	}
+
+	creds, err = ic.encryption.DecryptCredentials(ctx, intType.PlatformCredentialsEncrypted)
+	if err != nil {
+		return nil, err
+	}
+
+	_ = ic.cache.SetPlatformCredentials(ctx, integrationTypeID, creds)
+
+	return creds, nil
 }

@@ -152,12 +152,12 @@ func (c *IntegrationCache) SetPlatformCredentials(ctx context.Context, integrati
 	}
 
 	key := platformCredentialsKey(integrationTypeID)
-	if err := c.redis.Set(ctx, key, string(data), ttlMetadata); err != nil {
+	if err := c.redis.Set(ctx, key, string(data), ttlPlatformCredentials); err != nil {
 		c.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Failed to cache platform credentials")
 		return err
 	}
 
-	c.log.Debug(ctx).Uint("integration_type_id", integrationTypeID).Msg("✅ Platform credentials cached (TTL: 24h)")
+	c.log.Debug(ctx).Uint("integration_type_id", integrationTypeID).Msg("Platform credentials cached (no TTL)")
 	return nil
 }
 
