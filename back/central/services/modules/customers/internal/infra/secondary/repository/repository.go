@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/customers/internal/domain/errors"
@@ -13,12 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository implementa ports.IRepository
 type Repository struct {
 	db db.IDatabase
 }
 
-// New crea una nueva instancia del repositorio
 func New(database db.IDatabase) ports.IRepository {
 	return &Repository{db: database}
 }
@@ -68,7 +65,6 @@ func (r *Repository) List(ctx context.Context, params dtos.ListClientsParams) ([
 		query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ? OR dni ILIKE ?", like, like, like, like)
 	}
 
-	// Filtros por campo específico
 	if params.Email != "" {
 		query = query.Where("email = ?", params.Email)
 	}
@@ -151,26 +147,19 @@ func (r *Repository) ExistsByDni(ctx context.Context, businessID uint, dni strin
 	return count > 0, err
 }
 
-// GetOrderStats consulta la tabla orders directamente.
-// Replicado localmente para evitar compartir repositorios entre módulos.
-func (r *Repository) GetOrderStats(ctx context.Context, clientID uint) (int64, float64, *time.Time, error) {
-	type statsResult struct {
-		OrderCount  int64
-		TotalSpent  float64
-		LastOrderAt *time.Time
-	}
 
-	var result statsResult
+func (r *Repository) FindClientByPhone(ctx context.Context, businessID uint, phone string) (*entities.Client, error) {
+	var model models.Client
 	err := r.db.Conn(ctx).
-		Table("orders").
-		Select("COUNT(*) AS order_count, COALESCE(SUM(total), 0) AS total_spent, MAX(created_at) AS last_order_at").
-		Where("customer_id = ? AND deleted_at IS NULL", clientID).
-		Scan(&result).Error
+		Where("business_id = ? AND phone = ?", businessID, phone).
+		First(&model).Error
 	if err != nil {
-		return 0, 0, nil, err
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
 	}
-
-	return result.OrderCount, result.TotalSpent, result.LastOrderAt, nil
+	return modelToEntity(&model), nil
 }
 
 func modelToEntity(m *models.Client) *entities.Client {

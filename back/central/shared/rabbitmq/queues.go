@@ -25,6 +25,8 @@ const (
 
 	QueueOrdersToEvents = "orders.events.events"
 
+	QueueOrdersToCustomers = "orders.events.customers"
+
 	QueueOrdersConfirmationRequested = "orders.confirmation.requested"
 
 	QueueWhatsAppOrderConfirmed = "orders.whatsapp.confirmed"

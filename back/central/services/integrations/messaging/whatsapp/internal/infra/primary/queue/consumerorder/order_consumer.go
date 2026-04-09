@@ -90,7 +90,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	// Enviar plantilla configurada
 	messageID, err := c.useCase.SendTemplate(
 		context.Background(),
-		templateName, // ← Ahora viene del evento (o fallback)
+		templateName, // <- Ahora viene del evento (o fallback)
 		event.CustomerPhone,
 		variables,
 		event.OrderNumber,

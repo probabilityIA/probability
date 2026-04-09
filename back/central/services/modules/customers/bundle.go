@@ -1,24 +1,24 @@
 package customers
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa el módulo de clients
-func New(router *gin.RouterGroup, database db.IDatabase) {
-	// 1. Init Repository
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue) {
 	repo := repository.New(database)
-
-	// 2. Init Use Cases
-	uc := app.New(repo)
-
-	// 3. Init Handlers
+	uc := app.New(repo, logger)
 	h := handlers.New(uc)
-
-	// 4. Register Routes
 	h.RegisterRoutes(router)
+
+	consumer := queue.NewOrderConsumer(rabbitMQ, uc, logger)
+	consumer.Start(context.Background())
 }

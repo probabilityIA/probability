@@ -63,7 +63,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment, s3)
 
 	// Inicializar módulo de customers
-	customers.New(router, database)
+	customers.New(router, database, logger, rabbitMQ)
 
 	// Inicializar módulo de shipments
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)

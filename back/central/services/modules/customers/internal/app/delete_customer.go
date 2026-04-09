@@ -8,19 +8,17 @@ import (
 )
 
 func (uc *UseCase) DeleteClient(ctx context.Context, businessID, clientID uint) error {
-	// Verificar que existe
 	_, err := uc.repo.GetByID(ctx, businessID, clientID)
 	if err != nil {
 		return err
 	}
 
-	// Verificar si tiene órdenes
-	orderCount, _, _, err := uc.repo.GetOrderStats(ctx, clientID)
+	summary, err := uc.repo.GetCustomerSummary(ctx, businessID, clientID)
 	if err != nil {
 		return err
 	}
-	if orderCount > 0 {
-		return fmt.Errorf("%w: tiene %d orden(es)", domainerrors.ErrClientHasOrders, orderCount)
+	if summary != nil && summary.TotalOrders > 0 {
+		return fmt.Errorf("%w: tiene %d orden(es)", domainerrors.ErrClientHasOrders, summary.TotalOrders)
 	}
 
 	return uc.repo.Delete(ctx, businessID, clientID)

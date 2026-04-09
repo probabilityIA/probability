@@ -2,13 +2,11 @@ package ports
 
 import (
 	"context"
-	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/domain/entities"
 )
 
-// IRepository define los métodos del repositorio del módulo clients
 type IRepository interface {
 	Create(ctx context.Context, client *entities.Client) (*entities.Client, error)
 	GetByID(ctx context.Context, businessID, clientID uint) (*entities.Client, error)
@@ -16,10 +14,17 @@ type IRepository interface {
 	Update(ctx context.Context, client *entities.Client) (*entities.Client, error)
 	Delete(ctx context.Context, businessID, clientID uint) error
 
-	// Validaciones de unicidad
 	ExistsByEmail(ctx context.Context, businessID uint, email string, excludeID *uint) (bool, error)
 	ExistsByDni(ctx context.Context, businessID uint, dni string, excludeID *uint) (bool, error)
 
-	// Stats de órdenes (replica query de orders - sin compartir repositorio)
-	GetOrderStats(ctx context.Context, clientID uint) (orderCount int64, totalSpent float64, lastOrderAt *time.Time, err error)
+	GetCustomerSummary(ctx context.Context, businessID, customerID uint) (*entities.CustomerSummary, error)
+	ListCustomerAddresses(ctx context.Context, params dtos.ListCustomerAddressesParams) ([]entities.CustomerAddress, int64, error)
+	ListCustomerProducts(ctx context.Context, params dtos.ListCustomerProductsParams) ([]entities.CustomerProductHistory, int64, error)
+	ListCustomerOrderItems(ctx context.Context, params dtos.ListCustomerOrderItemsParams) ([]entities.CustomerOrderItem, int64, error)
+	UpsertCustomerSummary(ctx context.Context, summary *entities.CustomerSummary) error
+	UpsertCustomerAddress(ctx context.Context, address *entities.CustomerAddress) error
+	UpsertCustomerProductHistory(ctx context.Context, product *entities.CustomerProductHistory) error
+	UpsertCustomerOrderItem(ctx context.Context, item *entities.CustomerOrderItem) error
+	UpdateOrderItemsStatus(ctx context.Context, orderID string, status string) error
+	FindClientByPhone(ctx context.Context, businessID uint, phone string) (*entities.Client, error)
 }

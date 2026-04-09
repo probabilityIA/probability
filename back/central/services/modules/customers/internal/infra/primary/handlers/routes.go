@@ -5,14 +5,18 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra todas las rutas del módulo customers
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	customers := router.Group("/customers")
 	{
-		customers.GET("", middleware.JWT(), h.ListClients)         // GET    /api/v1/customers
-		customers.GET("/:id", middleware.JWT(), h.GetClient)       // GET    /api/v1/customers/:id
-		customers.POST("", middleware.JWT(), h.CreateClient)       // POST   /api/v1/customers
-		customers.PUT("/:id", middleware.JWT(), h.UpdateClient)    // PUT    /api/v1/customers/:id
-		customers.DELETE("/:id", middleware.JWT(), h.DeleteClient) // DELETE /api/v1/customers/:id
+		customers.GET("", middleware.JWT(), h.ListClients)
+		customers.GET("/:id", middleware.JWT(), h.GetClient)
+		customers.POST("", middleware.JWT(), h.CreateClient)
+		customers.PUT("/:id", middleware.JWT(), h.UpdateClient)
+		customers.DELETE("/:id", middleware.JWT(), h.DeleteClient)
+
+		customers.GET("/:id/summary", middleware.JWT(), h.GetCustomerSummary)
+		customers.GET("/:id/addresses", middleware.JWT(), h.ListCustomerAddresses)
+		customers.GET("/:id/products", middleware.JWT(), h.ListCustomerProducts)
+		customers.GET("/:id/order-items", middleware.JWT(), h.ListCustomerOrderItems)
 	}
 }

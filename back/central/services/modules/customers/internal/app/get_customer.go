@@ -12,15 +12,16 @@ func (uc *UseCase) GetClient(ctx context.Context, businessID, clientID uint) (*e
 		return nil, err
 	}
 
-	// Enriquecer con stats de órdenes
-	orderCount, totalSpent, lastOrderAt, err := uc.repo.GetOrderStats(ctx, clientID)
+	summary, err := uc.repo.GetCustomerSummary(ctx, businessID, clientID)
 	if err != nil {
-		return nil, err
+		return client, nil
 	}
 
-	client.OrderCount = orderCount
-	client.TotalSpent = totalSpent
-	client.LastOrderAt = lastOrderAt
+	if summary != nil {
+		client.OrderCount = int64(summary.TotalOrders)
+		client.TotalSpent = summary.TotalSpent
+		client.LastOrderAt = summary.LastOrderAt
+	}
 
 	return client, nil
 }

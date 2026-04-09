@@ -86,6 +86,7 @@ func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 		rabbitmq.QueueOrdersToScore,
 		rabbitmq.QueueOrdersToInventory,
 		rabbitmq.QueueOrdersToEvents,
+		rabbitmq.QueueOrdersToCustomers,
 	}
 
 	for _, queueName := range queues {
