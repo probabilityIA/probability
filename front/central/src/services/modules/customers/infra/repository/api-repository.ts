@@ -3,8 +3,13 @@ import { ICustomerRepository } from '../../domain/ports';
 import {
     CustomerInfo,
     CustomerDetail,
+    CustomerSummary,
     CustomersListResponse,
+    CustomerAddressListResponse,
+    CustomerProductListResponse,
+    CustomerOrderItemListResponse,
     GetCustomersParams,
+    PaginationParams,
     CreateCustomerDTO,
     UpdateCustomerDTO,
     DeleteCustomerResponse,
@@ -46,11 +51,19 @@ export class CustomerApiRepository implements ICustomerRepository {
         }
     }
 
-    /** Agrega ?business_id=X a la url si se provee (para super admin) */
     private withBusinessId(path: string, businessId?: number): string {
         if (!businessId) return path;
         const sep = path.includes('?') ? '&' : '?';
         return `${path}${sep}business_id=${businessId}`;
+    }
+
+    private buildPaginatedPath(basePath: string, params?: PaginationParams): string {
+        const searchParams = new URLSearchParams();
+        if (params?.page) searchParams.append('page', String(params.page));
+        if (params?.page_size) searchParams.append('page_size', String(params.page_size));
+        if (params?.business_id) searchParams.append('business_id', String(params.business_id));
+        const query = searchParams.toString();
+        return query ? `${basePath}?${query}` : basePath;
     }
 
     async getCustomers(params?: GetCustomersParams): Promise<CustomersListResponse> {
@@ -88,5 +101,21 @@ export class CustomerApiRepository implements ICustomerRepository {
         return this.fetch<DeleteCustomerResponse>(this.withBusinessId(`/customers/${id}`, businessId), {
             method: 'DELETE',
         });
+    }
+
+    async getCustomerSummary(customerId: number, businessId?: number): Promise<CustomerSummary> {
+        return this.fetch<CustomerSummary>(this.withBusinessId(`/customers/${customerId}/summary`, businessId));
+    }
+
+    async getCustomerAddresses(customerId: number, params?: PaginationParams): Promise<CustomerAddressListResponse> {
+        return this.fetch<CustomerAddressListResponse>(this.buildPaginatedPath(`/customers/${customerId}/addresses`, params));
+    }
+
+    async getCustomerProducts(customerId: number, params?: PaginationParams): Promise<CustomerProductListResponse> {
+        return this.fetch<CustomerProductListResponse>(this.buildPaginatedPath(`/customers/${customerId}/products`, params));
+    }
+
+    async getCustomerOrderItems(customerId: number, params?: PaginationParams): Promise<CustomerOrderItemListResponse> {
+        return this.fetch<CustomerOrderItemListResponse>(this.buildPaginatedPath(`/customers/${customerId}/order-items`, params));
     }
 }

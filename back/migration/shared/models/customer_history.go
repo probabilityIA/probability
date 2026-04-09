@@ -60,11 +60,11 @@ type CustomerProductHistory struct {
 
 type CustomerOrderItem struct {
 	gorm.Model
-	CustomerID  uint    `gorm:"not null;index;uniqueIndex:idx_cust_order_item_unique,priority:1"`
+	CustomerID  uint    `gorm:"not null;index"`
 	BusinessID  uint    `gorm:"not null;index"`
-	OrderID     string  `gorm:"size:36;not null;index;uniqueIndex:idx_cust_order_item_unique,priority:2"`
+	OrderID     string  `gorm:"size:36;not null;index"`
 	OrderNumber string  `gorm:"size:128"`
-	ProductID   *string `gorm:"size:64;uniqueIndex:idx_cust_order_item_unique,priority:3"`
+	ProductID   *string `gorm:"size:64;index"`
 	ProductName string  `gorm:"size:255"`
 	ProductSKU  string  `gorm:"size:255"`
 	ProductImage *string `gorm:"size:512"`

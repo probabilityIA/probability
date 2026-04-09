@@ -132,7 +132,7 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
             {/* Modal detalle */}
             {modalMode === 'view' && selectedCustomer && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">

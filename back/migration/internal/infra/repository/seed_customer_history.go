@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
@@ -12,15 +13,15 @@ func (r *Repository) seedCustomerHistory(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
 	var count int64
-	if err := db.Table("customer_summaries").Where("deleted_at IS NULL").Count(&count).Error; err != nil {
-		return fmt.Errorf("failed to check customer_summaries: %w", err)
+	if err := db.Model(&models.CustomerSummary{}).Where("deleted_at IS NULL").Count(&count).Error; err != nil {
+		return fmt.Errorf("failed to check customer_summary: %w", err)
 	}
 	if count > 0 {
 		return nil
 	}
 
 	var hasOrders int64
-	if err := db.Table("orders").Where("deleted_at IS NULL AND customer_id IS NOT NULL").Count(&hasOrders).Error; err != nil {
+	if err := db.Model(&models.Order{}).Where("deleted_at IS NULL AND customer_id IS NOT NULL").Count(&hasOrders).Error; err != nil {
 		return fmt.Errorf("failed to check orders: %w", err)
 	}
 	if hasOrders == 0 {
@@ -93,36 +94,29 @@ func (r *Repository) seedCustomerSummaries(_ context.Context, db *gorm.DB) error
 	const batchSize = 500
 	now := time.Now()
 	for i := 0; i < len(rows); i += batchSize {
-		end := i + batchSize
-		if end > len(rows) {
-			end = len(rows)
-		}
-		batch := rows[i:end]
-
-		values := make([]map[string]interface{}, len(batch))
-		for j, row := range batch {
-			values[j] = map[string]interface{}{
-				"customer_id":       row.CustomerID,
-				"business_id":      row.BusinessID,
-				"total_orders":     row.TotalOrders,
-				"delivered_orders":  row.DeliveredOrders,
-				"cancelled_orders":  row.CancelledOrders,
-				"in_progress_orders": row.InProgressOrders,
-				"total_spent":       row.TotalSpent,
-				"avg_ticket":        row.AvgTicket,
-				"total_paid_orders": row.TotalPaidOrders,
-				"avg_delivery_score": row.AvgDeliveryScore,
-				"first_order_at":    row.FirstOrderAt,
-				"last_order_at":     row.LastOrderAt,
-				"preferred_platform": row.Platform,
-				"last_updated_at":   now,
-				"created_at":        now,
-				"updated_at":        now,
-			}
+		end := min(i+batchSize, len(rows))
+		batch := make([]models.CustomerSummary, 0, end-i)
+		for _, row := range rows[i:end] {
+			batch = append(batch, models.CustomerSummary{
+				CustomerID:        row.CustomerID,
+				BusinessID:        row.BusinessID,
+				TotalOrders:       row.TotalOrders,
+				DeliveredOrders:   row.DeliveredOrders,
+				CancelledOrders:   row.CancelledOrders,
+				InProgressOrders:  row.InProgressOrders,
+				TotalSpent:        row.TotalSpent,
+				AvgTicket:         row.AvgTicket,
+				TotalPaidOrders:   row.TotalPaidOrders,
+				AvgDeliveryScore:  row.AvgDeliveryScore,
+				FirstOrderAt:      row.FirstOrderAt,
+				LastOrderAt:       row.LastOrderAt,
+				PreferredPlatform: row.Platform,
+				LastUpdatedAt:     now,
+			})
 		}
 
-		if err := db.Table("customer_summaries").Create(values).Error; err != nil {
-			return fmt.Errorf("failed to insert customer_summaries batch %d: %w", i/batchSize, err)
+		if err := db.Create(&batch).Error; err != nil {
+			return fmt.Errorf("failed to insert customer_summary batch %d: %w", i/batchSize, err)
 		}
 	}
 
@@ -166,33 +160,25 @@ func (r *Repository) seedCustomerAddresses(_ context.Context, db *gorm.DB) error
 	}
 
 	const batchSize = 500
-	now := time.Now()
 	for i := 0; i < len(rows); i += batchSize {
-		end := i + batchSize
-		if end > len(rows) {
-			end = len(rows)
-		}
-		batch := rows[i:end]
-
-		values := make([]map[string]interface{}, len(batch))
-		for j, row := range batch {
-			values[j] = map[string]interface{}{
-				"customer_id": row.CustomerID,
-				"business_id": row.BusinessID,
-				"street":      row.Street,
-				"city":        row.City,
-				"state":       row.State,
-				"country":     row.Country,
-				"postal_code": row.PostalCode,
-				"times_used":  row.TimesUsed,
-				"last_used_at": row.LastUsedAt,
-				"created_at":  now,
-				"updated_at":  now,
-			}
+		end := min(i+batchSize, len(rows))
+		batch := make([]models.CustomerAddress, 0, end-i)
+		for _, row := range rows[i:end] {
+			batch = append(batch, models.CustomerAddress{
+				CustomerID: row.CustomerID,
+				BusinessID: row.BusinessID,
+				Street:     row.Street,
+				City:       row.City,
+				State:      row.State,
+				Country:    row.Country,
+				PostalCode: row.PostalCode,
+				TimesUsed:  row.TimesUsed,
+				LastUsedAt: row.LastUsedAt,
+			})
 		}
 
-		if err := db.Table("customer_addresses").Create(values).Error; err != nil {
-			return fmt.Errorf("failed to insert customer_addresses batch %d: %w", i/batchSize, err)
+		if err := db.Create(&batch).Error; err != nil {
+			return fmt.Errorf("failed to insert customer_address batch %d: %w", i/batchSize, err)
 		}
 	}
 
@@ -245,37 +231,29 @@ func (r *Repository) seedCustomerOrderItems(_ context.Context, db *gorm.DB) erro
 	}
 
 	const batchSize = 500
-	now := time.Now()
 	for i := 0; i < len(rows); i += batchSize {
-		end := i + batchSize
-		if end > len(rows) {
-			end = len(rows)
-		}
-		batch := rows[i:end]
-
-		values := make([]map[string]interface{}, len(batch))
-		for j, row := range batch {
-			values[j] = map[string]interface{}{
-				"customer_id":   row.CustomerID,
-				"business_id":  row.BusinessID,
-				"order_id":     row.OrderID,
-				"order_number": row.OrderNumber,
-				"product_id":   row.ProductID,
-				"product_name": row.ProductName,
-				"product_sku":  row.ProductSKU,
-				"product_image": row.ProductImage,
-				"quantity":     row.Quantity,
-				"unit_price":   row.UnitPrice,
-				"total_price":  row.TotalPrice,
-				"order_status": row.OrderStatus,
-				"ordered_at":   row.OrderedAt,
-				"created_at":   now,
-				"updated_at":   now,
-			}
+		end := min(i+batchSize, len(rows))
+		batch := make([]models.CustomerOrderItem, 0, end-i)
+		for _, row := range rows[i:end] {
+			batch = append(batch, models.CustomerOrderItem{
+				CustomerID:   row.CustomerID,
+				BusinessID:   row.BusinessID,
+				OrderID:      row.OrderID,
+				OrderNumber:  row.OrderNumber,
+				ProductID:    row.ProductID,
+				ProductName:  row.ProductName,
+				ProductSKU:   row.ProductSKU,
+				ProductImage: row.ProductImage,
+				Quantity:     row.Quantity,
+				UnitPrice:    row.UnitPrice,
+				TotalPrice:   row.TotalPrice,
+				OrderStatus:  row.OrderStatus,
+				OrderedAt:    row.OrderedAt,
+			})
 		}
 
-		if err := db.Table("customer_order_items").Create(values).Error; err != nil {
-			return fmt.Errorf("failed to insert customer_order_items batch %d: %w", i/batchSize, err)
+		if err := db.Create(&batch).Error; err != nil {
+			return fmt.Errorf("failed to insert customer_order_item batch %d: %w", i/batchSize, err)
 		}
 	}
 
@@ -283,15 +261,15 @@ func (r *Repository) seedCustomerOrderItems(_ context.Context, db *gorm.DB) erro
 }
 
 type productHistoryRow struct {
-	CustomerID    uint
-	BusinessID    uint
-	ProductID     string
-	ProductName   string
-	ProductSKU    string
-	ProductImage  *string
-	TimesOrdered  int
-	TotalQuantity int
-	TotalSpent    float64
+	CustomerID     uint
+	BusinessID     uint
+	ProductID      string
+	ProductName    string
+	ProductSKU     string
+	ProductImage   *string
+	TimesOrdered   int
+	TotalQuantity  int
+	TotalSpent     float64
 	FirstOrderedAt time.Time
 	LastOrderedAt  time.Time
 }
@@ -325,35 +303,27 @@ func (r *Repository) seedCustomerProductHistories(_ context.Context, db *gorm.DB
 	}
 
 	const batchSize = 500
-	now := time.Now()
 	for i := 0; i < len(rows); i += batchSize {
-		end := i + batchSize
-		if end > len(rows) {
-			end = len(rows)
-		}
-		batch := rows[i:end]
-
-		values := make([]map[string]interface{}, len(batch))
-		for j, row := range batch {
-			values[j] = map[string]interface{}{
-				"customer_id":     row.CustomerID,
-				"business_id":    row.BusinessID,
-				"product_id":     row.ProductID,
-				"product_name":   row.ProductName,
-				"product_sku":    row.ProductSKU,
-				"product_image":  row.ProductImage,
-				"times_ordered":  row.TimesOrdered,
-				"total_quantity": row.TotalQuantity,
-				"total_spent":   row.TotalSpent,
-				"first_ordered_at": row.FirstOrderedAt,
-				"last_ordered_at":  row.LastOrderedAt,
-				"created_at":      now,
-				"updated_at":      now,
-			}
+		end := min(i+batchSize, len(rows))
+		batch := make([]models.CustomerProductHistory, 0, end-i)
+		for _, row := range rows[i:end] {
+			batch = append(batch, models.CustomerProductHistory{
+				CustomerID:     row.CustomerID,
+				BusinessID:     row.BusinessID,
+				ProductID:      row.ProductID,
+				ProductName:    row.ProductName,
+				ProductSKU:     row.ProductSKU,
+				ProductImage:   row.ProductImage,
+				TimesOrdered:   row.TimesOrdered,
+				TotalQuantity:  row.TotalQuantity,
+				TotalSpent:     row.TotalSpent,
+				FirstOrderedAt: row.FirstOrderedAt,
+				LastOrderedAt:  row.LastOrderedAt,
+			})
 		}
 
-		if err := db.Table("customer_product_histories").Create(values).Error; err != nil {
-			return fmt.Errorf("failed to insert customer_product_histories batch %d: %w", i/batchSize, err)
+		if err := db.Create(&batch).Error; err != nil {
+			return fmt.Errorf("failed to insert customer_product_history batch %d: %w", i/batchSize, err)
 		}
 	}
 

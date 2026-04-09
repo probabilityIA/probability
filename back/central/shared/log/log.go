@@ -108,6 +108,10 @@ func New() ILogger {
 	return defaultLogger
 }
 
+func NewFromZerolog(zl zerolog.Logger) ILogger {
+	return &logger{log: zl}
+}
+
 // createFileWriter crea un writer que escribe logs en formato JSON a un archivo
 // con rotación diaria (app-YYYY-MM-DD.log)
 func createFileWriter() (io.Writer, error) {

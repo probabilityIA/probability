@@ -1,5 +1,5 @@
 import { ICustomerRepository } from '../domain/ports';
-import { GetCustomersParams, CreateCustomerDTO, UpdateCustomerDTO } from '../domain/types';
+import { GetCustomersParams, PaginationParams, CreateCustomerDTO, UpdateCustomerDTO } from '../domain/types';
 
 export class CustomerUseCases {
     constructor(private repository: ICustomerRepository) {}
@@ -22,5 +22,21 @@ export class CustomerUseCases {
 
     async deleteCustomer(id: number, businessId?: number) {
         return this.repository.deleteCustomer(id, businessId);
+    }
+
+    async getCustomerSummary(customerId: number, businessId?: number) {
+        return this.repository.getCustomerSummary(customerId, businessId);
+    }
+
+    async getCustomerAddresses(customerId: number, params?: PaginationParams) {
+        return this.repository.getCustomerAddresses(customerId, params);
+    }
+
+    async getCustomerProducts(customerId: number, params?: PaginationParams) {
+        return this.repository.getCustomerProducts(customerId, params);
+    }
+
+    async getCustomerOrderItems(customerId: number, params?: PaginationParams) {
+        return this.repository.getCustomerOrderItems(customerId, params);
     }
 }
