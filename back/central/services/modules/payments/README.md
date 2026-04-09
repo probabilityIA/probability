@@ -28,75 +28,75 @@ Este módulo sigue **Arquitectura Hexagonal (Clean Architecture)** con la siguie
 
 ```
 payments/
-├── bundle.go                          # ✅ Ensambla e inyecta dependencias
-└── internal/                          # ✅ Carpeta internal (convención Go)
-    ├── domain/                        # 🔵 CAPA DE DOMINIO (núcleo)
-    │   ├── entities/                  # Entidades de negocio PURAS
-    │   │   ├── payment_method.go
-    │   │   └── payment_mapping.go
-    │   ├── dtos/                      # DTOs de dominio (sin tags)
-    │   │   ├── create_payment_method.go
-    │   │   ├── update_payment_method.go
-    │   │   └── responses.go
-    │   ├── ports/                     # Interfaces de repositorios
-    │   │   └── ports.go
-    │   └── errors/                    # Errores de dominio
-    │       └── errors.go
-    │
-    ├── app/                           # 🟢 CAPA DE APLICACIÓN
-    │   └── usecases/
-    │       ├── constructor.go         # IUseCase interface + New()
-    │       ├── usecases.go            # Implementación casos de uso
-    │       └── mappers/               # Conversiones de datos
-    │           ├── to_domain.go
-    │           └── to_response.go
-    │
-    └── infra/                         # 🔴 CAPA DE INFRAESTRUCTURA
-        ├── primary/                   # Adaptadores de entrada
-        │   └── handlers/
-        │       ├── constructor.go     # IHandler + New()
-        │       ├── routes.go          # Registro de rutas
-        │       ├── create-payment-method.go
-        │       ├── list-payment-methods.go
-        │       ├── get-payment-method.go
-        │       ├── update-payment-method.go
-        │       ├── delete-payment-method.go
-        │       ├── toggle-payment-method.go
-        │       ├── create-payment-mapping.go
-        │       ├── list-payment-mappings.go
-        │       ├── get-payment-mapping.go
-        │       ├── get-payment-mappings-by-integration.go
-        │       ├── update-payment-mapping.go
-        │       ├── delete-payment-mapping.go
-        │       ├── toggle-payment-mapping.go
-        │       ├── request/           # DTOs de entrada HTTP
-        │       │   ├── create_payment_method.go
-        │       │   ├── update_payment_method.go
-        │       │   ├── create_payment_mapping.go
-        │       │   └── update_payment_mapping.go
-        │       ├── response/          # DTOs de salida HTTP
-        │       │   ├── payment_method.go
-        │       │   ├── payment_mapping.go
-        │       │   └── error.go
-        │       └── mappers/           # Conversiones HTTP ↔ Domain
-        │           ├── to_domain.go
-        │           └── to_response.go
-        │
-        └── secondary/                 # Adaptadores de salida
-            └── repository/
-                ├── repository.go      # Implementación GORM
-                └── mappers/           # Conversiones Domain ↔ Models
-                    ├── to_domain.go
-                    └── to_model.go
++-- bundle.go                          # ✅ Ensambla e inyecta dependencias
++-- internal/                          # ✅ Carpeta internal (convención Go)
+    +-- domain/                        # 🔵 CAPA DE DOMINIO (núcleo)
+    |   +-- entities/                  # Entidades de negocio PURAS
+    |   |   +-- payment_method.go
+    |   |   +-- payment_mapping.go
+    |   +-- dtos/                      # DTOs de dominio (sin tags)
+    |   |   +-- create_payment_method.go
+    |   |   +-- update_payment_method.go
+    |   |   +-- responses.go
+    |   +-- ports/                     # Interfaces de repositorios
+    |   |   +-- ports.go
+    |   +-- errors/                    # Errores de dominio
+    |       +-- errors.go
+    |
+    +-- app/                           # 🟢 CAPA DE APLICACIÓN
+    |   +-- usecases/
+    |       +-- constructor.go         # IUseCase interface + New()
+    |       +-- usecases.go            # Implementación casos de uso
+    |       +-- mappers/               # Conversiones de datos
+    |           +-- to_domain.go
+    |           +-- to_response.go
+    |
+    +-- infra/                         # 🔴 CAPA DE INFRAESTRUCTURA
+        +-- primary/                   # Adaptadores de entrada
+        |   +-- handlers/
+        |       +-- constructor.go     # IHandler + New()
+        |       +-- routes.go          # Registro de rutas
+        |       +-- create-payment-method.go
+        |       +-- list-payment-methods.go
+        |       +-- get-payment-method.go
+        |       +-- update-payment-method.go
+        |       +-- delete-payment-method.go
+        |       +-- toggle-payment-method.go
+        |       +-- create-payment-mapping.go
+        |       +-- list-payment-mappings.go
+        |       +-- get-payment-mapping.go
+        |       +-- get-payment-mappings-by-integration.go
+        |       +-- update-payment-mapping.go
+        |       +-- delete-payment-mapping.go
+        |       +-- toggle-payment-mapping.go
+        |       +-- request/           # DTOs de entrada HTTP
+        |       |   +-- create_payment_method.go
+        |       |   +-- update_payment_method.go
+        |       |   +-- create_payment_mapping.go
+        |       |   +-- update_payment_mapping.go
+        |       +-- response/          # DTOs de salida HTTP
+        |       |   +-- payment_method.go
+        |       |   +-- payment_mapping.go
+        |       |   +-- error.go
+        |       +-- mappers/           # Conversiones HTTP ↔ Domain
+        |           +-- to_domain.go
+        |           +-- to_response.go
+        |
+        +-- secondary/                 # Adaptadores de salida
+            +-- repository/
+                +-- repository.go      # Implementación GORM
+                +-- mappers/           # Conversiones Domain ↔ Models
+                    +-- to_domain.go
+                    +-- to_model.go
 ```
 
 ### Flujo de Dependencias
 
 ```
-HTTP Request → Handler → UseCase → Repository → Database
-     ↓            ↓          ↓           ↓
+HTTP Request -> Handler -> UseCase -> Repository -> Database
+     v            v          v           v
   request/    mappers/  domain DTOs  models GORM
-  response/     ↓          ↓           ↓
+  response/     v          v           v
               domain    entities    mappers/
 ```
 
@@ -279,23 +279,23 @@ Este módulo ha sido completamente refactorizado y cumple con todas las reglas d
 
 ```
 payments/
-├── bundle.go            # ✅ Ensambla el módulo
-└── internal/            # ✅ Convención Go (paquetes privados)
-    ├── domain/          # 🔵 CAPA DE DOMINIO (núcleo)
-    │   ├── entities/    # Entidades PURAS (sin tags)
-    │   ├── dtos/        # DTOs PUROS (sin tags)
-    │   ├── ports/       # Interfaces (contratos)
-    │   └── errors/      # Errores de dominio
-    ├── app/             # 🟢 CAPA DE APLICACIÓN
-    │   └── usecases/
-    │       └── mappers/ # Conversiones domain ↔ entities
-    └── infra/           # 🔴 CAPA DE INFRAESTRUCTURA
-        ├── primary/handlers/
-        │   ├── request/     # DTOs HTTP entrada
-        │   ├── response/    # DTOs HTTP salida
-        │   └── mappers/     # Conversiones HTTP ↔ domain
-        └── secondary/repository/
-            └── mappers/     # Conversiones GORM ↔ domain
++-- bundle.go            # ✅ Ensambla el módulo
++-- internal/            # ✅ Convención Go (paquetes privados)
+    +-- domain/          # 🔵 CAPA DE DOMINIO (núcleo)
+    |   +-- entities/    # Entidades PURAS (sin tags)
+    |   +-- dtos/        # DTOs PUROS (sin tags)
+    |   +-- ports/       # Interfaces (contratos)
+    |   +-- errors/      # Errores de dominio
+    +-- app/             # 🟢 CAPA DE APLICACIÓN
+    |   +-- usecases/
+    |       +-- mappers/ # Conversiones domain ↔ entities
+    +-- infra/           # 🔴 CAPA DE INFRAESTRUCTURA
+        +-- primary/handlers/
+        |   +-- request/     # DTOs HTTP entrada
+        |   +-- response/    # DTOs HTTP salida
+        |   +-- mappers/     # Conversiones HTTP ↔ domain
+        +-- secondary/repository/
+            +-- mappers/     # Conversiones GORM ↔ domain
 ```
 
 **Comando para validar:**

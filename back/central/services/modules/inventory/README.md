@@ -6,53 +6,53 @@ Gestiona niveles de inventario, movimientos de stock y operaciones transaccional
 
 ```
 inventory/
-├── bundle.go                           # Composicion del modulo
-└── internal/
-    ├── domain/
-    │   ├── entities/                   # InventoryLevel, StockMovement, StockMovementType
-    │   ├── dtos/                       # Params de consulta, DTOs transaccionales, DTOs de ordenes
-    │   ├── ports/                      # IRepository, ISyncPublisher, IInventoryEventPublisher
-    │   └── errors/                     # Errores de dominio
-    ├── app/                            # Casos de uso
-    │   ├── constructor.go
-    │   ├── list_inventory.go           # Listar stock por bodega
-    │   ├── get_inventory.go            # Stock de un producto en todas las bodegas
-    │   ├── adjust_stock.go             # Ajuste manual
-    │   ├── transfer_stock.go           # Transferencia entre bodegas
-    │   ├── list_movements.go           # Historial de movimientos
-    │   ├── reserve_stock.go            # Reservar stock por orden nueva
-    │   ├── confirm_sale.go             # Confirmar venta (shipped/completed)
-    │   ├── release_stock.go            # Liberar reserva (cancelled)
-    │   ├── return_stock.go             # Devolver stock (refunded)
-    │   ├── list_movement_types.go      # Listar tipos de movimiento
-    │   ├── create_movement_type.go     # Crear tipo de movimiento
-    │   ├── update_movement_type.go     # Actualizar tipo
-    │   └── delete_movement_type.go     # Eliminar tipo
-    └── infra/
-        ├── primary/
-        │   ├── handlers/               # HTTP handlers (Gin)
-        │   │   ├── routes.go
-        │   │   ├── request/            # Structs de request HTTP
-        │   │   └── response/           # Structs de response HTTP
-        │   └── queue/
-        │       └── order_consumer.go   # Consumer RabbitMQ (orders.events.inventory)
-        └── secondary/
-            ├── repository/             # GORM + transacciones atomicas
-            │   ├── inventory_level_queries.go
-            │   ├── adjust_stock_tx.go
-            │   ├── transfer_stock_tx.go
-            │   ├── reserve_stock_tx.go
-            │   ├── confirm_sale_tx.go
-            │   ├── release_stock_tx.go
-            │   ├── return_stock_tx.go
-            │   ├── stock_movements.go
-            │   ├── movement_type_queries.go
-            │   └── product_integration_queries.go
-            ├── redis/
-            │   ├── inventory_cache.go  # Cache de niveles (TTL)
-            │   └── event_publisher.go  # Pub/sub para SSE
-            └── queue/
-                └── sync_publisher.go   # Publicar sync a integraciones externas
++-- bundle.go                           # Composicion del modulo
++-- internal/
+    +-- domain/
+    |   +-- entities/                   # InventoryLevel, StockMovement, StockMovementType
+    |   +-- dtos/                       # Params de consulta, DTOs transaccionales, DTOs de ordenes
+    |   +-- ports/                      # IRepository, ISyncPublisher, IInventoryEventPublisher
+    |   +-- errors/                     # Errores de dominio
+    +-- app/                            # Casos de uso
+    |   +-- constructor.go
+    |   +-- list_inventory.go           # Listar stock por bodega
+    |   +-- get_inventory.go            # Stock de un producto en todas las bodegas
+    |   +-- adjust_stock.go             # Ajuste manual
+    |   +-- transfer_stock.go           # Transferencia entre bodegas
+    |   +-- list_movements.go           # Historial de movimientos
+    |   +-- reserve_stock.go            # Reservar stock por orden nueva
+    |   +-- confirm_sale.go             # Confirmar venta (shipped/completed)
+    |   +-- release_stock.go            # Liberar reserva (cancelled)
+    |   +-- return_stock.go             # Devolver stock (refunded)
+    |   +-- list_movement_types.go      # Listar tipos de movimiento
+    |   +-- create_movement_type.go     # Crear tipo de movimiento
+    |   +-- update_movement_type.go     # Actualizar tipo
+    |   +-- delete_movement_type.go     # Eliminar tipo
+    +-- infra/
+        +-- primary/
+        |   +-- handlers/               # HTTP handlers (Gin)
+        |   |   +-- routes.go
+        |   |   +-- request/            # Structs de request HTTP
+        |   |   +-- response/           # Structs de response HTTP
+        |   +-- queue/
+        |       +-- order_consumer.go   # Consumer RabbitMQ (orders.events.inventory)
+        +-- secondary/
+            +-- repository/             # GORM + transacciones atomicas
+            |   +-- inventory_level_queries.go
+            |   +-- adjust_stock_tx.go
+            |   +-- transfer_stock_tx.go
+            |   +-- reserve_stock_tx.go
+            |   +-- confirm_sale_tx.go
+            |   +-- release_stock_tx.go
+            |   +-- return_stock_tx.go
+            |   +-- stock_movements.go
+            |   +-- movement_type_queries.go
+            |   +-- product_integration_queries.go
+            +-- redis/
+            |   +-- inventory_cache.go  # Cache de niveles (TTL)
+            |   +-- event_publisher.go  # Pub/sub para SSE
+            +-- queue/
+                +-- sync_publisher.go   # Publicar sync a integraciones externas
 ```
 
 ## Endpoints HTTP
@@ -96,7 +96,7 @@ Escucha eventos del ciclo de vida de ordenes y ejecuta operaciones de inventario
 |--------|--------|
 | `order.created` | Reservar stock de cada item en la bodega por defecto |
 | `order.cancelled` | Liberar stock reservado |
-| `order.shipped` | Confirmar venta (reserved → sold) |
+| `order.shipped` | Confirmar venta (reserved -> sold) |
 | `order.completed` | Confirmar venta |
 | `order.refunded` | Devolver stock al inventario |
 | `order.status_changed` | Enrutar segun keywords del estado |
@@ -104,13 +104,13 @@ Escucha eventos del ciclo de vida de ordenes y ejecuta operaciones de inventario
 ### Flujo de stock por orden
 
 ```
-Orden creada → quantity reservada (reserved_qty += N, available_qty -= N)
-    │
-    ├─ Orden cancelada → reserva liberada (reserved_qty -= N, available_qty += N)
-    │
-    └─ Orden enviada/completada → venta confirmada (reserved_qty -= N, quantity -= N)
-         │
-         └─ Orden reembolsada → stock devuelto (quantity += N, available_qty += N)
+Orden creada -> quantity reservada (reserved_qty += N, available_qty -= N)
+    |
+    +- Orden cancelada -> reserva liberada (reserved_qty -= N, available_qty += N)
+    |
+    +- Orden enviada/completada -> venta confirmada (reserved_qty -= N, quantity -= N)
+         |
+         +- Orden reembolsada -> stock devuelto (quantity += N, available_qty += N)
 ```
 
 ## Operaciones Transaccionales
@@ -157,7 +157,7 @@ ReorderPoint  *int    — Punto de reorden
 ```
 ProductID       string  — UUID del producto
 WarehouseID     uint    — Bodega
-MovementTypeID  uint    — Tipo de movimiento (FK → stock_movement_types)
+MovementTypeID  uint    — Tipo de movimiento (FK -> stock_movement_types)
 Quantity        int     — Cantidad (positivo = entrada, negativo = salida)
 PreviousQty     int     — Stock antes del movimiento
 NewQty          int     — Stock despues del movimiento

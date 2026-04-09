@@ -6,8 +6,8 @@ Configuración para usar Podman en lugar de Docker.
 
 ```
 podman/
-├── deploy-podman.sh       # Script de despliegue a producción (ECR)
-└── README.md              # Este archivo
++-- deploy-podman.sh       # Script de despliegue a producción (ECR)
++-- README.md              # Este archivo
 
 Nota: Podman usa el mismo docker/Dockerfile que Docker
 ```

@@ -18,69 +18,69 @@ Este módulo sigue **Clean Architecture / Hexagonal Architecture** con separaci�
 
 ```
 orderstatus/
-├── bundle.go              # Punto de entrada - ensambla el módulo
-└── internal/              # Código interno (no exportable)
-    ├── domain/            # 🔵 NÚCLEO - Reglas de negocio
-    │   ├── entities/      # Entidades PURAS (sin tags)
-    │   ├── dtos/          # DTOs de dominio
-    │   ├── ports/         # Interfaces (contratos)
-    │   └── errors/        # Errores de dominio
-    │
-    ├── app/               # 🟢 APLICACIÓN - Casos de uso
-    │   ├── constructor.go # IUseCase interface + New()
-    │   ├── create.go      # CreateOrderStatusMapping
-    │   ├── get.go         # GetOrderStatusMapping
-    │   ├── list.go        # ListOrderStatusMappings
-    │   ├── update.go      # UpdateOrderStatusMapping
-    │   ├── delete.go      # DeleteOrderStatusMapping
-    │   ├── toggle.go      # ToggleOrderStatusMappingActive
-    │   ├── list_statuses.go # ListOrderStatuses
-    │   ├── request/       # DTOs de entrada (vacío actualmente)
-    │   ├── response/      # DTOs de salida (vacío actualmente)
-    │   └── mappers/       # Conversiones (vacío actualmente)
-    │
-    └── infra/             # 🔴 INFRAESTRUCTURA - Adaptadores
-        ├── primary/       # Adaptadores de entrada (drivers)
-        │   └── handlers/  # HTTP handlers (Gin)
-        │       ├── constructor.go      # IHandler + New()
-        │       ├── routes.go           # RegisterRoutes()
-        │       ├── create.go           # POST /order-status-mappings
-        │       ├── get.go              # GET /order-status-mappings/:id
-        │       ├── list.go             # GET /order-status-mappings
-        │       ├── update.go           # PUT /order-status-mappings/:id
-        │       ├── delete.go           # DELETE /order-status-mappings/:id
-        │       ├── toggle.go           # PATCH /order-status-mappings/:id/toggle
-        │       ├── list_order_statuses.go # GET /order-statuses
-        │       ├── list_simple.go      # GET /order-statuses/simple
-        │       ├── request/            # DTOs HTTP request
-        │       │   ├── create.go
-        │       │   └── update.go
-        │       ├── response/           # DTOs HTTP response
-        │       │   ├── response.go
-        │       │   └── simple-response.go
-        │       └── mappers/            # Conversiones domain ↔ HTTP
-        │           ├── to_domain.go
-        │           └── to_response.go
-        │
-        └── secondary/     # Adaptadores de salida (driven)
-            └── repository/
-                ├── constructor.go      # New() - retorna ports.IRepository
-                ├── create.go           # Create
-                ├── get_by_id.go        # GetByID
-                ├── list.go             # List con filtros
-                ├── update.go           # Update
-                ├── delete.go           # Delete
-                ├── toggle.go           # ToggleActive
-                ├── exists.go           # Exists
-                ├── list_statuses.go    # ListOrderStatuses
-                ├── get_status_id.go    # GetOrderStatusIDBy...
-                ├── models/             # Modelos GORM locales
-                │   ├── order_status_mapping.go
-                │   ├── integration_type.go
-                │   └── order_status.go
-                ├── request/            # DTOs de queries (vacío)
-                ├── response/           # DTOs de resultados (vacío)
-                └── mappers/            # Conversiones adicionales (vacío)
++-- bundle.go              # Punto de entrada - ensambla el módulo
++-- internal/              # Código interno (no exportable)
+    +-- domain/            # 🔵 NÚCLEO - Reglas de negocio
+    |   +-- entities/      # Entidades PURAS (sin tags)
+    |   +-- dtos/          # DTOs de dominio
+    |   +-- ports/         # Interfaces (contratos)
+    |   +-- errors/        # Errores de dominio
+    |
+    +-- app/               # 🟢 APLICACIÓN - Casos de uso
+    |   +-- constructor.go # IUseCase interface + New()
+    |   +-- create.go      # CreateOrderStatusMapping
+    |   +-- get.go         # GetOrderStatusMapping
+    |   +-- list.go        # ListOrderStatusMappings
+    |   +-- update.go      # UpdateOrderStatusMapping
+    |   +-- delete.go      # DeleteOrderStatusMapping
+    |   +-- toggle.go      # ToggleOrderStatusMappingActive
+    |   +-- list_statuses.go # ListOrderStatuses
+    |   +-- request/       # DTOs de entrada (vacío actualmente)
+    |   +-- response/      # DTOs de salida (vacío actualmente)
+    |   +-- mappers/       # Conversiones (vacío actualmente)
+    |
+    +-- infra/             # 🔴 INFRAESTRUCTURA - Adaptadores
+        +-- primary/       # Adaptadores de entrada (drivers)
+        |   +-- handlers/  # HTTP handlers (Gin)
+        |       +-- constructor.go      # IHandler + New()
+        |       +-- routes.go           # RegisterRoutes()
+        |       +-- create.go           # POST /order-status-mappings
+        |       +-- get.go              # GET /order-status-mappings/:id
+        |       +-- list.go             # GET /order-status-mappings
+        |       +-- update.go           # PUT /order-status-mappings/:id
+        |       +-- delete.go           # DELETE /order-status-mappings/:id
+        |       +-- toggle.go           # PATCH /order-status-mappings/:id/toggle
+        |       +-- list_order_statuses.go # GET /order-statuses
+        |       +-- list_simple.go      # GET /order-statuses/simple
+        |       +-- request/            # DTOs HTTP request
+        |       |   +-- create.go
+        |       |   +-- update.go
+        |       +-- response/           # DTOs HTTP response
+        |       |   +-- response.go
+        |       |   +-- simple-response.go
+        |       +-- mappers/            # Conversiones domain ↔ HTTP
+        |           +-- to_domain.go
+        |           +-- to_response.go
+        |
+        +-- secondary/     # Adaptadores de salida (driven)
+            +-- repository/
+                +-- constructor.go      # New() - retorna ports.IRepository
+                +-- create.go           # Create
+                +-- get_by_id.go        # GetByID
+                +-- list.go             # List con filtros
+                +-- update.go           # Update
+                +-- delete.go           # Delete
+                +-- toggle.go           # ToggleActive
+                +-- exists.go           # Exists
+                +-- list_statuses.go    # ListOrderStatuses
+                +-- get_status_id.go    # GetOrderStatusIDBy...
+                +-- models/             # Modelos GORM locales
+                |   +-- order_status_mapping.go
+                |   +-- integration_type.go
+                |   +-- order_status.go
+                +-- request/            # DTOs de queries (vacío)
+                +-- response/           # DTOs de resultados (vacío)
+                +-- mappers/            # Conversiones adicionales (vacío)
 ```
 
 ---
@@ -88,46 +88,46 @@ orderstatus/
 ## 🎯 Flujo de Dependencias
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    HTTP Request                         │
-└─────────────────────────────────────────────────────────┘
-                         │
++---------------------------------------------------------+
+|                    HTTP Request                         |
++---------------------------------------------------------+
+                         |
                          ▼
-┌─────────────────────────────────────────────────────────┐
-│  PRIMARY ADAPTERS (infra/primary/handlers)              │
-│  - Validación HTTP                                      │
-│  - Parseo de parámetros                                 │
-│  - Mapeo request → domain                               │
-└─────────────────────────────────────────────────────────┘
-                         │
++---------------------------------------------------------+
+|  PRIMARY ADAPTERS (infra/primary/handlers)              |
+|  - Validación HTTP                                      |
+|  - Parseo de parámetros                                 |
+|  - Mapeo request -> domain                               |
++---------------------------------------------------------+
+                         |
                          ▼
-┌─────────────────────────────────────────────────────────┐
-│  APPLICATION LAYER (app)                                │
-│  - Lógica de negocio                                    │
-│  - Validaciones de dominio                              │
-│  - Orquestación de casos de uso                         │
-└─────────────────────────────────────────────────────────┘
-                         │
++---------------------------------------------------------+
+|  APPLICATION LAYER (app)                                |
+|  - Lógica de negocio                                    |
+|  - Validaciones de dominio                              |
+|  - Orquestación de casos de uso                         |
++---------------------------------------------------------+
+                         |
                          ▼
-┌─────────────────────────────────────────────────────────┐
-│  DOMAIN LAYER (domain)                                  │
-│  - Entidades puras (sin tags)                           │
-│  - Puertos (interfaces)                                 │
-│  - Errores de dominio                                   │
-└─────────────────────────────────────────────────────────┘
-                         │
++---------------------------------------------------------+
+|  DOMAIN LAYER (domain)                                  |
+|  - Entidades puras (sin tags)                           |
+|  - Puertos (interfaces)                                 |
+|  - Errores de dominio                                   |
++---------------------------------------------------------+
+                         |
                          ▼
-┌─────────────────────────────────────────────────────────┐
-│  SECONDARY ADAPTERS (infra/secondary/repository)        │
-│  - Implementación de repositorios                       │
-│  - Modelos GORM (con tags)                              │
-│  - Mapeo domain ↔ DB                                    │
-└─────────────────────────────────────────────────────────┘
-                         │
++---------------------------------------------------------+
+|  SECONDARY ADAPTERS (infra/secondary/repository)        |
+|  - Implementación de repositorios                       |
+|  - Modelos GORM (con tags)                              |
+|  - Mapeo domain ↔ DB                                    |
++---------------------------------------------------------+
+                         |
                          ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Database (PostgreSQL)                │
-└─────────────────────────────────────────────────────────┘
++---------------------------------------------------------+
+|                    Database (PostgreSQL)                |
++---------------------------------------------------------+
 
 REGLA DE ORO: Las dependencias SIEMPRE apuntan hacia el dominio (adentro)
 ```
@@ -346,7 +346,7 @@ PATCH /api/v1/order-status-mappings/:id/toggle
   "integration_type_id": 1,
   "original_status": "paid",
   "order_status_id": 2,
-  "is_active": false,  // ← Cambió de true a false
+  "is_active": false,  // <- Cambió de true a false
   "priority": 10,
   "description": "...",
   "created_at": "2024-01-15T10:30:00Z",
@@ -692,39 +692,39 @@ Este módulo fue completamente refactorizado desde una estructura legacy a arqui
 #### Antes (Legacy)
 ```
 orderstatus/
-├── bundle.go
-├── domain/
-│   ├── entities.go       # ❌ Con tags JSON
-│   └── ports.go          # ❌ Tipos externos
-├── app/
-│   └── usecases.go       # ❌ Todo mezclado
-└── infra/
-    └── repository/
-        └── repository.go  # ❌ Modelos externos
++-- bundle.go
++-- domain/
+|   +-- entities.go       # ❌ Con tags JSON
+|   +-- ports.go          # ❌ Tipos externos
++-- app/
+|   +-- usecases.go       # ❌ Todo mezclado
++-- infra/
+    +-- repository/
+        +-- repository.go  # ❌ Modelos externos
 ```
 
 #### Después (Hexagonal)
 ```
 orderstatus/
-├── bundle.go
-└── internal/             # ✅ Todo en internal/
-    ├── domain/           # ✅ 100% PURO
-    │   ├── entities/     # Sin tags
-    │   ├── dtos/
-    │   ├── ports/
-    │   └── errors/
-    ├── app/              # ✅ Separado
-    │   ├── constructor.go
-    │   ├── create.go, get.go, list.go...
-    │   ├── request/, response/, mappers/
-    └── infra/
-        ├── primary/handlers/
-        │   ├── routes.go
-        │   ├── create.go, get.go...
-        │   └── request/, response/, mappers/
-        └── secondary/repository/
-            ├── create.go, get_by_id.go...
-            └── models/   # ✅ Modelos GORM locales
++-- bundle.go
++-- internal/             # ✅ Todo en internal/
+    +-- domain/           # ✅ 100% PURO
+    |   +-- entities/     # Sin tags
+    |   +-- dtos/
+    |   +-- ports/
+    |   +-- errors/
+    +-- app/              # ✅ Separado
+    |   +-- constructor.go
+    |   +-- create.go, get.go, list.go...
+    |   +-- request/, response/, mappers/
+    +-- infra/
+        +-- primary/handlers/
+        |   +-- routes.go
+        |   +-- create.go, get.go...
+        |   +-- request/, response/, mappers/
+        +-- secondary/repository/
+            +-- create.go, get_by_id.go...
+            +-- models/   # ✅ Modelos GORM locales
 ```
 
 ### Beneficios Obtenidos
@@ -739,4 +739,4 @@ orderstatus/
 
 **Última actualización**: 2026-01-31
 **Estado**: ✅ PRODUCCIÓN - 100% CONFORME CON ARQUITECTURA HEXAGONAL
-**Refactorización**: Migración completa de estructura legacy → hexagonal con `internal/`
+**Refactorización**: Migración completa de estructura legacy -> hexagonal con `internal/`

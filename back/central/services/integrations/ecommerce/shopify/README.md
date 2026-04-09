@@ -22,23 +22,23 @@ Módulo de integración con Shopify. Recibe eventos de órdenes vía webhooks y 
 
 ```
 bundle.go
-│
-├── infra/primary/handlers/          ← Adaptadores de entrada
-│   ├── WebhookHandler               ← Recibe webhooks de Shopify (HMAC + async)
-│   ├── OAuthHandlers                ← Flujo OAuth2
-│   └── ComplianceWebhookHandler     ← GDPR/CCPA
-│
-├── internal/app/usecases/           ← Lógica de negocio
-│   ├── CreateOrder
-│   ├── ProcessOrderPaid/Updated/Cancelled/Fulfilled/PartiallyFulfilled
-│   ├── SyncOrders / SyncOrdersWithParams / GetOrders
-│   ├── CreateWebhook / ListWebhooks / DeleteWebhook / VerifyWebhooks
-│   └── TestConnection
-│
-└── infra/secondary/                 ← Adaptadores de salida
-    ├── client/         ← HTTP client Shopify API (Resty, 30s timeout)
-    ├── queue/          ← Publisher RabbitMQ (canonical orders)
-    └── core/           ← ShopifyCore — implementa core.IIntegrationContract
+|
++-- infra/primary/handlers/          <- Adaptadores de entrada
+|   +-- WebhookHandler               <- Recibe webhooks de Shopify (HMAC + async)
+|   +-- OAuthHandlers                <- Flujo OAuth2
+|   +-- ComplianceWebhookHandler     <- GDPR/CCPA
+|
++-- internal/app/usecases/           <- Lógica de negocio
+|   +-- CreateOrder
+|   +-- ProcessOrderPaid/Updated/Cancelled/Fulfilled/PartiallyFulfilled
+|   +-- SyncOrders / SyncOrdersWithParams / GetOrders
+|   +-- CreateWebhook / ListWebhooks / DeleteWebhook / VerifyWebhooks
+|   +-- TestConnection
+|
++-- infra/secondary/                 <- Adaptadores de salida
+    +-- client/         <- HTTP client Shopify API (Resty, 30s timeout)
+    +-- queue/          <- Publisher RabbitMQ (canonical orders)
+    +-- core/           <- ShopifyCore — implementa core.IIntegrationContract
 ```
 
 ---
@@ -72,164 +72,164 @@ bundle.go
 
 ---
 
-## Flujo de sincronización: Sync → RabbitMQ → SSE
+## Flujo de sincronización: Sync -> RabbitMQ -> SSE
 
 La sincronización de órdenes tiene dos modos: **directo** (rango <= 14 días) y **por lotes** (rango > 14 días). Ambos convergen en el mismo pipeline de eventos.
 
 ### Diagrama completo
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  FRONTEND (IntegrationList.tsx)                                         │
-│                                                                         │
-│  Usuario presiona "Iniciar Sincronización"                              │
-│       │                                                                 │
-│       ▼                                                                 │
-│  POST /integrations/:id/sync → HTTP 202 Accepted                       │
-│       │                                                                 │
-│       ▼                                                                 │
-│  Escucha SSE (módulo events) esperando eventos de progreso              │
-└─────────────────────┬───────────────────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────────────────┐
-│  MÓDULO INTEGRATIONS/CORE (handler sync-orders.go)                      │
-│                                                                         │
-│  ¿Rango > 14 días?                                                      │
-│       │                                                                 │
-│       ├─ SÍ (batch) ──────────────────┐                                 │
-│       │   SplitDateRange(7 días)      │                                 │
-│       │   Publica N msgs a cola       │                                 │
-│       │   integration.sync.batches    │                                 │
-│       │        │                      │                                 │
-│       │        ▼                      │                                 │
-│       │   SSE: batched.started        │                                 │
-│       │   { total_batches, ... }      │                                 │
-│       │                               │                                 │
-│       ├─ NO (directo) ─── go func()   │                                 │
-│       │   Llama SyncOrders()          │                                 │
-│       │   directamente                │                                 │
-│       │                               │                                 │
-└───────┼───────────────────────────────┼─────────────────────────────────┘
-        │                               │
-        │    ┌──────────────────────────┐│
-        │    │  BATCH CONSUMER          ││
-        │    │  (sync_batch_consumer)   ││
-        │    │                          ││
-        │    │  Para cada lote:         ││
-        │    │  Resuelve provider →     ││
-        │    │  provider.SyncOrders()   ││
-        │    │       │                  ││
-        │    │       ▼                  ││
-        │    │  SSE: batch.completed    ││
-        │    │  o batch.failed          ││
-        │    └──────┬───────────────────┘│
-        │           │                    │
-        ▼           ▼                    │
-┌───────────────────────────────────────────────────────────────────────┐
-│  MÓDULO SHOPIFY (usecases/sync_orders.go)                             │
-│                                                                       │
-│  SyncOrdersWithParams():                                              │
-│       │                                                               │
-│       ▼                                                               │
-│  GetOrders() ← llama Shopify API paginado                            │
-│       │                                                               │
-│       ├─ Por cada página de órdenes:                                  │
-│       │   MapShopifyOrderToProbability()                              │
-│       │   orderPublisher.Publish() ──────────┐                        │
-│       │                                      │                        │
-│       ▼                                      │                        │
-│  Retorna (totalFetched, error)               │                        │
-│       │                                      │                        │
-│       ▼                                      │                        │
-│  SSE: integration.sync.completed             │                        │
-│  { total_fetched, duration }                 │                        │
-│  ─── o ───                                   │                        │
-│  SSE: integration.sync.failed                │                        │
-│  { error }                                   │                        │
-└──────────────────────────────────────────────┼────────────────────────┘
-                                               │
++-------------------------------------------------------------------------+
+|  FRONTEND (IntegrationList.tsx)                                         |
+|                                                                         |
+|  Usuario presiona "Iniciar Sincronización"                              |
+|       |                                                                 |
+|       ▼                                                                 |
+|  POST /integrations/:id/sync -> HTTP 202 Accepted                       |
+|       |                                                                 |
+|       ▼                                                                 |
+|  Escucha SSE (módulo events) esperando eventos de progreso              |
++---------------------+---------------------------------------------------+
+                      |
++---------------------▼---------------------------------------------------+
+|  MÓDULO INTEGRATIONS/CORE (handler sync-orders.go)                      |
+|                                                                         |
+|  ¿Rango > 14 días?                                                      |
+|       |                                                                 |
+|       +- SÍ (batch) ------------------+                                 |
+|       |   SplitDateRange(7 días)      |                                 |
+|       |   Publica N msgs a cola       |                                 |
+|       |   integration.sync.batches    |                                 |
+|       |        |                      |                                 |
+|       |        ▼                      |                                 |
+|       |   SSE: batched.started        |                                 |
+|       |   { total_batches, ... }      |                                 |
+|       |                               |                                 |
+|       +- NO (directo) --- go func()   |                                 |
+|       |   Llama SyncOrders()          |                                 |
+|       |   directamente                |                                 |
+|       |                               |                                 |
++-------+-------------------------------+---------------------------------+
+        |                               |
+        |    +--------------------------+|
+        |    |  BATCH CONSUMER          ||
+        |    |  (sync_batch_consumer)   ||
+        |    |                          ||
+        |    |  Para cada lote:         ||
+        |    |  Resuelve provider ->     ||
+        |    |  provider.SyncOrders()   ||
+        |    |       |                  ||
+        |    |       ▼                  ||
+        |    |  SSE: batch.completed    ||
+        |    |  o batch.failed          ||
+        |    +------+-------------------+|
+        |           |                    |
+        ▼           ▼                    |
++-----------------------------------------------------------------------+
+|  MÓDULO SHOPIFY (usecases/sync_orders.go)                             |
+|                                                                       |
+|  SyncOrdersWithParams():                                              |
+|       |                                                               |
+|       ▼                                                               |
+|  GetOrders() <- llama Shopify API paginado                            |
+|       |                                                               |
+|       +- Por cada página de órdenes:                                  |
+|       |   MapShopifyOrderToProbability()                              |
+|       |   orderPublisher.Publish() ----------+                        |
+|       |                                      |                        |
+|       ▼                                      |                        |
+|  Retorna (totalFetched, error)               |                        |
+|       |                                      |                        |
+|       ▼                                      |                        |
+|  SSE: integration.sync.completed             |                        |
+|  { total_fetched, duration }                 |                        |
+|  --- o ---                                   |                        |
+|  SSE: integration.sync.failed                |                        |
+|  { error }                                   |                        |
++----------------------------------------------+------------------------+
+                                               |
                                                ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  RABBITMQ: probability.orders.canonical                              │
-│                                                                      │
-│  Cola con órdenes en formato ProbabilityOrderDTO                     │
-│  (una orden = un mensaje)                                            │
-└──────────────────────────┬───────────────────────────────────────────┘
-                           │
++----------------------------------------------------------------------+
+|  RABBITMQ: probability.orders.canonical                              |
+|                                                                      |
+|  Cola con órdenes en formato ProbabilityOrderDTO                     |
+|  (una orden = un mensaje)                                            |
++--------------------------+-------------------------------------------+
+                           |
                            ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  MÓDULO ORDERS (queue/consumer.go) ← OrderConsumer                   │
-│                                                                      │
-│  handleMessage():                                                    │
-│       │                                                              │
-│       ▼                                                              │
-│  Deserializa ProbabilityOrderDTO                                     │
-│       │                                                              │
-│       ▼                                                              │
-│  createUC.MapAndSaveOrder()                                          │
-│       │                                                              │
-│       ├─ Orden nueva    → guarda en DB → SSE: order.created          │
-│       ├─ Orden existente→ actualiza DB → SSE: order.updated          │
-│       └─ Error          → guarda en order_errors                     │
-│                           → SSE: order.rejected { reason }           │
-│                                                                      │
-│  GARANTÍA: cada orden publicada a la cola genera                     │
-│  EXACTAMENTE 1 evento SSE (created | updated | rejected)            │
-│  Esto permite que el frontend complete la barra de progreso:         │
-│  created + updated + rejected === totalFetched                       │
-└──────────────────────────┬───────────────────────────────────────────┘
-                           │
++----------------------------------------------------------------------+
+|  MÓDULO ORDERS (queue/consumer.go) <- OrderConsumer                   |
+|                                                                      |
+|  handleMessage():                                                    |
+|       |                                                              |
+|       ▼                                                              |
+|  Deserializa ProbabilityOrderDTO                                     |
+|       |                                                              |
+|       ▼                                                              |
+|  createUC.MapAndSaveOrder()                                          |
+|       |                                                              |
+|       +- Orden nueva    -> guarda en DB -> SSE: order.created          |
+|       +- Orden existente-> actualiza DB -> SSE: order.updated          |
+|       +- Error          -> guarda en order_errors                     |
+|                           -> SSE: order.rejected { reason }           |
+|                                                                      |
+|  GARANTÍA: cada orden publicada a la cola genera                     |
+|  EXACTAMENTE 1 evento SSE (created | updated | rejected)            |
+|  Esto permite que el frontend complete la barra de progreso:         |
+|  created + updated + rejected === totalFetched                       |
++--------------------------+-------------------------------------------+
+                           |
                            ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  RABBITMQ: events.exchange (topic exchange)                          │
-│                                                                      │
-│  Todos los eventos SSE se publican aquí como EventEnvelope:          │
-│  { type, category, business_id, integration_id, data }               │
-│                                                                      │
-│  Routing key = event type (e.g. "integration.sync.order.created")    │
-└──────────────────────────┬───────────────────────────────────────────┘
-                           │
++----------------------------------------------------------------------+
+|  RABBITMQ: events.exchange (topic exchange)                          |
+|                                                                      |
+|  Todos los eventos SSE se publican aquí como EventEnvelope:          |
+|  { type, category, business_id, integration_id, data }               |
+|                                                                      |
+|  Routing key = event type (e.g. "integration.sync.order.created")    |
++--------------------------+-------------------------------------------+
+                           |
                            ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  MÓDULO EVENTS (consumer/rabbitmq_consumer.go)                       │
-│                                                                      │
-│  Consume de "events.unified" (bindeada a events.exchange con "#")    │
-│       │                                                              │
-│       ▼                                                              │
-│  EventDispatcher.HandleEvent()                                       │
-│       │                                                              │
-│       ├─ Busca notification_configs en Redis cache                   │
-│       ├─ Rutea por canal: SSE | WhatsApp | Email                     │
-│       └─ Si no hay configs → broadcast SSE por defecto               │
-│              │                                                       │
-│              ▼                                                       │
-│  ssePublisher.PublishEvent() → SSE push al frontend                  │
-└──────────────────────────┬───────────────────────────────────────────┘
-                           │
++----------------------------------------------------------------------+
+|  MÓDULO EVENTS (consumer/rabbitmq_consumer.go)                       |
+|                                                                      |
+|  Consume de "events.unified" (bindeada a events.exchange con "#")    |
+|       |                                                              |
+|       ▼                                                              |
+|  EventDispatcher.HandleEvent()                                       |
+|       |                                                              |
+|       +- Busca notification_configs en Redis cache                   |
+|       +- Rutea por canal: SSE | WhatsApp | Email                     |
+|       +- Si no hay configs -> broadcast SSE por defecto               |
+|              |                                                       |
+|              ▼                                                       |
+|  ssePublisher.PublishEvent() -> SSE push al frontend                  |
++--------------------------+-------------------------------------------+
+                           |
                            ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│  FRONTEND (IntegrationList.tsx)                                      │
-│                                                                      │
-│  useSSE() recibe eventos y actualiza estado:                         │
-│                                                                      │
-│  Eventos de sincronización:                                          │
-│  ├─ integration.sync.started        → inicializa contadores          │
-│  ├─ integration.sync.completed      → guarda totalFetched            │
-│  ├─ integration.sync.failed         → muestra error                  │
-│  │                                                                   │
-│  Eventos por lote (rango > 14 días):                                 │
-│  ├─ integration.sync.batched.started → inicializa N lotes            │
-│  ├─ integration.sync.batch.completed → marca lote verde              │
-│  ├─ integration.sync.batch.failed    → marca lote rojo               │
-│  │                                                                   │
-│  Eventos por orden (alimentan barra de progreso):                    │
-│  ├─ integration.sync.order.created   → +1 creada (verde)            │
-│  ├─ integration.sync.order.updated   → +1 actualizada (amarillo)    │
-│  └─ integration.sync.order.rejected  → +1 rechazada (rojo)          │
-│                                                                      │
-│  Barra: created + updated + rejected / totalFetched = progreso       │
-│  Cuando created + updated + rejected >= totalFetched → 100%          │
-└──────────────────────────────────────────────────────────────────────┘
++----------------------------------------------------------------------+
+|  FRONTEND (IntegrationList.tsx)                                      |
+|                                                                      |
+|  useSSE() recibe eventos y actualiza estado:                         |
+|                                                                      |
+|  Eventos de sincronización:                                          |
+|  +- integration.sync.started        -> inicializa contadores          |
+|  +- integration.sync.completed      -> guarda totalFetched            |
+|  +- integration.sync.failed         -> muestra error                  |
+|  |                                                                   |
+|  Eventos por lote (rango > 14 días):                                 |
+|  +- integration.sync.batched.started -> inicializa N lotes            |
+|  +- integration.sync.batch.completed -> marca lote verde              |
+|  +- integration.sync.batch.failed    -> marca lote rojo               |
+|  |                                                                   |
+|  Eventos por orden (alimentan barra de progreso):                    |
+|  +- integration.sync.order.created   -> +1 creada (verde)            |
+|  +- integration.sync.order.updated   -> +1 actualizada (amarillo)    |
+|  +- integration.sync.order.rejected  -> +1 rechazada (rojo)          |
+|                                                                      |
+|  Barra: created + updated + rejected / totalFetched = progreso       |
+|  Cuando created + updated + rejected >= totalFetched -> 100%          |
++----------------------------------------------------------------------+
 ```
 
 ### Eventos SSE completos
@@ -258,34 +258,34 @@ Esto garantiza que `created + updated + rejected === totalFetched`, permitiendo 
 
 ---
 
-## Flujo principal: Webhook → RabbitMQ
+## Flujo principal: Webhook -> RabbitMQ
 
 ```
-Shopify → POST /integrations/shopify/webhook
-              │
-              ├─ Extrae: X-Shopify-Topic, X-Shopify-Shop-Domain, X-Shopify-HMAC-SHA256
-              ├─ Lee body como bytes
-              ├─ Valida HMAC-SHA256 (secret por tienda, fallback a secret global)
-              ├─ Responde 200 OK inmediato
-              │
-              └─ Goroutine async:
-                    │
-                    ├─ Parse JSON → ShopifyOrder
-                    ├─ Dispatch por topic:
-                    │     orders/create             → CreateOrder()
-                    │     orders/paid               → ProcessOrderPaid()
-                    │     orders/updated            → ProcessOrderUpdated()
-                    │     orders/cancelled          → ProcessOrderCancelled()
-                    │     orders/fulfilled          → ProcessOrderFulfilled()
-                    │     orders/partially_fulfilled→ ProcessOrderPartiallyFulfilled()
-                    │
-                    └─ Cada handler:
+Shopify -> POST /integrations/shopify/webhook
+              |
+              +- Extrae: X-Shopify-Topic, X-Shopify-Shop-Domain, X-Shopify-HMAC-SHA256
+              +- Lee body como bytes
+              +- Valida HMAC-SHA256 (secret por tienda, fallback a secret global)
+              +- Responde 200 OK inmediato
+              |
+              +- Goroutine async:
+                    |
+                    +- Parse JSON -> ShopifyOrder
+                    +- Dispatch por topic:
+                    |     orders/create             -> CreateOrder()
+                    |     orders/paid               -> ProcessOrderPaid()
+                    |     orders/updated            -> ProcessOrderUpdated()
+                    |     orders/cancelled          -> ProcessOrderCancelled()
+                    |     orders/fulfilled          -> ProcessOrderFulfilled()
+                    |     orders/partially_fulfilled-> ProcessOrderPartiallyFulfilled()
+                    |
+                    +- Cada handler:
                           1. GetIntegrationByExternalID(shopDomain, typeID=1)
                           2. Llenar ShopifyOrder: BusinessID, IntegrationID
-                          3. MapShopifyOrderToProbability() → ProbabilityOrderDTO
+                          3. MapShopifyOrderToProbability() -> ProbabilityOrderDTO
                           4. EnrichOrderWithDetails() (payment, fulfillment, financial)
                           5. Agregar ChannelMetadata con JSON raw de Shopify
-                          6. orderPublisher.Publish() → RabbitMQ
+                          6. orderPublisher.Publish() -> RabbitMQ
 ```
 
 ---
@@ -295,8 +295,8 @@ Shopify → POST /integrations/shopify/webhook
 Al crear una integración de tipo Shopify, `bundle.go` registra un observador que automáticamente crea los 6 webhooks necesarios en la tienda:
 
 ```
-OnIntegrationCreated(ShopifyTypeID) →
-    CreateWebhook(integrationID, baseURL) →
+OnIntegrationCreated(ShopifyTypeID) ->
+    CreateWebhook(integrationID, baseURL) ->
         Crea en Shopify:
             orders/create
             orders/paid
@@ -314,14 +314,14 @@ URL del webhook: `{WEBHOOK_BASE_URL}/integrations/shopify/webhook`
 ## Rutas HTTP
 
 ```
-POST   /integrations/shopify/webhook                    ← Webhooks de órdenes (HMAC)
-POST   /integrations/shopify/webhook/:integration_id    ← Ruta alternativa
-POST   /integrations/shopify/webhooks/compliance        ← Compliance GDPR/CCPA
-POST   /integrations/shopify/connect                    ← Iniciar OAuth (JWT)
-POST   /integrations/shopify/connect/custom             ← OAuth custom (JWT)
-GET    /shopify/callback                                 ← OAuth2 callback
-POST   /integrations/shopify/auth/login                 ← Login con session token
-POST   /integrations/shopify/config                     ← Obtener configuración
+POST   /integrations/shopify/webhook                    <- Webhooks de órdenes (HMAC)
+POST   /integrations/shopify/webhook/:integration_id    <- Ruta alternativa
+POST   /integrations/shopify/webhooks/compliance        <- Compliance GDPR/CCPA
+POST   /integrations/shopify/connect                    <- Iniciar OAuth (JWT)
+POST   /integrations/shopify/connect/custom             <- OAuth custom (JWT)
+GET    /shopify/callback                                 <- OAuth2 callback
+POST   /integrations/shopify/auth/login                 <- Login con session token
+POST   /integrations/shopify/config                     <- Obtener configuración
 ```
 
 ---
@@ -363,10 +363,10 @@ type ISyncEventPublisher interface {
 Es lo que core invoca cuando opera sobre una integración de tipo Shopify (test connection, sync, webhooks).
 
 ```
-core → ShopifyCore.TestConnection()           → useCase.TestConnection()
-core → ShopifyCore.SyncOrdersByIntegrationID() → useCase.SyncOrders()
-core → ShopifyCore.CreateWebhook()            → useCase.CreateWebhook()
-core → ShopifyCore.GetWebhookURL()            → construye "{baseURL}/integrations/shopify/webhook"
+core -> ShopifyCore.TestConnection()           -> useCase.TestConnection()
+core -> ShopifyCore.SyncOrdersByIntegrationID() -> useCase.SyncOrders()
+core -> ShopifyCore.CreateWebhook()            -> useCase.CreateWebhook()
+core -> ShopifyCore.GetWebhookURL()            -> construye "{baseURL}/integrations/shopify/webhook"
 ```
 
 ---

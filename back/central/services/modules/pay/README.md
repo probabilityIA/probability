@@ -10,29 +10,29 @@ Módulo de pagos de primera clase para procesar transacciones reales a través d
 
 ```
 Frontend
-  │
+  |
   ▼
 POST /pay/transactions
-  │
+  |
   ▼
 CreatePayment (UseCase)
-  ├─► Crear PaymentTransaction en DB  (status: pending)
-  ├─► Crear PaymentSyncLog           (status: processing)
-  └─► Publicar a "pay.requests"
-          │
+  +->> Crear PaymentTransaction en DB  (status: pending)
+  +->> Crear PaymentSyncLog           (status: processing)
+  +->> Publicar a "pay.requests"
+          |
           ▼
   integrations/pay/router
-  (enruta según gateway_code → "pay.nequi.requests")
-          │
+  (enruta según gateway_code -> "pay.nequi.requests")
+          |
           ▼
   integrations/pay/nequi
-  (llama API Nequi → publica resultado a "pay.responses")
-          │
+  (llama API Nequi -> publica resultado a "pay.responses")
+          |
           ▼
 ResponseConsumer (este módulo)
-  ├─► Actualizar PaymentTransaction  (status: completed | failed)
-  ├─► Actualizar PaymentSyncLog
-  └─► SSE vía Redis Pub/Sub → Frontend
+  +->> Actualizar PaymentTransaction  (status: completed | failed)
+  +->> Actualizar PaymentSyncLog
+  +->> SSE vía Redis Pub/Sub -> Frontend
 ```
 
 ---
@@ -41,54 +41,54 @@ ResponseConsumer (este módulo)
 
 ```
 pay/
-├── bundle.go                            # Punto de entrada — ensambla todo
-└── internal/
-    ├── domain/
-    │   ├── entities/
-    │   │   ├── payment_transaction.go   # Entidad principal (sin tags)
-    │   │   └── payment_sync_log.go      # Registro de cada intento
-    │   ├── dtos/
-    │   │   ├── create_payment_dto.go    # DTO de entrada
-    │   │   └── payment_message.go       # Mensajes RabbitMQ (request/response)
-    │   ├── ports/
-    │   │   └── ports.go                 # IRepository, IUseCase, IRequestPublisher, ISSEPublisher
-    │   ├── constants/
-    │   │   └── constants.go             # Estados, gateways, nombres de colas
-    │   └── errors/
-    │       └── errors.go                # Errores tipados del dominio
-    ├── app/
-    │   ├── constructor.go               # Factory: New() → IUseCase
-    │   ├── create_payment.go            # Iniciar pago
-    │   ├── process_payment_response.go  # Procesar respuesta del gateway
-    │   ├── retry_payment.go             # Reintentar pago fallido
-    │   ├── get_payment.go               # Consultar transacción por ID
-    │   └── list_payments.go             # Listar con paginación
-    └── infra/
-        ├── primary/
-        │   ├── handlers/
-        │   │   ├── constructor.go
-        │   │   ├── routes.go
-        │   │   ├── create_payment_handler.go
-        │   │   ├── get_payment_handler.go
-        │   │   ├── list_payments_handler.go
-        │   │   ├── request/
-        │   │   │   └── create_payment.go
-        │   │   ├── response/
-        │   │   │   └── payment.go
-        │   │   └── mappers/
-        │   │       └── mapper.go
-        │   └── queue/consumer/
-        │       ├── constructor.go
-        │       ├── response_consumer.go  # Consume "pay.responses"
-        │       └── retry_consumer.go     # Cron cada ~5 min
-        └── secondary/
-            ├── repository/
-            │   ├── constructor.go
-            │   └── repository.go         # GORM — usa migration/shared/models
-            ├── queue/
-            │   └── request_publisher.go  # Publica a "pay.requests"
-            └── redis/
-                └── sse_publisher.go      # Redis Pub/Sub para SSE
++-- bundle.go                            # Punto de entrada — ensambla todo
++-- internal/
+    +-- domain/
+    |   +-- entities/
+    |   |   +-- payment_transaction.go   # Entidad principal (sin tags)
+    |   |   +-- payment_sync_log.go      # Registro de cada intento
+    |   +-- dtos/
+    |   |   +-- create_payment_dto.go    # DTO de entrada
+    |   |   +-- payment_message.go       # Mensajes RabbitMQ (request/response)
+    |   +-- ports/
+    |   |   +-- ports.go                 # IRepository, IUseCase, IRequestPublisher, ISSEPublisher
+    |   +-- constants/
+    |   |   +-- constants.go             # Estados, gateways, nombres de colas
+    |   +-- errors/
+    |       +-- errors.go                # Errores tipados del dominio
+    +-- app/
+    |   +-- constructor.go               # Factory: New() -> IUseCase
+    |   +-- create_payment.go            # Iniciar pago
+    |   +-- process_payment_response.go  # Procesar respuesta del gateway
+    |   +-- retry_payment.go             # Reintentar pago fallido
+    |   +-- get_payment.go               # Consultar transacción por ID
+    |   +-- list_payments.go             # Listar con paginación
+    +-- infra/
+        +-- primary/
+        |   +-- handlers/
+        |   |   +-- constructor.go
+        |   |   +-- routes.go
+        |   |   +-- create_payment_handler.go
+        |   |   +-- get_payment_handler.go
+        |   |   +-- list_payments_handler.go
+        |   |   +-- request/
+        |   |   |   +-- create_payment.go
+        |   |   +-- response/
+        |   |   |   +-- payment.go
+        |   |   +-- mappers/
+        |   |       +-- mapper.go
+        |   +-- queue/consumer/
+        |       +-- constructor.go
+        |       +-- response_consumer.go  # Consume "pay.responses"
+        |       +-- retry_consumer.go     # Cron cada ~5 min
+        +-- secondary/
+            +-- repository/
+            |   +-- constructor.go
+            |   +-- repository.go         # GORM — usa migration/shared/models
+            +-- queue/
+            |   +-- request_publisher.go  # Publica a "pay.requests"
+            +-- redis/
+                +-- sse_publisher.go      # Redis Pub/Sub para SSE
 ```
 
 ---
@@ -145,18 +145,18 @@ pay/
 | Cola | Dirección | Descripción |
 |------|-----------|-------------|
 | `pay.requests` | Publica | Solicitud de pago hacia el router de integraciones |
-| `pay.responses` | Consume | Resultado del gateway → actualiza DB + SSE |
+| `pay.responses` | Consume | Resultado del gateway -> actualiza DB + SSE |
 
 ---
 
 ## Estados de una Transacción
 
 ```
-pending ──► processing ──► completed
-                │
-                └──► failed (max 3 reintentos)
-                       │
-                       └──► cancelled (si se agotaron reintentos)
+pending -->> processing -->> completed
+                |
+                +-->> failed (max 3 reintentos)
+                       |
+                       +-->> cancelled (si se agotaron reintentos)
 ```
 
 | Estado | Descripción |
@@ -220,7 +220,7 @@ Eventos posibles: `payment.completed`, `payment.failed`, `payment.processing`
 | Columna | Tipo | Descripción |
 |---------|------|-------------|
 | `id` | bigint PK | Auto-incremental |
-| `business_id` | bigint | FK → businesses (multi-tenant) |
+| `business_id` | bigint | FK -> businesses (multi-tenant) |
 | `amount` | numeric | Monto (ej: `50000` = $50.000 COP) |
 | `currency` | varchar | `"COP"` |
 | `status` | varchar | `pending\|processing\|completed\|failed\|cancelled` |

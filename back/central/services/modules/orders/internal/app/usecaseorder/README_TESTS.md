@@ -106,7 +106,7 @@ func TestCreateOrder_Success(t *testing.T) {
 |------|-------------|--------------|
 | `TestListOrders_Success` | Listado paginado exitoso | - Retorna órdenes<br>- Metadata de paginación correcta<br>- Cálculo de páginas |
 | `TestListOrders_EmptyResult` | Sin resultados | - Maneja lista vacía<br>- Total = 0, páginas = 0 |
-| `TestListOrders_PaginationValidation` | Validación de parámetros | **6 sub-tests**:<br>- Página negativa → 1<br>- Página 0 → 1<br>- PageSize negativo → 10<br>- PageSize 0 → 10<br>- PageSize > 100 → 10<br>- Valores válidos no cambian |
+| `TestListOrders_PaginationValidation` | Validación de parámetros | **6 sub-tests**:<br>- Página negativa -> 1<br>- Página 0 -> 1<br>- PageSize negativo -> 10<br>- PageSize 0 -> 10<br>- PageSize > 100 -> 10<br>- Valores válidos no cambian |
 | `TestListOrders_RepositoryError` | Error de BD | - Maneja timeout/error |
 | `TestListOrders_TotalPagesCalculation` | Cálculo de páginas | **5 sub-tests**:<br>- Sin registros<br>- Menos que pageSize<br>- Exacto una página<br>- Múltiples páginas<br>- Exacto múltiples |
 | `TestListOrders_WithFilters` | Filtros complejos | - Pasa filtros al repo<br>- Múltiples criterios |
@@ -117,9 +117,9 @@ Los tests validan que se cumplen las reglas de paginación:
 
 ```go
 // Límites aplicados
-page < 1        → page = 1
-pageSize < 1    → pageSize = 10
-pageSize > 100  → pageSize = 10
+page < 1        -> page = 1
+pageSize < 1    -> pageSize = 10
+pageSize > 100  -> pageSize = 10
 ```
 
 ---
@@ -136,7 +136,7 @@ pageSize > 100  → pageSize = 10
 | `TestUpdateOrder_StatusChange_PublishesStatusEvent` | Cambio de estado | - Publica 2 eventos:<br>&nbsp;&nbsp;1. order.updated<br>&nbsp;&nbsp;2. order.status_changed |
 | `TestUpdateOrder_PartialUpdate` | Update parcial | - Solo modifica campos enviados<br>- Preserva campos no enviados |
 | `TestUpdateOrder_RepositoryError` | Error al guardar | - Maneja constraint violation |
-| `TestUpdateOrder_ConfirmationStatus` | Estados de confirmación | **3 sub-tests**:<br>- "yes" → isConfirmed = true<br>- "no" → isConfirmed = false<br>- "pending" → isConfirmed = nil |
+| `TestUpdateOrder_ConfirmationStatus` | Estados de confirmación | **3 sub-tests**:<br>- "yes" -> isConfirmed = true<br>- "no" -> isConfirmed = false<br>- "pending" -> isConfirmed = nil |
 
 ### Lógica Especial Testeada
 

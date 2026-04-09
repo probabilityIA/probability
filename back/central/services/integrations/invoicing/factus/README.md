@@ -25,43 +25,43 @@ Módulo completo de facturación electrónica para Factus con OAuth2 Password Gr
 
 ```
 factus/
-├── bundle.go                                                # Factory + IIntegrationContract
-└── internal/
-    ├── domain/
-    │   ├── dtos/
-    │   │   ├── invoice_types.go                            # Credentials, CustomerData, ItemData, CreateInvoiceRequest/Result, AuditData
-    │   │   └── bill_types.go                              # ListBillsParams, Bill, BillDetail, ListBillsResult, BillsPagination
-    │   ├── entities/config.go                              # InvoicingConfig + FilterConfig (réplica local)
-    │   ├── errors/errors.go                               # ErrAuthFailed, ErrInvoiceCreationFailed, ErrMissingCredentials, ErrTokenExpired
-    │   └── ports/ports.go                                 # IFactusClient, IInvoiceUseCase + estructuras de eventos
-    ├── app/
-    │   ├── constructor.go                                  # Use case stub
-    │   └── process_order_for_invoicing.go                 # Stub (procesamiento real en consumer)
-    └── infra/
-        ├── primary/consumer/
-        │   └── invoice_request_consumer.go                # Consumer RabbitMQ
-        └── secondary/
-            ├── client/
-            │   ├── client.go                              # Client struct + New() + endpointURL()
-            │   ├── auth.go                                # authenticate() / loginWithPassword() / refreshAccessToken() / TestAuthentication()
-            │   ├── token_cache.go                         # Cache dual: access_token (10 min) + refresh_token (1h)
-            │   ├── create_invoice.go                      # POST /v1/bills/validate
-            │   ├── list_bills.go                          # GET /v1/bills (filtros + paginación)
-            │   ├── get_bill.go                            # GET /v1/bills/show/:number
-            │   ├── request/invoice.go                     # CreateBillBody, CreateBillCustomer, CreateBillItem
-            │   ├── response/
-            │   │   ├── invoice.go                         # CreateBill, CreatedBill, CreateBillData
-            │   │   ├── list_bills.go                      # Bills, Bill, BillsData, BillsPagination
-            │   │   └── get_bill.go                        # GetBillDetail
-            │   └── mappers/
-            │       ├── invoice.go                         # BuildCreateBillRequest() + helpers GetConfigString/GetConfigInt
-            │       ├── list_bills.go                      # BillsToListResult()
-            │       ├── get_bill.go                        # GetBillToDetail()
-            │       └── config.go                          # GetConfigString(), GetConfigInt()
-            ├── cache/
-            │   └── config_cache.go                        # Redis cache para InvoicingConfig (TTL 1h)
-            └── integration_cache/
-                └── client.go                              # Lectura del Redis cache de IntegrationCore (meta + credenciales)
++-- bundle.go                                                # Factory + IIntegrationContract
++-- internal/
+    +-- domain/
+    |   +-- dtos/
+    |   |   +-- invoice_types.go                            # Credentials, CustomerData, ItemData, CreateInvoiceRequest/Result, AuditData
+    |   |   +-- bill_types.go                              # ListBillsParams, Bill, BillDetail, ListBillsResult, BillsPagination
+    |   +-- entities/config.go                              # InvoicingConfig + FilterConfig (réplica local)
+    |   +-- errors/errors.go                               # ErrAuthFailed, ErrInvoiceCreationFailed, ErrMissingCredentials, ErrTokenExpired
+    |   +-- ports/ports.go                                 # IFactusClient, IInvoiceUseCase + estructuras de eventos
+    +-- app/
+    |   +-- constructor.go                                  # Use case stub
+    |   +-- process_order_for_invoicing.go                 # Stub (procesamiento real en consumer)
+    +-- infra/
+        +-- primary/consumer/
+        |   +-- invoice_request_consumer.go                # Consumer RabbitMQ
+        +-- secondary/
+            +-- client/
+            |   +-- client.go                              # Client struct + New() + endpointURL()
+            |   +-- auth.go                                # authenticate() / loginWithPassword() / refreshAccessToken() / TestAuthentication()
+            |   +-- token_cache.go                         # Cache dual: access_token (10 min) + refresh_token (1h)
+            |   +-- create_invoice.go                      # POST /v1/bills/validate
+            |   +-- list_bills.go                          # GET /v1/bills (filtros + paginación)
+            |   +-- get_bill.go                            # GET /v1/bills/show/:number
+            |   +-- request/invoice.go                     # CreateBillBody, CreateBillCustomer, CreateBillItem
+            |   +-- response/
+            |   |   +-- invoice.go                         # CreateBill, CreatedBill, CreateBillData
+            |   |   +-- list_bills.go                      # Bills, Bill, BillsData, BillsPagination
+            |   |   +-- get_bill.go                        # GetBillDetail
+            |   +-- mappers/
+            |       +-- invoice.go                         # BuildCreateBillRequest() + helpers GetConfigString/GetConfigInt
+            |       +-- list_bills.go                      # BillsToListResult()
+            |       +-- get_bill.go                        # GetBillToDetail()
+            |       +-- config.go                          # GetConfigString(), GetConfigInt()
+            +-- cache/
+            |   +-- config_cache.go                        # Redis cache para InvoicingConfig (TTL 1h)
+            +-- integration_cache/
+                +-- client.go                              # Lectura del Redis cache de IntegrationCore (meta + credenciales)
 ```
 
 ---
@@ -72,28 +72,28 @@ factus/
 
 ```
 modules/invoicing
-    └── CreateInvoice()
-        └── resolveProvider(integrationID)
-            └── type_id=7 → provider="factus"
-            └── PublishInvoiceRequest → invoicing.requests
+    +-- CreateInvoice()
+        +-- resolveProvider(integrationID)
+            +-- type_id=7 -> provider="factus"
+            +-- PublishInvoiceRequest -> invoicing.requests
 
 invoicing.core (router)
-    └── handleInvoiceRequest()
-        └── provider="factus" → invoicing.factus.requests
+    +-- handleInvoiceRequest()
+        +-- provider="factus" -> invoicing.factus.requests
 
 factus.InvoiceRequestConsumer
-    └── handleInvoiceRequest()
-        └── processCreateInvoice()
-            ├── integrationCore.GetIntegrationByID()
-            ├── integrationCore.DecryptCredential(client_id, client_secret, username, password)
-            ├── factusClient.CreateInvoice()
-            │   ├── authenticate()
-            │   │   ├── [cache hit]  → retorna token cacheado
-            │   │   ├── [access exp] → refreshAccessToken() con refresh_token
-            │   │   └── [ambos exp]  → loginWithPassword() con credenciales
-            │   ├── mappers.BuildCreateBillRequest() → CreateBillBody
-            │   └── POST /v1/bills/validate
-            └── responsePublisher.PublishResponse() → invoicing.responses
+    +-- handleInvoiceRequest()
+        +-- processCreateInvoice()
+            +-- integrationCore.GetIntegrationByID()
+            +-- integrationCore.DecryptCredential(client_id, client_secret, username, password)
+            +-- factusClient.CreateInvoice()
+            |   +-- authenticate()
+            |   |   +-- [cache hit]  -> retorna token cacheado
+            |   |   +-- [access exp] -> refreshAccessToken() con refresh_token
+            |   |   +-- [ambos exp]  -> loginWithPassword() con credenciales
+            |   +-- mappers.BuildCreateBillRequest() -> CreateBillBody
+            |   +-- POST /v1/bills/validate
+            +-- responsePublisher.PublishResponse() -> invoicing.responses
 ```
 
 ### Autenticación OAuth2
@@ -104,9 +104,9 @@ factus.InvoiceRequestConsumer
 | Formato | **form-data** (no JSON) |
 | Grant inicial | `grant_type=password` |
 | Grant renovación | `grant_type=refresh_token` |
-| Access token TTL | 10 min (buffer 2 min → efectivo **8 min**) |
-| Refresh token TTL | 1h (buffer 5 min → efectivo **55 min**) |
-| Estrategia cache | Dual token: intenta access → intenta refresh → login completo |
+| Access token TTL | 10 min (buffer 2 min -> efectivo **8 min**) |
+| Refresh token TTL | 1h (buffer 5 min -> efectivo **55 min**) |
+| Estrategia cache | Dual token: intenta access -> intenta refresh -> login completo |
 
 **Login inicial:**
 ```
@@ -226,12 +226,12 @@ Body principal:
 ```
 
 **Resultado mapeado al dominio:**
-- `InvoiceNumber` ← `bill.number` (`"SETP990000203"`)
-- `ExternalID` ← `bill.id` (como string)
-- `CUFE` ← `bill.cufe`
-- `QRCode` ← `bill.qr`
-- `Total` ← `bill.total`
-- `IssuedAt` ← `bill.validated`
+- `InvoiceNumber` <- `bill.number` (`"SETP990000203"`)
+- `ExternalID` <- `bill.id` (como string)
+- `CUFE` <- `bill.cufe`
+- `QRCode` <- `bill.qr`
+- `Total` <- `bill.total`
+- `IssuedAt` <- `bill.validated`
 
 ### Cache de configuraciones (Redis)
 

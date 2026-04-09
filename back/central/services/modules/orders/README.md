@@ -27,49 +27,49 @@ En una plataforma multi-tenant como Probability, cada negocio:
 ### Flujo Conceptual
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  1. INTEGRACIÓN GENERA ORDEN                                   │
-│  Shopify, WhatsApp, MercadoLibre → Envía webhook              │
-└────────────────────────────────────────────────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────────────────────┐
-│  2. NORMALIZACIÓN A FORMATO CANÓNICO                           │
-│  Webhook → ProbabilityOrderDTO (formato unificado)             │
-│  → Cada integración mapea su formato al formato Probability    │
-└────────────────────────────────────────────────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────────────────────┐
-│  3. VALIDACIÓN Y ENRIQUECIMIENTO                               │
-│  → Verificar si orden ya existe (evitar duplicados)            │
-│  → Validar/Crear cliente (por email o DNI)                     │
-│  → Validar/Crear productos (por SKU)                           │
-│  → Mapear estados específicos a estados Probability            │
-└────────────────────────────────────────────────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────────────────────┐
-│  4. PERSISTENCIA COMPLETA                                      │
-│  → Guardar orden principal (orders)                            │
-│  → Guardar items (order_items)                                 │
-│  → Guardar direcciones (addresses)                             │
-│  → Guardar pagos (payments)                                    │
-│  → Guardar envíos (shipments)                                  │
-│  → Guardar datos crudos originales (order_channel_metadata)    │
-└────────────────────────────────────────────────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────────────────────┐
-│  5. EVENTOS Y PROCESAMIENTO ASÍNCRONO                          │
-│  → Publicar evento al fanout RabbitMQ (orders.events)          │
-│  → 5 consumers: invoicing, whatsapp, score, inventory, events  │
-│  → Events consumer → SSE, email, WhatsApp via EventDispatcher  │
-│  → Score consumer calcula probabilidad de entrega              │
-└────────────────────────────────────────────────────────────────┘
-                            ↓
-┌────────────────────────────────────────────────────────────────┐
-│  6. CONFIRMACIÓN OPCIONAL POR WHATSAPP                         │
-│  → Enviar mensaje de confirmación al cliente                   │
-│  → Recibir respuesta SÍ/NO                                     │
-│  → Actualizar estado de confirmación                           │
-└────────────────────────────────────────────────────────────────┘
++----------------------------------------------------------------+
+|  1. INTEGRACIÓN GENERA ORDEN                                   |
+|  Shopify, WhatsApp, MercadoLibre -> Envía webhook              |
++----------------------------------------------------------------+
+                            v
++----------------------------------------------------------------+
+|  2. NORMALIZACIÓN A FORMATO CANÓNICO                           |
+|  Webhook -> ProbabilityOrderDTO (formato unificado)             |
+|  -> Cada integración mapea su formato al formato Probability    |
++----------------------------------------------------------------+
+                            v
++----------------------------------------------------------------+
+|  3. VALIDACIÓN Y ENRIQUECIMIENTO                               |
+|  -> Verificar si orden ya existe (evitar duplicados)            |
+|  -> Validar/Crear cliente (por email o DNI)                     |
+|  -> Validar/Crear productos (por SKU)                           |
+|  -> Mapear estados específicos a estados Probability            |
++----------------------------------------------------------------+
+                            v
++----------------------------------------------------------------+
+|  4. PERSISTENCIA COMPLETA                                      |
+|  -> Guardar orden principal (orders)                            |
+|  -> Guardar items (order_items)                                 |
+|  -> Guardar direcciones (addresses)                             |
+|  -> Guardar pagos (payments)                                    |
+|  -> Guardar envíos (shipments)                                  |
+|  -> Guardar datos crudos originales (order_channel_metadata)    |
++----------------------------------------------------------------+
+                            v
++----------------------------------------------------------------+
+|  5. EVENTOS Y PROCESAMIENTO ASÍNCRONO                          |
+|  -> Publicar evento al fanout RabbitMQ (orders.events)          |
+|  -> 5 consumers: invoicing, whatsapp, score, inventory, events  |
+|  -> Events consumer -> SSE, email, WhatsApp via EventDispatcher  |
+|  -> Score consumer calcula probabilidad de entrega              |
++----------------------------------------------------------------+
+                            v
++----------------------------------------------------------------+
+|  6. CONFIRMACIÓN OPCIONAL POR WHATSAPP                         |
+|  -> Enviar mensaje de confirmación al cliente                   |
+|  -> Recibir respuesta SÍ/NO                                     |
+|  -> Actualizar estado de confirmación                           |
++----------------------------------------------------------------+
 ```
 
 ---
@@ -136,13 +136,13 @@ type ProbabilityOrderDTO struct {
 
 **Validación de Clientes:**
 - Busca cliente existente por **email** o **DNI**
-- Si no existe → Crea nuevo cliente automáticamente
+- Si no existe -> Crea nuevo cliente automáticamente
 - Asigna `customer_id` a la orden
 
 **Validación de Productos:**
 - Para cada item de la orden:
   - Busca producto por **SKU**
-  - Si no existe → Crea nuevo producto automáticamente
+  - Si no existe -> Crea nuevo producto automáticamente
   - Asigna `product_id` al item
 
 **Beneficio**: Las órdenes nunca fallan por falta de cliente/producto. El sistema los crea automáticamente.
@@ -154,39 +154,39 @@ type ProbabilityOrderDTO struct {
 Cada plataforma tiene sus propios estados. Probability normaliza a tres tipos de estados:
 
 #### Estados de Orden (OrderStatus)
-- `pending` → Pendiente de procesamiento
-- `processing` → En preparación
-- `shipped` → Enviado
-- `delivered` → Entregado
-- `completed` → Completado
-- `cancelled` → Cancelado
-- `refunded` → Reembolsado
-- `failed` → Fallido
-- `on_hold` → En espera
+- `pending` -> Pendiente de procesamiento
+- `processing` -> En preparación
+- `shipped` -> Enviado
+- `delivered` -> Entregado
+- `completed` -> Completado
+- `cancelled` -> Cancelado
+- `refunded` -> Reembolsado
+- `failed` -> Fallido
+- `on_hold` -> En espera
 
 #### Estados de Pago (PaymentStatus)
-- `pending` → Pendiente de pago
-- `paid` → Pagado
-- `partially_paid` → Pago parcial
-- `refunded` → Reembolsado
-- `partially_refunded` → Reembolso parcial
-- `voided` → Anulado
-- `authorized` → Autorizado
-- `expired` → Expirado
+- `pending` -> Pendiente de pago
+- `paid` -> Pagado
+- `partially_paid` -> Pago parcial
+- `refunded` -> Reembolsado
+- `partially_refunded` -> Reembolso parcial
+- `voided` -> Anulado
+- `authorized` -> Autorizado
+- `expired` -> Expirado
 
 #### Estados de Fulfillment (FulfillmentStatus)
-- `unfulfilled` → Sin preparar
-- `partial` → Parcialmente preparado
-- `fulfilled` → Completamente preparado
-- `restocked` → Devuelto a inventario
-- `on_hold` → En espera
+- `unfulfilled` -> Sin preparar
+- `partial` -> Parcialmente preparado
+- `fulfilled` -> Completamente preparado
+- `restocked` -> Devuelto a inventario
+- `on_hold` -> En espera
 
-**Mapeo de Shopify → Probability:**
+**Mapeo de Shopify -> Probability:**
 ```go
 // Ejemplo
-Shopify "pending" → Probability pending (OrderStatus)
-Shopify "paid" → Probability paid (PaymentStatus)
-Shopify "fulfilled" → Probability fulfilled (FulfillmentStatus)
+Shopify "pending" -> Probability pending (OrderStatus)
+Shopify "paid" -> Probability paid (PaymentStatus)
+Shopify "fulfilled" -> Probability fulfilled (FulfillmentStatus)
 ```
 
 ---
@@ -203,11 +203,11 @@ Una sola orden se guarda en **múltiples tablas relacionadas**:
 - Score de entrega
 
 #### Tablas Relacionadas:
-- **`order_items`** → Productos de la orden (N items)
-- **`addresses`** → Direcciones de envío/facturación (1-2 direcciones)
-- **`payments`** → Pagos asociados (1-N pagos)
-- **`shipments`** → Envíos y tracking (1-N envíos)
-- **`order_channel_metadata`** → Datos crudos originales (webhook completo)
+- **`order_items`** -> Productos de la orden (N items)
+- **`addresses`** -> Direcciones de envío/facturación (1-2 direcciones)
+- **`payments`** -> Pagos asociados (1-N pagos)
+- **`shipments`** -> Envíos y tracking (1-N envíos)
+- **`order_channel_metadata`** -> Datos crudos originales (webhook completo)
 
 **Ventajas**:
 - Estructura normalizada (evita duplicación)
@@ -882,29 +882,29 @@ Response: 200 OK
 3. **Módulo Shopify llama** `POST /orders/map` con el DTO canónico
 4. **Módulo Orders**:
    - Verifica si orden ya existe (`external_id` + `integration_id`)
-   - Si existe → Actualiza
-   - Si no existe → Crea nueva
+   - Si existe -> Actualiza
+   - Si no existe -> Crea nueva
 5. **Valida/Crea Cliente**:
    - Busca por email: `juan@example.com`
-   - Si no existe → Crea cliente nuevo
+   - Si no existe -> Crea cliente nuevo
 6. **Valida/Crea Productos**:
    - Para cada item, busca por SKU
-   - Si no existe → Crea producto nuevo
+   - Si no existe -> Crea producto nuevo
 7. **Mapea Estados**:
-   - `financial_status: "paid"` → `payment_status_id: 2` (paid)
-   - `fulfillment_status: "unfulfilled"` → `fulfillment_status_id: 1` (unfulfilled)
+   - `financial_status: "paid"` -> `payment_status_id: 2` (paid)
+   - `fulfillment_status: "unfulfilled"` -> `fulfillment_status_id: 1` (unfulfilled)
 8. **Guarda en BD**:
-   - `orders` → Orden principal
-   - `order_items` → 3 items
-   - `addresses` → 1 dirección de envío
-   - `payments` → 1 pago
-   - `order_channel_metadata` → Webhook original
+   - `orders` -> Orden principal
+   - `order_items` -> 3 items
+   - `addresses` -> 1 dirección de envío
+   - `payments` -> 1 pago
+   - `order_channel_metadata` -> Webhook original
 9. **Publica Eventos**:
-   - `order.created` → RabbitMQ fanout (`orders.events`)
+   - `order.created` -> RabbitMQ fanout (`orders.events`)
    - Todos los consumers reciben copia: invoicing, whatsapp, score, inventory, events
 10. **Consumer calcula score** (asíncrono):
-    - Cliente nuevo → -10 pts
-    - Pago anticipado → +10 pts
+    - Cliente nuevo -> -10 pts
+    - Pago anticipado -> +10 pts
     - Score final: 60
 11. **Actualiza orden** con score y factores negativos
 
@@ -1018,49 +1018,49 @@ GET /api/orders?business_id=1&status_id=1&is_cod=true&page=1&page_size=20
 
 ```
 orders/
-├── bundle.go                    # Ensamblador del módulo
-└── internal/
-    ├── domain/                  # 🔵 CAPA DE DOMINIO
-    │   ├── entities/            # Entidades principales
-    │   ├── dtos/                # DTOs de dominio
-    │   ├── ports/               # Interfaces (contratos)
-    │   └── errors/              # Errores de dominio
-    │
-    ├── app/                     # 🟢 CAPA DE APLICACIÓN
-    │   ├── helpers/             # Helpers compartidos
-    │   │   └── statusmapper/    # Mapeo de estados por plataforma
-    │   ├── usecaseorder/        # Casos de uso CRUD (get, list, delete)
-    │   ├── usecasecreateorder/  # Crear orden + publicar eventos
-    │   ├── usecaseupdateorder/  # Actualizar orden + publicar eventos
-    │   └── usecaseorderscore/   # Cálculo de score de entrega
-    │
-    ├── mocks/                   # Mocks para testing
-    │
-    └── infra/                   # 🔴 CAPA DE INFRAESTRUCTURA
-        ├── primary/             # Adaptadores de entrada
-        │   ├── handlers/        # HTTP handlers (Gin)
-        │   │   ├── constructor.go
-        │   │   ├── router.go
-        │   │   ├── request/     # DTOs HTTP de entrada (CON tags)
-        │   │   ├── response/    # DTOs HTTP de salida (CON tags)
-        │   │   ├── mappers/     # Conversión Domain ↔ HTTP
-        │   │   └── *.go         # Un handler por archivo
-        │   └── queue/           # RabbitMQ consumers
-        │       ├── consumer.go          # Score consumer
-        │       └── whatsapp_consumer.go # WhatsApp response consumer
-        │
-        └── secondary/           # Adaptadores de salida
-            ├── repository/      # PostgreSQL (GORM)
-            │   ├── constructor.go
-            │   ├── repository.go
-            │   ├── status_queries.go  # Consultas réplica de estados
-            │   └── mappers/
-            ├── eventpublisher/  # Publisher de integración (Shopify events)
-            │   └── constructor.go
-            └── queue/           # RabbitMQ fanout publisher
-                ├── order_publisher.go   # Publica al fanout orders.events
-                ├── response/            # Structs de mensaje
-                └── mappers/             # Mapeo Order → OrderEventMessage
++-- bundle.go                    # Ensamblador del módulo
++-- internal/
+    +-- domain/                  # 🔵 CAPA DE DOMINIO
+    |   +-- entities/            # Entidades principales
+    |   +-- dtos/                # DTOs de dominio
+    |   +-- ports/               # Interfaces (contratos)
+    |   +-- errors/              # Errores de dominio
+    |
+    +-- app/                     # 🟢 CAPA DE APLICACIÓN
+    |   +-- helpers/             # Helpers compartidos
+    |   |   +-- statusmapper/    # Mapeo de estados por plataforma
+    |   +-- usecaseorder/        # Casos de uso CRUD (get, list, delete)
+    |   +-- usecasecreateorder/  # Crear orden + publicar eventos
+    |   +-- usecaseupdateorder/  # Actualizar orden + publicar eventos
+    |   +-- usecaseorderscore/   # Cálculo de score de entrega
+    |
+    +-- mocks/                   # Mocks para testing
+    |
+    +-- infra/                   # 🔴 CAPA DE INFRAESTRUCTURA
+        +-- primary/             # Adaptadores de entrada
+        |   +-- handlers/        # HTTP handlers (Gin)
+        |   |   +-- constructor.go
+        |   |   +-- router.go
+        |   |   +-- request/     # DTOs HTTP de entrada (CON tags)
+        |   |   +-- response/    # DTOs HTTP de salida (CON tags)
+        |   |   +-- mappers/     # Conversión Domain ↔ HTTP
+        |   |   +-- *.go         # Un handler por archivo
+        |   +-- queue/           # RabbitMQ consumers
+        |       +-- consumer.go          # Score consumer
+        |       +-- whatsapp_consumer.go # WhatsApp response consumer
+        |
+        +-- secondary/           # Adaptadores de salida
+            +-- repository/      # PostgreSQL (GORM)
+            |   +-- constructor.go
+            |   +-- repository.go
+            |   +-- status_queries.go  # Consultas réplica de estados
+            |   +-- mappers/
+            +-- eventpublisher/  # Publisher de integración (Shopify events)
+            |   +-- constructor.go
+            +-- queue/           # RabbitMQ fanout publisher
+                +-- order_publisher.go   # Publica al fanout orders.events
+                +-- response/            # Structs de mensaje
+                +-- mappers/             # Mapeo Order -> OrderEventMessage
 ```
 
 ---
@@ -1073,7 +1073,7 @@ orders/
 
 **Separación de Capas:**
 - ✅ Separación de capas (Domain, App, Infra)
-- ✅ Flujo de dependencias correcto (Infra → App → Domain)
+- ✅ Flujo de dependencias correcto (Infra -> App -> Domain)
 - ✅ Domain 100% puro (SIN tags, SIN GORM, SIN Gin)
 - ✅ Domain organizado en subcarpetas (`entities/`, `dtos/`, `ports/`, `errors/`)
 
@@ -1103,46 +1103,46 @@ orders/
 
 ```
 orders/internal/
-├── domain/                      # 🔵 CAPA DE DOMINIO (PURA)
-│   ├── entities/               # ✅ 11 archivos SIN tags
-│   │   ├── order.go
-│   │   ├── order_item.go
-│   │   ├── address.go
-│   │   ├── payment.go
-│   │   ├── shipment.go
-│   │   ├── channel_metadata.go
-│   │   ├── product.go
-│   │   ├── client.go
-│   │   ├── order_status.go
-│   │   ├── order_event.go
-│   │   └── order_error.go
-│   ├── dtos/                   # ✅ 5 archivos SIN tags, usa []byte
-│   │   ├── create_order_request.go
-│   │   ├── update_order_request.go
-│   │   ├── order_response.go
-│   │   ├── order_summary.go
-│   │   └── probability_order_dto.go
-│   ├── ports/                  # ✅ Interfaces
-│   │   └── ports.go
-│   └── errors/                 # ✅ Errores de dominio
-│       └── errors.go
-│
-└── infra/primary/handlers/     # 🔴 CAPA DE INFRAESTRUCTURA
-    ├── request/                # ✅ 4 archivos CON tags + datatypes.JSON
-    │   ├── create_order.go
-    │   ├── update_order.go
-    │   ├── map_order.go
-    │   └── list_orders_filters.go
-    ├── response/               # ✅ 5 archivos CON tags + datatypes.JSON
-    │   ├── order.go
-    │   ├── order_summary.go
-    │   ├── order_raw.go
-    │   ├── orders_list.go
-    │   └── error.go
-    ├── mappers/                # ✅ 2 archivos de conversión
-    │   ├── to_domain.go        # HTTP → Domain (datatypes.JSON → []byte)
-    │   └── to_response.go      # Domain → HTTP ([]byte → datatypes.JSON)
-    └── *.go                    # Handlers actualizados
++-- domain/                      # 🔵 CAPA DE DOMINIO (PURA)
+|   +-- entities/               # ✅ 11 archivos SIN tags
+|   |   +-- order.go
+|   |   +-- order_item.go
+|   |   +-- address.go
+|   |   +-- payment.go
+|   |   +-- shipment.go
+|   |   +-- channel_metadata.go
+|   |   +-- product.go
+|   |   +-- client.go
+|   |   +-- order_status.go
+|   |   +-- order_event.go
+|   |   +-- order_error.go
+|   +-- dtos/                   # ✅ 5 archivos SIN tags, usa []byte
+|   |   +-- create_order_request.go
+|   |   +-- update_order_request.go
+|   |   +-- order_response.go
+|   |   +-- order_summary.go
+|   |   +-- probability_order_dto.go
+|   +-- ports/                  # ✅ Interfaces
+|   |   +-- ports.go
+|   +-- errors/                 # ✅ Errores de dominio
+|       +-- errors.go
+|
++-- infra/primary/handlers/     # 🔴 CAPA DE INFRAESTRUCTURA
+    +-- request/                # ✅ 4 archivos CON tags + datatypes.JSON
+    |   +-- create_order.go
+    |   +-- update_order.go
+    |   +-- map_order.go
+    |   +-- list_orders_filters.go
+    +-- response/               # ✅ 5 archivos CON tags + datatypes.JSON
+    |   +-- order.go
+    |   +-- order_summary.go
+    |   +-- order_raw.go
+    |   +-- orders_list.go
+    |   +-- error.go
+    +-- mappers/                # ✅ 2 archivos de conversión
+    |   +-- to_domain.go        # HTTP -> Domain (datatypes.JSON -> []byte)
+    |   +-- to_response.go      # Domain -> HTTP ([]byte -> datatypes.JSON)
+    +-- *.go                    # Handlers actualizados
 
 ```
 
@@ -1150,17 +1150,17 @@ orders/internal/
 
 ```
 HTTP Request (CON tags + datatypes.JSON)
-    ↓
+    v
 [mappers.MapOrderRequestToDomain()]
-    ↓
+    v
 Domain DTO (SIN tags + []byte)
-    ↓
+    v
 [UseCase procesa]
-    ↓
+    v
 Domain Response (SIN tags + []byte)
-    ↓
+    v
 [mappers.OrderToResponse()]
-    ↓
+    v
 HTTP Response (CON tags + datatypes.JSON)
 ```
 
@@ -1340,7 +1340,7 @@ Todos los eventos se publican al fanout con formato `OrderEventMessage` que incl
 
 **Nuevo:**
 - Cola `orders.events.events` bindeada al fanout existente
-- Módulo `events` consume del fanout y transforma `OrderEventMessage` → `entities.Event`
+- Módulo `events` consume del fanout y transforma `OrderEventMessage` -> `entities.Event`
 - EventDispatcher (SSE, email, WhatsApp) ahora recibe eventos via fanout, no via topic exchange
 
 **Refactorizado:**

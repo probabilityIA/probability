@@ -7,11 +7,11 @@ Funciona **fuera de Nginx** con puertos propios expuestos directamente al host, 
 ## Arquitectura
 
 ```
-Browser ──► Next.js (:3002) ──SSR fetch──► Go API (:3070) ──► Docker Socket
-                │                              │                 /var/run/docker.sock
-                │◄──────── SSE (logs) ─────────│
-                │                              │──► PostgreSQL (auth)
-                │                              │──► /proc (system stats)
+Browser -->> Next.js (:3002) --SSR fetch-->> Go API (:3070) -->> Docker Socket
+                |                              |                 /var/run/docker.sock
+                |<<-------- SSE (logs) ---------|
+                |                              |-->> PostgreSQL (auth)
+                |                              |-->> /proc (system stats)
 ```
 
 ### Stack
@@ -37,58 +37,58 @@ Puertos restringidos por Security Group a IPs autorizadas.
 
 ```
 back/monitoring/
-├── cmd/main.go                          # Entry point
-├── Dockerfile                           # Multi-stage build (golang → alpine)
-├── .env                                 # Config local
-└── internal/
-    ├── domain/
-    │   ├── entities/
-    │   │   ├── container.go             # Container, ContainerStats, SystemStats, LogEntry, ComposeService
-    │   │   └── user.go                  # MonitoringUser (auth via DB)
-    │   ├── dtos/
-    │   │   ├── auth.go                  # LoginRequest, LoginResponse
-    │   │   └── container.go             # ContainerActionRequest, LogStreamRequest
-    │   ├── ports/ports.go               # IDockerService, IUserRepository, IUseCase
-    │   └── errors/errors.go             # Custom error types
-    ├── app/
-    │   ├── constructor.go               # UseCase constructor
-    │   ├── login.go                     # Auth: bcrypt + JWT (24h)
-    │   ├── list_containers.go           # Listar contenedores filtrados por compose project
-    │   ├── get_container.go             # Detalle de un contenedor
-    │   ├── get_stats.go                 # Stats CPU/RAM de un contenedor
-    │   ├── get_system_stats.go          # Stats del servidor host (CPU/RAM/Disk)
-    │   ├── container_action.go          # restart, stop, start
-    │   ├── stream_logs.go              # Streaming de logs via Docker SDK
-    │   └── get_compose_services.go      # Listar servicios del compose
-    └── infra/
-        ├── primary/handlers/
-        │   ├── constructor.go           # Handler + IHandler interface
-        │   ├── routes.go               # Registro de rutas
-        │   ├── middleware.go            # JWT middleware (HS256)
-        │   ├── login_handler.go         # POST /api/v1/auth/login
-        │   ├── list_containers_handler.go
-        │   ├── get_container_handler.go
-        │   ├── get_stats_handler.go
-        │   ├── get_system_stats_handler.go
-        │   ├── get_logs_handler.go
-        │   ├── stream_logs_handler.go   # SSE endpoint
-        │   ├── container_action_handler.go
-        │   ├── get_compose_services_handler.go
-        │   ├── health_handler.go
-        │   ├── request/                 # Request DTOs con tags
-        │   ├── response/               # Response DTOs con tags
-        │   └── mappers/                # Domain ↔ HTTP mappers
-        └── secondary/
-            ├── docker/
-            │   ├── constructor.go       # Docker SDK client
-            │   ├── containers.go        # List, Inspect, filtrado por label
-            │   ├── actions.go           # Restart, Stop, Start
-            │   ├── logs.go              # Log streaming via Docker API
-            │   ├── stats.go             # Container CPU/RAM/Network stats
-            │   └── system_stats.go      # Host stats via /proc y syscall
-            └── repository/
-                ├── constructor.go       # GORM PostgreSQL
-                └── user.go              # GetUserByEmail para auth
++-- cmd/main.go                          # Entry point
++-- Dockerfile                           # Multi-stage build (golang -> alpine)
++-- .env                                 # Config local
++-- internal/
+    +-- domain/
+    |   +-- entities/
+    |   |   +-- container.go             # Container, ContainerStats, SystemStats, LogEntry, ComposeService
+    |   |   +-- user.go                  # MonitoringUser (auth via DB)
+    |   +-- dtos/
+    |   |   +-- auth.go                  # LoginRequest, LoginResponse
+    |   |   +-- container.go             # ContainerActionRequest, LogStreamRequest
+    |   +-- ports/ports.go               # IDockerService, IUserRepository, IUseCase
+    |   +-- errors/errors.go             # Custom error types
+    +-- app/
+    |   +-- constructor.go               # UseCase constructor
+    |   +-- login.go                     # Auth: bcrypt + JWT (24h)
+    |   +-- list_containers.go           # Listar contenedores filtrados por compose project
+    |   +-- get_container.go             # Detalle de un contenedor
+    |   +-- get_stats.go                 # Stats CPU/RAM de un contenedor
+    |   +-- get_system_stats.go          # Stats del servidor host (CPU/RAM/Disk)
+    |   +-- container_action.go          # restart, stop, start
+    |   +-- stream_logs.go              # Streaming de logs via Docker SDK
+    |   +-- get_compose_services.go      # Listar servicios del compose
+    +-- infra/
+        +-- primary/handlers/
+        |   +-- constructor.go           # Handler + IHandler interface
+        |   +-- routes.go               # Registro de rutas
+        |   +-- middleware.go            # JWT middleware (HS256)
+        |   +-- login_handler.go         # POST /api/v1/auth/login
+        |   +-- list_containers_handler.go
+        |   +-- get_container_handler.go
+        |   +-- get_stats_handler.go
+        |   +-- get_system_stats_handler.go
+        |   +-- get_logs_handler.go
+        |   +-- stream_logs_handler.go   # SSE endpoint
+        |   +-- container_action_handler.go
+        |   +-- get_compose_services_handler.go
+        |   +-- health_handler.go
+        |   +-- request/                 # Request DTOs con tags
+        |   +-- response/               # Response DTOs con tags
+        |   +-- mappers/                # Domain ↔ HTTP mappers
+        +-- secondary/
+            +-- docker/
+            |   +-- constructor.go       # Docker SDK client
+            |   +-- containers.go        # List, Inspect, filtrado por label
+            |   +-- actions.go           # Restart, Stop, Start
+            |   +-- logs.go              # Log streaming via Docker API
+            |   +-- stats.go             # Container CPU/RAM/Network stats
+            |   +-- system_stats.go      # Host stats via /proc y syscall
+            +-- repository/
+                +-- constructor.go       # GORM PostgreSQL
+                +-- user.go              # GetUserByEmail para auth
 ```
 
 ### Endpoints
@@ -136,48 +136,48 @@ GET    /health                           # Health check
 
 ```
 front/monitoring/
-├── Dockerfile                           # Multi-stage (node → standalone)
-├── middleware.ts                        # Auth middleware (redirect to /login)
-├── src/
-│   ├── app/
-│   │   ├── layout.tsx                   # Root layout (dark theme)
-│   │   ├── page.tsx                     # Redirect → /dashboard
-│   │   ├── globals.css                  # Cyberpunk theme + animations
-│   │   ├── login/page.tsx               # Client Component - login form
-│   │   ├── dashboard/
-│   │   │   ├── page.tsx                 # SSR - architecture view
-│   │   │   └── [id]/page.tsx            # SSR - container detail + logs
-│   │   └── api/
-│   │       ├── logs/[id]/route.ts       # SSE proxy → Go API
-│   │       ├── stats/[id]/route.ts      # Stats proxy → Go API
-│   │       └── system/route.ts          # System stats proxy → Go API
-│   ├── services/monitoring/
-│   │   ├── domain/
-│   │   │   ├── types.ts                 # Container, Stats, SystemStats, etc.
-│   │   │   └── ports.ts                 # IMonitoringRepository
-│   │   ├── infra/
-│   │   │   ├── repository/api-repository.ts  # Fetch wrapper al Go API
-│   │   │   └── actions/index.ts         # Server Actions (login, logout, restart, stop, start)
-│   │   └── ui/
-│   │       ├── components/
-│   │       │   ├── ArchitectureView.tsx  # Diagrama SVG: nodos + flechas animadas entre pares
-│   │       │   ├── ContainerCard.tsx     # Card clickeable (abre modal)
-│   │       │   ├── ContainerModal.tsx    # Modal: info + stats + logs en vivo + acciones
-│   │       │   ├── ContainerGrid.tsx     # Grid simple de cards
-│   │       │   ├── ContainerDetail.tsx   # Info detallada de un contenedor
-│   │       │   ├── ActionButtons.tsx     # Restart/Stop/Start con feedback
-│   │       │   ├── StatsBar.tsx          # CPU/RAM bars de un contenedor (polling 5s)
-│   │       │   ├── SystemStatsBar.tsx    # CPU/RAM/Disk del servidor (polling 5s)
-│   │       │   ├── LogViewer.tsx         # Terminal con SSE, ANSI stripped, colorized
-│   │       │   └── Header.tsx           # Nav con logo + logout
-│   │       └── hooks/
-│   │           ├── useLogStream.ts       # ReadableStream + SSE parsing
-│   │           ├── useContainerStats.ts  # Polling stats de un contenedor
-│   │           └── useSystemStats.ts     # Polling stats del servidor
-│   └── shared/
-│       ├── auth/middleware.ts            # JWT cookie check + redirect
-│       ├── lib/api.ts                   # Fetch wrapper con token
-│       └── lib/token.ts                 # Lee JWT desde document.cookie
++-- Dockerfile                           # Multi-stage (node -> standalone)
++-- middleware.ts                        # Auth middleware (redirect to /login)
++-- src/
+|   +-- app/
+|   |   +-- layout.tsx                   # Root layout (dark theme)
+|   |   +-- page.tsx                     # Redirect -> /dashboard
+|   |   +-- globals.css                  # Cyberpunk theme + animations
+|   |   +-- login/page.tsx               # Client Component - login form
+|   |   +-- dashboard/
+|   |   |   +-- page.tsx                 # SSR - architecture view
+|   |   |   +-- [id]/page.tsx            # SSR - container detail + logs
+|   |   +-- api/
+|   |       +-- logs/[id]/route.ts       # SSE proxy -> Go API
+|   |       +-- stats/[id]/route.ts      # Stats proxy -> Go API
+|   |       +-- system/route.ts          # System stats proxy -> Go API
+|   +-- services/monitoring/
+|   |   +-- domain/
+|   |   |   +-- types.ts                 # Container, Stats, SystemStats, etc.
+|   |   |   +-- ports.ts                 # IMonitoringRepository
+|   |   +-- infra/
+|   |   |   +-- repository/api-repository.ts  # Fetch wrapper al Go API
+|   |   |   +-- actions/index.ts         # Server Actions (login, logout, restart, stop, start)
+|   |   +-- ui/
+|   |       +-- components/
+|   |       |   +-- ArchitectureView.tsx  # Diagrama SVG: nodos + flechas animadas entre pares
+|   |       |   +-- ContainerCard.tsx     # Card clickeable (abre modal)
+|   |       |   +-- ContainerModal.tsx    # Modal: info + stats + logs en vivo + acciones
+|   |       |   +-- ContainerGrid.tsx     # Grid simple de cards
+|   |       |   +-- ContainerDetail.tsx   # Info detallada de un contenedor
+|   |       |   +-- ActionButtons.tsx     # Restart/Stop/Start con feedback
+|   |       |   +-- StatsBar.tsx          # CPU/RAM bars de un contenedor (polling 5s)
+|   |       |   +-- SystemStatsBar.tsx    # CPU/RAM/Disk del servidor (polling 5s)
+|   |       |   +-- LogViewer.tsx         # Terminal con SSE, ANSI stripped, colorized
+|   |       |   +-- Header.tsx           # Nav con logo + logout
+|   |       +-- hooks/
+|   |           +-- useLogStream.ts       # ReadableStream + SSE parsing
+|   |           +-- useContainerStats.ts  # Polling stats de un contenedor
+|   |           +-- useSystemStats.ts     # Polling stats del servidor
+|   +-- shared/
+|       +-- auth/middleware.ts            # JWT cookie check + redirect
+|       +-- lib/api.ts                   # Fetch wrapper con token
+|       +-- lib/token.ts                 # Lee JWT desde document.cookie
 ```
 
 ### Paginas
@@ -193,22 +193,22 @@ El dashboard muestra un diagrama tipo mapa conceptual con 3 capas horizontales y
 
 ```
 FRONTEND
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ monitoring-web│  │ front-central│  │ front-website│  │ front-testing│
-└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘
-       │ HTTP             │ HTTP       (standalone)           │ HTTP
++--------------+  +--------------+  +--------------+  +--------------+
+| monitoring-web|  | front-central|  | front-website|  | front-testing|
++------+-------+  +------+-------+  +--------------+  +------+-------+
+       | HTTP             | HTTP       (standalone)           | HTTP
        ▼                  ▼                                   ▼
 BACKEND
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ monitoring-api│  │ back-central │  │    nginx     │  │ back-testing │
-└──────────────┘  └───┬──────┬───┘  └──────────────┘  └──────┬───────┘
-                      │      │                                │
-                  TCP:6379  AMQP:5672            testea APIs ──┘
++--------------+  +--------------+  +--------------+  +--------------+
+| monitoring-api|  | back-central |  |    nginx     |  | back-testing |
++--------------+  +---+------+---+  +--------------+  +------+-------+
+                      |      |                                |
+                  TCP:6379  AMQP:5672            testea APIs --+
                       ▼      ▼
 DATA & MESSAGING
-                  ┌──────────────┐  ┌──────────────┐
-                  │  rabbitmq    │  │    redis     │
-                  └──────────────┘  └──────────────┘
+                  +--------------+  +--------------+
+                  |  rabbitmq    |  |    redis     |
+                  +--------------+  +--------------+
 ```
 
 - **Flechas SVG reales** con puntos luminosos animados que viajan por la linea

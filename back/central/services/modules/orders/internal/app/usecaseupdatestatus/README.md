@@ -16,15 +16,15 @@ Este caso de uso es el **unico punto de entrada autorizado** para cambiar el est
 
 ```
 Integraciones externas (Shopify, Amazon, MercadoLibre)
-  → Escriben estado SIN restriccion (son fuente de verdad de su plataforma)
-  → Pasan por: MapAndSaveOrder → usecaseupdateorder → updateOrderStatus()
-  → NO usan este caso de uso
+  -> Escriben estado SIN restriccion (son fuente de verdad de su plataforma)
+  -> Pasan por: MapAndSaveOrder -> usecaseupdateorder -> updateOrderStatus()
+  -> NO usan este caso de uso
 
 Operacion interna (UI de Probability, API manual)
-  → DEBE pasar por este caso de uso (PUT /orders/:id/status)
-  → Validacion estricta de transiciones
-  → Registra historial en order_history
-  → Publica eventos a RabbitMQ
+  -> DEBE pasar por este caso de uso (PUT /orders/:id/status)
+  -> Validacion estricta de transiciones
+  -> Registra historial en order_history
+  -> Publica eventos a RabbitMQ
 ```
 
 ### Bloqueo del endpoint general
@@ -44,7 +44,7 @@ El handler `PUT /orders/:id` (update general) **no mapea los campos Status, Orig
 6. Ejecutar strategy del estado destino (executeStrategy)
 7. Resolver StatusID desde el codigo (GetOrderStatusIDByCode)
 8. Persistir cambios (UpdateOrder)
-9. Registrar historial (CreateOrderHistory → tabla order_history)
+9. Registrar historial (CreateOrderHistory -> tabla order_history)
 10. Publicar eventos a RabbitMQ (OrderEventTypeUpdated + OrderEventTypeStatusChanged)
 ```
 
@@ -53,55 +53,55 @@ El handler `PUT /orders/:id` (update general) **no mapea los campos Status, Orig
 ## Mapa de Transiciones Permitidas
 
 ```
-                          ┌──────────┐
-                     ┌───→│ on_hold  │───→ pending
-                     │    └──────────┘       │
-                     │                       v
-                     │    ┌─────────────────────┐
-                     ├────│      picking        │◄──── inventory_issue
-                     │    └─────────────────────┘
-                     │              │
-                     │              v
-                     ├────┌─────────────────────┐
-                     │    │      packing        │
-                     │    └─────────────────────┘
-                     │              │
-                     │              v
-                          ┌─────────────────────┐
-                          │   ready_to_ship     │
-                          └─────────────────────┘
-                                    │
+                          +----------+
+                     +---->| on_hold  |----> pending
+                     |    +----------+       |
+                     |                       v
+                     |    +---------------------+
+                     +----|      picking        |<<---- inventory_issue
+                     |    +---------------------+
+                     |              |
+                     |              v
+                     +----+---------------------+
+                     |    |      packing        |
+                     |    +---------------------+
+                     |              |
+                     |              v
+                          +---------------------+
+                          |   ready_to_ship     |
+                          +---------------------+
+                                    |
                                     v
-                          ┌─────────────────────┐
-                          │ assigned_to_driver  │◄──── delivery_novelty
-                          └─────────────────────┘
-                                    │
+                          +---------------------+
+                          | assigned_to_driver  |<<---- delivery_novelty
+                          +---------------------+
+                                    |
                                     v
-                          ┌─────────────────────┐
-                          │     picked_up       │
-                          └─────────────────────┘
-                                    │
+                          +---------------------+
+                          |     picked_up       |
+                          +---------------------+
+                                    |
                                     v
-                          ┌─────────────────────┐
-                          │     in_transit      │
-                          └─────────────────────┘
-                                    │
+                          +---------------------+
+                          |     in_transit      |
+                          +---------------------+
+                                    |
                                     v
-                          ┌─────────────────────┐
-                          │  out_for_delivery   │
-                          └─────────────────────┘
-                           │    │    │    │
-                ┌──────────┘    │    │    └──────────────┐
+                          +---------------------+
+                          |  out_for_delivery   |
+                          +---------------------+
+                           |    |    |    |
+                +----------+    |    |    +--------------+
                 v               v    v                  v
-          ┌──────────┐  ┌──────────┐ ┌──────────┐ ┌──────────┐
-          │delivered │  │ novelty  │ │ rejected │ │ d_failed │
-          └──────────┘  └──────────┘ └──────────┘ └──────────┘
-           │    │                         │              │
+          +----------+  +----------+ +----------+ +----------+
+          |delivered |  | novelty  | | rejected | | d_failed |
+          +----------+  +----------+ +----------+ +----------+
+           |    |                         |              |
            v    v                         v              v
-      completed │                   return_in_transit ◄──┘
-           │    │                         │
+      completed |                   return_in_transit <<--+
+           |    |                         |
            v    v                         v
-       refunded                      returned → refunded
+       refunded                      returned -> refunded
 
     ★ cancelled: accesible desde CUALQUIER estado no-terminal
     ★ Terminales (sin salida): cancelled, refunded
@@ -131,7 +131,7 @@ El handler `PUT /orders/:id` (update general) **no mapea los campos Status, Orig
 | `cancelled` | (terminal — sin salida) |
 | `refunded` | (terminal — sin salida) |
 
-La logica esta en `domain/entities/order_status.go` → `validTransitions` map + `CanTransitionTo()`.
+La logica esta en `domain/entities/order_status.go` -> `validTransitions` map + `CanTransitionTo()`.
 
 ---
 
@@ -257,7 +257,7 @@ Tests unitarios en `change_status_test.go`. Plan de pruebas E2E en `/.claude/tes
 
 ### Flujos probados (E2E)
 
-1. Happy path completo (pending → ... → completed)
+1. Happy path completo (pending -> ... -> completed)
 2. Cancelacion desde picking
 3. Novedad de entrega + reintento con nuevo piloto
 4. Rechazo + devolucion + reembolso
@@ -275,28 +275,28 @@ Tests unitarios en `change_status_test.go`. Plan de pruebas E2E en `/.claude/tes
 
 ```
 usecaseupdatestatus/
-├── README.md                  # Este archivo
-├── constructor.go             # New() + struct
-├── change_status.go           # Orquestador principal + executeStrategy + saveOrderHistory
-├── change_status_test.go      # Tests unitarios
-├── publish_events.go          # Publicacion a RabbitMQ
-├── to_picking.go              # Strategy: → picking
-├── to_packing.go              # Strategy: → packing
-├── to_ready_to_ship.go        # Strategy: → ready_to_ship
-├── to_assigned_to_driver.go   # Strategy: → assigned_to_driver (metadata: driver_id, driver_name)
-├── to_picked_up.go            # Strategy: → picked_up
-├── to_in_transit.go           # Strategy: → in_transit (metadata: tracking_number, tracking_link)
-├── to_out_for_delivery.go     # Strategy: → out_for_delivery
-├── to_delivered.go            # Strategy: → delivered (auto: delivered_at = now)
-├── to_delivery_novelty.go     # Strategy: → delivery_novelty (metadata: reason → novelty)
-├── to_delivery_failed.go      # Strategy: → delivery_failed (metadata: reason → notes)
-├── to_rejected.go             # Strategy: → rejected (metadata: reason → notes)
-├── to_return_in_transit.go    # Strategy: → return_in_transit (metadata: tracking_number)
-├── to_returned.go             # Strategy: → returned
-├── to_inventory_issue.go      # Strategy: → inventory_issue (metadata: notes → novelty)
-├── to_on_hold.go              # Strategy: → on_hold (metadata: reason → notes)
-├── to_cancelled.go            # Strategy: → cancelled (metadata: reason → notes)
-├── to_completed.go            # Strategy: → completed
-├── to_refunded.go             # Strategy: → refunded
-└── to_failed.go               # Strategy: → failed
++-- README.md                  # Este archivo
++-- constructor.go             # New() + struct
++-- change_status.go           # Orquestador principal + executeStrategy + saveOrderHistory
++-- change_status_test.go      # Tests unitarios
++-- publish_events.go          # Publicacion a RabbitMQ
++-- to_picking.go              # Strategy: -> picking
++-- to_packing.go              # Strategy: -> packing
++-- to_ready_to_ship.go        # Strategy: -> ready_to_ship
++-- to_assigned_to_driver.go   # Strategy: -> assigned_to_driver (metadata: driver_id, driver_name)
++-- to_picked_up.go            # Strategy: -> picked_up
++-- to_in_transit.go           # Strategy: -> in_transit (metadata: tracking_number, tracking_link)
++-- to_out_for_delivery.go     # Strategy: -> out_for_delivery
++-- to_delivered.go            # Strategy: -> delivered (auto: delivered_at = now)
++-- to_delivery_novelty.go     # Strategy: -> delivery_novelty (metadata: reason -> novelty)
++-- to_delivery_failed.go      # Strategy: -> delivery_failed (metadata: reason -> notes)
++-- to_rejected.go             # Strategy: -> rejected (metadata: reason -> notes)
++-- to_return_in_transit.go    # Strategy: -> return_in_transit (metadata: tracking_number)
++-- to_returned.go             # Strategy: -> returned
++-- to_inventory_issue.go      # Strategy: -> inventory_issue (metadata: notes -> novelty)
++-- to_on_hold.go              # Strategy: -> on_hold (metadata: reason -> notes)
++-- to_cancelled.go            # Strategy: -> cancelled (metadata: reason -> notes)
++-- to_completed.go            # Strategy: -> completed
++-- to_refunded.go             # Strategy: -> refunded
++-- to_failed.go               # Strategy: -> failed
 ```

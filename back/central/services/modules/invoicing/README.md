@@ -27,34 +27,34 @@ Este módulo sigue **Arquitectura Hexagonal (Ports & Adapters)**:
 
 ```
 modules/invoicing/
-├── bundle.go              # Ensambla el módulo
-└── internal/
-    ├── domain/            # Núcleo - Reglas de negocio
-    │   ├── entities/      # Entidades PURAS (sin tags)
-    │   ├── dtos/          # Data Transfer Objects
-    │   ├── ports/         # Interfaces (contratos)
-    │   ├── errors/        # Errores de dominio
-    │   └── constants/     # Constantes
-    ├── app/               # Casos de uso
-    │   ├── constructor.go
-    │   ├── create_invoice.go
-    │   ├── bulk_create_invoices_async.go # ✨ NUEVO - Procesamiento asíncrono
-    │   ├── get_summary.go      # ✨ NUEVO - Resumen de KPIs
-    │   ├── get_stats.go        # ✨ NUEVO - Estadísticas detalladas
-    │   ├── get_trends.go       # ✨ NUEVO - Tendencias temporales
-    │   └── deprecated_providers.go  # Métodos deprecados (retornan error)
-    └── infra/
-        ├── primary/       # Adaptadores de entrada
-        │   ├── handlers/  # HTTP handlers (Gin)
-        │   └── queue/     # Consumers (RabbitMQ)
-        │       └── consumer/
-        │           ├── retry_consumer.go
-        │           └── bulk_invoice_consumer.go
-        └── secondary/     # Adaptadores de salida
-            ├── repository/ # Repositorios DB (GORM)
-            ├── queue/      # Publishers (RabbitMQ)
-            └── redis/      # SSE Publisher (Redis Pub/Sub)
-                └── sse_publisher.go
++-- bundle.go              # Ensambla el módulo
++-- internal/
+    +-- domain/            # Núcleo - Reglas de negocio
+    |   +-- entities/      # Entidades PURAS (sin tags)
+    |   +-- dtos/          # Data Transfer Objects
+    |   +-- ports/         # Interfaces (contratos)
+    |   +-- errors/        # Errores de dominio
+    |   +-- constants/     # Constantes
+    +-- app/               # Casos de uso
+    |   +-- constructor.go
+    |   +-- create_invoice.go
+    |   +-- bulk_create_invoices_async.go # ✨ NUEVO - Procesamiento asíncrono
+    |   +-- get_summary.go      # ✨ NUEVO - Resumen de KPIs
+    |   +-- get_stats.go        # ✨ NUEVO - Estadísticas detalladas
+    |   +-- get_trends.go       # ✨ NUEVO - Tendencias temporales
+    |   +-- deprecated_providers.go  # Métodos deprecados (retornan error)
+    +-- infra/
+        +-- primary/       # Adaptadores de entrada
+        |   +-- handlers/  # HTTP handlers (Gin)
+        |   +-- queue/     # Consumers (RabbitMQ)
+        |       +-- consumer/
+        |           +-- retry_consumer.go
+        |           +-- bulk_invoice_consumer.go
+        +-- secondary/     # Adaptadores de salida
+            +-- repository/ # Repositorios DB (GORM)
+            +-- queue/      # Publishers (RabbitMQ)
+            +-- redis/      # SSE Publisher (Redis Pub/Sub)
+                +-- sse_publisher.go
 ```
 
 ## Relación con Integraciones
@@ -63,9 +63,9 @@ Este módulo **delega la ejecución real** a proveedores específicos mediante `
 
 ```
 modules/invoicing (lógica de negocio)
-        ↓ usa
+        v usa
 integrations/core (orquestador)
-        ↓ delega a
+        v delega a
 integrations/invoicing/softpymes (proveedor específico)
 integrations/invoicing/alegra (futuro)
 integrations/invoicing/siigo (futuro)
@@ -421,7 +421,7 @@ trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "d
 | `invoice.cancelled` | Factura cancelada |
 | `credit_note.created` | Nota de crédito creada |
 
-### Redis Pub/Sub → SSE (Notificaciones en Tiempo Real)
+### Redis Pub/Sub -> SSE (Notificaciones en Tiempo Real)
 
 Además de RabbitMQ, el módulo publica eventos a **Redis Pub/Sub** para que el frontend reciba actualizaciones en tiempo real via **Server-Sent Events (SSE)**.
 
@@ -439,31 +439,31 @@ Además de RabbitMQ, el módulo publica eventos a **Redis Pub/Sub** para que el 
 ## Flujo SSE (Notificaciones en Tiempo Real)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    FLUJO DE EVENTOS SSE                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  CreateInvoice / CancelInvoice / BulkJob                        │
-│       │                                                         │
-│       ├─→ RabbitMQ (procesamiento asíncrono, sin cambios)       │
-│       │                                                         │
-│       └─→ Redis Pub/Sub ──→ Events Module suscribe              │
-│               │                  │                              │
-│               │                  ├─→ InvoiceEventSubscriber     │
-│               │                  │     (lee del canal Redis)    │
-│               │                  │                              │
-│               │                  ├─→ InvoiceEventConsumer       │
-│               │                  │     (convierte a Event)      │
-│               │                  │                              │
-│               │                  └─→ EventManager broadcast     │
-│               │                        │                        │
-│               │                        └─→ SSE connections      │
-│               │                              │                  │
-│               │                              └─→ Frontend       │
-│               │                                   useInvoiceSSE │
-│               │                                                 │
-│  Canal: probability:invoicing:events                            │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+|                    FLUJO DE EVENTOS SSE                         |
++-----------------------------------------------------------------+
+|                                                                 |
+|  CreateInvoice / CancelInvoice / BulkJob                        |
+|       |                                                         |
+|       +--> RabbitMQ (procesamiento asíncrono, sin cambios)       |
+|       |                                                         |
+|       +--> Redis Pub/Sub ---> Events Module suscribe              |
+|               |                  |                              |
+|               |                  +--> InvoiceEventSubscriber     |
+|               |                  |     (lee del canal Redis)    |
+|               |                  |                              |
+|               |                  +--> InvoiceEventConsumer       |
+|               |                  |     (convierte a Event)      |
+|               |                  |                              |
+|               |                  +--> EventManager broadcast     |
+|               |                        |                        |
+|               |                        +--> SSE connections      |
+|               |                              |                  |
+|               |                              +--> Frontend       |
+|               |                                   useInvoiceSSE |
+|               |                                                 |
+|  Canal: probability:invoicing:events                            |
++-----------------------------------------------------------------+
 ```
 
 ### Arquitectura del Publisher SSE
@@ -615,7 +615,7 @@ POST /integrations
 ### ✅ Completado
 
 - [x] Sincronización automática vía RabbitMQ
-- [x] Notificaciones en tiempo real via SSE (Redis Pub/Sub → Events Module → Frontend)
+- [x] Notificaciones en tiempo real via SSE (Redis Pub/Sub -> Events Module -> Frontend)
 - [x] Facturación masiva asíncrona con progreso en tiempo real
 - [x] Creación masiva de facturas desde órdenes (bulk)
 

@@ -6,17 +6,17 @@
 
 ```
 testing/
-├── main.go                # ✅ Entry point monolito
-├── go.mod                 # ✅ Módulo único
-├── integrations/
-│   ├── softpymes/         # ✅ Simulador Softpymes
-│   │   ├── bundle.go      # Inicialización y servidor HTTP
-│   │   ├── routes.go      # Handlers HTTP
-│   │   └── internal/      # Lógica interna
-│   ├── shopify/           # Simulador Shopify (webhooks)
-│   └── whatsapp/          # (Futuro)
-└── shared/
-    └── log/               # Logger compartido
++-- main.go                # ✅ Entry point monolito
++-- go.mod                 # ✅ Módulo único
++-- integrations/
+|   +-- softpymes/         # ✅ Simulador Softpymes
+|   |   +-- bundle.go      # Inicialización y servidor HTTP
+|   |   +-- routes.go      # Handlers HTTP
+|   |   +-- internal/      # Lógica interna
+|   +-- shopify/           # Simulador Shopify (webhooks)
+|   +-- whatsapp/          # (Futuro)
++-- shared/
+    +-- log/               # Logger compartido
 ```
 
 ## 🚀 Uso

@@ -13,7 +13,7 @@ Integración con la REST API v3 de WooCommerce para sincronizar órdenes desde t
 | TestConnection | ✅ |
 | SyncOrders (paginado, async) | ✅ |
 | Webhook (HMAC, async) | ✅ |
-| Order Mapper → Canonical | ✅ |
+| Order Mapper -> Canonical | ✅ |
 | Frontend Config Form | ✅ |
 | ListWebhooks / CreateWebhook | ⏳ TODO |
 
@@ -24,7 +24,7 @@ Integración con la REST API v3 de WooCommerce para sincronizar órdenes desde t
 HTTP Basic Auth con `consumer_key` y `consumer_secret` generados desde el panel de WordPress.
 
 ```
-WordPress Admin → WooCommerce → Ajustes → Avanzado → REST API → Agregar clave
+WordPress Admin -> WooCommerce -> Ajustes -> Avanzado -> REST API -> Agregar clave
 ```
 
 | Campo | Tipo | Ejemplo |
@@ -61,7 +61,7 @@ WooCommerce usa paginación basada en página (no cursor):
 ### Configuración en WooCommerce
 
 ```
-WordPress Admin → WooCommerce → Ajustes → Avanzado → Webhooks → Agregar webhook
+WordPress Admin -> WooCommerce -> Ajustes -> Avanzado -> Webhooks -> Agregar webhook
 ```
 
 - **URL de entrega:** `{BASE_URL}/integrations/woocommerce/webhook`
@@ -112,39 +112,39 @@ Opcional — solo se valida si `WOOCOMMERCE_WEBHOOK_SECRET` está configurada co
 
 ```
 woocommerce/
-├── README.md
-├── bundle.go                          # Ensambla el módulo, retorna IIntegrationContract
-└── internal/
-    ├── domain/
-    │   ├── entities.go                # Integration, WooCommerceOrder, Billing, Shipping, LineItem, etc.
-    │   ├── errors.go                  # ErrMissingStoreURL, ErrWebhookInvalidSignature, etc.
-    │   ├── ports.go                   # IWooCommerceClient, IIntegrationService, OrderPublisher
-    │   └── query_params.go            # GetOrdersParams, GetOrdersResult
-    ├── app/usecases/
-    │   ├── constructor.go             # IWooCommerceUseCase (4 métodos)
-    │   ├── test_connection.go         # Valida credenciales via GET /system_status
-    │   ├── sync_orders.go             # Sync paginado async (30 días default, 500ms rate limit)
-    │   ├── process_webhook.go         # Deserializa → mapea → publica a RabbitMQ
-    │   └── mapper/
-    │       └── order_mapper.go        # WooCommerceOrder → ProbabilityOrderDTO
-    └── infra/
-        ├── primary/handlers/
-        │   ├── constructor.go         # IHandler + RegisterRoutes
-        │   └── handle_webhook.go      # HMAC validation + async processing
-        └── secondary/
-            ├── client/
-            │   ├── constructor.go     # HTTP client con Basic Auth
-            │   ├── get_orders.go      # GetOrders (paginado), GetOrder (individual)
-            │   └── response/
-            │       └── woo_order_response.go  # JSON structs + ToDomain()
-            ├── core/
-            │   ├── core.go            # IIntegrationContract adapter
-            │   └── integration_service.go
-            └── queue/
-                ├── mapper/canonical_order_mapper.go
-                ├── rabbitmq_publisher.go
-                ├── noop_publisher.go
-                └── request/canonical_order_dto.go
++-- README.md
++-- bundle.go                          # Ensambla el módulo, retorna IIntegrationContract
++-- internal/
+    +-- domain/
+    |   +-- entities.go                # Integration, WooCommerceOrder, Billing, Shipping, LineItem, etc.
+    |   +-- errors.go                  # ErrMissingStoreURL, ErrWebhookInvalidSignature, etc.
+    |   +-- ports.go                   # IWooCommerceClient, IIntegrationService, OrderPublisher
+    |   +-- query_params.go            # GetOrdersParams, GetOrdersResult
+    +-- app/usecases/
+    |   +-- constructor.go             # IWooCommerceUseCase (4 métodos)
+    |   +-- test_connection.go         # Valida credenciales via GET /system_status
+    |   +-- sync_orders.go             # Sync paginado async (30 días default, 500ms rate limit)
+    |   +-- process_webhook.go         # Deserializa -> mapea -> publica a RabbitMQ
+    |   +-- mapper/
+    |       +-- order_mapper.go        # WooCommerceOrder -> ProbabilityOrderDTO
+    +-- infra/
+        +-- primary/handlers/
+        |   +-- constructor.go         # IHandler + RegisterRoutes
+        |   +-- handle_webhook.go      # HMAC validation + async processing
+        +-- secondary/
+            +-- client/
+            |   +-- constructor.go     # HTTP client con Basic Auth
+            |   +-- get_orders.go      # GetOrders (paginado), GetOrder (individual)
+            |   +-- response/
+            |       +-- woo_order_response.go  # JSON structs + ToDomain()
+            +-- core/
+            |   +-- core.go            # IIntegrationContract adapter
+            |   +-- integration_service.go
+            +-- queue/
+                +-- mapper/canonical_order_mapper.go
+                +-- rabbitmq_publisher.go
+                +-- noop_publisher.go
+                +-- request/canonical_order_dto.go
 ```
 
 ---

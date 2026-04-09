@@ -8,34 +8,34 @@ Es un **relay puro**: no tiene base de datos ni estado propio. Solo recibe, vali
 
 ```
 Grafana Cloud
-     │
-     │  POST /api/v1/monitoring/alerts/grafana
-     │  Header: X-Grafana-Signature-V2: sha256=<hmac>
+     |
+     |  POST /api/v1/monitoring/alerts/grafana
+     |  Header: X-Grafana-Signature-V2: sha256=<hmac>
      ▼
-┌─────────────────────┐
-│   WebhookGrafana    │  ← Valida HMAC-SHA256
-│     (handler)       │  ← Parsea payload
-└─────────┬───────────┘
-          │
++---------------------+
+|   WebhookGrafana    |  <- Valida HMAC-SHA256
+|     (handler)       |  <- Parsea payload
++---------+-----------+
+          |
           ▼
-┌─────────────────────┐
-│  ProcessGrafanaAlert│  ← Filtra alertas "firing"
-│     (use case)      │  ← Mapea alertname → tipo legible
-└─────────┬───────────┘
-          │
++---------------------+
+|  ProcessGrafanaAlert|  <- Filtra alertas "firing"
+|     (use case)      |  <- Mapea alertname -> tipo legible
++---------+-----------+
+          |
           ▼
    RabbitMQ queue
   "monitoring.alerts"
-          │
+          |
           ▼
-┌─────────────────────┐
-│   consumeralert     │  ← Lee credenciales de env vars
-│  (whatsapp module)  │  ← Construye template message
-└─────────┬───────────┘
-          │
++---------------------+
+|   consumeralert     |  <- Lee credenciales de env vars
+|  (whatsapp module)  |  <- Construye template message
++---------+-----------+
+          |
           ▼
    WhatsApp API (Meta)
-   → +573023406789
+   -> +573023406789
 ```
 
 ---
@@ -135,7 +135,7 @@ Por favor revisa el estado del servidor a la brevedad.
 
 #### Cómo crearla en Meta Business Manager
 
-1. Ir a **Meta Business Manager** → **WhatsApp** → **Message Templates**
+1. Ir a **Meta Business Manager** -> **WhatsApp** -> **Message Templates**
 2. Clic en **Create Template**
 3. Configurar:
    - **Category**: Utility
@@ -151,7 +151,7 @@ Por favor revisa el estado del servidor a la brevedad.
 
 ## Configuración en Grafana Cloud (post-despliegue)
 
-### Reglas de alerta (Alerting → Alert Rules → New Rule)
+### Reglas de alerta (Alerting -> Alert Rules -> New Rule)
 
 **RAM Alta**
 ```
@@ -180,7 +180,7 @@ Labels: alertname=DISCO_ALTO
 Annotations: summary=<valor>% - supera umbral de 80%
 ```
 
-### Contact Point (Alerting → Contact Points → New)
+### Contact Point (Alerting -> Contact Points -> New)
 
 - **Type**: Webhook
 - **URL**: `https://www.probabilityia.com.co/api/v1/monitoring/alerts/grafana`

@@ -6,20 +6,20 @@ Módulo de pruebas de integración para el sistema de mensajería de WhatsApp, s
 
 ```
 whatsapp/
-├── bundle.go                        # Punto de entrada del módulo
-└── internal/
-    ├── domain/                      # Capa de dominio (sin dependencias externas)
-    │   ├── entities.go              # Entidades de dominio (Conversation, MessageLog, etc.)
-    │   ├── ports.go                 # Interfaces (IWebhookClient)
-    │   └── repository.go            # Repositorio en memoria
-    ├── app/
-    │   └── usecases/                # Casos de uso
-    │       ├── constructor.go       # Constructor de use cases
-    │       └── conversation_simulator.go  # Lógica de simulación
-    └── infra/
-        └── primary/
-            └── client/
-                └── webhook_client.go  # Cliente HTTP para enviar webhooks
++-- bundle.go                        # Punto de entrada del módulo
++-- internal/
+    +-- domain/                      # Capa de dominio (sin dependencias externas)
+    |   +-- entities.go              # Entidades de dominio (Conversation, MessageLog, etc.)
+    |   +-- ports.go                 # Interfaces (IWebhookClient)
+    |   +-- repository.go            # Repositorio en memoria
+    +-- app/
+    |   +-- usecases/                # Casos de uso
+    |       +-- constructor.go       # Constructor de use cases
+    |       +-- conversation_simulator.go  # Lógica de simulación
+    +-- infra/
+        +-- primary/
+            +-- client/
+                +-- webhook_client.go  # Cliente HTTP para enviar webhooks
 ```
 
 ## 🎯 Funcionalidades
@@ -53,7 +53,7 @@ Ver todos los mensajes de una conversación:
 messages := whatsappIntegration.GetMessages(conversationID)
 ```
 
-## 📋 Mapeo de Templates → Respuestas
+## 📋 Mapeo de Templates -> Respuestas
 
 | Template | Respuesta Automática |
 |----------|---------------------|
@@ -117,21 +117,21 @@ go run cmd/main.go
 
 ```
 1. Sistema Real envía template al usuario real
-   ↓
+   v
 2. Usuario usa el simulador (opción 8 o 9)
-   ↓
+   v
 3. Simulador espera WHATSAPP_AUTO_REPLY_DELAY (2s default)
-   ↓
+   v
 4. Simulador envía webhook: status "delivered"
-   ↓
+   v
 5. Simulador espera 500ms
-   ↓
+   v
 6. Simulador envía webhook: status "read"
-   ↓
+   v
 7. Simulador espera 500ms
-   ↓
+   v
 8. Simulador envía webhook: mensaje de usuario (button response)
-   ↓
+   v
 9. Sistema Real procesa la respuesta y actualiza el estado
 ```
 

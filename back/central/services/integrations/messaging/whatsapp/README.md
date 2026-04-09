@@ -15,7 +15,7 @@ Integración completa y bidireccional con WhatsApp Business Cloud API para gesti
 | System User | `cam-adm` (ID: `61579689993959`) |
 | PIN 2FA del número | `170122` |
 
-> **IMPORTANTE**: Los tokens del system user se generan desde **Probabilityapp** (Business Settings → System Users → cam-adm → Generar identificador). El system user debe tener asignada la app ProbabilityIA y las cuentas de WhatsApp como activos.
+> **IMPORTANTE**: Los tokens del system user se generan desde **Probabilityapp** (Business Settings -> System Users -> cam-adm -> Generar identificador). El system user debe tener asignada la app ProbabilityIA y las cuentas de WhatsApp como activos.
 
 ---
 
@@ -47,7 +47,7 @@ El agente humano puede chatear directamente con el cliente desde el dashboard:
 
 Permite controlar quién responde al cliente: la IA o el humano:
 
-- **Toggle en el header del chat**: `🟢 IA Activa` → `🔴 IA Pausada`
+- **Toggle en el header del chat**: `🟢 IA Activa` -> `🔴 IA Pausada`
 - **Cuando IA está activa**: el compositor del chat está bloqueado — solo la IA responde
 - **Cuando IA está pausada**: el compositor se habilita y el humano escribe libremente
 - Al pausar la IA se activa automáticamente una `HumanSession` en Redis para ese teléfono
@@ -86,8 +86,8 @@ Mecanismo que enruta los mensajes entrantes del cliente al dashboard en lugar de
 | Clave | TTL | Propósito |
 |-------|-----|-----------|
 | `whatsapp:conv:{id}` | 25h | Datos de la conversación |
-| `whatsapp:conv:idx:po:{phone}:{order}` | 25h | Índice phone+order → conv ID |
-| `whatsapp:conv:idx:active:{phone}` | 25h | Índice teléfono activo → conv ID |
+| `whatsapp:conv:idx:po:{phone}:{order}` | 25h | Índice phone+order -> conv ID |
+| `whatsapp:conv:idx:active:{phone}` | 25h | Índice teléfono activo -> conv ID |
 | `whatsapp:human_session:{phone}` | 24h | Sesión de atención humana activa |
 | `whatsapp:ai_paused:{phone}` | 24h | Flag de IA pausada (humano en control) |
 
@@ -95,33 +95,33 @@ Mecanismo que enruta los mensajes entrantes del cliente al dashboard en lugar de
 
 ```
 Cliente escribe
-      │
+      |
       ▼
 ¿Conversación activa en Redis?
-      ├─ SÍ → procesar flujo de bot → publicar SSE → persistir BD
-      └─ NO
-           │
+      +- SÍ -> procesar flujo de bot -> publicar SSE -> persistir BD
+      +- NO
+           |
            ▼
       ¿HumanSession activa?
-           ├─ SÍ → persistir BD + publicar SSE al dashboard
-           └─ NO
-                │
+           +- SÍ -> persistir BD + publicar SSE al dashboard
+           +- NO
+                |
                 ▼
            ¿AIForwarder disponible?
-                └─ SÍ → reenviar a ai_sales (que chequea IsAIPaused)
+                +- SÍ -> reenviar a ai_sales (que chequea IsAIPaused)
 ```
 
 ### Flujo de respuesta manual (humano)
 
 ```
 Agente escribe en dashboard
-      │
+      |
       ▼
-SendManualReply → envía texto libre a WhatsApp API
-      │
+SendManualReply -> envía texto libre a WhatsApp API
+      |
       ▼
 ActivateHumanSession en Redis (TTL 24h)
-      │
+      |
       ▼
 Persiste en BD via RabbitMQ (persistence publisher)
 ```
@@ -155,8 +155,8 @@ Cacheadas en Redis (`integration:platform_creds:2`) durante el warmup del servid
 ### Webhook (sin JWT)
 
 Las rutas del webhook (`GET/POST /api/v1/integrations/whatsapp/webhook`) **no usan JWT** porque Meta envía su propia autenticación:
-- **GET** (verificación): Meta envía `hub.verify_token` → se compara con `verify_token` de platform_creds
-- **POST** (eventos): Meta firma el payload con HMAC-SHA256 → se valida con `webhook_secret` de platform_creds
+- **GET** (verificación): Meta envía `hub.verify_token` -> se compara con `verify_token` de platform_creds
+- **POST** (eventos): Meta firma el payload con HMAC-SHA256 -> se valida con `webhook_secret` de platform_creds
 
 ---
 
@@ -164,52 +164,52 @@ Las rutas del webhook (`GET/POST /api/v1/integrations/whatsapp/webhook`) **no us
 
 ```
 whatsApp/
-├── bundle.go                                  # Ensamblaje de componentes (DI)
-├── internal/
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   ├── conversation.go                # Entidades de conversación y estados
-│   │   │   ├── message.go                     # Entidades de mensajes
-│   │   │   └── template.go                    # Catálogo de plantillas
-│   │   ├── dtos/
-│   │   ├── ports/
-│   │   │   └── ports.go                       # Interfaces (IConversationCache, ISSEEventPublisher, etc.)
-│   │   └── errors/
-│   ├── app/
-│   │   ├── usecasemessaging/
-│   │   │   ├── constructor.go                 # IUseCase interface + dependencias
-│   │   │   ├── handle-webhook.go              # Procesamiento de webhooks + SSE + HumanSession
-│   │   │   ├── send-template-message.go       # Envío de plantillas
-│   │   │   ├── send_manual_reply.go           # Respuesta manual + ActivateHumanSession
-│   │   │   ├── ai_control.go                  # PauseAI / ResumeAI
-│   │   │   ├── conversation-manager.go        # Máquina de estados
-│   │   │   └── utils.go                       # NormalizePhoneNumber, helpers
-│   │   └── usecasetestconnection/
-│   │       └── test-connection.go             # Test con template prueba_conexion
-│   └── infra/
-│       ├── primary/
-│       │   ├── handlers/
-│       │   │   ├── constructor.go             # IHandler + struct handler
-│       │   │   ├── routes.go                  # Webhook SIN JWT, demás CON JWT
-│       │   │   ├── webhook_handler.go         # Procesa mensajes y estados de Meta
-│       │   │   ├── send_template_handler.go   # Envía plantilla manual
-│       │   │   ├── manual_reply_handler.go    # POST /conversations/:id/reply
-│       │   │   ├── ai_control_handler.go      # POST /conversations/:id/pause-ai y /resume-ai
-│       │   │   └── request/
-│       │   │       ├── manual_reply.go
-│       │   │       └── ai_control.go
-│       │   └── queue/
-│       │       ├── consumerorder/             # Consume orders.confirmation.requested
-│       │       └── consumeralert/             # Consume alertas de monitoreo
-│       └── secondary/
-│           ├── client/                        # Cliente HTTP WhatsApp API
-│           ├── cache/
-│           │   ├── conversation_cache.go      # Redis: conversaciones + HumanSession + AIPaused
-│           │   └── credentials_cache.go       # Lee platform_creds desde Redis
-│           └── queue/
-│               ├── sse_publisher.go           # Publica eventos SSE via RabbitMQ
-│               ├── event_publisher.go         # Publica eventos de negocio
-│               └── persistence_publisher.go   # Publica eventos de persistencia
++-- bundle.go                                  # Ensamblaje de componentes (DI)
++-- internal/
+|   +-- domain/
+|   |   +-- entities/
+|   |   |   +-- conversation.go                # Entidades de conversación y estados
+|   |   |   +-- message.go                     # Entidades de mensajes
+|   |   |   +-- template.go                    # Catálogo de plantillas
+|   |   +-- dtos/
+|   |   +-- ports/
+|   |   |   +-- ports.go                       # Interfaces (IConversationCache, ISSEEventPublisher, etc.)
+|   |   +-- errors/
+|   +-- app/
+|   |   +-- usecasemessaging/
+|   |   |   +-- constructor.go                 # IUseCase interface + dependencias
+|   |   |   +-- handle-webhook.go              # Procesamiento de webhooks + SSE + HumanSession
+|   |   |   +-- send-template-message.go       # Envío de plantillas
+|   |   |   +-- send_manual_reply.go           # Respuesta manual + ActivateHumanSession
+|   |   |   +-- ai_control.go                  # PauseAI / ResumeAI
+|   |   |   +-- conversation-manager.go        # Máquina de estados
+|   |   |   +-- utils.go                       # NormalizePhoneNumber, helpers
+|   |   +-- usecasetestconnection/
+|   |       +-- test-connection.go             # Test con template prueba_conexion
+|   +-- infra/
+|       +-- primary/
+|       |   +-- handlers/
+|       |   |   +-- constructor.go             # IHandler + struct handler
+|       |   |   +-- routes.go                  # Webhook SIN JWT, demás CON JWT
+|       |   |   +-- webhook_handler.go         # Procesa mensajes y estados de Meta
+|       |   |   +-- send_template_handler.go   # Envía plantilla manual
+|       |   |   +-- manual_reply_handler.go    # POST /conversations/:id/reply
+|       |   |   +-- ai_control_handler.go      # POST /conversations/:id/pause-ai y /resume-ai
+|       |   |   +-- request/
+|       |   |       +-- manual_reply.go
+|       |   |       +-- ai_control.go
+|       |   +-- queue/
+|       |       +-- consumerorder/             # Consume orders.confirmation.requested
+|       |       +-- consumeralert/             # Consume alertas de monitoreo
+|       +-- secondary/
+|           +-- client/                        # Cliente HTTP WhatsApp API
+|           +-- cache/
+|           |   +-- conversation_cache.go      # Redis: conversaciones + HumanSession + AIPaused
+|           |   +-- credentials_cache.go       # Lee platform_creds desde Redis
+|           +-- queue/
+|               +-- sse_publisher.go           # Publica eventos SSE via RabbitMQ
+|               +-- event_publisher.go         # Publica eventos de negocio
+|               +-- persistence_publisher.go   # Publica eventos de persistencia
 ```
 
 ---
@@ -230,18 +230,18 @@ whatsApp/
 ## Flujo de Conversación (bot automatizado)
 
 ```
-[INICIO] → confirmacion_pedido_contraentrega
-            ├─ "Confirmar pedido" → pedido_confirmado_v2 [FIN: event confirmed]
-            └─ "No confirmar" → menu_no_confirmacion
-                                 ├─ "Presentar novedad" → tipo_novedad_pedido
-                                 │                          ├─ "Cambio de dirección" → novedad_cambio_direccion [FIN: event novelty]
-                                 │                          ├─ "Cambio de productos" → novedad_cambio_productos [FIN: event novelty]
-                                 │                          └─ "Cambio medio de pago" → novedad_cambio_medio_pago [FIN: event novelty]
-                                 ├─ "Cancelar pedido" → confirmar_cancelacion_pedido
-                                 │                       ├─ "Sí, cancelar" → motivo_cancelacion_pedido
-                                 │                       │                    └─ [texto libre] → pedido_cancelado [FIN: event cancelled]
-                                 │                       └─ "No, volver" → menu_no_confirmacion
-                                 └─ "Asesor" → handoff_asesor [FIN: event handoff → HUMANO]
+[INICIO] -> confirmacion_pedido_contraentrega
+            +- "Confirmar pedido" -> pedido_confirmado_v2 [FIN: event confirmed]
+            +- "No confirmar" -> menu_no_confirmacion
+                                 +- "Presentar novedad" -> tipo_novedad_pedido
+                                 |                          +- "Cambio de dirección" -> novedad_cambio_direccion [FIN: event novelty]
+                                 |                          +- "Cambio de productos" -> novedad_cambio_productos [FIN: event novelty]
+                                 |                          +- "Cambio medio de pago" -> novedad_cambio_medio_pago [FIN: event novelty]
+                                 +- "Cancelar pedido" -> confirmar_cancelacion_pedido
+                                 |                       +- "Sí, cancelar" -> motivo_cancelacion_pedido
+                                 |                       |                    +- [texto libre] -> pedido_cancelado [FIN: event cancelled]
+                                 |                       +- "No, volver" -> menu_no_confirmacion
+                                 +- "Asesor" -> handoff_asesor [FIN: event handoff -> HUMANO]
 ```
 
 ---
@@ -375,6 +375,6 @@ Verificar que existe la clave `whatsapp:ai_paused:{phone}` en Redis. El módulo 
 El warmup del servidor debe cachear `platform_creds` en Redis. Verificar que `warm_cache.go` ejecute `warmPlatformCredentials()`.
 
 ### Token sin permisos para un WABA
-1. Business Settings → System Users → cam-adm → Activos asignados
+1. Business Settings -> System Users -> cam-adm -> Activos asignados
 2. Verificar que el WABA esté asignado con control total
 3. Regenerar token

@@ -188,11 +188,11 @@ El cliente sigue el patrón de **Arquitectura Hexagonal**:
 
 ```
 ports.IInvoicingProviderClient (interface de dominio)
-           ↑
+           ^
            |
     softpymes.Client (implementación)
            |
-           ↓
+           v
   shared/httpclient (cliente HTTP compartido)
 ```
 

@@ -12,46 +12,46 @@ All orders are mapped to the canonical `ProbabilityOrderDTO` format and publishe
 
 ```
 meli/
-├── bundle.go                          # Wiring: client, service, queue, usecase, handler
-└── internal/
-    ├── domain/                        # Pure domain — zero external dependencies
-    │   ├── entities.go                # MeliOrder, MeliBuyer, MeliPayment, MeliShipping, TokenResponse, etc.
-    │   ├── ports.go                   # IMeliClient, IIntegrationService, OrderPublisher
-    │   ├── errors.go                  # Domain errors (ErrTokenExpired, ErrRateLimited, etc.)
-    │   └── query_params.go            # GetOrdersParams (offset/limit), GetOrdersResult
-    ├── app/usecases/                  # Business logic
-    │   ├── constructor.go             # IMeliUseCase interface + New()
-    │   ├── test_connection.go         # Validates credentials via GET /users/me
-    │   ├── process_notification.go    # IPN flow: fetch order → map → publish
-    │   ├── sync_orders.go             # Bulk sync with pagination (offset/limit, max 50)
-    │   ├── refresh_token.go           # OAuth token management (lazy refresh)
-    │   └── mapper/
-    │       └── order_mapper.go        # MapMeliOrderToProbability + status mappings
-    └── infra/
-        ├── primary/handlers/
-        │   ├── constructor.go         # IHandler + RegisterRoutes
-        │   └── handle_notification.go # POST /meli/notifications — respond 200, process async
-        └── secondary/
-            ├── client/                # HTTP client for MeLi REST API
-            │   ├── constructor.go     # MeliClient + newAuthorizedRequest helper
-            │   ├── get_order.go       # GET /orders/{id}
-            │   ├── get_orders.go      # GET /orders/search?seller={id}
-            │   ├── get_shipment.go    # GET /shipments/{id}
-            │   ├── get_user.go        # GET /users/me
-            │   ├── refresh_token.go   # POST /oauth/token
-            │   └── response/          # JSON-tagged structs + ToDomain()
-            │       ├── meli_order_response.go
-            │       └── meli_shipping_response.go
-            ├── core/                  # Adapter to integration core
-            │   ├── core.go            # IIntegrationContract (TestConnection, Sync, GetWebhookURL)
-            │   └── integration_service.go  # Adapter core → domain.IIntegrationService
-            └── queue/                 # RabbitMQ publisher
-                ├── rabbitmq_publisher.go
-                ├── noop_publisher.go
-                ├── mapper/
-                │   └── canonical_order_mapper.go
-                └── request/
-                    └── canonical_order_dto.go
++-- bundle.go                          # Wiring: client, service, queue, usecase, handler
++-- internal/
+    +-- domain/                        # Pure domain — zero external dependencies
+    |   +-- entities.go                # MeliOrder, MeliBuyer, MeliPayment, MeliShipping, TokenResponse, etc.
+    |   +-- ports.go                   # IMeliClient, IIntegrationService, OrderPublisher
+    |   +-- errors.go                  # Domain errors (ErrTokenExpired, ErrRateLimited, etc.)
+    |   +-- query_params.go            # GetOrdersParams (offset/limit), GetOrdersResult
+    +-- app/usecases/                  # Business logic
+    |   +-- constructor.go             # IMeliUseCase interface + New()
+    |   +-- test_connection.go         # Validates credentials via GET /users/me
+    |   +-- process_notification.go    # IPN flow: fetch order -> map -> publish
+    |   +-- sync_orders.go             # Bulk sync with pagination (offset/limit, max 50)
+    |   +-- refresh_token.go           # OAuth token management (lazy refresh)
+    |   +-- mapper/
+    |       +-- order_mapper.go        # MapMeliOrderToProbability + status mappings
+    +-- infra/
+        +-- primary/handlers/
+        |   +-- constructor.go         # IHandler + RegisterRoutes
+        |   +-- handle_notification.go # POST /meli/notifications — respond 200, process async
+        +-- secondary/
+            +-- client/                # HTTP client for MeLi REST API
+            |   +-- constructor.go     # MeliClient + newAuthorizedRequest helper
+            |   +-- get_order.go       # GET /orders/{id}
+            |   +-- get_orders.go      # GET /orders/search?seller={id}
+            |   +-- get_shipment.go    # GET /shipments/{id}
+            |   +-- get_user.go        # GET /users/me
+            |   +-- refresh_token.go   # POST /oauth/token
+            |   +-- response/          # JSON-tagged structs + ToDomain()
+            |       +-- meli_order_response.go
+            |       +-- meli_shipping_response.go
+            +-- core/                  # Adapter to integration core
+            |   +-- core.go            # IIntegrationContract (TestConnection, Sync, GetWebhookURL)
+            |   +-- integration_service.go  # Adapter core -> domain.IIntegrationService
+            +-- queue/                 # RabbitMQ publisher
+                +-- rabbitmq_publisher.go
+                +-- noop_publisher.go
+                +-- mapper/
+                |   +-- canonical_order_mapper.go
+                +-- request/
+                    +-- canonical_order_dto.go
 ```
 
 ## MercadoLibre API Endpoints Used
@@ -92,15 +92,15 @@ Token management is **lazy** — `EnsureValidToken()` checks expiration before e
 MercadoLibre sends IPN notifications to `POST /integrations/meli/notifications`:
 
 ```
-MeLi IPN → Handler (respond 200) → goroutine →
+MeLi IPN -> Handler (respond 200) -> goroutine ->
   1. Parse notification body (topic + resource)
   2. Filter: only process "orders_v2" topic
   3. Extract order_id from resource ("/orders/123456789")
-  4. Find integration by seller_id (notification.user_id → store_id)
+  4. Find integration by seller_id (notification.user_id -> store_id)
   5. EnsureValidToken (refresh if needed)
-  6. GET /orders/{id} → full order data
-  7. GET /shipments/{id} → shipping details (optional, non-fatal)
-  8. MapMeliOrderToProbability → canonical DTO
+  6. GET /orders/{id} -> full order data
+  7. GET /shipments/{id} -> shipping details (optional, non-fatal)
+  8. MapMeliOrderToProbability -> canonical DTO
   9. Publish to RabbitMQ queue "probability.orders.canonical"
 ```
 
@@ -123,12 +123,12 @@ MeLi IPN → Handler (respond 200) → goroutine →
 Bulk synchronization via `SyncOrders` (last 30 days) or `SyncOrdersWithParams`:
 
 ```
-Core.SyncOrdersByIntegrationID → UseCase.SyncOrders →
+Core.SyncOrdersByIntegrationID -> UseCase.SyncOrders ->
   1. Get integration + seller_id
   2. EnsureValidToken
   3. Launch async goroutine:
      - Paginate: GET /orders/search (offset 0, 50, 100...)
-     - For each order: GET /shipments/{id} → map → publish
+     - For each order: GET /shipments/{id} -> map -> publish
      - Rate limit: 1s between pages
      - Auto-retry on token expiration
 ```

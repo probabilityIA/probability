@@ -8,42 +8,42 @@ Módulo de integración con **Softpymes** para emisión de facturas electrónica
 
 ```
 softpymes/
-├── bundle.go                                     # Punto de entrada: inicializa consumers y cliente
-└── internal/
-    ├── domain/
-    │   ├── entities/
-    │   │   ├── catalog.go                        # Constantes DIAN (tipos de doc, monedas, etc.)
-    │   │   └── config.go                         # InvoicingConfig (réplica local)
-    │   ├── dtos/
-    │   │   └── invoice_types.go                  # DTOs tipados (CreateInvoiceRequest, Result, etc.)
-    │   ├── ports/
-    │   │   └── ports.go                          # Interfaces: ISoftpymesClient, IInvoiceUseCase
-    │   └── errors/
-    │       └── errors.go                         # Errores de dominio
-    ├── app/
-    │   ├── constructor.go                        # Constructor del use case
-    │   └── process_order_for_invoicing.go        # Use case: facturación automática por evento
-    └── infra/
-        ├── primary/
-        │   └── consumer/
-        │       ├── invoice_request_consumer.go   # Escucha invoicing.softpymes.requests
-        │       └── order_consumer.go             # Escucha orders.events.invoicing
-        └── secondary/
-            ├── client/
-            │   ├── client.go                     # Cliente HTTP base
-            │   ├── auth.go                       # Autenticación y test de conexión
-            │   ├── invoice.go                    # CreateInvoice()
-            │   ├── credit_note.go                # CreateCreditNote()
-            │   ├── get_document.go               # GetDocumentByNumber()
-            │   ├── list_documents.go             # ListDocuments()
-            │   ├── customer.go                   # ensureCustomerExists(), createCustomer()
-            │   └── token_cache.go                # Cache en memoria del Bearer token
-            ├── cache/
-            │   └── config_cache.go               # Redis cache de InvoicingConfig
-            ├── queue/
-            │   └── response_publisher.go         # Publica respuestas a invoicing.responses
-            └── integration_cache/
-                └── client.go                     # Lee metadata y credenciales de IntegrationCore
++-- bundle.go                                     # Punto de entrada: inicializa consumers y cliente
++-- internal/
+    +-- domain/
+    |   +-- entities/
+    |   |   +-- catalog.go                        # Constantes DIAN (tipos de doc, monedas, etc.)
+    |   |   +-- config.go                         # InvoicingConfig (réplica local)
+    |   +-- dtos/
+    |   |   +-- invoice_types.go                  # DTOs tipados (CreateInvoiceRequest, Result, etc.)
+    |   +-- ports/
+    |   |   +-- ports.go                          # Interfaces: ISoftpymesClient, IInvoiceUseCase
+    |   +-- errors/
+    |       +-- errors.go                         # Errores de dominio
+    +-- app/
+    |   +-- constructor.go                        # Constructor del use case
+    |   +-- process_order_for_invoicing.go        # Use case: facturación automática por evento
+    +-- infra/
+        +-- primary/
+        |   +-- consumer/
+        |       +-- invoice_request_consumer.go   # Escucha invoicing.softpymes.requests
+        |       +-- order_consumer.go             # Escucha orders.events.invoicing
+        +-- secondary/
+            +-- client/
+            |   +-- client.go                     # Cliente HTTP base
+            |   +-- auth.go                       # Autenticación y test de conexión
+            |   +-- invoice.go                    # CreateInvoice()
+            |   +-- credit_note.go                # CreateCreditNote()
+            |   +-- get_document.go               # GetDocumentByNumber()
+            |   +-- list_documents.go             # ListDocuments()
+            |   +-- customer.go                   # ensureCustomerExists(), createCustomer()
+            |   +-- token_cache.go                # Cache en memoria del Bearer token
+            +-- cache/
+            |   +-- config_cache.go               # Redis cache de InvoicingConfig
+            +-- queue/
+            |   +-- response_publisher.go         # Publica respuestas a invoicing.responses
+            +-- integration_cache/
+                +-- client.go                     # Lee metadata y credenciales de IntegrationCore
 ```
 
 ---
@@ -54,44 +54,44 @@ softpymes/
 
 ```
 Invoicing Module
-    │
-    └─▶ [invoicing.softpymes.requests]
-            │
+    |
+    +-▶ [invoicing.softpymes.requests]
+            |
             ▼
     InvoiceRequestConsumer.Start()
-            │
-            ├─ Obtiene integración desde IntegrationCore
-            ├─ Desencripta api_key / api_secret
-            ├─ Client.CreateInvoice()
-            │       ├─ authenticate()               ← POST /oauth/integration/login/
-            │       ├─ ensureCustomerExists()        ← GET/POST /app/integration/customer
-            │       └─ POST /app/integration/sales_invoice/
-            │
-            ├─ Espera 3s para procesamiento DIAN
-            ├─ GetDocumentByNumber()                ← POST /app/integration/search/documents/
-            │
-            └─▶ [invoicing.responses]               ← InvoiceResponseMessage
+            |
+            +- Obtiene integración desde IntegrationCore
+            +- Desencripta api_key / api_secret
+            +- Client.CreateInvoice()
+            |       +- authenticate()               <- POST /oauth/integration/login/
+            |       +- ensureCustomerExists()        <- GET/POST /app/integration/customer
+            |       +- POST /app/integration/sales_invoice/
+            |
+            +- Espera 3s para procesamiento DIAN
+            +- GetDocumentByNumber()                <- POST /app/integration/search/documents/
+            |
+            +-▶ [invoicing.responses]               <- InvoiceResponseMessage
 ```
 
 ### Flujo B — Facturación automática (desde Orders Module)
 
 ```
 Orders Module
-    │
-    └─▶ [orders.events.invoicing]
-            │
+    |
+    +-▶ [orders.events.invoicing]
+            |
             ▼
     OrderConsumer.Start()
-            │
+            |
             ▼
     ProcessOrderForInvoicing() [Use Case]
-            │
-            ├─ ConfigCache (Redis) → fallback IntegrationCore
-            ├─ Validar filtros (monto, pago, estado)
-            ├─ Verificar duplicado en Redis Hash
-            ├─ Obtener credenciales desde integration_cache
-            ├─ Client.CreateInvoice()               ← mismo flujo que Flujo A
-            └─ Marcar como procesado en Redis (30 días)
+            |
+            +- ConfigCache (Redis) -> fallback IntegrationCore
+            +- Validar filtros (monto, pago, estado)
+            +- Verificar duplicado en Redis Hash
+            +- Obtener credenciales desde integration_cache
+            +- Client.CreateInvoice()               <- mismo flujo que Flujo A
+            +- Marcar como procesado en Redis (30 días)
 ```
 
 ---
@@ -148,8 +148,8 @@ Orders Module
 
 Antes de crear una factura, el cliente verifica si el tercero existe en Softpymes:
 
-1. `GET /app/integration/customer?identification={nit}` → si existe, usa su `branchCode`
-2. Si no existe → `POST /app/integration/customer` con:
+1. `GET /app/integration/customer?identification={nit}` -> si existe, usa su `branchCode`
+2. Si no existe -> `POST /app/integration/customer` con:
    - Tipo: Persona Natural (`thirdType = "N"`)
    - Identificación: Cédula de Ciudadanía (`13`)
    - Nombre dividido en `firstName` / `lastName`

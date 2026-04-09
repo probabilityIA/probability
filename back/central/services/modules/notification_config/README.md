@@ -25,32 +25,32 @@ En una plataforma multi-tenant como Probability, cada negocio:
 ### Flujo Conceptual
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  1. EVENTO OCURRE                                               │
-│  Una orden es creada en Shopify                                │
-└─────────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  2. SISTEMA BUSCA CONFIGURACIONES                               │
-│  ¿Hay configs activas para esta integración + evento?          │
-│  → Business: "Mi Tienda"                                        │
-│  → Integration: "Shopify Mi Tiendita"                          │
-│  → Event: "order.created"                                       │
-└─────────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  3. VALIDA CONDICIONES                                          │
-│  ¿Cumple con los filtros configurados?                         │
-│  → Estado de la orden: "created" ✓                             │
-│  → Método de pago: "contra_entrega" ✓                          │
-└─────────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  4. ENVÍA NOTIFICACIÓN                                          │
-│  Por el canal configurado:                                      │
-│  → WhatsApp: "Tu pedido #1234 ha sido confirmado"              │
-│  → Email: "Confirmación de Pedido"                             │
-└─────────────────────────────────────────────────────────────────┘
++-----------------------------------------------------------------+
+|  1. EVENTO OCURRE                                               |
+|  Una orden es creada en Shopify                                |
++-----------------------------------------------------------------+
+                            v
++-----------------------------------------------------------------+
+|  2. SISTEMA BUSCA CONFIGURACIONES                               |
+|  ¿Hay configs activas para esta integración + evento?          |
+|  -> Business: "Mi Tienda"                                        |
+|  -> Integration: "Shopify Mi Tiendita"                          |
+|  -> Event: "order.created"                                       |
++-----------------------------------------------------------------+
+                            v
++-----------------------------------------------------------------+
+|  3. VALIDA CONDICIONES                                          |
+|  ¿Cumple con los filtros configurados?                         |
+|  -> Estado de la orden: "created" ✓                             |
+|  -> Método de pago: "contra_entrega" ✓                          |
++-----------------------------------------------------------------+
+                            v
++-----------------------------------------------------------------+
+|  4. ENVÍA NOTIFICACIÓN                                          |
+|  Por el canal configurado:                                      |
+|  -> WhatsApp: "Tu pedido #1234 ha sido confirmado"              |
+|  -> Email: "Confirmación de Pedido"                             |
++-----------------------------------------------------------------+
 ```
 
 ---
@@ -101,15 +101,15 @@ type NotificationType struct {
 **Relación:** Cada evento pertenece a UN tipo de notificación.
 
 **Ejemplos para WhatsApp:**
-- `order.created` → "Confirmación de Pedido"
-- `order.shipped` → "Tu pedido ha sido enviado"
-- `order.delivered` → "Tu pedido ha sido entregado"
-- `order.canceled` → "Pedido cancelado"
-- `invoice.created` → "Factura disponible"
+- `order.created` -> "Confirmación de Pedido"
+- `order.shipped` -> "Tu pedido ha sido enviado"
+- `order.delivered` -> "Tu pedido ha sido entregado"
+- `order.canceled` -> "Pedido cancelado"
+- `invoice.created` -> "Factura disponible"
 
 **Ejemplos para SSE (notificaciones web):**
-- `order.created` → "Nueva Orden en el Dashboard"
-- `order.status_changed` → "Estado de Orden Actualizado"
+- `order.created` -> "Nueva Orden en el Dashboard"
+- `order.status_changed` -> "Estado de Orden Actualizado"
 
 ```go
 type NotificationEventType struct {
@@ -131,8 +131,8 @@ type NotificationEventType struct {
 **Relación M2M con Order Statuses (AllowedOrderStatuses):**
 - Tabla pivote: `notification_event_type_allowed_statuses`
 - Define qué estados de orden son válidos para cada tipo de evento
-- Si está vacío → se permiten todos los estados
-- Ejemplo: `order.created` → solo `[pending, processing]`, `order.shipped` → solo `[shipped, delivered]`
+- Si está vacío -> se permiten todos los estados
+- Ejemplo: `order.created` -> solo `[pending, processing]`, `order.shipped` -> solo `[shipped, delivered]`
 - Se usa en el frontend para filtrar los toggles de estados en el formulario de reglas
 
 ---
@@ -180,44 +180,44 @@ A partir de v3.0.0, la gestión de configs se centra en la **integración**: en 
 ### Flujo UI
 
 ```
-┌──────────────────────────────┐
-│  1. LISTA AGRUPADA           │
-│  Muestra integraciones con   │
-│  sus reglas (count, canales) │
-│  [Configurar] [+ Agregar]   │
-└──────────────────────────────┘
-         ↓ Click "Agregar"
-┌──────────────────────────────┐
-│  2. INTEGRATION PICKER       │
-│  Seleccionar integración     │
-│  ecommerce del negocio       │
-└──────────────────────────────┘
-         ↓ Selecciona una
-┌──────────────────────────────┐
-│  3. INTEGRATION RULES FORM   │
-│  Gestionar N reglas:         │
-│  ┌──────────────────────┐    │
-│  │ Regla 1: WhatsApp +  │    │
-│  │ order.created +      │    │
-│  │ [pending, processing]│    │
-│  └──────────────────────┘    │
-│  ┌──────────────────────┐    │
-│  │ Regla 2: SSE +       │    │
-│  │ order.status_changed │    │
-│  └──────────────────────┘    │
-│  [+ Agregar regla]           │
-│  [Guardar]                   │
-└──────────────────────────────┘
-         ↓ Guardar
-┌──────────────────────────────┐
-│  4. BATCH SYNC               │
-│  PUT /notification-configs/  │
-│  sync?business_id=X          │
-│  → Crea nuevas               │
-│  → Actualiza existentes      │
-│  → Elimina removidas         │
-│  → Todo en UNA transacción   │
-└──────────────────────────────┘
++------------------------------+
+|  1. LISTA AGRUPADA           |
+|  Muestra integraciones con   |
+|  sus reglas (count, canales) |
+|  [Configurar] [+ Agregar]   |
++------------------------------+
+         v Click "Agregar"
++------------------------------+
+|  2. INTEGRATION PICKER       |
+|  Seleccionar integración     |
+|  ecommerce del negocio       |
++------------------------------+
+         v Selecciona una
++------------------------------+
+|  3. INTEGRATION RULES FORM   |
+|  Gestionar N reglas:         |
+|  +----------------------+    |
+|  | Regla 1: WhatsApp +  |    |
+|  | order.created +      |    |
+|  | [pending, processing]|    |
+|  +----------------------+    |
+|  +----------------------+    |
+|  | Regla 2: SSE +       |    |
+|  | order.status_changed |    |
+|  +----------------------+    |
+|  [+ Agregar regla]           |
+|  [Guardar]                   |
++------------------------------+
+         v Guardar
++------------------------------+
+|  4. BATCH SYNC               |
+|  PUT /notification-configs/  |
+|  sync?business_id=X          |
+|  -> Crea nuevas               |
+|  -> Actualiza existentes      |
+|  -> Elimina removidas         |
+|  -> Todo en UNA transacción   |
++------------------------------+
 ```
 
 ### Componentes Frontend
@@ -317,9 +317,9 @@ curl -X PUT http://localhost:8080/api/v1/notification-configs/sync?business_id=1
 ```
 
 **Lógica del sync:**
-- Rules sin `id` → se crean como nuevas
-- Rules con `id` → se actualizan
-- Configs existentes cuyo `id` no aparece en el request → se eliminan (soft delete)
+- Rules sin `id` -> se crean como nuevas
+- Rules con `id` -> se actualizan
+- Configs existentes cuyo `id` no aparece en el request -> se eliminan (soft delete)
 - Validación: no permite duplicados `(notification_type_id, notification_event_type_id)` en el mismo request
 
 ---
@@ -521,62 +521,62 @@ PUT /api/v1/notification-configs/sync?business_id=X
 
 ```
 notification_config/
-├── bundle.go                    # Ensamblador del módulo
-└── internal/
-    ├── domain/                  # DOMINIO (núcleo puro)
-    │   ├── entities/            # Entidades sin tags
-    │   │   ├── notification_type.go
-    │   │   ├── notification_event_type.go
-    │   │   └── business_notification_config.go
-    │   ├── dtos/                # DTOs de dominio
-    │   │   ├── filter.go
-    │   │   └── sync.go          # DTOs para batch sync
-    │   ├── ports/               # Interfaces
-    │   │   ├── repository.go
-    │   │   └── usecase.go
-    │   └── errors/              # Errores de dominio
-    │
-    ├── app/                     # APLICACIÓN (casos de uso)
-    │   ├── constructor.go
-    │   ├── create*.go
-    │   ├── update*.go
-    │   ├── delete*.go
-    │   ├── get*.go
-    │   ├── list*.go
-    │   ├── sync.go              # Caso de uso batch sync
-    │   ├── request/
-    │   ├── response/
-    │   └── mappers/
-    │
-    ├── infra/                   # INFRAESTRUCTURA
-    │   ├── primary/             # Adaptadores de entrada
-    │   │   └── handlers/
-    │   │       ├── notification_type/
-    │   │       ├── notification_event_type/
-    │   │       └── notification_config/
-    │   │           ├── constructor.go
-    │   │           ├── routes.go
-    │   │           ├── create_handler.go
-    │   │           ├── list_handler.go
-    │   │           ├── sync_handler.go       # Handler batch sync
-    │   │           └── request/
-    │   │               └── sync_request.go   # Request DTO HTTP
-    │   │
-    │   └── secondary/           # Adaptadores de salida
-    │       ├── repository/
-    │       │   ├── repository.go
-    │       │   ├── notification_type_repository.go
-    │       │   ├── notification_event_type_repository.go
-    │       │   ├── sync_configs.go            # Repo transaccional sync
-    │       │   ├── order_status_queries.go    # Queries replicadas (aislamiento)
-    │       │   └── mappers/
-    │       └── cache/
-    │           ├── constructor.go
-    │           ├── warmup_cache.go
-    │           ├── invalidate_configs_by_integration.go
-    │           └── ...
-    │
-    └── mocks/                   # Mocks para testing
++-- bundle.go                    # Ensamblador del módulo
++-- internal/
+    +-- domain/                  # DOMINIO (núcleo puro)
+    |   +-- entities/            # Entidades sin tags
+    |   |   +-- notification_type.go
+    |   |   +-- notification_event_type.go
+    |   |   +-- business_notification_config.go
+    |   +-- dtos/                # DTOs de dominio
+    |   |   +-- filter.go
+    |   |   +-- sync.go          # DTOs para batch sync
+    |   +-- ports/               # Interfaces
+    |   |   +-- repository.go
+    |   |   +-- usecase.go
+    |   +-- errors/              # Errores de dominio
+    |
+    +-- app/                     # APLICACIÓN (casos de uso)
+    |   +-- constructor.go
+    |   +-- create*.go
+    |   +-- update*.go
+    |   +-- delete*.go
+    |   +-- get*.go
+    |   +-- list*.go
+    |   +-- sync.go              # Caso de uso batch sync
+    |   +-- request/
+    |   +-- response/
+    |   +-- mappers/
+    |
+    +-- infra/                   # INFRAESTRUCTURA
+    |   +-- primary/             # Adaptadores de entrada
+    |   |   +-- handlers/
+    |   |       +-- notification_type/
+    |   |       +-- notification_event_type/
+    |   |       +-- notification_config/
+    |   |           +-- constructor.go
+    |   |           +-- routes.go
+    |   |           +-- create_handler.go
+    |   |           +-- list_handler.go
+    |   |           +-- sync_handler.go       # Handler batch sync
+    |   |           +-- request/
+    |   |               +-- sync_request.go   # Request DTO HTTP
+    |   |
+    |   +-- secondary/           # Adaptadores de salida
+    |       +-- repository/
+    |       |   +-- repository.go
+    |       |   +-- notification_type_repository.go
+    |       |   +-- notification_event_type_repository.go
+    |       |   +-- sync_configs.go            # Repo transaccional sync
+    |       |   +-- order_status_queries.go    # Queries replicadas (aislamiento)
+    |       |   +-- mappers/
+    |       +-- cache/
+    |           +-- constructor.go
+    |           +-- warmup_cache.go
+    |           +-- invalidate_configs_by_integration.go
+    |           +-- ...
+    |
+    +-- mocks/                   # Mocks para testing
 ```
 
 ---

@@ -20,39 +20,39 @@ Implementación completa del módulo Siigo como tercer proveedor de facturación
 
 ```
 siigo/
-├── bundle.go                                         # Factory + IIntegrationContract
-└── internal/
-    ├── domain/
-    │   ├── dtos/
-    │   │   ├── invoice_types.go                      # Credentials, CustomerData, ItemData, CreateInvoiceRequest/Result, AuditData
-    │   │   └── customer_types.go                     # CustomerResult, CreateCustomerRequest, ListInvoicesParams/Result
-    │   ├── entities/config.go                        # InvoicingConfig (réplica local)
-    │   ├── errors/errors.go                          # Errores específicos de Siigo
-    │   └── ports/ports.go                            # ISiigoClient, IInvoiceUseCase + eventos
-    ├── app/
-    │   ├── constructor.go                            # Use case stub
-    │   └── process_order_for_invoicing.go            # Stub (procesamiento real en consumer)
-    └── infra/
-        ├── primary/consumer/
-        │   └── invoice_request_consumer.go           # Consumer RabbitMQ
-        └── secondary/
-            ├── client/
-            │   ├── client.go                         # Client struct + New()
-            │   ├── auth.go                           # loginWithCredentials() - POST /v1/auth
-            │   ├── token_cache.go                    # Cache access_token 24h
-            │   ├── create_invoice.go                 # POST /v1/invoices
-            │   ├── get_customer.go                   # GET /v1/customers?identification=xxx
-            │   ├── create_customer.go                # POST /v1/customers
-            │   ├── list_invoices.go                  # GET /v1/invoices
-            │   ├── request/invoice.go                # Structs del body de Siigo
-            │   ├── response/
-            │   │   ├── invoice.go                    # Structs de respuesta de factura
-            │   │   └── customer.go                   # Structs de respuesta de cliente
-            │   └── mappers/
-            │       ├── invoice.go                    # dtos.CreateInvoiceRequest → request.SiigoInvoice
-            │       └── customer.go                   # response.Customer → dtos.CustomerResult
-            └── queue/
-                └── response_publisher.go             # Publisher a invoicing.responses
++-- bundle.go                                         # Factory + IIntegrationContract
++-- internal/
+    +-- domain/
+    |   +-- dtos/
+    |   |   +-- invoice_types.go                      # Credentials, CustomerData, ItemData, CreateInvoiceRequest/Result, AuditData
+    |   |   +-- customer_types.go                     # CustomerResult, CreateCustomerRequest, ListInvoicesParams/Result
+    |   +-- entities/config.go                        # InvoicingConfig (réplica local)
+    |   +-- errors/errors.go                          # Errores específicos de Siigo
+    |   +-- ports/ports.go                            # ISiigoClient, IInvoiceUseCase + eventos
+    +-- app/
+    |   +-- constructor.go                            # Use case stub
+    |   +-- process_order_for_invoicing.go            # Stub (procesamiento real en consumer)
+    +-- infra/
+        +-- primary/consumer/
+        |   +-- invoice_request_consumer.go           # Consumer RabbitMQ
+        +-- secondary/
+            +-- client/
+            |   +-- client.go                         # Client struct + New()
+            |   +-- auth.go                           # loginWithCredentials() - POST /v1/auth
+            |   +-- token_cache.go                    # Cache access_token 24h
+            |   +-- create_invoice.go                 # POST /v1/invoices
+            |   +-- get_customer.go                   # GET /v1/customers?identification=xxx
+            |   +-- create_customer.go                # POST /v1/customers
+            |   +-- list_invoices.go                  # GET /v1/invoices
+            |   +-- request/invoice.go                # Structs del body de Siigo
+            |   +-- response/
+            |   |   +-- invoice.go                    # Structs de respuesta de factura
+            |   |   +-- customer.go                   # Structs de respuesta de cliente
+            |   +-- mappers/
+            |       +-- invoice.go                    # dtos.CreateInvoiceRequest -> request.SiigoInvoice
+            |       +-- customer.go                   # response.Customer -> dtos.CustomerResult
+            +-- queue/
+                +-- response_publisher.go             # Publisher a invoicing.responses
 ```
 
 ### Archivos modificados
@@ -72,25 +72,25 @@ siigo/
 
 ```
 modules/invoicing
-    └── CreateInvoice()
-        └── resolveProvider(integrationID)
-            └── type_id=8 → provider="siigo"
-            └── PublishInvoiceRequest → invoicing.requests
+    +-- CreateInvoice()
+        +-- resolveProvider(integrationID)
+            +-- type_id=8 -> provider="siigo"
+            +-- PublishInvoiceRequest -> invoicing.requests
 
 invoicing.core (router)
-    └── handleInvoiceRequest()
-        └── provider="siigo" → invoicing.siigo.requests
+    +-- handleInvoiceRequest()
+        +-- provider="siigo" -> invoicing.siigo.requests
 
 siigo.InvoiceRequestConsumer
-    └── handleInvoiceRequest()
-        └── processCreateInvoice()
-            ├── DecryptCredential(username, access_key, account_id, partner_id)
-            ├── siigoClient.CreateInvoice()
-            │   ├── authenticate() → POST /v1/auth
-            │   ├── GetCustomerByIdentification() → GET /v1/customers?identification=xxx
-            │   │   └── [si no existe] CreateCustomer() → POST /v1/customers
-            │   └── POST /v1/invoices
-            └── responsePublisher.PublishResponse() → invoicing.responses
+    +-- handleInvoiceRequest()
+        +-- processCreateInvoice()
+            +-- DecryptCredential(username, access_key, account_id, partner_id)
+            +-- siigoClient.CreateInvoice()
+            |   +-- authenticate() -> POST /v1/auth
+            |   +-- GetCustomerByIdentification() -> GET /v1/customers?identification=xxx
+            |   |   +-- [si no existe] CreateCustomer() -> POST /v1/customers
+            |   +-- POST /v1/invoices
+            +-- responsePublisher.PublishResponse() -> invoicing.responses
 ```
 
 ### Autenticación
@@ -156,8 +156,8 @@ Estos campos deben configurarse en el `invoice_config` de la integración en Sii
 
 A diferencia de Factus y Softpymes, Siigo requiere gestión explícita de clientes:
 
-1. **Buscar** cliente por `customer_dni` → `GET /v1/customers?identification=<dni>`
-2. Si **no existe**, crear el cliente → `POST /v1/customers`
+1. **Buscar** cliente por `customer_dni` -> `GET /v1/customers?identification=<dni>`
+2. Si **no existe**, crear el cliente -> `POST /v1/customers`
 3. Usar la identificación del cliente en el body de la factura
 
 ---
@@ -169,9 +169,9 @@ A diferencia de Factus y Softpymes, Siigo requiere gestión explícita de client
 - [ ] **Probar con credenciales reales** — El mapeo del body de factura (`request/invoice.go`) es una aproximación basada en la documentación. Necesita validarse contra una cuenta Siigo real, en especial los campos `document_id`, `payment_method_id` y `tax_id`
 - [ ] **Validar respuesta de la API** — Los campos de `CreateInvoiceResponse` (especialmente `id`, `name`, `Errors`) deben verificarse contra respuestas reales de Siigo, ya que la estructura puede variar
 - [ ] **Obtener IDs de configuración** — Los valores de `document_id`, `payment_method_id` y `tax_id` son específicos de cada cuenta Siigo. Se deben consultar con:
-  - `GET /v1/document-types` → para `document_id`
-  - `GET /v1/payment-types` → para `payment_method_id`
-  - `GET /v1/taxes` → para `tax_id`
+  - `GET /v1/document-types` -> para `document_id`
+  - `GET /v1/payment-types` -> para `payment_method_id`
+  - `GET /v1/taxes` -> para `tax_id`
 
 ### Mejoras deseables
 

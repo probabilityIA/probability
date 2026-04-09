@@ -18,11 +18,11 @@ Esta migración refactoriza completamente el sistema de configuración de notifi
 ### Antes (Arquitectura Plana)
 ```
 BusinessNotificationConfig
-├── business_id (FK)
-├── event_type (string: "order.created")
-├── channels (JSON: ["sse", "whatsapp"])
-├── filters (JSON)
-└── order_statuses (M2M)
++-- business_id (FK)
++-- event_type (string: "order.created")
++-- channels (JSON: ["sse", "whatsapp"])
++-- filters (JSON)
++-- order_statuses (M2M)
 ```
 
 **Problemas:**
@@ -34,15 +34,15 @@ BusinessNotificationConfig
 ### Después (Arquitectura Jerárquica)
 ```
 NotificationType (ej: WhatsApp, SSE)
-└── NotificationEventType (ej: order.created, order.shipped)
-    └── BusinessNotificationConfig
-        ├── business_id (FK)
-        ├── integration_id (FK) - NUEVO - La integración origen
-        ├── notification_type_id (FK) - NUEVO - Canal de salida
-        ├── notification_event_type_id (FK) - NUEVO - Tipo de evento
-        ├── enabled (bool)
-        ├── filters (JSON)
-        └── order_statuses (M2M)
++-- NotificationEventType (ej: order.created, order.shipped)
+    +-- BusinessNotificationConfig
+        +-- business_id (FK)
+        +-- integration_id (FK) - NUEVO - La integración origen
+        +-- notification_type_id (FK) - NUEVO - Canal de salida
+        +-- notification_event_type_id (FK) - NUEVO - Tipo de evento
+        +-- enabled (bool)
+        +-- filters (JSON)
+        +-- order_statuses (M2M)
 ```
 
 **Ventajas:**
@@ -99,19 +99,19 @@ CREATE TABLE notification_event_types (
 **Eventos iniciales por tipo:**
 
 **SSE:**
-- order.created → "Nueva Orden"
-- order.status_changed → "Cambio de Estado de Orden"
+- order.created -> "Nueva Orden"
+- order.status_changed -> "Cambio de Estado de Orden"
 
 **WhatsApp:**
-- order.created → "Confirmación de Pedido"
-- order.shipped → "Pedido Enviado"
-- order.delivered → "Pedido Entregado"
-- order.canceled → "Pedido Cancelado"
-- invoice.created → "Factura Generada"
+- order.created -> "Confirmación de Pedido"
+- order.shipped -> "Pedido Enviado"
+- order.delivered -> "Pedido Entregado"
+- order.canceled -> "Pedido Cancelado"
+- invoice.created -> "Factura Generada"
 
 **Email:**
-- order.created → "Confirmación de Pedido"
-- order.shipped → "Pedido Enviado"
+- order.created -> "Confirmación de Pedido"
+- order.shipped -> "Pedido Enviado"
 
 ### Modificaciones a `business_notification_configs`
 

@@ -72,8 +72,8 @@ Sincroniza órdenes de los últimos 30 días (configurable). Se ejecuta en **bac
 **Rate limiting:** 500ms entre páginas para no saturar la API.
 
 **Filtros soportados:**
-- `created_at_min` / `created_at_max` → se convierten a `f_creationDate` de VTEX
-- `status` → se convierte a `f_status`
+- `created_at_min` / `created_at_max` -> se convierten a `f_creationDate` de VTEX
+- `status` -> se convierte a `f_status`
 
 ### 3. Webhook (Hook v1)
 
@@ -110,7 +110,7 @@ VTEX envía un POST cuando cambia el estado de una orden.
 
 ## Mapeo de estados
 
-### Orden (VTEX → Probability)
+### Orden (VTEX -> Probability)
 
 | Estado VTEX | Estado Probability |
 |-------------|-------------------|
@@ -141,7 +141,7 @@ Referencia completa: [Order flow and status](https://help.vtex.com/en/tutorial/o
 
 ---
 
-## Mapeo de campos (VTEXOrder → ProbabilityOrderDTO)
+## Mapeo de campos (VTEXOrder -> ProbabilityOrderDTO)
 
 | Campo VTEX | Campo Canonical | Nota |
 |------------|-----------------|------|
@@ -170,40 +170,40 @@ Referencia completa: [Order flow and status](https://help.vtex.com/en/tutorial/o
 
 ```
 vtex/
-├── bundle.go                          # Ensamblaje del módulo
-└── internal/
-    ├── domain/
-    │   ├── entities.go                # VTEXOrder, VTEXWebhookPayload, etc. (sin tags)
-    │   ├── ports.go                   # IVTEXClient, IIntegrationService, OrderPublisher
-    │   └── errors.go                  # Errores del dominio
-    ├── app/usecases/
-    │   ├── constructor.go             # IVTEXUseCase interface + New()
-    │   ├── test_connection.go         # Verificación de credenciales
-    │   ├── sync_orders.go             # Sincronización paginada en background
-    │   ├── process_webhook.go         # Procesamiento de webhooks
-    │   └── mapper/
-    │       └── order_mapper.go        # VTEXOrder → ProbabilityOrderDTO
-    └── infra/
-        ├── primary/handlers/
-        │   ├── constructor.go         # Handler HTTP + RegisterRoutes
-        │   └── handle_webhook.go      # POST /integrations/vtex/webhook
-        └── secondary/
-            ├── client/
-            │   ├── constructor.go     # HTTP client con headers VTEX
-            │   ├── get_orders.go      # GET /api/oms/pvt/orders (lista)
-            │   ├── get_order_by_id.go # GET /api/oms/pvt/orders/{id} (detalle)
-            │   └── response/
-            │       └── vtex_order_response.go  # Structs JSON + ToDomain()
-            ├── core/
-            │   ├── core.go            # IIntegrationContract adapter
-            │   └── integration_service.go  # Adapter core → domain
-            └── queue/
-                ├── rabbitmq_publisher.go    # Publica a RabbitMQ
-                ├── noop_publisher.go        # Fallback sin RabbitMQ
-                ├── mapper/
-                │   └── canonical_order_mapper.go  # Domain → Serializable
-                └── request/
-                    └── canonical_order_dto.go     # Structs con JSON tags
++-- bundle.go                          # Ensamblaje del módulo
++-- internal/
+    +-- domain/
+    |   +-- entities.go                # VTEXOrder, VTEXWebhookPayload, etc. (sin tags)
+    |   +-- ports.go                   # IVTEXClient, IIntegrationService, OrderPublisher
+    |   +-- errors.go                  # Errores del dominio
+    +-- app/usecases/
+    |   +-- constructor.go             # IVTEXUseCase interface + New()
+    |   +-- test_connection.go         # Verificación de credenciales
+    |   +-- sync_orders.go             # Sincronización paginada en background
+    |   +-- process_webhook.go         # Procesamiento de webhooks
+    |   +-- mapper/
+    |       +-- order_mapper.go        # VTEXOrder -> ProbabilityOrderDTO
+    +-- infra/
+        +-- primary/handlers/
+        |   +-- constructor.go         # Handler HTTP + RegisterRoutes
+        |   +-- handle_webhook.go      # POST /integrations/vtex/webhook
+        +-- secondary/
+            +-- client/
+            |   +-- constructor.go     # HTTP client con headers VTEX
+            |   +-- get_orders.go      # GET /api/oms/pvt/orders (lista)
+            |   +-- get_order_by_id.go # GET /api/oms/pvt/orders/{id} (detalle)
+            |   +-- response/
+            |       +-- vtex_order_response.go  # Structs JSON + ToDomain()
+            +-- core/
+            |   +-- core.go            # IIntegrationContract adapter
+            |   +-- integration_service.go  # Adapter core -> domain
+            +-- queue/
+                +-- rabbitmq_publisher.go    # Publica a RabbitMQ
+                +-- noop_publisher.go        # Fallback sin RabbitMQ
+                +-- mapper/
+                |   +-- canonical_order_mapper.go  # Domain -> Serializable
+                +-- request/
+                    +-- canonical_order_dto.go     # Structs con JSON tags
 ```
 
 ---
