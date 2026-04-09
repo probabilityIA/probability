@@ -53,40 +53,68 @@ func (r *Repository) GetByID(ctx context.Context, businessID, clientID uint) (*e
 	return modelToEntity(&model), nil
 }
 
+type clientWithOrders struct {
+	models.Client
+	TotalOrders int64 `gorm:"column:total_orders"`
+}
+
 func (r *Repository) List(ctx context.Context, params dtos.ListClientsParams) ([]entities.Client, int64, error) {
-	var modelsList []models.Client
 	var total int64
 
-	query := r.db.Conn(ctx).Model(&models.Client{}).
-		Where("business_id = ?", params.BusinessID)
+	countQuery := r.db.Conn(ctx).Model(&models.Client{}).
+		Where("client.business_id = ?", params.BusinessID)
 
 	if params.Search != "" {
 		like := "%" + params.Search + "%"
-		query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ? OR dni ILIKE ?", like, like, like, like)
+		countQuery = countQuery.Where("client.name ILIKE ? OR client.email ILIKE ? OR client.phone ILIKE ? OR client.dni ILIKE ?", like, like, like, like)
 	}
-
 	if params.Email != "" {
-		query = query.Where("email = ?", params.Email)
+		countQuery = countQuery.Where("client.email = ?", params.Email)
 	}
 	if params.Dni != "" {
-		query = query.Where("dni = ?", params.Dni)
+		countQuery = countQuery.Where("client.dni = ?", params.Dni)
 	}
 	if params.Name != "" {
-		query = query.Where("name ILIKE ?", "%"+params.Name+"%")
+		countQuery = countQuery.Where("client.name ILIKE ?", "%"+params.Name+"%")
 	}
 
-	if err := query.Count(&total).Error; err != nil {
+	if err := countQuery.Count(&total).Error; err != nil {
 		return nil, 0, err
+	}
+
+	var rows []clientWithOrders
+	query := r.db.Conn(ctx).
+		Table("client").
+		Select("client.*, COALESCE(cs.total_orders, 0) AS total_orders").
+		Joins("LEFT JOIN customer_summary cs ON cs.customer_id = client.id AND cs.business_id = client.business_id AND cs.deleted_at IS NULL").
+		Where("client.business_id = ? AND client.deleted_at IS NULL", params.BusinessID)
+
+	if params.Search != "" {
+		like := "%" + params.Search + "%"
+		query = query.Where("client.name ILIKE ? OR client.email ILIKE ? OR client.phone ILIKE ? OR client.dni ILIKE ?", like, like, like, like)
+	}
+	if params.Email != "" {
+		query = query.Where("client.email = ?", params.Email)
+	}
+	if params.Dni != "" {
+		query = query.Where("client.dni = ?", params.Dni)
+	}
+	if params.Name != "" {
+		query = query.Where("client.name ILIKE ?", "%"+params.Name+"%")
 	}
 
 	offset := params.Offset()
-	if err := query.Offset(offset).Limit(params.PageSize).Order("created_at DESC").Find(&modelsList).Error; err != nil {
+	if err := query.Order("total_orders DESC, client.created_at DESC").
+		Offset(offset).Limit(params.PageSize).
+		Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
 
-	clients := make([]entities.Client, len(modelsList))
-	for i, m := range modelsList {
-		clients[i] = *modelToEntity(&m)
+	clients := make([]entities.Client, len(rows))
+	for i, row := range rows {
+		c := modelToEntity(&row.Client)
+		c.OrderCount = row.TotalOrders
+		clients[i] = *c
 	}
 	return clients, total, nil
 }

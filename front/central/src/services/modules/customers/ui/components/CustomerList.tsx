@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, EyeIcon, ChartBarIcon, MapPinIcon, ShoppingBagIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { getCustomersAction, deleteCustomerAction } from '../../infra/actions';
 import { CustomerInfo, GetCustomersParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
@@ -10,11 +10,18 @@ import { getActionError } from '@/shared/utils/action-result';
 interface CustomerListProps {
     onView?: (customer: CustomerInfo) => void;
     onEdit?: (customer: CustomerInfo) => void;
+    onViewSummary?: (customer: CustomerInfo) => void;
+    onViewAddresses?: (customer: CustomerInfo) => void;
+    onViewProducts?: (customer: CustomerInfo) => void;
+    onViewOrders?: (customer: CustomerInfo) => void;
     onRefreshRef?: (ref: () => void) => void;
     selectedBusinessId?: number;
 }
 
-export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBusinessId }: CustomerListProps) {
+export default function CustomerList({
+    onView, onEdit, onViewSummary, onViewAddresses, onViewProducts, onViewOrders,
+    onRefreshRef, selectedBusinessId,
+}: CustomerListProps) {
     const [customers, setCustomers] = useState<CustomerInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -55,7 +62,6 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
         onRefreshRef?.(fetchCustomers);
     }, [fetchCustomers, onRefreshRef]);
 
-    // Resetear a página 1 cuando cambia el negocio seleccionado
     useEffect(() => {
         setPage(1);
         setSearch('');
@@ -75,7 +81,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
     };
 
     const handleDelete = async (customer: CustomerInfo) => {
-        if (!confirm(`¿Eliminar al cliente "${customer.name}"? Esta acción no se puede deshacer.`)) return;
+        if (!confirm(`Eliminar al cliente "${customer.name}"? Esta accion no se puede deshacer.`)) return;
         try {
             await deleteCustomerAction(customer.id, selectedBusinessId);
             fetchCustomers();
@@ -87,9 +93,8 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
     const columns = [
         { key: 'name', label: 'Nombre' },
         { key: 'email', label: 'Email' },
-        { key: 'phone', label: 'Teléfono' },
-        { key: 'dni', label: 'Documento' },
-        { key: 'created_at', label: 'Creado', align: 'center' as const },
+        { key: 'phone', label: 'Telefono' },
+        { key: 'total_orders', label: 'Compras', align: 'center' as const },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
     ];
 
@@ -98,34 +103,71 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
             <span className="font-medium text-gray-900 dark:text-white">{customer.name}</span>
         ),
         email: (
-            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.email || <span className="text-gray-300">—</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.email || <span className="text-gray-300">--</span>}</span>
         ),
         phone: (
-            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.phone || <span className="text-gray-300">—</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.phone || <span className="text-gray-300">--</span>}</span>
         ),
-        dni: (
-            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.dni || <span className="text-gray-300">—</span>}</span>
-        ),
-        created_at: (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-                {new Date(customer.created_at).toLocaleDateString('es-CO')}
+        total_orders: (
+            <span className={`inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-sm font-semibold ${
+                customer.total_orders > 0
+                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                    : 'text-gray-400'
+            }`}>
+                {customer.total_orders || 0}
             </span>
         ),
         actions: (
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-1.5">
                 {onView && (
                     <button
                         onClick={() => onView(customer)}
-                        className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+                        className="p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
                         title="Ver detalle"
                     >
                         <EyeIcon className="w-4 h-4" />
                     </button>
                 )}
+                {onViewSummary && (
+                    <button
+                        onClick={() => onViewSummary(customer)}
+                        className="p-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition-colors"
+                        title="Resumen"
+                    >
+                        <ChartBarIcon className="w-4 h-4" />
+                    </button>
+                )}
+                {onViewAddresses && (
+                    <button
+                        onClick={() => onViewAddresses(customer)}
+                        className="p-1.5 bg-teal-500 hover:bg-teal-600 text-white rounded-md transition-colors"
+                        title="Direcciones"
+                    >
+                        <MapPinIcon className="w-4 h-4" />
+                    </button>
+                )}
+                {onViewProducts && (
+                    <button
+                        onClick={() => onViewProducts(customer)}
+                        className="p-1.5 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors"
+                        title="Productos"
+                    >
+                        <ShoppingBagIcon className="w-4 h-4" />
+                    </button>
+                )}
+                {onViewOrders && (
+                    <button
+                        onClick={() => onViewOrders(customer)}
+                        className="p-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded-md transition-colors"
+                        title="Ordenes"
+                    >
+                        <ClipboardDocumentListIcon className="w-4 h-4" />
+                    </button>
+                )}
                 {onEdit && (
                     <button
                         onClick={() => onEdit(customer)}
-                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors"
+                        className="p-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors"
                         title="Editar"
                     >
                         <PencilIcon className="w-4 h-4" />
@@ -133,7 +175,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
                 )}
                 <button
                     onClick={() => handleDelete(customer)}
-                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                    className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
                     title="Eliminar"
                 >
                     <TrashIcon className="w-4 h-4" />
@@ -152,13 +194,12 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
 
     return (
         <div className="space-y-4">
-            {/* Buscador */}
             <form onSubmit={handleSearch} className="flex gap-2">
                 <input
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Buscar por nombre, email o teléfono..."
+                    placeholder="Buscar por nombre, email o telefono..."
                     className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <button

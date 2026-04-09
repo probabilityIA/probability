@@ -24,6 +24,7 @@ const makeCustomerInfo = (overrides: Partial<CustomerInfo> = {}): CustomerInfo =
     email: 'juan@test.com',
     phone: '3001234567',
     dni: '123456789',
+    total_orders: 5,
     created_at: '2026-03-01T00:00:00Z',
     updated_at: '2026-03-01T00:00:00Z',
     ...overrides,

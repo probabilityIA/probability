@@ -5,6 +5,7 @@ export interface CustomerInfo {
     email: string | null;
     phone: string;
     dni: string | null;
+    total_orders: number;
     created_at: string;
     updated_at: string;
 }

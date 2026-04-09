@@ -13,22 +13,36 @@ interface Props {
 const formatCurrency = (v: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(v);
 
-const statusColors: Record<string, string> = {
-    delivered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    refunded: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    picking: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    shipped: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+const statusConfig: Record<string, { label: string; colors: string }> = {
+    pending: { label: 'Pendiente', colors: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+    processing: { label: 'En Procesamiento', colors: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    picking: { label: 'Seleccionando', colors: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    packing: { label: 'Empacando', colors: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    ready_to_ship: { label: 'Listo para despacho', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    assigned_to_driver: { label: 'Asignado a piloto', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    picked_up: { label: 'Recogido', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    shipped: { label: 'Enviada', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    in_transit: { label: 'En camino', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    out_for_delivery: { label: 'En reparto final', colors: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
+    delivered: { label: 'Entregada', colors: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    completed: { label: 'Completada', colors: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    cancelled: { label: 'Cancelada', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+    refunded: { label: 'Reembolsada', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+    failed: { label: 'Fallida', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+    on_hold: { label: 'En Espera', colors: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+    delivery_novelty: { label: 'Novedad de entrega', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    delivery_failed: { label: 'Entrega fallida', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    rejected: { label: 'Rechazado', colors: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+    returned: { label: 'Devuelto', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    return_in_transit: { label: 'Devolucion en camino', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
+    inventory_issue: { label: 'Novedad de inventario', colors: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' },
 };
 
 function StatusBadge({ status }: { status: string }) {
-    const colors = statusColors[status] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+    const config = statusConfig[status] || { label: status, colors: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' };
     return (
-        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${colors}`}>
-            {status}
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${config.colors}`}>
+            {config.label}
         </span>
     );
 }
