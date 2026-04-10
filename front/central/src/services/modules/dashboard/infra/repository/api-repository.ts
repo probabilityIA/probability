@@ -44,7 +44,7 @@ export class DashboardApiRepository implements IDashboardRepository {
         }
     }
 
-    async getStats(businessId?: number, integrationId?: number, weekStartDate?: Date): Promise<DashboardStatsResponse> {
+    async getStats(businessId?: number, integrationId?: number, weekStartDate?: Date, startDate?: Date, endDate?: Date): Promise<DashboardStatsResponse> {
         let params = '';
         const queryParams = [];
 
@@ -53,6 +53,14 @@ export class DashboardApiRepository implements IDashboardRepository {
         if (weekStartDate) {
             const dateStr = weekStartDate.toISOString().split('T')[0];
             queryParams.push(`week_start_date=${dateStr}`);
+        }
+        if (startDate) {
+            const dateStr = startDate.toISOString().split('T')[0];
+            queryParams.push(`start_date=${dateStr}`);
+        }
+        if (endDate) {
+            const dateStr = endDate.toISOString().split('T')[0];
+            queryParams.push(`end_date=${dateStr}`);
         }
 
         if (queryParams.length > 0) {

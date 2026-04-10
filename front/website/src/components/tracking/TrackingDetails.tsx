@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import type { TrackingSearchResult } from '../../types/tracking';
 
 interface TrackingDetailsProps {

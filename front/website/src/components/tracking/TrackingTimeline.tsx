@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import type { TrackingHistory } from '../../types/tracking';
 
 interface TrackingTimelineProps {

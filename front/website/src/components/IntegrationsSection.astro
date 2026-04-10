@@ -1,4 +1,9 @@
 ---
+import { INTEGRATION_LOGOS } from '../config/images';
+
+// Definir integraciones activas (completas)
+const activeIntegrations = ['Shopify', 'Sofpymes', 'Envioclik', 'Interrapidísimo'];
+const allLogos = INTEGRATION_LOGOS;
 ---
 
 <section class="bg-white py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-10 lg:px-20">
@@ -6,45 +11,17 @@
 		<p class="text-center text-xl sm:text-2xl font-semibold" style="color: #8B5CF6;">Integrado con las principales plataformas</p>
 	</div>
 	<div class="flex flex-wrap justify-center items-center gap-6 sm:gap-8 md:gap-12 lg:gap-16">
-		<!-- Shopify -->
-		<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer">
-			<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744750_shopify.png" alt="Shopify" class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-			</div>
-			<span class="text-gray-700 text-xs sm:text-sm font-medium">Shopify</span>
-		</div>
-
-		<!-- Mercado Libre -->
-		<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer opacity-50">
-			<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744961_mercado-libre-logo.png" alt="Mercado Libre" class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-			</div>
-			<span class="text-gray-700 text-xs sm:text-sm font-medium">Mercado Libre</span>
-		</div>
-
-		<!-- WooCommerce -->
-		<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer opacity-50">
-			<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765745053_woocomerce.webp" alt="WooCommerce" class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-			</div>
-			<span class="text-gray-700 text-xs sm:text-sm font-medium">WooCommerce</span>
-		</div>
-
-		<!-- WhatsApp -->
-		<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer opacity-50">
-			<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-				<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-			</div>
-			<span class="text-gray-700 text-xs sm:text-sm font-medium">WhatsApp</span>
-		</div>
-
-		<!-- Sofpymes -->
-		<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer">
-			<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1769929713_sofpymes.png" alt="Sofpymes" class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-			</div>
-			<span class="text-gray-700 text-xs sm:text-sm font-medium">Sofpymes</span>
-		</div>
+		{allLogos.map((logo) => {
+			const isActive = activeIntegrations.includes(logo.name);
+			return (
+				<div class={`integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer ${!isActive ? 'opacity-50' : ''}`}>
+					<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
+						<img src={logo.src} alt={logo.alt} class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
+					</div>
+					<span class="text-gray-700 text-xs sm:text-sm font-medium">{logo.name}</span>
+				</div>
+			);
+		})}
 	</div>
 	<div class="text-center mt-8 sm:mt-12 md:mt-16">
 		<p class="text-gray-600 text-xs sm:text-sm px-4">Pronto tendremos más lanzamientos de integraciones. ¡Mantente atento!</p>

@@ -27,7 +27,7 @@ func New(database db.IDatabase, logger log.ILogger) domain.IRepository {
 }
 
 // GetTotalOrders obtiene el total de órdenes
-func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integrationID *uint) (int64, error) {
+func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) (int64, error) {
 	var count int64
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
@@ -41,6 +41,14 @@ func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integ
 		query = query.Where("integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Count(&count).Error; err != nil {
 		return 0, err
 	}
@@ -49,7 +57,7 @@ func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integ
 }
 
 // GetOrdersToday obtiene el total de órdenes creadas hoy
-func (r *Repository) GetOrdersToday(ctx context.Context, businessID *uint, integrationID *uint) (int64, error) {
+func (r *Repository) GetOrdersToday(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) (int64, error) {
 	var count int64
 	query := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("DATE(created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')")
@@ -64,6 +72,14 @@ func (r *Repository) GetOrdersToday(ctx context.Context, businessID *uint, integ
 		query = query.Where("integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Count(&count).Error; err != nil {
 		return 0, err
 	}
@@ -72,7 +88,7 @@ func (r *Repository) GetOrdersToday(ctx context.Context, businessID *uint, integ
 }
 
 // GetOrdersByIntegrationType obtiene el conteo de órdenes agrupado por tipo de integración
-func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrderCountByIntegrationType, error) {
+func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrderCountByIntegrationType, error) {
 	type Result struct {
 		IntegrationType string `gorm:"column:integration_type"`
 		Count           int64  `gorm:"column:count"`
@@ -95,6 +111,14 @@ func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID 
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -112,7 +136,7 @@ func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID 
 }
 
 // GetTopCustomers obtiene los top N clientes por número de órdenes
-func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopCustomer, error) {
+func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.TopCustomer, error) {
 	type Result struct {
 		CustomerName  string `gorm:"column:customer_name"`
 		CustomerEmail string `gorm:"column:customer_email"`
@@ -138,6 +162,14 @@ func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, inte
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -156,7 +188,7 @@ func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, inte
 }
 
 // GetOrdersByLocation obtiene el conteo de órdenes agrupado por ubicación (estado/departamento)
-func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.OrderCountByLocation, error) {
+func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.OrderCountByLocation, error) {
 	type Result struct {
 		City       string `gorm:"column:city"`
 		State      string `gorm:"column:state"`
@@ -182,6 +214,14 @@ func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, 
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -200,7 +240,7 @@ func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, 
 }
 
 // GetTopDrivers obtiene los top N transportadores por número de órdenes
-func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopDriver, error) {
+func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.TopDriver, error) {
 	type Result struct {
 		DriverName string `gorm:"column:driver_name"`
 		DriverID   *uint  `gorm:"column:driver_id"`
@@ -226,6 +266,14 @@ func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, integr
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -244,7 +292,7 @@ func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, integr
 }
 
 // GetDriversByLocation obtiene transportadores agrupados por ubicación
-func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.DriverByLocation, error) {
+func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.DriverByLocation, error) {
 	type Result struct {
 		DriverName string `gorm:"column:driver_name"`
 		City       string `gorm:"column:city"`
@@ -271,6 +319,14 @@ func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint,
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -290,7 +346,7 @@ func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint,
 }
 
 // GetTopProducts obtiene los top N productos por número de órdenes
-func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopProduct, error) {
+func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.TopProduct, error) {
 	type Result struct {
 		ProductName string  `gorm:"column:product_name"`
 		ProductID   string  `gorm:"column:product_id"`
@@ -320,6 +376,14 @@ func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, integ
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -340,7 +404,7 @@ func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, integ
 }
 
 // GetProductsByCategory obtiene productos agrupados por categoría
-func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ProductByCategory, error) {
+func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ProductByCategory, error) {
 	type Result struct {
 		Category string `gorm:"column:category"`
 		Count    int64  `gorm:"column:count"`
@@ -376,6 +440,18 @@ func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint
 		query = query.Where("products.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por rango de fechas (solo para órdenes)
+	if startDate != nil || endDate != nil {
+		if integrationID != nil && *integrationID > 0 {
+			if startDate != nil {
+				query = query.Where("orders.created_at >= ?", *startDate)
+			}
+			if endDate != nil {
+				query = query.Where("orders.created_at < ?", *endDate)
+			}
+		}
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -393,7 +469,7 @@ func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint
 }
 
 // GetProductsByBrand obtiene productos agrupados por marca
-func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ProductByBrand, error) {
+func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ProductByBrand, error) {
 	type Result struct {
 		Brand string `gorm:"column:brand"`
 		Count int64  `gorm:"column:count"`
@@ -428,6 +504,18 @@ func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint, i
 		query = query.Where("products.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por rango de fechas (solo para órdenes)
+	if startDate != nil || endDate != nil {
+		if integrationID != nil && *integrationID > 0 {
+			if startDate != nil {
+				query = query.Where("orders.created_at >= ?", *startDate)
+			}
+			if endDate != nil {
+				query = query.Where("orders.created_at < ?", *endDate)
+			}
+		}
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -445,7 +533,7 @@ func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint, i
 }
 
 // GetShipmentsByStatus obtiene envíos agrupados por estado
-func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByStatus, error) {
+func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ShipmentsByStatus, error) {
 	type Result struct {
 		Status string `gorm:"column:status"`
 		Count  int64  `gorm:"column:count"`
@@ -469,6 +557,14 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint,
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -487,7 +583,7 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint,
 
 // GetShipmentsByStatusFiltered obtiene envíos agrupados por estado (solo: pending, in_transit, delivered)
 // Solo cuenta el shipment más reciente por orden para evitar duplicados
-func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByStatus, error) {
+func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ShipmentsByStatus, error) {
 	type Result struct {
 		Status string `gorm:"column:status"`
 		Count  int64  `gorm:"column:count"`
@@ -518,26 +614,46 @@ func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessI
 		END
 	`
 
+	// Construir filtros de fecha
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND o.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND o.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
 	// Handle both business_id and integration_id filters
 	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{"pending", "in_transit", "delivered", *businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
-			"pending", "in_transit", "delivered", *businessID, *integrationID,
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{"pending", "in_transit", "delivered", *businessID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
-			"pending", "in_transit", "delivered", *businessID,
+			baseSQLPart+`AND o.business_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{"pending", "in_transit", "delivered", *integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
-			"pending", "in_transit", "delivered", *integrationID,
+			baseSQLPart+`AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else {
+		allParams := []interface{}{"pending", "in_transit", "delivered"}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+orderBySQLPart,
-			"pending", "in_transit", "delivered",
+			baseSQLPart+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	}
 
@@ -559,7 +675,7 @@ func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessI
 
 // GetShipmentsByCarrier obtiene envíos agrupados por transportista
 // Solo cuenta el shipment más reciente por orden para evitar duplicados
-func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
+func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
 		Carrier string `gorm:"column:carrier"`
 		Count   int64  `gorm:"column:count"`
@@ -582,24 +698,42 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 		ORDER BY count DESC
 	`
 
+	// Construir filtros de fecha
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND o.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND o.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
 	var query *gorm.DB
 	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
-			*businessID, *integrationID,
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{*businessID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
-			*businessID,
+			baseSQLPart+`AND o.business_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
-			*integrationID,
+			baseSQLPart+`AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else {
-		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart)
+		query = r.db.Conn(ctx).Raw(baseSQLPart + dateFilterPart + orderBySQLPart, dateParams...)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -620,7 +754,7 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 
 // GetShipmentsByCarrierToday obtiene envíos agrupados por transportista del día actual
 // Solo cuenta el shipment más reciente por orden para evitar duplicados
-func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
+func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
 		Carrier string `gorm:"column:carrier"`
 		Count   int64  `gorm:"column:count"`
@@ -644,24 +778,42 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 		ORDER BY count DESC
 	`
 
+	// Construir filtros de fecha (nota: GetShipmentsByCarrierToday ya filtra por hoy, pero se respeta el filtro si se proporciona)
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND o.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND o.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
 	var query *gorm.DB
 	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
-			*businessID, *integrationID,
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{*businessID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
-			*businessID,
+			baseSQLPart+`AND o.business_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
-			*integrationID,
+			baseSQLPart+`AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else {
-		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart)
+		query = r.db.Conn(ctx).Raw(baseSQLPart + dateFilterPart + orderBySQLPart, dateParams...)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -682,7 +834,7 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 
 // GetShipmentsByWarehouse obtiene envíos agrupados por almacén
 // Solo cuenta el shipment más reciente por orden para evitar duplicados
-func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.ShipmentsByWarehouse, error) {
+func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int, startDate *time.Time, endDate *time.Time) ([]domain.ShipmentsByWarehouse, error) {
 	type Result struct {
 		WarehouseName string `gorm:"column:warehouse_name"`
 		WarehouseID   *uint  `gorm:"column:warehouse_id"`
@@ -707,24 +859,46 @@ func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *ui
 		LIMIT ?
 	`
 
+	// Construir filtros de fecha
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND o.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND o.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
 	var query *gorm.DB
 	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
+		allParams = append(allParams, limit)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
-			*businessID, *integrationID, limit,
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{*businessID}
+		allParams = append(allParams, dateParams...)
+		allParams = append(allParams, limit)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
-			*businessID, limit,
+			baseSQLPart+`AND o.business_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*integrationID}
+		allParams = append(allParams, dateParams...)
+		allParams = append(allParams, limit)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
-			*integrationID, limit,
+			baseSQLPart+`AND o.integration_id = ?`+dateFilterPart+orderBySQLPart,
+			allParams...,
 		)
 	} else {
-		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart, limit)
+		allParams := append(dateParams, limit)
+		query = r.db.Conn(ctx).Raw(baseSQLPart + dateFilterPart + orderBySQLPart, allParams...)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -814,7 +988,7 @@ func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *ui
 }
 
 // GetOrdersByDepartment obtiene TODAS las órdenes agrupadas por departamento
-func (r *Repository) GetOrdersByDepartment(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrdersByDepartment, error) {
+func (r *Repository) GetOrdersByDepartment(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByDepartment, error) {
 	type Result struct {
 		Department string `gorm:"column:department"`
 		Count      int64  `gorm:"column:count"`
@@ -838,6 +1012,14 @@ func (r *Repository) GetOrdersByDepartment(ctx context.Context, businessID *uint
 		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		r.logger.Error().Err(err).Msg("Error al obtener órdenes por departamento")
 		return nil, err
@@ -856,7 +1038,7 @@ func (r *Repository) GetOrdersByDepartment(ctx context.Context, businessID *uint
 }
 
 // GetOrdersByBusiness obtiene órdenes agrupadas por business (solo para super admin)
-func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int) ([]domain.OrdersByBusiness, error) {
+func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByBusiness, error) {
 	// Usar una subconsulta para obtener el nombre del business
 	// Primero obtenemos los business_ids y sus conteos, luego obtenemos los nombres
 	query := r.db.Conn(ctx).
@@ -866,6 +1048,14 @@ func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int) ([]doma
 		Group("orders.business_id").
 		Order("order_count DESC").
 		Limit(limit)
+
+	// Aplicar filtro por rango de fechas
+	if startDate != nil {
+		query = query.Where("orders.created_at >= ?", *startDate)
+	}
+	if endDate != nil {
+		query = query.Where("orders.created_at < ?", *endDate)
+	}
 
 	// Obtener los business_ids y conteos
 	type BusinessCount struct {
@@ -933,7 +1123,7 @@ func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int) ([]doma
 }
 
 // GetOrdersByMonth obtiene órdenes agrupadas por mes del año actual
-func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrdersByMonth, error) {
+func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByMonth, error) {
 	type Result struct {
 		Month       int   `gorm:"column:month"`
 		Year        int   `gorm:"column:year"`
@@ -957,26 +1147,44 @@ func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, int
 		ORDER BY year ASC, month ASC
 	`
 
+	// Construir filtros de fecha
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND orders.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND orders.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
 	var query *gorm.DB
 
 	// Construcción del query con filtros opcionales
 	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND orders.business_id = ? AND orders.integration_id = ? `+groupByPart,
-			*businessID, *integrationID,
+			baseSQLPart+`AND orders.business_id = ? AND orders.integration_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
 		)
 	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{*businessID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND orders.business_id = ? `+groupByPart,
-			*businessID,
+			baseSQLPart+`AND orders.business_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
 		)
 	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*integrationID}
+		allParams = append(allParams, dateParams...)
 		query = r.db.Conn(ctx).Raw(
-			baseSQLPart+`AND orders.integration_id = ? `+groupByPart,
-			*integrationID,
+			baseSQLPart+`AND orders.integration_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
 		)
 	} else {
-		query = r.db.Conn(ctx).Raw(baseSQLPart + groupByPart)
+		query = r.db.Conn(ctx).Raw(baseSQLPart + dateFilterPart + groupByPart, dateParams...)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {

@@ -4,7 +4,7 @@ import node from '@astrojs/node';
 
 import tailwindcss from '@tailwindcss/vite';
 
-import preact from '@astrojs/preact';
+import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
@@ -14,8 +14,11 @@ export default defineConfig({
   }),
   base: '/website/',
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    ssr: {
+      external: ['framer-motion']
+    }
   },
 
-  integrations: [preact()]
+  integrations: [react()]
 });

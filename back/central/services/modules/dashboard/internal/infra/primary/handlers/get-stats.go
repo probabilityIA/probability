@@ -83,8 +83,24 @@ func (h *DashboardHandlers) GetStats(c *gin.Context) {
 		}
 	}
 
+	var startDate *time.Time
+	if startDateParam := c.Query("start_date"); startDateParam != "" {
+		if parsedDate, err := time.Parse("2006-01-02", startDateParam); err == nil {
+			startDate = &parsedDate
+		}
+	}
+
+	var endDate *time.Time
+	if endDateParam := c.Query("end_date"); endDateParam != "" {
+		if parsedDate, err := time.Parse("2006-01-02", endDateParam); err == nil {
+			// Ajustar endDate a fin del día (23:59:59.999) para incluir el día completo
+			endOfDay := parsedDate.Add(24*time.Hour - time.Millisecond)
+			endDate = &endOfDay
+		}
+	}
+
 	// Obtener estadísticas del caso de uso
-	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID, weekStartDate)
+	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID, weekStartDate, startDate, endDate)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error al obtener estadísticas del dashboard")
 		c.JSON(http.StatusInternalServerError, gin.H{
