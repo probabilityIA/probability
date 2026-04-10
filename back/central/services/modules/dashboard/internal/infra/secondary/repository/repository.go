@@ -544,6 +544,7 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint,
 		Model(&models.Shipment{}).
 		Select("shipments.status, COUNT(*) as count").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
+		Where("orders.deleted_at IS NULL").
 		Group("shipments.status").
 		Order("count DESC")
 
@@ -692,6 +693,7 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 		) s
 		JOIN orders o ON o.id = s.order_id
 		WHERE s.carrier IS NOT NULL AND s.carrier != ''
+		AND o.deleted_at IS NULL
 	`
 	orderBySQLPart := `
 		GROUP BY TRIM(LOWER(s.carrier))
@@ -772,6 +774,7 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 		) s
 		JOIN orders o ON o.id = s.order_id
 		WHERE s.carrier IS NOT NULL AND s.carrier != ''
+		AND o.deleted_at IS NULL
 	`
 	orderBySQLPart := `
 		GROUP BY TRIM(LOWER(s.carrier))
@@ -852,6 +855,7 @@ func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *ui
 		) s
 		JOIN orders o ON o.id = s.order_id
 		WHERE s.warehouse_name != '' AND s.warehouse_id IS NOT NULL
+		AND o.deleted_at IS NULL
 	`
 	orderBySQLPart := `
 		GROUP BY s.warehouse_id, s.warehouse_name
@@ -943,7 +947,8 @@ func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *ui
 	query := r.db.Conn(ctx).
 		Model(&models.Order{}).
 		Where("orders.created_at >= ?", startDate).
-		Where("orders.created_at < ?", endDate)
+		Where("orders.created_at < ?", endDate).
+		Where("orders.deleted_at IS NULL")
 
 	// Aplicar filtro por business_id si está especificado
 	if businessID != nil && *businessID > 0 {
