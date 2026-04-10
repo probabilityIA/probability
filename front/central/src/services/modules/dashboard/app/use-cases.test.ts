@@ -98,7 +98,7 @@ describe('DashboardUseCases', () => {
 
             expect(result).toEqual(response);
             expect(repo.getStats).toHaveBeenCalledOnce();
-            expect(repo.getStats).toHaveBeenCalledWith(1, 2, undefined);
+            expect(repo.getStats).toHaveBeenCalledWith(1, 2, undefined, undefined, undefined);
         });
 
         it('debería llamar al repositorio sin parámetros cuando no se pasan filtros', async () => {
@@ -107,7 +107,7 @@ describe('DashboardUseCases', () => {
 
             await useCases.getStats();
 
-            expect(repo.getStats).toHaveBeenCalledWith(undefined, undefined, undefined);
+            expect(repo.getStats).toHaveBeenCalledWith(undefined, undefined, undefined, undefined, undefined);
         });
 
         it('debería pasar el businessId cuando se proporciona', async () => {
@@ -116,7 +116,7 @@ describe('DashboardUseCases', () => {
 
             await useCases.getStats(5);
 
-            expect(repo.getStats).toHaveBeenCalledWith(5, undefined, undefined);
+            expect(repo.getStats).toHaveBeenCalledWith(5, undefined, undefined, undefined, undefined);
         });
 
         it('debería pasar el integrationId cuando se proporciona', async () => {
@@ -125,7 +125,7 @@ describe('DashboardUseCases', () => {
 
             await useCases.getStats(undefined, 3);
 
-            expect(repo.getStats).toHaveBeenCalledWith(undefined, 3, undefined);
+            expect(repo.getStats).toHaveBeenCalledWith(undefined, 3, undefined, undefined, undefined);
         });
 
         it('debería pasar el weekStartDate cuando se proporciona', async () => {
@@ -135,7 +135,7 @@ describe('DashboardUseCases', () => {
 
             await useCases.getStats(1, 2, weekStart);
 
-            expect(repo.getStats).toHaveBeenCalledWith(1, 2, weekStart);
+            expect(repo.getStats).toHaveBeenCalledWith(1, 2, weekStart, undefined, undefined);
         });
 
         it('debería retornar estadísticas con orders_by_business para super admin', async () => {
