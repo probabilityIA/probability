@@ -238,9 +238,14 @@ export function Sidebar({ user }: SidebarProps) {
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex flex-col items-center py-4 transition-all duration-300 gap-2">
-            <div className={`relative transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
+          {/* Logo - Clickeable */}
+          <a
+            href="https://www.probabilityia.com.co/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center py-4 transition-all duration-300 gap-2 hover:opacity-80"
+          >
+            <div className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
               {businessLogo ? (
                 <img
                   src={businessLogo}
@@ -267,7 +272,7 @@ export function Sidebar({ user }: SidebarProps) {
                 />
               </div>
             )}
-          </div>
+          </a>
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent" />
 
           {/* Tarjeta de usuario arriba */}
