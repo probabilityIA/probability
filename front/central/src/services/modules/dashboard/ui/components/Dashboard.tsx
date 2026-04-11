@@ -9,6 +9,7 @@ import { TokenStorage } from '@/shared/utils/token-storage';
 import { TopCustomersTable } from './TopCustomersTable';
 import { TopProductsTable } from './TopProductsTable';
 import { ColombiaMap } from './ColombiaMap';
+import { DashboardCharts } from './DashboardCharts';
 import { Spinner, Alert, Select, DateRangePicker } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
 import {
@@ -1044,6 +1045,8 @@ export default function Dashboard() {
                 </div>
             )}
 
+            {/* DashboardCharts con 4 tabs de gráficas interactivas */}
+            {stats && <DashboardCharts stats={stats} />}
 
             {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-0">

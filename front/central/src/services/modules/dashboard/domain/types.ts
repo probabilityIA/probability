@@ -25,6 +25,10 @@ export interface DashboardStats {
     shipments_by_day_of_week: ShipmentsByDayOfWeek[];
     orders_by_department: OrdersByDepartment[];
 
+    // Nuevas: Órdenes por mes y semana
+    orders_by_month?: any[];
+    orders_by_week?: OrdersByWeek[];
+
     // Nuevas: Businesses (solo si es super admin)
     orders_by_business?: OrdersByBusiness[];
 }
@@ -104,6 +108,14 @@ export interface ShipmentsByDayOfWeek {
 
 export interface OrdersByDepartment {
     department: string;
+    count: number;
+}
+
+export interface OrdersByWeek {
+    week: string;           // "Sem 1 - 2026-03-04 a 2026-03-10"
+    week_number: number;    // 1-12
+    start_date: string;     // "2026-03-04"
+    end_date: string;       // "2026-03-10"
     count: number;
 }
 

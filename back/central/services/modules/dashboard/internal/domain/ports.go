@@ -47,6 +47,9 @@ type IRepository interface {
 
 	// Órdenes por mes
 	GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]OrdersByMonth, error)
+
+	// Órdenes por semana (últimas 12 semanas)
+	GetOrdersByWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]OrdersByWeek, error)
 }
 
 // IUseCase define la interfaz del caso de uso para obtener estadísticas del dashboard

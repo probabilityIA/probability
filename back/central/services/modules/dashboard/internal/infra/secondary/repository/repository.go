@@ -1127,6 +1127,100 @@ func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int, startDa
 	return resultsList, nil
 }
 
+// GetOrdersByWeek obtiene órdenes agrupadas por semana (últimas 12 semanas)
+// Semana comienza el lunes (ISO 8601)
+func (r *Repository) GetOrdersByWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByWeek, error) {
+	type Result struct {
+		StartDate string `gorm:"column:start_date"`
+		EndDate   string `gorm:"column:end_date"`
+		Count     int64  `gorm:"column:count"`
+	}
+
+	var results []Result
+
+	baseSQLPart := `
+		SELECT
+			TO_CHAR(DATE_TRUNC('week', orders.created_at AT TIME ZONE 'America/Bogota'), 'YYYY-MM-DD') as start_date,
+			TO_CHAR(DATE_TRUNC('week', orders.created_at AT TIME ZONE 'America/Bogota') + INTERVAL '6 days', 'YYYY-MM-DD') as end_date,
+			COUNT(*) as count
+		FROM orders
+		WHERE orders.deleted_at IS NULL
+	`
+	groupByPart := `
+		GROUP BY DATE_TRUNC('week', orders.created_at AT TIME ZONE 'America/Bogota')
+		ORDER BY DATE_TRUNC('week', orders.created_at AT TIME ZONE 'America/Bogota') DESC
+		LIMIT 12
+	`
+
+	// Construir filtros de fecha
+	dateFilterPart := ""
+	var dateParams []interface{}
+	if startDate != nil {
+		dateFilterPart += " AND orders.created_at >= ?"
+		dateParams = append(dateParams, *startDate)
+	}
+	if endDate != nil {
+		dateFilterPart += " AND orders.created_at < ?"
+		dateParams = append(dateParams, *endDate)
+	}
+
+	var query *gorm.DB
+
+	// Construcción del query con filtros opcionales
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*businessID, *integrationID}
+		allParams = append(allParams, dateParams...)
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.business_id = ? AND orders.integration_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		allParams := []interface{}{*businessID}
+		allParams = append(allParams, dateParams...)
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.business_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		allParams := []interface{}{*integrationID}
+		allParams = append(allParams, dateParams...)
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.integration_id = ? `+dateFilterPart+groupByPart,
+			allParams...,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(baseSQLPart + dateFilterPart + groupByPart, dateParams...)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error al obtener órdenes por semana")
+		return nil, err
+	}
+
+	// Invertir orden (queremos de más antigua a más reciente)
+	for i := len(results) / 2; i >= 0; i-- {
+		opp := len(results) - 1 - i
+		results[i], results[opp] = results[opp], results[i]
+	}
+
+	// Mapear resultados
+	ordersByWeek := make([]domain.OrdersByWeek, len(results))
+	for i, result := range results {
+		weekNumber := i + 1
+		weekLabel := fmt.Sprintf("Sem %d - %s a %s", weekNumber, result.StartDate, result.EndDate)
+
+		ordersByWeek[i] = domain.OrdersByWeek{
+			Week:       weekLabel,
+			WeekNumber: weekNumber,
+			StartDate:  result.StartDate,
+			EndDate:    result.EndDate,
+			Count:      result.Count,
+		}
+	}
+
+	return ordersByWeek, nil
+}
+
 // GetOrdersByMonth obtiene órdenes agrupadas por mes del año actual
 func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByMonth, error) {
 	type Result struct {

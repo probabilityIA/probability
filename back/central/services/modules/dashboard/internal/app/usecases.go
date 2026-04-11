@@ -148,6 +148,14 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		ordersByMonth = []domain.OrdersByMonth{}
 	}
 
+	// Obtener órdenes por semana (últimas 12 semanas)
+	ordersByWeek, err := uc.repo.GetOrdersByWeek(ctx, businessID, integrationID, startDate, endDate)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener órdenes por semana")
+		// No es un error fatal: si falla, retornar slice vacío
+		ordersByWeek = []domain.OrdersByWeek{}
+	}
+
 	stats := &domain.DashboardStats{
 		TotalOrders:             totalOrders,
 		OrdersToday:             ordersToday,
@@ -166,6 +174,7 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		ShipmentsByDayOfWeek:    shipmentsByDayOfWeek,
 		OrdersByDepartment:      ordersByDepartment,
 		OrdersByMonth:           ordersByMonth,
+		OrdersByWeek:            ordersByWeek,
 	}
 
 	// Obtener estadísticas de businesses solo si NO hay filtro de business aplicado (businessID == nil)
