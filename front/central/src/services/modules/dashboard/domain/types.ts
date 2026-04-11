@@ -26,7 +26,7 @@ export interface DashboardStats {
     orders_by_department: OrdersByDepartment[];
 
     // Nuevas: Órdenes por mes y semana
-    orders_by_month?: any[];
+    orders_by_month?: OrdersByMonth[];
     orders_by_week?: OrdersByWeek[];
 
     // Nuevas: Businesses (solo si es super admin)
@@ -117,6 +117,14 @@ export interface OrdersByWeek {
     start_date: string;     // "2026-03-04"
     end_date: string;       // "2026-03-10"
     count: number;
+}
+
+export interface OrdersByMonth {
+    month: string;          // "Marzo 2026"
+    month_number: number;   // 1-12
+    year: number;           // 2026
+    count: number;
+    percentage: number;
 }
 
 // Businesses (solo super admin)

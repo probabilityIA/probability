@@ -127,7 +127,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     if (!stats?.orders_by_month || stats.orders_by_month.length === 0) return null;
 
     const data = stats.orders_by_month.map((m: OrdersByMonth) => ({
-      month: m.month?.split(' ')[0] || '',
+      month: m.month?.split(' ')[0] || m.month || '',
       orders: m.count,
     }));
 
