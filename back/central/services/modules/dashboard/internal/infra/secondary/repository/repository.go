@@ -1312,3 +1312,56 @@ func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, int
 
 	return ordersByMonth, nil
 }
+
+// GetTopSellingDays obtiene los TOP N días de mayor demanda (fechas específicas)
+func (r *Repository) GetTopSellingDays(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopSellingDay, error) {
+	type Result struct {
+		Date  time.Time `gorm:"column:date"`
+		Count int64     `gorm:"column:count"`
+	}
+
+	var results []Result
+
+	query := r.db.Conn(ctx).
+		Model(&models.Order{}).
+		Select("DATE(orders.created_at AT TIME ZONE 'America/Bogota') as date, COUNT(*) as count").
+		Where("orders.deleted_at IS NULL").
+		Group("DATE(orders.created_at AT TIME ZONE 'America/Bogota')").
+		Order("count DESC").
+		Limit(limit)
+
+	// Aplicar filtro por business_id si está especificado
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	// Mapear resultados a TopSellingDay
+	topDays := make([]domain.TopSellingDay, len(results))
+	dayNames := []string{"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"}
+	monthNames := []string{"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"}
+
+	for i, result := range results {
+		dayName := dayNames[result.Date.Weekday()]
+		monthNum := result.Date.Month() - 1
+		monthShort := monthNames[monthNum]
+		formatted := fmt.Sprintf("%s %d %s", dayName, result.Date.Day(), monthShort)
+
+		topDays[i] = domain.TopSellingDay{
+			Date:      result.Date.Format("2006-01-02"),
+			DayName:   dayName,
+			Formatted: formatted,
+			Total:     result.Count,
+		}
+	}
+
+	return topDays, nil
+}

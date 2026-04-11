@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { DashboardStats, OrdersByWeek, OrdersByMonth, ShipmentsByDayOfWeek, ShipmentsByCarrier } from '../../domain/types';
 import {
   ComposedChart,
@@ -25,6 +27,7 @@ import {
 
 interface DashboardChartsProps {
   stats: DashboardStats | null;
+  selectedBusinessId?: number;
 }
 
 // Colores
@@ -76,18 +79,27 @@ const calculateLinearRegression = (data: number[]): { slope: number; intercept: 
   return { slope, intercept };
 };
 
-export default function DashboardCharts({ stats }: DashboardChartsProps) {
+export default function DashboardCharts({ stats, selectedBusinessId }: DashboardChartsProps) {
   const [activeTab, setActiveTab] = useState<'forecast' | 'monthly' | 'demand' | 'carrier'>('forecast');
+  const [topSellingDays, setTopSellingDays] = useState<any[]>([]);
 
   // Tab 1: Pronóstico de Órdenes
   const forecastData = useMemo(() => {
     if (!stats?.orders_by_week || stats.orders_by_week.length === 0) return null;
 
-    const historicalWeeks = stats.orders_by_week.map(w => ({
-      week: w.week,
-      orders: w.count,
-      type: 'historical' as const,
-    }));
+    const historicalWeeks = stats.orders_by_week.map((w, idx) => {
+      const startDate = new Date(w.start_date);
+      const endDate = new Date(w.end_date);
+      const dateRange = `${format(startDate, 'dd MMM', { locale: es })} – ${format(endDate, 'dd MMM', { locale: es })}`;
+
+      return {
+        weekLabel: `Sem ${idx + 1}`,
+        week: `Sem ${idx + 1}`,
+        orders: w.count,
+        dateRange,
+        type: 'historical' as const,
+      };
+    });
 
     const ordersArray = stats.orders_by_week.map(w => w.count);
     const emaValues = calculateEMA(ordersArray);
@@ -96,11 +108,13 @@ export default function DashboardCharts({ stats }: DashboardChartsProps) {
     const forecastWeeks = forecastedValues.map((orders, idx) => {
       const weekNum = stats.orders_by_week!.length + idx + 1;
       return {
+        weekLabel: `Sem ${weekNum}`,
         week: `Sem ${weekNum}`,
         orders: Math.round(orders),
         forecast: Math.round(orders),
         upper: Math.round(orders * 1.15),
         lower: Math.round(orders * 0.85),
+        dateRange: 'Pronóstico',
         type: 'forecast' as const,
       };
     });
@@ -129,51 +143,113 @@ export default function DashboardCharts({ stats }: DashboardChartsProps) {
     return trendData;
   }, [stats?.orders_by_month]);
 
-  // Tab 3: Días de Mayor Demanda
-  const demandData = useMemo(() => {
-    if (!stats?.shipments_by_day_of_week) return null;
+  // Tab 3: TOP 5 Días de Mayor Demanda (fechas específicas)
+  // Cargar desde endpoint backend GET /api/v1/dashboard/top-selling-days
+  useMemo(() => {
+    const fetchTopDays = async () => {
+      try {
+        const url = new URL('/api/v1/dashboard/top-selling-days', window.location.origin);
+        if (selectedBusinessId) {
+          url.searchParams.append('business_id', selectedBusinessId.toString());
+        }
+        url.searchParams.append('limit', '5');
 
-    return (stats.shipments_by_day_of_week as ShipmentsByDayOfWeek[])
-      .map(d => ({
-        day: d.day_name,
-        orders: d.count,
-      }))
-      .sort((a, b) => b.orders - a.orders);
-  }, [stats?.shipments_by_day_of_week]);
+        const response = await fetch(url.toString());
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data && Array.isArray(result.data)) {
+            setTopSellingDays(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching top selling days:', error);
+      }
+    };
+
+    fetchTopDays();
+  }, [selectedBusinessId]);
+
+  const demandData = useMemo(() => {
+    if (topSellingDays.length === 0) return null;
+
+    return topSellingDays.map((d, idx) => ({
+      date: d.date,
+      label: d.formatted,
+      orders: d.total,
+      isTop: idx === 0,
+    }));
+  }, [topSellingDays]);
 
   // Tab 4: Por Transportadora
+  const CARRIER_COLORS = {
+    enviame: '#7C3AED',
+    envioclick: '#06B6D4',
+    mipaquete: '#F59E0B',
+  };
+
   const carrierData = useMemo(() => {
     if (!stats?.shipments_by_carrier) return null;
 
     const carriers: { [key: string]: any } = {};
+    let totalShipments = 0;
 
     (stats.shipments_by_carrier as ShipmentsByCarrier[]).forEach(c => {
       const cleanCarrier = c.carrier?.toLowerCase() || 'unknown';
+      const carrierKey = cleanCarrier.includes('enviame')
+        ? 'enviame'
+        : cleanCarrier.includes('envioclick')
+          ? 'envioclick'
+          : cleanCarrier.includes('mipaquete')
+            ? 'mipaquete'
+            : 'other';
+
       carriers[cleanCarrier] = {
-        name: cleanCarrier,
+        name: c.carrier || 'Unknown',
+        displayName: c.carrier || 'Unknown',
         value: c.count,
-        fill: cleanCarrier.includes('enviame')
-          ? COLORS.primary
-          : cleanCarrier.includes('envioclick')
-            ? COLORS.secondary
-            : COLORS.tertiary,
+        fill: CARRIER_COLORS[carrierKey as keyof typeof CARRIER_COLORS] || CARRIER_COLORS.mipaquete,
       };
+      totalShipments += c.count;
     });
 
-    return Object.values(carriers);
+    const carrierList = Object.values(carriers);
+    const carrierMetrics = carrierList.map(carrier => ({
+      ...carrier,
+      percentage: totalShipments > 0 ? ((carrier.value / totalShipments) * 100).toFixed(1) : '0',
+    }));
+
+    return { carriers: carrierList, carrierMetrics, totalShipments };
   }, [stats?.shipments_by_carrier]);
 
   // Custom Tooltip
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
+
+      // Para gráficas de pronóstico y meses
+      if (data.week && data.dateRange) {
+        return (
+          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
+            <p className="text-sm font-semibold text-gray-900">
+              {data.week} · {data.dateRange}
+            </p>
+            <p className="text-sm text-gray-700">
+              {data.orders.toLocaleString()} órdenes
+            </p>
+            {data.upper && (
+              <p className="text-xs text-gray-500 mt-1">±{((data.upper - data.lower) / 2 / data.orders * 100).toFixed(0)}%</p>
+            )}
+          </div>
+        );
+      }
+
+      // Para otros gráficos
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
           <p className="text-sm font-semibold text-gray-900">{data.week || data.month || data.day}</p>
           <p className="text-sm text-gray-700">
-            Órdenes: <span className="font-bold">{data.orders || data.value}</span>
+            {data.orders !== undefined ? `${data.orders.toLocaleString()} órdenes` : `${data.value} envíos`}
           </p>
-          {data.type && <p className="text-xs text-gray-500 mt-1">{data.type === 'forecast' ? '📊 Predicción' : '📈 Histórico'}</p>}
         </div>
       );
     }
@@ -219,11 +295,11 @@ export default function DashboardCharts({ stats }: DashboardChartsProps) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-              <XAxis dataKey="week" tick={{ fontSize: 12, fill: '#9CA3AF' }} angle={-45} textAnchor="end" height={80} />
+              <XAxis dataKey="weekLabel" tick={{ fontSize: 12, fill: '#9CA3AF' }} angle={-45} textAnchor="end" height={80} />
               <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine
-                x={forecastData[forecastData.length - 5]?.week}
+                x={forecastData[forecastData.length - 4]?.weekLabel}
                 stroke="#D1D5DB"
                 strokeDasharray="5 5"
                 label={{ value: 'Pronóstico →', position: 'top', fill: '#6B7280', fontSize: 12 }}
@@ -286,23 +362,36 @@ export default function DashboardCharts({ stats }: DashboardChartsProps) {
           </ResponsiveContainer>
         )}
 
-        {/* TAB 3: Días de Mayor Demanda */}
+        {/* TAB 3: TOP 5 Días de Mayor Demanda */}
         {activeTab === 'demand' && demandData && (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart
               data={demandData}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+              margin={{ top: 5, right: 30, left: 140, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
               <XAxis type="number" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="day" type="category" tick={{ fontSize: 12, fill: '#9CA3AF' }} width={95} />
-              <Tooltip content={<CustomTooltip />} />
+              <YAxis
+                dataKey="label"
+                type="category"
+                tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                width={135}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                formatter={(value) => `${value.toLocaleString()} órdenes`}
+              />
               <Bar
                 dataKey="orders"
-                fill={COLORS.primary}
                 radius={[0, 4, 4, 0]}
               >
+                {demandData?.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isTop ? COLORS.primary : 'rgba(139, 92, 246, 0.2)'}
+                  />
+                ))}
                 <LabelList dataKey="orders" position="right" fontSize={12} fill="#6B7280" />
               </Bar>
             </BarChart>
@@ -311,56 +400,67 @@ export default function DashboardCharts({ stats }: DashboardChartsProps) {
 
         {/* TAB 4: Por Transportadora */}
         {activeTab === 'carrier' && carrierData && (
-          <div className="flex gap-6 justify-center items-start">
-            <div className="w-64">
-              <ResponsiveContainer width="100%" height={280}>
+          <div className="flex flex-col items-center gap-8">
+            {/* PieChart Donut con Centro Customizado */}
+            <div className="w-80 relative">
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                   <Pie
-                    data={carrierData}
+                    data={carrierData.carriers}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={90}
+                    innerRadius={65}
+                    outerRadius={110}
                     paddingAngle={2}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    isAnimationActive={true}
+                    animationBegin={0}
+                    animationDuration={800}
+                    label={({ displayName, percent }) => `${carrierData.carriers.find(c => c.displayName === displayName)?.displayName || 'Unknown'} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={true}
                   >
-                    {carrierData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    {carrierData.carriers.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.fill}
+                        stroke="white"
+                        strokeWidth={3}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `${value} envíos`} />
+                  <Tooltip
+                    formatter={(value) => `${value.toLocaleString()} envíos`}
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
+              {/* Centro del Donut */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-xs font-medium text-gray-600">Total</div>
+                <div className="text-3xl font-bold text-gray-900">{carrierData.totalShipments.toLocaleString()}</div>
+              </div>
             </div>
 
-            <div className="flex-1">
-              <div className="text-sm font-semibold text-gray-900 mb-4">Estado de Envíos</div>
-              <div className="space-y-3">
-                {stats?.shipments_by_status?.map((status: any) => (
-                  <div key={status.status} className="flex items-center gap-3">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor:
-                          status.status === 'delivered'
-                            ? COLORS.success
-                            : status.status === 'in_transit'
-                              ? COLORS.primary
-                              : COLORS.danger,
-                      }}
-                    />
-                    <span className="text-sm text-gray-700">
-                      {status.status === 'delivered'
-                        ? 'Entregado'
-                        : status.status === 'in_transit'
-                          ? 'En tránsito'
-                          : 'Fallido'}
-                      : {status.count}
-                    </span>
+            {/* Metric Cards por Transportadora */}
+            <div className="w-full grid grid-cols-3 gap-4">
+              {carrierData.carrierMetrics?.map((carrier) => (
+                <div
+                  key={carrier.displayName}
+                  className="p-4 bg-white rounded-lg border border-gray-200"
+                  style={{
+                    borderTop: `3px solid ${carrier.fill}`,
+                  }}
+                >
+                  <div className="text-sm font-semibold text-gray-900 mb-2">{carrier.displayName}</div>
+                  <div className="text-2xl font-bold text-gray-900">{carrier.value.toLocaleString()}</div>
+                  <div
+                    className="text-xs font-medium mt-2 px-2 py-1 rounded-full text-white w-fit"
+                    style={{ backgroundColor: carrier.fill }}
+                  >
+                    {carrier.percentage}%
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -50,9 +50,13 @@ type IRepository interface {
 
 	// Órdenes por semana (últimas 12 semanas)
 	GetOrdersByWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]OrdersByWeek, error)
+
+	// TOP 5 días de mayor demanda (fechas específicas con más órdenes en toda la historia)
+	GetTopSellingDays(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]TopSellingDay, error)
 }
 
 // IUseCase define la interfaz del caso de uso para obtener estadísticas del dashboard
 type IUseCase interface {
 	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time, startDate *time.Time, endDate *time.Time) (*DashboardStats, error)
+	GetTopSellingDays(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]TopSellingDay, error)
 }

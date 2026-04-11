@@ -195,3 +195,14 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 
 	return stats, nil
 }
+
+// GetTopSellingDays obtiene los TOP N días de mayor demanda (fechas específicas)
+func (uc *UseCase) GetTopSellingDays(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopSellingDay, error) {
+	topDays, err := uc.repo.GetTopSellingDays(ctx, businessID, integrationID, limit)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener TOP días de mayor demanda")
+		return nil, err
+	}
+
+	return topDays, nil
+}

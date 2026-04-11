@@ -146,3 +146,11 @@ type OrdersByWeek struct {
 	EndDate    string `json:"end_date"`    // Fecha fin (YYYY-MM-DD)
 	Count      int64  `json:"count"`       // Número de órdenes
 }
+
+// TopSellingDay representa los días con más órdenes en la historia
+type TopSellingDay struct {
+	Date      string `json:"date"`       // Fecha en formato YYYY-MM-DD
+	DayName   string `json:"day_name"`   // Nombre del día (Lunes, Martes, etc)
+	Formatted string `json:"formatted"`  // Formato legible (ej: "Lunes 23 mar")
+	Total     int64  `json:"total"`      // Número de órdenes
+}
