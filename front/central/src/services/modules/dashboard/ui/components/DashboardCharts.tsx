@@ -416,7 +416,10 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
                     isAnimationActive={true}
                     animationBegin={0}
                     animationDuration={800}
-                    label={({ displayName, percent }) => `${carrierData.carriers.find(c => c.displayName === displayName)?.displayName || 'Unknown'} ${(percent * 100).toFixed(0)}%`}
+                    label={({ index, percent }) => {
+                      const carrier = carrierData.carriers[index || 0];
+                      return `${carrier?.displayName || 'Unknown'} ${((percent || 0) * 100).toFixed(0)}%`;
+                    }}
                     labelLine={true}
                   >
                     {carrierData.carriers.map((entry, index) => (
