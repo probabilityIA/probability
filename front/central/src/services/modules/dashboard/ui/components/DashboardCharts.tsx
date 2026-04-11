@@ -380,7 +380,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
               />
               <Tooltip
                 contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                formatter={(value) => `${value.toLocaleString()} órdenes`}
+                formatter={(value) => value ? `${(value as number).toLocaleString()} órdenes` : '0 órdenes'}
               />
               <Bar
                 dataKey="orders"
@@ -429,7 +429,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => `${value.toLocaleString()} envíos`}
+                    formatter={(value) => value ? `${(value as number).toLocaleString()} envíos` : '0 envíos'}
                     contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
                   />
                 </PieChart>
