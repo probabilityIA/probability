@@ -11,20 +11,13 @@ import (
 )
 
 func main() {
-	// 1. Init Logger
 	logger := log.New()
-
-	// 2. Init Config
 	cfg := env.New(logger)
-
-	// 3. Init DB
 	database := db.New(logger, cfg)
 	defer database.Close()
 
-	// 4. Init Repository
 	repo := repository.New(database, cfg)
 
-	// 5. Run Migrations
 	logger.Info().Msg("Starting database migration...")
 	if err := repo.Migrate(context.Background()); err != nil {
 		logger.Fatal(context.Background()).Err(err).Msg("Migration failed")

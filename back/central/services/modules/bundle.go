@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
+	"github.com/secamc93/probability/back/central/services/modules/announcements"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/drivers"
@@ -13,9 +14,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
-	"github.com/secamc93/probability/back/central/services/modules/probability"
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
+	"github.com/secamc93/probability/back/central/services/modules/probability"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite"
 	"github.com/secamc93/probability/back/central/services/modules/routes"
@@ -25,16 +26,15 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
+	"github.com/secamc93/probability/back/central/shared/bedrock"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
-	"github.com/secamc93/probability/back/central/shared/bedrock"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-// ModuleBundles contiene referencias a los bundles de módulos que otros servicios pueden necesitar
 type ModuleBundles struct {
 	router      *gin.RouterGroup
 	database    db.IDatabase
@@ -44,86 +44,44 @@ type ModuleBundles struct {
 	redisClient redis.IRedis
 }
 
-// New inicializa todos los módulos (excepto invoicing que requiere integrationCore)
-// y retorna referencias a bundles compartidos
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock) *ModuleBundles {
-	// Inicializar módulo de payments
+	announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
-
-	// Inicializar módulo de order status mappings
 	orderstatus.New(router, database, logger, environment)
-
-	// Inicializar módulo de orders
 	orders.New(router, database, logger, environment, rabbitMQ)
-
-	// Inicializar módulo de probability (score de entrega via RabbitMQ consumer)
 	probability.New(database, logger, rabbitMQ)
-
-	// Inicializar módulo de products
 	products.New(router, database, logger, environment, s3)
-
-	// Inicializar módulo de customers
 	customers.New(router, database, logger, rabbitMQ)
-
-	// Inicializar módulo de shipments
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
-
-	// Inicializar módulo de notification configs (con RabbitMQ para consumer de delivery results)
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
-
-	// Módulo de events se inicializa en init.go (unificado, sin database)
-
-	// Inicializar módulo de AI
 	ai.New(router, logger)
-
-	// Inicializar módulo de dashboard
 	dashboard.New(router, database, logger)
-
-	// Inicializar módulo de pagos (pasarelas externas + wallet)
 	pay.New(router, database, logger, environment, rabbitMQ, redisClient)
-
-	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
-
-	// Inicializar módulo de warehouses (bodegas)
 	warehouses.New(router, database)
-
-	// Inicializar módulo de inventory (stock + movimientos + cache Redis)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
-
-	// Ultima milla
 	drivers.New(router, database)
 	vehicles.New(router, database)
 	routes.New(router, database)
-
-	// Inicializar módulo de storefront (tienda para clientes finales)
 	storefront.New(router, database, logger, rabbitMQ, environment)
-
-	// Inicializar módulo de tienda pública (sin auth)
 	publicsite.New(router, database, logger, environment)
-
-	// Inicializar módulo de configuración de sitio web (con auth)
 	websiteconfig.New(router, database, logger)
 
-	// Inicializar módulo de suscripciones
 	subModule := subscriptions.Setup(database)
 	subModule.RegisterRoutes(router)
 
-	// Inicializar módulo de monitoreo (alertas Grafana -> RabbitMQ)
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)
 	} else {
-		logger.Warn().Msg("RabbitMQ no disponible, módulo de monitoreo no se inicializará")
+		logger.Warn().Msg("RabbitMQ no disponible, modulo de monitoreo no se inicializara")
 	}
 
-	// Inicializar módulo de AI Sales (agente de ventas via WhatsApp + Bedrock)
 	if bedrockClient != nil && rabbitMQ != nil && redisClient != nil {
 		ai_sales.New(database, logger, rabbitMQ, redisClient, bedrockClient)
 	} else {
-		logger.Warn().Msg("AI Sales: Bedrock, RabbitMQ o Redis no disponible, módulo no se inicializará")
+		logger.Warn().Msg("AI Sales: Bedrock, RabbitMQ o Redis no disponible, modulo no se inicializara")
 	}
 
-	// Retornar referencias a bundles compartidos
 	return &ModuleBundles{
 		router:      router,
 		database:    database,

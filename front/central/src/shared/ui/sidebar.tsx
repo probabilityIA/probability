@@ -104,6 +104,8 @@ export function Sidebar({ user }: SidebarProps) {
   // Clientes: Visible para negocio
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
+  const canViewAnnouncements = isSuperAdmin;
+
   // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
   const canViewInventory = isSuperAdmin || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read');
@@ -521,6 +523,34 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Clientes</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {canViewAnnouncements && (
+                <li>
+                  <Link
+                    href="/announcements"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/announcements')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/announcements') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.5 0V5.882m0 0C7.5 4.334 9.167 3 11 3s3.5 1.334 3.5 2.882M11 5.882h3.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Anuncios</span>
                     )}
                   </Link>
                 </li>

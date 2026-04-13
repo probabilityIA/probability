@@ -6,7 +6,6 @@ import (
 
 	"github.com/secamc93/probability/back/migration/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/env"
-	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 type Repository struct {
@@ -22,17 +21,8 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
-	if err := r.db.Conn(ctx).AutoMigrate(
-		&models.CustomerSummary{},
-		&models.CustomerAddress{},
-		&models.CustomerProductHistory{},
-		&models.CustomerOrderItem{},
-	); err != nil {
-		return fmt.Errorf("failed to auto-migrate customer history tables: %w", err)
-	}
-
-	if err := r.seedCustomerHistory(ctx); err != nil {
-		return fmt.Errorf("failed to seed customer history: %w", err)
+	if err := r.migrateAnnouncements(ctx); err != nil {
+		return fmt.Errorf("failed to migrate announcements: %w", err)
 	}
 
 	return nil

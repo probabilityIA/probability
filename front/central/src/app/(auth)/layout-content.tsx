@@ -14,6 +14,8 @@ import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-busines
 import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
+import AnnouncementModal from '@/services/modules/announcements/ui/components/AnnouncementModal';
+import AnnouncementTicker from '@/services/modules/announcements/ui/components/AnnouncementTicker';
 
 interface LayoutContentProps {
   user: {
@@ -96,6 +98,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
               <InvoicingBusinessProvider>
                 <DeliveryBusinessProvider>
                   <StorefrontBusinessProvider>
+                    <AnnouncementTicker />
                     <OrdersSubNavbar />
                     <InventorySubNavbar />
                     <IntegrationsSubNavbar />
@@ -127,11 +130,13 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         `}</style>
       </main>
 
-      {/* Lina — Asistente Virtual (solo para roles business / super admin) */}
+      {/* Lina -- Asistente Virtual (solo para roles business / super admin) */}
       <LinaChatbot
         userScope={user?.scope}
         isSuperAdmin={user?.is_super_admin}
       />
+
+      <AnnouncementModal />
     </div>
   );
 }
