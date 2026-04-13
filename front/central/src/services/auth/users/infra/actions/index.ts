@@ -9,6 +9,7 @@ import {
     UpdateUserDTO,
     AssignRolesDTO
 } from '../../domain/types';
+import { generatePasswordAction } from '@/services/auth/login/infra/actions';
 
 async function getUseCases() {
     const cookieStore = await cookies();
@@ -68,5 +69,19 @@ export const assignRolesAction = async (id: number, data: AssignRolesDTO) => {
     } catch (error: any) {
         console.error('Assign Roles Action Error:', error.message);
         return { success: false, message: error.message };
+    }
+};
+
+export const resetPasswordAction = async (userId: number) => {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value;
+        if (!token) {
+            return { success: false, email: '', password: '', message: 'No se encontro el token de sesion' };
+        }
+        return await generatePasswordAction({ user_id: userId }, token);
+    } catch (error: any) {
+        console.error('Reset Password Action Error:', error.message);
+        return { success: false, email: '', password: '', message: error.message };
     }
 };

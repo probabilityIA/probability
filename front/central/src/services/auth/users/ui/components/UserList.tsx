@@ -9,12 +9,13 @@ import { Spinner } from '@/shared/ui/spinner';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { User, GetUsersParams } from '../../domain/types';
 import { UserForm } from './UserForm';
-import { getUsersAction, deleteUserAction, getUserByIdAction, assignRolesAction } from '../../infra/actions';
+import { getUsersAction, deleteUserAction, getUserByIdAction, assignRolesAction, resetPasswordAction } from '../../infra/actions';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { getRolesAction } from '@/services/auth/roles/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import { Role } from '@/services/auth/roles/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 export const UserList: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -30,7 +31,6 @@ export const UserList: React.FC = () => {
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [loadingUser, setLoadingUser] = useState(false);
 
-    // Estados para asignar rol
     const [showAssignRoleModal, setShowAssignRoleModal] = useState(false);
     const [assigningRoleUser, setAssigningRoleUser] = useState<User | null>(null);
     const [roles, setRoles] = useState<Role[]>([]);
@@ -40,13 +40,19 @@ export const UserList: React.FC = () => {
     const [loadingRoles, setLoadingRoles] = useState(false);
     const [assigningRole, setAssigningRole] = useState(false);
 
-    // Filters
+    const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+    const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+    const [generatedEmail, setGeneratedEmail] = useState<string | null>(null);
+    const [resettingPassword, setResettingPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const { isSuperAdmin } = usePermissions();
+
     const [filters, setFilters] = useState<GetUsersParams>({
         page: 1,
         page_size: 20,
     });
 
-    // Definir filtros disponibles
     const availableFilters: FilterOption[] = [
         {
             key: 'name',
@@ -98,7 +104,6 @@ export const UserList: React.FC = () => {
         },
     ];
 
-    // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
         const active: ActiveFilter[] = [];
 
@@ -168,7 +173,6 @@ export const UserList: React.FC = () => {
         return active;
     }, [filters]);
 
-    // Manejar adición de filtro
     const handleAddFilter = useCallback((filterKey: string, value: any) => {
         setFilters((prev) => {
             const newFilters = { ...prev, page: 1 };
@@ -189,7 +193,6 @@ export const UserList: React.FC = () => {
         });
     }, []);
 
-    // Manejar eliminación de filtro
     const handleRemoveFilter = useCallback((filterKey: string) => {
         setFilters((prev) => {
             const newFilters = { ...prev, page: 1 };
@@ -198,7 +201,6 @@ export const UserList: React.FC = () => {
         });
     }, []);
 
-    // Cargar usuarios
     const loadUsers = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -268,13 +270,11 @@ export const UserList: React.FC = () => {
         }
     };
 
-    // Cargar roles y negocios cuando se abre el modal de asignar rol
     const handleOpenAssignRole = async (user: User) => {
         setAssigningRoleUser(user);
         setShowAssignRoleModal(true);
         setLoadingRoles(true);
 
-        // Preseleccionar valores si el usuario ya tiene asignaciones
         const firstAssignment = user.business_role_assignments?.[0];
         if (firstAssignment) {
             setSelectedBusinessId(firstAssignment.business_id ? String(firstAssignment.business_id) : '');
@@ -305,14 +305,12 @@ export const UserList: React.FC = () => {
         }
     };
 
-    // Asignar rol al usuario
     const handleAssignRole = async () => {
         if (!assigningRoleUser || !selectedRoleId) {
             setError('Debe seleccionar un rol');
             return;
         }
 
-        // Para usuarios platform no se requiere business_id
         const isPlatformUser = assigningRoleUser.scope_code === 'platform';
         if (!isPlatformUser && !selectedBusinessId) {
             setError('Debe seleccionar un negocio y un rol');
@@ -343,6 +341,51 @@ export const UserList: React.FC = () => {
         }
     };
 
+    const handleResetPassword = async () => {
+        if (!resetPasswordUser) return;
+        setResettingPassword(true);
+        try {
+            const response = await resetPasswordAction(resetPasswordUser.id);
+            if (response.success && response.password) {
+                setGeneratedPassword(response.password);
+                setGeneratedEmail(response.email);
+            } else {
+                setError(response.message || 'Error al generar nueva contrasena');
+                setResetPasswordUser(null);
+            }
+        } catch (err: any) {
+            setError(getActionError(err, 'Error al generar nueva contrasena'));
+            setResetPasswordUser(null);
+        } finally {
+            setResettingPassword(false);
+        }
+    };
+
+    const handleCopyPassword = async () => {
+        if (!generatedPassword) return;
+        try {
+            await navigator.clipboard.writeText(generatedPassword);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            const textArea = document.createElement('textarea');
+            textArea.value = generatedPassword;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    const closePasswordModal = () => {
+        setResetPasswordUser(null);
+        setGeneratedPassword(null);
+        setGeneratedEmail(null);
+        setCopied(false);
+    };
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -351,7 +394,6 @@ export const UserList: React.FC = () => {
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
 
-            {/* Filtros dinámicos y Tabla */}
             <div>
                 <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-b-0">
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 gap-4">
@@ -378,7 +420,6 @@ export const UserList: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-                {/* Tabla */}
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -511,6 +552,18 @@ export const UserList: React.FC = () => {
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                                         </svg>
                                                     </button>
+                                                    {isSuperAdmin && (
+                                                        <button
+                                                            onClick={() => setResetPasswordUser(user)}
+                                                            className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                                            title="Restablecer contrasena"
+                                                            aria-label="Restablecer contrasena"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleEdit(user)}
                                                         className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
@@ -541,11 +594,9 @@ export const UserList: React.FC = () => {
                         </table>
                     </div>
 
-                    {/* Paginación */}
                     {!loading && users.length > 0 && (
                         <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                {/* Desktop: Full pagination */}
                                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                     <div>
                                         <p className="text-sm text-gray-700 dark:text-gray-200">
@@ -581,7 +632,6 @@ export const UserList: React.FC = () => {
                                     </nav>
                                 </div>
 
-                                {/* Mobile: Page size selector */}
                                 <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
@@ -632,7 +682,6 @@ export const UserList: React.FC = () => {
                 onClose={() => setDeleteId(null)}
             />
 
-            {/* Modal para asignar rol */}
             <Modal
                 isOpen={showAssignRoleModal}
                 onClose={() => { setShowAssignRoleModal(false); setAssigningRoleUser(null); }}
@@ -645,7 +694,6 @@ export const UserList: React.FC = () => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {/* Indicador de tipo de usuario */}
                         {assigningRoleUser?.scope_code === 'platform' && (
                             <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg">
                                 <p className="text-sm text-purple-700 dark:text-purple-200">
@@ -654,7 +702,6 @@ export const UserList: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Roles actuales del usuario */}
                         {assigningRoleUser?.business_role_assignments && assigningRoleUser.business_role_assignments.length > 0 && (
                             <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Roles actuales:</p>
@@ -671,7 +718,6 @@ export const UserList: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Selector de negocio - Solo para usuarios NO platform */}
                         {assigningRoleUser?.scope_code !== 'platform' && (
                             <Select
                                 label="Negocio *"
@@ -722,6 +768,91 @@ export const UserList: React.FC = () => {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {resetPasswordUser && !generatedPassword && (
+                <ConfirmModal
+                    isOpen={true}
+                    title="Restablecer Contrasena"
+                    message={`Se generara una nueva contrasena aleatoria para ${resetPasswordUser.name} (${resetPasswordUser.email}). La contrasena actual dejara de funcionar. Esta seguro?`}
+                    confirmText={resettingPassword ? 'Generando...' : 'Si, generar nueva contrasena'}
+                    cancelText="Cancelar"
+                    type="warning"
+                    onConfirm={handleResetPassword}
+                    onClose={closePasswordModal}
+                />
+            )}
+
+            <Modal
+                isOpen={!!generatedPassword}
+                onClose={closePasswordModal}
+                title="Nueva Contrasena Generada"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                            <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                                Esta contrasena solo se mostrara una vez
+                            </p>
+                        </div>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                            Copie la contrasena antes de cerrar este dialogo. No podra verla de nuevo.
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Email
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-white font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-md">
+                            {generatedEmail}
+                        </p>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nueva Contrasena
+                        </label>
+                        <div className="flex items-center gap-2">
+                            <p className="flex-1 text-sm text-gray-900 dark:text-white font-mono bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-md select-all">
+                                {generatedPassword}
+                            </p>
+                            <button
+                                onClick={handleCopyPassword}
+                                className={`p-2 rounded-md transition-colors duration-200 ${
+                                    copied
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500'
+                                }`}
+                                title={copied ? 'Copiado' : 'Copiar contrasena'}
+                            >
+                                {copied ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={closePasswordModal}
+                        >
+                            Entendido, cerrar
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );
