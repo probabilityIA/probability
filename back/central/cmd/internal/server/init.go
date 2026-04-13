@@ -65,7 +65,6 @@ func Init(ctx context.Context) error {
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
 
-	routes.SetupSwagger(r, environment, logger)
 	// jwtService := middleware.GetJWTService()
 
 	v1Group := r.Group("/api/v1")

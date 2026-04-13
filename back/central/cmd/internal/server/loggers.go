@@ -16,23 +16,11 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig, queu
 	port := e.Get("HTTP_PORT")
 	serverURL := fmt.Sprintf("http://localhost:%s", port)
 
-	swaggerBaseURL := e.Get("URL_BASE_SWAGGER")
-	if swaggerBaseURL == "" {
-		swaggerBaseURL = serverURL
-	}
-	docsURL := fmt.Sprintf("%s/docs/index.html", swaggerBaseURL)
+	coloredURL := fmt.Sprintf("\033[34;4m%s\033[0m", serverURL)
 
-	// Colores ANSI para URLs
-	coloredURL := fmt.Sprintf("\033[34;4m%s\033[0m", serverURL) // azul subrayado
-	coloredDocs := fmt.Sprintf("\033[33;4m%s\033[0m", docsURL)  // amarillo subrayado
-
-	// Espacio inicial
 	logger.Info(ctx).Msg(" ")
-
-	// Cabecera
 	logger.Info(ctx).Msg(" 🚀 Servidor HTTP iniciado correctamente")
 	logger.Info(ctx).Msgf(" 📍 Disponible en: %s", coloredURL)
-	logger.Info(ctx).Msgf(" 📖 Documentación: %s", coloredDocs)
 	logger.Info(ctx).Msg(" ")
 
 	// PostgreSQL (si aplica)
