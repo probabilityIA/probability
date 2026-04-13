@@ -170,8 +170,8 @@ func TestTestConnection_ConTestPhone_EnviaMensaje_Exito(t *testing.T) {
 	if capturedToken != "token-de-prueba" {
 		t.Errorf("accessToken = %q, quería %q", capturedToken, "token-de-prueba")
 	}
-	if capturedTemplateName != "hello_world" {
-		t.Errorf("template.Name = %q, quería %q", capturedTemplateName, "hello_world")
+	if capturedTemplateName != "prueba_conexion" {
+		t.Errorf("template.Name = %q, quería %q", capturedTemplateName, "prueba_conexion")
 	}
 }
 

@@ -212,8 +212,8 @@ func TestSendTemplate_Exito(t *testing.T) {
 
 	waMock := &mocks.WhatsAppMock{
 		SendMessageFn: func(_ context.Context, phoneNumberID uint, msg entities.TemplateMessage, _ string) (string, error) {
-			if msg.Template.Name != "pedido_confirmado" {
-				t.Errorf("Template.Name = %q, quería %q", msg.Template.Name, "pedido_confirmado")
+			if msg.Template.Name != "pedido_confirmado_v2" {
+				t.Errorf("Template.Name = %q, quería %q", msg.Template.Name, "pedido_confirmado_v2")
 			}
 			return expectedMsgID, nil
 		},
@@ -252,9 +252,9 @@ func TestSendTemplate_Exito(t *testing.T) {
 
 	messageID, err := uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
-		map[string]string{"1": "ORD-001"},
+		map[string]string{"1": "Juan", "2": "ORD-001", "3": "MiTienda", "4": "Calle 123", "5": "Producto A"},
 		"ORD-001",
 		1,
 	)
@@ -309,7 +309,7 @@ func TestSendTemplate_ErrorVariableFaltante(t *testing.T) {
 	// pedido_confirmado requiere variable "1" (numero_pedido)
 	_, err := uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
 		map[string]string{}, // faltan variables
 		"ORD-001",
@@ -338,9 +338,9 @@ func TestSendTemplate_ErrorNumeroTelefonoInvalido(t *testing.T) {
 
 	_, err := uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"numero_invalido",
-		map[string]string{"1": "ORD-001"},
+		map[string]string{"1": "Juan", "2": "ORD-001", "3": "MiTienda", "4": "Calle 123", "5": "Producto A"},
 		"ORD-001",
 		1,
 	)
@@ -370,9 +370,9 @@ func TestSendTemplate_ErrorObtenendoConfigWhatsApp(t *testing.T) {
 
 	_, err := uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
-		map[string]string{"1": "ORD-001"},
+		map[string]string{"1": "Juan", "2": "ORD-001", "3": "MiTienda", "4": "Calle 123", "5": "Producto A"},
 		"ORD-001",
 		1,
 	)
@@ -418,9 +418,9 @@ func TestSendTemplate_ErrorEnvioClienteWhatsApp(t *testing.T) {
 
 	_, err := uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
-		map[string]string{"1": "ORD-001"},
+		map[string]string{"1": "Juan", "2": "ORD-001", "3": "MiTienda", "4": "Calle 123", "5": "Producto A"},
 		"ORD-001",
 		1,
 	)
@@ -475,9 +475,9 @@ func TestSendTemplate_ConversacionActivaExistenteEsReutilizada(t *testing.T) {
 
 	_, _ = uc.SendTemplate(
 		context.Background(),
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
-		map[string]string{"1": "ORD-001"},
+		map[string]string{"1": "Juan", "2": "ORD-001", "3": "MiTienda", "4": "Calle 123", "5": "Producto A"},
 		"ORD-001",
 		1,
 	)
@@ -662,13 +662,13 @@ func TestBuildTemplateMessage_ConVariables(t *testing.T) {
 	)
 
 	templateDef := entities.TemplateDefinition{
-		Name:      "pedido_confirmado",
+		Name:      "pedido_confirmado_v2",
 		Language:  "es",
 		Variables: []string{"numero_pedido"},
 	}
 
 	msg := uc.buildTemplateMessage(
-		"pedido_confirmado",
+		"pedido_confirmado_v2",
 		"+573001234567",
 		map[string]string{"1": "ORD-999"},
 		templateDef,
@@ -680,8 +680,8 @@ func TestBuildTemplateMessage_ConVariables(t *testing.T) {
 	if msg.To != "+573001234567" {
 		t.Errorf("To = %q, quería %q", msg.To, "+573001234567")
 	}
-	if msg.Template.Name != "pedido_confirmado" {
-		t.Errorf("Template.Name = %q, quería %q", msg.Template.Name, "pedido_confirmado")
+	if msg.Template.Name != "pedido_confirmado_v2" {
+		t.Errorf("Template.Name = %q, quería %q", msg.Template.Name, "pedido_confirmado_v2")
 	}
 	if msg.Template.Language.Code != "es" {
 		t.Errorf("Language.Code = %q, quería %q", msg.Template.Language.Code, "es")

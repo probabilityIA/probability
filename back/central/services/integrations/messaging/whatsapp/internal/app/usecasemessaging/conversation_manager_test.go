@@ -25,6 +25,7 @@ func newUsecasesForTest(
 		persistPublisher:  persistPub,
 		credentialsCache:  credsCache,
 		publisher:         publisher,
+		ssePublisher:      &mocks.SSEEventPublisherMock{},
 		log:               &mocks.LoggerMock{},
 		config:            cfg,
 	}
@@ -162,8 +163,8 @@ func TestTransitionState_AwaitingConfirmation_ConfirmarPedido(t *testing.T) {
 	if transition.NextState != entities.StateCompleted {
 		t.Errorf("NextState = %q, quería %q", transition.NextState, entities.StateCompleted)
 	}
-	if transition.TemplateName != "pedido_confirmado" {
-		t.Errorf("TemplateName = %q, quería %q", transition.TemplateName, "pedido_confirmado")
+	if transition.TemplateName != "pedido_confirmado_v2" {
+		t.Errorf("TemplateName = %q, quería %q", transition.TemplateName, "pedido_confirmado_v2")
 	}
 	if !transition.PublishEvent {
 		t.Error("PublishEvent debería ser true")

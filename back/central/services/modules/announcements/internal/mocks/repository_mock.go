@@ -16,6 +16,8 @@ type RepositoryMock struct {
 	CreateImagesFn                func(ctx context.Context, images []entities.AnnouncementImage) error
 	DeleteImagesByAnnouncementIDFn func(ctx context.Context, announcementID uint) error
 	GetImagesByAnnouncementIDFn   func(ctx context.Context, announcementID uint) ([]entities.AnnouncementImage, error)
+	GetImageByIDFn                func(ctx context.Context, id uint) (*entities.AnnouncementImage, error)
+	DeleteImageByIDFn             func(ctx context.Context, id uint) error
 	ReplaceLinksFn                func(ctx context.Context, announcementID uint, links []entities.AnnouncementLink) error
 	ReplaceTargetsFn              func(ctx context.Context, announcementID uint, targets []entities.AnnouncementTarget) error
 	RegisterViewFn                func(ctx context.Context, view *entities.AnnouncementView) error
@@ -81,6 +83,20 @@ func (m *RepositoryMock) GetImagesByAnnouncementID(ctx context.Context, announce
 		return m.GetImagesByAnnouncementIDFn(ctx, announcementID)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) GetImageByID(ctx context.Context, id uint) (*entities.AnnouncementImage, error) {
+	if m.GetImageByIDFn != nil {
+		return m.GetImageByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) DeleteImageByID(ctx context.Context, id uint) error {
+	if m.DeleteImageByIDFn != nil {
+		return m.DeleteImageByIDFn(ctx, id)
+	}
+	return nil
 }
 
 func (m *RepositoryMock) ReplaceLinks(ctx context.Context, announcementID uint, links []entities.AnnouncementLink) error {
