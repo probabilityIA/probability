@@ -305,12 +305,28 @@ func (c *TransportRequestConsumer) processTrack(ctx context.Context, request *Tr
 
 // processCancel handles shipment cancellation
 func (c *TransportRequestConsumer) processCancel(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
-	idShipment, _ := request.Payload["id_shipment"].(string)
-	if idShipment == "" {
-		return c.errorResponse(request, "id_shipment is required in payload")
+	idShipment, _ := request.Payload["id_shipment"].(string) // Original ID/Tracking from URL
+	trackingNumber, _ := request.Payload["tracking_number"].(string)
+	if trackingNumber == "" {
+		trackingNumber = idShipment
 	}
 
-	resp, err := c.useCase.Cancel(ctx, baseURL, apiKey, idShipment)
+	idOrderRaw := request.Payload["envioclick_id_order"]
+	var idOrder int64
+	switch v := idOrderRaw.(type) {
+	case float64:
+		idOrder = int64(v)
+	case int64:
+		idOrder = v
+	case int:
+		idOrder = int64(v)
+	}
+
+	if trackingNumber == "" {
+		return c.errorResponse(request, "tracking_number (o id_shipment) es requerido")
+	}
+
+	resp, err := c.useCase.Cancel(ctx, baseURL, apiKey, trackingNumber, idOrder)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}

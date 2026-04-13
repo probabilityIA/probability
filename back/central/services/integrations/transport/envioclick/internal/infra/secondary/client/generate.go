@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
@@ -49,11 +50,12 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		return nil, fmt.Errorf("%s", parseEnvioClickError(resp.Body()))
 	}
 
-	// Parsear manualmente con interface{} en tracker para tolerar string o número
+	// Parsear manualmente con interface{} en tracker e idOrder para tolerar variaciones
 	var raw struct {
 		Status string `json:"status"`
 		Data   struct {
 			Tracker          interface{} `json:"tracker"`
+			IDOrder          interface{} `json:"idOrder"`
 			URL              string      `json:"url"`
 			MyGuideReference string      `json:"myGuideReference"`
 		} `json:"data"`
@@ -64,7 +66,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		return nil, fmt.Errorf("error parseando respuesta del servicio de transporte: %w", err)
 	}
 
-	// Convertir tracker a string sin importar si viene como string o número
+	// Convertir tracker a string
 	var trackingNumber string
 	switch v := raw.Data.Tracker.(type) {
 	case string:
@@ -77,12 +79,26 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		}
 	}
 
+	// Convertir idOrder a int64
+	var idOrder int64
+	switch v := raw.Data.IDOrder.(type) {
+	case float64:
+		idOrder = int64(v)
+	case int:
+		idOrder = int64(v)
+	case string:
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+			idOrder = n
+		}
+	}
+
 	apiResp := &domain.GenerateResponse{
 		Status: raw.Status,
 		Data: domain.GenerateData{
 			TrackingNumber:   trackingNumber,
 			LabelURL:         raw.Data.URL,
 			MyGuideReference: raw.Data.MyGuideReference,
+			IDOrder:          idOrder,
 		},
 	}
 

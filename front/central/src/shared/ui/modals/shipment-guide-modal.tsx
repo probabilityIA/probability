@@ -201,6 +201,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Carrier Offices search states
     const [showOriginOffices, setShowOriginOffices] = useState(false);
     const [showDestOffices, setShowDestOffices] = useState(false);
+    const [officeCarrier, setOfficeCarrier] = useState<string | null>(null);
     
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
@@ -477,6 +478,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setGeneratedPdfUrl(null);
             setTrackingNumber(null);
             setSelectedCarrier(null);
+            setOfficeCarrier(null);
             setError(null);
             setSuccess(null);
             setPendingCorrelationId(null);
@@ -489,6 +491,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Step 1: Quote (async - sends to queue, result arrives via SSE)
     const handleStep1Submit = async (data: Step1Values) => {
+        // Autocompletar el paso 3 con las direcciones del paso 1
+        step3Form.setValue("originCrossStreet", data.originAddress);
+        step3Form.setValue("destCrossStreet", data.destAddress);
+
         // Check for validation errors
         const errors = step1Form.formState.errors;
         if (Object.keys(errors).length > 0) {
@@ -929,8 +935,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {showOriginOffices && (
                                                         <CarrierOfficeSelector 
                                                             city={originSearch}
-                                                            onSelectAddress={(addr) => {
+                                                            onSelectAddress={(addr, carrierId) => {
                                                                 step1Form.setValue("originAddress", addr, { shouldValidate: true });
+                                                                setOfficeCarrier(carrierId);
                                                                 setShowOriginOffices(false);
                                                             }}
                                                             onClose={() => setShowOriginOffices(false)}
@@ -1001,8 +1008,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {showDestOffices && (
                                                         <CarrierOfficeSelector 
                                                             city={destSearch}
-                                                            onSelectAddress={(addr) => {
+                                                            onSelectAddress={(addr, carrierId) => {
                                                                 step1Form.setValue("destAddress", addr, { shouldValidate: true });
+                                                                setOfficeCarrier(carrierId);
                                                                 setShowDestOffices(false);
                                                             }}
                                                             onClose={() => setShowDestOffices(false)}
@@ -1118,7 +1126,22 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                                     Filtra por servicio / Transportadora
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Todos los precios incluyen IVA</p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
+                                    {officeCarrier && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-600">
+                                            🏢 Filtrado: {officeCarrier}
+                                            <button
+                                                type="button"
+                                                onClick={() => setOfficeCarrier(null)}
+                                                className="ml-1 text-purple-500 hover:text-purple-800 dark:hover:text-purple-100 font-bold leading-none"
+                                                title="Quitar filtro"
+                                            >
+                                                ×
+                                            </button>
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
@@ -1130,7 +1153,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-4 gap-3 auto-rows-max">
-                                        {rates.map((rate) => {
+                                        {rates.filter(rate => {
+                                            if (!officeCarrier) return true;
+                                            return rate.carrier.toLowerCase().includes(officeCarrier.toLowerCase());
+                                        }).map((rate) => {
                                             const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;

@@ -11,7 +11,7 @@ export interface Shipment {
     carrier_code?: string;
     guide_id?: string;
     guide_url?: string;
-    status: 'pending' | 'in_transit' | 'delivered' | 'failed';
+    status: 'pending' | 'in_transit' | 'delivered' | 'failed' | 'cancelled';
     shipped_at?: string;
     delivered_at?: string;
     shipping_cost?: number;
@@ -253,5 +253,6 @@ export interface ShipmentSSEEventData {
   error_message?: string;
   quotes?: Record<string, any>;
   tracking?: Record<string, any>;
+  [key: string]: any; // allow extra fields from backend
 }
 

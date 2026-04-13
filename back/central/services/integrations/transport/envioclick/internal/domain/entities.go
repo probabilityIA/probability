@@ -72,17 +72,26 @@ type GenerateData struct {
 	LabelURL         string `json:"url"`
 	MyGuideReference string `json:"myGuideReference"`
 	Carrier          string `json:"carrier"`
+	IDOrder          int64  `json:"idOrder"`
 }
 
 type TrackingResponse struct {
-	Status string       `json:"status"`
-	Data   TrackingData `json:"data"`
+	Status         string         `json:"status"`
+	StatusCodes    []int          `json:"status_codes"`
+	StatusMessages []StatusMsg    `json:"status_messages"`
+	Data           TrackingData   `json:"data"`
+}
+
+type StatusMsg struct {
+	Request string `json:"request"`
 }
 
 type TrackingData struct {
 	TrackingNumber string         `json:"trackingNumber"`
 	Carrier        string         `json:"carrier"`
 	Status         string         `json:"status"`
+	StatusDetail   string         `json:"statusDetail"`
+	ArrivalDate    *string        `json:"arrivalDate"`
 	Events         []TrackHistory `json:"history"`
 }
 
@@ -99,26 +108,18 @@ type CancelResponse struct {
 }
 
 type CancelBatchRequest struct {
-	Orders []CancelBatchOrder `json:"orders"`
-}
-
-type CancelBatchOrder struct {
-	TrackingCode string `json:"trackingCode"`
-	Motivo       string `json:"motivo"`
+	IDOrders []int64 `json:"idOrders"`
 }
 
 type CancelBatchResponse struct {
-	Status string          `json:"status"`
-	Data   CancelBatchData `json:"data,omitempty"`
+	Status         string          `json:"status"`
+	StatusCodes    []int           `json:"status_codes"`
+	StatusMessages []StatusMsg     `json:"status_messages"`
+	Data           CancelBatchData `json:"data,omitempty"`
 }
 
 type CancelBatchData struct {
-	Successful []CancelBatchResult `json:"successful,omitempty"`
-	Failed     []CancelBatchResult `json:"failed,omitempty"`
-}
-
-type CancelBatchResult struct {
-	TrackingCode string `json:"trackingCode"`
-	Message      string `json:"message,omitempty"`
-	Error        string `json:"error,omitempty"`
+	NotValidOrders   []int64 `json:"not_valid_orders"`
+	OnlyCancelOrders []int64 `json:"only_cancel_orders"`
+	ToRefundOrders   []int64 `json:"to_refund_orders"`
 }

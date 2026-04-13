@@ -18,7 +18,7 @@ func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchReque
 	}
 
 	c.log.Info(ctx).
-		Int("order_count", len(req.Orders)).
+		Int("order_count", len(req.IDOrders)).
 		Msg("🗑️ Cancelling EnvioClick shipments in batch")
 
 	var apiResp domain.CancelBatchResponse
@@ -32,7 +32,7 @@ func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchReque
 		Post(strings.TrimRight(baseURL, "/") + "/v2cancellation/batch/order")
 
 	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel batch request failed - network error")
+		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel batch request failed")
 		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
 	}
 

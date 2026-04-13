@@ -157,11 +157,13 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	trackingNumber, _ := dataField["tracker"].(string)
 	labelURL, _ := dataField["url"].(string)
 	carrier, _ := dataField["carrier"].(string)
+	idOrder, _ := dataField["idOrder"].(float64)
 
 	c.log.Info(ctx).
 		Str("tracking_number", trackingNumber).
 		Str("label_url", labelURL).
 		Str("carrier", carrier).
+		Float64("id_order", idOrder).
 		Str("correlation_id", response.CorrelationID).
 		Interface("all_datafield_values", dataField).
 		Msg("✅ Guide generated successfully")
@@ -183,6 +185,22 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			if carrier != "" {
 				shipment.Carrier = &carrier
 			}
+
+			// Store idOrder in Metadata
+			if idOrder != 0 {
+				var meta map[string]interface{}
+				if len(shipment.Metadata) > 0 {
+					json.Unmarshal(shipment.Metadata, &meta)
+				}
+				if meta == nil {
+					meta = make(map[string]interface{})
+				}
+				meta["envioclick_id_order"] = int64(idOrder)
+				if updatedBytes, err := json.Marshal(meta); err == nil {
+					shipment.Metadata = updatedBytes
+				}
+			}
+
 			shipment.Status = "pending"
 			shipment.IsTest = response.IsTest
 

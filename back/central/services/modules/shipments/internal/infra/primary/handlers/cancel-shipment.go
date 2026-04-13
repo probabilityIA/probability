@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +48,41 @@ func (h *Handlers) CancelShipment(c *gin.Context) {
 		return
 	}
 
+	var shipmentID *uint
+	var trackingNumber string
+	var idOrder int64
+	if s, err := h.uc.Repo().GetShipmentByTrackingNumber(c.Request.Context(), id); err == nil {
+		shipmentID = &s.ID
+		if s.TrackingNumber != nil {
+			trackingNumber = *s.TrackingNumber
+		}
+		// Extract idOrder from metadata
+		if len(s.Metadata) > 0 {
+			var meta map[string]interface{}
+			if err := json.Unmarshal(s.Metadata, &meta); err == nil {
+				if val, ok := meta["envioclick_id_order"].(float64); ok {
+					idOrder = int64(val)
+				}
+			}
+		}
+	} else if numID, parseErr := strconv.ParseUint(id, 10, 64); parseErr == nil {
+		if s, err := h.uc.Repo().GetShipmentByID(c.Request.Context(), uint(numID)); err == nil {
+			shipmentID = &s.ID
+			if s.TrackingNumber != nil {
+				trackingNumber = *s.TrackingNumber
+			}
+			// Extract idOrder from metadata
+			if len(s.Metadata) > 0 {
+				var meta map[string]interface{}
+				if err := json.Unmarshal(s.Metadata, &meta); err == nil {
+					if val, ok := meta["envioclick_id_order"].(float64); ok {
+						idOrder = int64(val)
+					}
+				}
+			}
+		}
+	}
+
 	correlationID := uuid.New().String()
 
 	effectiveBaseURL := carrier.BaseURL
@@ -54,6 +91,7 @@ func (h *Handlers) CancelShipment(c *gin.Context) {
 	}
 
 	msg := &domain.TransportRequestMessage{
+		ShipmentID:        shipmentID,
 		Provider:          carrier.ProviderCode,
 		IntegrationTypeID: carrier.IntegrationTypeID,
 		Operation:         "cancel",
@@ -64,7 +102,9 @@ func (h *Handlers) CancelShipment(c *gin.Context) {
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
 		Payload: map[string]interface{}{
-			"id_shipment": id,
+			"id_shipment":         id,
+			"tracking_number":     trackingNumber,
+			"envioclick_id_order": idOrder,
 		},
 	}
 
