@@ -12,7 +12,7 @@ interface OfficeResult {
 
 interface CarrierOfficeSelectorProps {
     city: string;
-    onSelectAddress: (address: string) => void;
+    onSelectAddress: (address: string, carrierId: string) => void;
     onClose: () => void;
 }
 
@@ -135,7 +135,7 @@ export function CarrierOfficeSelector({ city, onSelectAddress, onClose }: Carrie
                                     if (match && match[1]) {
                                         address = match[1];
                                     }
-                                    onSelectAddress(address);
+                                    onSelectAddress(address, selectedCarrier);
                                     onClose();
                                 }}
                                 className="group p-3 border border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500 rounded-md cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-colors"
