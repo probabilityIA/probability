@@ -8,7 +8,6 @@ export function getApiUrl(): string {
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol; // http: o https:
     const host = window.location.host;         // localhost:4322 o www.probabilityia.com.co
-    const origin = `${protocol}//${host}`;
 
     // En producción, usa ruta relativa (nginx hace proxy)
     // En local, construye URL completa al backend
@@ -25,4 +24,5 @@ export function getApiUrl(): string {
   return '/api/v1';
 }
 
+// Exportar como getter para que se evalúe en cada llamada (no en importación)
 export const API_BASE_URL = getApiUrl();

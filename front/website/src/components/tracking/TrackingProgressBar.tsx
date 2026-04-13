@@ -1,3 +1,4 @@
+/** @jsxImportSource react */
 import type { TrackingStatus } from '../../types/tracking';
 
 interface TrackingProgressBarProps {

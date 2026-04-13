@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState } from 'react';
 
 export default function Calculator() {
 	const [pedidos, setPedidos] = useState(1000);

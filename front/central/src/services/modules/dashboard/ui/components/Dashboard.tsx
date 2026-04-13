@@ -9,7 +9,8 @@ import { TokenStorage } from '@/shared/utils/token-storage';
 import { TopCustomersTable } from './TopCustomersTable';
 import { TopProductsTable } from './TopProductsTable';
 import { ColombiaMap } from './ColombiaMap';
-import { Spinner, Alert, Select } from '@/shared/ui';
+import DashboardCharts from './DashboardCharts';
+import { Spinner, Alert, Select, DateRangePicker } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
 import {
     ChartContainer,
@@ -115,6 +116,7 @@ interface Business {
 export default function Dashboard() {
     const { isSuperAdmin } = usePermissions();
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [statsWithoutFilter, setStatsWithoutFilter] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | undefined>(undefined);
@@ -134,6 +136,17 @@ export default function Dashboard() {
 
     // Estado para la navegación de meses
     const [selectedMonthOffset, setSelectedMonthOffset] = useState(0); // 0 = mes actual, -1 = mes pasado, etc.
+
+    // Estado para el filtro de rango de fechas global
+    const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
+
+    // Debug: Log cuando dateRange cambia
+    useEffect(() => {
+        console.log('📅 dateRange changed:', {
+            start: dateRange.start?.toISOString().split('T')[0],
+            end: dateRange.end?.toISOString().split('T')[0],
+        });
+    }, [dateRange]);
 
     useEffect(() => {
         const userData = TokenStorage.getUser();
@@ -163,26 +176,67 @@ export default function Dashboard() {
         }
     }, [isSuperAdmin]);
 
-    // Cargar estadísticas
+    // Cargar estadísticas SIN filtro de fechas (para Órdenes del día y Mensuales)
+    const fetchStatsWithoutFilter = useCallback(async () => {
+        try {
+            console.log('🔍 fetchStatsWithoutFilter called');
+
+            const response = await getDashboardStatsAction(
+                selectedBusinessId,
+                undefined, // integrationId
+                weekStartDate,
+                undefined, // sin startDate
+                undefined  // sin endDate
+            );
+
+            console.log('✅ Stats without filter loaded');
+            setStatsWithoutFilter(response.data);
+        } catch (err: any) {
+            console.error('Error fetching dashboard stats (without filter):', err);
+        }
+    }, [selectedBusinessId, weekStartDate]);
+
+    // Cargar estadísticas CON filtro de fechas (para gráficas)
     const fetchStats = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
 
+            // Debug: Log parameters
+            console.log('🔍 fetchStats called with:', {
+                selectedBusinessId,
+                weekStartDate,
+                dateRangeStart: dateRange.start?.toISOString().split('T')[0],
+                dateRangeEnd: dateRange.end?.toISOString().split('T')[0],
+            });
+
             const response = await getDashboardStatsAction(
                 selectedBusinessId,
                 undefined, // integrationId
-                weekStartDate
+                weekStartDate,
+                dateRange.start,
+                dateRange.end
             );
+
+            // Debug: Log response
+            console.log('✅ getDashboardStatsAction response:', response.data);
+
             setStats(response.data);
+            console.log('📊 Stats with filter updated');
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
             setError(getActionError(err, 'Error al cargar las estadísticas'));
         } finally {
             setLoading(false);
         }
-    }, [selectedBusinessId, weekStartDate]);
+    }, [selectedBusinessId, weekStartDate, dateRange.start, dateRange.end]);
 
+    // Cargar datos sin filtro cuando cambian businessId o weekStartDate
+    useEffect(() => {
+        fetchStatsWithoutFilter();
+    }, [fetchStatsWithoutFilter]);
+
+    // Cargar datos con filtro cuando cambian businessId, weekStartDate o dateRange
     useEffect(() => {
         fetchStats();
     }, [fetchStats]);
@@ -647,10 +701,10 @@ export default function Dashboard() {
         value: item.count,
     }));
 
-    // Seleccionar dataset según toggle
+    // Seleccionar dataset según toggle - CON FILTRO DE FECHAS
     const rawCarrierData = carrierFilter === 'today'
-        ? (stats.shipments_by_carrier_today || [])
-        : (stats.shipments_by_carrier || []);
+        ? (stats?.shipments_by_carrier_today || [])
+        : (stats?.shipments_by_carrier || []);
 
     // Agrupar y sumar por transportista (evitar duplicados)
     const carrierMap = new Map<string, number>();
@@ -750,16 +804,16 @@ export default function Dashboard() {
             ? Math.round(((totalOrders - totalOrdersLastWeek) / (totalOrdersLastWeek || 1)) * 100)
             : null;
 
-    // New orders today: obtener del último elemento de shipments_by_day_of_week (hoy)
+    // New orders today: obtener del último elemento de shipments_by_day_of_week (hoy) - SIEMPRE SIN FILTRO DE FECHAS
     const newOrdersToday = (() => {
-        const s: any = stats as any;
+        const s: any = statsWithoutFilter as any;
 
         // Primera opción: campos direc tos
-        if (typeof s.orders_today === 'number') return s.orders_today;
-        if (typeof s.today_orders === 'number') return s.today_orders;
+        if (typeof s?.orders_today === 'number') return s.orders_today;
+        if (typeof s?.today_orders === 'number') return s.today_orders;
 
         // Segunda opción: obtener del último día en shipments_by_day_of_week (que debería ser hoy)
-        if (Array.isArray(s.shipments_by_day_of_week) && s.shipments_by_day_of_week.length > 0) {
+        if (Array.isArray(s?.shipments_by_day_of_week) && s.shipments_by_day_of_week.length > 0) {
             // Tomar el último elemento como "hoy"
             const lastDay = s.shipments_by_day_of_week[s.shipments_by_day_of_week.length - 1];
             if (lastDay && typeof lastDay.count === 'number') {
@@ -771,7 +825,7 @@ export default function Dashboard() {
         }
 
         // Tercera opción: orders_by_date (último elemento)
-        if (Array.isArray(s.orders_by_date) && s.orders_by_date.length > 0) {
+        if (Array.isArray(s?.orders_by_date) && s.orders_by_date.length > 0) {
             const last = s.orders_by_date[s.orders_by_date.length - 1];
             return last.count ?? last.order_count ?? last.value ?? 0;
         }
@@ -799,10 +853,10 @@ export default function Dashboard() {
         return ship ?? 0;
     })();
 
-    // Calcular el mes a mostrar basado en selectedMonthOffset
+    // Calcular el mes a mostrar basado en selectedMonthOffset - SIEMPRE SIN FILTRO DE FECHAS
     const monthData = (() => {
-        const s: any = stats as any;
-        const ordersByMonth = s.orders_by_month as any[] || [];
+        const s: any = statsWithoutFilter as any;
+        const ordersByMonth = s?.orders_by_month as any[] || [];
 
         if (ordersByMonth.length === 0) {
             return {
@@ -857,7 +911,42 @@ export default function Dashboard() {
                         Dashboard
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-4 flex-wrap">
+                    <div className="w-80">
+                        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Filtro por días</label>
+                        {dateRange.start && dateRange.end && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mb-2">
+                                {dateRange.start.toLocaleDateString('es-CO')} - {dateRange.end.toLocaleDateString('es-CO')}
+                            </p>
+                        )}
+                        <DateRangePicker
+                            startDate={dateRange.start?.toISOString().split('T')[0]}
+                            endDate={dateRange.end?.toISOString().split('T')[0]}
+                            onChange={(start, end) => {
+                                console.log('🎯 DateRangePicker onChange triggered:', { start, end });
+                                let startDate: Date | undefined;
+                                let endDate: Date | undefined;
+
+                                if (start) {
+                                    const [year, month, day] = start.split('-').map(Number);
+                                    startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+                                    console.log('🕐 startDate created:', startDate.toISOString());
+                                }
+
+                                if (end) {
+                                    const [year, month, day] = end.split('-').map(Number);
+                                    endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+                                    console.log('🕐 endDate created:', endDate.toISOString());
+                                }
+
+                                setDateRange({
+                                    start: startDate,
+                                    end: endDate,
+                                });
+                            }}
+                            placeholder="Seleccionar período"
+                        />
+                    </div>
                     {isSuperAdmin && (
                         <div className="w-64">
                             <Select
@@ -876,68 +965,57 @@ export default function Dashboard() {
                             />
                         </div>
                     )}
-
                 </div>
             </div>
 
             {/* Small summary cards under the revenue header (like the screenshot) */}
             <div className="mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Órdenes Totales</p>
-                            <div className="mt-2 flex items-center space-x-4">
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalOrders.toLocaleString()}</p>
-                                    {computedTotalOrdersChange !== null ? (
-                                        <p className={`text-xs ${computedTotalOrdersChange >= 0 ? 'text-green-600' : 'text-amber-500'}`}>
-                                            {computedTotalOrdersChange >= 0 ? '↑' : '↓'} {Math.abs(computedTotalOrdersChange)}% compared to last week
-                                        </p>
-                                    ) : (
-                                        <p className="text-xs text-gray-400">Aún no hay comparación semanal</p>
-                                    )}
-                                </div>
-                                <div className="w-20 h-10">
-                                    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
-                                        <path d="M0,30 C25,10 50,12 75,2 100,0" fill="none" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
+                    {/* Órdenes Totales */}
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes Totales</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalOrders.toLocaleString()}</p>
+                        {dateRange.start && dateRange.end ? (
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                Período: {dateRange.start.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {dateRange.end.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
+                            </p>
+                        ) : (
+                            <p className="text-xs text-gray-400 mt-1">Aún no hay comparación semanal</p>
+                        )}
+                    </div>
+
+                    {/* Órdenes del día */}
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes del día</p>
+                        <div className="flex items-center space-x-4">
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{newOrdersToday.toLocaleString()}</p>
+                                <p className="text-xs text-gray-400">Actuales</p>
+                            </div>
+                            <div className="w-20 h-10">
+                                <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
+                                    <path d="M0,30 C20,20 40,15 60,10 80,6 100,8" fill="none" stroke="#F97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
                             </div>
                         </div>
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Órdenes del día</p>
-                            <div className="mt-2 flex items-center space-x-4">
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{newOrdersToday.toLocaleString()}</p>
-                                    <p className="text-xs text-gray-400">Actuales</p>
-                                </div>
-                                <div className="w-20 h-10">
-                                    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
-                                        <path d="M0,30 C20,20 40,15 60,10 80,6 100,8" fill="none" stroke="#F97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    {/* Órdenes Mensuales */}
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes Mensuales</p>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                             <div className="flex items-center space-x-2">
                                 <button
                                     onClick={() => setSelectedMonthOffset(selectedMonthOffset - 1)}
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"
                                     title="Mes anterior"
                                 >
-                                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
-                                <div className="text-center min-w-[90px]">
-                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{monthData.monthName}</p>
+                                <div className="text-center min-w-[75px]">
+                                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{monthData.monthName}</p>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">{monthData.year}</p>
                                 </div>
                                 <button
@@ -945,7 +1023,7 @@ export default function Dashboard() {
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"
                                     title="Próximo mes"
                                 >
-                                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
@@ -967,6 +1045,8 @@ export default function Dashboard() {
                 </div>
             )}
 
+            {/* DashboardCharts con 4 tabs de gráficas interactivas */}
+            {stats && <DashboardCharts stats={stats} selectedBusinessId={selectedBusinessId} />}
 
             {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-0">
@@ -1073,13 +1153,11 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Mostrar aviso si "Hoy" no tiene datos */}
-                    {carrierFilter === 'today' && (stats.shipments_by_carrier_today || []).length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Sin envíos hoy</p>
-                    ) : shipmentsByCarrierData.length > 0 ? (
+                    {/* Mostrar aviso si no hay datos */}
+                    {shipmentsByCarrierData.length > 0 ? (
                         <CarrierBarChart data={shipmentsByCarrierData} height={340} />
                     ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles para el período seleccionado</p>
                     )}
                 </div>
 

@@ -29,8 +29,9 @@ type DashboardStats struct {
 	// Nuevas: Businesses (solo si es super admin)
 	OrdersByBusiness []OrdersByBusiness `json:"orders_by_business,omitempty"`
 
-	// Nuevas: Órdenes mensuales
+	// Nuevas: Órdenes mensuales y semanales
 	OrdersByMonth []OrdersByMonth `json:"orders_by_month"`
+	OrdersByWeek  []OrdersByWeek  `json:"orders_by_week"`
 }
 
 // OrderCountByIntegrationType representa el conteo de órdenes por tipo de integración
@@ -135,4 +136,21 @@ type OrdersByMonth struct {
 	Year        int    `json:"year"`         // Año
 	Count       int64  `json:"count"`        // Número de órdenes
 	Percentage  float64 `json:"percentage"` // Porcentaje respecto a total anual
+}
+
+// OrdersByWeek representa órdenes agrupadas por semana (últimas 12 semanas)
+type OrdersByWeek struct {
+	Week       string `json:"week"`        // Etiqueta semana (ej: "Sem 1 - Mar 4-10")
+	WeekNumber int    `json:"week_number"` // Número de semana (1-12)
+	StartDate  string `json:"start_date"`  // Fecha inicio (YYYY-MM-DD)
+	EndDate    string `json:"end_date"`    // Fecha fin (YYYY-MM-DD)
+	Count      int64  `json:"count"`       // Número de órdenes
+}
+
+// TopSellingDay representa los días con más órdenes en la historia
+type TopSellingDay struct {
+	Date      string `json:"date"`       // Fecha en formato YYYY-MM-DD
+	DayName   string `json:"day_name"`   // Nombre del día (Lunes, Martes, etc)
+	Formatted string `json:"formatted"`  // Formato legible (ej: "Lunes 23 mar")
+	Total     int64  `json:"total"`      // Número de órdenes
 }

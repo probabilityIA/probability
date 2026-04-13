@@ -1,4 +1,5 @@
-import { useState } from 'preact/hooks';
+/** @jsxImportSource react */
+import { useState } from 'react';
 
 interface TrackingSearchInputProps {
   onSearch: (query: string) => void;

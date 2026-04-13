@@ -1,10 +1,11 @@
-import { useState } from 'preact/hooks';
+/** @jsxImportSource react */
+import { useState } from 'react';
 import TrackingSearchInput from './tracking/TrackingSearchInput';
 import TrackingProgressBar from './tracking/TrackingProgressBar';
 import TrackingDetails from './tracking/TrackingDetails';
 import TrackingTimeline from './tracking/TrackingTimeline';
 import type { TrackingSearchResult, TrackingHistory } from '../types/tracking';
-import { API_BASE_URL } from '../config/api';
+import { getApiUrl } from '../config/api';
 
 interface SearchResult {
   success: boolean;
@@ -31,8 +32,9 @@ export default function TrackingClient() {
 
     try {
       // Llamar al endpoint del backend
+      const apiUrl = getApiUrl();
       const response = await fetch(
-        `${API_BASE_URL}/tracking/search?tracking_number=${encodeURIComponent(query)}`
+        `${apiUrl}/tracking/search?tracking_number=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -57,8 +59,9 @@ export default function TrackingClient() {
       // Obtener historial si hay tracking_number
       if (foundShipment.tracking_number) {
         try {
+          const apiUrl = getApiUrl();
           const historyResponse = await fetch(
-            `${API_BASE_URL}/tracking/${encodeURIComponent(foundShipment.tracking_number)}/history`
+            `${apiUrl}/tracking/${encodeURIComponent(foundShipment.tracking_number)}/history`
           );
 
           if (historyResponse.ok) {
