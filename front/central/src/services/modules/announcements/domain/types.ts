@@ -137,3 +137,17 @@ export interface DeleteAnnouncementResponse {
     success: boolean;
     message: string;
 }
+
+export interface UploadImageResponse {
+    success: boolean;
+    data: {
+        id: number;
+        image_url: string;
+        sort_order: number;
+    };
+}
+
+export interface DeleteImageResponse {
+    success: boolean;
+    message: string;
+}

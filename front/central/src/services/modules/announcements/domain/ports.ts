@@ -9,6 +9,8 @@ import {
     RegisterViewDTO,
     ChangeStatusDTO,
     DeleteAnnouncementResponse,
+    UploadImageResponse,
+    DeleteImageResponse,
 } from './types';
 
 export interface IAnnouncementRepository {
@@ -23,4 +25,6 @@ export interface IAnnouncementRepository {
     listCategories(): Promise<AnnouncementCategory[]>;
     changeStatus(id: number, data: ChangeStatusDTO): Promise<void>;
     forceRedisplay(id: number): Promise<void>;
+    uploadImage(announcementId: number, formData: FormData): Promise<UploadImageResponse>;
+    deleteImage(announcementId: number, imageId: number): Promise<DeleteImageResponse>;
 }

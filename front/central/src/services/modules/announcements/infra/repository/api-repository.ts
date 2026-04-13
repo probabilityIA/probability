@@ -11,6 +11,8 @@ import {
     RegisterViewDTO,
     ChangeStatusDTO,
     DeleteAnnouncementResponse,
+    UploadImageResponse,
+    DeleteImageResponse,
 } from '../../domain/types';
 
 export class AnnouncementApiRepository implements IAnnouncementRepository {
@@ -118,6 +120,32 @@ export class AnnouncementApiRepository implements IAnnouncementRepository {
     async forceRedisplay(id: number): Promise<void> {
         await this.fetch<void>(`/announcements/${id}/force-redisplay`, {
             method: 'POST',
+        });
+    }
+
+    async uploadImage(announcementId: number, formData: FormData): Promise<UploadImageResponse> {
+        const url = `${this.baseUrl}/announcements/${announcementId}/image`;
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+        };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || data.error || 'Error uploading image');
+        }
+        return data;
+    }
+
+    async deleteImage(announcementId: number, imageId: number): Promise<DeleteImageResponse> {
+        return this.fetch<DeleteImageResponse>(`/announcements/${announcementId}/image/${imageId}`, {
+            method: 'DELETE',
         });
     }
 }

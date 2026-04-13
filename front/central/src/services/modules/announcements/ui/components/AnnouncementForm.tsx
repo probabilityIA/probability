@@ -3,11 +3,19 @@
 import { useState, useEffect } from 'react';
 import { TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { AnnouncementInfo, CreateAnnouncementDTO, UpdateAnnouncementDTO, AnnouncementCategory, CreateLinkDTO, DisplayType, FrequencyType } from '../../domain/types';
-import { createAnnouncementAction, updateAnnouncementAction, listCategoriesAction } from '../../infra/actions';
+import { createAnnouncementAction, updateAnnouncementAction, listCategoriesAction, uploadImageAction, deleteImageAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
 import ImageUploader from './ImageUploader';
 import BusinessTargetSelector from './BusinessTargetSelector';
+
+interface ImageItem {
+    id?: number;
+    image_url?: string;
+    file?: File;
+    preview: string;
+    sort_order: number;
+}
 
 interface AnnouncementFormProps {
     announcement?: AnnouncementInfo;
@@ -50,11 +58,33 @@ export default function AnnouncementForm({ announcement, onSuccess, onCancel }: 
         announcement?.targets?.map(t => t.business_id) || []
     );
 
+    const [images, setImages] = useState<ImageItem[]>(
+        (announcement?.images || []).map(img => ({
+            id: img.id,
+            image_url: img.image_url,
+            preview: img.image_url,
+            sort_order: img.sort_order,
+        }))
+    );
+    const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+
+    const initialImageIds = (announcement?.images || []).map(img => img.id);
+
     useEffect(() => {
         listCategoriesAction()
             .then(setCategories)
             .catch(() => {});
     }, []);
+
+    const handleImagesChange = (updated: ImageItem[]) => {
+        const currentIds = updated.filter(i => i.id).map(i => i.id!);
+        const newlyRemoved = initialImageIds.filter(id => !currentIds.includes(id));
+        setRemovedImageIds(prev => {
+            const combined = new Set([...prev, ...newlyRemoved]);
+            return Array.from(combined);
+        });
+        setImages(updated);
+    };
 
     const addLink = () => {
         setLinks([...links, { label: '', url: '', sort_order: links.length }]);
@@ -91,11 +121,30 @@ export default function AnnouncementForm({ announcement, onSuccess, onCancel }: 
         };
 
         try {
+            let savedAnnouncement: AnnouncementInfo;
+
             if (announcement) {
-                await updateAnnouncementAction(announcement.id, data as UpdateAnnouncementDTO);
+                savedAnnouncement = await updateAnnouncementAction(announcement.id, data as UpdateAnnouncementDTO);
             } else {
-                await createAnnouncementAction(data);
+                savedAnnouncement = await createAnnouncementAction(data);
             }
+
+            const announcementId = savedAnnouncement.id;
+
+            for (const imageId of removedImageIds) {
+                try {
+                    await deleteImageAction(announcementId, imageId);
+                } catch {}
+            }
+
+            const newImages = images.filter(img => img.file);
+            for (const img of newImages) {
+                const fd = new FormData();
+                fd.append('image', img.file!);
+                fd.append('sort_order', String(img.sort_order));
+                await uploadImageAction(announcementId, fd);
+            }
+
             setSuccess(announcement ? 'Anuncio actualizado' : 'Anuncio creado');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
@@ -253,13 +302,8 @@ export default function AnnouncementForm({ announcement, onSuccess, onCancel }: 
                     Imagenes
                 </label>
                 <ImageUploader
-                    images={(announcement?.images || []).map(img => ({
-                        id: img.id,
-                        image_url: img.image_url,
-                        preview: img.image_url,
-                        sort_order: img.sort_order,
-                    }))}
-                    onChange={() => {}}
+                    images={images}
+                    onChange={handleImagesChange}
                 />
             </div>
 

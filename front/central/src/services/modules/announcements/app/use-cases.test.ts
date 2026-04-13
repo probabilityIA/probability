@@ -78,6 +78,8 @@ function createMockRepository(): IAnnouncementRepository {
         listCategories: vi.fn(),
         changeStatus: vi.fn(),
         forceRedisplay: vi.fn(),
+        uploadImage: vi.fn(),
+        deleteImage: vi.fn(),
     };
 }
 
@@ -314,6 +316,43 @@ describe('AnnouncementUseCases', () => {
             vi.mocked(repo.forceRedisplay).mockRejectedValue(new Error('Not found'));
 
             await expect(useCases.forceRedisplay(999)).rejects.toThrow('Not found');
+        });
+    });
+
+    describe('uploadImage', () => {
+        it('sube imagen al anuncio', async () => {
+            const uploadResponse = { success: true, data: { id: 1, image_url: 'https://s3/img.png', sort_order: 0 } };
+            const formData = new FormData();
+            vi.mocked(repo.uploadImage).mockResolvedValue(uploadResponse);
+
+            const result = await useCases.uploadImage(1, formData);
+
+            expect(repo.uploadImage).toHaveBeenCalledWith(1, formData);
+            expect(result).toEqual(uploadResponse);
+        });
+
+        it('propaga error', async () => {
+            vi.mocked(repo.uploadImage).mockRejectedValue(new Error('Upload failed'));
+
+            await expect(useCases.uploadImage(1, new FormData())).rejects.toThrow('Upload failed');
+        });
+    });
+
+    describe('deleteImage', () => {
+        it('elimina imagen del anuncio', async () => {
+            const deleteImgResponse = { success: true, message: 'image deleted' };
+            vi.mocked(repo.deleteImage).mockResolvedValue(deleteImgResponse);
+
+            const result = await useCases.deleteImage(1, 5);
+
+            expect(repo.deleteImage).toHaveBeenCalledWith(1, 5);
+            expect(result).toEqual(deleteImgResponse);
+        });
+
+        it('propaga error', async () => {
+            vi.mocked(repo.deleteImage).mockRejectedValue(new Error('Not found'));
+
+            await expect(useCases.deleteImage(1, 999)).rejects.toThrow('Not found');
         });
     });
 });

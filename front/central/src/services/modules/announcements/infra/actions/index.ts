@@ -104,3 +104,23 @@ export const forceRedisplayAction = async (id: number) => {
         throw new Error(error.message);
     }
 };
+
+export const uploadImageAction = async (announcementId: number, formData: FormData) => {
+    try {
+        return await (await getUseCases()).uploadImage(announcementId, formData);
+    } catch (error: any) {
+        return {
+            success: false,
+            data: { id: 0, image_url: '', sort_order: 0 },
+            message: error.message || 'Error al subir imagen',
+        };
+    }
+};
+
+export const deleteImageAction = async (announcementId: number, imageId: number) => {
+    try {
+        return await (await getUseCases()).deleteImage(announcementId, imageId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};

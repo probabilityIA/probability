@@ -19,6 +19,12 @@ func (r *Repository) migrateAnnouncements(ctx context.Context) error {
 		return fmt.Errorf("failed to auto-migrate announcement tables: %w", err)
 	}
 
+	r.db.Conn(ctx).Exec("DELETE FROM announcement_images WHERE deleted_at IS NOT NULL")
+
+	if r.db.Conn(ctx).Migrator().HasColumn(&models.AnnouncementImage{}, "deleted_at") {
+		r.db.Conn(ctx).Migrator().DropColumn(&models.AnnouncementImage{}, "deleted_at")
+	}
+
 	if err := r.seedAnnouncementCategories(ctx); err != nil {
 		return fmt.Errorf("failed to seed announcement categories: %w", err)
 	}

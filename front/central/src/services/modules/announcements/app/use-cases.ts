@@ -53,4 +53,12 @@ export class AnnouncementUseCases {
     async forceRedisplay(id: number) {
         return this.repository.forceRedisplay(id);
     }
+
+    async uploadImage(announcementId: number, formData: FormData) {
+        return this.repository.uploadImage(announcementId, formData);
+    }
+
+    async deleteImage(announcementId: number, imageId: number) {
+        return this.repository.deleteImage(announcementId, imageId);
+    }
 }
