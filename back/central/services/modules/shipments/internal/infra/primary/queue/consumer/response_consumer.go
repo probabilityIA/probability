@@ -396,13 +396,20 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Shipment cancelled successfully")
 
-	// If we have a shipment ID, update status
 	if response.ShipmentID != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
 			shipment.Status = "cancelled"
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to cancelled")
+			}
+
+			if shipment.OrderID != nil && *shipment.OrderID != "" {
+				if err := c.repo.UpdateOrderStatusByOrderID(ctx, *shipment.OrderID, "cancelled"); err != nil {
+					c.log.Error(ctx).Err(err).
+						Str("order_id", *shipment.OrderID).
+						Msg("Failed to sync cancelled status to order")
+				}
 			}
 		}
 

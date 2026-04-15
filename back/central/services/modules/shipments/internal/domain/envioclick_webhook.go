@@ -1,7 +1,5 @@
 package domain
 
-// EnvioClickWebhookPayload representa el payload recibido desde el webhook de EnvioClick
-// cuando ocurre un evento de tracking de un envío.
 type EnvioClickWebhookPayload struct {
 	IDCarrier           int64                    `json:"idCarrier"`
 	Carrier             string                   `json:"carrier"`
@@ -14,7 +12,6 @@ type EnvioClickWebhookPayload struct {
 	Events              []EnvioClickWebhookEvent `json:"events"`
 }
 
-// EnvioClickWebhookEvent representa cada evento de tracking dentro del webhook.
 type EnvioClickWebhookEvent struct {
 	Timestamp     string  `json:"timestamp"`
 	Status        string  `json:"status"`
@@ -26,13 +23,6 @@ type EnvioClickWebhookEvent struct {
 	ReceivedBy    *string `json:"receivedBy"`
 }
 
-// MapEnvioClickStatus convierte un estado de EnvioClick al estado interno de Probability.
-// Referencia de estados EnvioClick:
-//   - "Pendiente de Recolección"  -> pending
-//   - "En tránsito" / "En Tránsito" -> in_transit
-//   - "Entregado"                 -> delivered
-//   - "Incidencia" / incidence=true -> failed
-//   - Cualquier otro              -> in_transit (por defecto seguro)
 func MapEnvioClickStatus(statusStep string, incidence bool) string {
 	if incidence {
 		return "failed"

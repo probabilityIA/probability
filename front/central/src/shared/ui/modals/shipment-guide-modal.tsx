@@ -222,7 +222,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         opt.label.toLowerCase().includes(destSearch.toLowerCase())
     );
 
-    // Step 1 Form
+    const orderIsCOD = !!(order?.cod_total && order.cod_total > 0);
+
     const step1Form = useForm<Step1Values>({
         resolver: zodResolver(step1Schema),
         mode: 'onChange',
@@ -237,7 +238,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             length: 10,
             description: "E-commerce Order",
             contentValue: 0,
-            codValue: 0,
+            codValue: orderIsCOD ? order!.cod_total! : 0,
             includeGuideCost: false,
             insurance: false,
             codPaymentMethod: "cash",
@@ -340,7 +341,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
             }
 
-            // Step 3
+            if (order.cod_total && order.cod_total > 0) {
+                step1Form.setValue("codValue", order.cod_total, { shouldValidate: true });
+                step1Form.setValue("codPaymentMethod", "cash");
+            }
+
             step3Form.setValue("destCompany", order.customer_name);
             step3Form.setValue("destFirstName", order.customer_name.split(" ")[0] || "");
             step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
@@ -1057,14 +1062,21 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                     </div>
 
-                                    {/* Additional Info */}
-                                    <div className="grid grid-cols-2 gap-2">
+                                    {orderIsCOD && (
+                                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-900/30 dark:border-amber-600">
+                                            <span className="text-amber-700 dark:text-amber-300 font-semibold text-sm">
+                                                Orden Contra Entrega - ${order!.cod_total!.toLocaleString()} COP
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-3 gap-2">
                                         <Input
                                             compact
-                                            label="Descripción *"
+                                            label="Descripcion *"
                                             {...step1Form.register("description")}
                                             error={step1Form.formState.errors.description?.message}
-                                            placeholder="descripción"
+                                            placeholder="descripcion"
                                         />
                                         <Input
                                             compact
@@ -1072,6 +1084,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             type="number"
                                             {...step1Form.register("contentValue", { valueAsNumber: true })}
                                             error={step1Form.formState.errors.contentValue?.message}
+                                        />
+                                        <Input
+                                            compact
+                                            label="Valor contra entrega (COD)"
+                                            type="number"
+                                            {...step1Form.register("codValue", { valueAsNumber: true })}
+                                            error={step1Form.formState.errors.codValue?.message}
+                                            readOnly={orderIsCOD}
                                         />
                                     </div>
 
@@ -1093,19 +1113,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {...step1Form.register("insurance")}
                                                     className="rounded"
                                                 />
-                                                <span className="text-sm">Asegurar envío</span>
+                                                <span className="text-sm">Asegurar envio</span>
                                             </label>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                                                Método de pago COD
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                                Metodo de pago COD
                                             </label>
                                             <select
                                                 {...step1Form.register("codPaymentMethod")}
                                                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                             >
                                                 <option value="cash">Efectivo</option>
-                                                <option value="data_phone">Datáfono</option>
+                                                <option value="data_phone">Datafono</option>
                                             </select>
                                             {step1Form.formState.errors.codPaymentMethod?.message && (
                                                 <p className="text-sm text-red-500 mt-1">
@@ -1123,21 +1143,26 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {currentStep === 2 && (
                         <div className="flex flex-col h-full overflow-y-auto">
                             <div className="pb-2">
-                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
+                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
                                     Filtra por servicio / Transportadora
                                 </h3>
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
+                                    {(step1Data?.codValue ?? 0) > 0 && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600">
+                                            Contra Entrega - Solo opciones COD
+                                        </span>
+                                    )}
                                     {officeCarrier && (
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-600">
-                                            🏢 Filtrado: {officeCarrier}
+                                            Filtrado: {officeCarrier}
                                             <button
                                                 type="button"
                                                 onClick={() => setOfficeCarrier(null)}
                                                 className="ml-1 text-purple-500 hover:text-purple-800 dark:hover:text-purple-100 font-bold leading-none"
                                                 title="Quitar filtro"
                                             >
-                                                ×
+                                                x
                                             </button>
                                         </span>
                                     )}
@@ -1151,12 +1176,27 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <span className="text-sm font-medium">Cargando cotizaciones...</span>
                                         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                                     </div>
-                                ) : (
+                                ) : (() => {
+                                    const filteredRates = rates.filter(rate => {
+                                        const isCodRequest = (step1Data?.codValue ?? 0) > 0;
+                                        if (isCodRequest && !rate.cod) return false;
+                                        if (officeCarrier && !rate.carrier.toLowerCase().includes(officeCarrier.toLowerCase())) return false;
+                                        return true;
+                                    });
+                                    if (filteredRates.length === 0) {
+                                        return (
+                                            <div className="flex flex-col items-center justify-center gap-2 py-10 text-amber-600">
+                                                <span className="text-sm font-medium">
+                                                    {(step1Data?.codValue ?? 0) > 0
+                                                        ? "No hay transportadoras disponibles con opcion contra entrega para esta ruta"
+                                                        : "No se encontraron cotizaciones para esta ruta"}
+                                                </span>
+                                            </div>
+                                        );
+                                    }
+                                    return (
                                     <div className="grid grid-cols-4 gap-3 auto-rows-max">
-                                        {rates.filter(rate => {
-                                            if (!officeCarrier) return true;
-                                            return rate.carrier.toLowerCase().includes(officeCarrier.toLowerCase());
-                                        }).map((rate) => {
+                                        {filteredRates.map((rate) => {
                                             const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
@@ -1210,8 +1250,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 </div>
                                                             </div>
                                                             {isCOD && (
-                                                                <div className="text-xs text-blue-600 mt-1 text-center font-medium">
-                                                                    ✓ COD disponible
+                                                                <div className="mt-1 text-center">
+                                                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                                        COD
+                                                                    </span>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1220,7 +1262,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             );
                                         })}
                                     </div>
-                                )}
+                                    );
+                                })()}
                             </div>
                         </div>
                     )}

@@ -14,6 +14,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	api.POST("/shipment", h.handleGenerate)
 	api.POST("/track", h.handleTrack)
 	api.DELETE("/shipment/:id", h.handleCancel)
+	api.POST("/v2cancellation/batch/order", h.handleCancelBatch)
 
 	// Health check (no auth required)
 	router.GET("/health", h.handleHealth)
@@ -83,11 +84,12 @@ func (h *Handler) handleGenerate(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": resp.Status,
 			"data": gin.H{
-				"tracker":          numericTracker, // BUG: número en lugar de string
+				"tracker":          numericTracker,
 				"url":              resp.Data.LabelURL,
 				"myGuideReference": resp.Data.MyGuideReference,
 				"carrier":          resp.Data.Carrier,
 				"product":          resp.Data.Product,
+				"idOrder":          resp.Data.IDOrder,
 			},
 		})
 		return
@@ -120,6 +122,22 @@ func (h *Handler) handleCancel(c *gin.Context) {
 	resp, err := h.apiSimulator.HandleCancel(id)
 	if err != nil {
 		c.JSON(404, envioClickError(err.Error()))
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func (h *Handler) handleCancelBatch(c *gin.Context) {
+	var req domain.CancelBatchRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, envioClickError("Invalid request format"))
+		return
+	}
+
+	resp, err := h.apiSimulator.HandleCancelBatch(req)
+	if err != nil {
+		c.JSON(422, envioClickError(err.Error()))
 		return
 	}
 

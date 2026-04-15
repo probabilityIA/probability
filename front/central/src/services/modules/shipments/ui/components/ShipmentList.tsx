@@ -489,6 +489,10 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 );
             }
         },
+        onCancelFailed: (data) => {
+            const errorMsg = data.error_message || 'Error al cancelar el envio';
+            alert(`Cancelacion fallida: ${errorMsg}`);
+        },
     });
 
     const [filters, setFilters] = useState<GetShipmentsParams>({
@@ -557,19 +561,13 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
 
     const confirmCancel = async () => {
         if (!cancelModalData) return;
-        
+
         if (cancelModalData.type === 'single' && cancelModalData.shipmentId) {
             setCancelingId(cancelModalData.shipmentId);
             setCancelModalData(null);
             try {
                 const response = await cancelShipmentAction(cancelModalData.shipmentId);
-                if (response.success) {
-                    fetchShipments();
-                    if (selectedShipment) {
-                        const idStr = selectedShipment.tracking_number || selectedShipment.id.toString();
-                        if (idStr === cancelModalData.shipmentId) setSelectedShipment(null);
-                    }
-                } else {
+                if (!response.success) {
                     alert(`Error: ${response.message}`);
                 }
             } catch (error: any) {
@@ -590,11 +588,10 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 });
 
                 const response = await cancelBatchShipmentAction({ orders });
-                if (response.success) {
-                    fetchShipments();
-                    setSelectedIds(new Set());
-                } else {
+                if (!response.success) {
                     alert(`Error: ${response.message}`);
+                } else {
+                    setSelectedIds(new Set());
                 }
             } catch (error: any) {
                 alert(`Error: ${error.message}`);

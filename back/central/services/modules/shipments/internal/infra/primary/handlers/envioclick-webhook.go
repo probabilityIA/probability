@@ -8,14 +8,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
-// EnvioClickWebhook recibe notificaciones de tracking desde EnvioClick y actualiza
-// automáticamente el estado del envío correspondiente en la base de datos.
-//
-// Endpoint: POST /shipments/webhooks/envioclick  (público, sin JWT)
-//
-// EnvioClick enviará este payload cada vez que un envío cambie de estado.
-// Se busca el envío por trackingCode y se actualiza el estado mapeando los
-// estados de EnvioClick a los estados internos de Probability.
 func (h *Handlers) EnvioClickWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -51,16 +43,14 @@ func (h *Handlers) EnvioClickWebhook(c *gin.Context) {
 		return
 	}
 
-	// Determinar el estado a partir del último evento
 	var newStatus string
 	var hasIncidence bool
 
 	if len(payload.Events) > 0 {
-		latestEvent := payload.Events[0]
+		latestEvent := payload.Events[len(payload.Events)-1]
 		hasIncidence = latestEvent.Incidence
 		newStatus = domain.MapEnvioClickStatus(latestEvent.StatusStep, hasIncidence)
 	} else {
-		// Sin eventos, no hay nada que actualizar
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "Sin eventos en el payload",

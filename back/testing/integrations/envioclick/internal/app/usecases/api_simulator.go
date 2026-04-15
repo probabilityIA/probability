@@ -198,10 +198,11 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 		}
 	}
 
-	// Store the shipment
 	now := time.Now()
+	idOrder := time.Now().UnixMilli()
 	shipment := &domain.StoredShipment{
 		ID:             shipmentID,
+		IDOrder:        idOrder,
 		TrackingNumber: trackingNumber,
 		Carrier:        carrier.Name,
 		CarrierID:      carrier.ID,
@@ -210,6 +211,7 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 		Destination:    req.Destination,
 		Packages:       req.Packages,
 		ContentValue:   req.ContentValue,
+		CODValue:       req.CODValue,
 		Flete:          flete,
 		Status:         "created",
 		LabelURL:       labelURL,
@@ -232,6 +234,7 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 			MyGuideReference: req.MyShipmentReference,
 			Carrier:          carrier.Name,
 			Product:          product,
+			IDOrder:          idOrder,
 		},
 	}, nil
 }
@@ -251,9 +254,14 @@ func (s *APISimulator) HandleTrack(trackingNumber string) (*domain.TrackingRespo
 		return nil, fmt.Errorf("shipment not found for tracking: %s", trackingNumber)
 	}
 
-	status := "in_transit"
-	if shipment.Status == "cancelled" {
+	var status string
+	switch shipment.Status {
+	case "cancelled":
 		status = "cancelled"
+	case "created":
+		status = "Pendiente de Recoleccion"
+	default:
+		status = "in_transit"
 	}
 
 	history := GenerateTrackingHistory(shipment.Carrier, shipment.CreatedAt)
@@ -322,5 +330,44 @@ func (s *APISimulator) HandleCancel(shipmentID string) (*domain.CancelResponse, 
 	return &domain.CancelResponse{
 		Status:  "success",
 		Message: "Cancelacion exitosa",
+	}, nil
+}
+
+func (s *APISimulator) HandleCancelBatch(req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+	s.logger.Info().
+		Int("order_count", len(req.IDOrders)).
+		Msg("Simulando cancelacion batch de envios")
+
+	cancelled := make([]int64, 0)
+	notValid := make([]int64, 0)
+
+	for _, idOrder := range req.IDOrders {
+		shipment, exists := s.Repository.GetByIDOrder(idOrder)
+		if !exists {
+			notValid = append(notValid, idOrder)
+			continue
+		}
+		if shipment.Status == "cancelled" {
+			notValid = append(notValid, idOrder)
+			continue
+		}
+		now := time.Now()
+		shipment.CancelledAt = &now
+		s.Repository.MarkCancelled(shipment.ID)
+		cancelled = append(cancelled, idOrder)
+	}
+
+	s.logger.Info().
+		Int("cancelled", len(cancelled)).
+		Int("not_valid", len(notValid)).
+		Msg("Cancelacion batch procesada")
+
+	return &domain.CancelBatchResponse{
+		Status: "success",
+		Data: domain.CancelBatchRespData{
+			OnlyCancelOrders: cancelled,
+			NotValidOrders:   notValid,
+			ToRefundOrders:   []int64{},
+		},
 	}, nil
 }

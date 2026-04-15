@@ -473,15 +473,25 @@ func GenerateRates(req domain.QuoteRequest) []domain.Rate {
 		deliveryDays := c.BaseDelivery + rng.Intn(3) // base + 0-2 extra days
 
 		idCounter++
+		minInsurance := math.Round(flete*0.02/100) * 100
+		extraInsurance := math.Round(req.ContentValue*0.005/100) * 100
+		supportsCOD := rng.Intn(2) == 0
+		if req.CODValue > 0 && i < 2 {
+			supportsCOD = true
+		}
+
 		rates = append(rates, domain.Rate{
-			IDRate:        idCounter,
-			IDProduct:     p.ID,
-			Product:       p.Name,
-			IDCarrier:     c.ID,
-			Carrier:       c.Name,
-			Flete:         flete,
-			DeliveryDays:  deliveryDays,
-			QuotationType: "standard",
+			IDRate:           idCounter,
+			IDProduct:        p.ID,
+			Product:          p.Name,
+			IDCarrier:        c.ID,
+			Carrier:          c.Name,
+			Flete:            flete,
+			MinimumInsurance: minInsurance,
+			ExtraInsurance:   extraInsurance,
+			DeliveryDays:     deliveryDays,
+			QuotationType:    "standard",
+			COD:              supportsCOD,
 		})
 	}
 

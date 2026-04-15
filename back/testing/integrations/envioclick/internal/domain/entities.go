@@ -52,14 +52,32 @@ type QuoteData struct {
 }
 
 type Rate struct {
-	IDRate        int64   `json:"idRate"`
-	IDProduct     int64   `json:"idProduct"`
-	Product       string  `json:"product"`
-	IDCarrier     int64   `json:"idCarrier"`
-	Carrier       string  `json:"carrier"`
-	Flete         float64 `json:"flete"`
-	DeliveryDays  int     `json:"deliveryDays"`
-	QuotationType string  `json:"quotationType"`
+	IDRate           int64   `json:"idRate"`
+	IDProduct        int64   `json:"idProduct"`
+	Product          string  `json:"product"`
+	IDCarrier        int64   `json:"idCarrier"`
+	Carrier          string  `json:"carrier"`
+	Flete            float64 `json:"flete"`
+	MinimumInsurance float64 `json:"minimumInsurance"`
+	ExtraInsurance   float64 `json:"extraInsurance"`
+	DeliveryDays     int     `json:"deliveryDays"`
+	QuotationType    string  `json:"quotationType"`
+	COD              bool    `json:"cod"`
+}
+
+type CancelBatchRequest struct {
+	IDOrders []int64 `json:"idOrders"`
+}
+
+type CancelBatchResponse struct {
+	Status string              `json:"status"`
+	Data   CancelBatchRespData `json:"data"`
+}
+
+type CancelBatchRespData struct {
+	NotValidOrders   []int64 `json:"not_valid_orders"`
+	OnlyCancelOrders []int64 `json:"only_cancel_orders"`
+	ToRefundOrders   []int64 `json:"to_refund_orders"`
 }
 
 type GenerateResponse struct {
@@ -71,8 +89,9 @@ type GenerateData struct {
 	TrackingNumber   string `json:"tracker"`
 	LabelURL         string `json:"url"`
 	MyGuideReference string `json:"myGuideReference"`
-	Carrier          string `json:"carrier,omitempty"`          // carrier name (added for mock)
-	Product          string `json:"product,omitempty"`          // carrier product (added for mock)
+	Carrier          string `json:"carrier,omitempty"`
+	Product          string `json:"product,omitempty"`
+	IDOrder          int64  `json:"idOrder"`
 }
 
 type TrackingResponse struct {
@@ -107,6 +126,7 @@ type TrackRequest struct {
 // StoredShipment is the internal model for in-memory storage
 type StoredShipment struct {
 	ID             string
+	IDOrder        int64
 	TrackingNumber string
 	Carrier        string
 	CarrierID      int64
@@ -115,8 +135,9 @@ type StoredShipment struct {
 	Destination    Address
 	Packages       []Package
 	ContentValue   float64
+	CODValue       float64
 	Flete          float64
-	Status         string // created, in_transit, delivered, cancelled
+	Status         string
 	LabelURL       string
 	CreatedAt      time.Time
 	CancelledAt    *time.Time

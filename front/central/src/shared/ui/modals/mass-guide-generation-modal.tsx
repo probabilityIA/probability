@@ -195,6 +195,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         for (let i = 0; i < selectedOrders.length; i++) {
             const order = selectedOrders[i];
             try {
+                const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
                     packages: [{
                         weight: order.weight || 1,
@@ -204,15 +205,16 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     }],
                     description: `Orden ${order.order_number}`,
                     contentValue: order.total_amount || 10000,
+                    codValue: orderCodValue,
                     includeGuideCost: false,
-                    codPaymentMethod: 'cash',
+                    codPaymentMethod: orderCodValue ? 'cash' : '',
                     origin: {
                         daneCode: selectedWarehouse?.city_dane_code || '11001000',
-                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Dirección no especificada',
+                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Direccion no especificada',
                     },
                     destination: {
                         daneCode: findDaneCode(order.shipping_city || "", order.shipping_state || "") || '11001001',
-                        address: order.shipping_street || 'Dirección no especificada',
+                        address: order.shipping_street || 'Direccion no especificada',
                     },
                 };
 
@@ -253,6 +255,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
             try {
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "") || "11001000";
 
+                const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
                     myShipmentReference: "Orden " + (order.internal_number || order.order_number),
@@ -260,11 +263,12 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     order_uuid: order.id,
                     requestPickup: false,
                     pickupDate: new Date().toISOString().split('T')[0],
-                    insurance: true, // Re-enable insurance as default
+                    insurance: true,
                     description: `Orden ${order.order_number}`,
                     contentValue: order.total_amount || 10000,
+                    codValue: genCodValue,
                     includeGuideCost: false,
-                    codPaymentMethod: 'cash',
+                    codPaymentMethod: genCodValue ? 'cash' : '',
                     packages: [{
                         weight: order.weight || 1,
                         height: order.height || 10,
@@ -406,7 +410,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             className="mr-3"
                                         />
                                         <div className="flex-1">
-                                            <div className="font-semibold">{order.order_number}</div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-semibold">{order.order_number}</span>
+                                                {order.cod_total && order.cod_total > 0 && (
+                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                        COD ${order.cod_total.toLocaleString()}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div className="text-sm text-gray-600 dark:text-gray-300">
                                                 {order.customer_name} - {order.shipping_city || <span className="text-red-500 text-xs font-semibold">Sin ciudad (Edita para continuar)</span>}
                                             </div>
@@ -499,7 +510,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 <tbody>
                                     {orders.filter(o => selectedOrderIds.has(o.id)).map(order => (
                                         <tr key={order.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-3 font-medium">{order.order_number}</td>
+                                            <td className="p-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-medium">{order.order_number}</span>
+                                                    {order.cod_total && order.cod_total > 0 && (
+                                                        <span className="inline-block px-1 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300">COD</span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="p-3">
                                                 <div>{order.customer_name}</div>
                                                 <div className="text-xs text-gray-500 dark:text-gray-400">{order.shipping_city}</div>

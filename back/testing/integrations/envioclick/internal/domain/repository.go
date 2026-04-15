@@ -97,10 +97,20 @@ func (r *ShipmentRepository) SaveRate(rateID int64, rateInfo *RateInfo) {
 	r.ratesByID[rateID] = rateInfo
 }
 
-// GetRateByID obtiene la información de un rate por su ID
 func (r *ShipmentRepository) GetRateByID(rateID int64) (*RateInfo, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	info, exists := r.ratesByID[rateID]
 	return info, exists
+}
+
+func (r *ShipmentRepository) GetByIDOrder(idOrder int64) (*StoredShipment, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, s := range r.shipmentsByID {
+		if s.IDOrder == idOrder {
+			return s, true
+		}
+	}
+	return nil, false
 }
