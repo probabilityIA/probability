@@ -79,13 +79,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         shipping_country: order?.shipping_country || 'Colombia',
         shipping_postal_code: order?.shipping_postal_code || '',
 
-        // Financial
         subtotal: order?.subtotal || 0,
         tax: order?.tax || 0,
         discount: order?.discount || 0,
         shipping_cost: order?.shipping_cost || 0,
         total_amount: order?.total_amount || 0,
         currency: order?.currency || 'COP',
+        cod_total: order?.cod_total || 0,
 
         // Payment
         payment_method_id: order?.payment_method_id || 1,
@@ -148,6 +148,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [citySearch, setCitySearch] = useState('');
     const [showCityResults, setShowCityResults] = useState(false);
     const cityRef = useRef<HTMLDivElement>(null);
+
+    const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
 
     const [house, setHouse] = useState(() => {
         if (!order?.shipping_street) return '';
@@ -361,13 +363,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </Alert>
             )}
 
-            {/* 3-Column Layout with 2-Column below */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Column 1: Customer Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
-                    {/* Customer Info */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información del Cliente</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Cliente</h3>
+                        </div>
 
                         {/* Warning banner */}
                         {!formData.customer_email && (formData.customer_first_name || formData.customer_name) && (
@@ -555,11 +559,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         </div>
                     </div>
                 </div>
-                {/* Column 2: Shipping Address */}
                 <div>
-                    {/* Shipping Address */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Dirección de Envío</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Direccion de Envio</h3>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
@@ -683,11 +690,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     </div>
                 </div>
 
-                {/* Column 3: Financial Info only */}
-                <div>
-                    {/* Financial */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información Financiera</h3>
+                <div className="space-y-4">
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Financiera</h3>
+                        </div>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
@@ -713,12 +723,34 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     </span>
                                 </div>
                             </div>
+
+                            <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-600/30">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contra Entrega</span>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={isCOD}
+                                        onClick={() => {
+                                            setIsCOD(!isCOD);
+                                            setFormData(prev => ({ ...prev, cod_total: !isCOD ? prev.total_amount : 0 }));
+                                        }}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isCOD ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                    >
+                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCOD ? 'translate-x-6' : 'translate-x-1'}`} />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Payment & Status */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg mt-4">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Pago y Estado</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Pago y Estado</h3>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="flex items-center">
@@ -780,10 +812,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                 </div>
 
-                {/* Product Selection - spans 2 columns */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Productos</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Productos</h3>
+                        </div>
                         <ProductSelector
                             businessId={formData.business_id || 0}
                             selectedProducts={selectedProducts}
@@ -793,10 +829,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     </div>
                 </div>
 
-                {/* Notes */}
                 <div>
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg h-full">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Notas</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl h-full">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Notas</h3>
+                        </div>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -807,10 +847,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     </div>
                 </div>
 
-                {/* Logistics */}
                 <div className="lg:col-span-3">
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
-                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Logística</h3>
+                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
+                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            </div>
+                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Logistica</h3>
+                        </div>
                         
                         {/* 24-hour processing notice */}
                         <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
