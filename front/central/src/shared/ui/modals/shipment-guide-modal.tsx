@@ -859,12 +859,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         // eslint-disable-next-line react-hooks/refs
                         <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
-                                <div className="space-y-3">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* Origin */}
-                                        <div className="space-y-2">
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30 rounded-xl p-4 space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">Origen</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm font-bold">A</div>
+                                                    <h3 className="font-semibold text-base text-purple-700 dark:text-purple-400">Origen</h3>
+                                                </div>
                                                 {originWarehouses.length > 0 && (
                                                     <select
                                                         className="text-xs border border-gray-200 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
@@ -951,9 +953,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             )}
                                         </div>
 
-                                        {/* Destination */}
-                                        <div className="space-y-2">
-                                            <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">Destino</h3>
+                                        <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 rounded-xl p-4 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">B</div>
+                                                <h3 className="font-semibold text-base text-blue-700 dark:text-blue-400">Destino</h3>
+                                            </div>
 
                                             <div ref={destRef} className="relative">
                                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
@@ -1025,9 +1029,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                     </div>
 
-                                    {/* Package Details */}
-                                    <div className="border-t pt-2">
-                                        <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Características del paquete</h3>
+                                    <div className="bg-gray-50/80 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/30 rounded-xl p-4">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                            </div>
+                                            <h3 className="font-semibold text-base text-gray-700 dark:text-gray-200">Paquete</h3>
+                                        </div>
                                         <div className="grid grid-cols-4 gap-2">
                                             <Input
                                                 compact
@@ -1059,7 +1067,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 error={step1Form.formState.errors.length?.message}
                                             />
                                         </div>
-                                    </div>
 
                                     {orderIsCOD && (
                                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-900/30 dark:border-amber-600">
@@ -1069,68 +1076,63 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                     )}
 
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <Input
-                                            compact
-                                            label="Descripcion *"
-                                            {...step1Form.register("description")}
-                                            error={step1Form.formState.errors.description?.message}
-                                            placeholder="descripcion"
-                                        />
-                                        <Input
-                                            compact
-                                            label="Valor factura declarado *"
-                                            type="number"
-                                            {...step1Form.register("contentValue", { valueAsNumber: true })}
-                                            error={step1Form.formState.errors.contentValue?.message}
-                                        />
-                                        <Input
-                                            compact
-                                            label="Valor contra entrega"
-                                            type="number"
-                                            {...step1Form.register("codValue", { valueAsNumber: true })}
-                                            error={step1Form.formState.errors.codValue?.message}
-                                            readOnly={orderIsCOD}
-                                        />
-                                    </div>
+                                        <div className="grid grid-cols-3 gap-2 mt-3">
+                                            <Input
+                                                compact
+                                                label="Descripcion *"
+                                                {...step1Form.register("description")}
+                                                error={step1Form.formState.errors.description?.message}
+                                                placeholder="descripcion"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Valor factura declarado *"
+                                                type="number"
+                                                {...step1Form.register("contentValue", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.contentValue?.message}
+                                            />
+                                            <Input
+                                                compact
+                                                label="Valor contra entrega"
+                                                type="number"
+                                                {...step1Form.register("codValue", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.codValue?.message}
+                                                readOnly={orderIsCOD}
+                                            />
+                                        </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                        <div>
-                                            <label className="flex items-center space-x-2">
+                                        <div className="flex items-center gap-6 mt-3 pt-3 border-t border-gray-200 dark:border-gray-600/30">
+                                            <label className="flex items-center gap-2 cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     {...step1Form.register("insurance")}
-                                                    className="rounded"
+                                                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                                                 />
-                                                <span className="text-sm">Asegurar envio</span>
+                                                <span className="text-sm text-gray-700 dark:text-gray-300">Asegurar envio</span>
                                             </label>
-                                        </div>
-                                        {(step1Form.watch("codValue") ?? 0) > 0 && (
-                                            <>
-                                                <div>
-                                                    <label className="flex items-center space-x-2">
+                                            {(step1Form.watch("codValue") ?? 0) > 0 && (
+                                                <>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
                                                             {...step1Form.register("includeGuideCost")}
-                                                            className="rounded"
+                                                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                                                         />
-                                                        <span className="text-sm">Incluir costo guia en contra entrega</span>
+                                                        <span className="text-sm text-gray-700 dark:text-gray-300">Incluir costo guia en contra entrega</span>
                                                     </label>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                                                        Metodo de pago contra entrega
-                                                    </label>
-                                                    <select
-                                                        {...step1Form.register("codPaymentMethod")}
-                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                                    >
-                                                        <option value="cash">Efectivo</option>
-                                                        <option value="data_phone">Datafono</option>
-                                                    </select>
-                                                </div>
-                                            </>
-                                        )}
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm text-gray-700 dark:text-gray-300">Metodo pago:</span>
+                                                        <select
+                                                            {...step1Form.register("codPaymentMethod")}
+                                                            className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                        >
+                                                            <option value="cash">Efectivo</option>
+                                                            <option value="data_phone">Datafono</option>
+                                                        </select>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
