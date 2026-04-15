@@ -22,6 +22,7 @@ type RepositoryMock struct {
 	GetShipmentBusinessIDByIDFn       func(ctx context.Context, shipmentID uint) (uint, error)
 	UpdateOrderGuideLinkFn            func(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
 	UpdateOrderStatusByOrderIDFn      func(ctx context.Context, orderID string, status string) error
+	ClearOrderGuideDataFn             func(ctx context.Context, orderID string) error
 	EnsureAllBusinessesActiveFn       func(ctx context.Context) error
 	GetOrderIntegrationIDFn           func(ctx context.Context, orderUUID string) (uint, error)
 	CreateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
@@ -138,7 +139,10 @@ func (m *RepositoryMock) UpdateOrderStatusByOrderID(ctx context.Context, orderID
 	return nil
 }
 
-func (m *RepositoryMock) ClearOrderGuideData(_ context.Context, _ string) error {
+func (m *RepositoryMock) ClearOrderGuideData(ctx context.Context, orderID string) error {
+	if m.ClearOrderGuideDataFn != nil {
+		return m.ClearOrderGuideDataFn(ctx, orderID)
+	}
 	return nil
 }
 

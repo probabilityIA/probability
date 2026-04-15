@@ -44,14 +44,13 @@ func buildCancelMessage(shipmentID *uint, businessID uint, status string, errMsg
 	return b
 }
 
-func TestHandleCancelResponse_Success_UpdatesShipmentAndOrder(t *testing.T) {
+func TestHandleCancelResponse_Success_UpdatesShipmentAndClearsOrder(t *testing.T) {
 	shipmentID := uint(42)
 	orderID := "order-uuid-123"
 	businessID := uint(7)
 
 	updatedStatus := ""
-	updatedOrderID := ""
-	updatedOrderStatus := ""
+	clearedOrderID := ""
 	cancelledShipmentID := uint(0)
 	cancelledBusinessID := uint(0)
 
@@ -67,9 +66,8 @@ func TestHandleCancelResponse_Success_UpdatesShipmentAndOrder(t *testing.T) {
 			updatedStatus = shipment.Status
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, id string, status string) error {
-			updatedOrderID = id
-			updatedOrderStatus = status
+		ClearOrderGuideDataFn: func(ctx context.Context, id string) error {
+			clearedOrderID = id
 			return nil
 		},
 	}
@@ -92,11 +90,8 @@ func TestHandleCancelResponse_Success_UpdatesShipmentAndOrder(t *testing.T) {
 	if updatedStatus != "cancelled" {
 		t.Errorf("expected shipment status 'cancelled', got '%s'", updatedStatus)
 	}
-	if updatedOrderID != orderID {
-		t.Errorf("expected order ID '%s', got '%s'", orderID, updatedOrderID)
-	}
-	if updatedOrderStatus != "cancelled" {
-		t.Errorf("expected order status 'cancelled', got '%s'", updatedOrderStatus)
+	if clearedOrderID != orderID {
+		t.Errorf("expected ClearOrderGuideData called with '%s', got '%s'", orderID, clearedOrderID)
 	}
 	if cancelledShipmentID != shipmentID {
 		t.Errorf("expected SSE shipment ID %d, got %d", shipmentID, cancelledShipmentID)
@@ -106,12 +101,11 @@ func TestHandleCancelResponse_Success_UpdatesShipmentAndOrder(t *testing.T) {
 	}
 }
 
-func TestHandleCancelResponse_Success_SyncsOrderStatus(t *testing.T) {
+func TestHandleCancelResponse_Success_ClearsOrderGuideData(t *testing.T) {
 	shipmentID := uint(10)
 	orderID := "order-sync-456"
 
-	syncCalled := false
-	syncedStatus := ""
+	clearCalled := false
 
 	repoMock := &mocks.RepositoryMock{
 		GetShipmentByIDFn: func(ctx context.Context, id uint) (*domain.Shipment, error) {
@@ -124,9 +118,8 @@ func TestHandleCancelResponse_Success_SyncsOrderStatus(t *testing.T) {
 		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, id string, status string) error {
-			syncCalled = true
-			syncedStatus = status
+		ClearOrderGuideDataFn: func(ctx context.Context, id string) error {
+			clearCalled = true
 			return nil
 		},
 	}
@@ -138,11 +131,8 @@ func TestHandleCancelResponse_Success_SyncsOrderStatus(t *testing.T) {
 
 	consumer.handleResponse(msg)
 
-	if !syncCalled {
-		t.Error("expected UpdateOrderStatusByOrderID to be called, but it was not")
-	}
-	if syncedStatus != "cancelled" {
-		t.Errorf("expected synced order status 'cancelled', got '%s'", syncedStatus)
+	if !clearCalled {
+		t.Error("expected ClearOrderGuideData to be called, but it was not")
 	}
 }
 
@@ -202,7 +192,7 @@ func TestHandleCancelResponse_Error_DoesNotUpdateRepository(t *testing.T) {
 			updateCalled = true
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, orderID string, status string) error {
+		ClearOrderGuideDataFn: func(ctx context.Context, orderID string) error {
 			updateCalled = true
 			return nil
 		},
@@ -225,7 +215,7 @@ func TestHandleCancelResponse_NoShipmentID_OnlyPublishesSSE(t *testing.T) {
 
 	getShipmentCalled := false
 	updateShipmentCalled := false
-	updateOrderCalled := false
+	clearOrderCalled := false
 	cancelledPublished := false
 	cancelFailedPublished := false
 
@@ -238,8 +228,8 @@ func TestHandleCancelResponse_NoShipmentID_OnlyPublishesSSE(t *testing.T) {
 			updateShipmentCalled = true
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, orderID string, status string) error {
-			updateOrderCalled = true
+		ClearOrderGuideDataFn: func(ctx context.Context, orderID string) error {
+			clearOrderCalled = true
 			return nil
 		},
 	}
@@ -267,8 +257,8 @@ func TestHandleCancelResponse_NoShipmentID_OnlyPublishesSSE(t *testing.T) {
 	if updateShipmentCalled {
 		t.Error("expected UpdateShipment not to be called when ShipmentID is nil")
 	}
-	if updateOrderCalled {
-		t.Error("expected UpdateOrderStatusByOrderID not to be called when ShipmentID is nil")
+	if clearOrderCalled {
+		t.Error("expected ClearOrderGuideData not to be called when ShipmentID is nil")
 	}
 	if cancelledPublished {
 		t.Error("expected PublishShipmentCancelled not to be called when ShipmentID is nil")
@@ -317,10 +307,10 @@ func TestHandleCancelResponse_RepositoryGetError_SkipsUpdateButPublishesSSE(t *t
 	}
 }
 
-func TestHandleCancelResponse_ShipmentWithoutOrderID_SkipsOrderSync(t *testing.T) {
+func TestHandleCancelResponse_ShipmentWithoutOrderID_SkipsOrderClear(t *testing.T) {
 	shipmentID := uint(20)
 
-	updateOrderCalled := false
+	clearOrderCalled := false
 
 	repoMock := &mocks.RepositoryMock{
 		GetShipmentByIDFn: func(ctx context.Context, id uint) (*domain.Shipment, error) {
@@ -333,8 +323,8 @@ func TestHandleCancelResponse_ShipmentWithoutOrderID_SkipsOrderSync(t *testing.T
 		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, orderID string, status string) error {
-			updateOrderCalled = true
+		ClearOrderGuideDataFn: func(ctx context.Context, orderID string) error {
+			clearOrderCalled = true
 			return nil
 		},
 	}
@@ -346,15 +336,15 @@ func TestHandleCancelResponse_ShipmentWithoutOrderID_SkipsOrderSync(t *testing.T
 
 	consumer.handleResponse(msg)
 
-	if updateOrderCalled {
-		t.Error("expected UpdateOrderStatusByOrderID not to be called when OrderID is nil")
+	if clearOrderCalled {
+		t.Error("expected ClearOrderGuideData not to be called when OrderID is nil")
 	}
 }
 
-func TestHandleCancelResponse_ShipmentWithEmptyOrderID_SkipsOrderSync(t *testing.T) {
+func TestHandleCancelResponse_ShipmentWithEmptyOrderID_SkipsOrderClear(t *testing.T) {
 	shipmentID := uint(21)
 
-	updateOrderCalled := false
+	clearOrderCalled := false
 
 	repoMock := &mocks.RepositoryMock{
 		GetShipmentByIDFn: func(ctx context.Context, id uint) (*domain.Shipment, error) {
@@ -368,8 +358,8 @@ func TestHandleCancelResponse_ShipmentWithEmptyOrderID_SkipsOrderSync(t *testing
 		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
 			return nil
 		},
-		UpdateOrderStatusByOrderIDFn: func(ctx context.Context, orderID string, status string) error {
-			updateOrderCalled = true
+		ClearOrderGuideDataFn: func(ctx context.Context, orderID string) error {
+			clearOrderCalled = true
 			return nil
 		},
 	}
@@ -381,7 +371,7 @@ func TestHandleCancelResponse_ShipmentWithEmptyOrderID_SkipsOrderSync(t *testing
 
 	consumer.handleResponse(msg)
 
-	if updateOrderCalled {
-		t.Error("expected UpdateOrderStatusByOrderID not to be called when OrderID is empty string")
+	if clearOrderCalled {
+		t.Error("expected ClearOrderGuideData not to be called when OrderID is empty string")
 	}
 }
