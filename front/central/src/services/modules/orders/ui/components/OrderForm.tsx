@@ -73,8 +73,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         customer_phone: order?.customer_phone || '',
         customer_dni: order?.customer_dni || '',
 
-        // Shipping
-        shipping_street: order?.shipping_street || '',
+        shipping_street: order?.shipping_street ? order.shipping_street.split(' | ')[0] : '',
         shipping_city: order?.shipping_city || '',
         shipping_state: order?.shipping_state || '',
         shipping_country: order?.shipping_country || 'Colombia',
@@ -150,9 +149,16 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [showCityResults, setShowCityResults] = useState(false);
     const cityRef = useRef<HTMLDivElement>(null);
 
-    // Casa y Barrio states
-    const [house, setHouse] = useState('');
-    const [barrio, setBarrio] = useState('');
+    const [house, setHouse] = useState(() => {
+        if (!order?.shipping_street) return '';
+        const parts = order.shipping_street.split(' | ');
+        return parts.length >= 2 ? parts[1] : '';
+    });
+    const [barrio, setBarrio] = useState(() => {
+        if (!order?.shipping_street) return '';
+        const parts = order.shipping_street.split(' | ');
+        return parts.length >= 3 ? parts[2] : '';
+    });
 
     // Address map coordinates (set when user selects a suggestion)
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -274,8 +280,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 throw new Error('Por favor completa los campos requeridos');
             }
 
+            const parts = [formData.shipping_street || ''];
+            if (house.trim()) parts.push(house.trim());
+            if (barrio.trim()) parts.push(barrio.trim());
+            const fullShippingStreet = parts.join(' | ');
+
             const baseData = {
                 ...formData,
+                shipping_street: fullShippingStreet,
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };

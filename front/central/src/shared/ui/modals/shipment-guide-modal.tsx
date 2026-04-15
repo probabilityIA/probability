@@ -322,7 +322,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             // Step 1
             step1Form.setValue("contentValue", order.total_amount);
             step1Form.setValue("description", `Order ${order.order_number}`);
-            step1Form.setValue("destAddress", order.shipping_street, { shouldValidate: true });
+            step1Form.setValue("destAddress", (order.shipping_street || "").split(" | ")[0], { shouldValidate: true });
 
             if (order.weight && order.weight > 0) {
                 step1Form.setValue("weight", order.weight, { shouldValidate: true });
@@ -351,7 +351,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             step3Form.setValue("destEmail", order.customer_email);
             step3Form.setValue("destPhone", order.customer_phone);
-            step3Form.setValue("destCrossStreet", (order.shipping_street || "").substring(0, 35));
+            const streetParts = (order.shipping_street || "").split(" | ");
+            step3Form.setValue("destCrossStreet", (streetParts[0] || "").substring(0, 35));
+            if (streetParts[1]) step3Form.setValue("destReference", streetParts[1].substring(0, 25));
+            if (streetParts[2]) step3Form.setValue("destSuburb", streetParts[2].substring(0, 30));
             step3Form.setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
             step3Form.setValue("external_order_id", order.order_number);
         }
