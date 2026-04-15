@@ -167,8 +167,23 @@ func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID str
 		Update("status", status).Error
 }
 
-// EnsureAllBusinessesActive sets all existing businesses to 'paid' status with a 2030 expiration date.
-// This is a one-time migration to ensure service continuity.
+func (r *Repository) ClearOrderGuideData(ctx context.Context, orderID string) error {
+	if orderID == "" {
+		return nil
+	}
+	return r.db.Conn(ctx).
+		Table("orders").
+		Where("id = ? AND deleted_at IS NULL", orderID).
+		Updates(map[string]any{
+			"tracking_number": nil,
+			"tracking_link":   nil,
+			"guide_link":      nil,
+			"guide_id":        nil,
+			"carrier":         nil,
+			"status":          "pending",
+		}).Error
+}
+
 func (r *Repository) EnsureAllBusinessesActive(ctx context.Context) error {
 	return r.db.Conn(ctx).
 		Table("businesses").

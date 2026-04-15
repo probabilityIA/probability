@@ -34,8 +34,10 @@ type CustomerAddress struct {
 	City       string `gorm:"size:128;uniqueIndex:idx_cust_addr_unique,priority:4"`
 	State      string `gorm:"size:128;uniqueIndex:idx_cust_addr_unique,priority:5"`
 	Country    string `gorm:"size:128;uniqueIndex:idx_cust_addr_unique,priority:6"`
-	PostalCode string `gorm:"size:32;uniqueIndex:idx_cust_addr_unique,priority:7"`
-	TimesUsed  int    `gorm:"not null;default:1"`
+	PostalCode string   `gorm:"size:32;uniqueIndex:idx_cust_addr_unique,priority:7"`
+	Latitude   *float64 `gorm:"type:decimal(10,8)"`
+	Longitude  *float64 `gorm:"type:decimal(11,8)"`
+	TimesUsed  int      `gorm:"not null;default:1"`
 	LastUsedAt time.Time
 
 	Client Client `gorm:"foreignKey:CustomerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

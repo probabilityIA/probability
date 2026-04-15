@@ -190,6 +190,38 @@ func (r *Repository) FindClientByPhone(ctx context.Context, businessID uint, pho
 	return modelToEntity(&model), nil
 }
 
+func (r *Repository) FindClientByDNI(ctx context.Context, businessID uint, dni string) (*entities.Client, error) {
+	var model models.Client
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND dni = ?", businessID, dni).
+		First(&model).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return modelToEntity(&model), nil
+}
+
+func (r *Repository) FindClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
+	var model models.Client
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND email = ?", businessID, email).
+		First(&model).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return modelToEntity(&model), nil
+}
+
+func (r *Repository) UpdateClientFields(ctx context.Context, clientID uint, updates map[string]any) error {
+	return r.db.Conn(ctx).Model(&models.Client{}).Where("id = ?", clientID).Updates(updates).Error
+}
+
 func modelToEntity(m *models.Client) *entities.Client {
 	return &entities.Client{
 		ID:         m.ID,

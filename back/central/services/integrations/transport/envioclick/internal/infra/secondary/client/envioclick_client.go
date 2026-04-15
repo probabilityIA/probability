@@ -44,7 +44,6 @@ func New(logger log.ILogger) domain.IEnvioClickClient {
 	}
 }
 
-// envioClickErrorResponse represents the structured error format from EnvioClick
 type envioClickErrorResponse struct {
 	StatusMessages []struct {
 		Error []string `json:"error"`

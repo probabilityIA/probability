@@ -54,6 +54,8 @@ type OrderEventDTO struct {
 	ShippingState       string
 	ShippingCountry     string
 	ShippingPostalCode  string
+	ShippingLat         *float64
+	ShippingLng         *float64
 	OrderNumber         string
 	OrderedAt           time.Time
 	Items               []OrderEventItemDTO

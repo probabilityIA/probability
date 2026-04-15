@@ -38,8 +38,28 @@ func (uc *UseCase) resolveCustomerID(ctx context.Context, event dtos.OrderEventD
 		return *event.CustomerID, nil
 	}
 
+	if event.CustomerDNI != "" {
+		client, err := uc.repo.FindClientByDNI(ctx, event.BusinessID, event.CustomerDNI)
+		if err != nil {
+			return 0, err
+		}
+		if client != nil {
+			return client.ID, nil
+		}
+	}
+
 	if event.CustomerPhone != "" {
 		client, err := uc.repo.FindClientByPhone(ctx, event.BusinessID, event.CustomerPhone)
+		if err != nil {
+			return 0, err
+		}
+		if client != nil {
+			return client.ID, nil
+		}
+	}
+
+	if event.CustomerEmail != "" {
+		client, err := uc.repo.FindClientByEmail(ctx, event.BusinessID, event.CustomerEmail)
 		if err != nil {
 			return 0, err
 		}
@@ -51,7 +71,46 @@ func (uc *UseCase) resolveCustomerID(ctx context.Context, event dtos.OrderEventD
 	return 0, nil
 }
 
+func (uc *UseCase) syncClientData(ctx context.Context, customerID uint, event dtos.OrderEventDTO) {
+	client, err := uc.repo.GetByID(ctx, event.BusinessID, customerID)
+	if err != nil || client == nil {
+		return
+	}
+
+	updates := map[string]any{}
+
+	if event.CustomerName != "" && event.CustomerName != client.Name {
+		updates["name"] = event.CustomerName
+	}
+
+	if event.CustomerEmail != "" {
+		if client.Email == nil || *client.Email != event.CustomerEmail {
+			updates["email"] = event.CustomerEmail
+		}
+	}
+
+	if event.CustomerPhone != "" && event.CustomerPhone != client.Phone {
+		updates["phone"] = event.CustomerPhone
+	}
+
+	if event.CustomerDNI != "" {
+		if client.Dni == nil || *client.Dni != event.CustomerDNI {
+			updates["dni"] = event.CustomerDNI
+		}
+	}
+
+	if len(updates) == 0 {
+		return
+	}
+
+	if err := uc.repo.UpdateClientFields(ctx, customerID, updates); err != nil {
+		uc.log.Error(ctx).Err(err).Uint("customer_id", customerID).Msg("failed to sync client data from order")
+	}
+}
+
 func (uc *UseCase) handleOrderCreated(ctx context.Context, customerID uint, event dtos.OrderEventDTO) error {
+	uc.syncClientData(ctx, customerID, event)
+
 	paidCount := 0
 	if event.IsPaid {
 		paidCount = 1
@@ -99,6 +158,8 @@ func (uc *UseCase) handleOrderCreated(ctx context.Context, customerID uint, even
 			State:      event.ShippingState,
 			Country:    event.ShippingCountry,
 			PostalCode: event.ShippingPostalCode,
+			Latitude:   event.ShippingLat,
+			Longitude:  event.ShippingLng,
 			TimesUsed:  1,
 			LastUsedAt: event.OrderedAt,
 		}

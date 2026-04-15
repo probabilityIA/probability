@@ -124,25 +124,25 @@ const step1Schema = z.object({
 
 // Step 3: Detailed Contact Info Schema
 const step3Schema = z.object({
-    originCompany: z.string().min(2).max(28),
-    originFirstName: z.string().min(2).max(14),
-    originLastName: z.string().min(2).max(14),
-    originEmail: z.string().email().min(8).max(60),
-    originPhone: z.string().length(10),
-    originSuburb: z.string().min(2).max(30),
-    originCrossStreet: z.string().min(2).max(35),
-    originReference: z.string().min(2).max(25),
-    destCompany: z.string().min(2).max(28).optional(),
-    destFirstName: z.string().min(2).max(14),
-    destLastName: z.string().min(2).max(14),
-    destEmail: z.string().email().min(8).max(60),
-    destPhone: z.string().length(10),
-    destSuburb: z.string().min(2).max(30).optional(),
-    destCrossStreet: z.string().min(2).max(35),
-    destReference: z.string().min(2).max(25).optional(),
+    originCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
+    originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    originLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    originEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
+    originPhone: z.string().length(10, "Debe tener 10 digitos"),
+    originSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres"),
+    originCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
+    originReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres"),
+    destCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres").optional(),
+    destFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    destLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    destEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
+    destPhone: z.string().length(10, "Debe tener 10 digitos"),
+    destSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres").optional(),
+    destCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
+    destReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres").optional(),
     requestPickup: z.boolean(),
-    myShipmentReference: z.string().min(2).max(28),
-    external_order_id: z.string().min(1).max(28).optional(),
+    myShipmentReference: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
+    external_order_id: z.string().min(1, "Requerido").max(28, "Max 28 caracteres").optional(),
 });
 
 type Step1Values = z.infer<typeof step1Schema>;
@@ -1273,175 +1273,70 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {/* Step 3: Details */}
                     {currentStep === 3 && (
                         <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
-                            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-0 bg-gray-50 dark:bg-gray-700 overflow-y-auto flex-1">
-                                <div className="grid grid-cols-2 gap-1 p-1">
-                                    {/* Origin Details - Columna 1 */}
-                                    <div>
-                                        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Dirección - Remitente</h3>
-                                        <div className="grid grid-cols-3 gap-1">
-                                            <Input
-                                                compact
-                                                label="Calle *"
-                                                {...step3Form.register("originCrossStreet")}
-                                                error={step3Form.formState.errors.originCrossStreet?.message}
-                                                placeholder="calle 75 sur n 42-97"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Edificio/Interior/Apto *"
-                                                {...step3Form.register("originReference")}
-                                                error={step3Form.formState.errors.originReference?.message}
-                                                placeholder="apt 801"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Barrio *"
-                                                {...step3Form.register("originSuburb")}
-                                                error={step3Form.formState.errors.originSuburb?.message}
-                                                placeholder="sector Aves María"
-                                            />
+                            <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                    <div className="border border-purple-200 dark:border-purple-700 rounded-xl bg-purple-50/40 dark:bg-purple-900/10 p-4">
+                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-purple-200/60 dark:border-purple-700/40">
+                                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600 dark:text-purple-400"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            </div>
+                                            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-400">Remitente (Origen)</h3>
                                         </div>
 
-                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
-                                        <Input
-                                            compact
-                                            label="Empresa"
-                                            {...step3Form.register("originCompany")}
-                                            error={step3Form.formState.errors.originCompany?.message}
-                                            placeholder="ProbabilityIA"
-                                        />
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            <Input compact label="Calle *" {...step3Form.register("originCrossStreet")} error={step3Form.formState.errors.originCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
+                                            <Input compact label="Edificio/Apto *" {...step3Form.register("originReference")} error={step3Form.formState.errors.originReference?.message} placeholder="apt 801" />
+                                            <Input compact label="Barrio *" {...step3Form.register("originSuburb")} error={step3Form.formState.errors.originSuburb?.message} placeholder="sector Aves Maria" />
+                                        </div>
 
-                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
-                                        <div className="grid grid-cols-2 gap-1">
-                                            <Input
-                                                compact
-                                                label="Nombre *"
-                                                {...step3Form.register("originFirstName")}
-                                                error={step3Form.formState.errors.originFirstName?.message}
-                                                placeholder="Luisa"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Apellido *"
-                                                {...step3Form.register("originLastName")}
-                                                error={step3Form.formState.errors.originLastName?.message}
-                                                placeholder="Muñoz"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Teléfono *"
-                                                {...step3Form.register("originPhone")}
-                                                error={step3Form.formState.errors.originPhone?.message}
-                                                placeholder="3224098631"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Correo *"
-                                                type="email"
-                                                {...step3Form.register("originEmail")}
-                                                error={step3Form.formState.errors.originEmail?.message}
-                                                placeholder="probabilitysa@gmail.com"
-                                            />
+                                        <Input compact label="Empresa" {...step3Form.register("originCompany")} error={step3Form.formState.errors.originCompany?.message} placeholder="ProbabilityIA" className="mt-1.5" />
+
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mt-2 mb-1">Contacto</p>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            <Input compact label="Nombre *" {...step3Form.register("originFirstName")} error={step3Form.formState.errors.originFirstName?.message} placeholder="Luisa" />
+                                            <Input compact label="Apellido *" {...step3Form.register("originLastName")} error={step3Form.formState.errors.originLastName?.message} placeholder="Munoz" />
+                                            <Input compact label="Telefono *" {...step3Form.register("originPhone")} error={step3Form.formState.errors.originPhone?.message} placeholder="3224098631" />
+                                            <Input compact label="Correo *" type="email" {...step3Form.register("originEmail")} error={step3Form.formState.errors.originEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
 
-                                    {/* Destination Details - Columna 2 */}
-                                    <div>
-                                        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Destinatario</h3>
-                                        <div className="grid grid-cols-3 gap-1">
-                                            <Input
-                                                compact
-                                                label="Calle *"
-                                                {...step3Form.register("destCrossStreet")}
-                                                error={step3Form.formState.errors.destCrossStreet?.message}
-                                                placeholder="calle 75 sur n 42-97"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Edificio/Interior/Apto"
-                                                {...step3Form.register("destReference")}
-                                                error={step3Form.formState.errors.destReference?.message}
-                                                placeholder="Edificio = casa #"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Barrio"
-                                                {...step3Form.register("destSuburb")}
-                                                error={step3Form.formState.errors.destSuburb?.message}
-                                                placeholder="Barrio = Nombre barrio"
-                                            />
+                                    <div className="border border-blue-200 dark:border-blue-700 rounded-xl bg-blue-50/40 dark:bg-blue-900/10 p-4">
+                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-blue-200/60 dark:border-blue-700/40">
+                                            <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                            </div>
+                                            <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400">Destinatario (Destino)</h3>
                                         </div>
 
-                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
-                                        <Input
-                                            compact
-                                            label="Empresa"
-                                            {...step3Form.register("destCompany")}
-                                            error={step3Form.formState.errors.destCompany?.message}
-                                            placeholder="Empresa = nombre (opcional)"
-                                        />
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
+                                        <div className="grid grid-cols-3 gap-1.5">
+                                            <Input compact label="Calle *" {...step3Form.register("destCrossStreet")} error={step3Form.formState.errors.destCrossStreet?.message} placeholder="calle 75 sur n 42-97" />
+                                            <Input compact label="Edificio/Apto" {...step3Form.register("destReference")} error={step3Form.formState.errors.destReference?.message} placeholder="casa #" />
+                                            <Input compact label="Barrio" {...step3Form.register("destSuburb")} error={step3Form.formState.errors.destSuburb?.message} placeholder="Nombre barrio" />
+                                        </div>
 
-                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <Input
-                                                compact
-                                                label="Nombre *"
-                                                {...step3Form.register("destFirstName")}
-                                                error={step3Form.formState.errors.destFirstName?.message}
-                                                placeholder="Luisa"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Apellido *"
-                                                {...step3Form.register("destLastName")}
-                                                error={step3Form.formState.errors.destLastName?.message}
-                                                placeholder="Muñoz"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Teléfono *"
-                                                {...step3Form.register("destPhone")}
-                                                error={step3Form.formState.errors.destPhone?.message}
-                                                placeholder="3224098631"
-                                            />
-                                            <Input
-                                                compact
-                                                label="Correo *"
-                                                type="email"
-                                                {...step3Form.register("destEmail")}
-                                                error={step3Form.formState.errors.destEmail?.message}
-                                                placeholder="probabilitysa@gmail.com"
-                                            />
+                                        <Input compact label="Empresa" {...step3Form.register("destCompany")} error={step3Form.formState.errors.destCompany?.message} placeholder="Empresa (opcional)" className="mt-1.5" />
+
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mt-2 mb-1">Contacto</p>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            <Input compact label="Nombre *" {...step3Form.register("destFirstName")} error={step3Form.formState.errors.destFirstName?.message} placeholder="Luisa" />
+                                            <Input compact label="Apellido *" {...step3Form.register("destLastName")} error={step3Form.formState.errors.destLastName?.message} placeholder="Munoz" />
+                                            <Input compact label="Telefono *" {...step3Form.register("destPhone")} error={step3Form.formState.errors.destPhone?.message} placeholder="3224098631" />
+                                            <Input compact label="Correo *" type="email" {...step3Form.register("destEmail")} error={step3Form.formState.errors.destEmail?.message} placeholder="correo@ejemplo.com" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Additional Options - Ocupa 2 columnas */}
-                                <div className="grid grid-cols-2 gap-1 mt-0.5 pt-1 px-1 border-t">
-                                    <Input
-                                        compact
-                                        label="Mi referencia de envío"
-                                        {...step3Form.register("myShipmentReference")}
-                                        error={step3Form.formState.errors.myShipmentReference?.message}
-                                        placeholder="Orden 5649"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Número de orden externo"
-                                        {...step3Form.register("external_order_id")}
-                                        error={step3Form.formState.errors.external_order_id?.message}
-                                        placeholder="ORD345678"
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-1 mt-0.5 px-1">
-                                    <label className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            {...step3Form.register("requestPickup")}
-                                            className="rounded w-5 h-5"
-                                        />
-                                        <span className="text-sm font-medium">Solicitar recolección</span>
+                                <div className="border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50/60 dark:bg-gray-700/30 p-4">
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-2">Opciones adicionales</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input compact label="Mi referencia de envio" {...step3Form.register("myShipmentReference")} error={step3Form.formState.errors.myShipmentReference?.message} placeholder="Orden 5649" />
+                                        <Input compact label="Numero de orden externo" {...step3Form.register("external_order_id")} error={step3Form.formState.errors.external_order_id?.message} placeholder="ORD345678" />
+                                    </div>
+                                    <label className="flex items-center space-x-2 mt-2">
+                                        <input type="checkbox" {...step3Form.register("requestPickup")} className="rounded w-5 h-5" />
+                                        <span className="text-sm font-medium">Solicitar recoleccion</span>
                                     </label>
                                 </div>
                             </div>

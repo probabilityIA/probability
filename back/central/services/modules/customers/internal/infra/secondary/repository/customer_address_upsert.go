@@ -23,8 +23,15 @@ func (r *Repository) UpsertCustomerAddress(ctx context.Context, address *entitie
 		return err
 	}
 
-	return r.db.Conn(ctx).Model(&existing).Updates(map[string]any{
-		"times_used":  existing.TimesUsed + 1,
+	updates := map[string]any{
+		"times_used":   existing.TimesUsed + 1,
 		"last_used_at": address.LastUsedAt,
-	}).Error
+	}
+	if address.Latitude != nil {
+		updates["latitude"] = address.Latitude
+	}
+	if address.Longitude != nil {
+		updates["longitude"] = address.Longitude
+	}
+	return r.db.Conn(ctx).Model(&existing).Updates(updates).Error
 }

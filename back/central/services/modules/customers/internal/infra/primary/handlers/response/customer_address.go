@@ -15,6 +15,8 @@ type CustomerAddressResponse struct {
 	State      string    `json:"state"`
 	Country    string    `json:"country"`
 	PostalCode string    `json:"postal_code"`
+	Latitude   *float64  `json:"latitude,omitempty"`
+	Longitude  *float64  `json:"longitude,omitempty"`
 	TimesUsed  int       `json:"times_used"`
 	LastUsedAt time.Time `json:"last_used_at"`
 }
@@ -29,6 +31,8 @@ func AddressFromEntity(a *entities.CustomerAddress) CustomerAddressResponse {
 		State:      a.State,
 		Country:    a.Country,
 		PostalCode: a.PostalCode,
+		Latitude:   a.Latitude,
+		Longitude:  a.Longitude,
 		TimesUsed:  a.TimesUsed,
 		LastUsedAt: a.LastUsedAt,
 	}

@@ -27,4 +27,7 @@ type IRepository interface {
 	UpsertCustomerOrderItem(ctx context.Context, item *entities.CustomerOrderItem) error
 	UpdateOrderItemsStatus(ctx context.Context, orderID string, status string) error
 	FindClientByPhone(ctx context.Context, businessID uint, phone string) (*entities.Client, error)
+	FindClientByDNI(ctx context.Context, businessID uint, dni string) (*entities.Client, error)
+	FindClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error)
+	UpdateClientFields(ctx context.Context, clientID uint, updates map[string]any) error
 }

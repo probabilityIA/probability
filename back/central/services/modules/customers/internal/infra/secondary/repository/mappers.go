@@ -59,6 +59,8 @@ func mapCustomerAddressToEntity(m *models.CustomerAddress) entities.CustomerAddr
 		State:      m.State,
 		Country:    m.Country,
 		PostalCode: m.PostalCode,
+		Latitude:   m.Latitude,
+		Longitude:  m.Longitude,
 		TimesUsed:  m.TimesUsed,
 		LastUsedAt: m.LastUsedAt,
 	}
@@ -73,6 +75,8 @@ func mapCustomerAddressFromEntity(e *entities.CustomerAddress) *models.CustomerA
 		State:      e.State,
 		Country:    e.Country,
 		PostalCode: e.PostalCode,
+		Latitude:   e.Latitude,
+		Longitude:  e.Longitude,
 		TimesUsed:  e.TimesUsed,
 		LastUsedAt: e.LastUsedAt,
 	}

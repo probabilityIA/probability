@@ -43,6 +43,8 @@ export interface CustomerAddress {
     state: string;
     country: string;
     postal_code: string;
+    latitude?: number;
+    longitude?: number;
     times_used: number;
     last_used_at: string;
 }

@@ -41,6 +41,8 @@ type orderSnapshot struct {
 	ShippingState       string              `json:"shipping_state,omitempty"`
 	ShippingCountry     string              `json:"shipping_country,omitempty"`
 	ShippingPostalCode  string              `json:"shipping_postal_code,omitempty"`
+	ShippingLat         *float64            `json:"shipping_lat,omitempty"`
+	ShippingLng         *float64            `json:"shipping_lng,omitempty"`
 	IsPaid              bool                `json:"is_paid"`
 	DeliveryProbability float64             `json:"delivery_probability,omitempty"`
 	Status              string              `json:"status,omitempty"`
@@ -153,6 +155,8 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 		ShippingState:       msg.Order.ShippingState,
 		ShippingCountry:     msg.Order.ShippingCountry,
 		ShippingPostalCode:  msg.Order.ShippingPostalCode,
+		ShippingLat:         msg.Order.ShippingLat,
+		ShippingLng:         msg.Order.ShippingLng,
 		OrderNumber:         msg.Order.OrderNumber,
 		OrderedAt:           msg.Order.CreatedAt,
 		Items:               items,

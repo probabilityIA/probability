@@ -25,5 +25,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate announcements: %w", err)
 	}
 
+	if err := r.migrateCustomerAddressCoords(ctx); err != nil {
+		return fmt.Errorf("failed to migrate customer address coords: %w", err)
+	}
+
 	return nil
 }

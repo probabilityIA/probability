@@ -48,6 +48,8 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		ShippingState:       order.ShippingState,
 		ShippingCountry:     order.ShippingCountry,
 		ShippingPostalCode:  order.ShippingPostalCode,
+		ShippingLat:         order.ShippingLat,
+		ShippingLng:         order.ShippingLng,
 		ItemsSummary:        BuildItemsSummary(order.OrderItems),
 		ShippingAddress:     BuildShippingAddress(order),
 		IsPaid:              order.IsPaid,

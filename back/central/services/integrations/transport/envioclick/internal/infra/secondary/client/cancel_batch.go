@@ -29,7 +29,7 @@ func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchReque
 		SetBody(req).
 		SetResult(&apiResp).
 		SetDebug(true).
-		Post(strings.TrimRight(baseURL, "/") + "/v2cancellation/batch/order")
+		Post(strings.TrimRight(baseURL, "/") + "/cancellation/batch/order")
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel batch request failed")

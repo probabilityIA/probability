@@ -37,8 +37,8 @@ type IRepository interface {
 	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
 	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
 
-	// UpdateOrderStatusByOrderID updates the status of an order on the orders table.
 	UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error
+	ClearOrderGuideData(ctx context.Context, orderID string) error
 
 	// EnsureAllBusinessesActive sets all existing businesses to 'paid' status as a one-time migration
 	EnsureAllBusinessesActive(ctx context.Context) error

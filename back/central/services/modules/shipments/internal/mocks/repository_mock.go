@@ -138,6 +138,10 @@ func (m *RepositoryMock) UpdateOrderStatusByOrderID(ctx context.Context, orderID
 	return nil
 }
 
+func (m *RepositoryMock) ClearOrderGuideData(_ context.Context, _ string) error {
+	return nil
+}
+
 func (m *RepositoryMock) EnsureAllBusinessesActive(ctx context.Context) error {
 	if m.EnsureAllBusinessesActiveFn != nil {
 		return m.EnsureAllBusinessesActiveFn(ctx)

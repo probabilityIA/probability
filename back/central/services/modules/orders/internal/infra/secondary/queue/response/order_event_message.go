@@ -47,11 +47,13 @@ type OrderSnapshot struct {
 
 	Items []OrderItemSnapshot `json:"items,omitempty"`
 
-	ShippingStreet      string  `json:"shipping_street,omitempty"`
-	ShippingCity        string  `json:"shipping_city,omitempty"`
-	ShippingState       string  `json:"shipping_state,omitempty"`
-	ShippingCountry     string  `json:"shipping_country,omitempty"`
-	ShippingPostalCode  string  `json:"shipping_postal_code,omitempty"`
+	ShippingStreet      string   `json:"shipping_street,omitempty"`
+	ShippingCity        string   `json:"shipping_city,omitempty"`
+	ShippingState       string   `json:"shipping_state,omitempty"`
+	ShippingCountry     string   `json:"shipping_country,omitempty"`
+	ShippingPostalCode  string   `json:"shipping_postal_code,omitempty"`
+	ShippingLat         *float64 `json:"shipping_lat,omitempty"`
+	ShippingLng         *float64 `json:"shipping_lng,omitempty"`
 	ItemsSummary        string  `json:"items_summary,omitempty"`
 	ShippingAddress     string  `json:"shipping_address,omitempty"`
 	IsPaid              bool    `json:"is_paid"`

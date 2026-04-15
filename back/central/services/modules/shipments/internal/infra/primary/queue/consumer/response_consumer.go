@@ -405,10 +405,10 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 			}
 
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
-				if err := c.repo.UpdateOrderStatusByOrderID(ctx, *shipment.OrderID, "cancelled"); err != nil {
+				if err := c.repo.ClearOrderGuideData(ctx, *shipment.OrderID); err != nil {
 					c.log.Error(ctx).Err(err).
 						Str("order_id", *shipment.OrderID).
-						Msg("Failed to sync cancelled status to order")
+						Msg("Failed to clear guide data from order")
 				}
 			}
 		}

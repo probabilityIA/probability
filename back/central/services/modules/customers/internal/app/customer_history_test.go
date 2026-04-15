@@ -115,6 +115,18 @@ func (m *mockRepo) FindClientByPhone(ctx context.Context, bID uint, phone string
 	return nil, nil
 }
 
+func (m *mockRepo) FindClientByDNI(_ context.Context, _ uint, _ string) (*entities.Client, error) {
+	return nil, nil
+}
+
+func (m *mockRepo) FindClientByEmail(_ context.Context, _ uint, _ string) (*entities.Client, error) {
+	return nil, nil
+}
+
+func (m *mockRepo) UpdateClientFields(_ context.Context, _ uint, _ map[string]any) error {
+	return nil
+}
+
 func testLogger() log.ILogger {
 	nop := zerolog.Nop()
 	return log.NewFromZerolog(nop)

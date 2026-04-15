@@ -18,6 +18,7 @@ import dynamic from 'next/dynamic';
 
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
 import { CustomerInfo } from '../../../customers/domain/types';
+import { getCustomerAddressesAction } from '../../../customers/infra/actions';
 import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderFormProps {
@@ -162,8 +163,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return parts.length >= 3 ? parts[2] : '';
     });
 
-    // Address map coordinates (set when user selects a suggestion)
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
+    const [addressAutofilled, setAddressAutofilled] = useState(false);
 
 
     // Client autocomplete (triggered from DNI, name, or email fields)
@@ -197,12 +198,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         }
     }, [searchClients, clearClients]);
 
-    const handleClientSelect = useCallback((client: CustomerInfo) => {
+    const handleClientSelect = useCallback(async (client: CustomerInfo) => {
         const nameParts = client.name.split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
 
-        // Strip +57 prefix from phone since the form already shows it
         let phone = client.phone || '';
         if (phone.startsWith('+57')) phone = phone.slice(3);
         if (phone.startsWith('57') && phone.length > 10) phone = phone.slice(2);
@@ -219,7 +219,45 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         setShowClientDropdown(false);
         setActiveSearchField(null);
         clearClients();
-    }, [clearClients]);
+
+        try {
+            const addressRes = await getCustomerAddressesAction(client.id, {
+                page: 1,
+                page_size: 1,
+                business_id: formData.business_id,
+            });
+            if (addressRes.data && addressRes.data.length > 0) {
+                const addr = addressRes.data[0];
+                const streetParts = addr.street ? addr.street.split(' | ') : [''];
+                const mainStreet = streetParts[0] || '';
+                const addrHouse = streetParts.length >= 2 ? streetParts[1] : '';
+                const addrBarrio = streetParts.length >= 3 ? streetParts[2] : '';
+
+                setFormData(prev => ({
+                    ...prev,
+                    shipping_street: mainStreet,
+                    shipping_city: addr.city || '',
+                    shipping_state: addr.state || '',
+                    shipping_country: addr.country || 'Colombia',
+                    shipping_postal_code: addr.postal_code || '',
+                }));
+                setHouse(addrHouse);
+                setBarrio(addrBarrio);
+
+                if (addr.city && addr.state) {
+                    setCitySearch(`${addr.city} (${addr.state})`);
+                }
+
+                if (addr.latitude && addr.longitude) {
+                    setAddressCoords({ lat: addr.latitude, lon: addr.longitude });
+                }
+
+                setAddressAutofilled(true);
+            }
+        } catch {
+            // silently ignore - address autocomplete is best-effort
+        }
+    }, [clearClients, formData.business_id]);
 
     // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
@@ -290,6 +328,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             const baseData = {
                 ...formData,
                 shipping_street: fullShippingStreet,
+                shipping_lat: addressCoords?.lat,
+                shipping_lng: addressCoords?.lon,
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
@@ -567,6 +607,22 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Direccion de Envio</h3>
                         </div>
+
+                        {addressAutofilled && (
+                            <div className="mb-4 px-3 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+                                <p className="text-xs text-green-700">
+                                    Direccion autocompletada a partir del historial del cliente.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setAddressAutofilled(false)}
+                                    className="text-green-500 hover:text-green-700 ml-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
@@ -577,6 +633,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     onChange={(val) => setFormData({ ...formData, shipping_street: val })}
                                     city={formData.shipping_city}
                                     onSelect={(s: AddressSuggestion) => {
+                                        setAddressAutofilled(false);
                                         if (s.lat && s.lon) setAddressCoords({ lat: s.lat, lon: s.lon });
                                         if (s.neighbourhood) setBarrio(s.neighbourhood);
                                         if (s.postcode) setFormData(prev => ({ ...prev, shipping_postal_code: s.postcode }));
