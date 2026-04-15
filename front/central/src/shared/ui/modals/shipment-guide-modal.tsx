@@ -815,7 +815,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', height: '85vh' }}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
                 <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">Generar Guía de Envío</h2>
