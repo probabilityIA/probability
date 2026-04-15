@@ -1087,7 +1087,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         />
                                         <Input
                                             compact
-                                            label="Valor contra entrega (COD)"
+                                            label="Valor contra entrega"
                                             type="number"
                                             {...step1Form.register("codValue", { valueAsNumber: true })}
                                             error={step1Form.formState.errors.codValue?.message}
@@ -1100,39 +1100,38 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <label className="flex items-center space-x-2">
                                                 <input
                                                     type="checkbox"
-                                                    {...step1Form.register("includeGuideCost")}
-                                                    className="rounded"
-                                                />
-                                                <span className="text-sm">Incluir costo en COD</span>
-                                            </label>
-                                        </div>
-                                        <div>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
                                                     {...step1Form.register("insurance")}
                                                     className="rounded"
                                                 />
                                                 <span className="text-sm">Asegurar envio</span>
                                             </label>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                                                Metodo de pago COD
-                                            </label>
-                                            <select
-                                                {...step1Form.register("codPaymentMethod")}
-                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                            >
-                                                <option value="cash">Efectivo</option>
-                                                <option value="data_phone">Datafono</option>
-                                            </select>
-                                            {step1Form.formState.errors.codPaymentMethod?.message && (
-                                                <p className="text-sm text-red-500 mt-1">
-                                                    {step1Form.formState.errors.codPaymentMethod.message}
-                                                </p>
-                                            )}
-                                        </div>
+                                        {(step1Form.watch("codValue") ?? 0) > 0 && (
+                                            <>
+                                                <div>
+                                                    <label className="flex items-center space-x-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            {...step1Form.register("includeGuideCost")}
+                                                            className="rounded"
+                                                        />
+                                                        <span className="text-sm">Incluir costo guia en contra entrega</span>
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                                        Metodo de pago contra entrega
+                                                    </label>
+                                                    <select
+                                                        {...step1Form.register("codPaymentMethod")}
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                    >
+                                                        <option value="cash">Efectivo</option>
+                                                        <option value="data_phone">Datafono</option>
+                                                    </select>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -1150,7 +1149,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
                                     {(step1Data?.codValue ?? 0) > 0 && (
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600">
-                                            Contra Entrega - Solo opciones COD
+                                            Contra Entrega - Solo opciones contra entrega
                                         </span>
                                     )}
                                     {officeCarrier && (
@@ -1252,7 +1251,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             {isCOD && (
                                                                 <div className="mt-1 text-center">
                                                                     <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                                                        COD
+                                                                        Contra Entrega
                                                                     </span>
                                                                 </div>
                                                             )}

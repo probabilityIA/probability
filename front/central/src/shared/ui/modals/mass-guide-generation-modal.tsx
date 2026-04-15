@@ -414,7 +414,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                 <span className="font-semibold">{order.order_number}</span>
                                                 {order.cod_total && order.cod_total > 0 && (
                                                     <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                                        COD ${order.cod_total.toLocaleString()}
+                                                        Contra Entrega ${order.cod_total.toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>
@@ -514,7 +514,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="font-medium">{order.order_number}</span>
                                                     {order.cod_total && order.cod_total > 0 && (
-                                                        <span className="inline-block px-1 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300">COD</span>
+                                                        <span className="inline-block px-1 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300">Contra Entrega</span>
                                                     )}
                                                 </div>
                                             </td>

@@ -60,6 +60,7 @@ type Rate struct {
 	ExtraInsurance   float64 `json:"extraInsurance"`
 	DeliveryDays     int     `json:"deliveryDays"`
 	QuotationType    string  `json:"quotationType"`
+	COD              bool    `json:"cod"`
 }
 
 type GenerateResponse struct {
