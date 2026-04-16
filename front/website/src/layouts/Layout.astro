@@ -1,0 +1,39 @@
+---
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', description = 'Reduce devoluciones, aumenta ganancias. Crece con inteligencia artificial.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<base href="/website/" />
+		<meta charset="UTF-8" />
+		<meta name="description" content={description} />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="keywords" content="IA, devoluciones, ecommerce, predicción, logística" />
+		<meta name="robots" content="index, follow" />
+		<link rel="icon" type="image/png" href="/website/logo-icon.png" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+
+		<!-- Open Graph Tags -->
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content="/website/logo-icon.png" />
+		<meta property="og:type" content="website" />
+
+		<!-- Twitter Cards -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+	</head>
+	<body class="bg-white text-gray-900 antialiased">
+		<slot />
+	</body>
+</html>

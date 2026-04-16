@@ -1,0 +1,27 @@
+---
+import Calculator from './ROICalculator.tsx';
+---
+
+<Calculator client:load />
+
+<style>
+	.slider::-webkit-slider-thumb {
+		appearance: none;
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background: #facc15;
+		cursor: pointer;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+
+	.slider::-moz-range-thumb {
+		width: 24px;
+		height: 24px;
+		border-radius: 50%;
+		background: #facc15;
+		cursor: pointer;
+		border: none;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	}
+</style>

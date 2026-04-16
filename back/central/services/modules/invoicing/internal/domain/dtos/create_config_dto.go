@@ -1,0 +1,35 @@
+package dtos
+
+// CreateConfigDTO contiene los datos para crear una configuración de facturación
+type CreateConfigDTO struct {
+	// ID del negocio
+	BusinessID uint
+
+	// IDs de las integraciones de e-commerce (fuentes de órdenes)
+	// Ejemplo: [shopify_integration_id, platform_integration_id]
+	IntegrationIDs []uint
+
+	// ID de la integración de facturación (nuevo campo - FK a integrations)
+	InvoicingIntegrationID uint
+
+	// ID del proveedor de facturación (deprecado - usar InvoicingIntegrationID)
+	InvoicingProviderID uint
+
+	// Si la configuración está habilitada
+	Enabled bool
+
+	// Si debe facturar automáticamente
+	AutoInvoice bool
+
+	// Filtros (ej: monto mínimo, métodos de pago permitidos)
+	Filters map[string]interface{}
+
+	// Configuración adicional de facturación
+	InvoiceConfig map[string]interface{}
+
+	// Descripción (opcional)
+	Description *string
+
+	// ID del usuario que crea la configuración
+	CreatedByUserID uint
+}

@@ -1,0 +1,226 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
+
+import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
+import { Order } from '@/services/modules/orders/domain/types';
+import { Modal } from '@/shared/ui';
+import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
+import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
+import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
+
+
+export default function OrdersPage() {
+    const { setActionButtons } = useNavbarActions();
+    const { selectedBusinessId } = useOrdersBusiness();
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [viewMode, setViewMode] = useState<'details' | 'recommendation'>('details');
+    const [showTestGuideModal, setShowTestGuideModal] = useState(false);
+    const [showGuideModal, setShowGuideModal] = useState(false);
+    const [showMassUploadModal, setShowMassUploadModal] = useState(false);
+    const [showMassGuideModal, setShowMassGuideModal] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+    // Set action buttons in navbar
+    useEffect(() => {
+        const actionButtons = (
+            <>
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    + Nueva Orden
+                </button>
+                <button
+                    onClick={() => setShowMassUploadModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    Carga Masiva
+                </button>
+                <button
+                    onClick={() => setShowMassGuideModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    Guías Masivas
+                </button>
+            </>
+        );
+        setActionButtons(actionButtons);
+
+        return () => setActionButtons(null);
+    }, [setActionButtons]);
+
+    const handleView = (order: Order) => {
+        setSelectedOrder(order);
+        setViewMode('details'); // Set mode to details
+        setShowViewModal(true);
+    };
+
+    const handleViewRecommendation = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+                setShowGuideModal(true);
+            } else {
+                alert('No se pudieron cargar los detalles de la orden');
+            }
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            alert('Error al cargar la orden completa');
+        }
+    };
+
+    const handleEdit = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+            } else {
+                setSelectedOrder(order);
+            }
+        } catch {
+            setSelectedOrder(order);
+        }
+        setShowEditModal(true);
+    };
+
+    const handleSuccess = () => {
+        setShowCreateModal(false);
+        setShowEditModal(false);
+        setShowViewModal(false);
+        setSelectedOrder(null);
+        setRefreshKey(prev => prev + 1);
+    };
+
+    const handleCancel = () => {
+        setShowCreateModal(false);
+        setShowEditModal(false);
+        setShowViewModal(false);
+        setSelectedOrder(null);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+
+            <OrderList
+                refreshKey={refreshKey}
+                onView={handleView}
+                onViewRecommendation={handleViewRecommendation}
+                onEdit={handleEdit}
+                onCreate={() => setShowCreateModal(true)}
+                onTestGuide={() => setShowTestGuideModal(true)}
+                selectedBusinessId={selectedBusinessId}
+            />
+
+            {/* Test Guide Modal */}
+            {/* Test Guide Modal (No specific order) */}
+            <ShipmentGuideModal
+                isOpen={showTestGuideModal}
+                onClose={() => setShowTestGuideModal(false)}
+            />
+
+            {/* Guide Modal (Selected order) */}
+            <ShipmentGuideModal
+                isOpen={showGuideModal}
+                onClose={() => {
+                    setShowGuideModal(false);
+                    setSelectedOrder(null);
+                }}
+                order={selectedOrder || undefined}
+                onGuideGenerated={(guideData) => {
+                    // Cache guide data in sessionStorage so OrderForm can use it
+                    console.log('🎯 onGuideGenerated callback received:', guideData);
+                    if (selectedOrder?.order_number && guideData?.tracking_number) {
+                        const key = `guide_${selectedOrder.order_number}`;
+                        sessionStorage.setItem(key, JSON.stringify(guideData));
+                        console.log('💾 Saved to sessionStorage:', key, guideData);
+                    } else {
+                        console.warn('⚠️ Missing order_number or tracking_number:', { selectedOrder: selectedOrder?.order_number, guideData });
+                    }
+                    // Reload orders list after guide generation to refresh shipment data
+                    // Modal stays open - user can close it manually when ready
+                    handleSuccess();
+                }}
+            />
+
+            {/* Create Modal */}
+            <Modal
+                isOpen={showCreateModal}
+                onClose={handleCancel}
+                title="Nueva Orden"
+                size="full"
+            >
+                <OrderForm
+                    onSuccess={handleSuccess}
+                    onCancel={handleCancel}
+                    selectedBusinessId={selectedBusinessId}
+                />
+            </Modal>
+
+            {/* View Modal - Dynamic Title based on mode */}
+            <Modal
+                isOpen={showViewModal}
+                onClose={handleCancel}
+                title={viewMode === 'recommendation' ? undefined : 'Detalles de la Orden'} // Remove title for recommendation
+                transparent={viewMode === 'recommendation'} // Enable transparent mode
+                size="full"
+            >
+                {selectedOrder && (
+                    <OrderDetails
+                        initialOrder={selectedOrder}
+                        onClose={handleCancel}
+                        mode={viewMode} // Pass mode prop
+                    />
+                )}
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={handleCancel}
+                title="Editar Orden"
+                size="full"
+            >
+                {selectedOrder && (
+                    <OrderForm
+                        order={selectedOrder}
+                        onSuccess={handleSuccess}
+                        onCancel={handleCancel}
+                        selectedBusinessId={selectedBusinessId}
+                    />
+                )}
+            </Modal>
+
+            {/* Mass Upload Modal */}
+            <MassOrderUploadModal
+                isOpen={showMassUploadModal}
+                onClose={() => setShowMassUploadModal(false)}
+                onUploadComplete={(count) => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowMassUploadModal(false);
+                }}
+                selectedBusinessId={selectedBusinessId}
+            />
+
+            {/* Mass Guide Generation Modal */}
+            <MassGuideGenerationModal
+                isOpen={showMassGuideModal}
+                onClose={() => setShowMassGuideModal(false)}
+                onComplete={(count) => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowMassGuideModal(false);
+                }}
+            />
+
+        </div>
+    );
+}

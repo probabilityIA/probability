@@ -1,0 +1,734 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Input, Button } from "@/shared/ui";
+import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
+import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
+import { OrderApiRepository } from "@/services/modules/orders/infra/repository/api-repository";
+import { Order } from "@/services/modules/orders/domain/types";
+import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
+import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
+import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
+import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
+import daneCodes from "../resources/municipios_dane_extendido.json";
+
+// Zod Schema
+const addressSchema = z.object({
+    company: z.string().optional(), // Made optional as per some flows, but validation might be needed on backend
+    firstName: z.string().min(1, "Nombre es requerido"),
+    lastName: z.string().min(1, "Apellido es requerido"),
+    email: z.string().email("Email inválido"),
+    phone: z.string().min(1, "Teléfono es requerido"),
+    address: z.string().min(1, "Dirección es requerida"),
+    suburb: z.string().min(1, "Barrio es requerido"),
+    crossStreet: z.string().optional(),
+    reference: z.string().optional(),
+    daneCode: z.string().min(1, "Código DANE es requerido").refine((val) => val in daneCodes, "El código DANE no es válido o no existe en la base de datos"),
+});
+
+const formSchema = z.object({
+    origin: addressSchema,
+    destination: addressSchema,
+    packageSize: z.enum(["small", "medium", "large", "custom"]),
+    customPackage: z.object({
+        weight: z.number().min(0.1, "El peso debe ser al menos 0.1 kg"),
+        height: z.number().min(1, "La altura debe ser al menos 1 cm"),
+        width: z.number().min(1, "El ancho debe ser al menos 1 cm"),
+        length: z.number().min(1, "El largo debe ser al menos 1 cm"),
+    }).optional(),
+    description: z.string().min(1, "Descripción es requerida"),
+    contentValue: z.number().min(0, "Valor declarado debe ser positivo"),
+    requestPickup: z.boolean(),
+    insurance: z.boolean(),
+    codPaymentMethod: z.string().min(1, "Método de pago requerido").max(10, "Máximo 10 caracteres"),
+    external_order_id: z.string().optional(),
+    myShipmentReference: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const PACKAGE_SIZES = {
+    small: { weight: 1, height: 10, width: 10, length: 10, label: "Pequeño (1kg - 10x10x10)" },
+    medium: { weight: 5, height: 30, width: 30, length: 30, label: "Mediano (5kg - 30x30x30)" },
+    large: { weight: 10, height: 50, width: 50, length: 50, label: "Grande (10kg - 50x50x50)" },
+    custom: { weight: 0, height: 0, width: 0, length: 0, label: "Personalizado" },
+};
+
+const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+const findDaneCode = (city: string, state: string) => {
+    const targetCity = normalizeString(city);
+    const targetState = normalizeString(state);
+
+    const entries = Object.entries(daneCodes);
+
+    // 1. Try exact match with city and state
+    const exactMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity &&
+        normalizeString(data.departamento) === targetState
+    );
+    if (exactMatch) return exactMatch[0];
+
+    // 2. Try match with city only
+    const cityMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity
+    );
+    if (cityMatch) return cityMatch[0];
+
+    return null;
+};
+
+export const ShippingForm = () => {
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [rates, setRates] = useState<EnvioClickRate[]>([]);
+    const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
+    const [hasQuoted, setHasQuoted] = useState(false);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [aiAnalysis, setAiAnalysis] = useState<{ recommended_carrier: string; reasoning: string } | null>(null);
+    const [loadingAI, setLoadingAI] = useState(false);
+    const [showBalanceModal, setShowBalanceModal] = useState(false);
+    const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
+
+    // Filter states
+    const [originSearch, setOriginSearch] = useState("");
+    const [destSearch, setDestSearch] = useState("");
+    const [showOriginResults, setShowOriginResults] = useState(false);
+    const [showDestResults, setShowDestResults] = useState(false);
+    
+    // Carrier Offices states
+    const [showOriginOffices, setShowOriginOffices] = useState(false);
+    const [showDestOffices, setShowDestOffices] = useState(false);
+
+    const originRef = useRef<HTMLDivElement>(null);
+    const destRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (originRef.current && !originRef.current.contains(event.target as Node)) {
+                setShowOriginResults(false);
+            }
+            if (destRef.current && !destRef.current.contains(event.target as Node)) {
+                setShowDestResults(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { errors },
+    } = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            origin: {
+                // Default origin for convenience (as per user example)
+                company: "", firstName: "", lastName: "", email: "", phone: "",
+                address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
+            },
+            destination: {
+                company: "", firstName: "", lastName: "", email: "", phone: "", address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
+            },
+            packageSize: "medium",
+            insurance: false,
+            requestPickup: true,
+            contentValue: 0,
+            codPaymentMethod: "cash",
+            description: "E-commerce Order",
+        },
+    });
+
+    const packageSize = watch("packageSize");
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            const repo = new OrderApiRepository();
+            try {
+                // Fetching first page of orders
+                const res = await repo.getOrders({ page_size: 50 });
+                setOrders(res.data);
+            } catch (e) {
+                console.error("Failed to fetch orders", e);
+            }
+        };
+        fetchOrders();
+
+        getWalletBalanceAction().then(res => {
+            if (res.success && res.data) setWalletBalance(res.data.Balance);
+        });
+    }, []);
+
+    const handleOrderSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const orderId = e.target.value;
+        const order = orders.find(o => o.id === orderId);
+        setSelectedOrder(order || null);
+        if (order) {
+            // Populate destination from order
+            setValue("destination.company", order.customer_name); // Or business name if available
+            setValue("destination.firstName", order.customer_name.split(" ")[0] || "");
+            setValue("destination.lastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
+            setValue("destination.email", order.customer_email);
+            setValue("destination.phone", order.customer_phone);
+            setValue("destination.address", order.shipping_street);
+            setValue("destination.suburb", order.shipping_state || ""); // Mapping state to suburb as fallback, simplistic
+            // Note: EnvioClick requires specific suburb/daneCode often. User might need to edit.
+            setValue("destination.crossStreet", "");
+            setValue("destination.reference", "");
+
+            // Set DANE code and city search label
+            const mappedDane = findDaneCode(order.shipping_city, order.shipping_state);
+            const finalDane = mappedDane || "11001000"; // Fallback to Bogota if not found
+
+            setValue("destination.daneCode", finalDane);
+            const cityData = daneCodes[finalDane as keyof typeof daneCodes];
+            if (cityData) {
+                setDestSearch((cityData as any).ciudad);
+            }
+
+            setValue("contentValue", order.total_amount);
+            setValue("description", "Order " + order.order_number);
+            setValue("external_order_id", order.order_number);
+            setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
+
+            // Try to map dimensions if available
+            if (order.weight && order.weight > 0) {
+                setValue("packageSize", "custom");
+                setValue("customPackage.weight", order.weight);
+                setValue("customPackage.height", order.height || 10);
+                setValue("customPackage.width", order.width || 10);
+                setValue("customPackage.length", order.length || 10);
+            }
+        }
+    };
+
+    const buildPayload = (data: FormValues, idRate: number = 0): EnvioClickQuoteRequest => {
+        const pkg =
+            data.packageSize === "custom" && data.customPackage
+                ? data.customPackage
+                : PACKAGE_SIZES[data.packageSize];
+
+        return {
+            order_uuid: selectedOrder?.id,
+            idRate: idRate,
+            myShipmentReference: data.myShipmentReference || `REF-${Date.now()}`,
+            external_order_id: data.external_order_id || `EXT-${Date.now()}`,
+            requestPickup: data.requestPickup,
+            pickupDate: new Date().toISOString().split("T")[0],
+            insurance: data.insurance,
+            description: data.description,
+            contentValue: Number(data.contentValue),
+            codValue: Number(data.contentValue), // Warning: codValue same as contentValue? inferred logic
+            includeGuideCost: false,
+            codPaymentMethod: data.codPaymentMethod,
+            packages: [
+                {
+                    weight: Number(pkg.weight),
+                    height: Number(pkg.height),
+                    width: Number(pkg.width),
+                    length: Number(pkg.length),
+                },
+            ],
+            origin: {
+                ...data.origin,
+                company: data.origin.company || "",
+                crossStreet: data.origin.crossStreet || "",
+                reference: data.origin.reference || ""
+            },
+            destination: {
+                ...data.destination,
+                company: data.destination.company || "",
+                crossStreet: data.destination.crossStreet || "",
+                reference: data.destination.reference || ""
+            },
+        };
+    };
+
+    const handleQuote = async (data: FormValues) => {
+        setLoading(true);
+        setError(null);
+        setRates([]);
+        setSelectedRate(null);
+        setHasQuoted(false);
+
+        try {
+            const payload = buildPayload(data);
+            const res = await quoteShipmentAction(payload);
+            if (res.success) {
+                // Quote request accepted. Rates will arrive via SSE events
+                // Just provide AI recommendations based on destination
+                const destDane = daneCodes[data.destination.daneCode as keyof typeof daneCodes];
+                if (destDane) {
+                    setLoadingAI(true);
+                    try {
+                        const aiRes = await getAIRecommendationAction((destDane as any).ciudad, (destDane as any).departamento);
+                        if (aiRes) {
+                            setAiAnalysis({
+                                recommended_carrier: aiRes.recommended_carrier,
+                                reasoning: aiRes.reasoning
+                            });
+                        }
+                    } catch (e) {
+                        console.error("AI Error:", e);
+                    } finally {
+                        setLoadingAI(false);
+                    }
+                }
+            } else {
+                setError(res.message || "Error al solicitar cotizaciones.");
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Error consultando cotizaciones";
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGenerate = async (data: FormValues) => {
+        if (selectedRate && walletBalance !== null && walletBalance < selectedRate.flete) {
+            setInsufficientBalanceInfo({ balance: walletBalance, cost: selectedRate.flete });
+            setShowBalanceModal(true);
+            return;
+        }
+
+        if (!selectedRate) {
+            setError("Debes seleccionar una cotización");
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const payload = buildPayload(data, selectedRate.idRate);
+            const res = await generateGuideAction(payload);
+            if (res.success && res.data?.data) {
+                setSuccess(`Guía generada exitosamente! Tracking: ${res.data.data.tracker}`);
+            } else {
+                setError(res.message || "Error generando guía");
+            }
+            // Reset logic if needed
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Error generando guía";
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Prepare city options derived from the JSON import
+    const cityOptions = Object.entries(daneCodes).map(([code, data]) => ({
+        code,
+        label: `${(data as any).ciudad} (${(data as any).departamento})`,
+        name: (data as any).ciudad
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
+    const filteredOriginCities = originSearch.length >= 3
+        ? cityOptions.filter(city => city.label.toLowerCase().includes(originSearch.toLowerCase())).slice(0, 10)
+        : [];
+
+    const filteredDestCities = destSearch.length >= 3
+        ? cityOptions.filter(city => city.label.toLowerCase().includes(destSearch.toLowerCase())).slice(0, 10)
+        : [];
+
+    return (
+        <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
+
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Seleccionar Orden</label>
+                <select
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                    onChange={handleOrderSelect}
+                    defaultValue=""
+                >
+                    <option value="" disabled>-- Seleccione una orden --</option>
+                    {orders.map(o => (
+                        <option key={o.id} value={o.id}>
+                            {o.order_number} - {o.customer_name} ({o.total_amount} {o.currency})
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                    <p className="font-bold">Error</p>
+                    <p>{error}</p>
+                </div>
+            )}
+
+            {showBalanceModal && insufficientBalanceInfo && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="bg-red-600 p-6 text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-3xl">⚠️</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Saldo Insuficiente</h3>
+                        </div>
+                        <div className="p-8 text-center">
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
+                                No cuentas con saldo suficiente en tu billetera local para generar esta guía.
+                            </p>
+                            <div className="bg-gray-50 rounded-xl p-4 mb-8 grid grid-cols-2 gap-4">
+                                <div className="text-left">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Tu Saldo</p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white">${walletBalance?.toLocaleString()}</p>
+                                </div>
+                                <div className="text-left border-l pl-4">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Costo Guía</p>
+                                    <p className="text-lg font-bold text-red-600">${insufficientBalanceInfo.cost.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <Button
+                                    className="w-full bg-red-600 hover:bg-red-700 h-12 text-lg"
+                                    onClick={() => window.location.href = '/wallet'}
+                                >
+                                    Recargar Billetera
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full h-12"
+                                    onClick={() => setShowBalanceModal(false)}
+                                >
+                                    Volver
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {success && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
+                    <p className="font-bold">Éxito</p>
+                    <p>{success}</p>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit(hasQuoted ? handleGenerate : handleQuote)} className="space-y-8">
+                {/* Origin Section */}
+                <section>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Origen</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Empresa" {...register("origin.company")} error={errors.origin?.company?.message} />
+                        <Input label="Nombre" {...register("origin.firstName")} error={errors.origin?.firstName?.message} />
+                        <Input label="Apellido" {...register("origin.lastName")} error={errors.origin?.lastName?.message} />
+                        <Input label="Email" {...register("origin.email")} error={errors.origin?.email?.message} />
+                        <Input label="Teléfono" {...register("origin.phone")} error={errors.origin?.phone?.message} />
+                        <div>
+                            <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
+                            {originSearch && (
+                                <div className="mt-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowOriginOffices(!showOriginOffices)}
+                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                    >
+                                        📍 ¿Recoger en oficina principal?
+                                    </button>
+                                    {showOriginOffices && (
+                                        <CarrierOfficeSelector 
+                                            city={originSearch}
+                                            onSelectAddress={(addr) => {
+                                                setValue("origin.address", addr, { shouldValidate: true });
+                                                setShowOriginOffices(false);
+                                            }}
+                                            onClose={() => setShowOriginOffices(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
+                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative" ref={originRef}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ciudad (Buscable)</label>
+                                <input
+                                    type="text"
+                                    value={originSearch}
+                                    onChange={(e) => {
+                                        setOriginSearch(e.target.value);
+                                        setShowOriginResults(true);
+                                    }}
+                                    onFocus={() => setShowOriginResults(true)}
+                                    placeholder="Escribe al menos 3 letras..."
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                                />
+                                {showOriginResults && filteredOriginCities.length > 0 && (
+                                    <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                        {filteredOriginCities.map((city) => (
+                                            <div
+                                                key={`origin-opt-${city.code}`}
+                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                onClick={() => {
+                                                    setValue("origin.daneCode", city.code);
+                                                    setOriginSearch(city.label);
+                                                    setShowOriginResults(false);
+                                                }}
+                                            >
+                                                {city.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <Input
+                                label="Código DANE"
+                                {...register("origin.daneCode")}
+                                error={errors.origin?.daneCode?.message}
+                                placeholder="Código DANE"
+                            />
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
+                            <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Destination Section */}
+                <section>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Destino</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input label="Empresa" {...register("destination.company")} error={errors.destination?.company?.message} />
+                        <Input label="Nombre" {...register("destination.firstName")} error={errors.destination?.firstName?.message} />
+                        <Input label="Apellido" {...register("destination.lastName")} error={errors.destination?.lastName?.message} />
+                        <Input label="Email" {...register("destination.email")} error={errors.destination?.email?.message} />
+                        <Input label="Teléfono" {...register("destination.phone")} error={errors.destination?.phone?.message} />
+                        <div>
+                            <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
+                            {destSearch && (
+                                <div className="mt-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowDestOffices(!showDestOffices)}
+                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                    >
+                                        📍 ¿Enviar a oficina principal?
+                                    </button>
+                                    {showDestOffices && (
+                                        <CarrierOfficeSelector 
+                                            city={destSearch}
+                                            onSelectAddress={(addr) => {
+                                                setValue("destination.address", addr, { shouldValidate: true });
+                                                setShowDestOffices(false);
+                                            }}
+                                            onClose={() => setShowDestOffices(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
+                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative" ref={destRef}>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ciudad (Buscable)</label>
+                                <input
+                                    type="text"
+                                    value={destSearch}
+                                    onChange={(e) => {
+                                        setDestSearch(e.target.value);
+                                        setShowDestResults(true);
+                                    }}
+                                    onFocus={() => setShowDestResults(true)}
+                                    placeholder="Escribe al menos 3 letras..."
+                                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                                />
+                                {showDestResults && filteredDestCities.length > 0 && (
+                                    <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                        {filteredDestCities.map((city) => (
+                                            <div
+                                                key={`dest-opt-${city.code}`}
+                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                onClick={() => {
+                                                    setValue("destination.daneCode", city.code);
+                                                    setDestSearch(city.label);
+                                                    setShowDestResults(false);
+                                                }}
+                                            >
+                                                {city.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <Input
+                                label="Código DANE"
+                                {...register("destination.daneCode")}
+                                error={errors.destination?.daneCode?.message}
+                                placeholder="Código DANE"
+                            />
+                        </div>
+                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
+                            <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Package Section */}
+                <section>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Paquete y Detalles</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Tamaño del Paquete</label>
+                            <select
+                                {...register("packageSize")}
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                            >
+                                {Object.entries(PACKAGE_SIZES).map(([key, val]) => (
+                                    <option key={key} value={key}>{val.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {packageSize === "custom" && (
+                            <>
+                                <Input label="Peso (kg)" type="number" step="0.1" {...register("customPackage.weight", { valueAsNumber: true })} error={errors.customPackage?.weight?.message} />
+                                <Input label="Alto (cm)" type="number" {...register("customPackage.height", { valueAsNumber: true })} error={errors.customPackage?.height?.message} />
+                                <Input label="Ancho (cm)" type="number" {...register("customPackage.width", { valueAsNumber: true })} error={errors.customPackage?.width?.message} />
+                                <Input label="Largo (cm)" type="number" {...register("customPackage.length", { valueAsNumber: true })} error={errors.customPackage?.length?.message} />
+                            </>
+                        )}
+
+                        <div className="col-span-2">
+                            <Input label="Descripción" {...register("description")} error={errors.description?.message} />
+                        </div>
+                        <Input label="Valor Declarado" type="number" {...register("contentValue", { valueAsNumber: true })} error={errors.contentValue?.message} />
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Método de Pago COD</label>
+                            <select {...register("codPaymentMethod")} className="w-full border-gray-300 rounded-md shadow-sm p-2 border">
+                                <option value="cash">Efectivo (cash)</option>
+                                <option value="data_phone">Datáfono</option>
+                            </select>
+                            {errors.codPaymentMethod && <p className="text-red-500 text-xs mt-1">{errors.codPaymentMethod.message}</p>}
+                        </div>
+
+                        {/* Opciones de Envío */}
+                        <div className="col-span-2 border-t pt-4 mt-4">
+                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">Opciones de Envío</h4>
+                            <div className="flex items-center gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        {...register("requestPickup")}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">Solicitar recolección</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        {...register("insurance")}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">Asegurar envío</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Rates Section */}
+                {rates.length > 0 && (
+                    <section className="bg-gray-50 p-4 rounded-md">
+                        {loadingAI && (
+                            <div className="text-center py-4 text-blue-600 animate-pulse text-sm font-medium">
+                                🤖 IA Analizando mejores opciones...
+                            </div>
+                        )}
+
+                        {aiAnalysis && !loadingAI && (
+                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
+                                <h4 className="text-blue-900 font-bold flex items-center gap-2 mb-1">
+                                    <span>🤖</span> Recomendación: {aiAnalysis.recommended_carrier}
+                                </h4>
+                                <p className="text-blue-800 text-xs leading-relaxed italic">
+                                    &quot;{aiAnalysis.reasoning}&quot;
+                                </p>
+                            </div>
+                        )}
+
+                        <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Cotizaciones Disponibles</h3>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {rates.map((rate) => {
+                                const isRecommended = rate.carrier.toLowerCase() === aiAnalysis?.recommended_carrier.toLowerCase();
+                                return (
+                                    <div
+                                        key={rate.idRate}
+                                        className={`p-3 border rounded cursor-pointer flex justify-between items-center transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                                        onClick={() => setSelectedRate(rate)}
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
+                                                {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+				{/* 24-hour processing notice */}
+				<div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+					<div className="flex items-center">
+						<div className="flex-shrink-0">
+							<span className="text-amber-800 font-bold">ℹ️</span>
+						</div>
+						<div className="ml-3">
+							<p className="text-sm text-amber-800">
+								<span className="font-bold">Aviso importante:</span> Los envíos pueden demorar hasta <span className="font-bold">24 horas hábiles</span> en ser procesados y recolectados por las transportadoras después de generada la guía.
+							</p>
+						</div>
+					</div>
+				</div>
+
+                <div className="flex justify-end pt-4 gap-4">
+                    {/* Show "Cotizar" button if not yet quoted or if user wants to quote again (maybe always visible? no, context dependent) 
+                        For simplicity: 
+                        - If no rates, show "Cotizar"
+                        - If rates exist, show "Cotizar de nuevo" AND "Generar Guía" (if rate selected)
+                     */}
+
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleSubmit(handleQuote)}
+                        disabled={loading}
+                    >
+                        {rates.length > 0 ? "Actualizar Cotización" : "Cotizar"}
+                    </Button>
+
+                    {rates.length > 0 && (
+                        <Button type="button" onClick={handleSubmit(handleGenerate)} disabled={loading || !selectedRate}>
+                            {loading ? "Generando..." : "Generar Guía"}
+                        </Button>
+                    )}
+                </div>
+            </form>
+        </div>
+    );
+};

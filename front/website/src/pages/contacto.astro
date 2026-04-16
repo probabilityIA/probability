@@ -1,0 +1,305 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const title = 'Contacto - ProbabilityIA | Soporte Disponible';
+const description = 'Contáctanos por WhatsApp o email. Nuestro equipo está listo para responder tus preguntas sobre IA y devoluciones.';
+---
+
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.whatsapp-float {
+		position: fixed;
+		bottom: 2rem;
+		right: 2rem;
+		z-index: 50;
+	}
+
+	.whatsapp-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 80px;
+		height: 80px;
+		background: transparent;
+		border-radius: 50%;
+		color: white;
+		text-decoration: none;
+		transition: all 0.3s ease;
+		animation: pulse 3s ease-in-out infinite;
+	}
+
+	.whatsapp-btn:hover {
+		transform: scale(1.2);
+		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+</style>
+
+<Layout title={title} description={description}>
+	<Header />
+	<main>
+		<!-- WhatsApp Float Button -->
+		<div class="whatsapp-float">
+			<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20consulta" class="whatsapp-btn" title="Contactanos por WhatsApp">
+				<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-12 h-12"/>
+			</a>
+		</div>
+
+		<!-- Hero Section -->
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
+			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
+
+			<div class="max-w-4xl mx-auto text-center relative z-10">
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 text-gray-900 leading-tight">
+					Ponte en <span class="gradient-text">contacto</span> con nosotros
+				</h1>
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+					Estamos aquí para responder tus preguntas y ayudarte a encontrar la solución perfecta para tu negocio
+				</p>
+			</div>
+		</section>
+
+		<!-- Contact Form & Info -->
+		<section class="bg-white py-20 px-6 sm:px-20">
+			<div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+				<!-- Contact Info -->
+				<div class="md:col-span-1">
+					<h2 class="text-2xl font-bold text-gray-900 mb-12">Información de Contacto</h2>
+
+					<div class="space-y-8">
+						<!-- Email -->
+						<div>
+							<div class="flex items-center gap-4">
+								<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+									<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+								</div>
+								<div>
+									<p class="text-gray-500 text-sm font-medium">Email</p>
+									<a href="mailto:gerencia@probabilityapp.com" class="text-gray-900 font-semibold hover:text-[#8B5CF6] transition-colors">
+										gerencia@probabilityapp.com
+									</a>
+								</div>
+							</div>
+						</div>
+
+						<!-- Contact Person -->
+						<div>
+							<div class="flex items-center gap-4">
+								<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+									<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+								</div>
+								<div>
+									<p class="text-gray-500 text-sm font-medium">Persona de Contacto</p>
+									<p class="text-gray-900 font-semibold">
+										Lina M.
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- WhatsApp -->
+						<div>
+							<div class="flex items-center gap-4">
+								<div class="w-16 h-16 rounded-lg bg-white flex items-center justify-center flex-shrink-0">
+									<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-12 h-12"/>
+								</div>
+								<div>
+									<p class="text-gray-500 text-sm font-medium">WhatsApp</p>
+									<a href="https://wa.me/573138241302" class="text-gray-900 font-semibold hover:text-green-600 transition-colors">
+										+57 313 824 1302
+									</a>
+								</div>
+							</div>
+						</div>
+
+						<!-- Hours -->
+						<div>
+							<div class="flex items-center gap-4">
+								<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+									<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+								</div>
+								<div>
+									<p class="text-gray-500 text-sm font-medium">Horarios</p>
+									<p class="text-gray-900 font-semibold">
+										Lunes - Viernes<br/>
+										<span class="text-sm text-gray-600">8:00 AM - 6:00 PM</span>
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Contact Form -->
+				<div class="md:col-span-2 bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-12">
+					<h2 class="text-2xl font-bold text-gray-900 mb-8">Envíanos un mensaje</h2>
+					<form id="contactForm" class="space-y-6">
+						<!-- Name -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Nombre Completo</label>
+							<input type="text" id="contactName" placeholder="Tu nombre" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Email -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Email</label>
+							<input type="email" id="contactEmail" placeholder="tu@email.com" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Company -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Empresa</label>
+							<input type="text" id="contactCompany" placeholder="Tu empresa" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Subject -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Asunto</label>
+							<select id="contactSubject" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors">
+								<option>Selecciona un asunto</option>
+								<option>Consulta sobre precios</option>
+								<option>Soporte técnico</option>
+								<option>Integración personalizada</option>
+								<option>Demo del producto</option>
+								<option>Otro</option>
+							</select>
+						</div>
+
+						<!-- Message -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Mensaje</label>
+							<textarea id="contactMessage" rows="6" placeholder="Tu mensaje..." class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors resize-none"></textarea>
+						</div>
+
+						<!-- Submit -->
+						<button type="submit" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-3 rounded-lg font-semibold transition-all hover:shadow-lg hover:shadow-purple-500/40">
+							Enviar por WhatsApp
+						</button>
+					</form>
+				</div>
+			</div>
+		</section>
+
+		<!-- FAQ Section -->
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto">
+				<h2 class="text-4xl font-bold text-gray-900 text-center mb-16">Preguntas Frecuentes</h2>
+				<div class="space-y-4">
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group hover:border-purple-300 transition-colors">
+						<summary class="flex items-center justify-between font-semibold text-gray-900 hover:text-[#8B5CF6] transition-colors">
+							¿Cuál es el tiempo de respuesta?
+							<span class="group-open:rotate-180 transition-transform text-[#8B5CF6]">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-gray-600 mt-4">Respondemos a todos los mensajes en máximo 24 horas hábiles. Para consultas por WhatsApp, la respuesta es más rápida.</p>
+					</details>
+
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group hover:border-purple-300 transition-colors">
+						<summary class="flex items-center justify-between font-semibold text-gray-900 hover:text-[#8B5CF6] transition-colors">
+							¿Cómo puedo solicitar una demo?
+							<span class="group-open:rotate-180 transition-transform text-[#8B5CF6]">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-gray-600 mt-4">Solicita tu demo haciendo clic en el botón "Solicitar Demo" en nuestra página de registro. Serás redirigido a nuestro calendario donde podrás programar una reunión personalizada con nuestro equipo.</p>
+					</details>
+
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group hover:border-purple-300 transition-colors">
+						<summary class="flex items-center justify-between font-semibold text-gray-900 hover:text-[#8B5CF6] transition-colors">
+							¿Ofrecen capacitación?
+							<span class="group-open:rotate-180 transition-transform text-[#8B5CF6]">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-gray-600 mt-4">Sí, ofrecemos capacitación gratuita para todos nuestros clientes. El equipo de soporte te guiará en el proceso de implementación.</p>
+					</details>
+
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group hover:border-purple-300 transition-colors">
+						<summary class="flex items-center justify-between font-semibold text-gray-900 hover:text-[#8B5CF6] transition-colors">
+							¿Puedo contactar directamente por WhatsApp?
+							<span class="group-open:rotate-180 transition-transform text-[#8B5CF6]">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-gray-600 mt-4">Claro, tenemos disponible un botón flotante de WhatsApp en la parte inferior derecha. Puedes contactarnos directamente a través de él para consultas rápidas.</p>
+					</details>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>
+
+<script>
+	const contactForm = document.getElementById('contactForm');
+	if (contactForm) {
+		contactForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const name = (document.getElementById('contactName') as HTMLInputElement)?.value || '';
+			const email = (document.getElementById('contactEmail') as HTMLInputElement)?.value || '';
+			const company = (document.getElementById('contactCompany') as HTMLInputElement)?.value || '';
+			const subject = (document.getElementById('contactSubject') as HTMLSelectElement)?.value || '';
+			const message = (document.getElementById('contactMessage') as HTMLTextAreaElement)?.value || '';
+
+			if (!name || !email || !company || !subject || !message) {
+				alert('Por favor completa todos los campos');
+				return;
+			}
+
+			// Crear mensaje formateado para WhatsApp
+			const whatsappMessage = `*NUEVO MENSAJE DE CONTACTO*
+
+*Nombre:* ${name}
+*Email:* ${email}
+*Empresa:* ${company}
+*Asunto:* ${subject}
+
+*Mensaje:*
+${message}`;
+
+			// Codificar el mensaje para URL
+			const encodedMessage = encodeURIComponent(whatsappMessage);
+			const whatsappPhone = '573138241302'; // Sin el +
+			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+			// Redirigir a WhatsApp
+			window.open(whatsappUrl, '_blank');
+		});
+	}
+</script>

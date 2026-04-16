@@ -1,0 +1,136 @@
+package usecases
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"strings"
+
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
+)
+
+// CreateWebhook crea un webhook en Shopify para la integración y actualiza el config con la información
+// Primero verifica si existen webhooks con la misma URL y los elimina antes de crear nuevos
+func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID string, baseURL string) (*domain.CreateWebhookResult, error) {
+	// Obtener la integración
+	integration, err := uc.integrationService.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener las credenciales
+	accessToken, err := uc.integrationService.DecryptCredential(ctx, integrationID, "access_token")
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener access_token: %w", err)
+	}
+
+	// Obtener el store_name del config
+	storeName, ok := integration.Config["store_name"].(string)
+	if !ok || storeName == "" {
+		return nil, fmt.Errorf("store_name no encontrado en la configuración")
+	}
+
+	// En modo test, usar la URL de pruebas
+	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
+
+	// Construir nuestra URL del webhook
+	// Asegurar que usamos el prefijo /api/v1 ya que el router lo espera
+	// Si baseURL ya tiene /api/v1, lo manejamos (aunque asumimos que es el host base)
+	apiPath := "/api/v1/integrations/shopify/webhook"
+	if strings.HasSuffix(baseURL, "/") {
+		baseURL = strings.TrimSuffix(baseURL, "/")
+	}
+	// Si el usuario configuró baseURL con /api/v1, evitamos duplicarlo
+	if strings.HasSuffix(baseURL, "/api/v1") {
+		baseURL = strings.TrimSuffix(baseURL, "/api/v1")
+	}
+
+	webhookURL := fmt.Sprintf("%s%s", baseURL, apiPath)
+
+	uc.log.Info(ctx).
+		Str("integration_id", integrationID).
+		Str("store_name", storeName).
+		Str("webhook_url", webhookURL).
+		Bool("is_testing", integration.IsTesting).
+		Msg("Creando webhooks en Shopify")
+
+	// Validar si la URL es localhost (entorno de pruebas)
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error al parsear baseURL: %w", err)
+	}
+
+	hostname := strings.ToLower(parsedURL.Hostname())
+	if strings.Contains(hostname, "localhost") || strings.Contains(hostname, "127.0.0.1") || strings.Contains(hostname, "::1") {
+		return &domain.CreateWebhookResult{
+			ExistingWebhooks: []domain.WebhookInfo{},
+			DeletedWebhooks:  []domain.WebhookInfo{},
+			CreatedWebhooks:  []string{},
+			WebhookURL:       webhookURL,
+		}, fmt.Errorf("no se pueden crear webhooks en entorno de pruebas (localhost). La URL del webhook sería: %s", webhookURL)
+	}
+
+	// Verificar si existen webhooks con nuestra URL
+	existingWebhooks, err := uc.VerifyWebhooksByURL(ctx, integrationID, baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error al verificar webhooks existentes: %w", err)
+	}
+
+	result := &domain.CreateWebhookResult{
+		ExistingWebhooks: existingWebhooks,
+		DeletedWebhooks:  make([]domain.WebhookInfo, 0),
+		CreatedWebhooks:  make([]string, 0),
+		WebhookURL:       webhookURL,
+	}
+
+	// Eliminar solo los webhooks que coinciden con nuestra URL
+	for _, webhook := range existingWebhooks {
+		if err := uc.shopifyClient.DeleteWebhook(ctx, storeName, accessToken, webhook.ID); err != nil {
+			uc.log.Warn(ctx).Err(err).Str("webhook_id", webhook.ID).Str("topic", webhook.Topic).Msg("Error al eliminar webhook existente")
+			continue
+		}
+		result.DeletedWebhooks = append(result.DeletedWebhooks, webhook)
+	}
+
+	// Eventos que necesitamos registrar
+	events := []string{
+		"orders/create",
+		"orders/updated",
+		"orders/paid",
+		"orders/cancelled",
+		"orders/fulfilled",
+		"orders/partially_fulfilled",
+	}
+
+	// Crear webhooks para todos los eventos
+	webhookConfigured := true
+	for _, event := range events {
+		webhookID, err := uc.shopifyClient.CreateWebhook(ctx, storeName, accessToken, webhookURL, event)
+		if err != nil {
+			webhookConfigured = false
+			uc.log.Error(ctx).Err(err).Str("event", event).Str("webhook_url", webhookURL).Str("store_name", storeName).Msg("Error al crear webhook en Shopify")
+			continue
+		}
+		result.CreatedWebhooks = append(result.CreatedWebhooks, webhookID)
+	}
+
+	// Si no se creó ningún webhook, retornar error
+	if len(result.CreatedWebhooks) == 0 {
+		return result, fmt.Errorf("no se pudo crear ningún webhook en Shopify")
+	}
+
+	// Actualizar el config con la información del webhook
+	configUpdate := map[string]interface{}{
+		"webhook_url":        webhookURL,
+		"webhook_configured": webhookConfigured,
+		"webhook_ids":        result.CreatedWebhooks,
+	}
+
+	// Hacer merge con el config existente
+	if err := uc.integrationService.UpdateIntegrationConfig(ctx, integrationID, configUpdate); err != nil {
+		return result, fmt.Errorf("error al actualizar config de la integración: %w", err)
+	}
+
+	return result, nil
+}

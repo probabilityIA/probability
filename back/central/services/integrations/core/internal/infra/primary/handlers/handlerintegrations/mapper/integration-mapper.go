@@ -1,0 +1,214 @@
+package mapper
+
+import (
+	"encoding/json"
+	"strings"
+
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/request"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
+	"gorm.io/datatypes"
+)
+
+// ToCreateIntegrationDTO convierte CreateIntegrationRequest a CreateIntegrationDTO
+func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID uint, businessID uint) domain.CreateIntegrationDTO {
+	var configJSON datatypes.JSON
+	if req.Config != nil {
+		configBytes, _ := json.Marshal(req.Config)
+		configJSON = configBytes
+	}
+
+	dto := domain.CreateIntegrationDTO{
+		Name:              req.Name,
+		Code:              req.Code,
+		IntegrationTypeID: req.IntegrationTypeID,
+		BusinessID:        req.BusinessID,
+		StoreID:           req.StoreID,
+		IsActive:          req.IsActive,
+		IsDefault:         req.IsDefault,
+		IsTesting:         req.IsTesting,
+		Config:            configJSON,
+		Credentials:       req.Credentials,
+		Description:       req.Description,
+		CreatedByID:       createdByID,
+	}
+
+	// Always override/set BusinessID from context if available
+	if businessID > 0 {
+		dto.BusinessID = &businessID
+	}
+
+	return dto
+}
+
+// ToUpdateIntegrationDTO convierte UpdateIntegrationRequest a UpdateIntegrationDTO
+func ToUpdateIntegrationDTO(req request.UpdateIntegrationRequest, updatedByID uint) domain.UpdateIntegrationDTO {
+	dto := domain.UpdateIntegrationDTO{
+		UpdatedByID: updatedByID,
+	}
+
+	if req.Name != nil {
+		dto.Name = req.Name
+	}
+	if req.Code != nil {
+		dto.Code = req.Code
+	}
+	if req.IntegrationTypeID != nil {
+		dto.IntegrationTypeID = req.IntegrationTypeID
+	}
+	if req.StoreID != nil {
+		dto.StoreID = req.StoreID
+	}
+	if req.IsActive != nil {
+		dto.IsActive = req.IsActive
+	}
+	if req.IsDefault != nil {
+		dto.IsDefault = req.IsDefault
+	}
+	if req.IsTesting != nil {
+		dto.IsTesting = req.IsTesting
+	}
+	if req.Description != nil {
+		dto.Description = req.Description
+	}
+	if req.Config != nil {
+		configBytes, _ := json.Marshal(*req.Config)
+		configJSON := datatypes.JSON(configBytes)
+		dto.Config = &configJSON
+	}
+	if req.Credentials != nil {
+		dto.Credentials = req.Credentials
+	}
+
+	return dto
+}
+
+// ToIntegrationResponse convierte domain.Integration a IntegrationResponse
+// imageURLBase es la URL base de S3 para construir URLs completas
+func ToIntegrationResponse(integration *domain.Integration, imageURLBase string) response.IntegrationResponse {
+	var config map[string]interface{}
+
+	// Parsear Config desde datatypes.JSON ([]byte) a map[string]interface{}
+	if len(integration.Config) > 0 {
+		if err := json.Unmarshal(integration.Config, &config); err != nil {
+			// Si falla el parseo, dejar config vacío
+			config = make(map[string]interface{})
+		}
+	}
+
+	// Derivar category, category_name y category_color desde IntegrationType.Category (no usar campo directo)
+	categoryCode := ""
+	categoryName := ""
+	categoryColor := ""
+	if integration.IntegrationType != nil && integration.IntegrationType.Category != nil {
+		categoryCode = integration.IntegrationType.Category.Code
+		categoryName = integration.IntegrationType.Category.Name
+		categoryColor = integration.IntegrationType.Category.Color
+	}
+
+	resp := response.IntegrationResponse{
+		ID:                integration.ID,
+		Name:              integration.Name,
+		Code:              integration.Code,
+		IntegrationTypeID: integration.IntegrationTypeID,
+		Category:          categoryCode, // Derivado de IntegrationType.Category.Code
+		CategoryName:      categoryName, // Derivado de IntegrationType.Category.Name
+		CategoryColor:     categoryColor, // Derivado de IntegrationType.Category.Color
+		BusinessID:        integration.BusinessID,
+		BusinessName:      integration.BusinessName,
+		StoreID:           integration.StoreID,
+		IsActive:          integration.IsActive,
+		IsDefault:         integration.IsDefault,
+		IsTesting:         integration.IsTesting,
+		Config:            config,
+		Description:       integration.Description,
+		CreatedByID:       integration.CreatedByID,
+		UpdatedByID:       integration.UpdatedByID,
+		CreatedAt:         integration.CreatedAt,
+		UpdatedAt:         integration.UpdatedAt,
+	}
+
+	// Incluir información del tipo de integración si está cargado
+	if integration.IntegrationType != nil {
+		imageURL := ""
+		if integration.IntegrationType.ImageURL != "" {
+			// Construir URL completa si es path relativo
+			if imageURLBase != "" && !strings.HasPrefix(integration.IntegrationType.ImageURL, "http") {
+				imageURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(integration.IntegrationType.ImageURL, "/")
+			} else {
+				imageURL = integration.IntegrationType.ImageURL
+			}
+		}
+
+		typeInfo := &response.IntegrationTypeInfo{
+			ID:       integration.IntegrationType.ID,
+			Name:     integration.IntegrationType.Name,
+			Code:     integration.IntegrationType.Code,
+			ImageURL: imageURL,
+		}
+
+		// Incluir categoría si está cargada
+		if integration.IntegrationType.Category != nil {
+			typeInfo.Category = &response.IntegrationCategoryInfo{
+				ID:    integration.IntegrationType.Category.ID,
+				Code:  integration.IntegrationType.Category.Code,
+				Name:  integration.IntegrationType.Category.Name,
+				Icon:  integration.IntegrationType.Category.Icon,
+				Color: integration.IntegrationType.Category.Color,
+			}
+		}
+
+		resp.IntegrationType = typeInfo
+	}
+
+	return resp
+}
+
+// ToIntegrationListResponse convierte lista de integraciones a IntegrationListResponse
+func ToIntegrationListResponse(integrations []*domain.Integration, total int64, page, pageSize int, imageURLBase string) response.IntegrationListResponse {
+	responses := make([]response.IntegrationResponse, len(integrations))
+	for i, integration := range integrations {
+		responses[i] = ToIntegrationResponse(integration, imageURLBase)
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10 // Safe default
+	}
+
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize > 0 {
+		totalPages++
+	}
+
+	return response.IntegrationListResponse{
+		Success:    true,
+		Message:    "Integraciones obtenidas exitosamente",
+		Data:       responses,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}
+}
+
+// ToIntegrationFilters convierte GetIntegrationsRequest a IntegrationFilters
+func ToIntegrationFilters(req request.GetIntegrationsRequest) domain.IntegrationFilters {
+	pageSize := req.PageSize
+	if pageSize <= 0 && req.PerPage > 0 {
+		pageSize = req.PerPage
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	return domain.IntegrationFilters{
+		Page:                req.Page,
+		PageSize:            pageSize,
+		IntegrationTypeID:   req.IntegrationTypeID,
+		IntegrationTypeCode: req.IntegrationTypeCode,
+		Category:            req.Category,
+		BusinessID:          req.BusinessID,
+		IsActive:            req.IsActive,
+		Search:              req.Search,
+	}
+}

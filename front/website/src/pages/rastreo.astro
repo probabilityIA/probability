@@ -1,0 +1,66 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import TrackingClient from '../components/TrackingClient';
+
+const title = 'Rastreo de Envíos - Tracking en Tiempo Real | ProbabilityIA';
+const description = 'Sistema inteligente de rastreo para tus envíos. Reduce incertidumbre y mejora la experiencia del cliente en tiempo real.';
+---
+
+<Layout title={title} description={description}>
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="max-w-6xl mx-auto relative z-10">
+				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
+					<span class="text-[#8B5CF6] font-medium text-sm">RASTREO DE ENVÍOS</span>
+				</div>
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+					Sigue tu <span class="gradient-text">envío</span> en tiempo real
+				</h1>
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl">
+					Ingresa tu número de tracking o número de orden para consultar el estado de tu envío
+				</p>
+			</div>
+		</section>
+
+		<!-- Tracking Content -->
+		<section class="bg-white py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto">
+				<TrackingClient client:load />
+			</div>
+		</section>
+
+		<!-- CTA Section -->
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#A855F7] to-[#7C3AED] rounded-2xl p-12 sm:p-20 text-center border border-purple-300">
+				<h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
+					¿Necesitas más ayuda?
+				</h2>
+				<p class="text-white text-opacity-90 mb-10 text-lg">
+					Contacta con nuestro equipo de soporte o escríbenos por WhatsApp
+				</p>
+				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+					<a href="mailto:soporte@probabilityia.com" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
+						Contactar Soporte
+					</a>
+					<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20pregunta%20sobre%20mi%20rastreo" class="flex justify-center items-center border-2 border-white text-white hover:bg-white hover:text-[#8B5CF6] px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all w-full sm:w-auto">
+						Contáctanos por WhatsApp
+					</a>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>
+
+<style>
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+</style>

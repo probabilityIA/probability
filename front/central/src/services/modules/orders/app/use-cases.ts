@@ -1,0 +1,51 @@
+import { IOrderRepository } from '../domain/ports';
+import {
+    GetOrdersParams,
+    CreateOrderDTO,
+    UpdateOrderDTO,
+    ChangeOrderStatusDTO
+} from '../domain/types';
+
+export class OrderUseCases {
+    constructor(private repository: IOrderRepository) { }
+
+    async getOrders(params?: GetOrdersParams) {
+        return this.repository.getOrders(params);
+    }
+
+    async getOrderById(id: string) {
+        return this.repository.getOrderById(id);
+    }
+
+    async getOrderHistory(orderId: string) {
+        return this.repository.getOrderHistory(orderId);
+    }
+
+    async createOrder(data: CreateOrderDTO) {
+        return this.repository.createOrder(data);
+    }
+
+    async updateOrder(id: string, data: UpdateOrderDTO) {
+        return this.repository.updateOrder(id, data);
+    }
+
+    async changeOrderStatus(id: string, data: ChangeOrderStatusDTO) {
+        return this.repository.changeOrderStatus(id, data);
+    }
+
+    async deleteOrder(id: string) {
+        return this.repository.deleteOrder(id);
+    }
+
+    async getOrderRaw(id: string) {
+        return this.repository.getOrderRaw(id);
+    }
+
+    async getAIRecommendation(origin: string, destination: string) {
+        return this.repository.getAIRecommendation(origin, destination);
+    }
+
+    async requestConfirmation(orderId: string) {
+        return this.repository.requestConfirmation(orderId);
+    }
+}

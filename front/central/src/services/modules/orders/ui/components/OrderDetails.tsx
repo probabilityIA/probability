@@ -1,0 +1,802 @@
+'use client';
+
+import { Order, OrderHistory } from '../../domain/types';
+import MapComponent from '@/shared/ui/MapComponent';
+import { getAIRecommendationAction, getOrderByIdAction, getOrderHistoryAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
+import { useState, useEffect } from 'react';
+import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
+import { ChangeStatusModal } from './ChangeStatusModal';
+import { isTerminalStatus } from '../../domain/order-status-transitions';
+import { useToast } from '@/shared/providers/toast-provider';
+
+interface Quotation {
+    carrier: string;
+    estimated_cost: number;
+    estimated_delivery_days: number;
+}
+
+interface AIRecommendation {
+    recommended_carrier: string;
+    reasoning: string;
+    alternatives: string[];
+    quotations?: Quotation[];
+}
+
+interface OrderDetailsProps {
+    initialOrder: Order;
+    onClose?: () => void;
+    mode?: 'details' | 'recommendation';
+}
+
+export default function OrderDetails({ initialOrder, onClose, mode = 'details' }: OrderDetailsProps) {
+    const [fullOrder, setFullOrder] = useState<Order | null>(null);
+    const [aiRecommendation, setAIRecommendation] = useState<AIRecommendation | null>(null);
+    const [loadingAI, setLoadingAI] = useState(false);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+    const [showGuideModal, setShowGuideModal] = useState(false);
+    const [showChangeStatus, setShowChangeStatus] = useState(false);
+    const [statusHistory, setStatusHistory] = useState<OrderHistory[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const { showToast } = useToast();
+
+    // Fetch full order details and history on mount
+    const fetchDetails = async () => {
+        if (!initialOrder.id) return;
+
+        setLoadingDetails(true);
+        setLoadingHistory(true);
+        try {
+            const [orderResponse, historyResponse] = await Promise.all([
+                getOrderByIdAction(initialOrder.id),
+                getOrderHistoryAction(initialOrder.id),
+            ]);
+            if (orderResponse.success && orderResponse.data) {
+                setFullOrder(orderResponse.data);
+            } else if (!orderResponse.success) {
+                console.error("Failed to load order details:", orderResponse.message);
+            }
+            if (historyResponse.success && historyResponse.data) {
+                setStatusHistory(historyResponse.data);
+            }
+        } catch (error) {
+            console.error("Error loading order details:", error);
+        } finally {
+            setLoadingDetails(false);
+            setLoadingHistory(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDetails();
+    }, [initialOrder.id]);
+
+    // Derived order object (prefer full, fallback to initial)
+    const order = fullOrder || initialOrder;
+
+    // AI Logic - Triggers when fullOrder (with address) is available
+    // AI Logic - Triggers when fullOrder (with address) is available AND mode is 'recommendation'
+    useEffect(() => {
+        if (mode === 'recommendation' && fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
+            setLoadingAI(true);
+            getAIRecommendationAction(fullOrder.shipping_city, fullOrder.shipping_state)
+                .then(data => {
+                    if (data && data.recommended_carrier) {
+                        setAIRecommendation(data);
+                    } else {
+                        setAIRecommendation(null);
+                    }
+                })
+                .catch(err => {
+                    console.warn("Recomendación AI no disponible:", err);
+                    setAIRecommendation(null);
+                })
+                .finally(() => setLoadingAI(false));
+        } else if (mode !== 'recommendation') {
+            // Reset AI state if leaving recommendation mode (opt)
+            setAIRecommendation(null);
+            setLoadingAI(false);
+        }
+    }, [fullOrder, mode]);
+
+    // Management State
+    const [isConfirmed, setIsConfirmed] = useState<boolean | null>(false);
+    const [novelty, setNovelty] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // WhatsApp Confirmation State
+    const [hasWhatsApp, setHasWhatsApp] = useState(false);
+    const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+    const [whatsAppSent, setWhatsAppSent] = useState(false);
+
+    // Initialize management state
+    useEffect(() => {
+        if (order) {
+            setIsConfirmed(order.is_confirmed ?? null);
+            setNovelty(order.novelty || '');
+        }
+    }, [order]);
+
+    // Check if business has WhatsApp integration
+    useEffect(() => {
+        if (order?.business_id != null && order.business_id > 0) {
+            checkWhatsAppIntegrationAction(order.business_id).then((result) => {
+                setHasWhatsApp(result);
+            });
+        }
+    }, [order?.business_id]);
+
+    const handleWhatsAppConfirmation = async () => {
+        if (!order.id) return;
+        setIsSendingWhatsApp(true);
+        try {
+            const result = await requestWhatsAppConfirmationAction(order.id);
+            if (result.success) {
+                setWhatsAppSent(true);
+                alert('Mensaje de confirmación enviado por WhatsApp');
+            } else {
+                alert(result.message || 'Error al enviar confirmación por WhatsApp');
+            }
+        } catch (error: any) {
+            console.error('Error sending WhatsApp confirmation:', error);
+            alert('Error al enviar confirmación por WhatsApp');
+        } finally {
+            setIsSendingWhatsApp(false);
+        }
+    };
+
+    const handleSaveManagement = async () => {
+        if (!order.id) return;
+        setIsSaving(true);
+        try {
+            const status = isConfirmed === true ? 'yes' : isConfirmed === false ? 'no' : 'pending';
+            const result = await updateOrderAction(order.id, {
+                confirmation_status: status,
+                novelty: novelty
+            });
+
+            if (result.success && result.data) {
+                // Update local state with the FULL updated order returned by backend
+                // This ensures calculated fields like delivery_probability and negative_factors are updated
+                setFullOrder(result.data);
+
+                alert('Cambios guardados correctamente');
+            } else {
+                alert('Error al guardar cambios');
+            }
+        } catch (error) {
+            console.error('Error saving management:', error);
+            alert('Error al guardar cambios');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const formatCurrency = (amount: number | string, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
+        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(num) || num === undefined) return '-';
+
+        // Priorizar moneda local (presentment) si está disponible
+        if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: currencyPresentment,
+            }).format(amountPresentment);
+        }
+
+        // Fallback a USD si no hay moneda local
+        return new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: currency || 'USD',
+        }).format(num);
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleString('es-CO');
+    };
+
+    // Helper para calcular color del texto basado en luminosidad
+    const getTextColor = (bgColor: string): string => {
+        const hex = bgColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    };
+
+    // Parse items if they are JSON string or access directly
+    const items = Array.isArray(order.items) ? order.items : [];
+
+    // Address for Map
+    const fullAddress = `${order.shipping_street || ''}`;
+    const city = order.shipping_city || '';
+
+    // If loading details, show a skeleton or loading state for critical sections
+    const isReady = !loadingDetails && fullOrder;
+
+    return (
+        <div className="space-y-2 p-3">
+            {/* AI Recommendation Section - Only shown in recommendation mode */}
+            {mode === 'recommendation' && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-blue-100 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+                    <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
+                        <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z" /></svg>
+                    </div>
+
+                    {onClose && (
+                        <button
+                            onClick={onClose}
+                            className="absolute top-2 right-2 z-20 p-1 bg-white dark:bg-gray-800/20 hover:bg-white dark:bg-gray-800/40 text-blue-900 rounded-full transition-colors backdrop-blur-sm"
+                            title="Cerrar"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+
+                    <div className="relative z-10">
+                        <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🤖</span> Recomendación Inteligente
+                        </h3>
+
+                        {isReady ? (
+                            <>
+                                {loadingAI ? (
+                                    <div className="flex items-center gap-3 text-purple-600 bg-white dark:bg-gray-800/50 p-3 rounded-lg animate-pulse">
+                                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Analizando mejores rutas y tarifas...</span>
+                                    </div>
+                                ) : aiRecommendation ? (
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex-1 space-y-4">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div>
+                                                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
+                                                        Mejor Opción
+                                                    </span>
+                                                    <p className="text-4xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">
+                                                        {aiRecommendation.recommended_carrier}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowGuideModal(true)}
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-purple-200 transition-all flex items-center gap-2"
+                                                >
+                                                    <span>📦</span> Cotizar y Generar Guía
+                                                </button>
+                                            </div>
+
+                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border border-blue-100 text-gray-700 dark:text-gray-200 text-sm leading-relaxed shadow-sm">
+                                                <p className="font-semibold text-blue-900 mb-1">Análisis:</p>
+                                                {aiRecommendation.reasoning}
+                                            </div>
+                                        </div>
+
+                                        {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
+                                            <div className="border-t border-blue-200 dark:border-blue-900 pt-6 mt-2">
+                                                <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                                    <span>📊</span> Cotizaciones Estimadas
+                                                </h4>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                    {aiRecommendation.quotations.map((quote, idx) => {
+                                                        const isRecommended = quote.carrier === aiRecommendation.recommended_carrier;
+                                                        return (
+                                                            <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between transition-all hover:shadow-md ${isRecommended
+                                                                ? 'bg-white dark:bg-gray-800 border-blue-300 dark:border-blue-600 shadow-sm ring-1 ring-blue-100 dark:ring-blue-900 relative overflow-hidden'
+                                                                : 'bg-slate-50 dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700'
+                                                                }`}>
+                                                                {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
+                                                                <div>
+                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                        {quote.carrier}
+                                                                    </p>
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                                                                        <span>⏱️</span> {quote.estimated_delivery_days} días hábiles
+                                                                    </p>
+                                                                </div>
+                                                                <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                                                                    <p className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-0.5">Costo Estimado</p>
+                                                                    <div className="flex justify-between items-end">
+                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600 dark:text-gray-300'}`}>
+                                                                            {formatCurrency(quote.estimated_cost, 'COP')}
+                                                                        </p>
+                                                                        <button
+                                                                            onClick={() => setShowGuideModal(true)}
+                                                                            className="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded"
+                                                                        >
+                                                                            Elegir
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700">
+                                        No hay recomendación disponible. Verifique que la orden tenga dirección completa (Ciudad y Departamento).
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="text-sm text-blue-400 mt-1 animate-pulse">Cargando datos de orden...</div>
+                        )}
+
+                        {showGuideModal && order && (
+                            <ShipmentGuideModal
+                                isOpen={showGuideModal}
+                                onClose={() => setShowGuideModal(false)}
+                                order={order}
+                                recommendedCarrier={aiRecommendation?.recommended_carrier}
+                                onGuideGenerated={() => {
+                                    // Reload order details after guide is generated to get updated shipment data
+                                    setShowGuideModal(false);
+                                    fetchDetails();
+                                }}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Order Details Sections - Only shown in details mode */}
+            {mode === 'details' && (
+                <>
+                    {/* 3 Column Layout - Información Grande a la Izquierda */}
+                    <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'auto auto auto' }}>
+                        {/* ROW 1, COL 1: Información General - LARGER */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Información General</h3>
+                            {loadingDetails ? (
+                                <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando información...</div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Nº Orden</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{order.order_number || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Número Interno</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white break-all mt-0.5">{order.internal_number || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Plataforma</p>
+                                        {order.integration_logo_url ? (
+                                            <img
+                                                src={order.integration_logo_url}
+                                                alt={order.platform}
+                                                className="h-10 w-10 object-contain mt-1"
+                                                title={order.platform}
+                                            />
+                                        ) : (
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white capitalize mt-1">{order.platform || '-'}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Estado (Probability)</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {order.order_status?.color ? (
+                                                <span
+                                                    className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
+                                                    style={{
+                                                        backgroundColor: order.order_status.color,
+                                                        color: getTextColor(order.order_status.color)
+                                                    }}
+                                                >
+                                                    {order.order_status.name || order.status}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                                                    {order.order_status?.name || order.status || '-'}
+                                                </span>
+                                            )}
+                                            {!isTerminalStatus(order.order_status?.code || order.status || '') && (
+                                                <button
+                                                    onClick={() => setShowChangeStatus(true)}
+                                                    className="px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all"
+                                                >
+                                                    Cambiar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {order.original_status && (
+                                        <div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Estado Original (Shopify)</p>
+                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800 dark:text-gray-100 mt-1">
+                                                {order.original_status}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Fecha</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{formatDate(order.occurred_at || order.created_at)}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ROW 1, COL 2: Resumen Financiero + Productos (STACKED) */}
+                        <div className="space-y-3">
+                            {/* Resumen Financiero */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Resumen Financiero</h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Subtotal</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrency(order.subtotal, order.currency, order.subtotal_presentment, order.currency_presentment)}
+                                        </span>
+                                    </div>
+                                    {(order.tax > 0 || (order.tax_presentment && order.tax_presentment > 0)) && (
+                                        <div className="flex justify-between pl-3">
+                                            <span className="text-xs text-gray-400 italic">IVA incluido</span>
+                                            <span className="text-xs text-gray-400 italic">
+                                                {formatCurrency(order.tax, order.currency, order.tax_presentment, order.currency_presentment)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {(order.discount > 0 || (order.discount_presentment && order.discount_presentment > 0)) && (
+                                        <div className="flex justify-between pl-3">
+                                            <span className="text-xs text-green-500 italic">Descuento aplicado</span>
+                                            <span className="text-xs text-green-500 italic">
+                                                -{formatCurrency(order.discount, order.currency, order.discount_presentment, order.currency_presentment)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Envío</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                            {formatCurrency(order.shipping_cost, order.currency, order.shipping_cost_presentment, order.currency_presentment)}
+                                        </span>
+                                    </div>
+                                    {((order.shipping_discount && order.shipping_discount > 0) || (order.shipping_discount_presentment && order.shipping_discount_presentment > 0)) && (
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Desc. Envío</span>
+                                            <span className="text-sm font-semibold text-green-600">
+                                                -{formatCurrency(order.shipping_discount || 0, order.currency, order.shipping_discount_presentment, order.currency_presentment)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between pt-2 border-t border-gray-300 mt-2">
+                                        <span className="text-base font-bold text-gray-900 dark:text-white">Total</span>
+                                        <span className="text-base font-bold text-purple-600">
+                                            {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Productos del Pedido */}
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Productos del Pedido</h3>
+                                {loadingDetails ? (
+                                    <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando productos...</div>
+                                ) : (order.order_items || items).length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                            <thead className="bg-gray-100 dark:bg-gray-700">
+                                                <tr>
+                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Producto</th>
+                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">SKU</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Cant</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Precio</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Desc.</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                                {(order.order_items || items).map((item: any, idx: number) => (
+                                                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right">{item.quantity || 0}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
+                                                        <td className="px-2 py-2 text-xs text-right">
+                                                            {(item.discount > 0 || (item.discount_presentment && item.discount_presentment > 0)) ? (
+                                                                <span className="text-green-600 font-semibold">-{formatCurrency(item.discount, order.currency, item.discount_presentment, order.currency_presentment)}</span>
+                                                            ) : (
+                                                                <span className="text-gray-400">-</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right font-semibold">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">No hay información de productos.</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* ROW 1, COL 3: Cronología y Pago */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Cronología y Pago</h3>
+                            <div className="space-y-4">
+                                {/* Cronología */}
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wide mb-2">Cronología</p>
+                                    <div className="space-y-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+                                        <div>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Creado (DB)</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.created_at)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Importado</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.imported_at)}</p>
+                                        </div>
+                                        {order.updated_at && (
+                                            <div>
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Actualizado</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.updated_at)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Detalles de Pago */}
+                                <div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wide mb-2">Estado de Pago</p>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Estado</p>
+                                            <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+                                                (order.payment_details?.financial_status === 'refunded') ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                                                    'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                                                }`}>
+                                                {order.payment_details?.financial_status?.toUpperCase() || (order.is_paid ? 'PAID' : 'PENDING')}
+                                            </span>
+                                        </div>
+                                        {order.paid_at && (
+                                            <div>
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Fecha</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.paid_at)}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ROW 2, COL 1-3: Cliente y Dirección */}
+                        <div className="bg-gray-50 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Cliente y Dirección</h3>
+                            {loadingDetails ? (
+                                <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
+                            ) : (
+                                <div className="grid grid-cols-4 gap-4">
+                                    {/* Col 1: Nombre */}
+                                    <div>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Nombre</p>
+                                        <p className="font-bold text-gray-900 dark:text-white text-sm">{order.customer_name || '-'}</p>
+                                    </div>
+
+                                    {/* Col 2: Email */}
+                                    <div>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Email</p>
+                                        <p className="font-medium text-gray-900 dark:text-white break-all text-sm">{order.customer_email || '-'}</p>
+                                    </div>
+
+                                    {/* Col 3: Teléfono + DNI */}
+                                    <div>
+                                        <div>
+                                            <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Teléfono</p>
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{order.customer_phone || '-'}</p>
+                                        </div>
+                                        {order.customer_dni && (
+                                            <div className="mt-2">
+                                                <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">DNI</p>
+                                                <p className="font-medium text-gray-900 dark:text-white text-sm">{order.customer_dni}</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Col 4: Dirección */}
+                                    <div>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Dirección</p>
+                                        <div className="space-y-1">
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{order.shipping_street || '-'}</p>
+                                            <p className="text-gray-700 dark:text-gray-200 text-sm">
+                                                {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
+                                            </p>
+                                            <p className="uppercase text-gray-700 dark:text-gray-200 text-sm">{order.shipping_country || '-'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ROW 3, COL 1-3: Gestión y Novedades */}
+                        <div className="bg-gray-50 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Gestión y Novedades</h3>
+                            <div className="space-y-3">
+                                <div className="flex flex-col">
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Confirmación de Pedido</label>
+                                    <select
+                                        className={`block w-full pl-3 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isConfirmed === true
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-500 dark:border-green-600 font-semibold'
+                                            : isConfirmed === false
+                                                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-500 dark:border-red-600 font-semibold'
+                                                : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-500 dark:border-yellow-600 font-semibold'
+                                            }`}
+                                        value={isConfirmed === null ? 'pending' : (isConfirmed ? 'yes' : 'no')}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setIsConfirmed(val === 'pending' ? null : val === 'yes');
+                                        }}
+                                    >
+                                        <option value="yes">Sí, Confirmado</option>
+                                        <option value="no">No, Rechazado/Cancelado</option>
+                                        <option value="pending">Pendiente confirmación</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Novedades / Notas</label>
+                                    <textarea
+                                        rows={3}
+                                        className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full text-sm border-gray-300 rounded-md p-2 border text-gray-900 dark:text-white"
+                                        placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
+                                        value={novelty}
+                                        onChange={(e) => setNovelty(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleSaveManagement}
+                                        disabled={isSaving}
+                                        className="inline-flex items-center justify-center px-4 py-2 flex-1 border border-transparent text-sm font-semibold rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                                    >
+                                        {isSaving ? 'Guardando...' : 'Guardar'}
+                                    </button>
+                                    {hasWhatsApp && order.is_confirmed !== true && (
+                                        <button
+                                            onClick={handleWhatsAppConfirmation}
+                                            disabled={isSendingWhatsApp || whatsAppSent}
+                                            className={`inline-flex items-center justify-center px-4 py-2 border text-sm font-semibold rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 ${
+                                                whatsAppSent
+                                                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 border-green-300 dark:border-green-600'
+                                                    : 'text-white bg-green-600 hover:bg-green-700 border-transparent'
+                                            }`}
+                                            title={!order.customer_phone ? 'La orden no tiene teléfono de cliente' : 'Enviar confirmación por WhatsApp'}
+                                        >
+                                            {isSendingWhatsApp ? (
+                                                <>
+                                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                    </svg>
+                                                    Enviando...
+                                                </>
+                                            ) : whatsAppSent ? (
+                                                <>
+                                                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Enviado
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                                    </svg>
+                                                    Confirmar por WhatsApp
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ROW 4: Historial de Estados - Timeline */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Historial de Estados</h3>
+                        {loadingHistory ? (
+                            <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400 animate-pulse">Cargando historial...</div>
+                        ) : statusHistory.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No hay cambios de estado registrados.</p>
+                        ) : (
+                            <div className="relative">
+                                {/* Línea horizontal */}
+                                <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-600"></div>
+
+                                <div className="flex overflow-x-auto pb-2 gap-0" style={{ scrollbarWidth: 'thin' }}>
+                                    {/* Nodo inicial: estado de creación */}
+                                    <div className="flex flex-col items-center flex-shrink-0 relative" style={{ minWidth: '120px' }}>
+                                        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </div>
+                                        <div className="mt-2 text-center px-1">
+                                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                {statusHistory[0].previous_status || 'Creada'}
+                                            </span>
+                                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Inicio</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Nodos de cambio de estado */}
+                                    {statusHistory.map((entry, idx) => {
+                                        const isLast = idx === statusHistory.length - 1;
+                                        return (
+                                            <div key={entry.id} className="flex flex-col items-center flex-shrink-0 relative" style={{ minWidth: '140px' }}>
+                                                {/* Flecha */}
+                                                <div className="absolute top-4 -left-4 text-gray-300 dark:text-gray-600">
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                {/* Círculo */}
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm ${
+                                                    isLast ? 'bg-purple-500' : 'bg-blue-400'
+                                                }`}>
+                                                    {isLast ? (
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                                {/* Info */}
+                                                <div className="mt-2 text-center px-1">
+                                                    <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full ${
+                                                        isLast
+                                                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                                                            : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                                                    }`}>
+                                                        {entry.new_status}
+                                                    </span>
+                                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-tight">
+                                                        {new Date(entry.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                                                        {' '}
+                                                        {new Date(entry.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                    {entry.changed_by_name && (
+                                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={entry.changed_by_name}>
+                                                            {entry.changed_by_name}
+                                                        </p>
+                                                    )}
+                                                    {entry.reason && (
+                                                        <p className="text-[10px] text-amber-500 dark:text-amber-400 truncate max-w-[120px] italic" title={entry.reason}>
+                                                            {entry.reason}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Change Status Modal */}
+            {showChangeStatus && (
+                <ChangeStatusModal
+                    isOpen={showChangeStatus}
+                    onClose={() => setShowChangeStatus(false)}
+                    order={order}
+                    onSuccess={() => {
+                        showToast(`Estado de #${order.order_number} actualizado`, 'success');
+                        setShowChangeStatus(false);
+                        fetchDetails();
+                    }}
+                />
+            )}
+        </div>
+    );
+}

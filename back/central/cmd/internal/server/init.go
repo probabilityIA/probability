@@ -1,0 +1,90 @@
+package server
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/secamc93/probability/back/central/cmd/internal/routes"
+	"github.com/secamc93/probability/back/central/services/auth"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	"github.com/secamc93/probability/back/central/services/events"
+	"github.com/secamc93/probability/back/central/services/integrations"
+	"github.com/secamc93/probability/back/central/services/modules"
+	"github.com/secamc93/probability/back/central/shared/bedrock"
+	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/email"
+	"github.com/secamc93/probability/back/central/shared/env"
+	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
+)
+
+func Init(ctx context.Context) error {
+	logger := log.New()
+	environment := env.New(logger)
+
+	database := db.New(logger, environment)
+	emailService := email.New(environment, logger)
+
+	// Initialize S3
+	s3Service := storage.New(environment, logger)
+
+	// Initialize RabbitMQ
+	queueRegistry := NewQueueRegistry()
+	rabbitMQ, err := rabbitmq.New(logger, environment)
+	if err != nil {
+		logger.Error(ctx).
+			Err(err).
+			Msg("Failed to initialize RabbitMQ - consumers will be disabled")
+	} else {
+		// RabbitMQ info mostrada en LogStartupInfo() - no duplicar aquí
+		// Configurar registry para registrar colas declaradas
+		if rmq, ok := rabbitMQ.(interface{ SetQueueRegistry(rabbitmq.QueueRegistryCallback) }); ok {
+			rmq.SetQueueRegistry(queueRegistry.Register)
+		}
+	}
+
+	// Initialize Redis
+	redisRegistry := NewRedisRegistry()
+	redisClient := redis.New(logger, environment)
+	if redisClient != nil {
+		// Configurar registry para registrar prefijos y canales
+		if rc, ok := redisClient.(interface {
+			SetCacheRegistry(redis.CacheRegistryCallback)
+			SetChannelRegistry(redis.ChannelRegistryCallback)
+		}); ok {
+			rc.SetCacheRegistry(redisRegistry.RegisterCachePrefix)
+			rc.SetChannelRegistry(redisRegistry.RegisterChannel)
+		}
+	}
+
+	// Initialize Bedrock (AI)
+	bedrockClient := bedrock.New(logger, environment)
+
+	middleware.InitFromEnv(environment, logger)
+	r := routes.BuildRouter(ctx, logger, environment)
+
+	// jwtService := middleware.GetJWTService()
+
+	v1Group := r.Group("/api/v1")
+
+	// Initialize Auth Modules
+	auth.New(v1Group, database, logger, environment, s3Service)
+
+	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
+	events.New(v1Group, logger, rabbitMQ, redisClient)
+
+	// Initialize Order Module (and others)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient)
+
+	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
+	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
+
+	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
+
+	port := environment.Get("HTTP_PORT")
+
+	addr := fmt.Sprintf(":%s", port)
+	return r.Run(addr)
+}

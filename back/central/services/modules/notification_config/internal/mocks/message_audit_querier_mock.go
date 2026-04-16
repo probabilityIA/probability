@@ -1,0 +1,44 @@
+package mocks
+
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
+)
+
+// MessageAuditQuerierMock - Mock de la interfaz IMessageAuditQuerier
+type MessageAuditQuerierMock struct {
+	ListMessageLogsFn func(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error)
+	GetMessageStatsFn func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error)
+	ListEmailLogsFn   func(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error)
+}
+
+func (m *MessageAuditQuerierMock) ListMessageLogs(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error) {
+	if m.ListMessageLogsFn != nil {
+		return m.ListMessageLogsFn(ctx, filter)
+	}
+	return []entities.MessageAuditLog{}, 0, nil
+}
+
+func (m *MessageAuditQuerierMock) GetMessageStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error) {
+	if m.GetMessageStatsFn != nil {
+		return m.GetMessageStatsFn(ctx, businessID, dateFrom, dateTo)
+	}
+	return nil, nil
+}
+
+func (m *MessageAuditQuerierMock) ListEmailLogs(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error) {
+	if m.ListEmailLogsFn != nil {
+		return m.ListEmailLogsFn(ctx, businessID, status, dateFrom, dateTo, page, pageSize)
+	}
+	return []entities.EmailDeliveryLog{}, 0, nil
+}
+
+func (m *MessageAuditQuerierMock) ListConversations(_ context.Context, _ dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
+	return []entities.ConversationSummary{}, 0, nil
+}
+
+func (m *MessageAuditQuerierMock) GetConversationMessages(_ context.Context, _ string, _ uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {
+	return nil, []entities.ConversationMessage{}, nil
+}

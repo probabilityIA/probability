@@ -1,0 +1,8 @@
+# Request DTOs para Repositorios
+
+Esta carpeta contendrá DTOs específicos para consultas complejas al repositorio.
+
+Ejemplos:
+- Filtros avanzados de búsqueda
+- Parámetros de paginación y ordenamiento
+- Criterios de consulta compuestos

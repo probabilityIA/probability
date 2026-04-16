@@ -1,0 +1,373 @@
+package usecases
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+
+	"github.com/secamc93/probability/back/testing/integrations/envioclick/internal/domain"
+)
+
+// HandleQuote simulates the POST /api/v2/quotation endpoint
+func (s *APISimulator) HandleQuote(req domain.QuoteRequest) (*domain.QuoteResponse, error) {
+	s.logger.Info().
+		Str("origin", req.Origin.DaneCode).
+		Str("destination", req.Destination.DaneCode).
+		Int("packages", len(req.Packages)).
+		Float64("content_value", req.ContentValue).
+		Msg("Simulando cotizacion de envio")
+
+	// Validate DANE codes
+	if req.Origin.DaneCode == "" {
+		return nil, fmt.Errorf("error: el codigo dane de origen no existe o no es valido")
+	}
+	if !IsValidDaneCode(req.Origin.DaneCode) {
+		return nil, fmt.Errorf("error: el codigo dane de origen no existe o no es valido")
+	}
+	if req.Destination.DaneCode == "" {
+		return nil, fmt.Errorf("error: el codigo dane del destino no existe o no es valido")
+	}
+	if !IsValidDaneCode(req.Destination.DaneCode) {
+		return nil, fmt.Errorf("error: el codigo dane del destino no existe o no es valido")
+	}
+
+	// Validate packages
+	if len(req.Packages) == 0 {
+		return nil, fmt.Errorf("Error de validacion: Faltan datos obligatorios o hay datos invalidos en la solicitud")
+	}
+	for _, pkg := range req.Packages {
+		if pkg.Weight <= 0 {
+			return nil, fmt.Errorf("El peso del paquete es invalido")
+		}
+		if pkg.Height <= 0 || pkg.Width <= 0 || pkg.Length <= 0 {
+			return nil, fmt.Errorf("Las dimensiones del paquete son invalidas")
+		}
+	}
+
+	// Validate content value
+	if req.ContentValue <= 0 {
+		return nil, fmt.Errorf("El valor declarado es invalido o esta fuera de rango")
+	}
+
+	rates := GenerateRates(req)
+
+	// Save rates in repository for later use in generate
+	for _, rate := range rates {
+		s.Repository.SaveRate(rate.IDRate, &domain.RateInfo{
+			IDCarrier: rate.IDCarrier,
+			Carrier:   rate.Carrier,
+			IDProduct: rate.IDProduct,
+			Product:   rate.Product,
+		})
+	}
+
+	s.logger.Info().
+		Int("rates_count", len(rates)).
+		Str("origin_city", GetCityName(req.Origin.DaneCode)).
+		Str("dest_city", GetCityName(req.Destination.DaneCode)).
+		Msg("Cotizacion generada exitosamente")
+
+	return &domain.QuoteResponse{
+		Status: "success",
+		Data: domain.QuoteData{
+			Rates: rates,
+		},
+	}, nil
+}
+
+// HandleGenerate simulates the POST /api/v2/shipment endpoint
+func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.GenerateResponse, error) {
+	s.logger.Info().
+		Int64("id_rate", req.IDRate).
+		Str("origin", req.Origin.DaneCode).
+		Str("destination", req.Destination.DaneCode).
+		Msg("Simulando generacion de guia")
+
+	// Same validations as quote
+	if req.Origin.DaneCode == "" || !IsValidDaneCode(req.Origin.DaneCode) {
+		return nil, fmt.Errorf("error: el codigo dane de origen no existe o no es valido")
+	}
+	if req.Destination.DaneCode == "" || !IsValidDaneCode(req.Destination.DaneCode) {
+		return nil, fmt.Errorf("error: el codigo dane del destino no existe o no es valido")
+	}
+	if len(req.Packages) == 0 {
+		return nil, fmt.Errorf("Error de validacion: Faltan datos obligatorios o hay datos invalidos en la solicitud")
+	}
+	for _, pkg := range req.Packages {
+		if pkg.Weight <= 0 {
+			return nil, fmt.Errorf("El peso del paquete es invalido")
+		}
+		if pkg.Height <= 0 || pkg.Width <= 0 || pkg.Length <= 0 {
+			return nil, fmt.Errorf("Las dimensiones del paquete son invalidas")
+		}
+	}
+	if req.ContentValue <= 0 {
+		return nil, fmt.Errorf("El valor declarado es invalido o esta fuera de rango")
+	}
+
+	// Pick a carrier based on IDRate (must have been saved in a previous quote call)
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	var carrier *carrierInfo
+	var product string
+	var shipmentID string
+	var trackingNumber string
+
+	if req.IDRate > 0 {
+		// Look up the rate that was saved during the quote
+		if rateInfo, exists := s.Repository.GetRateByID(req.IDRate); exists {
+			carrier = FindCarrierByID(rateInfo.IDCarrier)
+			product = rateInfo.Product
+			if carrier == nil {
+				// Fallback to random if carrier not found
+				carrier = &carriers[rng.Intn(len(carriers))]
+				product = carrier.Products[rng.Intn(len(carrier.Products))].Name
+			}
+
+			// If already generated for this rate, reuse the same tracking number
+			if rateInfo.GeneratedOnce {
+				shipmentID = rateInfo.ShipmentID
+				trackingNumber = rateInfo.TrackingNum
+				s.logger.Info().
+					Str("shipment_id", shipmentID).
+					Str("tracking", trackingNumber).
+					Msg("Reusing previously generated guide for this rate")
+			}
+		} else {
+			// No rate found, pick random
+			carrier = &carriers[rng.Intn(len(carriers))]
+			product = carrier.Products[rng.Intn(len(carrier.Products))].Name
+		}
+	} else {
+		// No IDRate provided, pick random
+		carrier = &carriers[rng.Intn(len(carriers))]
+		product = carrier.Products[rng.Intn(len(carrier.Products))].Name
+	}
+
+	// Generate new IDs only if not reusing
+	if shipmentID == "" {
+		shipmentID = s.Repository.GenerateShipmentID()
+		trackingNumber = GenerateTrackingNumber(*carrier, rng)
+
+		// Store for future calls with the same rate
+		if req.IDRate > 0 {
+			if rateInfo, exists := s.Repository.GetRateByID(req.IDRate); exists {
+				rateInfo.GeneratedOnce = true
+				rateInfo.ShipmentID = shipmentID
+				rateInfo.TrackingNum = trackingNumber
+			}
+		}
+	}
+
+	// Calculate flete
+	totalWeight := 0.0
+	for _, pkg := range req.Packages {
+		totalWeight += pkg.Weight
+	}
+	flete := calculateFlete(totalWeight, req.ContentValue, rng)
+
+	// Generate and upload PDF to S3; fall back to mock URL on any error
+	labelURL := fmt.Sprintf("https://envioclick-mock.local/labels/%s.pdf", shipmentID)
+	if s.s3 != nil {
+		originCity := GetCityName(req.Origin.DaneCode)
+		destCity := GetCityName(req.Destination.DaneCode)
+		pdfBytes, pdfErr := GenerateMockGuidePDF(trackingNumber, carrier.Name, product, shipmentID, originCity, destCity, flete)
+		if pdfErr == nil {
+			s3Key := fmt.Sprintf("testing-guias/%s.pdf", shipmentID)
+			ctx := context.Background()
+			_, uploadErr := s.s3.UploadFile(ctx, bytes.NewReader(pdfBytes), s3Key)
+			if uploadErr == nil {
+				// Build public URL using URL_BASE_DOMAIN_S3
+				if s.urlBase != "" {
+					labelURL = strings.TrimRight(s.urlBase, "/") + "/" + strings.TrimLeft(s3Key, "/")
+				} else {
+					labelURL = s.s3.GetImageURL(s3Key)
+				}
+				s.logger.Info().
+					Str("shipment_id", shipmentID).
+					Str("s3_key", s3Key).
+					Str("label_url", labelURL).
+					Msg("PDF de guia subido exitosamente a S3")
+			} else {
+				s.logger.Warn().Err(uploadErr).Str("shipment_id", shipmentID).Msg("Error subiendo PDF a S3, usando URL mock")
+			}
+		} else {
+			s.logger.Warn().Err(pdfErr).Str("shipment_id", shipmentID).Msg("Error generando PDF, usando URL mock")
+		}
+	}
+
+	now := time.Now()
+	idOrder := time.Now().UnixMilli()
+	shipment := &domain.StoredShipment{
+		ID:             shipmentID,
+		IDOrder:        idOrder,
+		TrackingNumber: trackingNumber,
+		Carrier:        carrier.Name,
+		CarrierID:      carrier.ID,
+		Product:        product,
+		Origin:         req.Origin,
+		Destination:    req.Destination,
+		Packages:       req.Packages,
+		ContentValue:   req.ContentValue,
+		CODValue:       req.CODValue,
+		Flete:          flete,
+		Status:         "created",
+		LabelURL:       labelURL,
+		CreatedAt:      now,
+	}
+	s.Repository.SaveShipment(shipment)
+
+	s.logger.Info().
+		Str("shipment_id", shipmentID).
+		Str("tracking", trackingNumber).
+		Str("carrier", carrier.Name).
+		Float64("flete", flete).
+		Msg("Guia generada exitosamente")
+
+	return &domain.GenerateResponse{
+		Status: "success",
+		Data: domain.GenerateData{
+			TrackingNumber:   trackingNumber,
+			LabelURL:         labelURL,
+			MyGuideReference: req.MyShipmentReference,
+			Carrier:          carrier.Name,
+			Product:          product,
+			IDOrder:          idOrder,
+		},
+	}, nil
+}
+
+// HandleTrack simulates the POST /api/v2/track endpoint
+func (s *APISimulator) HandleTrack(trackingNumber string) (*domain.TrackingResponse, error) {
+	s.logger.Info().
+		Str("tracking", trackingNumber).
+		Msg("Simulando rastreo de envio")
+
+	if trackingNumber == "" {
+		return nil, fmt.Errorf("tracking code is required")
+	}
+
+	shipment, exists := s.Repository.GetByTracking(trackingNumber)
+	if !exists {
+		return nil, fmt.Errorf("shipment not found for tracking: %s", trackingNumber)
+	}
+
+	var status string
+	switch shipment.Status {
+	case "cancelled":
+		status = "cancelled"
+	case "created":
+		status = "Pendiente de Recoleccion"
+	default:
+		status = "in_transit"
+	}
+
+	history := GenerateTrackingHistory(shipment.Carrier, shipment.CreatedAt)
+
+	s.logger.Info().
+		Str("tracking", trackingNumber).
+		Str("carrier", shipment.Carrier).
+		Str("status", status).
+		Int("events", len(history)).
+		Msg("Rastreo generado exitosamente")
+
+	return &domain.TrackingResponse{
+		Status: "success",
+		Data: domain.TrackingData{
+			TrackingNumber: trackingNumber,
+			Carrier:        shipment.Carrier,
+			Status:         status,
+			Events:         history,
+		},
+	}, nil
+}
+
+// ShouldSimulateNumericTracker returns true ~30% of the time to simulate
+// the known bug where EnvioClick returns the tracker field as a number instead of a string.
+// This caused: "json: cannot unmarshal number into Go struct field GenerateData.data.tracker of type string"
+func (s *APISimulator) ShouldSimulateNumericTracker() bool {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return rng.Intn(10) < 3 // 30% de probabilidad
+}
+
+// GenerateNumericTrackerValue generates a 12-digit numeric tracking number (int64)
+// to simulate the bug where EnvioClick returns tracker as a number
+func (s *APISimulator) GenerateNumericTrackerValue() int64 {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return rng.Int63n(900000000000) + 100000000000
+}
+
+// HandleCancel simulates the DELETE /api/v2/shipment/:id endpoint
+func (s *APISimulator) HandleCancel(shipmentID string) (*domain.CancelResponse, error) {
+	s.logger.Info().
+		Str("shipment_id", shipmentID).
+		Msg("Simulando cancelacion de envio")
+
+	if shipmentID == "" {
+		return nil, fmt.Errorf("shipment ID is required")
+	}
+
+	shipment, exists := s.Repository.GetByID(shipmentID)
+	if !exists {
+		return nil, fmt.Errorf("shipment not found: %s", shipmentID)
+	}
+
+	if shipment.Status == "cancelled" {
+		return nil, fmt.Errorf("shipment already cancelled: %s", shipmentID)
+	}
+
+	now := time.Now()
+	shipment.CancelledAt = &now
+	s.Repository.MarkCancelled(shipmentID)
+
+	s.logger.Info().
+		Str("shipment_id", shipmentID).
+		Str("tracking", shipment.TrackingNumber).
+		Msg("Envio cancelado exitosamente")
+
+	return &domain.CancelResponse{
+		Status:  "success",
+		Message: "Cancelacion exitosa",
+	}, nil
+}
+
+func (s *APISimulator) HandleCancelBatch(req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+	s.logger.Info().
+		Int("order_count", len(req.IDOrders)).
+		Msg("Simulando cancelacion batch de envios")
+
+	cancelled := make([]int64, 0)
+	notValid := make([]int64, 0)
+
+	for _, idOrder := range req.IDOrders {
+		shipment, exists := s.Repository.GetByIDOrder(idOrder)
+		if !exists {
+			notValid = append(notValid, idOrder)
+			continue
+		}
+		if shipment.Status == "cancelled" {
+			notValid = append(notValid, idOrder)
+			continue
+		}
+		now := time.Now()
+		shipment.CancelledAt = &now
+		s.Repository.MarkCancelled(shipment.ID)
+		cancelled = append(cancelled, idOrder)
+	}
+
+	s.logger.Info().
+		Int("cancelled", len(cancelled)).
+		Int("not_valid", len(notValid)).
+		Msg("Cancelacion batch procesada")
+
+	return &domain.CancelBatchResponse{
+		Status: "success",
+		Data: domain.CancelBatchRespData{
+			OnlyCancelOrders: cancelled,
+			NotValidOrders:   notValid,
+			ToRefundOrders:   []int64{},
+		},
+	}, nil
+}

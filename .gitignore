@@ -1,0 +1,94 @@
+# If you prefer the allow list template instead of the deny list, see community template:
+# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
+#
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Code coverage profiles and other test artifacts
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+CLAUDE.md
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+.env.*
+
+# Editor/IDE
+# .idea/
+# .vscode/
+
+# Compiled Binaries
+back/central/main
+back/central/central_reserve
+back/central/probability-back-central
+back/integrationTest/integrationTest
+
+# ===========================================
+# Terraform - Archivos pesados y sensibles
+# ===========================================
+
+# Directorio local de Terraform (plugins, providers - muy pesado)
+**/.terraform/
+.terraform/
+
+# Archivos de estado de Terraform (contienen informacion sensible)
+*.tfstate
+*.tfstate.*
+terraform.tfstate
+terraform.tfstate.backup
+
+# Variables con datos sensibles
+*.tfvars
+!*.tfvars.example
+
+# Archivos de plan de Terraform
+*.tfplan
+*.plan
+
+# Directorio de crash logs
+crash.log
+crash.*.log
+
+# Override files (usados para configuracion local)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+probability.pem
+.cursor
+.cursor/
+
+# Claude Code configuration and cache
+.claude
+.claude/
+.playwright-mcp/
+.vscode/
+
+# Lock file (opcional - algunos lo versionan, otros no)
+# .terraform.lock.hcl
+
+# MCP config (contains DB credentials)
+.mcp.json
+.claude/mcp.json
+.claude/settings.json
+.claude.json

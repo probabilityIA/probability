@@ -1,0 +1,564 @@
+package client
+
+import (
+	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
+)
+
+// InvoiceResponse representa la respuesta de creación de factura de Softpymes
+// Según documentación oficial: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
+type InvoiceResponse struct {
+	Message string       `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
+	Info    *InvoiceInfo `json:"info,omitempty"`
+}
+
+// InvoiceInfo contiene los datos de la factura creada por Softpymes
+type InvoiceInfo struct {
+	Date           string  `json:"date"`           // "2023-10-25T10:39:13.000Z"
+	DocumentNumber string  `json:"documentNumber"` // "ABC0000000000"
+	Subtotal       float64 `json:"subtotal"`
+	Discount       float64 `json:"discount"`
+	IVA            float64 `json:"iva"`
+	Withholding    float64 `json:"withholding"`
+	Total          float64 `json:"total"`
+	DocsFe         *DocsFe `json:"docsFe,omitempty"`
+}
+
+// DocsFe contiene información de validación de la factura electrónica
+// NOTA: Softpymes retorna status como string ("Aceptado", "Pendiente", "Rechazado"), NO bool.
+type DocsFe struct {
+	Status  string `json:"status"`          // "Aceptado", "Pendiente", "Rechazado"
+	Message string `json:"message"`         // "Documento válido enviado al proveedor tecnológico"
+	Error   string `json:"error,omitempty"` // Error de la DIAN (ej: "Empresa no habilitada...")
+}
+
+// CreateInvoice crea una factura electrónica en Softpymes
+// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest, baseURL string) (*dtos.CreateInvoiceResult, error) {
+	result := &dtos.CreateInvoiceResult{}
+
+	// Validar credenciales
+	if req.Credentials.APIKey == "" {
+		return result, fmt.Errorf("api_key not found in credentials")
+	}
+	if req.Credentials.APISecret == "" {
+		return result, fmt.Errorf("api_secret not found in credentials")
+	}
+
+	// Extraer referer del config
+	referer, _ := req.Config["referer"].(string)
+	if referer == "" {
+		return result, fmt.Errorf("referer not found in config")
+	}
+
+	// Autenticar usando la URL efectiva
+	token, err := c.authenticate(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, baseURL)
+	if err != nil {
+		return result, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Verificar idempotencia: solo en reintentos, consultar si ya existe la factura en Softpymes.
+	// En el primer intento no es necesario — se evita una llamada extra innecesaria.
+	if req.IsRetry && req.OrderID != "" {
+		branchCode := "001"
+		if bc, ok := req.Config["branch_code"].(string); ok && bc != "" {
+			branchCode = bc
+		}
+		existing, err := c.findExistingInvoiceByOrderID(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, req.OrderID, branchCode, req.OrderCreatedAt, baseURL)
+		if err != nil {
+			// No bloqueamos la creación si la consulta falla — solo advertimos
+			c.log.Warn(ctx).Err(err).
+				Str("order_id", req.OrderID).
+				Msg("Could not check for existing invoice, proceeding with creation")
+		} else if existing != nil {
+			c.log.Info(ctx).
+				Str("order_id", req.OrderID).
+				Str("document_number", existing.DocumentNumber).
+				Msg("Invoice already exists for this order in Softpymes, skipping duplicate creation")
+			result.InvoiceNumber = existing.DocumentNumber
+			result.ExternalID = existing.DocumentNumber
+			result.IssuedAt = existing.DocumentDate
+			result.ProviderInfo = map[string]interface{}{
+				"already_existed": true,
+				"document_number": existing.DocumentNumber,
+			}
+			return result, nil
+		}
+	}
+
+	// Determinar customerNit
+	// Si force_default_customer está habilitado, siempre usar default_customer_nit
+	// ignorando el DNI real del cliente (ej: facturar siempre a "CONSUMIDOR FINAL")
+	forceDefault, _ := req.Config["force_default_customer"].(bool)
+	customerNit := ""
+	if forceDefault {
+		if defaultNit, ok := req.Config["default_customer_nit"].(string); ok && defaultNit != "" {
+			customerNit = defaultNit
+			c.log.Info(ctx).
+				Str("default_nit", defaultNit).
+				Str("original_dni", req.Customer.DNI).
+				Msg("Using forced default customer NIT (force_default_customer=true)")
+		} else {
+			c.log.Error(ctx).
+				Msg("force_default_customer is true but default_customer_nit is not configured")
+			return result, fmt.Errorf("force_default_customer is true but default_customer_nit is not configured")
+		}
+	} else {
+		customerNit = req.Customer.DNI
+		if customerNit == "" {
+			if defaultNit, ok := req.Config["default_customer_nit"].(string); ok && defaultNit != "" {
+				customerNit = defaultNit
+				c.log.Info(ctx).
+					Str("default_nit", defaultNit).
+					Msg("Using default customer NIT from config (customer has no DNI)")
+			} else {
+				c.log.Error(ctx).
+					Msg("customerNit is required but not provided. Configure default_customer_nit in integration config or ensure customers have DNI")
+				return result, fmt.Errorf("customerNit is required: customer has no DNI and no default_customer_nit configured")
+			}
+		}
+	}
+
+	// Asegurar que el cliente existe en Softpymes antes de facturar
+	// Retorna el branchCode real asignado por Softpymes
+	customerBranch := ""
+	if branch, err := c.ensureCustomerExists(ctx, token, referer, customerNit, &req.Customer, req.Config, baseURL); err != nil {
+		c.log.Warn(ctx).Err(err).
+			Str("customer_nit", customerNit).
+			Msg("Could not ensure customer exists in Softpymes, proceeding anyway")
+	} else {
+		customerBranch = branch
+	}
+
+	// Fallback: usar config solo si no se pudo obtener branchCode del cliente
+	if customerBranch == "" {
+		customerBranch = "001" // default
+		if cb, ok := req.Config["customer_branch_code"].(string); ok && cb != "" {
+			customerBranch = cb
+		}
+	}
+
+	// Obtener branch_code del config (default "001")
+	branchCode := "001"
+	if branch, ok := req.Config["branch_code"].(string); ok && branch != "" {
+		branchCode = branch
+	}
+
+	// Obtener seller_nit del config (OPCIONAL)
+	sellerNit := ""
+	if seller, ok := req.Config["seller_nit"].(string); ok && seller != "" {
+		sellerNit = seller
+	}
+
+	// Obtener resolution_id del config
+	resolutionID := 0
+	if resID, ok := req.Config["resolution_id"].(float64); ok {
+		resolutionID = int(resID)
+	} else if resID, ok := req.Config["resolution_id"].(int); ok {
+		resolutionID = resID
+	}
+
+	if resolutionID == 0 {
+		c.log.Warn(ctx).
+			Msg("resolutionId is 0 - Softpymes may reject this invoice. Configure a valid resolution_id in integration config")
+	}
+
+	// Validar items
+	if len(req.Items) == 0 {
+		c.log.Error(ctx).Msg("No items found in invoice request - cannot create invoice without items")
+		return result, fmt.Errorf("no items found in invoice data")
+	}
+
+	// Extract item_mappings from config for configurable item code resolution.
+	// If not configured, behavior is identical to the original (SKU / "SHIPPING").
+	var itemMappings map[string]interface{}
+	if mappings, ok := req.Config["item_mappings"].(map[string]interface{}); ok {
+		itemMappings = mappings
+	}
+
+	// Mapear items al formato de Softpymes.
+	// Softpymes espera precios base (sin IVA). Usamos UnitPriceBase que ya fue
+	// calculado al importar la orden desde la plataforma (Shopify, MercadoLibre, etc).
+	// Si UnitPriceBase es 0 (órdenes antiguas sin el campo), fallback a UnitPrice.
+	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
+	for _, item := range req.Items {
+		itemCode := resolveItemCode(item.SKU, item.Name, item.ProductID, itemMappings)
+
+		unitPrice := item.UnitPriceBase
+		if unitPrice == 0 {
+			unitPrice = item.UnitPrice
+		}
+
+		softpymesItem := map[string]interface{}{
+			"itemCode":  itemCode,
+			"quantity":  float64(item.Quantity),
+			"unitCode":  "UNI",
+			"discount":  item.DiscountPercent,
+			"unitValue": fmt.Sprintf("%.2f", unitPrice),
+		}
+
+		softpymesItems = append(softpymesItems, softpymesItem)
+	}
+
+	// Agregar shipping como línea de factura si hay costo de envío efectivo.
+	// SHIPPING debe existir en el catálogo de Softpymes como servicio.
+	// Usar ShippingCostBase (sin IVA) calculado en el módulo invoicing.
+	// Si hay descuento de envío (free shipping), restarlo del costo.
+	effectiveShipping := req.ShippingCost - req.ShippingDiscount
+	if effectiveShipping < 0 {
+		effectiveShipping = 0
+	}
+
+	if effectiveShipping > 0 {
+		shippingPrice := req.ShippingCostBase
+		if shippingPrice == 0 {
+			shippingPrice = effectiveShipping // fallback órdenes antiguas
+		}
+
+		shippingItem := map[string]interface{}{
+			"itemCode":  resolveShippingItemCode(itemMappings),
+			"quantity":  1.0,
+			"unitCode":  "UNI",
+			"discount":  0,
+			"unitValue": fmt.Sprintf("%.2f", shippingPrice),
+		}
+		softpymesItems = append(softpymesItems, shippingItem)
+	}
+
+	// Mapear currency al formato de Softpymes
+	rawCurrency := req.Currency
+	if rawCurrency == "" {
+		rawCurrency = "COP"
+	}
+	currency := mapCurrencyToSoftpymes(rawCurrency)
+
+	// Generar documentDate en formato YYYY-MM-DD (zona horaria Colombia UTC-5)
+	loc, _ := time.LoadLocation("America/Bogota")
+	documentDate := time.Now().In(loc).Format("2006-01-02")
+
+	// comment: identifica la orden de origen para idempotencia y trazabilidad
+	// Formato: "order:<UUID> | #<OrderNumber>" — el cliente ve el OrderNumber (Shopify)
+	// y findExistingInvoiceByOrderID busca por "order:<UUID>" (strings.Contains)
+	comment := ""
+	if req.OrderID != "" {
+		comment = "order:" + req.OrderID
+		if req.OrderNumber != "" {
+			comment += " | #" + req.OrderNumber
+		}
+	}
+
+	// Construir request según formato de Softpymes
+	invoiceReq := map[string]interface{}{
+		"documentDate":   documentDate,
+		"currencyCode":   currency,
+		"exchangeRate":   1.0,
+		"branchCode":     branchCode,
+		"customerBranch": customerBranch,
+		"customerNit":    customerNit,
+		"termDays":       0,
+		"resolutionId":   resolutionID,
+		"comment":        comment,
+		"items":          softpymesItems,
+	}
+
+	// Solo incluir sellerNit si está configurado
+	if sellerNit != "" {
+		invoiceReq["sellerNit"] = sellerNit
+	}
+
+	c.log.Info(ctx).
+		Str("document_date", documentDate).
+		Str("currency", currency).
+		Str("customer_nit", customerNit).
+		Str("customer_branch", customerBranch).
+		Str("seller_nit", sellerNit).
+		Str("branch_code", branchCode).
+		Int("resolution_id", resolutionID).
+		Int("items_count", len(softpymesItems)).
+		Interface("items", softpymesItems).
+		Msg("Sending invoice request to Softpymes")
+
+	var invoiceResp InvoiceResponse
+
+	requestURL := c.resolveURL(baseURL, "/app/integration/sales_invoice/")
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetAuthToken(token).
+		SetHeader("Referer", referer).
+		SetBody(invoiceReq).
+		SetResult(&invoiceResp).
+		SetDebug(true).
+		Post(requestURL)
+
+	// Capturar audit data (siempre, independiente del resultado)
+	result.AuditData = &dtos.AuditData{
+		RequestURL:     requestURL,
+		RequestPayload: invoiceReq,
+	}
+	if resp != nil {
+		result.AuditData.ResponseStatus = resp.StatusCode()
+		result.AuditData.ResponseBody = string(resp.Body())
+	}
+
+	if err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to create invoice")
+		return result, fmt.Errorf("invoice creation request failed: %w", err)
+	}
+
+	// Manejar errores HTTP
+	if resp.IsError() {
+		c.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("response", string(resp.Body())).
+			Msg("Invoice creation failed")
+
+		if resp.StatusCode() == 401 {
+			c.tokenCache.Clear()
+			return result, fmt.Errorf("authentication token expired")
+		}
+
+		return result, fmt.Errorf("invoice creation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+	}
+
+	// Verificar que haya info en la respuesta
+	if invoiceResp.Info == nil {
+		// Softpymes puede responder HTTP 200 sin info cuando la DIAN está validando.
+		// Esto NO es un error: el documento fue aceptado por Softpymes y está en cola de validación.
+		if strings.Contains(strings.ToLower(invoiceResp.Message), "validación") {
+			c.log.Info(ctx).
+				Str("message", invoiceResp.Message).
+				Msg("Invoice accepted by Softpymes, pending DIAN validation")
+			result.PendingValidation = true
+			result.ProviderMessage = invoiceResp.Message
+			return result, nil
+		}
+		c.log.Warn(ctx).
+			Str("message", invoiceResp.Message).
+			Msg("Invoice response has no info")
+		return result, fmt.Errorf("invoice response has no info: %s", invoiceResp.Message)
+	}
+
+	// Verificar rechazo DIAN: error explícito o status "Rechazado"
+	// Softpymes reporta rechazo con docsFe.error != "" O docsFe.status == "Rechazado"
+	if invoiceResp.Info.DocsFe != nil {
+		if invoiceResp.Info.DocsFe.Error != "" {
+			c.log.Error(ctx).
+				Str("docsFe_error", invoiceResp.Info.DocsFe.Error).
+				Str("docsFe_status", invoiceResp.Info.DocsFe.Status).
+				Str("document_number", invoiceResp.Info.DocumentNumber).
+				Msg("DIAN rejected invoice (error field)")
+			return result, fmt.Errorf("DIAN rejection: %s", invoiceResp.Info.DocsFe.Error)
+		}
+		if invoiceResp.Info.DocsFe.Status == "Rechazado" {
+			c.log.Error(ctx).
+				Str("docsFe_status", invoiceResp.Info.DocsFe.Status).
+				Str("docsFe_message", invoiceResp.Info.DocsFe.Message).
+				Str("document_number", invoiceResp.Info.DocumentNumber).
+				Msg("DIAN rejected invoice (status Rechazado)")
+			return result, fmt.Errorf("DIAN rejection: %s", invoiceResp.Info.DocsFe.Message)
+		}
+	}
+
+	c.log.Info(ctx).
+		Str("document_number", invoiceResp.Info.DocumentNumber).
+		Str("date", invoiceResp.Info.Date).
+		Float64("total", invoiceResp.Info.Total).
+		Str("message", invoiceResp.Message).
+		Msg("Invoice created successfully in Softpymes")
+
+	// Rellenar resultado tipado
+	result.InvoiceNumber = invoiceResp.Info.DocumentNumber
+	result.ExternalID = invoiceResp.Info.DocumentNumber
+	result.IssuedAt = invoiceResp.Info.Date
+
+	result.ProviderInfo = map[string]interface{}{
+		"subtotal":    invoiceResp.Info.Subtotal,
+		"discount":    invoiceResp.Info.Discount,
+		"iva":         invoiceResp.Info.IVA,
+		"withholding": invoiceResp.Info.Withholding,
+		"total":       invoiceResp.Info.Total,
+	}
+
+	if invoiceResp.Info.DocsFe != nil {
+		result.ProviderInfo["dian_status"] = invoiceResp.Info.DocsFe.Status   // "Aceptado", "Pendiente", etc.
+		result.ProviderInfo["dian_message"] = invoiceResp.Info.DocsFe.Message
+	}
+
+	return result, nil
+}
+
+// CancelInvoice anula una factura emitida en Softpymes
+// documentNumber: número de documento (ej: "FEV0000001")
+// baseURL: URL base efectiva (producción o testing)
+func (c *Client) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, documentNumber, reason, baseURL string) error {
+	// Autenticar
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	cancelReq := map[string]interface{}{
+		"documentNumber": documentNumber,
+		"reason":         reason,
+	}
+
+	var cancelResp struct {
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+
+	requestURL := c.resolveURL(baseURL, "/app/integration/sales_invoice/cancel/")
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetAuthToken(token).
+		SetHeader("Referer", referer).
+		SetBody(cancelReq).
+		SetResult(&cancelResp).
+		Post(requestURL)
+
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("document_number", documentNumber).Msg("Failed to cancel invoice")
+		return fmt.Errorf("invoice cancellation request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		if resp.StatusCode() == 401 {
+			c.tokenCache.Clear()
+			return fmt.Errorf("authentication token expired")
+		}
+		c.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("response", string(resp.Body())).
+			Msg("Invoice cancellation failed")
+		return fmt.Errorf("invoice cancellation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+	}
+
+	if cancelResp.Error != "" {
+		return fmt.Errorf("invoice cancellation error: %s", cancelResp.Error)
+	}
+
+	c.log.Info(ctx).
+		Str("document_number", documentNumber).
+		Str("message", cancelResp.Message).
+		Msg("Invoice cancelled successfully in Softpymes")
+
+	return nil
+}
+
+// resolveItemCode determines the Softpymes item code for a regular line item.
+// Resolution order:
+//  1. Named service mappings (membership_sku->membership_code, tip_sku->tip_code)
+//  2. by_sku[SKU]
+//  3. default
+//  4. SKU as-is (original behavior)
+//
+// If itemMappings is nil or no mapping matches, falls back to original behavior.
+// resolveItemCode determines the Softpymes item code for a line item.
+// It matches services by item name: tips ("Tip"/"Propina") and memberships
+// ("Membership"/"Membresía"). For regular products, the original SKU is used.
+func resolveItemCode(itemSKU string, itemName string, productID *string, itemMappings map[string]interface{}) string {
+	if itemMappings != nil && itemName != "" {
+		nameLower := strings.ToLower(strings.TrimSpace(itemName))
+		// Tip: exact match on "tip" or "propina"
+		if nameLower == "tip" || nameLower == "propina" {
+			if code, ok := itemMappings["tip"].(string); ok && code != "" {
+				return code
+			}
+		}
+		// Membership: name contains "membership" or "membresía"/"membresia"
+		if strings.Contains(nameLower, "membership") || strings.Contains(nameLower, "membresía") || strings.Contains(nameLower, "membresia") {
+			if code, ok := itemMappings["membership"].(string); ok && code != "" {
+				return code
+			}
+		}
+	}
+	// Original behavior: SKU, fallback to ProductID
+	if itemSKU != "" {
+		return itemSKU
+	}
+	if productID != nil {
+		return *productID
+	}
+	return ""
+}
+
+// resolveShippingItemCode determines the Softpymes item code for shipping.
+// Uses item_mappings.shipping if configured, otherwise "SHIPPING" (original behavior).
+func resolveShippingItemCode(itemMappings map[string]interface{}) string {
+	if itemMappings != nil {
+		if code, ok := itemMappings["shipping"].(string); ok && code != "" {
+			return code
+		}
+	}
+	return "SHIPPING"
+}
+
+// mapCurrencyToSoftpymes convierte códigos ISO de moneda al formato de Softpymes
+// Softpymes usa: "P" = Peso Colombiano, "D" = Dólar Americano
+func mapCurrencyToSoftpymes(isoCurrency string) string {
+	switch isoCurrency {
+	case "COP", "cop":
+		return "P"
+	case "USD", "usd":
+		return "D"
+	default:
+		return "P"
+	}
+}
+
+// findExistingInvoiceByOrderID busca en Softpymes una factura ya creada para una orden.
+// Solo se llama en reintentos. Filtra por branchCode y un rango de fechas acotado
+// (desde la fecha de creación de la orden hasta hoy) para minimizar resultados.
+// La búsqueda final es por el campo "comment" que almacena "order:<orderID>".
+// Retorna nil, nil si no existe ninguna factura previa para esta orden.
+func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSecret, referer, orderID, branchCode, orderCreatedAt, baseURL string) (*Document, error) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Now().In(loc)
+	dateTo := now.Format("2006-01-02")
+
+	// dateFrom: fecha de creación de la orden si se provee, si no el día actual.
+	// Los reintentos suelen ocurrir el mismo día, así que el rango es mínimo.
+	dateFrom := dateTo
+	if orderCreatedAt != "" {
+		dateFrom = orderCreatedAt
+	}
+
+	pageSize := "50"
+	params := ListDocumentsParams{
+		DateFrom: dateFrom,
+		DateTo:   dateTo,
+		PageSize: &pageSize,
+	}
+	if branchCode != "" {
+		params.BranchCode = &branchCode
+	}
+
+	c.log.Info(ctx).
+		Str("order_id", orderID).
+		Str("date_from", dateFrom).
+		Str("date_to", dateTo).
+		Str("branch_code", branchCode).
+		Msg("Checking for existing Softpymes invoice (retry idempotency)")
+
+	docs, err := c.listDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error querying existing invoices: %w", err)
+	}
+
+	searchComment := "order:" + orderID
+	for i, doc := range *docs {
+		if strings.Contains(doc.Comment, searchComment) {
+			c.log.Info(ctx).
+				Str("order_id", orderID).
+				Str("document_number", doc.DocumentNumber).
+				Msg("Found existing Softpymes invoice for order — skipping duplicate")
+			return &(*docs)[i], nil
+		}
+	}
+
+	return nil, nil
+}

@@ -1,0 +1,214 @@
+name: Testing Backend CI/CD - Probability
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'back/testing/**'
+      - 'back/migration/**'
+      - 'infra/compose-prod/docker-compose.yaml'
+      - '.github/workflows/testing-backend-ci-cd.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: testing-backend-deploy
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: 476702565908
+  IMAGE_NAME: testing-backend
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+    outputs:
+      version_full: ${{ steps.version.outputs.VERSION_FULL }}
+      version_short: ${{ steps.version.outputs.VERSION_SHORT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.23'
+          cache-dependency-path: back/testing/go.sum
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Generate version
+        id: version
+        run: |
+          chmod +x .github/scripts/generate-version.sh
+          .github/scripts/generate-version.sh probability-testing-backend us-east-1 476702565908
+
+      - name: Build image with Docker (ARM64)
+        working-directory: ./back
+        run: |
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-testing-backend"
+
+          docker build \
+            --platform linux/arm64 \
+            --no-cache \
+            -f testing/docker/Dockerfile \
+            -t ${REPO_URL}:latest \
+            -t ${REPO_URL}:${VERSION_FULL} \
+            -t ${REPO_URL}:${VERSION_SHORT} \
+            -t ${REPO_URL}:${SHORT_SHA} \
+            .
+
+          echo "Imagen construida con 4 tags:"
+          echo "   - latest"
+          echo "   - ${VERSION_FULL}"
+          echo "   - ${VERSION_SHORT}"
+          echo "   - ${SHORT_SHA}"
+
+      - name: Push image to ECR
+        run: |
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-testing-backend"
+
+          echo "Pushing tags to ECR..."
+          docker push ${REPO_URL}:latest
+          docker push ${REPO_URL}:${VERSION_FULL}
+          docker push ${REPO_URL}:${VERSION_SHORT}
+          docker push ${REPO_URL}:${SHORT_SHA}
+
+          echo "4 tags pushed successfully"
+
+      - name: Create Git Tag
+        run: |
+          VERSION_TAG="v${{ steps.version.outputs.VERSION_SHORT }}"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git tag -d "${VERSION_TAG}" 2>/dev/null || true
+
+          git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG} - Testing Backend
+
+          Image: probability-testing-backend:${{ steps.version.outputs.VERSION_FULL }}
+          Commit: ${{ github.sha }}"
+
+          git push origin "${VERSION_TAG}" --force
+          echo "Git tag created/updated: ${VERSION_TAG}"
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Upload compose file
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            infra/compose-prod/docker-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
+
+      - name: Deploy to server
+        env:
+          VERSION_FULL: ${{ needs.build-and-push.outputs.version_full }}
+          VERSION_SHORT: ${{ needs.build-and-push.outputs.version_short }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "VERSION_FULL='${{ env.VERSION_FULL }}' bash -s" << 'EOF'
+            set -e
+            export PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin:$PATH
+
+            mkdir -p ~/probability/infra/compose-prod
+
+            if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then
+              echo "Installing AWS CLI for ARM64..."
+              sudo rm -rf /usr/local/aws-cli /usr/local/bin/aws /usr/local/bin/aws_completer
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+              rm -rf aws awscliv2.zip
+              /usr/local/bin/aws --version || { echo "Error: AWS CLI install failed"; exit 1; }
+            fi
+
+            cd ~/probability/infra/compose-prod || exit 1
+            export PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin:$PATH
+
+            echo "Logging in to ECR..."
+            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
+              docker login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+
+            REPO_URL="476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-backend"
+
+            echo "Pulling image with version tag: $VERSION_FULL"
+            docker rmi ${REPO_URL}:latest 2>/dev/null || true
+            docker rmi ${REPO_URL}:$VERSION_FULL 2>/dev/null || true
+
+            docker pull ${REPO_URL}:$VERSION_FULL
+            docker tag ${REPO_URL}:$VERSION_FULL ${REPO_URL}:latest
+
+            echo "Stopping testing backend..."
+            docker stop -t 10 testing_backend_prod || true
+            docker rm -f testing_backend_prod || true
+
+            echo "Liberando puerto 9092..."
+            sudo fuser -k 9092/tcp || true
+            sleep 2
+
+            echo "Starting testing backend with new image..."
+            docker compose -f docker-compose.yaml up -d back-testing
+            sleep 5
+
+            echo "Waiting for container to start (15 seconds)..."
+            sleep 15
+
+            CONTAINER_STATUS=$(docker inspect testing_backend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            if [ "$CONTAINER_STATUS" != "running" ]; then
+              echo "Container not running, attempting restart..."
+              docker logs --tail 30 testing_backend_prod 2>/dev/null || true
+              docker restart testing_backend_prod 2>/dev/null || true
+              sleep 10
+              CONTAINER_STATUS=$(docker inspect testing_backend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "$CONTAINER_STATUS" != "running" ]; then
+                echo "Error: Could not start container"
+                exit 1
+              fi
+            fi
+
+            echo "Container running correctly"
+
+            # Clean old images
+            docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep "probability-testing-backend" | \
+              grep -v "$VERSION_FULL" | grep -v "latest" | \
+              awk '{print $2}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker image prune -f
+
+            echo "Testing backend deployed successfully with version $VERSION_FULL"
+          EOF

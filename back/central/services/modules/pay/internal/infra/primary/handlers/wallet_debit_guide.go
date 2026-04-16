@@ -1,0 +1,52 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/handlers/request"
+)
+
+// DebitForGuide maneja POST /pay/wallet/debit-guide
+func (h *walletHandler) DebitForGuide(c *gin.Context) {
+	var req request.DebitForGuideRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	businessID, exists := middleware.GetBusinessID(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Business ID not found in token"})
+		return
+	}
+
+	// Si el caller es admin (business_id=0), usar el business_id del request body
+	if businessID == 0 {
+		if req.BusinessID == nil || *req.BusinessID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required for admin users"})
+			return
+		}
+		businessID = *req.BusinessID
+	}
+
+	// Capturar user_id de quien genera la transacción
+	var userID *uint
+	if uid, ok := middleware.GetUserID(c); ok && uid != 0 {
+		userID = &uid
+	}
+
+	if err := h.walletUC.DebitForGuide(c.Request.Context(), &dtos.DebitForGuideDTO{
+		BusinessID:     businessID,
+		Amount:         req.Amount,
+		TrackingNumber: req.TrackingNumber,
+		UserID:         userID,
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Wallet debited successfully", "tracking_number": req.TrackingNumber})
+}

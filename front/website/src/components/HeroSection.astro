@@ -1,0 +1,284 @@
+---
+---
+
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.12;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.blob-1 {
+		width: 400px;
+		height: 400px;
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		top: -100px;
+		right: -100px;
+		animation-delay: 0s;
+	}
+
+	.blob-2 {
+		width: 350px;
+		height: 350px;
+		background: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
+		bottom: -50px;
+		left: -50px;
+		animation-delay: 2s;
+	}
+
+	.blob-3 {
+		width: 300px;
+		height: 300px;
+		background: #8B5CF6;
+		top: 50%;
+		left: -150px;
+		animation-delay: 4s;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.particle {
+		position: absolute;
+		width: 2px;
+		height: 2px;
+		background: #8B5CF6;
+		border-radius: 50%;
+		opacity: 0.3;
+	}
+
+	@keyframes float-box {
+		0%, 100% {
+			transform: translateY(0px) rotate(0deg);
+		}
+		50% {
+			transform: translateY(-30px) rotate(1deg);
+		}
+	}
+
+	.box-float {
+		animation: float-box 5s ease-in-out infinite;
+	}
+
+	#carbon-fiber-canvas {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 1;
+		pointer-events: none;
+	}
+</style>
+
+<section class="relative bg-white py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-20 overflow-hidden" id="hero-section">
+	<!-- Carbon Fiber Canvas Background -->
+	<canvas id="carbon-fiber-canvas"></canvas>
+
+	<!-- Decorative Blobs -->
+	<div class="blob blob-1"></div>
+	<div class="blob blob-2"></div>
+	<div class="blob blob-3"></div>
+
+	<!-- Decorative Particles -->
+	<div class="particle" style="top: 10%; left: 5%; animation: float 8s ease-in-out infinite;"></div>
+	<div class="particle" style="top: 20%; right: 10%; animation: float 7s ease-in-out infinite; animation-delay: 1s;"></div>
+	<div class="particle" style="top: 40%; left: 15%; animation: float 9s ease-in-out infinite; animation-delay: 2s;"></div>
+	<div class="particle" style="bottom: 30%; right: 15%; animation: float 10s ease-in-out infinite; animation-delay: 3s;"></div>
+	<div class="particle" style="bottom: 15%; left: 25%; animation: float 8s ease-in-out infinite; animation-delay: 1.5s;"></div>
+
+	<!-- Box Image - Absolute positioned with lazy loading -->
+	<img
+		src="https://images-cam93.s3.us-east-1.amazonaws.com/probability-box.png"
+		alt="Caja de Probabilidad - Predice devoluciones"
+		class="hidden lg:block absolute right-0 top-0 h-full w-[1200px] object-contain drop-shadow-2xl -mr-[400px] box-float"
+		style="z-index: 2;"
+		loading="lazy"
+		decoding="async"
+	/>
+
+	<div class="max-w-7xl mx-auto relative z-10">
+		<!-- Left Content -->
+		<div class="max-w-2xl">
+			<!-- Badge -->
+			<div class="flex justify-start mb-6 sm:mb-8">
+				<div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-3 sm:px-4 py-2 hover:bg-purple-100 transition-colors">
+					<svg class="w-3 sm:w-4 h-3 sm:h-4 text-[#8B5CF6]" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M12 2a1 1 0 011 1v1.5a1 1 0 11-2 0V3a1 1 0 011-1m0 12a1 1 0 011 1v1.5a1 1 0 11-2 0V16a1 1 0 011-1m7.07-5.07a1 1 0 00-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414l-1.06-1.06M6.34 6.34a1 1 0 10-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414L6.34 6.34m10.32 10.32a1 1 0 10-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414l-1.06-1.06"></path>
+					</svg>
+					<span class="text-gray-700 font-medium text-xs sm:text-sm">Potenciado por IA</span>
+				</div>
+			</div>
+
+			<!-- Main Title -->
+			<h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-left mb-6 sm:mb-8 text-gray-900 leading-tight">
+				Predice y elimina<br /><span class="gradient-text">devoluciones</span> antes de que sucedan
+			</h1>
+
+			<!-- Description -->
+			<p class="text-base sm:text-lg md:text-xl text-gray-500 text-left mb-8 sm:mb-12">
+				Utiliza inteligencia artificial para analizar comportamientos, optimizar envíos y aumentar tu rentabilidad automáticamente.
+			</p>
+
+			<!-- CTA Buttons -->
+			<div class="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+				<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" class="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-purple-500/40 hover:scale-105 text-sm sm:text-base">
+				Solicitar Demo Gratis
+				<svg class="w-3 sm:w-4 h-3 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M5 12h14M12 5l7 7-7 7"/>
+				</svg>
+			</a>
+			<a href="./contacto" class="w-full sm:w-auto border border-gray-300 text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all text-sm sm:text-base">
+				Contáctanos
+			</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	interface Particle {
+		x: number;
+		y: number;
+		baseX: number;
+		baseY: number;
+		vx: number;
+		vy: number;
+		opacity: number;
+	}
+
+	const canvas = document.getElementById('carbon-fiber-canvas') as HTMLCanvasElement;
+	const ctx = canvas?.getContext('2d');
+
+	if (!canvas || !ctx) {
+		throw new Error('Canvas or context not found');
+	}
+
+	let particles: Particle[] = [];
+	let mouseX = 0;
+	let mouseY = 0;
+	let mousePresent = false;
+
+	// Configurar canvas
+	function resizeCanvas() {
+		const section = document.getElementById('hero-section');
+		if (section) {
+			canvas.width = section.offsetWidth;
+			canvas.height = section.offsetHeight;
+		}
+	}
+
+	// Crear partículas
+	function initParticles() {
+		particles = [];
+		const particleCount = Math.floor((canvas.width * canvas.height) / 2000);
+
+		for (let i = 0; i < particleCount; i++) {
+			const x = Math.random() * canvas.width;
+			const y = Math.random() * canvas.height;
+
+			particles.push({
+				x,
+				y,
+				baseX: x,
+				baseY: y,
+				vx: 0,
+				vy: 0,
+				opacity: Math.random() * 0.6 + 0.2,
+			});
+		}
+	}
+
+	// Dibujar partículas
+	function draw() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		particles.forEach((particle) => {
+			// Distancia al mouse
+			const dx = particle.x - mouseX;
+			const dy = particle.y - mouseY;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+			const repelDistance = 150;
+
+			if (mousePresent && distance < repelDistance) {
+				// Repulsión del mouse
+				const angle = Math.atan2(dy, dx);
+				const force = (1 - distance / repelDistance) * 3;
+				particle.vx += Math.cos(angle) * force;
+				particle.vy += Math.sin(angle) * force;
+			}
+
+			// Volver a la posición original
+			particle.vx += (particle.baseX - particle.x) * 0.02;
+			particle.vy += (particle.baseY - particle.y) * 0.02;
+
+			// Fricción
+			particle.vx *= 0.95;
+			particle.vy *= 0.95;
+
+			// Actualizar posición
+			particle.x += particle.vx;
+			particle.y += particle.vy;
+
+			// Dibujar partícula
+			ctx.fillStyle = `rgba(139, 92, 246, ${particle.opacity})`;
+			ctx.beginPath();
+			ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Dibujar líneas conectoras cercanas
+			particles.forEach((otherParticle) => {
+				const lineDx = otherParticle.x - particle.x;
+				const lineDy = otherParticle.y - particle.y;
+				const lineDistance = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
+
+				if (lineDistance < 80) {
+					ctx.strokeStyle = `rgba(139, 92, 246, ${(1 - lineDistance / 80) * particle.opacity * 0.3})`;
+					ctx.lineWidth = 0.5;
+					ctx.beginPath();
+					ctx.moveTo(particle.x, particle.y);
+					ctx.lineTo(otherParticle.x, otherParticle.y);
+					ctx.stroke();
+				}
+			});
+		});
+
+		requestAnimationFrame(draw);
+	}
+
+	// Event listeners
+	document.addEventListener('mousemove', (e) => {
+		mouseX = e.clientX;
+		mouseY = e.clientY;
+		mousePresent = true;
+	});
+
+	document.addEventListener('mouseleave', () => {
+		mousePresent = false;
+	});
+
+	window.addEventListener('resize', () => {
+		resizeCanvas();
+		initParticles();
+	});
+
+	// Inicializar
+	resizeCanvas();
+	initParticles();
+	draw();
+</script>

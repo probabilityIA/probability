@@ -1,0 +1,2 @@
+# Esta carpeta contendrá mappers entre DTOs de HTTP y DTOs de dominio
+# Conversiones: request → domain DTO y domain DTO → response

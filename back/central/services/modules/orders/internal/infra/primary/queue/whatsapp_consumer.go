@@ -1,0 +1,314 @@
+package queue
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+)
+
+// WhatsAppConfirmedEvent representa el evento de confirmación desde WhatsApp
+type WhatsAppConfirmedEvent struct {
+	EventType   string `json:"event_type"`
+	OrderNumber string `json:"order_number"`
+	PhoneNumber string `json:"phone_number"`
+	BusinessID  uint   `json:"business_id"`
+	Source      string `json:"source"`
+	Timestamp   int64  `json:"timestamp"`
+}
+
+// WhatsAppCancelledEvent representa el evento de cancelación desde WhatsApp
+type WhatsAppCancelledEvent struct {
+	EventType          string `json:"event_type"`
+	OrderNumber        string `json:"order_number"`
+	CancellationReason string `json:"cancellation_reason"`
+	PhoneNumber        string `json:"phone_number"`
+	BusinessID         uint   `json:"business_id"`
+	Source             string `json:"source"`
+	Timestamp          int64  `json:"timestamp"`
+}
+
+// WhatsAppNoveltyEvent representa el evento de novedad desde WhatsApp
+type WhatsAppNoveltyEvent struct {
+	EventType   string `json:"event_type"`
+	OrderNumber string `json:"order_number"`
+	NoveltyType string `json:"novelty_type"`
+	PhoneNumber string `json:"phone_number"`
+	BusinessID  uint   `json:"business_id"`
+	Source      string `json:"source"`
+	Timestamp   int64  `json:"timestamp"`
+}
+
+// WhatsAppConsumer consume eventos de WhatsApp y actualiza órdenes
+type WhatsAppConsumer struct {
+	queue           rabbitmq.IQueue
+	repository      ports.IRepository
+	rabbitPublisher ports.IOrderRabbitPublisher
+	log             log.ILogger
+}
+
+// NewWhatsAppConsumer crea un nuevo consumidor de eventos de WhatsApp
+func NewWhatsAppConsumer(
+	queue rabbitmq.IQueue,
+	repository ports.IRepository,
+	rabbitPublisher ports.IOrderRabbitPublisher,
+	logger log.ILogger,
+) *WhatsAppConsumer {
+	return &WhatsAppConsumer{
+		queue:           queue,
+		repository:      repository,
+		rabbitPublisher: rabbitPublisher,
+		log:             logger,
+	}
+}
+
+// Start inicia el consumidor de eventos de WhatsApp
+func (c *WhatsAppConsumer) Start(ctx context.Context) error {
+	// Declarar colas
+	queues := []string{
+		rabbitmq.QueueWhatsAppOrderConfirmed,
+		rabbitmq.QueueWhatsAppOrderCancelled,
+		rabbitmq.QueueWhatsAppOrderNovelty,
+	}
+
+	for _, queueName := range queues {
+		if err := c.queue.DeclareQueue(queueName, true); err != nil {
+			c.log.Error().
+				Err(err).
+				Str("queue", queueName).
+				Msg("Error declaring queue")
+			return err
+		}
+	}
+
+	// Consumir de múltiples colas
+	go func() {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderConfirmed, c.handleConfirmed); err != nil {
+			c.log.Error().Err(err).Msg("Error consuming confirmed queue")
+		}
+	}()
+
+	go func() {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderCancelled, c.handleCancelled); err != nil {
+			c.log.Error().Err(err).Msg("Error consuming cancelled queue")
+		}
+	}()
+
+	go func() {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderNovelty, c.handleNovelty); err != nil {
+			c.log.Error().Err(err).Msg("Error consuming novelty queue")
+		}
+	}()
+
+	return nil
+}
+
+// handleConfirmed procesa eventos de confirmación
+func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
+	var event WhatsAppConfirmedEvent
+	if err := json.Unmarshal(msg, &event); err != nil {
+		c.log.Error().Err(err).Msg("Error unmarshaling confirmed event")
+		return err
+	}
+
+	ctx := context.Background()
+
+	c.log.Info().
+		Str("order_number", event.OrderNumber).
+		Str("phone_number", event.PhoneNumber).
+		Msg("Processing order confirmation from WhatsApp")
+
+	// Buscar orden por order_number + business_id (evita actualizar orden de otro negocio)
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(ctx, event.OrderNumber, event.BusinessID)
+	if err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_number", event.OrderNumber).
+			Uint("business_id", event.BusinessID).
+			Msg("Error getting order for confirmation")
+		return err
+	}
+
+	// Guardar estado anterior para el evento de cambio
+	previousStatus := "pending"
+	if order.OrderStatus != nil {
+		previousStatus = order.OrderStatus.Code
+	}
+
+	// Actualizar IsConfirmed = true
+	confirmed := true
+	order.IsConfirmed = &confirmed
+
+	// Cambiar estado a "processing" (confirmado = en procesamiento)
+	processingStatusID, err := c.repository.GetOrderStatusIDByCode(ctx, "processing")
+	if err != nil {
+		c.log.Warn().Err(err).Msg("Error getting processing status ID, skipping status change")
+	} else if processingStatusID != nil {
+		order.StatusID = processingStatusID
+	}
+
+	// Guardar cambios
+	if err := c.repository.UpdateOrder(ctx, order); err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_id", order.ID).
+			Str("order_number", event.OrderNumber).
+			Msg("Error updating order confirmation status")
+		return err
+	}
+
+	// Publicar evento al fanout -> SSE + otros consumers
+	if c.rabbitPublisher != nil {
+		go func() {
+			bgCtx := context.Background()
+			if err := c.rabbitPublisher.PublishOrderStatusChanged(bgCtx, order, previousStatus, "processing"); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing confirmation event to fanout")
+			}
+		}()
+	}
+
+	c.log.Info().
+		Str("order_id", order.ID).
+		Str("order_number", event.OrderNumber).
+		Str("previous_status", previousStatus).
+		Str("new_status", "processing").
+		Msg("Order confirmed successfully via WhatsApp")
+
+	return nil
+}
+
+// handleCancelled procesa eventos de cancelación
+func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
+	var event WhatsAppCancelledEvent
+	if err := json.Unmarshal(msg, &event); err != nil {
+		c.log.Error().Err(err).Msg("Error unmarshaling cancelled event")
+		return err
+	}
+
+	c.log.Warn().
+		Str("order_number", event.OrderNumber).
+		Str("reason", event.CancellationReason).
+		Msg("Processing order cancellation from WhatsApp")
+
+	// Buscar orden por order_number + business_id
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
+	if err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_number", event.OrderNumber).
+			Msg("Error getting order for cancellation")
+		return err
+	}
+
+	// Marcar IsConfirmed = false y guardar motivo en Novelty
+	confirmed := false
+	noveltyText := fmt.Sprintf("Cancelación solicitada vía WhatsApp: %s (Teléfono: %s)", event.CancellationReason, event.PhoneNumber)
+
+	// Si ya existe novedad previa, concatenar
+	if order.Novelty != nil && *order.Novelty != "" {
+		noveltyText = *order.Novelty + " | " + noveltyText
+	}
+
+	order.IsConfirmed = &confirmed
+	order.Novelty = &noveltyText
+
+	// Guardar cambios
+	if err := c.repository.UpdateOrder(context.Background(), order); err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_id", order.ID).
+			Str("order_number", event.OrderNumber).
+			Msg("Error updating order cancellation status")
+		return err
+	}
+
+	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
+	if c.rabbitPublisher != nil {
+		go func() {
+			if err := c.rabbitPublisher.PublishOrderCancelled(context.Background(), order); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing cancellation event to fanout")
+			}
+		}()
+	}
+
+	c.log.Warn().
+		Str("order_id", order.ID).
+		Str("order_number", event.OrderNumber).
+		Msg("Order cancellation recorded - requires manual review")
+
+	return nil
+}
+
+// handleNovelty procesa eventos de novedades
+func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
+	var event WhatsAppNoveltyEvent
+	if err := json.Unmarshal(msg, &event); err != nil {
+		c.log.Error().Err(err).Msg("Error unmarshaling novelty event")
+		return err
+	}
+
+	c.log.Info().
+		Str("order_number", event.OrderNumber).
+		Str("novelty_type", event.NoveltyType).
+		Msg("Processing order novelty from WhatsApp")
+
+	// Buscar orden por order_number + business_id
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
+	if err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_number", event.OrderNumber).
+			Msg("Error getting order for novelty")
+		return err
+	}
+
+	// Construir texto de novedad según tipo
+	var noveltyText string
+	switch event.NoveltyType {
+	case "change_address":
+		noveltyText = fmt.Sprintf("Solicitud de cambio de dirección vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+	case "change_products":
+		noveltyText = fmt.Sprintf("Solicitud de cambio de productos vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+	case "change_payment":
+		noveltyText = fmt.Sprintf("Solicitud de cambio de método de pago vía WhatsApp (Teléfono: %s)", event.PhoneNumber)
+	default:
+		noveltyText = fmt.Sprintf("Novedad vía WhatsApp: %s (Teléfono: %s)", event.NoveltyType, event.PhoneNumber)
+	}
+
+	// Si ya existe novedad previa, concatenar
+	if order.Novelty != nil && *order.Novelty != "" {
+		noveltyText = *order.Novelty + " | " + noveltyText
+	}
+
+	order.Novelty = &noveltyText
+
+	// Guardar cambios
+	if err := c.repository.UpdateOrder(context.Background(), order); err != nil {
+		c.log.Error().
+			Err(err).
+			Str("order_id", order.ID).
+			Str("order_number", event.OrderNumber).
+			Msg("Error updating order novelty")
+		return err
+	}
+
+	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
+	if c.rabbitPublisher != nil {
+		go func() {
+			if err := c.rabbitPublisher.PublishOrderUpdated(context.Background(), order); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing novelty event to fanout")
+			}
+		}()
+	}
+
+	c.log.Info().
+		Str("order_id", order.ID).
+		Str("order_number", event.OrderNumber).
+		Str("novelty_type", event.NoveltyType).
+		Msg("Order novelty recorded successfully")
+
+	return nil
+}

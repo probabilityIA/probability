@@ -1,0 +1,53 @@
+package ai_sales
+
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/app"
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/primary/queue/consumer"
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/secondary/ai_adapter"
+	aicache "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/secondary/cache"
+	configprovider "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/secondary/config"
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/bedrock"
+	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/redis"
+)
+
+func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, bedrockClient bedrock.IBedrock) {
+	aiProvider := ai_adapter.New(bedrockClient, logger)
+	sessionCache := aicache.New(redisClient, logger)
+	productRepo := repository.New(database, logger)
+	customerRepo := repository.NewCustomerRepository(database, logger)
+	responsePublisher := queue.NewResponsePublisher(rabbitMQ, logger)
+	orderPublisher := queue.NewOrderPublisher(rabbitMQ, logger)
+	configProvider := configprovider.New(redisClient, logger)
+	persistencePublisher := queue.NewPersistencePublisher(rabbitMQ, logger)
+	pauseChecker := aicache.NewPauseChecker(redisClient)
+
+	useCase := app.New(aiProvider, sessionCache, productRepo, customerRepo, responsePublisher, orderPublisher, configProvider, persistencePublisher, pauseChecker, logger)
+
+	aiConsumer := consumer.New(rabbitMQ, useCase, logger)
+
+	go func() {
+		if err := aiConsumer.Start(context.Background()); err != nil {
+			logger.Error(context.Background()).
+				Err(err).
+				Msg("Error iniciando AI Sales consumer")
+		}
+	}()
+
+	orderResultConsumer := consumer.NewOrderResultConsumer(rabbitMQ, responsePublisher, sessionCache, persistencePublisher, logger)
+	go func() {
+		if err := orderResultConsumer.Start(context.Background()); err != nil {
+			logger.Error(context.Background()).
+				Err(err).
+				Msg("Error iniciando AI Order Result consumer")
+		}
+	}()
+
+	logger.Info(context.Background()).Msg("Modulo AI Sales inicializado")
+}

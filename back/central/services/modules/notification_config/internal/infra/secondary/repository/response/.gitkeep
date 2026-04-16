@@ -1,0 +1,8 @@
+# Response DTOs para Repositorios
+
+Esta carpeta contendrá DTOs específicos para resultados del repositorio.
+
+Ejemplos:
+- Resultados paginados
+- Agregaciones y estadísticas
+- Resultados de operaciones batch

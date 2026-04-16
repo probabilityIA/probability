@@ -1,0 +1,397 @@
+services:
+
+  front-central:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+    container_name: frontend_prod
+    ports:
+      - "8080:3000"
+    environment:
+      # API Backend URL (dentro de la red Docker)
+      API_BASE_URL: "http://back-central:3050/api/v1"
+      # NEXT_PUBLIC para cliente (browser) - debe apuntar al dominio público
+      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
+      # SSE Backend URL (conexión directa desde el navegador)
+      NEXT_PUBLIC_SSE_BASE_URL: "${NEXT_PUBLIC_SSE_BASE_URL:-https://www.probabilityia.com.co/api/v1}"
+    env_file:
+    - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      - back-central
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  front-website:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
+    container_name: website_prod
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  back-central:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
+    container_name: central_reserve_prod
+    ports:
+      - "127.0.0.1:3050:3050"
+    environment:
+      DB_HOST:             "${DB_HOST:-postgres}"
+      DB_PORT:             "5432"
+      DB_NAME:             "${DB_NAME}"
+      DB_USER:             "${DB_USER}"
+      DB_PASS:             "${DB_PASSWORD}"
+      DB_LOG_LEVEL:        "${DB_LOG_LEVEL}"
+      PGSSLMODE:           "${DB_SSLMODE}"
+      APP_ENV:             "${APP_ENV}"
+      HTTP_PORT:           "3050"
+      LOG_LEVEL:           "${LOG_LEVEL}"
+      JWT_SECRET:          "${JWT_SECRET}"
+      URL_BASE_SWAGGER:    "${URL_BASE_SWAGGER}"
+      SMTP_HOST:           "${SMTP_HOST}"
+      SMTP_PORT:           "${SMTP_PORT}"
+      SMTP_USER:           "${SMTP_USER}"
+      SMTP_PASS:           "${SMTP_PASS}"
+      FROM_EMAIL:          "${FROM_EMAIL:-}"
+      SES_REGION:          "${SES_REGION}"
+      SES_ACCESS_KEY:      "${SES_ACCESS_KEY}"
+      SES_SECRET_KEY:      "${SES_SECRET_KEY}"
+      SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
+      SMTP_USE_TLS:        "${SMTP_USE_TLS}"
+      # S3 y media
+      S3_BUCKET:           "${S3_BUCKET}"
+      S3_REGION:           "${S3_REGION}"
+      S3_KEY:              "${S3_KEY}"
+      S3_SECRET:           "${S3_SECRET}"
+      URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+      WHATSAPP_URL:        "${WHATSAPP_URL}"
+      WHATSAPP_TOKEN:      "${WHATSAPP_TOKEN}"
+      WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
+      # Encryption
+      ENCRYPTION_KEY:      "${ENCRYPTION_KEY}"
+      # Redis (usar nombre del servicio en la red Docker)
+      REDIS_HOST:         "redis"
+      REDIS_PORT:         "6379"
+      REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
+      REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
+      RABBITMQ_HOST:      "rabbitmq"
+      RABBITMQ_PORT:      "5672"
+      RABBITMQ_USER:      "${RABBITMQ_USER:-admin}"
+      RABBITMQ_PASS:      "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_VHOST:     "${RABBITMQ_VHOST:-/}"
+      RABBITMQ_ORDERS_CREATE: "${RABBITMQ_ORDERS_CREATE:-orders.create}"
+      # Softpymes (Facturación Electrónica)
+      SOFTPYMES_API_URL:  "${SOFTPYMES_API_URL:-https://api-integracion.softpymes.com.co}"
+      # Monitoreo - Alertas Grafana
+      GRAFANA_WEBHOOK_SECRET: "${GRAFANA_WEBHOOK_SECRET}"
+      # Google Geocoding API
+      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
+      # Amazon Bedrock (AI)
+      BEDROCK_ACCESS_KEY: "${BEDROCK_ACCESS_KEY}"
+      BEDROCK_SECRET_KEY: "${BEDROCK_SECRET_KEY}"
+      BEDROCK_REGION:     "${BEDROCK_REGION}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+
+
+  back-testing:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-backend:latest
+    container_name: testing_backend_prod
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      DB_HOST:             "${DB_HOST:-postgres}"
+      DB_PORT:             "5432"
+      DB_NAME:             "${DB_NAME}"
+      DB_USER:             "${DB_USER}"
+      DB_PASS:             "${DB_PASSWORD}"
+      PGSSLMODE:           "${DB_SSLMODE}"
+      JWT_SECRET:          "${JWT_SECRET}"
+      CENTRAL_API_URL:     "https://www.probabilityia.com.co"
+      SHOPIFY_CLIENT_SECRET: "${SHOPIFY_CLIENT_SECRET}"
+      TESTING_API_PORT:    "9092"
+      SOFTPYMES_MOCK_PORT: "9090"
+      ENVIOCLICK_MOCK_PORT: "9091"
+      RUN_MODE:            "server"
+      S3_KEY:              "${S3_KEY}"
+      S3_SECRET:           "${S3_SECRET}"
+      S3_BUCKET:           "${S3_BUCKET}"
+      S3_REGION:           "${S3_REGION}"
+      URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9092/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    depends_on:
+      back-central:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  front-testing:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-frontend:latest
+    container_name: testing_frontend_prod
+    ports:
+      - "8082:3051"
+    environment:
+      API_URL: "http://back-testing:9092"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3051/testing"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      - back-testing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_prod
+    command: >
+      redis-server 
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_prod
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Monitoring Services (independent of nginx)
+  monitoring-api:
+    platform: linux/arm64
+    build:
+      context: ../../back/monitoring
+      dockerfile: Dockerfile
+    container_name: monitoring_api_prod
+    ports:
+      - "3070:3070"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      HTTP_PORT:        "3070"
+      JWT_SECRET:       "${MONITORING_JWT_SECRET:-monitoring-secret-change-in-prod}"
+      COMPOSE_PROJECT:  "compose-prod"
+      GIN_MODE:         "release"
+      LOG_LEVEL:        "info"
+      DB_HOST:          "${DB_HOST:-postgres}"
+      DB_PORT:          "5432"
+      DB_NAME:          "${DB_NAME}"
+      DB_USER:          "${DB_USER}"
+      DB_PASS:          "${DB_PASSWORD}"
+      PGSSLMODE:        "${DB_SSLMODE}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3070/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  monitoring-web:
+    platform: linux/arm64
+    build:
+      context: ../../front/monitoring
+      dockerfile: Dockerfile
+    container_name: monitoring_web_prod
+    ports:
+      - "3002:3002"
+    environment:
+      MONITORING_API_URL:             "http://monitoring-api:3070"
+      NEXT_PUBLIC_MONITORING_API_URL: "http://monitoring-api:3070"
+      PORT:                           "3002"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      monitoring-api:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          cpus: "0.10"
+          memory: 96M
+
+  nginx:
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
+    container_name: nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: "${DOMAIN}"
+      SSL_CERT_PATH: "${SSL_CERT_PATH}"
+      SSL_KEY_PATH: "${SSL_KEY_PATH}"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      back-central:
+        condition: service_healthy
+      front-central:
+        condition: service_started
+      front-website:
+        condition: service_started
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local

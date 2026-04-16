@@ -1,0 +1,247 @@
+name: Testing Frontend CI/CD - Probability
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'front/testing/**'
+      - '.github/workflows/testing-frontend-ci-cd.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: testing-frontend-deploy
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: 476702565908
+  IMAGE_NAME: testing-frontend
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: write
+    outputs:
+      version_full: ${{ steps.version.outputs.VERSION_FULL }}
+      version_short: ${{ steps.version.outputs.VERSION_SHORT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Generate version
+        id: version
+        run: |
+          chmod +x .github/scripts/generate-version.sh
+          .github/scripts/generate-version.sh probability-testing-frontend us-east-1 476702565908
+
+      - name: Build image with Docker (ARM64)
+        working-directory: ./front/testing
+        env:
+          CENTRAL_API_URL: "http://back-central:3050"
+          TESTING_API_URL: "http://back-testing:9092"
+        run: |
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-testing-frontend"
+
+          docker build \
+            --platform linux/arm64 \
+            --no-cache \
+            --build-arg CENTRAL_API_URL=${CENTRAL_API_URL} \
+            --build-arg TESTING_API_URL=${TESTING_API_URL} \
+            -f docker/Dockerfile \
+            -t ${REPO_URL}:latest \
+            -t ${REPO_URL}:${VERSION_FULL} \
+            -t ${REPO_URL}:${VERSION_SHORT} \
+            -t ${REPO_URL}:${SHORT_SHA} \
+            .
+
+          echo "Imagen construida con 4 tags:"
+          echo "   - latest"
+          echo "   - ${VERSION_FULL}"
+          echo "   - ${VERSION_SHORT}"
+          echo "   - ${SHORT_SHA}"
+
+      - name: Push image to ECR
+        run: |
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-testing-frontend"
+
+          echo "Pushing tags to ECR..."
+          docker push ${REPO_URL}:latest
+          docker push ${REPO_URL}:${VERSION_FULL}
+          docker push ${REPO_URL}:${VERSION_SHORT}
+          docker push ${REPO_URL}:${SHORT_SHA}
+
+          echo "4 tags pushed successfully"
+
+      - name: Create Git Tag
+        run: |
+          VERSION_TAG="v${{ steps.version.outputs.VERSION_SHORT }}"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git tag -d "${VERSION_TAG}" 2>/dev/null || true
+
+          git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG} - Testing Frontend
+
+          Image: probability-testing-frontend:${{ steps.version.outputs.VERSION_FULL }}
+          Commit: ${{ github.sha }}"
+
+          git push origin "${VERSION_TAG}" --force
+          echo "Git tag created/updated: ${VERSION_TAG}"
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Upload compose file
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            infra/compose-prod/docker-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
+
+      - name: Deploy to server
+        env:
+          VERSION_FULL: ${{ needs.build-and-push.outputs.version_full }}
+          VERSION_SHORT: ${{ needs.build-and-push.outputs.version_short }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "VERSION_FULL='${{ env.VERSION_FULL }}' bash -s" << 'EOF'
+            set -e
+            export PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin:$PATH
+
+            mkdir -p ~/probability/infra/compose-prod
+
+            if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then
+              echo "Installing AWS CLI for ARM64..."
+              sudo rm -rf /usr/local/aws-cli /usr/local/bin/aws /usr/local/bin/aws_completer
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+              rm -rf aws awscliv2.zip
+              /usr/local/bin/aws --version || { echo "Error: AWS CLI install failed"; exit 1; }
+            fi
+
+            cd ~/probability/infra/compose-prod || exit 1
+            export PATH=/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin:$PATH
+
+            echo "Logging in to ECR..."
+            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
+              docker login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+
+            REPO_URL="476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-frontend"
+
+            echo "Cleaning local images..."
+            docker rmi ${REPO_URL}:latest 2>/dev/null || true
+            docker rmi ${REPO_URL}:$VERSION_FULL 2>/dev/null || true
+            docker image prune -f 2>/dev/null || true
+
+            echo "Pulling image $VERSION_FULL..."
+            docker pull ${REPO_URL}:$VERSION_FULL
+            docker tag ${REPO_URL}:$VERSION_FULL ${REPO_URL}:latest
+
+            echo "Stopping testing frontend..."
+            docker stop -t 10 testing_frontend_prod || true
+            docker rm -f testing_frontend_prod || true
+
+            echo "Liberando puerto 8082..."
+            sudo fuser -k 8082/tcp || true
+            sleep 2
+
+            echo "Starting testing frontend with new image..."
+            docker compose -f docker-compose.yaml up -d --no-deps front-testing
+            sleep 3
+
+            echo "Waiting for container to start (60 seconds max)..."
+            WAIT_COUNT=0
+            MAX_WAIT=12
+            while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+              CONTAINER_STATUS=$(docker inspect testing_frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "$CONTAINER_STATUS" = "running" ]; then
+                echo "Container is running after $((WAIT_COUNT * 5 + 3)) seconds"
+                break
+              fi
+              if [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "dead" ]; then
+                echo "Container exited prematurely (status: $CONTAINER_STATUS)"
+                echo "=== Container logs (stdout + stderr) ==="
+                docker logs --tail 50 testing_frontend_prod 2>&1 || true
+                echo "=== Container inspect ==="
+                docker inspect testing_frontend_prod --format '{{.State.ExitCode}} {{.State.Error}}' 2>&1 || true
+                echo "=== OOMKilled check ==="
+                docker inspect testing_frontend_prod --format '{{.State.OOMKilled}}' 2>&1 || true
+                echo "Attempting restart..."
+                docker restart testing_frontend_prod 2>/dev/null || true
+                sleep 15
+                CONTAINER_STATUS=$(docker inspect testing_frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                if [ "$CONTAINER_STATUS" != "running" ]; then
+                  echo "=== Logs after restart ==="
+                  docker logs --tail 30 testing_frontend_prod 2>&1 || true
+                  echo "Error: Could not start container"
+                  exit 1
+                fi
+                break
+              fi
+              WAIT_COUNT=$((WAIT_COUNT + 1))
+              sleep 5
+            done
+
+            if [ "$CONTAINER_STATUS" != "running" ]; then
+              echo "Container did not start within 60 seconds (status: $CONTAINER_STATUS)"
+              echo "=== Container logs ==="
+              docker logs --tail 50 testing_frontend_prod 2>&1 || true
+              exit 1
+            fi
+
+            echo "Container running correctly"
+
+            # Clean old images
+            docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep "probability-testing-frontend" | \
+              grep -v "$VERSION_FULL" | grep -v "latest" | \
+              awk '{print $2}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker image prune -f
+
+            # Restart nginx to pick up new upstream
+            echo "Restarting nginx..."
+            docker restart nginx_prod
+            sleep 3
+
+            echo "Testing frontend deployed successfully with version $VERSION_FULL"
+          EOF

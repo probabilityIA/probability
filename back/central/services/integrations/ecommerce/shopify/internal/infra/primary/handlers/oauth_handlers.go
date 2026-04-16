@@ -1,0 +1,620 @@
+package handlers
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+)
+
+// shopifyTypeID es el ID del tipo de integración Shopify en la tabla integration_types.
+const shopifyTypeID = uint(1)
+
+// shopifyConfigEnvFallback mapea nombre de campo en platform_credentials -> variable de entorno de fallback.
+var shopifyConfigEnvFallback = map[string]string{
+	"client_id":     "SHOPIFY_CLIENT_ID",
+	"client_secret": "SHOPIFY_CLIENT_SECRET",
+	"redirect_uri":  "SHOPIFY_REDIRECT_URI",
+	"frontend_url":  "FRONTEND_URL",
+	"scopes":        "SHOPIFY_SCOPES",
+}
+
+// getShopifyConfig lee un campo de configuración de Shopify.
+// Orden de prioridad:
+//  1. platform_credentials_encrypted del IntegrationType en BD (cacheado en Redis 24h)
+//  2. Variable de entorno como fallback
+func (h *ShopifyHandler) getShopifyConfig(ctx context.Context, field string) string {
+	if h.coreIntegration != nil {
+		creds, err := h.coreIntegration.GetPlatformCredential(ctx, fmt.Sprintf("%d", shopifyTypeID), field)
+		if err == nil && creds != "" {
+			return creds
+		}
+	}
+	// Fallback a variable de entorno
+	envKey, ok := shopifyConfigEnvFallback[field]
+	if !ok {
+		envKey = "SHOPIFY_" + strings.ToUpper(field)
+	}
+	return h.config.Get(envKey)
+}
+
+// OAuthStateData almacena información temporal durante el flujo OAuth
+type OAuthStateData struct {
+	IntegrationName string
+	ShopDomain      string
+	UserID          uint
+	BusinessID      uint
+	Expiry          time.Time
+	// Custom App Credentials (optional)
+	ClientID     string
+	ClientSecret string
+}
+
+// oauthStateStore almacena temporalmente los estados CSRF para validación.
+// Protegido por oauthStateMutex para acceso concurrente seguro desde HTTP handlers.
+var (
+	oauthStateStore = make(map[string]*OAuthStateData)
+	oauthStateMutex sync.Mutex
+)
+
+// InitiateOAuthRequest representa la solicitud para iniciar OAuth
+type InitiateOAuthRequest struct {
+	IntegrationName string `json:"integration_name" binding:"required"`
+	ShopDomain      string `json:"shop_domain" binding:"required"`
+}
+
+// InitiateCustomOAuthRequest representa la solicitud para iniciar OAuth con credenciales personalizadas
+type InitiateCustomOAuthRequest struct {
+	IntegrationName string `json:"integration_name" binding:"required"`
+	ShopDomain      string `json:"shop_domain" binding:"required"`
+	ClientID        string `json:"client_id" binding:"required"`
+	ClientSecret    string `json:"client_secret" binding:"required"`
+}
+
+// InitiateOAuthResponse representa la respuesta con la URL de autorización
+type InitiateOAuthResponse struct {
+	Success          bool   `json:"success"`
+	Message          string `json:"message"`
+	AuthorizationURL string `json:"authorization_url,omitempty"`
+	State            string `json:"state,omitempty"`
+	Error            string `json:"error,omitempty"`
+}
+
+// InitiateOAuthHandler inicia el flujo OAuth de Shopify (App Pública/Default)
+//
+//	@Summary		Iniciar OAuth con Shopify (Default)
+//	@Description	Genera la URL de autorización usando credenciales de entorno
+//	@Tags			Shopify OAuth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		InitiateOAuthRequest	true	"Datos para iniciar OAuth"
+//	@Success		200		{object}	InitiateOAuthResponse
+//	@Failure		400		{object}	InitiateOAuthResponse
+//	@Failure		401		{object}	InitiateOAuthResponse
+//	@Failure		500		{object}	InitiateOAuthResponse
+//	@Router			/integrations/shopify/connect [post]
+func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
+	var req InitiateOAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error().Err(err).Msg("Error al validar datos de entrada para OAuth")
+		c.JSON(http.StatusBadRequest, InitiateOAuthResponse{
+			Success: false,
+			Message: "Datos de entrada inválidos",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	h.initiateOAuthProcess(c, req.IntegrationName, req.ShopDomain, "", "")
+}
+
+// InitiateCustomOAuthHandler inicia el flujo OAuth de Shopify con credenciales personalizadas
+//
+//	@Summary		Iniciar OAuth con Shopify (Custom App)
+//	@Description	Genera la URL de autorización usando credenciales proporcionadas en el body
+//	@Tags			Shopify OAuth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		InitiateCustomOAuthRequest	true	"Datos y credenciales para iniciar OAuth"
+//	@Success		200		{object}	InitiateOAuthResponse
+//	@Failure		400		{object}	InitiateOAuthResponse
+//	@Failure		401		{object}	InitiateOAuthResponse
+//	@Failure		500		{object}	InitiateOAuthResponse
+//	@Router			/integrations/shopify/connect/custom [post]
+func (h *ShopifyHandler) InitiateCustomOAuthHandler(c *gin.Context) {
+	var req InitiateCustomOAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error().Err(err).Msg("Error al validar datos de entrada para Custom OAuth")
+		c.JSON(http.StatusBadRequest, InitiateOAuthResponse{
+			Success: false,
+			Message: "Datos de entrada inválidos",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	h.initiateOAuthProcess(c, req.IntegrationName, req.ShopDomain, req.ClientID, req.ClientSecret)
+}
+
+// initiateOAuthProcess encapsula la lógica común de inicio de OAuth
+func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, shopDomainParam, customClientID, customClientSecret string) {
+	// Validar que el usuario esté autenticado
+	userID, exists := middleware.GetUserID(c)
+	if !exists {
+		h.logger.Error().Msg("Intento de iniciar OAuth sin usuario autenticado")
+		c.JSON(http.StatusUnauthorized, InitiateOAuthResponse{
+			Success: false,
+			Message: "Usuario no autenticado",
+			Error:   "token de autenticación inválido o ausente",
+		})
+		return
+	}
+
+	// Obtener business_id del contexto
+	businessID := c.GetUint("business_id")
+
+	// Normalizar el dominio de la tienda
+	shopDomain := normalizeShopDomain(shopDomainParam)
+
+	// Generar state CSRF
+	state, err := generateState()
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Error al generar state CSRF")
+		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
+			Success: false,
+			Message: "Error al generar token de seguridad",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	// Almacenar state con metadata (expira en 10 minutos)
+	oauthStateMutex.Lock()
+	// Limpieza lazy: eliminar estados expirados al insertar uno nuevo
+	now := time.Now()
+	for k, v := range oauthStateStore {
+		if now.After(v.Expiry) {
+			delete(oauthStateStore, k)
+		}
+	}
+	oauthStateStore[state] = &OAuthStateData{
+		IntegrationName: integrationName,
+		ShopDomain:      shopDomain,
+		UserID:          userID,
+		BusinessID:      businessID,
+		Expiry:          time.Now().Add(10 * time.Minute),
+		ClientID:        customClientID,
+		ClientSecret:    customClientSecret,
+	}
+	oauthStateMutex.Unlock()
+
+	// Determinar credenciales a usar (BD/Redis primero, luego env vars como fallback)
+	var clientID, redirectURI, scopes string
+
+	if customClientID != "" {
+		// Usar credenciales custom proporcionadas por el usuario
+		clientID = customClientID
+	} else {
+		clientID = h.getShopifyConfig(c.Request.Context(), "client_id")
+	}
+	redirectURI = h.getShopifyConfig(c.Request.Context(), "redirect_uri")
+	scopes = h.getShopifyConfig(c.Request.Context(), "scopes")
+
+	// 1. Fallback para Scopes: si no están configurados, usar los mínimos necesarios
+	if scopes == "" {
+		scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products"
+		h.logger.Info().Msg("scopes no configurados en BD ni env, usando valores por defecto")
+	}
+
+	// 2. Fallback para Redirect URI: si no está configurada, generarla dinámicamente
+	if redirectURI == "" {
+		scheme := "https"
+		if h.config.Get("APP_ENV") == "development" {
+			scheme = "http"
+		}
+		redirectURI = fmt.Sprintf("%s://%s/api/v1/shopify/callback", scheme, c.Request.Host)
+		h.logger.Info().Str("redirect_uri", redirectURI).Msg("redirect_uri no configurada en BD ni env, generada URL dinámica")
+	}
+
+	// 3. Validar Client ID (crítico)
+	if clientID == "" {
+		h.logger.Error().Msg("Faltan credenciales críticas para Shopify OAuth (Client ID)")
+		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
+			Success: false,
+			Message: "Error de configuración: falta el Client ID de Shopify",
+			Error:   "client_id is missing (configurar en BD o en SHOPIFY_CLIENT_ID)",
+		})
+		return
+	}
+
+	// Construir URL de autorización de Shopify
+	authURL := fmt.Sprintf(
+		"https://%s/admin/oauth/authorize?client_id=%s&scope=%s&redirect_uri=%s&state=%s",
+		shopDomain,
+		url.QueryEscape(clientID),
+		url.QueryEscape(scopes),
+		url.QueryEscape(redirectURI),
+		url.QueryEscape(state),
+	)
+
+	h.logger.Info().
+		Uint("user_id", userID).
+		Str("shop_domain", shopDomain).
+		Str("state", state).
+		Bool("is_custom", customClientID != "").
+		Msg("OAuth iniciado exitosamente")
+
+	c.JSON(http.StatusOK, InitiateOAuthResponse{
+		Success:          true,
+		Message:          "URL de autorización generada",
+		AuthorizationURL: authURL,
+		State:            state,
+	})
+}
+
+// OAuthCallbackHandler maneja el callback de OAuth desde Shopify
+//
+//	@Summary		Callback de OAuth
+//	@Description	Recibe el código de autorización de Shopify y lo intercambia por un access token
+//	@Tags			Shopify OAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			code	query	string	true	"Código de autorización"
+//	@Param			shop	query	string	true	"Dominio de la tienda"
+//	@Param			state	query	string	true	"State CSRF"
+//	@Param			hmac	query	string	true	"HMAC signature"
+//	@Success		302		{string}	string	"Redirección al frontend con datos de integración"
+//	@Failure		400		{object}	map[string]interface{}	"Error en validación"
+//	@Router			/shopify/callback [get]
+func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
+	code := c.Query("code")
+	shop := c.Query("shop")
+	state := c.Query("state")
+	hmacParam := c.Query("hmac")
+
+	// Validar parámetros requeridos
+	if code == "" || shop == "" || state == "" || hmacParam == "" {
+		h.logger.Error().Msg("Parámetros faltantes en callback OAuth")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Parámetros faltantes en la solicitud",
+		})
+		return
+	}
+
+	// Validar state CSRF (consume el state — one-time use)
+	oauthStateMutex.Lock()
+	stateData, exists := oauthStateStore[state]
+	if !exists || time.Now().After(stateData.Expiry) {
+		delete(oauthStateStore, state)
+		oauthStateMutex.Unlock()
+		h.logger.Error().Str("state", state).Msg("State CSRF inválido o expirado")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Token de seguridad inválido o expirado",
+		})
+		return
+	}
+	// Eliminar state usado
+	delete(oauthStateStore, state)
+	oauthStateMutex.Unlock()
+
+	// Validar HMAC (custom secret > BD/Redis > env var)
+	clientSecret := h.getShopifyConfig(c.Request.Context(), "client_secret")
+	if stateData.ClientSecret != "" {
+		clientSecret = stateData.ClientSecret // Custom app override
+	}
+
+	if !h.validateHMACWithSecret(c.Request.URL.Query(), hmacParam, clientSecret) {
+		h.logger.Error().Msg("HMAC inválido en callback OAuth")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Firma HMAC inválida",
+		})
+		return
+	}
+
+	// Intercambiar código por access token (custom > BD/Redis > env var)
+	clientID := h.getShopifyConfig(c.Request.Context(), "client_id")
+	if stateData.ClientID != "" {
+		clientID = stateData.ClientID // Custom app override
+	}
+
+	accessToken, scope, err := h.exchangeCodeForToken(shop, code, clientID, clientSecret)
+	if err != nil {
+		h.logger.Error().Err(err).Str("shop", shop).Msg("Error al intercambiar código por token")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "Error al obtener token de acceso",
+		})
+		return
+	}
+
+	h.logger.Info().
+		Str("shop", shop).
+		Str("scope", scope).
+		Str("integration_name", stateData.IntegrationName).
+		Msg("Token de acceso obtenido exitosamente")
+
+	// Codificar datos para el frontend
+	integrationCode := generateIntegrationCode(stateData.IntegrationName)
+
+	// Generar token de intercambio único (UUID simple)
+	exchangeTokenBytes := make([]byte, 16)
+	rand.Read(exchangeTokenBytes)
+	exchangeToken := hex.EncodeToString(exchangeTokenBytes)
+
+	// Almacenar en memoria (TTL 5 mins)
+	StoreExchangeToken(exchangeToken, TokenExchangeData{
+		AccessToken:  accessToken,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Expiry:       time.Now().Add(5 * time.Minute),
+	})
+
+	// Mantener cookie por si acaso (fallback), pero el método principal será exchange_token
+	creds := map[string]string{
+		"access_token":  accessToken,
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+	}
+	credsJSON, err := json.Marshal(creds)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Error al serializar credenciales OAuth")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al procesar credenciales"})
+		return
+	}
+	middleware.SetSecureCookie(c, "shopify_temp_token", url.QueryEscape(string(credsJSON)), 300)
+
+	// Redirigir al frontend CON el exchange_token (BD/Redis > env var > fallback dinámico)
+	frontendURL := h.getShopifyConfig(c.Request.Context(), "frontend_url")
+	if frontendURL == "" {
+		// Fallback dinámico: derivar del host actual del request
+		scheme := "https"
+		if h.config.Get("APP_ENV") == "development" {
+			scheme = "http"
+		}
+		frontendURL = fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+		h.logger.Warn().Str("frontend_url", frontendURL).Msg("frontend_url no configurada en BD ni env, usando host del request")
+	}
+
+	redirectURL := fmt.Sprintf(
+		"%s/integrations?shopify_oauth=success&shop=%s&integration_name=%s&integration_code=%s&state=%s&user_id=%d&business_id=%d&exchange_token=%s",
+		frontendURL,
+		url.QueryEscape(shop),
+		url.QueryEscape(stateData.IntegrationName),
+		url.QueryEscape(integrationCode),
+		url.QueryEscape(state),
+		stateData.UserID,
+		stateData.BusinessID,
+		exchangeToken,
+	)
+
+	h.logger.Info().
+		Str("redirect_url", redirectURL).
+		Uint("user_id", stateData.UserID).
+		Uint("business_id", stateData.BusinessID).
+		Msg("Redirigiendo al frontend después de OAuth exitoso")
+
+	c.Redirect(http.StatusFound, redirectURL)
+}
+
+// exchangeCodeForToken intercambia el código de autorización por un access token
+func (h *ShopifyHandler) exchangeCodeForToken(shop, code, clientID, clientSecret string) (string, string, error) {
+	tokenURL := fmt.Sprintf("https://%s/admin/oauth/access_token", shop)
+
+	data := url.Values{}
+	data.Set("client_id", clientID)
+	data.Set("client_secret", clientSecret)
+	data.Set("code", code)
+
+	resp, err := http.PostForm(tokenURL, data)
+	if err != nil {
+		return "", "", fmt.Errorf("error al hacer request de token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", fmt.Errorf("respuesta no exitosa: %d", resp.StatusCode)
+	}
+
+	var result struct {
+		AccessToken string `json:"access_token"`
+		Scope       string `json:"scope"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", "", fmt.Errorf("error al decodificar respuesta: %w", err)
+	}
+
+	return result.AccessToken, result.Scope, nil
+}
+
+// generateState genera un state CSRF aleatorio
+func generateState() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// normalizeShopDomain normaliza el dominio de la tienda
+func normalizeShopDomain(domain string) string {
+	domain = strings.TrimSpace(domain)
+	domain = strings.ToLower(domain)
+
+	// Remover protocolo si existe
+	domain = strings.TrimPrefix(domain, "https://")
+	domain = strings.TrimPrefix(domain, "http://")
+
+	// Asegurar que termine en .myshopify.com
+	if !strings.HasSuffix(domain, ".myshopify.com") {
+		if !strings.Contains(domain, ".") {
+			domain = domain + ".myshopify.com"
+		}
+	}
+
+	return domain
+}
+
+// validateHMACWithSecret valida la firma HMAC de Shopify usando un secret específico
+func (h *ShopifyHandler) validateHMACWithSecret(queryParams url.Values, receivedHMAC, clientSecret string) bool {
+	// Crear una copia de los parámetros sin el HMAC
+	params := url.Values{}
+	for k, v := range queryParams {
+		if k != "hmac" && k != "signature" {
+			params[k] = v
+		}
+	}
+
+	// Construir query string ordenado
+	message := params.Encode()
+
+	// Calcular HMAC
+	mac := hmac.New(sha256.New, []byte(clientSecret))
+	mac.Write([]byte(message))
+	expectedHMAC := hex.EncodeToString(mac.Sum(nil))
+
+	return hmac.Equal([]byte(expectedHMAC), []byte(receivedHMAC))
+}
+
+// generateIntegrationCode genera un código único para la integración basado en el nombre
+func generateIntegrationCode(name string) string {
+	code := strings.ToLower(name)
+	code = strings.TrimSpace(code)
+	code = strings.ReplaceAll(code, " ", "_")
+	// Remover caracteres especiales
+	code = strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
+			return r
+		}
+		return -1
+	}, code)
+	// Agregar timestamp para unicidad
+	code = fmt.Sprintf("%s_%d", code, time.Now().Unix())
+	return code
+}
+
+// GetOAuthTokenHandler recupera los tokens obtenidos durante el callback OAuth
+//
+//	@Summary		Obtener token de OAuth
+//	@Description	Recupera el access token y credenciales almacenadas temporalmente en cookie cifrada
+//	@Tags			Shopify OAuth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200		{object}	map[string]string
+//	@Failure		400		{object}	map[string]string
+//	@Router			/integrations/shopify/oauth/token [get]
+
+// GetConfigHandler retorna la configuración pública de Shopify (Client ID)
+//
+//	@Summary		Obtener configuración de Shopify
+//	@Description	Retorna el Client ID de Shopify para inicializar App Bridge en el frontend
+//	@Tags			Shopify Integrations
+//	@Produce		json
+//	@Success		200		{object}	map[string]string
+//	@Router			/integrations/shopify/config [get]
+func (h *ShopifyHandler) GetConfigHandler(c *gin.Context) {
+	clientID := h.config.Get("SHOPIFY_CLIENT_ID")
+
+	if clientID == "" {
+		h.logger.Warn().Msg("SHOPIFY_CLIENT_ID no configurado - OAuth de Shopify no disponible")
+		// Retornar 200 OK con configuración vacía (no es un error, simplemente no está configurado)
+		c.JSON(http.StatusOK, gin.H{
+			"shopify_client_id": nil,
+			"configured":        false,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"shopify_client_id": clientID,
+		"configured":        true,
+	})
+}
+
+// Estructura para recibir el session token
+type LoginWithSessionTokenRequest struct {
+	SessionToken string `json:"session_token" binding:"required"`
+}
+
+// ShopifySessionTokenClaims representa el payload del JWT de Shopify Session Token.
+// Ver: https://shopify.dev/docs/apps/auth/oauth/session-tokens#payload
+type ShopifySessionTokenClaims struct {
+	jwt.RegisteredClaims
+	Dest string `json:"dest"` // Destination (https://<shop_domain>)
+	Sid  string `json:"sid"`  // Session ID
+}
+
+// LoginWithSessionTokenHandler autentica un usuario basado en el Session Token de Shopify.
+// Valida la firma HS256 del JWT usando el Client Secret de Shopify.
+func (h *ShopifyHandler) LoginWithSessionTokenHandler(c *gin.Context) {
+	var req LoginWithSessionTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error().Err(err).Msg("LoginWithSessionToken: Error binding JSON")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos de solicitud inválidos"})
+		return
+	}
+
+	clientSecret := h.getShopifyConfig(c.Request.Context(), "client_secret")
+	if clientSecret == "" {
+		h.logger.Error().Msg("SHOPIFY_CLIENT_SECRET no configurado")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error de configuración del servidor"})
+		return
+	}
+
+	// Validar firma HS256 y parsear claims usando golang-jwt/jwt
+	token, err := jwt.ParseWithClaims(req.SessionToken, &ShopifySessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Verificar que el algoritmo sea HMAC (HS256)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("algoritmo de firma inesperado: %v", token.Header["alg"])
+		}
+		return []byte(clientSecret), nil
+	})
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Session token JWT inválido")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token de sesión inválido o expirado"})
+		return
+	}
+
+	claims, ok := token.Claims.(*ShopifySessionTokenClaims)
+	if !ok || !token.Valid {
+		h.logger.Error().Msg("Claims del session token inválidos")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token de sesión inválido"})
+		return
+	}
+
+	// El campo 'dest' contiene la URL de la tienda, ej: https://tienda.myshopify.com
+	if claims.Dest == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Falta el claim 'dest' en el token"})
+		return
+	}
+
+	// Limpiar el protocolo para obtener solo el dominio
+	shopDomain := strings.TrimPrefix(claims.Dest, "https://")
+
+	h.logger.Info().Str("shop", shopDomain).Str("sub", claims.Subject).Msg("Login vía Session Token validado")
+
+	// TODO: Buscar el business asociado a este shopDomain e integrar con el sistema de auth
+	// h.businessService.GetByShopifyShop(shopDomain)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login exitoso",
+		"shop":    shopDomain,
+	})
+}

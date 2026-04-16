@@ -1,0 +1,93 @@
+=== RUN   TestCreate_Success
+--- PASS: TestCreate_Success (0.00s)
+=== RUN   TestCreate_DuplicateConfig
+--- PASS: TestCreate_DuplicateConfig (0.00s)
+=== RUN   TestCreate_RepositoryListError
+--- PASS: TestCreate_RepositoryListError (0.00s)
+=== RUN   TestCreate_RepositoryCreateError
+--- PASS: TestCreate_RepositoryCreateError (0.00s)
+=== RUN   TestCreate_CacheErrorShouldNotFail
+--- PASS: TestCreate_CacheErrorShouldNotFail (0.00s)
+=== RUN   TestCreate_DifferentIntegration_ShouldSucceed
+--- PASS: TestCreate_DifferentIntegration_ShouldSucceed (0.00s)
+=== RUN   TestDeleteNotificationEventType_Success
+--- PASS: TestDeleteNotificationEventType_Success (0.00s)
+=== RUN   TestDeleteNotificationEventType_NotFound
+--- PASS: TestDeleteNotificationEventType_NotFound (0.00s)
+=== RUN   TestDeleteNotificationEventType_HasActiveConfigs
+--- PASS: TestDeleteNotificationEventType_HasActiveConfigs (0.00s)
+=== RUN   TestDeleteNotificationEventType_HasInactiveConfigs_ShouldSucceed
+--- PASS: TestDeleteNotificationEventType_HasInactiveConfigs_ShouldSucceed (0.00s)
+=== RUN   TestDeleteNotificationEventType_MixedActiveInactive_ShouldFail
+--- PASS: TestDeleteNotificationEventType_MixedActiveInactive_ShouldFail (0.00s)
+=== RUN   TestDeleteNotificationEventType_RepositoryListError
+--- PASS: TestDeleteNotificationEventType_RepositoryListError (0.00s)
+=== RUN   TestDeleteNotificationEventType_DeleteError
+--- PASS: TestDeleteNotificationEventType_DeleteError (0.00s)
+=== RUN   TestDelete_Success
+--- PASS: TestDelete_Success (0.00s)
+=== RUN   TestDelete_NotFound
+--- PASS: TestDelete_NotFound (0.00s)
+=== RUN   TestDelete_RepositoryError
+--- PASS: TestDelete_RepositoryError (0.00s)
+=== RUN   TestGetByID_Success
+--- PASS: TestGetByID_Success (0.00s)
+=== RUN   TestGetByID_NotFound
+--- PASS: TestGetByID_NotFound (0.00s)
+=== RUN   TestGetByID_RepositoryError
+--- PASS: TestGetByID_RepositoryError (0.00s)
+=== RUN   TestGetByID_ZeroID
+--- PASS: TestGetByID_ZeroID (0.00s)
+=== RUN   TestGetByID_WithRelations
+--- PASS: TestGetByID_WithRelations (0.00s)
+=== RUN   TestList_Success_NoFilters
+--- PASS: TestList_Success_NoFilters (0.00s)
+=== RUN   TestList_Success_WithFilters
+--- PASS: TestList_Success_WithFilters (0.00s)
+=== RUN   TestList_Success_EmptyResult
+--- PASS: TestList_Success_EmptyResult (0.00s)
+=== RUN   TestList_RepositoryError
+--- PASS: TestList_RepositoryError (0.00s)
+=== RUN   TestList_FilterByNotificationTypeID
+--- PASS: TestList_FilterByNotificationTypeID (0.00s)
+=== RUN   TestList_FilterByEnabled
+--- PASS: TestList_FilterByEnabled (0.00s)
+=== RUN   TestUpdate_Success
+--- PASS: TestUpdate_Success (0.00s)
+=== RUN   TestUpdate_OnlyDescription
+--- PASS: TestUpdate_OnlyDescription (0.00s)
+=== RUN   TestUpdate_OnlyEnabled
+--- PASS: TestUpdate_OnlyEnabled (0.00s)
+=== RUN   TestUpdate_NotFound
+--- PASS: TestUpdate_NotFound (0.00s)
+=== RUN   TestUpdate_RepositoryUpdateError
+--- PASS: TestUpdate_RepositoryUpdateError (0.00s)
+=== RUN   TestUpdate_CacheErrorShouldNotFail
+--- PASS: TestUpdate_CacheErrorShouldNotFail (0.00s)
+=== RUN   TestUpdate_EmptyDTO
+--- PASS: TestUpdate_EmptyDTO (0.00s)
+=== RUN   TestValidateConditions_Success
+=== RUN   TestValidateConditions_Success/Sin_filtros_de_estados_-_debe_aceptar_cualquier_estado
+=== RUN   TestValidateConditions_Success/Estado_permitido_en_la_lista_-_debe_aceptar
+=== RUN   TestValidateConditions_Success/Estado_NO_permitido_-_debe_rechazar
+=== RUN   TestValidateConditions_Success/Primer_estado_en_la_lista_-_debe_aceptar
+=== RUN   TestValidateConditions_Success/Último_estado_en_la_lista_-_debe_aceptar
+=== RUN   TestValidateConditions_Success/Un_solo_estado_permitido_-_debe_aceptar_si_coincide
+=== RUN   TestValidateConditions_Success/Un_solo_estado_permitido_-_debe_rechazar_si_no_coincide
+--- PASS: TestValidateConditions_Success (0.00s)
+    --- PASS: TestValidateConditions_Success/Sin_filtros_de_estados_-_debe_aceptar_cualquier_estado (0.00s)
+    --- PASS: TestValidateConditions_Success/Estado_permitido_en_la_lista_-_debe_aceptar (0.00s)
+    --- PASS: TestValidateConditions_Success/Estado_NO_permitido_-_debe_rechazar (0.00s)
+    --- PASS: TestValidateConditions_Success/Primer_estado_en_la_lista_-_debe_aceptar (0.00s)
+    --- PASS: TestValidateConditions_Success/Último_estado_en_la_lista_-_debe_aceptar (0.00s)
+    --- PASS: TestValidateConditions_Success/Un_solo_estado_permitido_-_debe_aceptar_si_coincide (0.00s)
+    --- PASS: TestValidateConditions_Success/Un_solo_estado_permitido_-_debe_rechazar_si_no_coincide (0.00s)
+=== RUN   TestValidateConditions_PaymentMethod
+--- PASS: TestValidateConditions_PaymentMethod (0.00s)
+=== RUN   TestValidateConditions_EmptyOrderStatusIDs
+--- PASS: TestValidateConditions_EmptyOrderStatusIDs (0.00s)
+=== RUN   TestValidateConditions_NilConfig
+--- PASS: TestValidateConditions_NilConfig (0.00s)
+PASS
+coverage: 42.0% of statements
+ok  	github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app	0.005s

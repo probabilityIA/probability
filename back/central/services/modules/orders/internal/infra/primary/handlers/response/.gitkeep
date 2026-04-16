@@ -1,0 +1,2 @@
+# Esta carpeta contendrá DTOs de response HTTP específicos de handlers
+# Por ahora, los handlers usan DTOs del domain/dtos/

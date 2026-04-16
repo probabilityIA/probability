@@ -1,0 +1,307 @@
+import { env } from '@/shared/config/env';
+import { IIntegrationRepository } from '../../domain/ports';
+import {
+    Integration,
+    PaginatedResponse,
+    GetIntegrationsParams,
+    SingleResponse,
+    CreateIntegrationDTO,
+    UpdateIntegrationDTO,
+    ActionResponse,
+    IntegrationType,
+    CreateIntegrationTypeDTO,
+    UpdateIntegrationTypeDTO,
+    ListWebhooksResponse,
+    DeleteWebhookResponse,
+    WebhookResponse,
+    VerifyWebhooksResponse,
+    CreateWebhookResponse,
+    SyncOrdersParams,
+    IntegrationCategory,
+    IntegrationCategoriesResponse
+} from '../../domain/types';
+
+export class IntegrationApiRepository implements IIntegrationRepository {
+    private baseUrl: string;
+    private token: string | null;
+
+    constructor(token?: string | null) {
+        this.baseUrl = env.API_BASE_URL;
+        this.token = token || null;
+    }
+
+    private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+        const url = `${this.baseUrl}${path}`;
+
+        console.log(`[API Request] ${options.method || 'GET'} ${url}`, {
+            headers: options.headers,
+            body: options.body
+        });
+
+        // Si el body es FormData, no establecer Content-Type (el navegador lo hará automáticamente)
+        const isFormData = options.body instanceof FormData;
+
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+            ...(options.headers as Record<string, string> || {}),
+        };
+
+        if (this.token) {
+            (headers as any)['Authorization'] = `Bearer ${this.token}`;
+        }
+
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers,
+            });
+
+            const text = await res.text();
+            let data;
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (e) {
+                console.error(`[API JSON Parse Error] ${url}`, text);
+                throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}...`);
+            }
+
+            console.log(`[API Response] ${res.status} ${url}`, data);
+
+            if (!res.ok) {
+                console.error(`[API Error] ${res.status} ${url}`, data);
+                throw new Error(data.error || data.message || 'An error occurred');
+            }
+
+            return data;
+        } catch (error) {
+            console.error(`[API Network Error] ${url}`, error);
+            throw error;
+        }
+    }
+
+    async getIntegrations(params?: GetIntegrationsParams): Promise<PaginatedResponse<Integration>> {
+        const searchParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) searchParams.append(key, String(value));
+            });
+        }
+        const response = await this.fetch<PaginatedResponse<Integration>>(`/integrations?${searchParams.toString()}`);
+        return {
+            ...response,
+            data: response.data || []
+        };
+    }
+
+    async getIntegrationById(id: number): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}`);
+    }
+
+    async getIntegrationByType(type: string, businessId?: number): Promise<SingleResponse<Integration>> {
+        const searchParams = new URLSearchParams();
+        if (businessId) searchParams.append('business_id', String(businessId));
+        return this.fetch<SingleResponse<Integration>>(`/integrations/type/${type}?${searchParams.toString()}`);
+    }
+
+    async createIntegration(data: CreateIntegrationDTO): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>('/integrations', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateIntegration(id: number, data: UpdateIntegrationDTO): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async testConnection(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/test`, {
+            method: 'POST',
+        });
+    }
+
+    async activateIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/activate`, {
+            method: 'PUT',
+        });
+    }
+
+    async deactivateIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/deactivate`, {
+            method: 'PUT',
+        });
+    }
+
+    async setAsDefault(id: number): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/set-default`, {
+            method: 'PUT',
+        });
+    }
+
+    async getSyncStatus(id: number, businessId?: number): Promise<{ success: boolean; in_progress: boolean; sync_state?: any }> {
+        const businessIdParam = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<{ success: boolean; in_progress: boolean; sync_state?: any }>(
+            `/integrations/events/sync-status/${id}${businessIdParam}`
+        );
+    }
+
+    async syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/sync`, {
+            method: 'POST',
+            body: params ? JSON.stringify(params) : undefined,
+        });
+    }
+
+    async testIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/test`, {
+            method: 'POST',
+        });
+    }
+
+    async testConnectionRaw(typeCode: string, config: Record<string, any>, credentials: Record<string, any>): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>('/integrations/test', {
+            method: 'POST',
+            body: JSON.stringify({
+                type_code: typeCode,
+                config,
+                credentials
+            })
+        });
+    }
+
+    // Integration Types
+    async getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>> {
+        const params = categoryId ? `?category_id=${categoryId}` : '';
+        return this.fetch<SingleResponse<IntegrationType[]>>(`/integration-types${params}`);
+    }
+
+    async getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
+        return this.fetch<SingleResponse<IntegrationType[]>>('/integration-types/active');
+    }
+
+    async getIntegrationTypeById(id: number): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`);
+    }
+
+    async getIntegrationTypeByCode(code: string): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/code/${code}`);
+    }
+
+    async createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        // Si hay imagen, usar FormData, sino JSON
+        if (data.image_file) {
+            const formData = new FormData();
+            formData.append('name', data.name);
+            if (data.code) formData.append('code', data.code);
+            if (data.description) formData.append('description', data.description);
+            if (data.icon) formData.append('icon', data.icon);
+            formData.append('category_id', String(data.category_id));
+            if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
+            if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
+            if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
+            if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
+            if (data.base_url) formData.append('base_url', data.base_url);
+            if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
+            if (data.platform_credentials && Object.keys(data.platform_credentials).length > 0) {
+                formData.append('platform_credentials', JSON.stringify(data.platform_credentials));
+            }
+            formData.append('image_file', data.image_file);
+
+            return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
+                method: 'POST',
+                body: formData,
+                headers: {} // No establecer Content-Type, el navegador lo hará automáticamente con FormData
+            });
+        }
+
+        return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        // Si hay imagen o remove_image, usar FormData, sino JSON
+        if (data.image_file || data.remove_image !== undefined) {
+            const formData = new FormData();
+            if (data.name) formData.append('name', data.name);
+            if (data.code) formData.append('code', data.code);
+            if (data.description) formData.append('description', data.description);
+            if (data.icon) formData.append('icon', data.icon);
+            if (data.category_id !== undefined) formData.append('category_id', String(data.category_id));
+            if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
+            if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
+            if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
+            if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
+            if (data.image_file) formData.append('image_file', data.image_file);
+            if (data.remove_image !== undefined) formData.append('remove_image', String(data.remove_image));
+            if (data.base_url) formData.append('base_url', data.base_url);
+            if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
+            if (data.platform_credentials && Object.keys(data.platform_credentials).length > 0) {
+                formData.append('platform_credentials', JSON.stringify(data.platform_credentials));
+            }
+
+            return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {} // No establecer Content-Type, el navegador lo hará automáticamente con FormData
+            });
+        }
+
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteIntegrationType(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integration-types/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, unknown> }> {
+        return this.fetch<{ success: boolean; message: string; data: Record<string, string> }>(`/integration-types/${id}/platform-credentials`);
+    }
+
+    async getWebhookUrl(id: number): Promise<WebhookResponse> {
+        return this.fetch<WebhookResponse>(`/integrations/${id}/webhook`);
+    }
+
+    async listWebhooks(id: number): Promise<ListWebhooksResponse> {
+        return this.fetch<ListWebhooksResponse>(`/integrations/${id}/webhooks`);
+    }
+
+    async deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse> {
+        return this.fetch<DeleteWebhookResponse>(`/integrations/${id}/webhooks/${webhookId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async verifyWebhooks(id: number): Promise<VerifyWebhooksResponse> {
+        return this.fetch<VerifyWebhooksResponse>(`/integrations/${id}/webhooks/verify`);
+    }
+
+    async createWebhook(id: number): Promise<CreateWebhookResponse> {
+        return this.fetch<CreateWebhookResponse>(`/integrations/${id}/webhooks/create`, {
+            method: 'POST',
+        });
+    }
+
+    // Integration Categories
+    async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
+        return this.fetch<IntegrationCategoriesResponse>('/integration-categories', {
+            cache: 'no-store', // Don't cache to always get fresh data
+        } as any);
+    }
+}

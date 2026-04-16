@@ -1,0 +1,244 @@
+package mapper
+
+import (
+	"encoding/json"
+
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos" // Added import for service
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	"gorm.io/datatypes"
+)
+
+// ToOrderResponse convierte un modelo Order a OrderResponse
+func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
+	if order == nil {
+		return nil
+	}
+
+	return &dtos.OrderResponse{
+		ID:        order.ID,
+		CreatedAt: order.CreatedAt,
+		UpdatedAt: order.UpdatedAt,
+		DeletedAt: order.DeletedAt,
+
+		// Identificadores de integración
+		BusinessID:         order.BusinessID,
+		IntegrationID:      order.IntegrationID,
+		IntegrationType:    order.IntegrationType,
+		IntegrationLogoURL: order.IntegrationLogoURL,
+		IntegrationName:    order.IntegrationName,
+
+		// Identificadores de la orden
+		Platform:       order.Platform,
+		ExternalID:     order.ExternalID,
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+
+		// Información financiera
+		Subtotal:                order.Subtotal,
+		Tax:                     order.Tax,
+		Discount:                order.Discount,
+		ShippingCost:                order.ShippingCost,
+		ShippingDiscount:            order.ShippingDiscount,
+		ShippingDiscountPresentment: order.ShippingDiscountPresentment,
+		TotalAmount:                 order.TotalAmount,
+		Currency:                    order.Currency,
+		CodTotal:                    order.CodTotal,
+		SubtotalPresentment:         order.SubtotalPresentment,
+		TaxPresentment:              order.TaxPresentment,
+		DiscountPresentment:         order.DiscountPresentment,
+		ShippingCostPresentment:     order.ShippingCostPresentment,
+		TotalAmountPresentment:  order.TotalAmountPresentment,
+		CurrencyPresentment:     order.CurrencyPresentment,
+
+		// Información del cliente
+		CustomerID:        order.CustomerID,
+		CustomerName:      order.CustomerName,
+		CustomerFirstName: order.CustomerFirstName,
+		CustomerLastName:  order.CustomerLastName,
+		CustomerEmail:     order.CustomerEmail,
+		CustomerPhone:     order.CustomerPhone,
+		CustomerDNI:       order.CustomerDNI,
+
+		// Dirección de envío (desnormalizado)
+		ShippingStreet:     order.ShippingStreet,
+		ShippingCity:       order.ShippingCity,
+		ShippingState:      order.ShippingState,
+		ShippingCountry:    order.ShippingCountry,
+		ShippingPostalCode: order.ShippingPostalCode,
+		ShippingLat:        order.ShippingLat,
+		ShippingLng:        order.ShippingLng,
+
+		// Información de pago
+		PaymentMethodID: order.PaymentMethodID,
+		IsPaid:          order.IsPaid,
+		PaidAt:          order.PaidAt,
+
+		// Información de envío/logística
+		TrackingNumber:      order.TrackingNumber,
+		TrackingLink:        order.TrackingLink,
+		GuideID:             order.GuideID,
+		GuideLink:           order.GuideLink,
+		DeliveryDate:        order.DeliveryDate,
+		DeliveredAt:         order.DeliveredAt,
+		DeliveryProbability: order.DeliveryProbability,
+
+		// Información de fulfillment
+		WarehouseID:   order.WarehouseID,
+		WarehouseName: order.WarehouseName,
+		DriverID:      order.DriverID,
+		DriverName:    order.DriverName,
+		IsLastMile:    order.IsLastMile,
+
+		// Dimensiones y peso
+		Weight: order.Weight,
+		Height: order.Height,
+		Width:  order.Width,
+		Length: order.Length,
+		Boxes:  order.Boxes,
+
+		// Tipo y estado
+		OrderTypeID:         order.OrderTypeID,
+		OrderTypeName:       order.OrderTypeName,
+		Status:              order.Status,
+		OriginalStatus:      order.OriginalStatus,
+		StatusID:            order.StatusID,
+		OrderStatus:         order.OrderStatus,
+		PaymentStatusID:     order.PaymentStatusID,
+		FulfillmentStatusID: order.FulfillmentStatusID,
+		PaymentStatus:       order.PaymentStatus,
+		FulfillmentStatus:   order.FulfillmentStatus,
+
+		// Información adicional
+		Notes:    order.Notes,
+		Coupon:   order.Coupon,
+		Approved: order.Approved,
+		UserID:   order.UserID,
+		UserName: order.UserName,
+
+		// Novedades
+		IsConfirmed: order.IsConfirmed,
+		Novelty:     order.Novelty,
+
+		// Testing
+		IsTest: order.IsTest,
+
+		// Facturación
+		Invoiceable:     order.Invoiceable,
+		InvoiceURL:      order.InvoiceURL,
+		InvoiceID:       order.InvoiceID,
+		InvoiceProvider: order.InvoiceProvider,
+		OrderStatusURL:  order.OrderStatusURL,
+
+		// Items de la orden
+		OrderItems: order.OrderItems,
+
+		// Información del envío (relación con shipments)
+		Shipment: mapShipmentToResponse(order.Shipments),
+
+		// Datos estructurados
+		Metadata:           order.Metadata,
+		FinancialDetails:   order.FinancialDetails,
+		ShippingDetails:    order.ShippingDetails,
+		PaymentDetails:     order.PaymentDetails,
+		FulfillmentDetails: order.FulfillmentDetails,
+
+		// Timestamps
+		OccurredAt: order.OccurredAt,
+		ImportedAt: order.ImportedAt,
+
+		// Calculated Fields
+		NegativeFactors: UnmarshalNegativeFactors(order.NegativeFactors),
+		ScoreBreakdown:  json.RawMessage(order.ScoreBreakdown),
+	}
+}
+
+func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
+	if len(jsonData) == 0 || string(jsonData) == "null" {
+		return []string{}
+	}
+	var factors []string
+	_ = json.Unmarshal(jsonData, &factors)
+	return factors
+}
+
+// mapShipmentToResponse convierte el slice de shipments al primer ShipmentData
+// (esperamos solo 1 debido al Limit(1) en el Preload)
+func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.ShipmentData {
+	if len(shipments) == 0 {
+		return nil
+	}
+
+	s := shipments[0]
+	return &dtos.ShipmentData{
+		ID:             s.ID,
+		Carrier:        s.Carrier,
+		TrackingNumber: s.TrackingNumber,
+		GuideURL:       s.GuideURL,
+		Status:         s.Status,
+	}
+}
+
+// ToOrderSummary convierte un modelo Order a OrderSummary
+func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
+	var businessID uint
+	if order.BusinessID != nil {
+		businessID = *order.BusinessID
+	}
+
+	// Mapear el primer shipment si existe
+	var shipment *dtos.ShipmentSummary
+	if len(order.Shipments) > 0 {
+		s := order.Shipments[0]
+		shipment = &dtos.ShipmentSummary{
+			ID:             s.ID,
+			Carrier:        s.Carrier,
+			TrackingNumber: s.TrackingNumber,
+			GuideURL:       s.GuideURL,
+			Status:         s.Status,
+		}
+	}
+
+	return dtos.OrderSummary{
+		ID:                     order.ID,
+		CreatedAt:              order.CreatedAt,
+		BusinessID:             businessID,
+		IntegrationID:          order.IntegrationID,
+		IntegrationType:        order.IntegrationType,
+		IntegrationLogoURL:     order.IntegrationLogoURL,
+		Platform:               order.Platform,
+		ExternalID:             order.ExternalID,
+		OrderNumber:            order.OrderNumber,
+		TotalAmount:            order.TotalAmount,
+		Currency:               order.Currency,
+		TotalAmountPresentment: order.TotalAmountPresentment,
+		CurrencyPresentment:    order.CurrencyPresentment,
+		CustomerName:           order.CustomerName,
+		CustomerFirstName:      order.CustomerFirstName,
+		CustomerLastName:       order.CustomerLastName,
+		CustomerEmail:          order.CustomerEmail,
+		CustomerPhone:          order.CustomerPhone,
+		ShippingStreet:         order.ShippingStreet,
+		ShippingCity:           order.ShippingCity,
+		ShippingState:          order.ShippingState,
+		Weight:                 order.Weight,
+		Height:                 order.Height,
+		Width:                  order.Width,
+		Length:                 order.Length,
+		Status:                 order.Status,
+		ItemsCount:             len(order.OrderItems),
+		DeliveryProbability:    order.DeliveryProbability,
+		NegativeFactors:        UnmarshalNegativeFactors(order.NegativeFactors),
+		ScoreBreakdown:         json.RawMessage(order.ScoreBreakdown),
+		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
+		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
+		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
+		OrderStatusURL:         order.OrderStatusURL,
+		GuideLink:              order.GuideLink,
+		IsPaid:                 order.IsPaid,
+		IsConfirmed:            order.IsConfirmed,
+		Novelty:                order.Novelty,
+		IsTest:                 order.IsTest,
+		InvoiceStatus:          order.InvoiceStatus,
+		Shipment:               shipment,
+	}
+}

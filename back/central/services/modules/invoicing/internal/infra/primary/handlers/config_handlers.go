@@ -1,0 +1,219 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/request"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
+)
+
+// CreateConfig crea una nueva configuración de facturación
+func (h *handler) CreateConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var req request.CreateConfig
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.log.Error(ctx).Err(err).Msg("Invalid request body")
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "invalid_request",
+			Message: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	logInfo := h.log.Info(ctx).
+		Uint("business_id", req.BusinessID).
+		Int("integration_ids_count", len(req.IntegrationIDs)).
+		Uint("invoicing_integration_id", req.InvoicingIntegrationID)
+
+	if req.InvoicingProviderID != nil {
+		logInfo = logInfo.Uint("provider_id", *req.InvoicingProviderID)
+	}
+
+	logInfo.Msg("Creating invoicing config")
+
+	// Obtener user ID del contexto (JWT)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.log.Error(ctx).Msg("User ID not found in context")
+		c.JSON(http.StatusUnauthorized, response.Error{
+			Error:   "unauthorized",
+			Message: "User not authenticated",
+		})
+		return
+	}
+
+	dto := mappers.CreateConfigRequestToDTO(&req, userID.(uint))
+
+	config, err := h.useCase.CreateConfig(ctx, dto)
+	if err != nil {
+		h.log.Error(ctx).Err(err).Msg("Failed to create config")
+		handleDomainError(c, err, "config_creation_failed")
+		return
+	}
+
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
+
+	h.log.Info(ctx).
+		Uint("config_id", config.ID).
+		Msg("Config created successfully")
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+// ListConfigs lista configuraciones de facturación
+func (h *handler) ListConfigs(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "business_id_required",
+			Message: "business_id is required",
+		})
+		return
+	}
+
+	page := 1
+	if p := c.Query("page"); p != "" {
+		page, _ = strconv.Atoi(p)
+	}
+
+	pageSize := 20
+	if ps := c.Query("page_size"); ps != "" {
+		pageSize, _ = strconv.Atoi(ps)
+	}
+
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	h.log.Debug(ctx).Uint("business_id", businessID).Msg("Listing configs")
+
+	configs, err := h.useCase.ListConfigs(ctx, businessID)
+	if err != nil {
+		h.log.Error(ctx).Err(err).Msg("Failed to list configs")
+		handleDomainError(c, err, "list_configs_failed")
+		return
+	}
+
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigsToResponse(configs, int64(len(configs)), page, pageSize, baseURL, bucket)
+	c.JSON(http.StatusOK, resp)
+}
+
+// GetConfig obtiene una configuración por ID
+func (h *handler) GetConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "invalid_id",
+			Message: "Invalid config ID",
+		})
+		return
+	}
+
+	h.log.Debug(ctx).Uint("config_id", uint(id)).Msg("Getting config")
+
+	config, err := h.useCase.GetConfig(ctx, uint(id))
+	if err != nil {
+		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to get config")
+		handleDomainError(c, err, "config_not_found")
+		return
+	}
+
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
+	c.JSON(http.StatusOK, resp)
+}
+
+// UpdateConfig actualiza una configuración
+func (h *handler) UpdateConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "invalid_id",
+			Message: "Invalid config ID",
+		})
+		return
+	}
+
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "business_id_required",
+			Message: "business_id is required",
+		})
+		return
+	}
+
+	var req request.UpdateConfig
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.log.Error(ctx).Err(err).Msg("Invalid request body")
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "invalid_request",
+			Message: "Invalid request body: " + err.Error(),
+		})
+		return
+	}
+
+	h.log.Info(ctx).Uint("config_id", uint(id)).Msg("Updating config")
+
+	dto := mappers.UpdateConfigRequestToDTO(&req)
+	dto.RequestingBusinessID = &businessID
+
+	config, err := h.useCase.UpdateConfig(ctx, uint(id), dto)
+	if err != nil {
+		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to update config")
+		handleDomainError(c, err, "config_update_failed")
+		return
+	}
+
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
+
+	h.log.Info(ctx).Uint("config_id", config.ID).Msg("Config updated successfully")
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// DeleteConfig elimina una configuración
+func (h *handler) DeleteConfig(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "invalid_id",
+			Message: "Invalid config ID",
+		})
+		return
+	}
+
+	h.log.Info(ctx).Uint("config_id", uint(id)).Msg("Deleting config")
+
+	err = h.useCase.DeleteConfig(ctx, uint(id))
+	if err != nil {
+		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to delete config")
+		handleDomainError(c, err, "config_deletion_failed")
+		return
+	}
+
+	h.log.Info(ctx).Uint("config_id", uint(id)).Msg("Config deleted successfully")
+
+	c.JSON(http.StatusOK, response.Success{
+		Success: true,
+		Message: "Config deleted successfully",
+	})
+}

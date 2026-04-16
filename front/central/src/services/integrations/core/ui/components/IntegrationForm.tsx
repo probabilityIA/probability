@@ -1,0 +1,933 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction, getWebhookUrlAction, activateIntegrationAction, deactivateIntegrationAction } from '../../infra/actions';
+import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
+import { Alert, Button } from '@/shared/ui';
+import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
+import { WhatsAppIntegrationView } from '@/services/integrations/messages/whatsapp/ui';
+import { SoftpymesConfigForm, SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+import { FactusConfigForm, FactusEditForm } from '@/services/integrations/invoicing/factus/ui';
+import { SiigoConfigForm, SiigoEditForm } from '@/services/integrations/invoicing/siigo/ui';
+import { AlegraConfigForm, AlegraEditForm } from '@/services/integrations/invoicing/alegra/ui';
+import { WorldOfficeConfigForm, WorldOfficeEditForm } from '@/services/integrations/invoicing/world_office/ui';
+import { HelisaConfigForm, HelisaEditForm } from '@/services/integrations/invoicing/helisa/ui';
+import { EnvioClickConfigForm, EnvioClickEditForm } from '@/services/integrations/transport/envioclick/ui';
+import { EnviameConfigForm, EnviameEditForm } from '@/services/integrations/transport/enviame/ui';
+import { TuConfigForm, TuEditForm } from '@/services/integrations/transport/tu/ui';
+import { MiPaqueteConfigForm, MiPaqueteEditForm } from '@/services/integrations/transport/mipaquete/ui';
+import { VTEXConfigForm, VTEXEditForm } from '@/services/integrations/ecommerce/vtex/ui';
+import { TiendanubeConfigForm, TiendanubeEditForm } from '@/services/integrations/ecommerce/tiendanube/ui';
+import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecommerce/magento/ui';
+import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
+import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
+import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
+import { getActionError } from '@/shared/utils/action-result';
+
+// IDs constantes de tipos de integración (tabla integration_types)
+const INTEGRATION_TYPE_IDS = {
+    SHOPIFY: 1,
+    WHATSAPP: 2,
+    MERCADO_LIBRE: 3,
+    WOOCOMMERCE: 4,
+    SOFTPYMES: 5,
+    FACTUS: 7,
+    SIIGO: 8,
+    ALEGRA: 9,
+    WORLD_OFFICE: 10,
+    HELISA: 11,
+    ENVIOCLICK: 12,
+    ENVIAME: 13,
+    TU: 14,
+    MIPAQUETE: 15,
+    VTEX: 16,
+    TIENDANUBE: 17,
+    MAGENTO: 18,
+    AMAZON: 19,
+    FALABELLA: 20,
+    EXITO: 21,
+} as const;
+
+interface IntegrationFormProps {
+    integration?: Integration;
+    onSuccess?: () => void;
+    onCancel?: () => void;
+    onTypeSelected?: (hasTypeSelected: boolean) => void;
+}
+
+export default function IntegrationForm({ integration, onSuccess, onCancel, onTypeSelected }: IntegrationFormProps) {
+    const [integrationTypes, setIntegrationTypes] = useState<IntegrationType[]>([]);
+    const [selectedType, setSelectedType] = useState<IntegrationType | null>(null);
+    const [loadingTypes, setLoadingTypes] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Notify parent when type is selected
+    useEffect(() => {
+        if (onTypeSelected) {
+            onTypeSelected(!!selectedType);
+        }
+    }, [selectedType, onTypeSelected]);
+
+    // Fetch integration types on mount
+    useEffect(() => {
+        const fetchIntegrationTypes = async () => {
+            console.log('🔍 Fetching integration types...');
+            try {
+                const response = await getActiveIntegrationTypesAction();
+                console.log('📦 Integration types response:', response);
+
+                if (response.success && response.data) {
+                    console.log('✅ Integration types loaded:', response.data);
+                    setIntegrationTypes(response.data);
+
+                    // Set selected type ONLY if editing an existing integration
+                    if (integration) {
+                        const type = response.data.find(t => t.id === integration.integration_type_id);
+                        setSelectedType(type || null);
+                    }
+                    // Don't auto-select first type when creating new
+                } else {
+                    console.warn('⚠️ No integration types in response:', response);
+                    setError('No se encontraron tipos de integración');
+                }
+            } catch (err) {
+                console.error('❌ Error fetching integration types:', err);
+                setError('Error al cargar los tipos de integración');
+            } finally {
+                setLoadingTypes(false);
+            }
+        };
+
+        fetchIntegrationTypes();
+    }, [integration]);
+
+    const handleTypeChange = (typeId: number) => {
+        const type = integrationTypes.find(t => t.id === typeId);
+        setSelectedType(type || null);
+    };
+
+    const handleShopifySubmit = async (data: {
+        name: string;
+        code: string;
+        store_id: string;
+        config: any;
+        credentials: any;
+        business_id?: number | null;
+    }) => {
+        if (!selectedType) return;
+
+        const integrationData = {
+            name: data.name,
+            code: data.code,
+            store_id: data.store_id,
+            integration_type_id: selectedType.id,
+            category: selectedType.category?.code || selectedType.integration_category?.code || 'external',
+            business_id: data.business_id || null,
+            config: data.config,
+            credentials: data.credentials,
+            is_active: true,
+            is_default: false,
+        };
+
+        await createIntegrationAction(integrationData);
+        onSuccess?.();
+    };
+
+    const handleTestConnection = async (config: any, credentials: any) => {
+        if (!selectedType) {
+            console.error('No hay tipo de integración seleccionado');
+            return false;
+        }
+
+        try {
+            const result = await testConnectionRawAction(selectedType.code, config, credentials);
+            if (result.success) {
+                console.log('✅ Conexión probada exitosamente:', result.message);
+                return true;
+            } else {
+                console.error('❌ Error al probar conexión:', result.message);
+                return false;
+            }
+        } catch (error: any) {
+            console.error('❌ Error al probar conexión:', error);
+            return false;
+        }
+    };
+
+    const [whatsappName, setWhatsappName] = useState('');
+    const [creatingWhatsapp, setCreatingWhatsapp] = useState(false);
+
+    const handleWhatsAppCreate = async () => {
+        if (!selectedType || !whatsappName.trim()) return;
+        setCreatingWhatsapp(true);
+        setError(null);
+        try {
+            const code = whatsappName.trim().toLowerCase().replace(/\s+/g, '_');
+            const result = await createIntegrationAction({
+                name: whatsappName.trim(),
+                code,
+                integration_type_id: selectedType.id,
+                category: selectedType.category?.code || selectedType.integration_category?.code || 'messaging',
+                business_id: null,
+                is_active: true,
+                is_default: false,
+            });
+            if (result.success) {
+                onSuccess?.();
+            } else {
+                setError(result.message || 'Error al crear la integración de WhatsApp');
+            }
+        } catch (err: any) {
+            setError(getActionError(err, 'Error al crear la integración de WhatsApp'));
+        } finally {
+            setCreatingWhatsapp(false);
+        }
+    };
+
+    const handleWhatsAppToggleActive = async (id: number, currentlyActive: boolean) => {
+        try {
+            if (currentlyActive) {
+                const result = await deactivateIntegrationAction(id);
+                return result.success;
+            } else {
+                const result = await activateIntegrationAction(id);
+                return result.success;
+            }
+        } catch {
+            return false;
+        }
+    };
+
+    const handleGetWebhook = async (): Promise<WebhookInfo | null> => {
+        if (!integration) return null;
+
+        try {
+            const result = await getWebhookUrlAction(integration.id);
+            if (result.success && result.data) {
+                return result.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting webhook:', error);
+            return null;
+        }
+    };
+
+    const handleShopifyUpdate = async (data: {
+        name: string;
+        code?: string;
+        store_id: string;
+        config: any;
+        credentials: any;
+        business_id?: number | null;
+        is_testing?: boolean;
+    }) => {
+        if (!integration) return;
+
+        try {
+            const updateData: any = {
+                name: data.name,
+                store_id: data.store_id,
+                config: data.config,
+                is_testing: data.is_testing,
+            };
+            if (data.code) {
+                updateData.code = data.code;
+            }
+            // Solo incluir credenciales si hay valores ingresados
+            if (data.credentials && Object.keys(data.credentials).some(k => data.credentials[k])) {
+                updateData.credentials = data.credentials;
+            }
+            const result = await updateIntegrationAction(integration.id, updateData);
+
+            if (result.success) {
+                onSuccess?.();
+            } else {
+                setError(result.message || 'Error al actualizar la integración');
+            }
+        } catch (err: any) {
+            setError(getActionError(err, 'Error al actualizar la integración'));
+        }
+    };
+
+    if (loadingTypes) {
+        return <div className="text-center py-8">Cargando tipos de integración...</div>;
+    }
+
+    if (error) {
+        return (
+            <Alert type="error" onClose={() => setError(null)}>
+                {error}
+            </Alert>
+        );
+    }
+
+    // If editing an existing integration
+    if (integration) {
+        console.log('📋 Integration recibida para editar:', integration);
+
+        // Parse config if it's a string
+        let parsedConfig = integration.config || {};
+        if (typeof integration.config === 'string') {
+            try {
+                parsedConfig = JSON.parse(integration.config);
+                console.log('✅ Config parseado en IntegrationForm:', parsedConfig);
+            } catch (e) {
+                console.error('❌ Error parsing config:', e);
+                parsedConfig = {};
+            }
+        } else if (integration.config) {
+            parsedConfig = integration.config;
+            console.log('✅ Config ya es objeto en IntegrationForm:', parsedConfig);
+        }
+
+        // Show edit form for Shopify with webhook support
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SHOPIFY) {
+            console.log('🛒 Editando Shopify - store_id:', integration.store_id);
+            console.log('🛒 Editando Shopify - config:', parsedConfig);
+            console.log('🛒 Editando Shopify - credentials:', integration.credentials);
+            return (
+                <ShopifyIntegrationForm
+                    onSubmit={handleShopifyUpdate}
+                    onCancel={onCancel}
+                    onTestConnection={handleTestConnection}
+                    onGetWebhook={handleGetWebhook}
+                    initialData={{
+                        name: integration.name,
+                        code: integration.code,
+                        store_id: integration.store_id,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType?.base_url_test,
+                    }}
+                    isEdit={true}
+                    integrationId={integration.id}
+                />
+            );
+        }
+
+        // Show WhatsApp view (read-only with webhook info)
+        console.log('🔍 Verificando tipo de integración:', {
+            hasSelectedType: !!selectedType,
+            selectedTypeId: selectedType?.id,
+            isWhatsApp: selectedType?.id === INTEGRATION_TYPE_IDS.WHATSAPP,
+        });
+
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WHATSAPP) {
+            return (
+                <WhatsAppIntegrationView
+                    integration={{
+                        id: integration.id,
+                        name: integration.name,
+                        code: integration.code,
+                        config: parsedConfig,
+                        credentials: integration.credentials || {},
+                        is_active: integration.is_active,
+                        created_at: integration.created_at,
+                        updated_at: integration.updated_at,
+                    }}
+                    imageUrl={selectedType.image_url}
+                    onToggleActive={handleWhatsAppToggleActive}
+                    onUpdateConfig={async (id, config) => {
+                        const result = await updateIntegrationAction(id, { config });
+                        return { success: result.success, message: result.message };
+                    }}
+                    onTestConnection={async (id) => {
+                        const result = await testIntegrationAction(id);
+                        return { success: result.success, message: result.message };
+                    }}
+                    onRefresh={onSuccess}
+                />
+            );
+        }
+
+        // Show edit form for Softpymes
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES) {
+            console.log('✅ Usando SoftpymesEditForm');
+            return (
+                <SoftpymesEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Factus
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.FACTUS) {
+            console.log('✅ Usando FactusEditForm');
+            return (
+                <FactusEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Siigo
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SIIGO) {
+            return (
+                <SiigoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Alegra
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ALEGRA) {
+            return (
+                <AlegraEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for World Office
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WORLD_OFFICE) {
+            return (
+                <WorldOfficeEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Helisa
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.HELISA) {
+            return (
+                <HelisaEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for EnvioClick
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK) {
+            console.log('✅ Usando EnvioClickEditForm');
+            return (
+                <EnvioClickEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Enviame
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ENVIAME) {
+            return (
+                <EnviameEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for TU
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.TU) {
+            return (
+                <TuEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for MiPaquete
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.MIPAQUETE) {
+            return (
+                <MiPaqueteEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for VTEX
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.VTEX) {
+            return (
+                <VTEXEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Tiendanube
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.TIENDANUBE) {
+            return (
+                <TiendanubeEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Magento
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.MAGENTO) {
+            return (
+                <MagentoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Amazon
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.AMAZON) {
+            return (
+                <AmazonEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Falabella
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.FALABELLA) {
+            return (
+                <FalabellaEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Exito
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.EXITO) {
+            return (
+                <ExitoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // For other types that don't have a specific form yet
+        return (
+            <Alert type="info">
+                <div className="space-y-3">
+                    <p className="font-semibold">Formulario de Edición No Disponible</p>
+                    <p>
+                        El formulario de edición para <strong>{selectedType?.name}</strong> aún no está implementado.
+                    </p>
+                    <p className="text-sm">
+                        Cada tipo de integración requiere su propio formulario personalizado.
+                        Por favor, contacta al equipo de desarrollo para implementar este formulario.
+                    </p>
+                </div>
+            </Alert>
+        );
+    }
+
+    // Creating new integration - show type selector first if no type selected
+    return (
+        <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+            {/* Type Selector - Show when no type is selected */}
+            {!selectedType && integrationTypes.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg w-full">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
+                        Selecciona el tipo de integración *
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full max-w-full overflow-x-hidden">
+                        {integrationTypes.map((type) => (
+                            <button
+                                key={type.id}
+                                type="button"
+                                onClick={() => handleTypeChange(type.id)}
+                                className="p-4 border-2 rounded-lg text-center transition-all hover:border-blue-300 hover:shadow-lg border-gray-200 dark:border-gray-700 w-full h-full flex flex-col justify-center items-center min-h-[140px] shadow-md"
+                            >
+                                {/* Logo centrado */}
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="flex-shrink-0">
+                                        {type.image_url ? (
+                                            <img
+                                                src={type.image_url}
+                                                alt={type.name}
+                                                className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                onError={(e) => {
+                                                    // Fallback a imágenes hardcodeadas si la imagen falla
+                                                    const target = e.target as HTMLImageElement;
+                                                    if (type.id === INTEGRATION_TYPE_IDS.SHOPIFY) {
+                                                        target.src = '/integrations/shopify.png';
+                                                    } else if (type.id === INTEGRATION_TYPE_IDS.WHATSAPP) {
+                                                        target.src = '/integrations/whatsapp.png';
+                                                    } else {
+                                                        target.style.display = 'none';
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            // Fallback a imágenes hardcodeadas si no hay imagen_url
+                                            <>
+                                                {type.id === INTEGRATION_TYPE_IDS.SHOPIFY && (
+                                                    <img
+                                                        src="/integrations/shopify.png"
+                                                        alt="Shopify"
+                                                        className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                    />
+                                                )}
+                                                {type.id === INTEGRATION_TYPE_IDS.WHATSAPP && (
+                                                    <img
+                                                        src="/integrations/whatsapp.png"
+                                                        alt="WhatsApp"
+                                                        className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                    />
+                                                )}
+                                                {type.id !== INTEGRATION_TYPE_IDS.SHOPIFY && type.id !== INTEGRATION_TYPE_IDS.WHATSAPP && (
+                                                    <div className="w-14 h-14 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-base font-semibold shadow-md">
+                                                        {type.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Contenido de texto - Nombre y código centrados */}
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <h4 className="font-semibold text-gray-900 dark:text-white text-base break-words mb-1">{type.name}</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 break-words">{type.code}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Show message if no types available */}
+            {!selectedType && integrationTypes.length === 0 && (
+                <div className="text-center py-8">
+                    <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300">No hay tipos de integración disponibles.</p>
+                </div>
+            )}
+
+            {/* Render specific form based on selected type */}
+            {selectedType && (
+                <div>
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SHOPIFY && (
+                        <ShopifyIntegrationForm
+                            onSubmit={handleShopifySubmit}
+                            onCancel={onCancel}
+                            onTestConnection={handleTestConnection}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.WHATSAPP && (
+                        <div className="space-y-4 max-w-md mx-auto py-4">
+                            <div className="flex flex-col items-center text-center mb-4">
+                                {selectedType.image_url ? (
+                                    <img src={selectedType.image_url} alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
+                                ) : (
+                                    <img src="/integrations/whatsapp.png" alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
+                                )}
+                                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                                    Crea una integración de WhatsApp para este negocio. Las notificaciones se configuran desde el módulo de Notificaciones.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                                    Nombre de la integración *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={whatsappName}
+                                    onChange={(e) => setWhatsappName(e.target.value)}
+                                    placeholder="Ej: WhatsApp - Mi Negocio"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    disabled={creatingWhatsapp}
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                {onCancel && (
+                                    <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={creatingWhatsapp}>
+                                        Cancelar
+                                    </Button>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    onClick={handleWhatsAppCreate}
+                                    disabled={creatingWhatsapp || !whatsappName.trim()}
+                                    loading={creatingWhatsapp}
+                                    className="flex-1"
+                                >
+                                    Crear integración
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES && (
+                        <SoftpymesConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.FACTUS && (
+                        <FactusConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SIIGO && (
+                        <SiigoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ALEGRA && (
+                        <AlegraConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.WORLD_OFFICE && (
+                        <WorldOfficeConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.HELISA && (
+                        <HelisaConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK && (
+                        <EnvioClickConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURL={selectedType.base_url}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ENVIAME && (
+                        <EnviameConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.TU && (
+                        <TuConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.MIPAQUETE && (
+                        <MiPaqueteConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.VTEX && (
+                        <VTEXConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.TIENDANUBE && (
+                        <TiendanubeConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.MAGENTO && (
+                        <MagentoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.AMAZON && (
+                        <AmazonConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.FALABELLA && (
+                        <FalabellaConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.EXITO && (
+                        <ExitoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.WHATSAPP &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.SOFTPYMES &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.FACTUS &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.SIIGO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ALEGRA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.WORLD_OFFICE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.HELISA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ENVIOCLICK &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ENVIAME &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.TU &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.MIPAQUETE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.VTEX &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.TIENDANUBE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.MAGENTO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.AMAZON &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.FALABELLA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.EXITO && (
+                        <Alert type="warning">
+                            <div className="space-y-3">
+                                <p className="font-semibold">Formulario No Disponible</p>
+                                <p>
+                                    El formulario de configuración para <strong>{selectedType.name}</strong> aún no está implementado.
+                                </p>
+                                <p className="text-sm">
+                                    Cada tipo de integración requiere su propio formulario personalizado.
+                                    Por favor, selecciona una integración con formulario disponible (ej: Shopify) o contacta al equipo de desarrollo.
+                                </p>
+                            </div>
+                        </Alert>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}

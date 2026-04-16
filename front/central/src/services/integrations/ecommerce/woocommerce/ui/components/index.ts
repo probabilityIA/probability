@@ -1,0 +1,1 @@
+export { WooCommerceConfigForm } from './WooCommerceConfigForm';
