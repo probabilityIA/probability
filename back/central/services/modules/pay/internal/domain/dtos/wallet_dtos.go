@@ -22,3 +22,34 @@ type DebitForGuideDTO struct {
 	TrackingNumber string
 	UserID         *uint
 }
+
+// FinancialStatsDTO datos para obtener estadísticas financieras
+type FinancialStatsDTO struct {
+	BusinessID *uint  // nil para todos los negocios
+	StartDate  string // YYYY-MM-DD
+	EndDate    string // YYYY-MM-DD
+	Month      string // YYYY-MM (alternativa rápida)
+}
+
+// BusinessFinancialStats ingresos por negocio
+type BusinessFinancialStats struct {
+	BusinessID         uint    `json:"business_id"`
+	BusinessName       string  `json:"business_name"`
+	SubscriptionIncome float64 `json:"subscription_income"`
+	GuideIncome        float64 `json:"guide_income"`
+	GuideCount         int     `json:"guide_count"`
+	TotalIncome        float64 `json:"total_income"`
+}
+
+// FinancialStatsResponse respuesta de estadísticas financieras
+type FinancialStatsResponse struct {
+	Period      PeriodInfo                `json:"period"`
+	TotalIncome float64                   `json:"total_income"`
+	Businesses  []BusinessFinancialStats  `json:"businesses"`
+}
+
+// PeriodInfo información del período de la consulta
+type PeriodInfo struct {
+	Start string `json:"start"`
+	End   string `json:"end"`
+}

@@ -29,5 +29,6 @@ func (h *walletHandler) RegisterWalletRoutes(router *gin.RouterGroup) {
 		wallet.POST("/admin/manual-debit", h.ManualDebit)
 		wallet.POST("/admin/adjust-balance", h.AdminAdjustBalance)
 		wallet.DELETE("/admin/history/:business_id", h.ClearRechargeHistory)
+		wallet.GET("/admin/financial-stats", h.GetFinancialStats)
 	}
 }

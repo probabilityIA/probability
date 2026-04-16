@@ -19,6 +19,26 @@ export interface WalletTransactionRequest {
     // Add other fields as necessary from the backend response
 }
 
+export interface BusinessFinancialStats {
+    business_id: number;
+    business_name: string;
+    subscription_income: number;
+    guide_income: number;
+    guide_count: number;
+    total_income: number;
+}
+
+export interface PeriodInfo {
+    start: string;
+    end: string;
+}
+
+export interface FinancialStatsResponse {
+    period: PeriodInfo;
+    total_income: number;
+    businesses: BusinessFinancialStats[];
+}
+
 /**
  * Helper to get the auth header from cookies
  */
@@ -311,6 +331,48 @@ export async function debitForGuideAction(amount: number, trackingNumber: string
         return { success: true, data };
     } catch (error: any) {
         console.error('debitForGuideAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get financial stats (Super admin only)
+ * @param businessId Optional - filter by specific business, omit to see all businesses
+ * @param startDate Optional - start date in YYYY-MM-DD format
+ * @param endDate Optional - end date in YYYY-MM-DD format
+ * @param month Optional - month in YYYY-MM format for quick monthly view
+ */
+export async function getFinancialStatsAction(
+    businessId?: number,
+    startDate?: string,
+    endDate?: string,
+    month?: string
+) {
+    try {
+        const headers = await getAuthHeader();
+        const queryParams = new URLSearchParams();
+        if (businessId) queryParams.append('business_id', businessId.toString());
+        if (startDate) queryParams.append('start_date', startDate);
+        if (endDate) queryParams.append('end_date', endDate);
+        if (month) queryParams.append('month', month);
+
+        const url = `${env.API_BASE_URL}/pay/wallet/admin/financial-stats${
+            queryParams.toString() ? '?' + queryParams.toString() : ''
+        }`;
+
+        const res = await fetch(url, {
+            headers,
+            cache: 'no-store'
+        });
+
+        if (!res.ok) {
+            throw new Error(`Failed to fetch financial stats: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, data: data as FinancialStatsResponse };
+    } catch (error: any) {
+        console.error('getFinancialStatsAction error:', error);
         return { success: false, error: error.message };
     }
 }

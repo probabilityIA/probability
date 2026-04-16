@@ -18,6 +18,7 @@ import {
 } from '@/services/modules/wallet/infra/actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { VirtualCard } from './virtual-card';
+import { FinancialStatsView } from './financial-stats';
 import { getActionError } from '@/shared/utils/action-result';
 import { getBoldSignatureAction } from '@/services/modules/pay/infra/actions';
 
@@ -90,6 +91,7 @@ function AdminWalletView() {
     const [error, setError] = useState<string | null>(null);
     const [businesses, setBusinesses] = useState<Record<number, string>>({});
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [activeTab, setActiveTab] = useState<'saldos' | 'finanzas'>('saldos');
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -146,87 +148,118 @@ function AdminWalletView() {
     if (error) return <Alert type="error">{error}</Alert>;
 
     return (
-        <div className="space-y-8">
-            {/* Wallets Section */}
-            <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Saldos de Negocios</h2>
-                <Table
-                    columns={[
-                        ...walletColumns,
-                        {
-                            key: 'actions',
-                            label: 'Acciones',
-                            render: (_, row) => (
-                                <div className="flex gap-2">
-                                    <RechargeWalletButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
-                                    <ManualDebitButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
-                                    <ClearHistoryButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
-                                </div>
-                            )
-                        }
-                    ]}
-                    data={wallets}
-                    loading={loading}
-                    emptyMessage="No hay billeteras registradas"
-                />
+        <div className="space-y-6">
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+                <button
+                    onClick={() => setActiveTab('saldos')}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'saldos'
+                            ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                            : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
+                >
+                    Saldos
+                </button>
+                <button
+                    onClick={() => setActiveTab('finanzas')}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                        activeTab === 'finanzas'
+                            ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                            : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
+                >
+                    📊 Finanzas
+                </button>
             </div>
 
-            {/* Top Section - En Revisión (Full Width) */}
-            <RequestsTableView
-                title="En revisión"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getPendingRequestsAction}
-                showActions={true}
-                emptyMessage="Sin pendientes"
-                compact={false}
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-            />
+            {/* Tab Content */}
+            {activeTab === 'saldos' && (
+                <div className="space-y-8">
+                    {/* Wallets Section */}
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Saldos de Negocios</h2>
+                        <Table
+                            columns={[
+                                ...walletColumns,
+                                {
+                                    key: 'actions',
+                                    label: 'Acciones',
+                                    render: (_, row) => (
+                                        <div className="flex gap-2">
+                                            <RechargeWalletButton
+                                                businessId={row.BusinessID}
+                                                businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                                onSuccess={fetchWalletsAndBusinesses}
+                                            />
+                                            <ManualDebitButton
+                                                businessId={row.BusinessID}
+                                                businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                                onSuccess={fetchWalletsAndBusinesses}
+                                            />
+                                            <ClearHistoryButton
+                                                businessId={row.BusinessID}
+                                                businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                                onSuccess={fetchWalletsAndBusinesses}
+                                            />
+                                        </div>
+                                    )
+                                }
+                            ]}
+                            data={wallets}
+                            loading={loading}
+                            emptyMessage="No hay billeteras registradas"
+                        />
+                    </div>
 
-            {/* Bottom Row - Approved and Rejected (Side by Side) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RequestsTableView
-                    title="Aprobados"
-                    businesses={businesses}
-                    onRequestsChanged={fetchWalletsAndBusinesses}
-                    allWallets={wallets}
-                    fetchAction={getProcessedRequestsAction}
-                    filterStatus="COMPLETED"
-                    showActions={false}
-                    emptyMessage="Sin aprobados"
-                    compact={true}
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                />
+                    {/* Top Section - En Revisión (Full Width) */}
+                    <RequestsTableView
+                        title="En revisión"
+                        businesses={businesses}
+                        onRequestsChanged={fetchWalletsAndBusinesses}
+                        allWallets={wallets}
+                        fetchAction={getPendingRequestsAction}
+                        showActions={true}
+                        emptyMessage="Sin pendientes"
+                        compact={false}
+                        itemsPerPage={itemsPerPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                    />
 
-                <RequestsTableView
-                    title="Rechazados"
-                    businesses={businesses}
-                    onRequestsChanged={fetchWalletsAndBusinesses}
-                    allWallets={wallets}
-                    fetchAction={getProcessedRequestsAction}
-                    filterStatus="FAILED"
-                    showActions={false}
-                    emptyMessage="Sin rechazados"
-                    compact={true}
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                />
-            </div>
+                    {/* Bottom Row - Approved and Rejected (Side by Side) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <RequestsTableView
+                            title="Aprobados"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getProcessedRequestsAction}
+                            filterStatus="COMPLETED"
+                            showActions={false}
+                            emptyMessage="Sin aprobados"
+                            compact={true}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                        />
+
+                        <RequestsTableView
+                            title="Rechazados"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getProcessedRequestsAction}
+                            filterStatus="FAILED"
+                            showActions={false}
+                            emptyMessage="Sin rechazados"
+                            compact={true}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'finanzas' && <FinancialStatsView />}
         </div>
     );
 }

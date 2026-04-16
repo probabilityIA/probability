@@ -40,6 +40,9 @@ type IRepository interface {
 	GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType string) error
 	DeleteAllTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) error
+
+	// Financial Stats
+	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)
 }
 
 // IRequestPublisher publica solicitudes de pago a la cola pay.requests
@@ -77,6 +80,7 @@ type IWalletUseCase interface {
 	GetTransactionsByBusinessID(ctx context.Context, businessID uint) ([]*entities.WalletTransaction, error)
 	ClearRechargeHistory(ctx context.Context, businessID uint) error
 	AdminAdjustBalance(ctx context.Context, dto *dtos.AdminAdjustBalanceDTO) error
+	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)
 
 	// Bold Integration
 	BoldGenerateSignature(ctx context.Context, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
