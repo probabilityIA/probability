@@ -185,10 +185,7 @@ func (r *Repository) ClearOrderGuideData(ctx context.Context, orderID string) er
 
 func (r *Repository) EnsureAllBusinessesActive(ctx context.Context) error {
 	return r.db.Conn(ctx).
-		Table("businesses").
+		Table("business").
 		Where("deleted_at IS NULL").
-		Updates(map[string]interface{}{
-			"status":     "paid",
-			"expiration": "2030-01-01 00:00:00",
-		}).Error
+		Update("is_active", true).Error
 }

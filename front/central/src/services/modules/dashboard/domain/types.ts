@@ -101,9 +101,10 @@ export interface ShipmentsByWarehouse {
 }
 
 export interface ShipmentsByDayOfWeek {
-    date: string;       // YYYY-MM-DD
-    day_name: string;   // Lunes, Martes, etc
+    date: string;                           // YYYY-MM-DD
+    day_name: string;                       // Lunes, Martes, etc
     count: number;
+    percentage_vs_previous?: number | null; // Porcentaje vs día anterior
 }
 
 export interface OrdersByDepartment {
@@ -137,5 +138,6 @@ export interface OrdersByBusiness {
 export interface DashboardStatsResponse {
     success: boolean;
     message: string;
+    server_time?: string;  // Fecha/hora actual del servidor (RFC3339)
     data: DashboardStats;
 }

@@ -32,6 +32,7 @@ import {
     ArchiveBoxIcon,
     BuildingOfficeIcon,
     CalendarDaysIcon,
+    ArrowTrendingUpIcon,
 } from '@heroicons/react/24/outline';
 import {
     PieChart,
@@ -111,6 +112,176 @@ const getCarrierInitials = (name: string): string => {
 interface Business {
     id: number;
     name: string;
+}
+
+interface SummaryCardProps {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    iconBg: string;
+    iconColor: string;
+    gradientColor: string;
+    trend?: number | null;
+    trendLabel: string;
+    sparklineData: number[];
+    sparklineColor: string;
+    hasMonthNav?: boolean;
+    onPrevMonth?: () => void;
+    onNextMonth?: () => void;
+}
+
+function SummaryCard({
+    label,
+    value,
+    icon,
+    iconBg,
+    iconColor,
+    gradientColor,
+    trend,
+    trendLabel,
+    sparklineData,
+    sparklineColor,
+    hasMonthNav = false,
+    onPrevMonth,
+    onNextMonth,
+}: SummaryCardProps) {
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        let current = 0;
+        const target = value;
+        const step = Math.ceil(target / 45);
+        const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            setDisplayValue(current);
+            if (current >= target) clearInterval(timer);
+        }, 25);
+        return () => clearInterval(timer);
+    }, [value]);
+
+    const trendColor =
+        trend === null || trend === undefined ? 'text-gray-400' : trend > 0 ? 'text-emerald-800' : trend < 0 ? 'text-red-800' : 'text-gray-400';
+    const trendBg =
+        trend === null || trend === undefined ? 'bg-gray-50' : trend > 0 ? 'bg-emerald-50' : trend < 0 ? 'bg-red-50' : 'bg-gray-50';
+    const trendArrow = trend === null || trend === undefined ? '' : trend > 0 ? '↑' : trend < 0 ? '↓' : '';
+
+    const w = 100;
+    const h = 32;
+    let points = '';
+    if (sparklineData.length > 0) {
+        const max = Math.max(...sparklineData);
+        const min = Math.min(...sparklineData);
+        const range = max - min || 1;
+        const step = w / (sparklineData.length - 1 || 1);
+        points = sparklineData
+            .map((v, i) => `${i * step},${h - ((v - min) / range) * h}`)
+            .join(' ');
+    }
+
+    return (
+        <div className="relative overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-md">
+            {/* Top gradient bar */}
+            <div style={{ height: '3px', background: gradientColor }} />
+
+            <div className="p-4">
+                {/* Header: Icon + Label + Nav */}
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        {/* Icon in pill */}
+                        <div
+                            style={{
+                                background: iconBg,
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: iconColor,
+                            }}
+                        >
+                            {icon}
+                        </div>
+                        {/* Label */}
+                        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                            {label}
+                        </p>
+                    </div>
+
+                    {/* Month nav (only for monthly card) */}
+                    {hasMonthNav && (
+                        <div className="flex gap-1">
+                            <button
+                                onClick={onPrevMonth}
+                                className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                title="Mes anterior"
+                            >
+                                <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={onNextMonth}
+                                className="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                                title="Próximo mes"
+                            >
+                                <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Main value with sparkline */}
+                <div className="flex items-end justify-between gap-3 mb-2">
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {displayValue.toLocaleString()}
+                    </p>
+
+                    {/* Sparkline SVG with area under curve */}
+                    {sparklineData.length > 0 && (
+                        <svg width={w} height={h} style={{ minWidth: `${w}px` }} viewBox={`0 0 ${w} ${h}`}>
+                            <defs>
+                                <linearGradient id={`grad-${label}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stopColor={sparklineColor} stopOpacity="0.25" />
+                                    <stop offset="100%" stopColor={sparklineColor} stopOpacity="0.01" />
+                                </linearGradient>
+                            </defs>
+                            {/* Area under curve */}
+                            <path
+                                d={`${points} L${w},${h} L0,${h} Z`}
+                                fill={`url(#grad-${label})`}
+                            />
+                            {/* Line stroke */}
+                            <polyline
+                                fill="none"
+                                stroke={sparklineColor}
+                                strokeWidth={1.5}
+                                points={points}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                    )}
+                </div>
+
+                {/* Trend badge + secondary label */}
+                <div className="flex items-center justify-between gap-2">
+                    {trend !== null && trend !== undefined ? (
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${trendBg} ${trendColor}`}>
+                            {trendArrow} {Math.abs(trend).toFixed(1)}%
+                        </span>
+                    ) : (
+                        <div />
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                        {trendLabel}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function Dashboard() {
@@ -783,10 +954,63 @@ export default function Dashboard() {
         unit: 'órdenes',
     }));
 
-    // series para sparklines (si existen)
-    const ordersByDateSeries = Array.isArray((stats as any).orders_by_date)
-        ? (stats as any).orders_by_date.map((d: any) => d.count ?? d.order_count ?? d.value ?? 0)
+    // ============================================================
+    // SPARKLINES - Datos para las minigráficas
+    // ============================================================
+
+    // Sparkline Órdenes del Día: últimos 7 días (shipments_by_day_of_week)
+    const dayOfWeekSeries = Array.isArray(stats.shipments_by_day_of_week)
+        ? stats.shipments_by_day_of_week.map((d: any) => d.count ?? 0)
         : [];
+
+    // Sparkline Órdenes Totales: últimas 4 semanas (orders_by_week)
+    const weekSeries = Array.isArray(stats.orders_by_week)
+        ? stats.orders_by_week.slice(0, 4).map((w: any) => w.count ?? 0)
+        : [];
+
+    // ============================================================
+    // PORCENTAJES - Cálculo de cambios real
+    // ============================================================
+
+    // Órdenes Totales: Semana actual vs semana anterior
+    const computedTotalOrdersChange = (() => {
+        const weeks = Array.isArray(stats.orders_by_week) ? stats.orders_by_week : [];
+        if (weeks.length < 2) return null;
+
+        const currentWeek = weeks[0]?.count ?? 0;      // Semana actual
+        const previousWeek = weeks[1]?.count ?? 0;     // Semana anterior
+
+        if (previousWeek === 0) return null;
+        return ((currentWeek - previousWeek) / previousWeek) * 100;
+    })();
+
+    // Órdenes del Día: Obtener porcentaje del día actual (calculado en el backend, usando server_time)
+    const todayOrdersChangePercentage = (() => {
+        const s: any = stats as any;
+        const dayData = Array.isArray(s?.shipments_by_day_of_week) ? s.shipments_by_day_of_week : [];
+
+        if (dayData.length < 1) return null;
+
+        // Usar server_time si está disponible, sino usar la fecha del cliente
+        let todayDateStr: string;
+        if (s?.server_time) {
+            // Extraer la fecha de server_time (RFC3339: "2026-04-17T15:30:00-05:00")
+            const serverDate = new Date(s.server_time);
+            todayDateStr = serverDate.getFullYear() + '-' +
+                          String(serverDate.getMonth() + 1).padStart(2, '0') + '-' +
+                          String(serverDate.getDate()).padStart(2, '0');
+        } else {
+            // Fallback: usar fecha del cliente
+            const today = new Date();
+            todayDateStr = today.getFullYear() + '-' +
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                          String(today.getDate()).padStart(2, '0');
+        }
+
+        // Buscar hoy en los datos
+        const todayData = dayData.find((d: any) => d.date === todayDateStr);
+        return todayData?.percentage_vs_previous ?? null;
+    })();
 
     // Formatear revenue para el encabezado superior (fallback si no existe)
     const revenueNumber = (stats as any).total_revenue ?? (stats.total_orders ?? 90239);
@@ -794,15 +1018,8 @@ export default function Dashboard() {
         ? revenueNumber.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         : String(revenueNumber);
 
-    // Valores para la tarjeta de Total Orders (antes 'New subscriptions')
+    // Valores para la tarjeta de Total Orders
     const totalOrders = stats.total_orders ?? 0;
-    const totalOrdersChangePct = (stats as any).total_orders_change_percentage ?? null;
-    const totalOrdersLastWeek = (stats as any).total_orders_last_week ?? null;
-    const computedTotalOrdersChange = totalOrdersChangePct !== null
-        ? Math.round(totalOrdersChangePct)
-        : totalOrdersLastWeek
-            ? Math.round(((totalOrders - totalOrdersLastWeek) / (totalOrdersLastWeek || 1)) * 100)
-            : null;
 
     // New orders today: obtener del último elemento de shipments_by_day_of_week (hoy) - SIEMPRE SIN FILTRO DE FECHAS
     const newOrdersToday = (() => {
@@ -968,74 +1185,57 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Small summary cards under the revenue header (like the screenshot) */}
+            {/* Summary cards with redesigned UI */}
             <div className="mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Órdenes Totales */}
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes Totales</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalOrders.toLocaleString()}</p>
-                        {dateRange.start && dateRange.end ? (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                Período: {dateRange.start.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {dateRange.end.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
-                            </p>
-                        ) : (
-                            <p className="text-xs text-gray-400 mt-1">Aún no hay comparación semanal</p>
-                        )}
-                    </div>
+                    {/* Órdenes Totales - Solo valor, sin porcentaje */}
+                    <SummaryCard
+                        label="Órdenes Totales"
+                        value={totalOrders}
+                        icon={<ArchiveBoxIcon className="w-4 h-4" />}
+                        iconBg="#EDE9FE"
+                        iconColor="#7C3AED"
+                        gradientColor="linear-gradient(90deg, #7C3AED, #A78BFA)"
+                        trend={null}
+                        trendLabel={
+                            dateRange.start && dateRange.end
+                                ? `${dateRange.start.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - ${dateRange.end.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}`
+                                : ''
+                        }
+                        sparklineData={weekSeries}
+                        sparklineColor="#7C3AED"
+                    />
 
-                    {/* Órdenes del día */}
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes del día</p>
-                        <div className="flex items-center space-x-4">
-                            <div>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{newOrdersToday.toLocaleString()}</p>
-                                <p className="text-xs text-gray-400">Actuales</p>
-                            </div>
-                            <div className="w-20 h-10">
-                                <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
-                                    <path d="M0,30 C20,20 40,15 60,10 80,6 100,8" fill="none" stroke="#F97316" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+                    {/* Órdenes del Día - Hoy vs ayer */}
+                    <SummaryCard
+                        label="Órdenes del Día"
+                        value={newOrdersToday}
+                        icon={<CalendarDaysIcon className="w-4 h-4" />}
+                        iconBg="#E0F2FE"
+                        iconColor="#0284C7"
+                        gradientColor="linear-gradient(90deg, #0284C7, #7DD3FC)"
+                        trend={todayOrdersChangePercentage}
+                        trendLabel="vs ayer"
+                        sparklineData={dayOfWeekSeries}
+                        sparklineColor="#0284C7"
+                    />
 
                     {/* Órdenes Mensuales */}
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes Mensuales</p>
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center space-x-2">
-                                <button
-                                    onClick={() => setSelectedMonthOffset(selectedMonthOffset - 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                    title="Mes anterior"
-                                >
-                                    <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-                                <div className="text-center min-w-[75px]">
-                                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{monthData.monthName}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">{monthData.year}</p>
-                                </div>
-                                <button
-                                    onClick={() => setSelectedMonthOffset(selectedMonthOffset + 1)}
-                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
-                                    title="Próximo mes"
-                                >
-                                    <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="flex-1 text-center">
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{monthData.count.toLocaleString()}</p>
-                                {monthData.percentage > 0 && (
-                                    <p className="text-xs text-gray-400">{monthData.percentage.toFixed(1)}%</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <SummaryCard
+                        label="Órdenes Mensuales"
+                        value={monthData.count}
+                        icon={<ArrowTrendingUpIcon className="w-4 h-4" />}
+                        iconBg="#D1FAE5"
+                        iconColor="#059669"
+                        gradientColor="linear-gradient(90deg, #059669, #6EE7B7)"
+                        trend={monthData.percentage !== undefined ? monthData.percentage : null}
+                        trendLabel={`${monthData.monthName} ${monthData.year}`}
+                        sparklineData={[]}
+                        sparklineColor="#059669"
+                        hasMonthNav={true}
+                        onPrevMonth={() => setSelectedMonthOffset(selectedMonthOffset - 1)}
+                        onNextMonth={() => setSelectedMonthOffset(selectedMonthOffset + 1)}
+                    />
                 </div>
             </div>
 

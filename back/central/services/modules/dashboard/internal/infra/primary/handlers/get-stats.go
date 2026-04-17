@@ -111,11 +111,15 @@ func (h *DashboardHandlers) GetStats(c *gin.Context) {
 		return
 	}
 
-	// Retornar respuesta exitosa
+	// Retornar respuesta exitosa con server time
+	loc, _ := time.LoadLocation("America/Bogota")
+	serverTime := time.Now().In(loc).Format(time.RFC3339)
+
 	response := domain.DashboardStatsResponse{
-		Success: true,
-		Message: "Estadísticas obtenidas exitosamente",
-		Data:    *stats,
+		Success:    true,
+		Message:    "Estadísticas obtenidas exitosamente",
+		ServerTime: serverTime,
+		Data:       *stats,
 	}
 
 	c.JSON(http.StatusOK, response)

@@ -974,18 +974,37 @@ func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *ui
 		countMap[dateStr]++
 	}
 
-	// Generar 7 días de la semana con sus conteos
+	// Generar 7 días de la semana con sus conteos y porcentajes
 	dayNames := []string{"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"}
 	ordersByDay := make([]domain.ShipmentsByDayOfWeek, 7)
 
 	for i := 0; i < 7; i++ {
 		currentDate := startDate.AddDate(0, 0, i)
 		dateStr := currentDate.Format("2006-01-02")
+		currentCount := countMap[dateStr]
+
+		// Calcular porcentaje vs día anterior
+		var percentageVsPrevious *float64
+		if i > 0 {
+			previousDateStr := startDate.AddDate(0, 0, i-1).Format("2006-01-02")
+			previousCount := countMap[previousDateStr]
+
+			if previousCount > 0 {
+				// Calcular porcentaje: ((actual - anterior) / anterior) * 100
+				percentage := float64(currentCount-previousCount) / float64(previousCount) * 100
+				percentageVsPrevious = &percentage
+			} else if currentCount > 0 {
+				// Si anterior fue 0 pero actual > 0, es +100%
+				percentage := 100.0
+				percentageVsPrevious = &percentage
+			}
+		}
 
 		ordersByDay[i] = domain.ShipmentsByDayOfWeek{
-			Date:    dateStr,
-			DayName: dayNames[i],
-			Count:   countMap[dateStr],
+			Date:                 dateStr,
+			DayName:              dayNames[i],
+			Count:                currentCount,
+			PercentageVsPrevious: percentageVsPrevious,
 		}
 	}
 
@@ -1221,13 +1240,12 @@ func (r *Repository) GetOrdersByWeek(ctx context.Context, businessID *uint, inte
 	return ordersByWeek, nil
 }
 
-// GetOrdersByMonth obtiene órdenes agrupadas por mes del año actual
+// GetOrdersByMonth obtiene órdenes agrupadas por mes del año actual con porcentaje mes-a-mes
 func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time, endDate *time.Time) ([]domain.OrdersByMonth, error) {
 	type Result struct {
-		Month       int   `gorm:"column:month"`
-		Year        int   `gorm:"column:year"`
-		Count       int64 `gorm:"column:count"`
-		TotalCount  int64 `gorm:"column:total_count"` // Para calcular porcentaje
+		Month int   `gorm:"column:month"`
+		Year  int   `gorm:"column:year"`
+		Count int64 `gorm:"column:count"`
 	}
 
 	var results []Result
@@ -1236,8 +1254,7 @@ func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, int
 		SELECT
 			EXTRACT(MONTH FROM orders.created_at)::int as month,
 			EXTRACT(YEAR FROM orders.created_at)::int as year,
-			COUNT(*) as count,
-			SUM(COUNT(*)) OVER (PARTITION BY EXTRACT(YEAR FROM orders.created_at)) as total_count
+			COUNT(*) as count
 		FROM orders
 		WHERE EXTRACT(YEAR FROM orders.created_at) = EXTRACT(YEAR FROM NOW())
 	`
@@ -1290,15 +1307,54 @@ func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, int
 		return nil, err
 	}
 
-	// Mapear resultados a DashboardStats.OrdersByMonth
 	monthNames := []string{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"}
+
+	// Crear mapa de mes -> count para acceso rápido
+	monthCounts := make(map[int]int64)
+	for _, result := range results {
+		monthCounts[result.Month] = result.Count
+	}
+
 	ordersByMonth := make([]domain.OrdersByMonth, len(results))
+	now := time.Now()
+	currentMonth := int(now.Month())
+	currentDay := now.Day()
 
 	for i, result := range results {
 		monthName := monthNames[result.Month-1]
 		percentage := float64(0)
-		if result.TotalCount > 0 {
-			percentage = (float64(result.Count) / float64(result.TotalCount)) * 100
+
+		// Si es el primer mes (Enero) o no hay datos del mes anterior, mostrar 0%
+		if result.Month == 1 {
+			percentage = 0
+		} else {
+			prevMonth := result.Month - 1
+			prevCount := monthCounts[prevMonth]
+
+			if prevCount == 0 {
+				percentage = 0
+			} else {
+				currentCount := result.Count
+
+				// Si es el mes actual (incompleto), normalizar por días disponibles
+				if result.Month == currentMonth {
+					// Obtener último día del mes anterior
+					firstOfCurrentMonth := time.Date(result.Year, time.Month(result.Month), 1, 0, 0, 0, 0, now.Location())
+					lastOfPrevMonth := firstOfCurrentMonth.AddDate(0, 0, -1)
+					daysInPrevMonth := lastOfPrevMonth.Day()
+
+					// Proyectar órdenes de los primeros 'currentDay' del mes anterior
+					projectedPrevMonthCount := (float64(prevCount) / float64(daysInPrevMonth)) * float64(currentDay)
+
+					// Calcular porcentaje comparando con la proyección
+					if projectedPrevMonthCount > 0 {
+						percentage = ((float64(currentCount) - projectedPrevMonthCount) / projectedPrevMonthCount) * 100
+					}
+				} else {
+					// Meses completos: comparación directa
+					percentage = ((float64(currentCount) - float64(prevCount)) / float64(prevCount)) * 100
+				}
+			}
 		}
 
 		ordersByMonth[i] = domain.OrdersByMonth{

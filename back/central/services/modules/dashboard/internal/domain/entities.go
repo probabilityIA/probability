@@ -118,9 +118,10 @@ type OrdersByBusiness struct {
 
 // ShipmentsByDayOfWeek representa órdenes agrupadas por día de una semana específica
 type ShipmentsByDayOfWeek struct {
-	Date      string `json:"date"`       // Fecha en formato YYYY-MM-DD
-	DayName   string `json:"day_name"`   // Lunes, Martes, etc
-	Count     int64  `json:"count"`      // Número de órdenes creadas ese día
+	Date                   string   `json:"date"`                      // Fecha en formato YYYY-MM-DD
+	DayName                string   `json:"day_name"`                  // Lunes, Martes, etc
+	Count                  int64    `json:"count"`                     // Número de órdenes creadas ese día
+	PercentageVsPrevious   *float64 `json:"percentage_vs_previous"`    // Porcentaje vs día anterior (nil si no aplica)
 }
 
 // OrdersByDepartment representa órdenes agrupadas por departamento

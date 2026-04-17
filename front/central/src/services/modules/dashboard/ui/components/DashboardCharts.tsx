@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DashboardStats, OrdersByWeek, OrdersByMonth, ShipmentsByDayOfWeek, ShipmentsByCarrier } from '../../domain/types';
@@ -80,8 +80,68 @@ const calculateLinearRegression = (data: number[]): { slope: number; intercept: 
 };
 
 export default function DashboardCharts({ stats, selectedBusinessId }: DashboardChartsProps) {
+  const defaultTabs = [
+    { id: 'forecast', label: 'Pronóstico de Órdenes', icon: '📈' },
+    { id: 'monthly', label: 'Órdenes por Mes', icon: '📊' },
+    { id: 'demand', label: 'Días de Mayor Demanda', icon: '🔥' },
+    { id: 'carrier', label: 'Por Transportadora', icon: '🚚' },
+  ];
+
   const [activeTab, setActiveTab] = useState<'forecast' | 'monthly' | 'demand' | 'carrier'>('forecast');
+  const [tabs, setTabs] = useState(defaultTabs);
+  const [draggedTab, setDraggedTab] = useState<string | null>(null);
   const [topSellingDays, setTopSellingDays] = useState<any[]>([]);
+  const [hoveredValue, setHoveredValue] = useState<number | null>(null);
+  const [hoverX, setHoverX] = useState<string | null>(null);
+
+  // Cargar orden de tabs desde localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('dashboardTabsOrder');
+    if (saved) {
+      try {
+        const order = JSON.parse(saved);
+        setTabs(order);
+      } catch (e) {
+        // Si hay error, usar orden por defecto
+      }
+    }
+  }, []);
+
+  // Guardar orden de tabs en localStorage
+  const saveTabs = (newTabs: any) => {
+    setTabs(newTabs);
+    localStorage.setItem('dashboardTabsOrder', JSON.stringify(newTabs));
+  };
+
+  const handleDragStart = (e: React.DragEvent, tabId: string) => {
+    setDraggedTab(tabId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetTabId: string) => {
+    e.preventDefault();
+    if (!draggedTab || draggedTab === targetTabId) {
+      setDraggedTab(null);
+      return;
+    }
+
+    const draggedIndex = tabs.findIndex(t => t.id === draggedTab);
+    const targetIndex = tabs.findIndex(t => t.id === targetTabId);
+
+    const newTabs = [...tabs];
+    [newTabs[draggedIndex], newTabs[targetIndex]] = [newTabs[targetIndex], newTabs[draggedIndex]];
+    saveTabs(newTabs);
+    setDraggedTab(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTab(null);
+  };
 
   // Tab 1: Pronóstico de Órdenes
   const forecastData = useMemo(() => {
@@ -122,6 +182,30 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     return [...historicalWeeks, ...forecastWeeks];
   }, [stats?.orders_by_week]);
 
+  // KPIs para Pronóstico
+  const forecastKPIs = useMemo(() => {
+    if (!forecastData || forecastData.length === 0) return null;
+
+    const historicalData = forecastData.filter(d => d.type === 'historical');
+    const forecastDataPoints = forecastData.filter(d => d.type === 'forecast');
+
+    const historicalOrders = historicalData.map(d => d.orders);
+    const avgHistorical = historicalOrders.length > 0
+      ? Math.round(historicalOrders.reduce((a, b) => a + b, 0) / historicalOrders.length)
+      : 0;
+
+    const lastHistoricalWeek = historicalData[historicalData.length - 1]?.orders || 0;
+    const projectedLastWeek = forecastDataPoints[0]?.forecast || 0;
+
+    return {
+      avgHistorical,
+      projectedLastWeek,
+      margin: 15,
+      historicalCount: historicalData.length,
+      splitIndex: historicalData.length,
+    };
+  }, [forecastData]);
+
   // Tab 2: Órdenes por Mes
   const monthlyData = useMemo(() => {
     if (!stats?.orders_by_month || stats.orders_by_month.length === 0) return null;
@@ -129,6 +213,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     const data = stats.orders_by_month.map((m: OrdersByMonth) => ({
       month: m.month?.split(' ')[0] || m.month || '',
       orders: m.count,
+      percentage: m.percentage || 0,
     }));
 
     // Calcular línea de tendencia
@@ -221,33 +306,45 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     return { carriers: carrierList, carrierMetrics, totalShipments };
   }, [stats?.shipments_by_carrier]);
 
-  // Custom Tooltip
+  // Custom Tooltip con Dark Theme
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
 
-      // Para gráficas de pronóstico y meses
+      // Filtrar items sin valor
+      const filteredPayload = payload.filter((p: any) => p.value !== null && p.value !== undefined);
+
       if (data.week && data.dateRange) {
+        setHoveredValue(data.orders);
+        setHoverX(data.weekLabel);
+
         return (
-          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
-            <p className="text-sm font-semibold text-gray-900">
+          <div style={{ backgroundColor: '#1e1e2e', padding: '16px 20px', borderRadius: '12px', border: '1.5px solid #3a3a4a', minWidth: '220px' }}>
+            <p style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', margin: '0 0 12px 0' }}>
               {data.week} · {data.dateRange}
             </p>
-            <p className="text-sm text-gray-700">
-              {data.orders.toLocaleString()} órdenes
-            </p>
+            {filteredPayload.map((p: any, idx: number) => (
+              p.value !== null && (
+                <p key={idx} style={{ fontSize: '13px', color: '#ffffff', margin: '6px 0', fontWeight: 500 }}>
+                  {p.name}: <span style={{ fontWeight: 700, color: p.color || '#3B82F6' }}>{(typeof p.value === 'number' ? p.value.toLocaleString() : p.value)}</span>
+                </p>
+              )
+            ))}
             {data.upper && (
-              <p className="text-xs text-gray-500 mt-1">±{((data.upper - data.lower) / 2 / data.orders * 100).toFixed(0)}%</p>
+              <p style={{ fontSize: '12px', color: '#a0a0b0', marginTop: '10px', fontStyle: 'italic' }}>
+                Margen: ±{((data.upper - data.lower) / 2 / data.orders * 100).toFixed(0)}%
+              </p>
             )}
           </div>
         );
       }
 
-      // Para otros gráficos
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
-          <p className="text-sm font-semibold text-gray-900">{data.week || data.month || data.day}</p>
-          <p className="text-sm text-gray-700">
+        <div style={{ backgroundColor: '#1e1e2e', padding: '16px 20px', borderRadius: '12px', border: '1.5px solid #3a3a4a', minWidth: '200px' }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+            {data.week || data.month || data.day}
+          </p>
+          <p style={{ fontSize: '13px', color: '#8B5CF6', margin: '8px 0 0 0', fontWeight: 600 }}>
             {data.orders !== undefined ? `${data.orders.toLocaleString()} órdenes` : `${data.value} envíos`}
           </p>
         </div>
@@ -256,87 +353,145 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     return null;
   };
 
-  const tabs = [
-    { id: 'forecast', label: 'Pronóstico de Órdenes', icon: '📈' },
-    { id: 'monthly', label: 'Órdenes por Mes', icon: '📊' },
-    { id: 'demand', label: 'Días de Mayor Demanda', icon: '🔥' },
-    { id: 'carrier', label: 'Por Transportadora', icon: '🚚' },
-  ];
 
   return (
-    <div className="mt-6 p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {tabs.map(tab => (
+    <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Folder Tabs */}
+      <div className="flex gap-0 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 pt-2">
+        {tabs.map((tab, idx) => (
           <button
             key={tab.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, tab.id)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, tab.id)}
+            onDragEnd={handleDragEnd}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap transition-all ${
+            className={`relative px-6 py-3 font-medium text-sm whitespace-nowrap transition-all cursor-move ${
+              draggedTab === tab.id ? 'opacity-50' : 'opacity-100'
+            } ${
               activeTab === tab.id
-                ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-white text-purple-600 border-l border-r border-t border-gray-200 rounded-t-lg shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
+            style={
+              activeTab === tab.id
+                ? {
+                    borderBottomColor: 'white',
+                    marginBottom: '-1px',
+                  }
+                : {}
+            }
           >
-            {tab.icon} {tab.label}
+            ⋮⋮ {tab.icon} {tab.label}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div className="animate-fadeIn">
-        {/* TAB 1: Pronóstico */}
-        {activeTab === 'forecast' && forecastData && (
-          <ResponsiveContainer width="100%" height={280}>
-            <ComposedChart data={forecastData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
-              <defs>
-                <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={COLORS.primary} stopOpacity={0.1} />
-                  <stop offset="95%" stopColor={COLORS.primary} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-              <XAxis dataKey="weekLabel" tick={{ fontSize: 12, fill: '#9CA3AF' }} angle={-45} textAnchor="end" height={80} />
-              <YAxis tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <ReferenceLine
-                x={forecastData[forecastData.length - 4]?.weekLabel}
-                stroke="#D1D5DB"
-                strokeDasharray="5 5"
-                label={{ value: 'Pronóstico →', position: 'top', fill: '#6B7280', fontSize: 12 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="upper"
-                fill="url(#confidenceGradient)"
-                stroke="none"
-                isAnimationActive={false}
-              />
-              <Area
-                type="monotone"
-                dataKey="lower"
-                fill="white"
-                stroke="none"
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="orders"
-                stroke={COLORS.primary}
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="forecast"
-                stroke={COLORS.primary}
-                strokeWidth={2}
-                strokeDasharray="5 4"
-                dot={false}
-                isAnimationActive={false}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+      <div className="p-6 animate-fadeIn">
+        {/* TAB 1: Pronóstico Mejorado */}
+        {activeTab === 'forecast' && forecastData && forecastKPIs && (
+          <div>
+            {/* KPI Cards */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {/* Promedio Histórico */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                <p className="text-xs font-medium text-blue-600 mb-1">Promedio Histórico</p>
+                <p className="text-2xl font-bold text-blue-900">{forecastKPIs.avgHistorical.toLocaleString()}</p>
+                <p className="text-xs text-blue-700 mt-1">{forecastKPIs.historicalCount} semanas</p>
+              </div>
+
+              {/* Valor Proyectado */}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                <p className="text-xs font-medium text-purple-600 mb-1">Valor Proyectado</p>
+                <p className="text-2xl font-bold text-purple-900">{forecastKPIs.projectedLastWeek.toLocaleString()}</p>
+                <p className="text-xs text-purple-700 mt-1">Próxima semana</p>
+              </div>
+
+              {/* Margen de Error */}
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-lg border border-amber-200">
+                <p className="text-xs font-medium text-amber-600 mb-1">Margen de Error</p>
+                <p className="text-2xl font-bold text-amber-900">±{forecastKPIs.margin}%</p>
+                <p className="text-xs text-amber-700 mt-1">Rango de confianza</p>
+              </div>
+            </div>
+
+            {/* Badge con Hover Value + Gráfico */}
+            <div className="relative">
+              {hoveredValue !== null && (
+                <div className="absolute top-2 right-2 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10 shadow-lg">
+                  {hoveredValue.toLocaleString()} órdenes
+                </div>
+              )}
+
+              <ResponsiveContainer width="100%" height={320}>
+                <ComposedChart
+                  data={forecastData}
+                  margin={{ top: 40, right: 30, left: 0, bottom: 60 }}
+                  onMouseMove={(state: any) => {
+                    if (state.isTooltipActive && state.tooltipPayload && state.tooltipPayload[0]) {
+                      setHoverX(state.tooltipPayload[0].payload.weekLabel);
+                    }
+                  }}
+                >
+                  <defs>
+                    <linearGradient id="confidenceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={true} />
+                  <XAxis dataKey="weekLabel" tick={{ fontSize: 11, fill: '#9CA3AF' }} angle={-45} textAnchor="end" height={80} />
+                  <YAxis tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#D1D5DB', strokeDasharray: '5 5' }} />
+
+                  {/* Split Line: Línea vertical que separa histórico de pronóstico */}
+                  <ReferenceLine
+                    x={forecastData[forecastKPIs.splitIndex - 1]?.weekLabel}
+                    stroke="#9CA3AF"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    label={{ value: 'Pronóstico →', position: 'insideTopRight', offset: -10, fill: '#6B7280', fontSize: 11, fontWeight: 500 }}
+                  />
+
+                  {/* Área de confianza (rango ±15%) */}
+                  <Area
+                    type="monotone"
+                    dataKey="upper"
+                    fill="url(#confidenceGradient)"
+                    stroke="none"
+                    isAnimationActive={false}
+                    dot={false}
+                    name="Rango superior"
+                  />
+
+                  {/* Línea de órdenes históricas (sólida) */}
+                  <Line
+                    type="monotone"
+                    dataKey="orders"
+                    stroke={COLORS.primary}
+                    strokeWidth={3}
+                    dot={false}
+                    isAnimationActive={false}
+                    name="Histórico"
+                  />
+
+                  {/* Línea de pronóstico (punteada) */}
+                  <Line
+                    type="monotone"
+                    dataKey="forecast"
+                    stroke={COLORS.primary}
+                    strokeWidth={2}
+                    strokeDasharray="6 3"
+                    dot={false}
+                    isAnimationActive={false}
+                    name="Pronóstico"
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         )}
 
         {/* TAB 2: Órdenes por Mes */}
@@ -349,6 +504,13 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="orders" fill={COLORS.primary} fillOpacity={0.15} radius={[4, 4, 0, 0]}>
                 <LabelList dataKey="orders" position="top" fontSize={12} fill="#6B7280" />
+                <LabelList
+                  dataKey="percentage"
+                  position="bottom"
+                  fontSize={11}
+                  fill="#9CA3AF"
+                  formatter={(value: number) => `${value > 0 ? '+' : ''}${value.toFixed(1)}%`}
+                />
               </Bar>
               <Line
                 type="monotone"
