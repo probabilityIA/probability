@@ -53,6 +53,39 @@ func TestMapStatusStepToProbability(t *testing.T) {
 	}
 }
 
+func TestApiStatusToStep(t *testing.T) {
+	tests := []struct {
+		name         string
+		status       string
+		statusDetail string
+		wantStep     string
+		wantMapped   ProbabilityShipmentStatus
+	}{
+		{"entregado status", "Entregado", "Envio entregado", "Entregado", StatusDelivered},
+		{"en transito simple", "En tr\u00e1nsito", "Ingresado A Bodega", "En Transito", StatusInTransit},
+		{"en distribucion via detail", "En tr\u00e1nsito", "En distribuci\u00f3n", "En Distribucion", StatusOutForDelivery},
+		{"salida a ruta no activa distribucion", "En tr\u00e1nsito", "Salida a ruta", "En Transito", StatusInTransit},
+		{"recoleccion en sucursal via status", "Recolecci\u00f3n en sucursal", "", "Envio Recolectado", StatusPickedUp},
+		{"incidencia de entrega via status", "Incidencia de Entrega", "", "Novedad", StatusOnHold},
+		{"cliente ausente via detail", "En tr\u00e1nsito", "Cliente ausente", "Novedad", StatusOnHold},
+		{"pendiente recoleccion", "Pendiente de recolecci\u00f3n", "", "Pendiente", StatusPending},
+		{"cancelado directo", "Cancelado", "Anulado por cliente", "Cancelado", StatusCancelled},
+		{"desconocido retorna status raw", "Estado Raro", "", "Estado Raro", StatusInTransit},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			step := ApiStatusToStep(tt.status, tt.statusDetail)
+			if step != tt.wantStep {
+				t.Errorf("ApiStatusToStep(%q, %q) step = %q, want %q", tt.status, tt.statusDetail, step, tt.wantStep)
+			}
+			mapped, _ := MapStatusStepToProbability(step, false)
+			if mapped != tt.wantMapped {
+				t.Errorf("pipeline(%q, %q) = %q, want %q", tt.status, tt.statusDetail, mapped, tt.wantMapped)
+			}
+		})
+	}
+}
+
 func TestWebhookPayloadToNormalizedUpdate(t *testing.T) {
 	t.Run("entregado con fecha de entrega", func(t *testing.T) {
 		p := &WebhookPayload{

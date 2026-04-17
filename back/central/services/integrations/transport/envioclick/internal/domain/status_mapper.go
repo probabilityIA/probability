@@ -19,20 +19,28 @@ func normalize(s string) string {
 }
 
 func ApiStatusToStep(status, statusDetail string) string {
-	detail := normalize(statusDetail)
+	combined := normalize(status + " " + statusDetail)
 	switch {
-	case strings.Contains(detail, "entregado"):
+	case strings.Contains(combined, "entregado"), strings.Contains(combined, "entregada"):
 		return "Entregado"
-	case strings.Contains(detail, "distribucion"), strings.Contains(detail, "reparto"):
-		return "En Distribucion"
-	case strings.Contains(detail, "recolec"):
-		return "Envio Recolectado"
-	case strings.Contains(detail, "devuelto"), strings.Contains(detail, "regresado"):
-		return "Devuelto"
-	case strings.Contains(detail, "no entregad"):
+	case strings.Contains(combined, "no entregad"):
 		return "No Entregado"
-	case strings.Contains(detail, "novedad"), strings.Contains(detail, "incidencia"):
+	case strings.Contains(combined, "devuelto"), strings.Contains(combined, "regresado"):
+		return "Devuelto"
+	case strings.Contains(combined, "cancelad"):
+		return "Cancelado"
+	case strings.Contains(combined, "pendiente"):
+		return "Pendiente"
+	case strings.Contains(combined, "novedad"),
+		strings.Contains(combined, "incidencia"),
+		strings.Contains(combined, "ausente"):
 		return "Novedad"
+	case strings.Contains(combined, "distribucion"), strings.Contains(combined, "reparto"):
+		return "En Distribucion"
+	case strings.Contains(combined, "recolec"):
+		return "Envio Recolectado"
+	case strings.Contains(combined, "transit"):
+		return "En Transito"
 	}
 	return status
 }
