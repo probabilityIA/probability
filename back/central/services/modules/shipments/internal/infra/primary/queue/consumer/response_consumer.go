@@ -409,6 +409,7 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
 			shipment.Status = "cancelled"
+			appendCancelEvent(shipment, response.Provider)
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to cancelled")
 			}
@@ -515,6 +516,17 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 	}
 
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
+}
+
+func appendCancelEvent(shipment *domain.Shipment, provider string) {
+	event := map[string]any{
+		"date":        time.Now().Format(time.RFC3339),
+		"status":      "cancelled",
+		"raw_status":  "Cancelado",
+		"description": "Envío cancelado",
+		"source":      provider,
+	}
+	mergeTrackingEvent(shipment, event)
 }
 
 func appendGuideGeneratedEvent(shipment *domain.Shipment, provider, trackingNumber, carrier string) {

@@ -37,6 +37,15 @@ func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, trackingN
 
 	status := trackResp.Data.Status
 	statusLower := strings.ToLower(status)
+	if strings.Contains(statusLower, "cancelad") {
+		uc.log.Info(ctx).
+			Str("tracking_number", trackingNumber).
+			Msg("Shipment already cancelled in carrier — returning success to sync DB")
+		return &domain.CancelResponse{
+			Status:  "success",
+			Message: "El envio ya estaba cancelado en el carrier",
+		}, nil
+	}
 	if !strings.Contains(statusLower, "pendiente") {
 		uc.log.Warn(ctx).
 			Str("status", status).
