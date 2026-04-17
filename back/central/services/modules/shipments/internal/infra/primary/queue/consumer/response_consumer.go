@@ -496,6 +496,20 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 		Msg("✅ Shipment updated from provider webhook")
 
 	businessID, _ := c.repo.GetShipmentBusinessIDByID(ctx, shipment.ID)
+
+	response.Data["shipment_id"] = shipment.ID
+	response.Data["previous_status"] = previousStatus
+	response.Data["new_status"] = probabilityStatus
+	if shipment.OrderID != nil {
+		response.Data["order_id"] = *shipment.OrderID
+	}
+	if shipment.OrderNumber != "" {
+		response.Data["order_number"] = shipment.OrderNumber
+	}
+	if shipment.CustomerName != "" {
+		response.Data["customer_name"] = shipment.CustomerName
+	}
+
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
 }
 
