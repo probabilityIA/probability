@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle, Package, RefreshCw } from 'lucide-react';
 import { syncShipmentStatusAction } from '../../infra/actions';
 import { useShipmentSSE } from '../hooks/useShipmentSSE';
@@ -57,6 +57,10 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const effectiveBusinessId = useMemo(() => businessId ?? 0, [businessId]);
+    const businessIdRef = useRef(businessId);
+    useEffect(() => {
+        businessIdRef.current = businessId;
+    }, [businessId]);
 
     useShipmentSSE({
         businessId: effectiveBusinessId,
@@ -90,15 +94,22 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
             setUpdates([]);
             setErrorMessage(null);
 
+            const currentBusinessId = businessIdRef.current;
+            if (!currentBusinessId) {
+                setErrorMessage('Selecciona un negocio antes de sincronizar');
+                setPhase('error');
+                return;
+            }
+
             const result: any = await syncShipmentStatusAction({
                 provider: 'envioclick',
-                business_id: businessId ?? undefined,
+                business_id: currentBusinessId,
             });
 
             if (cancelled) return;
 
             if (!result.success) {
-                setErrorMessage(result.message || 'No se pudo iniciar la sincronización');
+                setErrorMessage(result.message || result.error || 'No se pudo iniciar la sincronización');
                 setPhase('error');
                 return;
             }
@@ -107,7 +118,7 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
             const totalItems = (result.total_shipments as number | undefined) ?? 0;
 
             if (totalItems === 0) {
-                setErrorMessage('No hay envíos para sincronizar en el rango indicado');
+                setErrorMessage(result.message || 'No hay envíos para sincronizar en el rango indicado');
                 setPhase('error');
                 return;
             }
@@ -122,7 +133,7 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
         return () => {
             cancelled = true;
         };
-    }, [isOpen, phase, businessId]);
+    }, [isOpen, phase]);
 
     useEffect(() => {
         if (phase === 'running' && total > 0 && updates.length >= total) {
