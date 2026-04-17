@@ -208,3 +208,11 @@ func (m *RepositoryMock) SetDefaultOriginAddress(ctx context.Context, businessID
 	}
 	return nil
 }
+
+func (m *RepositoryMock) ListShipmentsForSync(ctx context.Context, filter domain.SyncShipmentsFilter) ([]domain.SyncShipmentRow, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error) {
+	return 0, "", nil
+}
