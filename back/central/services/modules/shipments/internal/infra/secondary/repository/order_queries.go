@@ -159,11 +159,24 @@ func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID str
 		return nil
 	}
 
+	updates := map[string]any{"status": status}
+
+	var statusID struct{ ID uint }
+	err := r.db.Conn(ctx).
+		Table("order_statuses").
+		Select("id").
+		Where("code = ? AND deleted_at IS NULL", status).
+		Limit(1).
+		Scan(&statusID).Error
+	if err == nil && statusID.ID > 0 {
+		updates["status_id"] = statusID.ID
+	}
+
 	return r.db.Conn(ctx).
 		Model(&models.Order{}).
 		Where("id = ?", orderID).
 		Where("deleted_at IS NULL").
-		Update("status", status).Error
+		Updates(updates).Error
 }
 
 func (r *Repository) ClearOrderGuideData(ctx context.Context, orderID string) error {

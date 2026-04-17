@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,10 +12,11 @@ import (
 )
 
 type syncShipmentsRequest struct {
-	Provider string   `json:"provider"`
-	DateFrom string   `json:"date_from"`
-	DateTo   string   `json:"date_to"`
-	Statuses []string `json:"statuses"`
+	Provider   string   `json:"provider"`
+	DateFrom   string   `json:"date_from"`
+	DateTo     string   `json:"date_to"`
+	Statuses   []string `json:"statuses"`
+	BusinessID uint     `json:"business_id"`
 }
 
 func (h *Handlers) SyncShipmentStatus(c *gin.Context) {
@@ -29,7 +29,7 @@ func (h *Handlers) SyncShipmentStatus(c *gin.Context) {
 		req.Provider = domain.SyncProviderEnvioclick
 	}
 
-	businessID, err := h.resolveBusinessIDForSync(c)
+	businessID, err := h.resolveBusinessIDForSync(c, req.BusinessID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})
 		return
@@ -88,7 +88,7 @@ func (h *Handlers) SyncShipmentStatus(c *gin.Context) {
 	})
 }
 
-func (h *Handlers) resolveBusinessIDForSync(c *gin.Context) (uint, error) {
+func (h *Handlers) resolveBusinessIDForSync(c *gin.Context, bodyBusinessID uint) (uint, error) {
 	businessID, exists := middleware.GetBusinessID(c)
 	if !exists {
 		return 0, errors.New("no se pudo identificar la empresa")
@@ -96,13 +96,8 @@ func (h *Handlers) resolveBusinessIDForSync(c *gin.Context) (uint, error) {
 	if !middleware.IsSuperAdmin(c) {
 		return businessID, nil
 	}
-	param := c.Query("business_id")
-	if param == "" {
-		return 0, errors.New("super admin: business_id es requerido como query param")
+	if bodyBusinessID == 0 {
+		return 0, errors.New("super admin: business_id es requerido en el body")
 	}
-	id, err := strconv.ParseUint(param, 10, 64)
-	if err != nil || id == 0 {
-		return 0, errors.New("super admin: business_id invalido")
-	}
-	return uint(id), nil
+	return bodyBusinessID, nil
 }

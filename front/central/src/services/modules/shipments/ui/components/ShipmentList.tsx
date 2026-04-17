@@ -12,9 +12,13 @@ import {
     Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
     AlertTriangle, Plus, ChevronLeft, ChevronRight, FileText,
     Download, CheckCircle2, Clock, XCircle, Navigation,
-    DollarSign, Box, User, Building2, Hash, StickyNote
+    DollarSign, Box, User, Building2, Hash, StickyNote,
+    PackageCheck, MapPinned, PauseCircle, RotateCcw
 } from 'lucide-react';
 import { ManualShipmentModal } from './ManualShipmentModal';
+import { SyncProgressModal } from './SyncProgressModal';
+import { MiniAddressMap } from './MiniAddressMap';
+import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
 // Carga dinámica del mapa para evitar SSR issues
@@ -30,18 +34,25 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
-    delivered: { label: 'Entregado', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-600', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
-    in_transit: { label: 'En tránsito', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-600', icon: <Truck size={12} />, border: 'border-blue-400' },
     pending: { label: 'Pendiente', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-600', icon: <Clock size={12} />, border: 'border-amber-400' },
+    picked_up: { label: 'Recolectado', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-600', icon: <PackageCheck size={12} />, border: 'border-indigo-400' },
+    in_transit: { label: 'En tránsito', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-600', icon: <Truck size={12} />, border: 'border-blue-400' },
+    out_for_delivery: { label: 'En reparto', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <MapPinned size={12} />, border: 'border-purple-400' },
+    delivered: { label: 'Entregado', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-600', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
+    on_hold: { label: 'Novedad', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-600', icon: <PauseCircle size={12} />, border: 'border-orange-400' },
+    returned: { label: 'Devuelto', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-600', icon: <RotateCcw size={12} />, border: 'border-rose-400' },
     failed: { label: 'Fallido', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-600', icon: <XCircle size={12} />, border: 'border-red-400' },
     cancelled: { label: 'Cancelado', color: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600', icon: <X size={12} />, border: 'border-gray-400' },
 };
 
 const CHIP_STATUS_OPTIONS = [
     { value: 'pending', label: 'Pendiente', icon: Clock, activeClass: 'bg-amber-500 text-white' },
+    { value: 'picked_up', label: 'Recolectado', icon: PackageCheck, activeClass: 'bg-indigo-500 text-white' },
     { value: 'in_transit', label: 'En tránsito', icon: Truck, activeClass: 'bg-blue-500 text-white' },
+    { value: 'out_for_delivery', label: 'En reparto', icon: MapPinned, activeClass: 'bg-purple-500 text-white' },
     { value: 'delivered', label: 'Entregado', icon: CheckCircle2, activeClass: 'bg-emerald-500 text-white' },
-    { value: 'failed', label: 'Fallido', icon: XCircle, activeClass: 'bg-red-500 text-white' },
+    { value: 'on_hold', label: 'Novedad', icon: PauseCircle, activeClass: 'bg-orange-500 text-white' },
+    { value: 'returned', label: 'Devuelto', icon: RotateCcw, activeClass: 'bg-rose-500 text-white' },
     { value: 'cancelled', label: 'Cancelado', icon: X, activeClass: 'bg-gray-500 text-white' },
 ];
 
@@ -57,7 +68,15 @@ function StatusBadge({ status }: { status: string }) {
 
 function formatDate(dateStr?: string) {
     if (!dateStr) return null;
-    return new Date(dateStr).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(dateStr).toLocaleString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'America/Bogota',
+    });
 }
 
 function formatMoney(amount?: number) {
@@ -119,25 +138,43 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
 
     const canelId = shipment.tracking_number || shipment.id.toString();
 
+    const carrierLogo = getCarrierLogo(shipment.carrier);
+
     return (
         <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-start justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-                <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider mb-1">Detalle de Envío</p>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
-                        {shipment.customer_name || shipment.client_name || 'Cliente desconocido'}
-                    </h3>
-                    {shipment.destination_address && (
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
-                            <MapPin size={11} className="flex-shrink-0" />
-                            <span className="truncate">{shipment.destination_address}</span>
+            <div className="flex items-start justify-between p-5 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {carrierLogo ? (
+                        <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1.5 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <img src={carrierLogo} alt={shipment.carrier} className="max-w-full max-h-full object-contain" />
                         </div>
-                    )}
+                    ) : shipment.carrier ? (
+                        <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <Truck size={20} className="text-gray-400" />
+                        </div>
+                    ) : null}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            {shipment.order_number && (
+                                <span className="text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/40 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-700">
+                                    {shipment.order_number}
+                                </span>
+                            )}
+                            {shipment.carrier && (
+                                <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">{shipment.carrier}</span>
+                            )}
+                        </div>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                            {shipment.customer_name || shipment.client_name || 'Cliente desconocido'}
+                        </h3>
+                        {shipment.tracking_number && (
+                            <p className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">#{shipment.tracking_number}</p>
+                        )}
+                    </div>
                 </div>
                 <button
                     onClick={onClose}
-                    className="ml-3 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0"
+                    className="ml-3 p-1.5 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0"
                 >
                     <X size={16} />
                 </button>
@@ -145,192 +182,179 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
 
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-                {/* Info strip */}
-                <div className="grid grid-cols-2 gap-3 p-4 border-b border-gray-50">
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Tracking</p>
-                        <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white break-all">
-                            {shipment.tracking_number || 'Sin tracking'}
-                        </p>
+                {/* Direcciones — 2 columns */}
+                <div className="px-4 pt-4 pb-2 border-b border-gray-50 dark:border-gray-700">
+                    <div className="flex items-center gap-1.5 mb-2">
+                        <MapPin size={12} className="text-gray-400 dark:text-gray-500" />
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Direcciones</p>
                     </div>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Estado</p>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <StatusBadge status={shipment.status} />
-                            {shipment.is_test && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
-                            )}
-                        </div>
-                    </div>
-                    {shipment.carrier && (
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Transportista</p>
-                            <div className="flex items-center gap-1.5">
-                                <Truck size={13} className="text-gray-400 dark:text-gray-500" />
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {shipment.carrier.split('(')[0].trim()}
+                    <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/40 rounded-lg overflow-hidden">
+                            <div className="px-3 pt-2 pb-1.5">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <Building2 size={11} className="text-blue-600 dark:text-blue-400" />
+                                    <p className="text-[10px] text-blue-700 dark:text-blue-300 uppercase font-bold tracking-wider">Origen</p>
+                                </div>
+                                <p className="text-xs text-blue-900 dark:text-blue-100 truncate" title={shipment.warehouse_name || 'Bodega principal'}>
+                                    {shipment.warehouse_name || 'Bodega principal'}
                                 </p>
                             </div>
+                            <MiniAddressMap address={shipment.warehouse_name || 'Medellín'} city="Medellín" color="blue" />
                         </div>
-                    )}
-                    {shipment.shipped_at && (
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Enviado</p>
-                            <div className="flex items-center gap-1.5">
-                                <Calendar size={13} className="text-gray-400 dark:text-gray-500" />
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(shipment.shipped_at)}</p>
-                            </div>
-                        </div>
-                    )}
-                    {shipment.delivered_at && (
-                        <div className="bg-emerald-50 rounded-lg p-3">
-                            <p className="text-[10px] text-emerald-600 uppercase font-bold tracking-wider mb-1">Entregado</p>
-                            <div className="flex items-center gap-1.5">
-                                <CheckCircle2 size={13} className="text-emerald-500" />
-                                <p className="text-sm font-semibold text-emerald-700">{formatDate(shipment.delivered_at)}</p>
-                            </div>
-                        </div>
-                    )}
-                    {shipment.estimated_delivery && !shipment.delivered_at && (
-                        <div className="bg-blue-50 rounded-lg p-3">
-                            <p className="text-[10px] text-blue-600 uppercase font-bold tracking-wider mb-1">Entrega Est.</p>
-                            <div className="flex items-center gap-1.5">
-                                <Clock size={13} className="text-blue-500" />
-                                <p className="text-sm font-semibold text-blue-700">{formatDate(shipment.estimated_delivery)}</p>
-                            </div>
-                        </div>
-                    )}
-                    {shipment.created_at && (
-                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Creado</p>
-                            <div className="flex items-center gap-1.5">
-                                <Calendar size={13} className="text-gray-400 dark:text-gray-500" />
-                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(shipment.created_at)}</p>
-                            </div>
-                        </div>
-                    )}
-                    {shipment.order_id && (
-                        <div className="col-span-2 bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">ID Orden</p>
-                            <div className="flex items-center gap-1.5">
-                                <Hash size={13} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                                <p className="text-xs font-mono text-gray-700 dark:text-gray-200 break-all">{shipment.order_id}</p>
-                            </div>
-                        </div>
-                    )}
-                    {/* Sección de contacto del cliente */}
-                    {(shipment.customer_email || shipment.customer_phone) && (
-                        <>
-                            {shipment.customer_email && (
-                                <div className="bg-blue-50 rounded-lg p-3">
-                                    <p className="text-[10px] text-blue-600 uppercase font-bold tracking-wider mb-1">Email</p>
-                                    <p className="text-xs text-blue-900 break-all">{shipment.customer_email}</p>
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/40 rounded-lg overflow-hidden">
+                            <div className="px-3 pt-2 pb-1.5">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <MapPin size={11} className="text-emerald-600 dark:text-emerald-400" />
+                                    <p className="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Destino</p>
                                 </div>
-                            )}
-                            {shipment.customer_phone && (
-                                <div className="bg-green-50 rounded-lg p-3">
-                                    <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider mb-1">Teléfono</p>
-                                    <p className="text-xs text-green-900 break-all">{shipment.customer_phone}</p>
-                                </div>
-                            )}
-                        </>
-                    )}
+                                <p className="text-xs text-emerald-900 dark:text-emerald-100 truncate" title={shipment.destination_address}>
+                                    {shipment.destination_address || 'Sin destino'}
+                                </p>
+                            </div>
+                            <MiniAddressMap address={shipment.destination_address || 'Colombia'} color="emerald" />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-2 px-4 pt-3 pb-2">
-                    {shipment.guide_url && (
-                        <a
-                            href={shipment.guide_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm"
-                        >
-                            <FileText size={13} />
-                            Ver Guía
-                        </a>
-                    )}
-                    {shipment.tracking_url && (
-                        <a
-                            href={shipment.tracking_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white border border-purple-600 text-xs font-semibold transition-colors dark:bg-purple-700 dark:hover:bg-purple-800"
-                        >
-                            <Navigation size={13} />
-                            Rastrear
-                        </a>
-                    )}
-                    {isCancelled ? (
-                        <div className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 text-xs font-semibold border border-gray-200 dark:border-gray-600 cursor-default">
-                            <X size={13} /> Cancelado
+                {/* Info compacta: Cliente + Tracking + Estado + Fechas + Acciones */}
+                <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 space-y-3">
+                    {/* Cliente + Tracking en una fila */}
+                    {(shipment.customer_name || shipment.client_name || shipment.tracking_number) && (
+                        <div className="grid grid-cols-2 gap-2">
+                            {(shipment.customer_name || shipment.client_name) && (
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2.5">
+                                    <div className="flex items-center gap-1 mb-1">
+                                        <User size={10} className="text-gray-400" />
+                                        <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Cliente</p>
+                                    </div>
+                                    <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
+                                        {shipment.customer_name || shipment.client_name}
+                                    </p>
+                                    <div className="mt-1 space-y-0.5 text-[10px] text-gray-600 dark:text-gray-300">
+                                        {shipment.customer_email && <p className="truncate">✉ {shipment.customer_email}</p>}
+                                        {shipment.customer_phone && <p>📞 {shipment.customer_phone}</p>}
+                                        {shipment.customer_dni && <p>Doc: {shipment.customer_dni}</p>}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2.5">
+                                <div className="flex items-center gap-1 mb-1">
+                                    <Hash size={10} className="text-gray-400" />
+                                    <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Tracking</p>
+                                </div>
+                                <p className="text-xs font-mono font-semibold text-gray-900 dark:text-white break-all">
+                                    {shipment.tracking_number || 'Sin tracking'}
+                                </p>
+                                <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                                    <StatusBadge status={shipment.status} />
+                                    {shipment.is_test && (
+                                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase">TEST</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    ) : (
-                        <button
-                            onClick={() => onCancel(canelId)}
-                            disabled={cancelingId === canelId}
-                            className="flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white border border-red-600 text-xs font-semibold transition-colors disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
-                            title="Cancelar envío"
-                        >
-                            {cancelingId === canelId
-                                ? <RefreshCw size={13} className="animate-spin" />
-                                : <><X size={13} /> Cancelar</>
-                            }
-                        </button>
                     )}
+
+                    {/* Fechas en fila compacta */}
+                    <div className="grid grid-cols-3 gap-2">
+                        {shipment.created_at && (
+                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-2">
+                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Creado</p>
+                                <p className="text-[11px] font-medium text-gray-900 dark:text-white leading-tight mt-0.5">{formatDate(shipment.created_at)}</p>
+                            </div>
+                        )}
+                        {shipment.shipped_at && (
+                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-2">
+                                <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider">Enviado</p>
+                                <p className="text-[11px] font-medium text-gray-900 dark:text-white leading-tight mt-0.5">{formatDate(shipment.shipped_at)}</p>
+                            </div>
+                        )}
+                        {shipment.delivered_at ? (
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded p-2">
+                                <p className="text-[9px] text-emerald-600 uppercase font-bold tracking-wider">Entregado</p>
+                                <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">{formatDate(shipment.delivered_at)}</p>
+                            </div>
+                        ) : shipment.estimated_delivery ? (
+                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-2">
+                                <p className="text-[9px] text-blue-600 uppercase font-bold tracking-wider">Entrega Est.</p>
+                                <p className="text-[11px] font-medium text-blue-700 dark:text-blue-300 leading-tight mt-0.5">{formatDate(shipment.estimated_delivery)}</p>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {/* Botones compactos */}
+                    <div className="flex gap-1.5 pt-1">
+                        {shipment.guide_url && (
+                            <a
+                                href={shipment.guide_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors"
+                            >
+                                <FileText size={11} />
+                                Ver Guía
+                            </a>
+                        )}
+                        {shipment.tracking_url && (
+                            <a
+                                href={shipment.tracking_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-semibold transition-colors"
+                            >
+                                <Navigation size={11} />
+                                Rastrear
+                            </a>
+                        )}
+                        {isCancelled ? (
+                            <div className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 text-[11px] font-semibold border border-gray-200 dark:border-gray-600 cursor-default">
+                                <X size={11} /> Cancelado
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => onCancel(canelId)}
+                                disabled={cancelingId === canelId}
+                                className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-[11px] font-semibold transition-colors disabled:opacity-50"
+                                title="Cancelar envío"
+                            >
+                                {cancelingId === canelId
+                                    ? <RefreshCw size={11} className="animate-spin" />
+                                    : <><X size={11} /> Cancelar</>
+                                }
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* ─── Costos ─────────────────────────────────────────── */}
-                {(shipment.shipping_cost != null || shipment.insurance_cost != null || shipment.total_cost != null) && (
-                    <div className="px-4 py-3 border-t border-gray-50">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <DollarSign size={12} className="text-gray-400 dark:text-gray-500" />
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Costos</p>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
+                {/* Costos + Paquete combinados en una fila */}
+                {(shipment.shipping_cost != null || shipment.insurance_cost != null || shipment.total_cost != null || shipment.weight != null || shipment.length != null) && (
+                    <div className="px-4 py-3 border-t border-gray-50 dark:border-gray-700">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            {shipment.total_cost != null && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-100 dark:border-emerald-800">
+                                    <DollarSign size={11} /> Total {formatMoney(shipment.total_cost)}
+                                </span>
+                            )}
                             {shipment.shipping_cost != null && (
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold mb-1">Envío</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(shipment.shipping_cost)}</p>
-                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                    Envío {formatMoney(shipment.shipping_cost)}
+                                </span>
                             )}
                             {shipment.insurance_cost != null && (
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold mb-1">Seguro</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(shipment.insurance_cost)}</p>
-                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                    Seguro {formatMoney(shipment.insurance_cost)}
+                                </span>
                             )}
-                            {shipment.total_cost != null && (
-                                <div className="bg-emerald-50 rounded-lg p-2.5">
-                                    <p className="text-[10px] text-emerald-600 uppercase font-bold mb-1">Total</p>
-                                    <p className="text-sm font-bold text-emerald-700">{formatMoney(shipment.total_cost)}</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* ─── Paquete ─────────────────────────────────────────── */}
-                {(shipment.weight != null || shipment.length != null || shipment.width != null || shipment.height != null) && (
-                    <div className="px-4 py-3 border-t border-gray-50">
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <Box size={12} className="text-gray-400 dark:text-gray-500" />
-                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider">Paquete</p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
                             {shipment.weight != null && (
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold">Peso</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{shipment.weight} kg</p>
-                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                    <Box size={11} className="text-gray-400" /> {shipment.weight} kg
+                                </span>
                             )}
                             {(shipment.length != null || shipment.width != null || shipment.height != null) && (
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-2">
-                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold">Dim.</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {shipment.length ?? '?'} × {shipment.width ?? '?'} × {shipment.height ?? '?'} cm
-                                    </p>
-                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                                    {shipment.length ?? '?'}×{shipment.width ?? '?'}×{shipment.height ?? '?'} cm
+                                </span>
                             )}
                         </div>
                     </div>
@@ -429,19 +453,6 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                     )}
                 </div>
 
-                {/* Reference Map */}
-                {destination && (
-                    <div className="px-4 pb-5">
-                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">Mapa de referencia</p>
-                        <div style={{ height: '200px' }} className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 dark:border-gray-700">
-                            <MapComponent
-                                address={destination}
-                                city={city}
-                                height="200px"
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
@@ -469,6 +480,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [isSyncing, setIsSyncing] = useState(false);
+    const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
     const [isCancelingBatch, setIsCancelingBatch] = useState(false);
     const [cancelModalData, setCancelModalData] = useState<{ isOpen: boolean; type: 'single' | 'batch'; shipmentId?: string } | null>(null);
 
@@ -692,52 +704,35 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     >
                         <option value="">Todos los estados</option>
                         <option value="pending">Pendiente</option>
+                        <option value="picked_up">Recolectado</option>
                         <option value="in_transit">En Tránsito</option>
+                        <option value="out_for_delivery">En Reparto</option>
                         <option value="delivered">Entregado</option>
-                        <option value="failed">Fallido</option>
+                        <option value="on_hold">Novedad</option>
+                        <option value="returned">Devuelto</option>
+                        <option value="cancelled">Cancelado</option>
                     </select>
-                    {/* Select entorno */}
-                    <select
-                        className="px-3 py-2 border border-gray-200 dark:border-gray-600 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
-                        value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
-                        onChange={(e) => {
-                            const val = e.target.value;
-                            updateFilters({ is_test: val === '' ? undefined : val === 'test' });
-                        }}
-                    >
-                        <option value="">Prod + TEST</option>
-                        <option value="production">Solo producción</option>
-                        <option value="test">Solo TEST</option>
-                    </select>
+                    {isSuperAdmin && (
+                        <select
+                            className="px-3 py-2 border border-gray-200 dark:border-gray-600 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
+                            value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                updateFilters({ is_test: val === '' ? undefined : val === 'test' });
+                            }}
+                        >
+                            <option value="">Prod + TEST</option>
+                            <option value="production">Solo producción</option>
+                            <option value="test">Solo TEST</option>
+                        </select>
+                    )}
                     <button
-                        onClick={async () => {
-                            if (isSyncing) return;
-                            setIsSyncing(true);
-                            try {
-                                const result: any = await syncShipmentStatusAction({
-                                    provider: 'envioclick',
-                                    business_id: selectedBusinessId ?? undefined,
-                                });
-                                if (result.success) {
-                                    const total = result.total_shipments ?? 0;
-                                    if (total === 0) {
-                                        alert('No hay envíos de Envioclick para sincronizar');
-                                    } else {
-                                        alert(`Sincronización iniciada: ${total} envíos en ${result.batches ?? 0} batches. Los estados se actualizarán en ~${result.estimated_duration_seconds ?? 0}s.`);
-                                    }
-                                } else {
-                                    alert('Error: ' + (result.message || 'no se pudo iniciar la sincronización'));
-                                }
-                            } finally {
-                                setIsSyncing(false);
-                            }
-                        }}
-                        disabled={isSyncing}
-                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap"
-                        title="Consulta Envioclick y actualiza los estados de los envíos activos"
+                        onClick={() => setIsSyncModalOpen(true)}
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap"
+                        title="Consulta el carrier y actualiza los estados de las guías activas"
                     >
-                        <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
-                        {isSyncing ? 'Sincronizando...' : 'Sincronizar Envioclick'}
+                        <RefreshCw size={14} />
+                        Sincronizar Estados
                     </button>
                 </div>
             </div>
@@ -746,7 +741,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             <div className="flex gap-4 flex-1 min-h-0">
 
                 {/* LEFT — Shipment cards list */}
-                <div className="w-1/2 flex flex-col min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="w-1/3 flex flex-col min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     
                     {/* Batch Actions Header */}
                     {shipments.length > 0 && (
@@ -852,16 +847,26 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                             )}
                                         </div>
 
-                                        {/* Row 3: Tracking + carrier + date */}
+                                        {/* Row 3: Order number + Tracking + carrier + date */}
                                         <div className="flex items-center gap-2 flex-wrap">
+                                            {shipment.order_number && (
+                                                <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded border border-purple-100 dark:border-purple-800">
+                                                    {shipment.order_number}
+                                                </span>
+                                            )}
                                             {shipment.tracking_number && (
                                                 <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                                                     #{shipment.tracking_number.slice(-10)}
                                                 </span>
                                             )}
                                             {shipment.carrier && (
-                                                <span className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-0.5">
-                                                    <Truck size={9} />{shipment.carrier}
+                                                <span className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-1 bg-white dark:bg-gray-700 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-600">
+                                                    {getCarrierLogo(shipment.carrier) ? (
+                                                        <img src={getCarrierLogo(shipment.carrier)!} alt={shipment.carrier} className="h-3 w-auto object-contain" />
+                                                    ) : (
+                                                        <Truck size={9} />
+                                                    )}
+                                                    {shipment.carrier}
                                                 </span>
                                             )}
                                             {(shipment.shipped_at || shipment.created_at) && (
@@ -905,7 +910,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 </div>
 
                 {/* RIGHT — Detail panel */}
-                <div className="w-1/2 min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="w-2/3 min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     {selectedShipment ? (
                         <TrackingDetail
                             shipment={selectedShipment}
@@ -937,6 +942,13 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 isOpen={isManualModalOpen}
                 onClose={() => setIsManualModalOpen(false)}
                 onSuccess={fetchShipments}
+            />
+
+            <SyncProgressModal
+                isOpen={isSyncModalOpen}
+                onClose={() => setIsSyncModalOpen(false)}
+                businessId={selectedBusinessId}
+                onCompleted={fetchShipments}
             />
 
             {/* Modal de confirmación de cancelación */}

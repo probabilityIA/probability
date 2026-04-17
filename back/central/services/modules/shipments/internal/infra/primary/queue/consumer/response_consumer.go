@@ -211,6 +211,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			shipment.Status = "pending"
 			shipment.IsTest = response.IsTest
 
+			appendGuideGeneratedEvent(shipment, response.Provider, trackingNumber, carrier)
+
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
@@ -407,6 +409,7 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
 			shipment.Status = "cancelled"
+			appendCancelEvent(shipment, response.Provider)
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to cancelled")
 			}
@@ -467,6 +470,8 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 		}
 	}
 
+	appendTrackingEvent(shipment, response, probabilityStatus)
+
 	if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 		c.log.Error(ctx).
 			Err(err).
@@ -496,7 +501,103 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 		Msg("✅ Shipment updated from provider webhook")
 
 	businessID, _ := c.repo.GetShipmentBusinessIDByID(ctx, shipment.ID)
+
+	response.Data["shipment_id"] = shipment.ID
+	response.Data["previous_status"] = previousStatus
+	response.Data["new_status"] = probabilityStatus
+	if shipment.OrderID != nil {
+		response.Data["order_id"] = *shipment.OrderID
+	}
+	if shipment.OrderNumber != "" {
+		response.Data["order_number"] = shipment.OrderNumber
+	}
+	if shipment.CustomerName != "" {
+		response.Data["customer_name"] = shipment.CustomerName
+	}
+
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
+}
+
+func appendCancelEvent(shipment *domain.Shipment, provider string) {
+	event := map[string]any{
+		"date":        time.Now().Format(time.RFC3339),
+		"status":      "cancelled",
+		"raw_status":  "Cancelado",
+		"description": "Envío cancelado",
+		"source":      provider,
+	}
+	mergeTrackingEvent(shipment, event)
+}
+
+func appendGuideGeneratedEvent(shipment *domain.Shipment, provider, trackingNumber, carrier string) {
+	event := map[string]any{
+		"date":        time.Now().Format(time.RFC3339),
+		"status":      "pending",
+		"raw_status":  "Guía generada",
+		"description": fmt.Sprintf("Guía creada con %s (tracking: %s)", carrierOrDefault(carrier, provider), trackingNumber),
+		"source":      provider,
+	}
+	mergeTrackingEvent(shipment, event)
+}
+
+func carrierOrDefault(carrier, provider string) string {
+	if carrier != "" {
+		return carrier
+	}
+	return provider
+}
+
+func mergeTrackingEvent(shipment *domain.Shipment, newEvent map[string]any) {
+	var meta map[string]any
+	if len(shipment.Metadata) > 0 {
+		_ = json.Unmarshal(shipment.Metadata, &meta)
+	}
+	if meta == nil {
+		meta = make(map[string]any)
+	}
+
+	var events []any
+	if raw, ok := meta["tracking_events"].([]any); ok {
+		events = raw
+	}
+
+	for _, existing := range events {
+		em, ok := existing.(map[string]any)
+		if !ok {
+			continue
+		}
+		if em["raw_status"] == newEvent["raw_status"] && em["description"] == newEvent["description"] && em["date"] == newEvent["date"] {
+			return
+		}
+	}
+
+	events = append(events, newEvent)
+	meta["tracking_events"] = events
+
+	if updated, err := json.Marshal(meta); err == nil {
+		shipment.Metadata = updated
+	}
+}
+
+func appendTrackingEvent(shipment *domain.Shipment, response *TransportResponseMessage, probabilityStatus string) {
+	rawStatus, _ := response.Data["raw_status"].(string)
+	description, _ := response.Data["event_description"].(string)
+	eventTimestamp, _ := response.Data["event_timestamp"].(string)
+	hasIncidence, _ := response.Data["has_incidence"].(bool)
+
+	if eventTimestamp == "" {
+		eventTimestamp = time.Now().Format(time.RFC3339)
+	}
+
+	newEvent := map[string]any{
+		"date":          eventTimestamp,
+		"status":        probabilityStatus,
+		"raw_status":    rawStatus,
+		"description":   description,
+		"has_incidence": hasIncidence,
+		"source":        response.Provider,
+	}
+	mergeTrackingEvent(shipment, newEvent)
 }
 
 func parseFlexibleTime(s string) *time.Time {
