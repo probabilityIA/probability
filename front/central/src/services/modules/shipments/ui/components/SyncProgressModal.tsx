@@ -58,15 +58,29 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
 
     const effectiveBusinessId = useMemo(() => businessId ?? 0, [businessId]);
     const businessIdRef = useRef(businessId);
+    const correlationPrefixRef = useRef<string | null>(null);
+    const phaseRef = useRef(phase);
     useEffect(() => {
         businessIdRef.current = businessId;
     }, [businessId]);
+    useEffect(() => {
+        correlationPrefixRef.current = correlationPrefix;
+    }, [correlationPrefix]);
+    useEffect(() => {
+        phaseRef.current = phase;
+    }, [phase]);
 
     useShipmentSSE({
         businessId: effectiveBusinessId,
         onTrackingUpdated: (data: ShipmentSSEEventData) => {
+            const currentPhase = phaseRef.current;
+            if (currentPhase === 'idle' || currentPhase === 'done' || currentPhase === 'error') return;
+
             const corr = (data.correlation_id as string | undefined) || '';
-            if (!correlationPrefix || !corr.startsWith(correlationPrefix)) return;
+            const prefix = correlationPrefixRef.current;
+
+            const matches = prefix ? corr.startsWith(prefix) : corr.startsWith('sync-');
+            if (!matches) return;
 
             setUpdates((prev) => {
                 const next: SyncUpdate = {
