@@ -82,15 +82,17 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
             const matches = prefix ? corr.startsWith(prefix) : corr.startsWith('sync-');
             if (!matches) return;
 
+            const payload = (data.tracking as Record<string, any> | undefined) || (data as Record<string, any>);
+
             setUpdates((prev) => {
                 const next: SyncUpdate = {
-                    shipmentId: data.shipment_id,
-                    orderNumber: data.order_number as string | undefined,
-                    customerName: data.customer_name as string | undefined,
-                    trackingNumber: (data.tracking_number as string) || '',
-                    previousStatus: data.previous_status as string | undefined,
-                    newStatus: (data.new_status as string) || (data.probability_status as string) || '',
-                    rawStatus: data.raw_status as string | undefined,
+                    shipmentId: payload.shipment_id as number | undefined,
+                    orderNumber: payload.order_number as string | undefined,
+                    customerName: payload.customer_name as string | undefined,
+                    trackingNumber: (payload.tracking_number as string) || '',
+                    previousStatus: payload.previous_status as string | undefined,
+                    newStatus: (payload.new_status as string) || (payload.probability_status as string) || '',
+                    rawStatus: payload.raw_status as string | undefined,
                     timestamp: Date.now(),
                 };
                 return [next, ...prev].slice(0, 200);
@@ -100,7 +102,6 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
 
     useEffect(() => {
         if (!isOpen) return;
-        if (phase !== 'idle') return;
 
         let cancelled = false;
         const run = async () => {
@@ -110,8 +111,10 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
 
             const currentBusinessId = businessIdRef.current;
             if (!currentBusinessId) {
-                setErrorMessage('Selecciona un negocio antes de sincronizar');
-                setPhase('error');
+                if (!cancelled) {
+                    setErrorMessage('Selecciona un negocio antes de sincronizar');
+                    setPhase('error');
+                }
                 return;
             }
 
@@ -147,7 +150,7 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
         return () => {
             cancelled = true;
         };
-    }, [isOpen, phase]);
+    }, [isOpen]);
 
     useEffect(() => {
         if (phase === 'running' && total > 0 && updates.length >= total) {
