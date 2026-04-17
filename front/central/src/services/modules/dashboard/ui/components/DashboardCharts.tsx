@@ -509,7 +509,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
                   position="bottom"
                   fontSize={11}
                   fill="#9CA3AF"
-                  formatter={(value: number) => `${value > 0 ? '+' : ''}${value.toFixed(1)}%`}
+                  formatter={(value: any) => typeof value === 'number' ? `${value > 0 ? '+' : ''}${value.toFixed(1)}%` : ''}
                 />
               </Bar>
               <Line
