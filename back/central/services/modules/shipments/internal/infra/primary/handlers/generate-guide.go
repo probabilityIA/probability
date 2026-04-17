@@ -45,22 +45,27 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		return
 	}
 
-	// 4. Pre-create shipment record so the response consumer can update it
 	shipmentReq := buildShipmentRequest(raw, carrier)
 
-	// DEBUG: Log the carrier being saved
-	if shipmentReq.Carrier != nil {
-		fmt.Printf("DEBUG: Saving shipment with carrier: %s\n", *shipmentReq.Carrier)
-	} else {
-		fmt.Printf("DEBUG: Shipment carrier is nil\n")
+	var shipmentID uint
+	if shipmentReq.OrderID != nil && *shipmentReq.OrderID != "" {
+		existing, _ := h.uc.Repo().GetShipmentsByOrderID(c.Request.Context(), *shipmentReq.OrderID)
+		for _, s := range existing {
+			if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
+				shipmentID = s.ID
+				break
+			}
+		}
 	}
 
-	shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envío: " + err.Error()})
-		return
+	if shipmentID == 0 {
+		shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envío: " + err.Error()})
+			return
+		}
+		shipmentID = shipmentResp.ID
 	}
-	shipmentID := shipmentResp.ID
 
 	correlationID := uuid.New().String()
 
