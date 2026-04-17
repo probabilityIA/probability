@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -46,25 +45,7 @@ func (uc *syncUseCase) SyncBatch(ctx context.Context, req domain.SyncBatchReques
 		return result, nil
 	}
 
-	trackingToItem := make(map[string]domain.SyncBatchItem, len(req.Items))
-	idOrderToItem := make(map[int64]domain.SyncBatchItem)
-	var itemsWithoutIDOrder []domain.SyncBatchItem
-
-	for _, item := range req.Items {
-		trackingToItem[item.TrackingNumber] = item
-		if item.EnvioclickIDOrder != nil && *item.EnvioclickIDOrder > 0 {
-			idOrderToItem[*item.EnvioclickIDOrder] = item
-		} else {
-			itemsWithoutIDOrder = append(itemsWithoutIDOrder, item)
-		}
-	}
-
-	if len(idOrderToItem) > 0 {
-		uc.processBatchByIDOrders(ctx, req, idOrderToItem, result)
-	}
-	if len(itemsWithoutIDOrder) > 0 {
-		uc.processIndividualTracks(ctx, req, itemsWithoutIDOrder, result)
-	}
+	uc.processIndividualTracks(ctx, req, req.Items, result)
 
 	uc.log.Info(ctx).
 		Str("correlation_id", req.CorrelationID).
@@ -77,60 +58,6 @@ func (uc *syncUseCase) SyncBatch(ctx context.Context, req domain.SyncBatchReques
 		Msg("Envioclick sync batch completed")
 
 	return result, nil
-}
-
-func (uc *syncUseCase) processBatchByIDOrders(ctx context.Context, req domain.SyncBatchRequest, items map[int64]domain.SyncBatchItem, result *domain.SyncBatchResult) {
-	idOrders := make([]int64, 0, len(items))
-	for id := range items {
-		idOrders = append(idOrders, id)
-	}
-
-	uc.log.Info(ctx).
-		Int("batch_size", len(idOrders)).
-		Str("correlation_id", req.CorrelationID).
-		Msg("Calling TrackByOrdersBatch")
-
-	resp, err := uc.client.TrackByOrdersBatch(req.BaseURL, req.APIKey, idOrders)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("TrackByOrdersBatch failed")
-		for _, item := range items {
-			uc.recordFailure(ctx, req, item, "TrackByOrdersBatch failed: "+err.Error(), result)
-		}
-		return
-	}
-
-	rawBody, _ := json.Marshal(resp)
-	dataMap := map[string]any{}
-	_ = json.Unmarshal(rawBody, &struct {
-		Data *map[string]any `json:"data"`
-	}{Data: &dataMap})
-
-	for idOrder, item := range items {
-		key := fmt.Sprintf("%d", idOrder)
-		rawEntry, ok := dataMap[key]
-		if !ok {
-			uc.recordNotFound(ctx, req, item, "idOrder not in response", result)
-			continue
-		}
-
-		entryBytes, _ := json.Marshal(rawEntry)
-		var trackingData struct {
-			Status           string  `json:"status"`
-			StatusDetail     string  `json:"statusDetail"`
-			RealPickupDate   *string `json:"realPickupDate"`
-			RealDeliveryDate *string `json:"realDeliveryDate"`
-		}
-		if err := json.Unmarshal(entryBytes, &trackingData); err != nil {
-			if msg, okStr := rawEntry.(string); okStr {
-				uc.recordNotFound(ctx, req, item, msg, result)
-			} else {
-				uc.recordFailure(ctx, req, item, "cannot parse entry: "+err.Error(), result)
-			}
-			continue
-		}
-
-		uc.processSingleResult(ctx, req, item, trackingData.Status, trackingData.StatusDetail, trackingData.RealPickupDate, trackingData.RealDeliveryDate, entryBytes, result)
-	}
 }
 
 func (uc *syncUseCase) processIndividualTracks(ctx context.Context, req domain.SyncBatchRequest, items []domain.SyncBatchItem, result *domain.SyncBatchResult) {
@@ -265,34 +192,3 @@ func (uc *syncUseCase) recordFailure(ctx context.Context, req domain.SyncBatchRe
 	result.Failed++
 }
 
-func (uc *syncUseCase) recordNotFound(ctx context.Context, req domain.SyncBatchRequest, item domain.SyncBatchItem, msg string, result *domain.SyncBatchResult) {
-	uc.log.Info(ctx).
-		Str("tracking_number", item.TrackingNumber).
-		Str("reason", msg).
-		Msg("Sync item not found in API")
-
-	trackingCopy := item.TrackingNumber
-	shipmentCopy := item.ShipmentID
-	itemCorrID := req.CorrelationID + "-" + uuid.New().String()[:8]
-	msgCopy := msg
-
-	logEntry := &domain.WebhookLog{
-		Source:         domain.WebhookSourceEnvioclick,
-		EventType:      domain.WebhookEventSync,
-		URL:            req.URL,
-		Method:         "INTERNAL",
-		RequestBody:    []byte("{}"),
-		RemoteIP:       req.RemoteIP,
-		Status:         domain.WebhookLogStatusIgnored,
-		ResponseCode:   404,
-		ShipmentID:     &shipmentCopy,
-		BusinessID:     &req.BusinessID,
-		CorrelationID:  &itemCorrID,
-		TrackingNumber: &trackingCopy,
-		ErrorMessage:   &msgCopy,
-	}
-	if err := uc.repo.Save(ctx, logEntry); err != nil {
-		uc.log.Warn(ctx).Err(err).Msg("Failed to save not-found sync log")
-	}
-	result.NotFound++
-}

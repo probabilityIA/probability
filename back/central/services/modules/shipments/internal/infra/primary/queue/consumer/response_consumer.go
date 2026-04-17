@@ -105,6 +105,11 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		c.handleCancelResponse(ctx, &response)
 	case "webhook_update":
 		c.handleWebhookUpdate(ctx, &response)
+	case "sync_batch":
+		c.log.Info(ctx).
+			Str("correlation_id", response.CorrelationID).
+			Interface("summary", response.Data).
+			Msg("Sync batch summary received")
 	default:
 		c.log.Warn(ctx).
 			Str("operation", response.Operation).
