@@ -103,6 +103,8 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		c.handleTrackResponse(ctx, &response)
 	case "cancel":
 		c.handleCancelResponse(ctx, &response)
+	case "webhook_update":
+		c.handleWebhookUpdate(ctx, &response)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", response.Operation).
@@ -415,6 +417,90 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 
 		c.ssePublisher.PublishShipmentCancelled(ctx, businessID, *response.ShipmentID)
 	}
+}
+
+func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *TransportResponseMessage) {
+	if response.Data == nil {
+		c.log.Warn(ctx).Str("correlation_id", response.CorrelationID).Msg("webhook_update response has no data")
+		return
+	}
+
+	trackingNumber, _ := response.Data["tracking_number"].(string)
+	probabilityStatus, _ := response.Data["probability_status"].(string)
+
+	if trackingNumber == "" || probabilityStatus == "" {
+		c.log.Warn(ctx).
+			Str("correlation_id", response.CorrelationID).
+			Str("tracking_number", trackingNumber).
+			Str("probability_status", probabilityStatus).
+			Msg("webhook_update response missing required fields")
+		return
+	}
+
+	shipment, err := c.repo.GetShipmentByTrackingNumber(ctx, trackingNumber)
+	if err != nil || shipment == nil {
+		c.log.Warn(ctx).
+			Err(err).
+			Str("tracking_number", trackingNumber).
+			Str("correlation_id", response.CorrelationID).
+			Msg("Shipment not found for webhook update")
+		return
+	}
+
+	previousStatus := shipment.Status
+	shipment.Status = probabilityStatus
+
+	if shippedAtStr, ok := response.Data["shipped_at"].(string); ok && shippedAtStr != "" {
+		if t := parseFlexibleTime(shippedAtStr); t != nil {
+			shipment.ShippedAt = t
+		}
+	}
+
+	if deliveredAtStr, ok := response.Data["delivered_at"].(string); ok && deliveredAtStr != "" {
+		if t := parseFlexibleTime(deliveredAtStr); t != nil {
+			shipment.DeliveredAt = t
+		}
+	}
+
+	if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
+		c.log.Error(ctx).
+			Err(err).
+			Uint("shipment_id", shipment.ID).
+			Str("correlation_id", response.CorrelationID).
+			Msg("Failed to update shipment from webhook")
+		return
+	}
+
+	if previousStatus != probabilityStatus && shipment.OrderID != nil && *shipment.OrderID != "" {
+		if err := c.repo.UpdateOrderStatusByOrderID(ctx, *shipment.OrderID, probabilityStatus); err != nil {
+			c.log.Warn(ctx).
+				Err(err).
+				Str("order_id", *shipment.OrderID).
+				Str("new_status", probabilityStatus).
+				Msg("Failed to sync order status from webhook")
+		}
+	}
+
+	c.log.Info(ctx).
+		Uint("shipment_id", shipment.ID).
+		Str("tracking_number", trackingNumber).
+		Str("previous_status", previousStatus).
+		Str("new_status", probabilityStatus).
+		Str("provider", response.Provider).
+		Str("correlation_id", response.CorrelationID).
+		Msg("✅ Shipment updated from provider webhook")
+
+	businessID, _ := c.repo.GetShipmentBusinessIDByID(ctx, shipment.ID)
+	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
+}
+
+func parseFlexibleTime(s string) *time.Time {
+	for _, layout := range []string{"2006-01-02 15:04:05", "2006-01-02T15:04:05Z", "2006-01-02T15:04:05.000Z", time.RFC3339, "2006-01-02"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return &t
+		}
+	}
+	return nil
 }
 
 // resolveBusinessID resolves the business ID from the response message.

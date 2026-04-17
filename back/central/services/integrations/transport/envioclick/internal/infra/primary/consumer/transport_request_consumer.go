@@ -46,6 +46,7 @@ const (
 type TransportRequestConsumer struct {
 	rabbit             rabbitmq.IQueue
 	useCase            app.IUseCase
+	syncUseCase        app.ISyncUseCase
 	responsePublisher  *queue.ResponsePublisher
 	credentialResolver ICredentialResolver
 	log                log.ILogger
@@ -55,6 +56,7 @@ type TransportRequestConsumer struct {
 func NewTransportRequestConsumer(
 	rabbit rabbitmq.IQueue,
 	useCase app.IUseCase,
+	syncUseCase app.ISyncUseCase,
 	responsePublisher *queue.ResponsePublisher,
 	credentialResolver ICredentialResolver,
 	logger log.ILogger,
@@ -62,6 +64,7 @@ func NewTransportRequestConsumer(
 	return &TransportRequestConsumer{
 		rabbit:             rabbit,
 		useCase:            useCase,
+		syncUseCase:        syncUseCase,
 		responsePublisher:  responsePublisher,
 		credentialResolver: credentialResolver,
 		log:                logger.WithModule("transport.envioclick.consumer"),
@@ -152,6 +155,8 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		response = c.processCancel(ctx, &request, baseURL, apiKey)
 	case "cancel_batch":
 		response = c.processCancelBatch(ctx, &request, baseURL, apiKey)
+	case "sync_batch":
+		response = c.processSyncBatch(ctx, &request, baseURL, apiKey)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", request.Operation).
@@ -371,6 +376,68 @@ func (c *TransportRequestConsumer) processCancelBatch(ctx context.Context, reque
 		IsTest:        request.IsTest,
 		Timestamp:     time.Now(),
 		Data:          toMap(resp),
+	}
+}
+
+func (c *TransportRequestConsumer) processSyncBatch(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
+	itemsRaw, ok := request.Payload["items"]
+	if !ok {
+		return c.errorResponse(request, "payload.items missing for sync_batch")
+	}
+
+	itemsBytes, err := json.Marshal(itemsRaw)
+	if err != nil {
+		return c.errorResponse(request, "failed to marshal items: "+err.Error())
+	}
+
+	var rawItems []struct {
+		ShipmentID        uint   `json:"shipment_id"`
+		TrackingNumber    string `json:"tracking_number"`
+		EnvioclickIDOrder *int64 `json:"envioclick_id_order"`
+	}
+	if err := json.Unmarshal(itemsBytes, &rawItems); err != nil {
+		return c.errorResponse(request, "failed to unmarshal items: "+err.Error())
+	}
+
+	items := make([]domain.SyncBatchItem, 0, len(rawItems))
+	for _, r := range rawItems {
+		items = append(items, domain.SyncBatchItem{
+			ShipmentID:        r.ShipmentID,
+			TrackingNumber:    r.TrackingNumber,
+			EnvioclickIDOrder: r.EnvioclickIDOrder,
+		})
+	}
+
+	syncReq := domain.SyncBatchRequest{
+		BusinessID:    request.BusinessID,
+		CorrelationID: request.CorrelationID,
+		BaseURL:       baseURL,
+		APIKey:        apiKey,
+		URL:           "internal://sync_batch",
+		RemoteIP:      "internal",
+		Items:         items,
+	}
+
+	result, err := c.syncUseCase.SyncBatch(ctx, syncReq)
+	if err != nil {
+		return c.errorResponse(request, err.Error())
+	}
+
+	return &queue.TransportResponseMessage{
+		BusinessID:    request.BusinessID,
+		Provider:      "envioclick",
+		Operation:     "sync_batch",
+		Status:        "success",
+		CorrelationID: request.CorrelationID,
+		IsTest:        request.IsTest,
+		Timestamp:     time.Now(),
+		Data: map[string]any{
+			"total":     result.Total,
+			"processed": result.Processed,
+			"failed":    result.Failed,
+			"unknown":   result.Unknown,
+			"not_found": result.NotFound,
+		},
 	}
 }
 

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button, Modal } from '@/shared/ui';
 import { useHasPermission } from '@/shared/contexts/permissions-context';
-import { getShipmentsAction, trackShipmentAction, cancelShipmentAction, cancelBatchShipmentAction } from '../../infra/actions';
+import { getShipmentsAction, trackShipmentAction, cancelShipmentAction, cancelBatchShipmentAction, syncShipmentStatusAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { useShipmentSSE } from '../hooks/useShipmentSSE';
 import {
@@ -468,6 +468,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     const [cancelingId, setCancelingId] = useState<string | null>(null);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [isSyncing, setIsSyncing] = useState(false);
     const [isCancelingBatch, setIsCancelingBatch] = useState(false);
     const [cancelModalData, setCancelModalData] = useState<{ isOpen: boolean; type: 'single' | 'batch'; shipmentId?: string } | null>(null);
 
@@ -708,6 +709,36 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         <option value="production">Solo producción</option>
                         <option value="test">Solo TEST</option>
                     </select>
+                    <button
+                        onClick={async () => {
+                            if (isSyncing) return;
+                            setIsSyncing(true);
+                            try {
+                                const result: any = await syncShipmentStatusAction({
+                                    provider: 'envioclick',
+                                    business_id: selectedBusinessId ?? undefined,
+                                });
+                                if (result.success) {
+                                    const total = result.total_shipments ?? 0;
+                                    if (total === 0) {
+                                        alert('No hay envíos de Envioclick para sincronizar');
+                                    } else {
+                                        alert(`Sincronización iniciada: ${total} envíos en ${result.batches ?? 0} batches. Los estados se actualizarán en ~${result.estimated_duration_seconds ?? 0}s.`);
+                                    }
+                                } else {
+                                    alert('Error: ' + (result.message || 'no se pudo iniciar la sincronización'));
+                                }
+                            } finally {
+                                setIsSyncing(false);
+                            }
+                        }}
+                        disabled={isSyncing}
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap"
+                        title="Consulta Envioclick y actualiza los estados de los envíos activos"
+                    >
+                        <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                        {isSyncing ? 'Sincronizando...' : 'Sincronizar Envioclick'}
+                    </button>
                 </div>
             </div>
 

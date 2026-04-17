@@ -3,40 +3,45 @@ package envioclick
 import (
 	"context"
 
+	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/app"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/infra/primary/consumer"
+	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New creates and initializes the EnvioClick transport provider.
-// credentialResolver is used by the consumer to decrypt per-business API keys.
 func New(
+	router *gin.RouterGroup,
+	database db.IDatabase,
 	logger log.ILogger,
 	rabbit rabbitmq.IQueue,
 	credentialResolver consumer.ICredentialResolver,
 ) {
 	logger = logger.WithModule("transport.envioclick")
 
-	// 1. HTTP Client
 	httpClient := client.New(logger)
 	logger.Info(context.Background()).Msg("✅ EnvioClick HTTP client initialized")
 
-	// 2. Response Publisher
 	responsePublisher := queue.NewResponsePublisher(rabbit, logger)
 	logger.Info(context.Background()).Msg("✅ EnvioClick response publisher initialized")
 
-	// 3. Use Case
 	useCase := app.New(httpClient, logger)
 	logger.Info(context.Background()).Msg("✅ EnvioClick use case initialized")
 
-	// 4. Request Consumer
+	webhookRepo := repository.New(database)
+	webhookPublisher := queue.NewWebhookResponsePublisher(responsePublisher)
+	syncUseCase := app.NewSyncUseCase(httpClient, webhookRepo, webhookPublisher, logger)
+
 	if rabbit != nil {
 		requestConsumer := consumer.NewTransportRequestConsumer(
 			rabbit,
 			useCase,
+			syncUseCase,
 			responsePublisher,
 			credentialResolver,
 			logger,
@@ -54,6 +59,11 @@ func New(
 		logger.Warn(context.Background()).
 			Msg("❌ RabbitMQ no disponible, consumer de transporte (EnvioClick) deshabilitado")
 	}
+
+	webhookUC := app.NewWebhookUseCase(webhookRepo, webhookPublisher, logger)
+	webhookHandlers := handlers.New(webhookUC, logger)
+	webhookHandlers.RegisterRoutes(router)
+	logger.Info(context.Background()).Msg("✅ EnvioClick webhook handler registered")
 
 	logger.Info(context.Background()).Msg("✅ EnvioClick bundle initialized")
 }

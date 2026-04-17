@@ -85,6 +85,18 @@ export class ShipmentApiRepository implements IShipmentRepository {
             body: JSON.stringify(req),
         });
     }
+
+    async syncShipmentStatus(params: { provider?: string; date_from?: string; date_to?: string; statuses?: string[]; business_id?: number }): Promise<{ success: boolean; correlation_id?: string; total_shipments?: number; batches?: number; batch_size?: number; estimated_duration_seconds?: number; message?: string }> {
+        const query = params.business_id ? `?business_id=${params.business_id}` : '';
+        const body: Record<string, unknown> = { provider: params.provider || 'envioclick' };
+        if (params.date_from) body.date_from = params.date_from;
+        if (params.date_to) body.date_to = params.date_to;
+        if (params.statuses && params.statuses.length > 0) body.statuses = params.statuses;
+        return this.fetch(`/shipments/sync-status${query}`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+    }
     async createShipment(req: CreateShipmentRequest): Promise<{ success: boolean; message: string; data?: Shipment }> {
         return this.fetch<{ success: boolean; message: string; data?: Shipment }>('/shipments', {
             method: 'POST',

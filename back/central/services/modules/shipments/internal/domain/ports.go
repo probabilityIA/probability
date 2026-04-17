@@ -46,6 +46,9 @@ type IRepository interface {
 	// GetOrderIntegrationID retrieves the integration_id for an order (replicated query — module isolation)
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
 
+	ListShipmentsForSync(ctx context.Context, filter SyncShipmentsFilter) ([]SyncShipmentRow, error)
+	GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error)
+
 	// Origin Addresses
 	CreateOriginAddress(ctx context.Context, address *OriginAddress) error
 	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)

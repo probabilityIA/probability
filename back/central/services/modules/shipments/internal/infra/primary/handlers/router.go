@@ -7,8 +7,6 @@ import (
 
 // RegisterRoutes registra todas las rutas del módulo shipments
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
-	// Rutas públicas (sin JWT) - webhooks y tracking
-	router.POST("/webhooks/envioclick", h.EnvioClickWebhook)
 	router.GET("/tracking/search", h.PublicSearchTracking)
 	router.GET("/tracking/:tracking_number/history", h.PublicGetTrackingHistory)
 
@@ -37,6 +35,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.POST("/tracking/:tracking_number/track", h.TrackShipment)
 		shipments.POST("/:id/cancel", h.CancelShipment)
 		shipments.POST("/cancel-batch", h.CancelBatchShipments)
+		shipments.POST("/sync-status", h.SyncShipmentStatus)
 	}
 
 }

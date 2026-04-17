@@ -43,7 +43,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	invoicing.New(config, logger, rabbitMQ, integrationCore)
 
 	// Transport: todos los proveedores de transporte + router de colas
-	transport.New(logger, rabbitMQ, integrationCore)
+	transport.New(router, db, logger, rabbitMQ, integrationCore)
 
 	// Pay: todos los proveedores de pago (Nequi, etc.) + router de colas
 	pay.New(config, logger, db, rabbitMQ)

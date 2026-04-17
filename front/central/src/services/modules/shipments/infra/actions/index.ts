@@ -138,3 +138,14 @@ export const deleteOriginAddressAction = async (id: number, businessId?: number)
     }
 };
 
+export const syncShipmentStatusAction = async (params: { provider?: string; date_from?: string; date_to?: string; statuses?: string[]; business_id?: number }) => {
+    try {
+        const token = await getAuthToken();
+        const repo = new ShipmentApiRepository(token);
+        return await repo.syncShipmentStatus(params);
+    } catch (error: any) {
+        console.error('Sync Shipment Status Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al sincronizar estados' };
+    }
+};
+

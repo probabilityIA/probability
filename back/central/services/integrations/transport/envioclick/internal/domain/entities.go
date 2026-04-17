@@ -88,12 +88,15 @@ type StatusMsg struct {
 }
 
 type TrackingData struct {
-	TrackingNumber string         `json:"trackingNumber"`
-	Carrier        string         `json:"carrier"`
-	Status         string         `json:"status"`
-	StatusDetail   string         `json:"statusDetail"`
-	ArrivalDate    *string        `json:"arrivalDate"`
-	Events         []TrackHistory `json:"history"`
+	TrackingNumber   string         `json:"trackingNumber"`
+	Carrier          string         `json:"carrier"`
+	Status           string         `json:"status"`
+	StatusDetail     string         `json:"statusDetail"`
+	ArrivalDate      *string        `json:"arrivalDate"`
+	RealPickupDate   *string        `json:"realPickupDate"`
+	RealDeliveryDate *string        `json:"realDeliveryDate"`
+	ReceivedBy       *string        `json:"receivedBy"`
+	Events           []TrackHistory `json:"history"`
 }
 
 type TrackHistory struct {

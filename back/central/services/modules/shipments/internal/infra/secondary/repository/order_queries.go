@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
@@ -147,21 +148,19 @@ func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, g
 	}
 
 	return r.db.Conn(ctx).
-		Table("orders").
+		Model(&models.Order{}).
 		Where("id = ?", orderID).
 		Where("deleted_at IS NULL").
 		Updates(updates).Error
 }
 
-// UpdateOrderStatusByOrderID updates the status of an order on the orders table.
-// Replicated write — module isolation rule.
 func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error {
 	if orderID == "" || status == "" {
 		return nil
 	}
 
 	return r.db.Conn(ctx).
-		Table("orders").
+		Model(&models.Order{}).
 		Where("id = ?", orderID).
 		Where("deleted_at IS NULL").
 		Update("status", status).Error
@@ -172,7 +171,7 @@ func (r *Repository) ClearOrderGuideData(ctx context.Context, orderID string) er
 		return nil
 	}
 	return r.db.Conn(ctx).
-		Table("orders").
+		Model(&models.Order{}).
 		Where("id = ? AND deleted_at IS NULL", orderID).
 		Updates(map[string]any{
 			"tracking_number": nil,
