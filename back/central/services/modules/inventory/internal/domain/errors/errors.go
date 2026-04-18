@@ -34,4 +34,12 @@ var (
 	ErrCrossDockNotFound         = errors.New("enlace cross-dock no encontrado")
 	ErrCrossDockExecuted         = errors.New("enlace cross-dock ya ejecutado")
 	ErrNoPutawayRule             = errors.New("no se encontro regla de put-away aplicable")
+
+	ErrCountPlanNotFound   = errors.New("plan de conteo ciclico no encontrado")
+	ErrCountTaskNotFound   = errors.New("tarea de conteo ciclico no encontrada")
+	ErrCountTaskClosed     = errors.New("tarea de conteo ciclico ya cerrada")
+	ErrCountLineNotFound   = errors.New("linea de conteo ciclico no encontrada")
+	ErrCountLineSubmitted  = errors.New("linea de conteo ciclico ya enviada")
+	ErrDiscrepancyNotFound = errors.New("discrepancia no encontrada")
+	ErrDiscrepancyResolved = errors.New("discrepancia ya resuelta")
 )

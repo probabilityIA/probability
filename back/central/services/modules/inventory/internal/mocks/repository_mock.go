@@ -93,6 +93,31 @@ type RepositoryMock struct {
 
 	ComputeVelocitiesFn func(ctx context.Context, businessID, warehouseID uint, period string) error
 	ListVelocitiesFn    func(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
+
+	CreateCountPlanFn  func(ctx context.Context, p *entities.CycleCountPlan) (*entities.CycleCountPlan, error)
+	GetCountPlanByIDFn func(ctx context.Context, businessID, id uint) (*entities.CycleCountPlan, error)
+	ListCountPlansFn   func(ctx context.Context, params dtos.ListCycleCountPlansParams) ([]entities.CycleCountPlan, int64, error)
+	UpdateCountPlanFn  func(ctx context.Context, p *entities.CycleCountPlan) (*entities.CycleCountPlan, error)
+	DeleteCountPlanFn  func(ctx context.Context, businessID, id uint) error
+
+	CreateCountTaskFn           func(ctx context.Context, t *entities.CycleCountTask) (*entities.CycleCountTask, error)
+	GetCountTaskByIDFn          func(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+	ListCountTasksFn            func(ctx context.Context, params dtos.ListCycleCountTasksParams) ([]entities.CycleCountTask, int64, error)
+	UpdateCountTaskFn           func(ctx context.Context, t *entities.CycleCountTask) (*entities.CycleCountTask, error)
+	GenerateCountLinesForTaskFn func(ctx context.Context, task *entities.CycleCountTask, strategy string) ([]entities.CycleCountLine, error)
+
+	CreateCountLineFn  func(ctx context.Context, line *entities.CycleCountLine) (*entities.CycleCountLine, error)
+	GetCountLineByIDFn func(ctx context.Context, businessID, id uint) (*entities.CycleCountLine, error)
+	ListCountLinesFn   func(ctx context.Context, params dtos.ListCycleCountLinesParams) ([]entities.CycleCountLine, int64, error)
+	UpdateCountLineFn  func(ctx context.Context, line *entities.CycleCountLine) (*entities.CycleCountLine, error)
+
+	CreateDiscrepancyFn    func(ctx context.Context, d *entities.InventoryDiscrepancy) (*entities.InventoryDiscrepancy, error)
+	GetDiscrepancyByIDFn   func(ctx context.Context, businessID, id uint) (*entities.InventoryDiscrepancy, error)
+	ListDiscrepanciesFn    func(ctx context.Context, params dtos.ListDiscrepanciesParams) ([]entities.InventoryDiscrepancy, int64, error)
+	UpdateDiscrepancyFn    func(ctx context.Context, d *entities.InventoryDiscrepancy) (*entities.InventoryDiscrepancy, error)
+	ApproveDiscrepancyTxFn func(ctx context.Context, params dtos.ApproveDiscrepancyTxParams) (*entities.InventoryDiscrepancy, error)
+
+	GetKardexFn func(ctx context.Context, params dtos.KardexQueryParams) ([]entities.KardexEntry, error)
 }
 
 func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {

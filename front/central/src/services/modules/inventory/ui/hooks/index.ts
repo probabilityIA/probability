@@ -11,3 +11,10 @@ export {
     useCrossDockLinks,
     useVelocities,
 } from './useOperations';
+export {
+    useCountPlans,
+    useCountTasks,
+    useCountLines,
+    useDiscrepancies,
+    useKardex,
+} from './useAudit';

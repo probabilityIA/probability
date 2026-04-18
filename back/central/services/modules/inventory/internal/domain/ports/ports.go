@@ -110,6 +110,31 @@ type IRepository interface {
 
 	ComputeVelocities(ctx context.Context, businessID, warehouseID uint, period string) error
 	ListVelocities(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
+
+	CreateCountPlan(ctx context.Context, p *entities.CycleCountPlan) (*entities.CycleCountPlan, error)
+	GetCountPlanByID(ctx context.Context, businessID, id uint) (*entities.CycleCountPlan, error)
+	ListCountPlans(ctx context.Context, params dtos.ListCycleCountPlansParams) ([]entities.CycleCountPlan, int64, error)
+	UpdateCountPlan(ctx context.Context, p *entities.CycleCountPlan) (*entities.CycleCountPlan, error)
+	DeleteCountPlan(ctx context.Context, businessID, id uint) error
+
+	CreateCountTask(ctx context.Context, t *entities.CycleCountTask) (*entities.CycleCountTask, error)
+	GetCountTaskByID(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+	ListCountTasks(ctx context.Context, params dtos.ListCycleCountTasksParams) ([]entities.CycleCountTask, int64, error)
+	UpdateCountTask(ctx context.Context, t *entities.CycleCountTask) (*entities.CycleCountTask, error)
+	GenerateCountLinesForTask(ctx context.Context, task *entities.CycleCountTask, strategy string) ([]entities.CycleCountLine, error)
+
+	CreateCountLine(ctx context.Context, line *entities.CycleCountLine) (*entities.CycleCountLine, error)
+	GetCountLineByID(ctx context.Context, businessID, id uint) (*entities.CycleCountLine, error)
+	ListCountLines(ctx context.Context, params dtos.ListCycleCountLinesParams) ([]entities.CycleCountLine, int64, error)
+	UpdateCountLine(ctx context.Context, line *entities.CycleCountLine) (*entities.CycleCountLine, error)
+
+	CreateDiscrepancy(ctx context.Context, d *entities.InventoryDiscrepancy) (*entities.InventoryDiscrepancy, error)
+	GetDiscrepancyByID(ctx context.Context, businessID, id uint) (*entities.InventoryDiscrepancy, error)
+	ListDiscrepancies(ctx context.Context, params dtos.ListDiscrepanciesParams) ([]entities.InventoryDiscrepancy, int64, error)
+	UpdateDiscrepancy(ctx context.Context, d *entities.InventoryDiscrepancy) (*entities.InventoryDiscrepancy, error)
+	ApproveDiscrepancyTx(ctx context.Context, params dtos.ApproveDiscrepancyTxParams) (*entities.InventoryDiscrepancy, error)
+
+	GetKardex(ctx context.Context, params dtos.KardexQueryParams) ([]entities.KardexEntry, error)
 }
 
 type LocationCapacityInfo struct {

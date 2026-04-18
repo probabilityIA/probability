@@ -73,6 +73,28 @@ type IUseCase interface {
 
 	RunSlotting(ctx context.Context, dto request.RunSlottingDTO) (*response.SlottingRunResult, error)
 	ListVelocities(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
+
+	CreateCountPlan(ctx context.Context, dto request.CreateCountPlanDTO) (*entities.CycleCountPlan, error)
+	GetCountPlan(ctx context.Context, businessID, id uint) (*entities.CycleCountPlan, error)
+	ListCountPlans(ctx context.Context, params dtos.ListCycleCountPlansParams) ([]entities.CycleCountPlan, int64, error)
+	UpdateCountPlan(ctx context.Context, dto request.UpdateCountPlanDTO) (*entities.CycleCountPlan, error)
+	DeleteCountPlan(ctx context.Context, businessID, id uint) error
+
+	GenerateCountTask(ctx context.Context, dto request.GenerateCountTaskDTO) (*response.GenerateCountTaskResult, error)
+	ListCountTasks(ctx context.Context, params dtos.ListCycleCountTasksParams) ([]entities.CycleCountTask, int64, error)
+	GetCountTask(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+	StartCountTask(ctx context.Context, dto request.StartCountTaskDTO) (*entities.CycleCountTask, error)
+	FinishCountTask(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+
+	ListCountLines(ctx context.Context, params dtos.ListCycleCountLinesParams) ([]entities.CycleCountLine, int64, error)
+	SubmitCountLine(ctx context.Context, dto request.SubmitCountLineDTO) (*response.SubmitCountLineResult, error)
+
+	ListDiscrepancies(ctx context.Context, params dtos.ListDiscrepanciesParams) ([]entities.InventoryDiscrepancy, int64, error)
+	GetDiscrepancy(ctx context.Context, businessID, id uint) (*entities.InventoryDiscrepancy, error)
+	ApproveDiscrepancy(ctx context.Context, dto request.ApproveDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
+	RejectDiscrepancy(ctx context.Context, dto request.RejectDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
+
+	ExportKardex(ctx context.Context, dto request.KardexExportDTO) (*response.KardexExportResult, error)
 }
 
 type useCase struct {

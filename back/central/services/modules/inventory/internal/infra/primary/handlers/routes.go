@@ -88,5 +88,33 @@ func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 			slotting.POST("/run", h.RunSlotting)
 			slotting.GET("/velocities", h.ListVelocities)
 		}
+
+		plans := inventory.Group("/cycle-count-plans")
+		{
+			plans.GET("", h.ListCountPlans)
+			plans.POST("", h.CreateCountPlan)
+			plans.PUT("/:id", h.UpdateCountPlan)
+			plans.DELETE("/:id", h.DeleteCountPlan)
+		}
+
+		countTasks := inventory.Group("/cycle-count-tasks")
+		{
+			countTasks.GET("", h.ListCountTasks)
+			countTasks.POST("/generate", h.GenerateCountTask)
+			countTasks.POST("/:id/start", h.StartCountTask)
+			countTasks.POST("/:id/finish", h.FinishCountTask)
+			countTasks.GET("/:taskId/lines", h.ListCountLines)
+		}
+
+		inventory.POST("/cycle-count-lines/:id/submit", h.SubmitCountLine)
+
+		discrepancies := inventory.Group("/discrepancies")
+		{
+			discrepancies.GET("", h.ListDiscrepancies)
+			discrepancies.POST("/:id/approve", h.ApproveDiscrepancy)
+			discrepancies.POST("/:id/reject", h.RejectDiscrepancy)
+		}
+
+		inventory.GET("/kardex/export", h.ExportKardex)
 	}
 }

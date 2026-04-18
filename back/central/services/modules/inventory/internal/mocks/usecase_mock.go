@@ -67,6 +67,28 @@ type UseCaseMock struct {
 
 	RunSlottingFn    func(ctx context.Context, dto request.RunSlottingDTO) (*response.SlottingRunResult, error)
 	ListVelocitiesFn func(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
+
+	CreateCountPlanFn func(ctx context.Context, dto request.CreateCountPlanDTO) (*entities.CycleCountPlan, error)
+	GetCountPlanFn    func(ctx context.Context, businessID, id uint) (*entities.CycleCountPlan, error)
+	ListCountPlansFn  func(ctx context.Context, params dtos.ListCycleCountPlansParams) ([]entities.CycleCountPlan, int64, error)
+	UpdateCountPlanFn func(ctx context.Context, dto request.UpdateCountPlanDTO) (*entities.CycleCountPlan, error)
+	DeleteCountPlanFn func(ctx context.Context, businessID, id uint) error
+
+	GenerateCountTaskFn func(ctx context.Context, dto request.GenerateCountTaskDTO) (*response.GenerateCountTaskResult, error)
+	ListCountTasksFn    func(ctx context.Context, params dtos.ListCycleCountTasksParams) ([]entities.CycleCountTask, int64, error)
+	GetCountTaskFn      func(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+	StartCountTaskFn    func(ctx context.Context, dto request.StartCountTaskDTO) (*entities.CycleCountTask, error)
+	FinishCountTaskFn   func(ctx context.Context, businessID, id uint) (*entities.CycleCountTask, error)
+
+	ListCountLinesFn  func(ctx context.Context, params dtos.ListCycleCountLinesParams) ([]entities.CycleCountLine, int64, error)
+	SubmitCountLineFn func(ctx context.Context, dto request.SubmitCountLineDTO) (*response.SubmitCountLineResult, error)
+
+	ListDiscrepanciesFn  func(ctx context.Context, params dtos.ListDiscrepanciesParams) ([]entities.InventoryDiscrepancy, int64, error)
+	GetDiscrepancyFn     func(ctx context.Context, businessID, id uint) (*entities.InventoryDiscrepancy, error)
+	ApproveDiscrepancyFn func(ctx context.Context, dto request.ApproveDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
+	RejectDiscrepancyFn  func(ctx context.Context, dto request.RejectDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
+
+	ExportKardexFn func(ctx context.Context, dto request.KardexExportDTO) (*response.KardexExportResult, error)
 }
 
 func (m *UseCaseMock) ValidateCubing(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error) {
