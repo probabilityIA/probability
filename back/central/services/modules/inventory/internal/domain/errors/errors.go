@@ -25,4 +25,13 @@ var (
 	ErrStateNotFound       = errors.New("estado de inventario no encontrado")
 	ErrStateTransition     = errors.New("transicion de estado no permitida")
 	ErrProductUoMNotFound  = errors.New("unidad de medida del producto no encontrada")
+
+	ErrPutawayRuleNotFound       = errors.New("regla de put-away no encontrada")
+	ErrPutawaySuggestionNotFound = errors.New("sugerencia de put-away no encontrada")
+	ErrPutawayAlreadyConfirmed   = errors.New("sugerencia de put-away ya fue confirmada")
+	ErrReplenishmentNotFound     = errors.New("tarea de reabastecimiento no encontrada")
+	ErrReplenishmentClosed       = errors.New("tarea de reabastecimiento ya cerrada")
+	ErrCrossDockNotFound         = errors.New("enlace cross-dock no encontrado")
+	ErrCrossDockExecuted         = errors.New("enlace cross-dock ya ejecutado")
+	ErrNoPutawayRule             = errors.New("no se encontro regla de put-away aplicable")
 )

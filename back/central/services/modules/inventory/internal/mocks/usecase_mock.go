@@ -45,6 +45,28 @@ type UseCaseMock struct {
 	CreateProductUoMFn func(ctx context.Context, dto request.CreateProductUoMDTO) (*entities.ProductUoM, error)
 	DeleteProductUoMFn func(ctx context.Context, businessID, id uint) error
 	ConvertUoMFn       func(ctx context.Context, dto request.ConvertUoMDTO) (*response.ConvertUoMResult, error)
+
+	CreatePutawayRuleFn      func(ctx context.Context, dto request.CreatePutawayRuleDTO) (*entities.PutawayRule, error)
+	ListPutawayRulesFn       func(ctx context.Context, params dtos.ListPutawayRulesParams) ([]entities.PutawayRule, int64, error)
+	UpdatePutawayRuleFn      func(ctx context.Context, dto request.UpdatePutawayRuleDTO) (*entities.PutawayRule, error)
+	DeletePutawayRuleFn      func(ctx context.Context, businessID, ruleID uint) error
+	SuggestPutawayFn         func(ctx context.Context, dto request.PutawaySuggestDTO) (*response.PutawaySuggestResult, error)
+	ConfirmPutawayFn         func(ctx context.Context, dto request.ConfirmPutawayDTO) (*entities.PutawaySuggestion, error)
+	ListPutawaySuggestionsFn func(ctx context.Context, params dtos.ListPutawaySuggestionsParams) ([]entities.PutawaySuggestion, int64, error)
+
+	CreateReplenishmentTaskFn  func(ctx context.Context, dto request.CreateReplenishmentTaskDTO) (*entities.ReplenishmentTask, error)
+	ListReplenishmentTasksFn   func(ctx context.Context, params dtos.ListReplenishmentTasksParams) ([]entities.ReplenishmentTask, int64, error)
+	AssignReplenishmentFn      func(ctx context.Context, dto request.AssignReplenishmentDTO) (*entities.ReplenishmentTask, error)
+	CompleteReplenishmentFn    func(ctx context.Context, dto request.CompleteReplenishmentDTO) (*entities.ReplenishmentTask, error)
+	CancelReplenishmentFn      func(ctx context.Context, businessID, taskID uint, reason string) (*entities.ReplenishmentTask, error)
+	DetectReplenishmentNeedsFn func(ctx context.Context, businessID uint) (*response.ReplenishmentDetectResult, error)
+
+	CreateCrossDockLinkFn func(ctx context.Context, dto request.CreateCrossDockLinkDTO) (*entities.CrossDockLink, error)
+	ListCrossDockLinksFn  func(ctx context.Context, params dtos.ListCrossDockLinksParams) ([]entities.CrossDockLink, int64, error)
+	ExecuteCrossDockFn    func(ctx context.Context, dto request.ExecuteCrossDockDTO) (*entities.CrossDockLink, error)
+
+	RunSlottingFn    func(ctx context.Context, dto request.RunSlottingDTO) (*response.SlottingRunResult, error)
+	ListVelocitiesFn func(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
 }
 
 func (m *UseCaseMock) ValidateCubing(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error) {

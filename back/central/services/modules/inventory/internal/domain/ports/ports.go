@@ -83,6 +83,33 @@ type IRepository interface {
 
 	ChangeStateTx(ctx context.Context, params dtos.ChangeInventoryStateTxParams) (*entities.StockMovement, error)
 	ListLotsForReserve(ctx context.Context, productID string, warehouseID, businessID uint, strategy string) ([]entities.InventoryLot, error)
+
+	CreatePutawayRule(ctx context.Context, rule *entities.PutawayRule) (*entities.PutawayRule, error)
+	ListPutawayRules(ctx context.Context, params dtos.ListPutawayRulesParams) ([]entities.PutawayRule, int64, error)
+	GetPutawayRuleByID(ctx context.Context, businessID, ruleID uint) (*entities.PutawayRule, error)
+	UpdatePutawayRule(ctx context.Context, rule *entities.PutawayRule) (*entities.PutawayRule, error)
+	DeletePutawayRule(ctx context.Context, businessID, ruleID uint) error
+	FindApplicableRule(ctx context.Context, businessID uint, productID string) (*entities.PutawayRule, error)
+	PickLocationInZone(ctx context.Context, zoneID uint) (uint, error)
+
+	CreatePutawaySuggestion(ctx context.Context, s *entities.PutawaySuggestion) (*entities.PutawaySuggestion, error)
+	GetPutawaySuggestionByID(ctx context.Context, businessID, id uint) (*entities.PutawaySuggestion, error)
+	ListPutawaySuggestions(ctx context.Context, params dtos.ListPutawaySuggestionsParams) ([]entities.PutawaySuggestion, int64, error)
+	UpdatePutawaySuggestion(ctx context.Context, s *entities.PutawaySuggestion) (*entities.PutawaySuggestion, error)
+
+	CreateReplenishmentTask(ctx context.Context, t *entities.ReplenishmentTask) (*entities.ReplenishmentTask, error)
+	GetReplenishmentTaskByID(ctx context.Context, businessID, id uint) (*entities.ReplenishmentTask, error)
+	ListReplenishmentTasks(ctx context.Context, params dtos.ListReplenishmentTasksParams) ([]entities.ReplenishmentTask, int64, error)
+	UpdateReplenishmentTask(ctx context.Context, t *entities.ReplenishmentTask) (*entities.ReplenishmentTask, error)
+	DetectReplenishmentCandidates(ctx context.Context, businessID uint) ([]entities.ReplenishmentTask, error)
+
+	CreateCrossDockLink(ctx context.Context, l *entities.CrossDockLink) (*entities.CrossDockLink, error)
+	GetCrossDockLinkByID(ctx context.Context, businessID, id uint) (*entities.CrossDockLink, error)
+	ListCrossDockLinks(ctx context.Context, params dtos.ListCrossDockLinksParams) ([]entities.CrossDockLink, int64, error)
+	UpdateCrossDockLink(ctx context.Context, l *entities.CrossDockLink) (*entities.CrossDockLink, error)
+
+	ComputeVelocities(ctx context.Context, businessID, warehouseID uint, period string) error
+	ListVelocities(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
 }
 
 type LocationCapacityInfo struct {

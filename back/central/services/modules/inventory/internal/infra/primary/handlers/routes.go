@@ -50,5 +50,43 @@ func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 			movTypes.PUT("/:id", h.UpdateMovementType)
 			movTypes.DELETE("/:id", h.DeleteMovementType)
 		}
+
+		putawayRules := inventory.Group("/putaway-rules")
+		{
+			putawayRules.GET("", h.ListPutawayRules)
+			putawayRules.POST("", h.CreatePutawayRule)
+			putawayRules.PUT("/:id", h.UpdatePutawayRule)
+			putawayRules.DELETE("/:id", h.DeletePutawayRule)
+		}
+
+		putaway := inventory.Group("/putaway")
+		{
+			putaway.POST("/suggest", h.SuggestPutaway)
+			putaway.POST("/suggestions/:id/confirm", h.ConfirmPutaway)
+			putaway.GET("/suggestions", h.ListPutawaySuggestions)
+		}
+
+		replenishment := inventory.Group("/replenishment")
+		{
+			replenishment.GET("/tasks", h.ListReplenishmentTasks)
+			replenishment.POST("/tasks", h.CreateReplenishmentTask)
+			replenishment.POST("/tasks/:id/assign", h.AssignReplenishment)
+			replenishment.POST("/tasks/:id/complete", h.CompleteReplenishment)
+			replenishment.POST("/tasks/:id/cancel", h.CancelReplenishment)
+			replenishment.POST("/detect", h.DetectReplenishment)
+		}
+
+		crossDock := inventory.Group("/cross-dock")
+		{
+			crossDock.GET("/links", h.ListCrossDockLinks)
+			crossDock.POST("/links", h.CreateCrossDockLink)
+			crossDock.POST("/links/:id/execute", h.ExecuteCrossDock)
+		}
+
+		slotting := inventory.Group("/slotting")
+		{
+			slotting.POST("/run", h.RunSlotting)
+			slotting.GET("/velocities", h.ListVelocities)
+		}
 	}
 }

@@ -66,6 +66,33 @@ type RepositoryMock struct {
 
 	ChangeStateTxFn      func(ctx context.Context, params dtos.ChangeInventoryStateTxParams) (*entities.StockMovement, error)
 	ListLotsForReserveFn func(ctx context.Context, productID string, warehouseID, businessID uint, strategy string) ([]entities.InventoryLot, error)
+
+	CreatePutawayRuleFn  func(ctx context.Context, rule *entities.PutawayRule) (*entities.PutawayRule, error)
+	ListPutawayRulesFn   func(ctx context.Context, params dtos.ListPutawayRulesParams) ([]entities.PutawayRule, int64, error)
+	GetPutawayRuleByIDFn func(ctx context.Context, businessID, ruleID uint) (*entities.PutawayRule, error)
+	UpdatePutawayRuleFn  func(ctx context.Context, rule *entities.PutawayRule) (*entities.PutawayRule, error)
+	DeletePutawayRuleFn  func(ctx context.Context, businessID, ruleID uint) error
+	FindApplicableRuleFn func(ctx context.Context, businessID uint, productID string) (*entities.PutawayRule, error)
+	PickLocationInZoneFn func(ctx context.Context, zoneID uint) (uint, error)
+
+	CreatePutawaySuggestionFn  func(ctx context.Context, s *entities.PutawaySuggestion) (*entities.PutawaySuggestion, error)
+	GetPutawaySuggestionByIDFn func(ctx context.Context, businessID, id uint) (*entities.PutawaySuggestion, error)
+	ListPutawaySuggestionsFn   func(ctx context.Context, params dtos.ListPutawaySuggestionsParams) ([]entities.PutawaySuggestion, int64, error)
+	UpdatePutawaySuggestionFn  func(ctx context.Context, s *entities.PutawaySuggestion) (*entities.PutawaySuggestion, error)
+
+	CreateReplenishmentTaskFn       func(ctx context.Context, t *entities.ReplenishmentTask) (*entities.ReplenishmentTask, error)
+	GetReplenishmentTaskByIDFn      func(ctx context.Context, businessID, id uint) (*entities.ReplenishmentTask, error)
+	ListReplenishmentTasksFn        func(ctx context.Context, params dtos.ListReplenishmentTasksParams) ([]entities.ReplenishmentTask, int64, error)
+	UpdateReplenishmentTaskFn       func(ctx context.Context, t *entities.ReplenishmentTask) (*entities.ReplenishmentTask, error)
+	DetectReplenishmentCandidatesFn func(ctx context.Context, businessID uint) ([]entities.ReplenishmentTask, error)
+
+	CreateCrossDockLinkFn  func(ctx context.Context, l *entities.CrossDockLink) (*entities.CrossDockLink, error)
+	GetCrossDockLinkByIDFn func(ctx context.Context, businessID, id uint) (*entities.CrossDockLink, error)
+	ListCrossDockLinksFn   func(ctx context.Context, params dtos.ListCrossDockLinksParams) ([]entities.CrossDockLink, int64, error)
+	UpdateCrossDockLinkFn  func(ctx context.Context, l *entities.CrossDockLink) (*entities.CrossDockLink, error)
+
+	ComputeVelocitiesFn func(ctx context.Context, businessID, warehouseID uint, period string) error
+	ListVelocitiesFn    func(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
 }
 
 func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {

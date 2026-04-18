@@ -51,6 +51,28 @@ type IUseCase interface {
 	CreateProductUoM(ctx context.Context, dto request.CreateProductUoMDTO) (*entities.ProductUoM, error)
 	DeleteProductUoM(ctx context.Context, businessID, id uint) error
 	ConvertUoM(ctx context.Context, dto request.ConvertUoMDTO) (*response.ConvertUoMResult, error)
+
+	CreatePutawayRule(ctx context.Context, dto request.CreatePutawayRuleDTO) (*entities.PutawayRule, error)
+	ListPutawayRules(ctx context.Context, params dtos.ListPutawayRulesParams) ([]entities.PutawayRule, int64, error)
+	UpdatePutawayRule(ctx context.Context, dto request.UpdatePutawayRuleDTO) (*entities.PutawayRule, error)
+	DeletePutawayRule(ctx context.Context, businessID, ruleID uint) error
+	SuggestPutaway(ctx context.Context, dto request.PutawaySuggestDTO) (*response.PutawaySuggestResult, error)
+	ConfirmPutaway(ctx context.Context, dto request.ConfirmPutawayDTO) (*entities.PutawaySuggestion, error)
+	ListPutawaySuggestions(ctx context.Context, params dtos.ListPutawaySuggestionsParams) ([]entities.PutawaySuggestion, int64, error)
+
+	CreateReplenishmentTask(ctx context.Context, dto request.CreateReplenishmentTaskDTO) (*entities.ReplenishmentTask, error)
+	ListReplenishmentTasks(ctx context.Context, params dtos.ListReplenishmentTasksParams) ([]entities.ReplenishmentTask, int64, error)
+	AssignReplenishment(ctx context.Context, dto request.AssignReplenishmentDTO) (*entities.ReplenishmentTask, error)
+	CompleteReplenishment(ctx context.Context, dto request.CompleteReplenishmentDTO) (*entities.ReplenishmentTask, error)
+	CancelReplenishment(ctx context.Context, businessID, taskID uint, reason string) (*entities.ReplenishmentTask, error)
+	DetectReplenishmentNeeds(ctx context.Context, businessID uint) (*response.ReplenishmentDetectResult, error)
+
+	CreateCrossDockLink(ctx context.Context, dto request.CreateCrossDockLinkDTO) (*entities.CrossDockLink, error)
+	ListCrossDockLinks(ctx context.Context, params dtos.ListCrossDockLinksParams) ([]entities.CrossDockLink, int64, error)
+	ExecuteCrossDock(ctx context.Context, dto request.ExecuteCrossDockDTO) (*entities.CrossDockLink, error)
+
+	RunSlotting(ctx context.Context, dto request.RunSlottingDTO) (*response.SlottingRunResult, error)
+	ListVelocities(ctx context.Context, params dtos.ListVelocityParams) ([]entities.ProductVelocity, error)
 }
 
 type useCase struct {

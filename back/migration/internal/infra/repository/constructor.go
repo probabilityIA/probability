@@ -41,5 +41,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate inventory traceability: %w", err)
 	}
 
+	if err := r.migrateInventoryOperations(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory operations: %w", err)
+	}
+
 	return nil
 }

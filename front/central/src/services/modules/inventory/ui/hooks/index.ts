@@ -4,3 +4,10 @@ export { useMovementTypes } from './useMovementTypes';
 export { useLots } from './useLots';
 export { useSerials } from './useSerials';
 export { useUoMs, useProductUoMs, useUoMConverter } from './useUoMs';
+export {
+    usePutawayRules,
+    usePutawaySuggestions,
+    useReplenishmentTasks,
+    useCrossDockLinks,
+    useVelocities,
+} from './useOperations';
