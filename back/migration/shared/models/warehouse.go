@@ -5,6 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type WarehouseLocationFlags struct {
+	IsPicking    bool `json:"is_picking"`
+	IsBulk       bool `json:"is_bulk"`
+	IsQuarantine bool `json:"is_quarantine"`
+	IsDamaged    bool `json:"is_damaged"`
+	IsReturns    bool `json:"is_returns"`
+	IsCrossDock  bool `json:"is_cross_dock"`
+	IsHazmat     bool `json:"is_hazmat"`
+}
+
 // Warehouse representa una bodega o almacén del negocio
 type Warehouse struct {
 	gorm.Model
@@ -46,22 +56,28 @@ func (Warehouse) TableName() string {
 	return "warehouses"
 }
 
-// WarehouseLocation representa una ubicación dentro de una bodega
 type WarehouseLocation struct {
 	gorm.Model
-	WarehouseID   uint   `gorm:"not null;index;uniqueIndex:idx_location_warehouse_code,priority:1"` // ID de la bodega a la que pertenece esta ubicación
-	Name          string `gorm:"size:255;not null"`                                                  // Nombre de la ubicación (ej: "Estante A-01")
-	Code          string `gorm:"size:50;not null;uniqueIndex:idx_location_warehouse_code,priority:2"` // Código único dentro de la bodega (ej: "A-01")
-	Type          string `gorm:"size:50;default:'storage'"`                                          // Tipo de ubicación: storage, picking, packing, receiving, shipping
-	IsActive      bool   `gorm:"default:true;index"`                                                 // Indica si la ubicación está activa
-	IsFulfillment bool   `gorm:"default:false;index"`                                                // Indica si la ubicación maneja fulfillment
-	Capacity      *int   //                                                                            Capacidad máxima de la ubicación (nil = sin límite)
+	WarehouseID   uint   `gorm:"not null;index;uniqueIndex:idx_location_warehouse_code,priority:1"`
+	LevelID       *uint  `gorm:"index"`
+	Name          string `gorm:"size:255;not null"`
+	Code          string `gorm:"size:50;not null;uniqueIndex:idx_location_warehouse_code,priority:2"`
+	Type          string `gorm:"size:50;default:'storage'"`
+	IsActive      bool   `gorm:"default:true;index"`
+	IsFulfillment bool   `gorm:"default:false;index"`
+	Capacity      *int
 
-	// Relación
-	Warehouse Warehouse `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Bodega a la que pertenece
+	MaxWeightKg  *float64
+	MaxVolumeCm3 *float64
+	LengthCm     *float64
+	WidthCm      *float64
+	HeightCm     *float64
+	Priority     int             `gorm:"default:0;index"`
+	Flags        datatypes.JSON  `gorm:"type:jsonb"`
+
+	Warehouse Warehouse `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-// TableName especifica el nombre de la tabla
 func (WarehouseLocation) TableName() string {
 	return "warehouse_locations"
 }

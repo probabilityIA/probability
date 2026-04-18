@@ -51,6 +51,26 @@ type IRepository interface {
 
 	// Warehouse queries
 	GetDefaultWarehouseID(ctx context.Context, businessID uint) (uint, error)
+
+	GetLocationCapacity(ctx context.Context, locationID uint) (*LocationCapacityInfo, error)
+	GetProductDimensions(ctx context.Context, productID string, businessID uint) (*ProductDimensions, error)
+	GetLocationOccupiedQty(ctx context.Context, locationID uint) (int, error)
+}
+
+type LocationCapacityInfo struct {
+	ID           uint
+	MaxWeightKg  *float64
+	MaxVolumeCm3 *float64
+}
+
+type ProductDimensions struct {
+	ID      string
+	Weight  float64
+	WeightU string
+	Length  float64
+	Width   float64
+	Height  float64
+	DimU    string
 }
 
 // ProductIntegrationInfo datos de una integración vinculada a un producto

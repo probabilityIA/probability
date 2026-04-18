@@ -13,12 +13,20 @@ import (
 func (r *Repository) CreateLocation(ctx context.Context, location *entities.WarehouseLocation) (*entities.WarehouseLocation, error) {
 	model := &models.WarehouseLocation{
 		WarehouseID:   location.WarehouseID,
+		LevelID:       location.LevelID,
 		Name:          location.Name,
 		Code:          location.Code,
 		Type:          location.Type,
 		IsActive:      location.IsActive,
 		IsFulfillment: location.IsFulfillment,
 		Capacity:      location.Capacity,
+		MaxWeightKg:   location.MaxWeightKg,
+		MaxVolumeCm3:  location.MaxVolumeCm3,
+		LengthCm:      location.LengthCm,
+		WidthCm:       location.WidthCm,
+		HeightCm:      location.HeightCm,
+		Priority:      location.Priority,
+		Flags:         locationFlagsToJSON(location.Flags),
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -67,12 +75,20 @@ func (r *Repository) UpdateLocation(ctx context.Context, location *entities.Ware
 	model := &models.WarehouseLocation{
 		Model:         gorm.Model{ID: location.ID},
 		WarehouseID:   location.WarehouseID,
+		LevelID:       location.LevelID,
 		Name:          location.Name,
 		Code:          location.Code,
 		Type:          location.Type,
 		IsActive:      location.IsActive,
 		IsFulfillment: location.IsFulfillment,
 		Capacity:      location.Capacity,
+		MaxWeightKg:   location.MaxWeightKg,
+		MaxVolumeCm3:  location.MaxVolumeCm3,
+		LengthCm:      location.LengthCm,
+		WidthCm:       location.WidthCm,
+		HeightCm:      location.HeightCm,
+		Priority:      location.Priority,
+		Flags:         locationFlagsToJSON(location.Flags),
 	}
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

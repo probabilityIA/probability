@@ -33,5 +33,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate webhook logs: %w", err)
 	}
 
+	if err := r.migrateWarehouseHierarchy(ctx); err != nil {
+		return fmt.Errorf("failed to migrate warehouse hierarchy: %w", err)
+	}
+
 	return nil
 }

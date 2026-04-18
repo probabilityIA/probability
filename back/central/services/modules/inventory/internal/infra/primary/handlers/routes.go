@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra todas las rutas del módulo inventory
 func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 	inventory := router.Group("/inventory")
 	inventory.Use(middleware.JWT())
@@ -16,8 +15,8 @@ func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 		inventory.POST("/transfer", h.TransferStock)
 		inventory.POST("/bulk-load", h.BulkLoadInventory)
 		inventory.GET("/movements", h.ListMovements)
+		inventory.POST("/positions/validate-cubing", h.ValidateCubing)
 
-		// Movement Types CRUD
 		movTypes := inventory.Group("/movement-types")
 		{
 			movTypes.GET("", h.ListMovementTypes)
