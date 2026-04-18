@@ -38,6 +38,34 @@ type RepositoryMock struct {
 	GetLocationCapacityFn                              func(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error)
 	GetProductDimensionsFn                             func(ctx context.Context, productID string, businessID uint) (*ports.ProductDimensions, error)
 	GetLocationOccupiedQtyFn                           func(ctx context.Context, locationID uint) (int, error)
+
+	CreateLotFn         func(ctx context.Context, lot *entities.InventoryLot) (*entities.InventoryLot, error)
+	GetLotByIDFn        func(ctx context.Context, businessID, lotID uint) (*entities.InventoryLot, error)
+	ListLotsFn          func(ctx context.Context, params dtos.ListLotsParams) ([]entities.InventoryLot, int64, error)
+	UpdateLotFn         func(ctx context.Context, lot *entities.InventoryLot) (*entities.InventoryLot, error)
+	DeleteLotFn         func(ctx context.Context, businessID, lotID uint) error
+	LotExistsByCodeFn   func(ctx context.Context, businessID uint, productID, code string, excludeID *uint) (bool, error)
+
+	CreateSerialFn    func(ctx context.Context, serial *entities.InventorySerial) (*entities.InventorySerial, error)
+	GetSerialByIDFn   func(ctx context.Context, businessID, serialID uint) (*entities.InventorySerial, error)
+	ListSerialsFn     func(ctx context.Context, params dtos.ListSerialsParams) ([]entities.InventorySerial, int64, error)
+	UpdateSerialFn    func(ctx context.Context, serial *entities.InventorySerial) (*entities.InventorySerial, error)
+	SerialExistsFn    func(ctx context.Context, businessID uint, productID, serial string, excludeID *uint) (bool, error)
+
+	ListInventoryStatesFn     func(ctx context.Context) ([]entities.InventoryState, error)
+	GetInventoryStateByCodeFn func(ctx context.Context, code string) (*entities.InventoryState, error)
+
+	ListUoMsFn    func(ctx context.Context) ([]entities.UnitOfMeasure, error)
+	GetUoMByCodeFn func(ctx context.Context, code string) (*entities.UnitOfMeasure, error)
+	GetUoMByIDFn   func(ctx context.Context, uomID uint) (*entities.UnitOfMeasure, error)
+
+	CreateProductUoMFn  func(ctx context.Context, pu *entities.ProductUoM) (*entities.ProductUoM, error)
+	ListProductUoMsFn   func(ctx context.Context, params dtos.ListProductUoMParams) ([]entities.ProductUoM, error)
+	DeleteProductUoMFn  func(ctx context.Context, businessID, id uint) error
+	GetBaseProductUoMFn func(ctx context.Context, businessID uint, productID string) (*entities.ProductUoM, error)
+
+	ChangeStateTxFn      func(ctx context.Context, params dtos.ChangeInventoryStateTxParams) (*entities.StockMovement, error)
+	ListLotsForReserveFn func(ctx context.Context, productID string, warehouseID, businessID uint, strategy string) ([]entities.InventoryLot, error)
 }
 
 func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {

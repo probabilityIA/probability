@@ -31,6 +31,26 @@ type IUseCase interface {
 	ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
 
 	ValidateCubing(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error)
+
+	CreateLot(ctx context.Context, dto request.CreateLotDTO) (*entities.InventoryLot, error)
+	GetLot(ctx context.Context, businessID, lotID uint) (*entities.InventoryLot, error)
+	ListLots(ctx context.Context, params dtos.ListLotsParams) ([]entities.InventoryLot, int64, error)
+	UpdateLot(ctx context.Context, dto request.UpdateLotDTO) (*entities.InventoryLot, error)
+	DeleteLot(ctx context.Context, businessID, lotID uint) error
+
+	CreateSerial(ctx context.Context, dto request.CreateSerialDTO) (*entities.InventorySerial, error)
+	GetSerial(ctx context.Context, businessID, serialID uint) (*entities.InventorySerial, error)
+	ListSerials(ctx context.Context, params dtos.ListSerialsParams) ([]entities.InventorySerial, int64, error)
+	UpdateSerial(ctx context.Context, dto request.UpdateSerialDTO) (*entities.InventorySerial, error)
+
+	ListInventoryStates(ctx context.Context) ([]entities.InventoryState, error)
+	ChangeInventoryState(ctx context.Context, dto request.ChangeInventoryStateDTO) (*entities.StockMovement, error)
+
+	ListUoMs(ctx context.Context) ([]entities.UnitOfMeasure, error)
+	ListProductUoMs(ctx context.Context, businessID uint, productID string) ([]entities.ProductUoM, error)
+	CreateProductUoM(ctx context.Context, dto request.CreateProductUoMDTO) (*entities.ProductUoM, error)
+	DeleteProductUoM(ctx context.Context, businessID, id uint) error
+	ConvertUoM(ctx context.Context, dto request.ConvertUoMDTO) (*response.ConvertUoMResult, error)
 }
 
 type useCase struct {

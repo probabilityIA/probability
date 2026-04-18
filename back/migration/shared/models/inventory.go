@@ -2,25 +2,27 @@ package models
 
 import "gorm.io/gorm"
 
-// InventoryLevel representa el nivel de inventario de un producto en una bodega
 type InventoryLevel struct {
 	gorm.Model
-	ProductID    string `gorm:"type:varchar(64);not null;uniqueIndex:idx_inventory_product_warehouse,priority:1"` // ID del producto (FK a products)
-	WarehouseID  uint   `gorm:"not null;uniqueIndex:idx_inventory_product_warehouse,priority:2"`                  // ID de la bodega donde se almacena
-	LocationID   *uint  `gorm:"index"`                                                                            // ID de la ubicación dentro de la bodega (nil = sin ubicación específica)
-	BusinessID   uint   `gorm:"not null;index"`                                                                   // ID del negocio propietario
-	Quantity     int    `gorm:"default:0;not null"`                                                               // Cantidad total de stock en esta bodega
-	ReservedQty  int    `gorm:"default:0;not null"`                                                               // Cantidad reservada/comprometida por órdenes pendientes
-	AvailableQty int    `gorm:"default:0;not null"`                                                               // Cantidad disponible para venta (Quantity - ReservedQty)
-	MinStock     *int   //                                                                                          Nivel mínimo de stock para alertas (nil = sin mínimo)
-	MaxStock     *int   //                                                                                          Nivel máximo de stock para control (nil = sin máximo)
-	ReorderPoint *int   //                                                                                          Punto de reorden: nivel en el que se debe reabastecer (nil = sin punto de reorden)
+	ProductID    string `gorm:"type:varchar(64);not null;uniqueIndex:idx_inventory_level_key,priority:1"`
+	WarehouseID  uint   `gorm:"not null;uniqueIndex:idx_inventory_level_key,priority:2"`
+	LocationID   *uint  `gorm:"index;uniqueIndex:idx_inventory_level_key,priority:3"`
+	LotID        *uint  `gorm:"index;uniqueIndex:idx_inventory_level_key,priority:4"`
+	StateID      *uint  `gorm:"index;uniqueIndex:idx_inventory_level_key,priority:5"`
+	BusinessID   uint   `gorm:"not null;index"`
+	Quantity     int    `gorm:"default:0;not null"`
+	ReservedQty  int    `gorm:"default:0;not null"`
+	AvailableQty int    `gorm:"default:0;not null"`
+	MinStock     *int
+	MaxStock     *int
+	ReorderPoint *int
 
-	// Relaciones
-	Product   Product            `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`   // Producto al que pertenece este nivel
-	Warehouse Warehouse          `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Bodega donde se almacena
-	Location  *WarehouseLocation `gorm:"foreignKey:LocationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"` // Ubicación específica dentro de la bodega
-	Business  Business           `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`  // Negocio propietario del inventario
+	Product   Product            `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Warehouse Warehouse          `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Location  *WarehouseLocation `gorm:"foreignKey:LocationID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Business  Business           `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Lot       *InventoryLot      `gorm:"foreignKey:LotID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	State     *InventoryState    `gorm:"foreignKey:StateID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 // TableName especifica el nombre de la tabla
@@ -28,30 +30,37 @@ func (InventoryLevel) TableName() string {
 	return "inventory_levels"
 }
 
-// StockMovement representa un movimiento de inventario (entrada, salida, ajuste, transferencia)
 type StockMovement struct {
 	gorm.Model
-	ProductID      string  `gorm:"type:varchar(64);not null;index"`                                                                    // ID del producto afectado por el movimiento
-	WarehouseID    uint    `gorm:"not null;index"`                                                                                      // ID de la bodega donde ocurre el movimiento
-	LocationID     *uint   `gorm:"index"`                                                                                               // ID de la ubicación dentro de la bodega (nil = movimiento general)
-	BusinessID     uint    `gorm:"not null;index"`                                                                                      // ID del negocio propietario
-	MovementTypeID uint    `gorm:"not null;index"`                                                                                      // FK al tipo de movimiento (stock_movement_types)
-	Reason         string  `gorm:"size:255"`                                                                                            // Motivo o justificación del movimiento
-	Quantity       int     `gorm:"not null"`                                                                                            // Cantidad movida: positivo=entrada, negativo=salida
-	PreviousQty    int     `gorm:"not null"`                                                                                            // Cantidad de stock antes del movimiento
-	NewQty         int     `gorm:"not null"`                                                                                            // Cantidad de stock después del movimiento
-	ReferenceType  *string `gorm:"size:50"`                                                                                             // Tipo de referencia del origen: order, shipment, manual, sync
-	ReferenceID    *string `gorm:"size:64"`                                                                                             // ID de la referencia de origen (ej: ID de la orden)
-	IntegrationID  *uint   `gorm:"index"`                                                                                               // ID de la integración que originó el movimiento (nil = manual)
-	Notes          string  `gorm:"type:text"`                                                                                           // Notas o comentarios adicionales sobre el movimiento
-	CreatedByID    *uint   `gorm:"index"`                                                                                               // ID del usuario que creó el movimiento (nil = sistema)
+	ProductID      string  `gorm:"type:varchar(64);not null;index"`
+	WarehouseID    uint    `gorm:"not null;index"`
+	LocationID     *uint   `gorm:"index"`
+	LotID          *uint   `gorm:"index"`
+	SerialID       *uint   `gorm:"index"`
+	FromStateID    *uint   `gorm:"index"`
+	ToStateID      *uint   `gorm:"index"`
+	UomID          *uint   `gorm:"index"`
+	QtyInBaseUom   float64 `gorm:"default:0"`
+	BusinessID     uint    `gorm:"not null;index"`
+	MovementTypeID uint    `gorm:"not null;index"`
+	Reason         string  `gorm:"size:255"`
+	Quantity       int     `gorm:"not null"`
+	PreviousQty    int     `gorm:"not null"`
+	NewQty         int     `gorm:"not null"`
+	ReferenceType  *string `gorm:"size:50"`
+	ReferenceID    *string `gorm:"size:64"`
+	IntegrationID  *uint   `gorm:"index"`
+	Notes          string  `gorm:"type:text"`
+	CreatedByID    *uint   `gorm:"index"`
 
-	// Relaciones
-	MovementType StockMovementType `gorm:"foreignKey:MovementTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"` // Tipo de movimiento (entrada, salida, ajuste, etc.)
-	Product      Product           `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`        // Producto afectado
-	Warehouse    Warehouse         `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`      // Bodega donde ocurre el movimiento
-	Business     Business          `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`       // Negocio propietario
-	CreatedBy    *User             `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`     // Usuario que creó el movimiento
+	MovementType StockMovementType `gorm:"foreignKey:MovementTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Product      Product           `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Warehouse    Warehouse         `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Business     Business          `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	CreatedBy    *User             `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Lot          *InventoryLot     `gorm:"foreignKey:LotID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Serial       *InventorySerial  `gorm:"foreignKey:SerialID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Uom          *UnitOfMeasure    `gorm:"foreignKey:UomID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 // TableName especifica el nombre de la tabla

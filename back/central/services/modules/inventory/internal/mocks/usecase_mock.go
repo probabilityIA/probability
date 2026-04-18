@@ -25,6 +25,26 @@ type UseCaseMock struct {
 	ReleaseStockForOrderFn   func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
 	ReturnStockForOrderFn    func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
 	ValidateCubingFn         func(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error)
+
+	CreateLotFn func(ctx context.Context, dto request.CreateLotDTO) (*entities.InventoryLot, error)
+	GetLotFn    func(ctx context.Context, businessID, lotID uint) (*entities.InventoryLot, error)
+	ListLotsFn  func(ctx context.Context, params dtos.ListLotsParams) ([]entities.InventoryLot, int64, error)
+	UpdateLotFn func(ctx context.Context, dto request.UpdateLotDTO) (*entities.InventoryLot, error)
+	DeleteLotFn func(ctx context.Context, businessID, lotID uint) error
+
+	CreateSerialFn func(ctx context.Context, dto request.CreateSerialDTO) (*entities.InventorySerial, error)
+	GetSerialFn    func(ctx context.Context, businessID, serialID uint) (*entities.InventorySerial, error)
+	ListSerialsFn  func(ctx context.Context, params dtos.ListSerialsParams) ([]entities.InventorySerial, int64, error)
+	UpdateSerialFn func(ctx context.Context, dto request.UpdateSerialDTO) (*entities.InventorySerial, error)
+
+	ListInventoryStatesFn  func(ctx context.Context) ([]entities.InventoryState, error)
+	ChangeInventoryStateFn func(ctx context.Context, dto request.ChangeInventoryStateDTO) (*entities.StockMovement, error)
+
+	ListUoMsFn         func(ctx context.Context) ([]entities.UnitOfMeasure, error)
+	ListProductUoMsFn  func(ctx context.Context, businessID uint, productID string) ([]entities.ProductUoM, error)
+	CreateProductUoMFn func(ctx context.Context, dto request.CreateProductUoMDTO) (*entities.ProductUoM, error)
+	DeleteProductUoMFn func(ctx context.Context, businessID, id uint) error
+	ConvertUoMFn       func(ctx context.Context, dto request.ConvertUoMDTO) (*response.ConvertUoMResult, error)
 }
 
 func (m *UseCaseMock) ValidateCubing(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error) {

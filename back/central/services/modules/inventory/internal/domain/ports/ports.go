@@ -55,6 +55,34 @@ type IRepository interface {
 	GetLocationCapacity(ctx context.Context, locationID uint) (*LocationCapacityInfo, error)
 	GetProductDimensions(ctx context.Context, productID string, businessID uint) (*ProductDimensions, error)
 	GetLocationOccupiedQty(ctx context.Context, locationID uint) (int, error)
+
+	CreateLot(ctx context.Context, lot *entities.InventoryLot) (*entities.InventoryLot, error)
+	GetLotByID(ctx context.Context, businessID, lotID uint) (*entities.InventoryLot, error)
+	ListLots(ctx context.Context, params dtos.ListLotsParams) ([]entities.InventoryLot, int64, error)
+	UpdateLot(ctx context.Context, lot *entities.InventoryLot) (*entities.InventoryLot, error)
+	DeleteLot(ctx context.Context, businessID, lotID uint) error
+	LotExistsByCode(ctx context.Context, businessID uint, productID, code string, excludeID *uint) (bool, error)
+
+	CreateSerial(ctx context.Context, serial *entities.InventorySerial) (*entities.InventorySerial, error)
+	GetSerialByID(ctx context.Context, businessID, serialID uint) (*entities.InventorySerial, error)
+	ListSerials(ctx context.Context, params dtos.ListSerialsParams) ([]entities.InventorySerial, int64, error)
+	UpdateSerial(ctx context.Context, serial *entities.InventorySerial) (*entities.InventorySerial, error)
+	SerialExists(ctx context.Context, businessID uint, productID, serial string, excludeID *uint) (bool, error)
+
+	ListInventoryStates(ctx context.Context) ([]entities.InventoryState, error)
+	GetInventoryStateByCode(ctx context.Context, code string) (*entities.InventoryState, error)
+
+	ListUoMs(ctx context.Context) ([]entities.UnitOfMeasure, error)
+	GetUoMByCode(ctx context.Context, code string) (*entities.UnitOfMeasure, error)
+	GetUoMByID(ctx context.Context, uomID uint) (*entities.UnitOfMeasure, error)
+
+	CreateProductUoM(ctx context.Context, pu *entities.ProductUoM) (*entities.ProductUoM, error)
+	ListProductUoMs(ctx context.Context, params dtos.ListProductUoMParams) ([]entities.ProductUoM, error)
+	DeleteProductUoM(ctx context.Context, businessID, id uint) error
+	GetBaseProductUoM(ctx context.Context, businessID uint, productID string) (*entities.ProductUoM, error)
+
+	ChangeStateTx(ctx context.Context, params dtos.ChangeInventoryStateTxParams) (*entities.StockMovement, error)
+	ListLotsForReserve(ctx context.Context, productID string, warehouseID, businessID uint, strategy string) ([]entities.InventoryLot, error)
 }
 
 type LocationCapacityInfo struct {
