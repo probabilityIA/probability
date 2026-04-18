@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/response"
@@ -32,16 +32,16 @@ func (h *handlers) BulkLoadInventory(c *gin.Context) {
 		createdByID = &userID
 	}
 
-	dto := dtos.BulkLoadDTO{
+	dto := apprequest.BulkLoadDTO{
 		WarehouseID: req.WarehouseID,
 		BusinessID:  businessID,
 		CreatedByID: createdByID,
 		Reason:      req.Reason,
-		Items:       make([]dtos.BulkLoadItem, len(req.Items)),
+		Items:       make([]apprequest.BulkLoadItem, len(req.Items)),
 	}
 
 	for i, item := range req.Items {
-		dto.Items[i] = dtos.BulkLoadItem{
+		dto.Items[i] = apprequest.BulkLoadItem{
 			SKU:          item.SKU,
 			Quantity:     item.Quantity,
 			MinStock:     item.MinStock,

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
@@ -78,7 +79,7 @@ func TestCreateMovementType_BodyInvalido_RetornaBadRequest(t *testing.T) {
 func TestCreateMovementType_CodigoYaExiste_RetornaConflict(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		CreateMovementTypeFn: func(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+		CreateMovementTypeFn: func(ctx context.Context, dto apprequest.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 			return nil, domainerrors.ErrMovementTypeCodeExists
 		},
 	}
@@ -100,7 +101,7 @@ func TestCreateMovementType_CodigoYaExiste_RetornaConflict(t *testing.T) {
 func TestCreateMovementType_ErrorInterno_RetornaInternalServerError(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		CreateMovementTypeFn: func(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+		CreateMovementTypeFn: func(ctx context.Context, dto apprequest.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 			return nil, errors.New("error de base de datos")
 		},
 	}
@@ -128,9 +129,9 @@ func TestCreateMovementType_Exitoso_RetornaCreatedConTipo(t *testing.T) {
 		Direction: "in",
 		IsActive:  true,
 	}
-	dtoCapturado := dtos.CreateStockMovementTypeDTO{}
+	dtoCapturado := apprequest.CreateStockMovementTypeDTO{}
 	uc := &mocks.UseCaseMock{
-		CreateMovementTypeFn: func(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+		CreateMovementTypeFn: func(ctx context.Context, dto apprequest.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 			dtoCapturado = dto
 			return tipoEsperado, nil
 		},
@@ -210,7 +211,7 @@ func TestUpdateMovementType_IDInvalido_RetornaBadRequest(t *testing.T) {
 func TestUpdateMovementType_TipoNoExiste_RetornaNotFound(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		UpdateMovementTypeFn: func(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+		UpdateMovementTypeFn: func(ctx context.Context, dto apprequest.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 			return nil, domainerrors.ErrMovementTypeNotFound
 		},
 	}
@@ -239,9 +240,9 @@ func TestUpdateMovementType_Exitoso_RetornaOKConTipoActualizado(t *testing.T) {
 		Name:     "Ajuste actualizado",
 		IsActive: false,
 	}
-	dtoCapturado := dtos.UpdateStockMovementTypeDTO{}
+	dtoCapturado := apprequest.UpdateStockMovementTypeDTO{}
 	uc := &mocks.UseCaseMock{
-		UpdateMovementTypeFn: func(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+		UpdateMovementTypeFn: func(ctx context.Context, dto apprequest.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 			dtoCapturado = dto
 			return tipoActualizado, nil
 		},

@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -30,7 +31,7 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 
 	levels := make([]entities.InventoryLevel, len(modelsList))
 	for i, m := range modelsList {
-		e := inventoryLevelModelToEntity(&m)
+		e := mappers.LevelModelToEntity(&m)
 
 		// Enriquecer con nombre de bodega
 		var wh struct {
@@ -78,7 +79,7 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 
 	levels := make([]entities.InventoryLevel, len(modelsList))
 	for i, m := range modelsList {
-		e := inventoryLevelModelToEntity(&m)
+		e := mappers.LevelModelToEntity(&m)
 
 		// Enriquecer con nombre del producto
 		var prod struct {
@@ -106,7 +107,7 @@ func (r *Repository) GetOrCreateLevel(ctx context.Context, productID string, war
 
 	err := query.First(&model).Error
 	if err == nil {
-		return inventoryLevelModelToEntity(&model), nil
+		return mappers.LevelModelToEntity(&model), nil
 	}
 	if err != gorm.ErrRecordNotFound {
 		return nil, err
@@ -127,7 +128,7 @@ func (r *Repository) GetOrCreateLevel(ctx context.Context, productID string, war
 		return nil, err
 	}
 
-	return inventoryLevelModelToEntity(&model), nil
+	return mappers.LevelModelToEntity(&model), nil
 }
 
 func (r *Repository) UpdateLevel(ctx context.Context, level *entities.InventoryLevel) error {

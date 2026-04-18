@@ -35,6 +35,30 @@ type RepositoryMock struct {
 	ReleaseStockTxFn                                   func(ctx context.Context, params dtos.ReleaseTxParams) error
 	ReturnStockTxFn                                    func(ctx context.Context, params dtos.ReturnStockTxParams) error
 	GetDefaultWarehouseIDFn                            func(ctx context.Context, businessID uint) (uint, error)
+	GetLocationCapacityFn                              func(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error)
+	GetProductDimensionsFn                             func(ctx context.Context, productID string, businessID uint) (*ports.ProductDimensions, error)
+	GetLocationOccupiedQtyFn                           func(ctx context.Context, locationID uint) (int, error)
+}
+
+func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {
+	if m.GetLocationCapacityFn != nil {
+		return m.GetLocationCapacityFn(ctx, locationID)
+	}
+	return &ports.LocationCapacityInfo{ID: locationID}, nil
+}
+
+func (m *RepositoryMock) GetProductDimensions(ctx context.Context, productID string, businessID uint) (*ports.ProductDimensions, error) {
+	if m.GetProductDimensionsFn != nil {
+		return m.GetProductDimensionsFn(ctx, productID, businessID)
+	}
+	return &ports.ProductDimensions{ID: productID}, nil
+}
+
+func (m *RepositoryMock) GetLocationOccupiedQty(ctx context.Context, locationID uint) (int, error) {
+	if m.GetLocationOccupiedQtyFn != nil {
+		return m.GetLocationOccupiedQtyFn(ctx, locationID)
+	}
+	return 0, nil
 }
 
 func (m *RepositoryMock) GetProductInventory(ctx context.Context, params dtos.GetProductInventoryParams) ([]entities.InventoryLevel, error) {

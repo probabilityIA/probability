@@ -6,6 +6,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -58,9 +59,9 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 		}
 
 		// Construir resultado
-		levelEntity := inventoryLevelModelToEntity(level)
+		levelEntity := mappers.LevelModelToEntity(level)
 		result = dtos.AdjustStockTxResult{
-			Movement:    stockMovementModelToEntity(movement),
+			Movement:    mappers.MovementModelToEntity(movement),
 			NewQuantity: newQty,
 			Level:       levelEntity,
 		}

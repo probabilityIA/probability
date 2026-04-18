@@ -6,22 +6,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
-
-func movementTypeModelToEntity(m *models.StockMovementType) *entities.StockMovementType {
-	return &entities.StockMovementType{
-		ID:          m.ID,
-		Code:        m.Code,
-		Name:        m.Name,
-		Description: m.Description,
-		IsActive:    m.IsActive,
-		Direction:   m.Direction,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-	}
-}
 
 func (r *Repository) ListMovementTypes(ctx context.Context, params dtos.ListStockMovementTypesParams) ([]entities.StockMovementType, int64, error) {
 	var modelsList []models.StockMovementType
@@ -43,7 +31,7 @@ func (r *Repository) ListMovementTypes(ctx context.Context, params dtos.ListStoc
 
 	result := make([]entities.StockMovementType, len(modelsList))
 	for i, m := range modelsList {
-		result[i] = *movementTypeModelToEntity(&m)
+		result[i] = *mappers.MovementTypeModelToEntity(&m)
 	}
 	return result, total, nil
 }
@@ -56,7 +44,7 @@ func (r *Repository) GetMovementTypeByID(ctx context.Context, id uint) (*entitie
 		}
 		return nil, err
 	}
-	return movementTypeModelToEntity(&model), nil
+	return mappers.MovementTypeModelToEntity(&model), nil
 }
 
 func (r *Repository) GetMovementTypeIDByCode(ctx context.Context, code string) (uint, error) {
@@ -97,7 +85,7 @@ func (r *Repository) CreateMovementType(ctx context.Context, movType *entities.S
 		return nil, err
 	}
 
-	return movementTypeModelToEntity(model), nil
+	return mappers.MovementTypeModelToEntity(model), nil
 }
 
 func (r *Repository) UpdateMovementType(ctx context.Context, movType *entities.StockMovementType) error {

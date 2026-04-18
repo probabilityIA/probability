@@ -3,7 +3,7 @@ package response
 import (
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	appresponse "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/response"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 )
 
@@ -72,7 +72,7 @@ type BulkLoadItemResultResponse struct {
 }
 
 // BulkLoadResultFromDTO convierte el resultado del use case a response HTTP
-func BulkLoadResultFromDTO(r *dtos.BulkLoadResult) BulkLoadResultResponse {
+func BulkLoadResultFromDTO(r *appresponse.BulkLoadResult) BulkLoadResultResponse {
 	items := make([]BulkLoadItemResultResponse, len(r.Items))
 	for i, item := range r.Items {
 		items[i] = BulkLoadItemResultResponse{

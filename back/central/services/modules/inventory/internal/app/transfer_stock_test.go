@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/mocks"
@@ -25,7 +26,7 @@ func TestTransferStock_CantidadCeroONegativa_RetornaErrTransferQtyNeg(t *testing
 			repo := &mocks.RepositoryMock{}
 			uc := buildUseCase(repo, nil, nil)
 
-			dto := dtos.TransferStockDTO{
+			dto := request.TransferStockDTO{
 				ProductID:       "prod-001",
 				FromWarehouseID: 1,
 				ToWarehouseID:   2,
@@ -49,7 +50,7 @@ func TestTransferStock_MismaBodegaOrigenDestino_RetornaErrSameWarehouse(t *testi
 	repo := &mocks.RepositoryMock{}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 1,
 		ToWarehouseID:   1, // misma bodega
@@ -75,7 +76,7 @@ func TestTransferStock_ProductoNoExiste_RetornaErrProductNotFound(t *testing.T) 
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-inexistente",
 		FromWarehouseID: 1,
 		ToWarehouseID:   2,
@@ -101,7 +102,7 @@ func TestTransferStock_ProductoSinTracking_RetornaErrProductNoTracking(t *testin
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 1,
 		ToWarehouseID:   2,
@@ -134,7 +135,7 @@ func TestTransferStock_BodegaOrigenNoExiste_RetornaErrWarehouseNotFound(t *testi
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 99, // no existe
 		ToWarehouseID:   2,
@@ -167,7 +168,7 @@ func TestTransferStock_BodegaDestinoNoExiste_RetornaErrWarehouseNotFound(t *test
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 1,
 		ToWarehouseID:   88, // no existe
@@ -207,7 +208,7 @@ func TestTransferStock_Exitoso_RetornaNil(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 1,
 		ToWarehouseID:   2,
@@ -256,7 +257,7 @@ func TestTransferStock_ErrorEnTransaccion_PropagaError(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.TransferStockDTO{
+	dto := request.TransferStockDTO{
 		ProductID:       "prod-001",
 		FromWarehouseID: 1,
 		ToWarehouseID:   2,

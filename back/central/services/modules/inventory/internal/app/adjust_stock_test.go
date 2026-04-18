@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/mocks"
@@ -15,7 +16,7 @@ func TestAdjustStock_CantidadCero_RetornaErrInvalidQuantity(t *testing.T) {
 	repo := &mocks.RepositoryMock{}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -47,7 +48,7 @@ func TestAdjustStock_ProductoNoEncontrado_RetornaErrProductNotFound(t *testing.T
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-inexistente",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -76,7 +77,7 @@ func TestAdjustStock_ProductoSinTracking_RetornaErrProductNoTracking(t *testing.
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -108,7 +109,7 @@ func TestAdjustStock_BodegaNoExiste_RetornaErrWarehouseNotFound(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 99,
 		BusinessID:  10,
@@ -141,7 +142,7 @@ func TestAdjustStock_ErrorVerificandoBodega_PropagaError(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -175,7 +176,7 @@ func TestAdjustStock_Exitoso_CantidadPositiva_UsaMovimientoInbound(t *testing.T)
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -215,7 +216,7 @@ func TestAdjustStock_Exitoso_CantidadNegativa_UsaMovimientoOutbound(t *testing.T
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -257,7 +258,7 @@ func TestAdjustStock_ErrorEnTransaccion_PropagaError(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,
@@ -294,7 +295,7 @@ func TestAdjustStock_PublisherNil_NoFalla(t *testing.T) {
 	// Publisher nil: el use case debe manejarlo sin panic
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.AdjustStockDTO{
+	dto := request.AdjustStockDTO{
 		ProductID:   "prod-001",
 		WarehouseID: 1,
 		BusinessID:  10,

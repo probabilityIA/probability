@@ -3,26 +3,23 @@ package app
 import (
 	"context"
 
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/response"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 )
 
-// ReturnStockForOrder devuelve stock cuando una orden es reembolsada.
-// Quantity += qty, AvailableQty = Quantity - ReservedQty.
-func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
-	// Resolver warehouse
+func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error) {
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Obtener movement type "return" (ID 5)
 	movTypeID, err := uc.repo.GetMovementTypeIDByCode(ctx, "return")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get return movement type")
 		return nil, err
 	}
 
-	result := &dtos.OrderStockResult{
+	result := &response.OrderStockResult{
 		OrderID:     orderID,
 		BusinessID:  businessID,
 		WarehouseID: whID,
@@ -30,13 +27,12 @@ func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, busi
 	}
 
 	for _, item := range items {
-		itemResult := dtos.ItemStockResult{
+		itemResult := response.ItemStockResult{
 			ProductID: item.ProductID,
 			SKU:       item.SKU,
 			Requested: item.Quantity,
 		}
 
-		// Verificar producto y tracking
 		_, _, trackInventory, err := uc.repo.GetProductByID(ctx, item.ProductID, businessID)
 		if err != nil {
 			itemResult.ErrorMessage = "producto no encontrado"
@@ -50,7 +46,6 @@ func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, busi
 			continue
 		}
 
-		// Ejecutar devolución transaccional
 		err = uc.repo.ReturnStockTx(ctx, dtos.ReturnStockTxParams{
 			ProductID:      item.ProductID,
 			WarehouseID:    whID,
@@ -70,14 +65,10 @@ func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, busi
 		itemResult.Sufficient = true
 		result.ItemResults = append(result.ItemResults, itemResult)
 
-		// Actualizar stock total del producto (best-effort)
 		uc.updateProductTotalStock(ctx, item.ProductID, businessID)
-
-		// Publicar sync a canales de venta
 		uc.publishSync(ctx, item.ProductID, businessID, 0, whID, "order_return")
 	}
 
-	// Publicar evento
 	uc.publishEvent(ctx, "inventory.returned", orderID, businessID, whID, result)
 
 	return result, nil

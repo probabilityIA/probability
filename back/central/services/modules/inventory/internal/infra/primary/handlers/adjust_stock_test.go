@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/mocks"
@@ -88,7 +88,7 @@ func TestAdjustStock_BodyInvalido_RetornaBadRequest(t *testing.T) {
 func TestAdjustStock_ProductoNoEncontrado_RetornaNotFound(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			return nil, domainerrors.ErrProductNotFound
 		},
 	}
@@ -110,7 +110,7 @@ func TestAdjustStock_ProductoNoEncontrado_RetornaNotFound(t *testing.T) {
 func TestAdjustStock_BodegaNoEncontrada_RetornaNotFound(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			return nil, domainerrors.ErrWarehouseNotFound
 		},
 	}
@@ -132,7 +132,7 @@ func TestAdjustStock_BodegaNoEncontrada_RetornaNotFound(t *testing.T) {
 func TestAdjustStock_CantidadInvalida_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			return nil, domainerrors.ErrInvalidQuantity
 		},
 	}
@@ -154,7 +154,7 @@ func TestAdjustStock_CantidadInvalida_RetornaBadRequest(t *testing.T) {
 func TestAdjustStock_ErrorInterno_RetornaInternalServerError(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			return nil, errors.New("error de base de datos")
 		},
 	}
@@ -183,9 +183,9 @@ func TestAdjustStock_Exitoso_RetornaCreatedConMovimiento(t *testing.T) {
 		Quantity:    5,
 		NewQty:      55,
 	}
-	dtoCapturado := dtos.AdjustStockDTO{}
+	dtoCapturado := apprequest.AdjustStockDTO{}
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			dtoCapturado = dto
 			return movimientoEsperado, nil
 		},
@@ -228,7 +228,7 @@ func TestAdjustStock_Exitoso_RetornaCreatedConMovimiento(t *testing.T) {
 func TestAdjustStock_ProductoSinTracking_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		AdjustStockFn: func(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+		AdjustStockFn: func(ctx context.Context, dto apprequest.AdjustStockDTO) (*entities.StockMovement, error) {
 			return nil, domainerrors.ErrProductNoTracking
 		},
 	}

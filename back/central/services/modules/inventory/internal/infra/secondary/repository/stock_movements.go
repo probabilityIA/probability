@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -70,7 +71,7 @@ func (r *Repository) ListMovements(ctx context.Context, params dtos.ListMovement
 
 	movements := make([]entities.StockMovement, len(modelsList))
 	for i, m := range modelsList {
-		e := stockMovementModelToEntity(&m)
+		e := mappers.MovementModelToEntity(&m)
 
 		// Enriquecer con nombre del producto y bodega
 		var prod struct {
