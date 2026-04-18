@@ -49,5 +49,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate inventory audit: %w", err)
 	}
 
+	if err := r.migrateInventoryCapture(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory capture: %w", err)
+	}
+
 	return nil
 }

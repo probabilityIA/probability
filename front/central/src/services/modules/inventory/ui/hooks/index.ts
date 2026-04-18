@@ -18,3 +18,8 @@ export {
     useDiscrepancies,
     useKardex,
 } from './useAudit';
+export {
+    useLPNs,
+    useScan,
+    useSyncLogs,
+} from './useCapture';

@@ -42,4 +42,11 @@ var (
 	ErrCountLineSubmitted  = errors.New("linea de conteo ciclico ya enviada")
 	ErrDiscrepancyNotFound = errors.New("discrepancia no encontrada")
 	ErrDiscrepancyResolved = errors.New("discrepancia ya resuelta")
+
+	ErrLPNNotFound       = errors.New("LPN no encontrada")
+	ErrDuplicateLPNCode  = errors.New("el codigo de LPN ya existe")
+	ErrLPNDissolved      = errors.New("LPN ya disuelta")
+	ErrLPNEmpty          = errors.New("LPN vacia")
+	ErrScanNotResolved   = errors.New("el codigo escaneado no corresponde a ninguna entidad")
+	ErrDuplicateSyncHash = errors.New("payload ya procesado (idempotencia)")
 )

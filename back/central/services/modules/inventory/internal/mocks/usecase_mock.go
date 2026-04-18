@@ -89,6 +89,21 @@ type UseCaseMock struct {
 	RejectDiscrepancyFn  func(ctx context.Context, dto request.RejectDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
 
 	ExportKardexFn func(ctx context.Context, dto request.KardexExportDTO) (*response.KardexExportResult, error)
+
+	CreateLPNFn   func(ctx context.Context, dto request.CreateLPNDTO) (*entities.LicensePlate, error)
+	GetLPNFn      func(ctx context.Context, businessID, id uint) (*entities.LicensePlate, error)
+	ListLPNsFn    func(ctx context.Context, params dtos.ListLPNParams) ([]entities.LicensePlate, int64, error)
+	UpdateLPNFn   func(ctx context.Context, dto request.UpdateLPNDTO) (*entities.LicensePlate, error)
+	DeleteLPNFn   func(ctx context.Context, businessID, id uint) error
+	AddToLPNFn    func(ctx context.Context, dto request.AddToLPNDTO) (*entities.LicensePlateLine, error)
+	MoveLPNFn     func(ctx context.Context, dto request.MoveLPNDTO) (*entities.LicensePlate, error)
+	DissolveLPNFn func(ctx context.Context, dto request.DissolveLPNDTO) error
+	MergeLPNFn    func(ctx context.Context, dto request.MergeLPNDTO) (*entities.LicensePlate, error)
+
+	ScanFn func(ctx context.Context, dto request.ScanDTO) (*response.ScanResponse, error)
+
+	InboundSyncFn  func(ctx context.Context, dto request.InboundSyncDTO) (*response.InboundSyncResult, error)
+	ListSyncLogsFn func(ctx context.Context, params dtos.ListSyncLogsParams) ([]entities.InventorySyncLog, int64, error)
 }
 
 func (m *UseCaseMock) ValidateCubing(ctx context.Context, dto request.ValidateCubingDTO) (*response.CubingCheckResult, error) {

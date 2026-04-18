@@ -135,6 +135,26 @@ type IRepository interface {
 	ApproveDiscrepancyTx(ctx context.Context, params dtos.ApproveDiscrepancyTxParams) (*entities.InventoryDiscrepancy, error)
 
 	GetKardex(ctx context.Context, params dtos.KardexQueryParams) ([]entities.KardexEntry, error)
+
+	CreateLPN(ctx context.Context, lpn *entities.LicensePlate) (*entities.LicensePlate, error)
+	GetLPNByID(ctx context.Context, businessID, id uint) (*entities.LicensePlate, error)
+	GetLPNByCode(ctx context.Context, businessID uint, code string) (*entities.LicensePlate, error)
+	ListLPNs(ctx context.Context, params dtos.ListLPNParams) ([]entities.LicensePlate, int64, error)
+	UpdateLPN(ctx context.Context, lpn *entities.LicensePlate) (*entities.LicensePlate, error)
+	DeleteLPN(ctx context.Context, businessID, id uint) error
+	LPNExistsByCode(ctx context.Context, businessID uint, code string, excludeID *uint) (bool, error)
+
+	AddLPNLine(ctx context.Context, line *entities.LicensePlateLine) (*entities.LicensePlateLine, error)
+	ListLPNLines(ctx context.Context, lpnID uint) ([]entities.LicensePlateLine, error)
+	DissolveLPN(ctx context.Context, businessID, id uint) error
+
+	RecordScanEvent(ctx context.Context, event *entities.ScanEvent) (*entities.ScanEvent, error)
+	ResolveScanCode(ctx context.Context, businessID uint, code string) (*entities.ScanResolution, error)
+
+	CreateSyncLog(ctx context.Context, log *entities.InventorySyncLog) (*entities.InventorySyncLog, error)
+	GetSyncLogByHash(ctx context.Context, businessID uint, direction, hash string) (*entities.InventorySyncLog, error)
+	UpdateSyncLogStatus(ctx context.Context, id uint, status, errorMsg string) error
+	ListSyncLogs(ctx context.Context, params dtos.ListSyncLogsParams) ([]entities.InventorySyncLog, int64, error)
 }
 
 type LocationCapacityInfo struct {

@@ -118,6 +118,25 @@ type RepositoryMock struct {
 	ApproveDiscrepancyTxFn func(ctx context.Context, params dtos.ApproveDiscrepancyTxParams) (*entities.InventoryDiscrepancy, error)
 
 	GetKardexFn func(ctx context.Context, params dtos.KardexQueryParams) ([]entities.KardexEntry, error)
+
+	CreateLPNFn       func(ctx context.Context, lpn *entities.LicensePlate) (*entities.LicensePlate, error)
+	GetLPNByIDFn      func(ctx context.Context, businessID, id uint) (*entities.LicensePlate, error)
+	GetLPNByCodeFn    func(ctx context.Context, businessID uint, code string) (*entities.LicensePlate, error)
+	ListLPNsFn        func(ctx context.Context, params dtos.ListLPNParams) ([]entities.LicensePlate, int64, error)
+	UpdateLPNFn       func(ctx context.Context, lpn *entities.LicensePlate) (*entities.LicensePlate, error)
+	DeleteLPNFn       func(ctx context.Context, businessID, id uint) error
+	LPNExistsByCodeFn func(ctx context.Context, businessID uint, code string, excludeID *uint) (bool, error)
+	AddLPNLineFn      func(ctx context.Context, line *entities.LicensePlateLine) (*entities.LicensePlateLine, error)
+	ListLPNLinesFn    func(ctx context.Context, lpnID uint) ([]entities.LicensePlateLine, error)
+	DissolveLPNFn     func(ctx context.Context, businessID, id uint) error
+
+	RecordScanEventFn func(ctx context.Context, event *entities.ScanEvent) (*entities.ScanEvent, error)
+	ResolveScanCodeFn func(ctx context.Context, businessID uint, code string) (*entities.ScanResolution, error)
+
+	CreateSyncLogFn       func(ctx context.Context, log *entities.InventorySyncLog) (*entities.InventorySyncLog, error)
+	GetSyncLogByHashFn    func(ctx context.Context, businessID uint, direction, hash string) (*entities.InventorySyncLog, error)
+	UpdateSyncLogStatusFn func(ctx context.Context, id uint, status, errorMsg string) error
+	ListSyncLogsFn        func(ctx context.Context, params dtos.ListSyncLogsParams) ([]entities.InventorySyncLog, int64, error)
 }
 
 func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {

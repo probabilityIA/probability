@@ -95,6 +95,21 @@ type IUseCase interface {
 	RejectDiscrepancy(ctx context.Context, dto request.RejectDiscrepancyDTO) (*entities.InventoryDiscrepancy, error)
 
 	ExportKardex(ctx context.Context, dto request.KardexExportDTO) (*response.KardexExportResult, error)
+
+	CreateLPN(ctx context.Context, dto request.CreateLPNDTO) (*entities.LicensePlate, error)
+	GetLPN(ctx context.Context, businessID, id uint) (*entities.LicensePlate, error)
+	ListLPNs(ctx context.Context, params dtos.ListLPNParams) ([]entities.LicensePlate, int64, error)
+	UpdateLPN(ctx context.Context, dto request.UpdateLPNDTO) (*entities.LicensePlate, error)
+	DeleteLPN(ctx context.Context, businessID, id uint) error
+	AddToLPN(ctx context.Context, dto request.AddToLPNDTO) (*entities.LicensePlateLine, error)
+	MoveLPN(ctx context.Context, dto request.MoveLPNDTO) (*entities.LicensePlate, error)
+	DissolveLPN(ctx context.Context, dto request.DissolveLPNDTO) error
+	MergeLPN(ctx context.Context, dto request.MergeLPNDTO) (*entities.LicensePlate, error)
+
+	Scan(ctx context.Context, dto request.ScanDTO) (*response.ScanResponse, error)
+
+	InboundSync(ctx context.Context, dto request.InboundSyncDTO) (*response.InboundSyncResult, error)
+	ListSyncLogs(ctx context.Context, params dtos.ListSyncLogsParams) ([]entities.InventorySyncLog, int64, error)
 }
 
 type useCase struct {

@@ -116,5 +116,26 @@ func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 		}
 
 		inventory.GET("/kardex/export", h.ExportKardex)
+
+		inventory.POST("/scan", h.Scan)
+
+		lpn := inventory.Group("/lpn")
+		{
+			lpn.GET("", h.ListLPNs)
+			lpn.POST("", h.CreateLPN)
+			lpn.GET("/:id", h.GetLPN)
+			lpn.PUT("/:id", h.UpdateLPN)
+			lpn.DELETE("/:id", h.DeleteLPN)
+			lpn.POST("/:id/lines", h.AddToLPN)
+			lpn.POST("/:id/move", h.MoveLPN)
+			lpn.POST("/:id/dissolve", h.DissolveLPN)
+			lpn.POST("/:id/merge", h.MergeLPN)
+		}
+
+		sync := inventory.Group("/sync")
+		{
+			sync.POST("/inbound/:integrationId", h.InboundSync)
+			sync.GET("/logs", h.ListSyncLogs)
+		}
 	}
 }
