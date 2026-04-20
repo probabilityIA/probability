@@ -166,6 +166,11 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	carrier, _ := dataField["carrier"].(string)
 	idOrder, _ := dataField["idOrder"].(float64)
 
+	// Si el carrier viene vacío de la respuesta, inferirlo del tracking_number
+	if carrier == "" && trackingNumber != "" {
+		carrier = inferCarrierFromTrackingNumber(trackingNumber)
+	}
+
 	c.log.Info(ctx).
 		Str("tracking_number", trackingNumber).
 		Str("label_url", labelURL).
@@ -714,4 +719,55 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 			}
 		}
 	}
+}
+
+// inferCarrierFromTrackingNumber deduce la transportadora basándose en el formato del tracking_number
+// Usa prefijos conocidos de Envioclik para identificar la transportadora
+func inferCarrierFromTrackingNumber(trackingNumber string) string {
+	if trackingNumber == "" {
+		return ""
+	}
+
+	upper := strings.ToUpper(trackingNumber)
+
+	// Prefijos con guion (formato ENV-xxx, CRD-xxx, etc.)
+	if strings.HasPrefix(upper, "ENV-") {
+		return "ENVIA"
+	}
+	if strings.HasPrefix(upper, "IRP-") {
+		return "INTERRAPIDISIMO"
+	}
+	if strings.HasPrefix(upper, "CRD-") {
+		return "COORDINADORA"
+	}
+	if strings.HasPrefix(upper, "SRV-") {
+		return "SERVIENTREGA"
+	}
+	if strings.HasPrefix(upper, "TCC-") {
+		return "TODOCARGO"
+	}
+
+	// Prefijos numéricos (formato Envioclik)
+	// ENVIA: 034056
+	if strings.HasPrefix(trackingNumber, "034056") {
+		return "ENVIA"
+	}
+
+	// INTERRAPIDISIMO: 2400 (rango amplio: 240047, 240048, 240050, etc.)
+	if strings.HasPrefix(trackingNumber, "2400") {
+		return "INTERRAPIDISIMO"
+	}
+
+	// COORDINADORA: 4005
+	if strings.HasPrefix(trackingNumber, "4005") {
+		return "COORDINADORA"
+	}
+
+	// SERVIENTREGA: 072
+	if strings.HasPrefix(trackingNumber, "072") {
+		return "SERVIENTREGA"
+	}
+
+	// Si no coincide con ningún prefijo conocido, retornar vacío
+	return ""
 }
