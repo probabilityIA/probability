@@ -4,13 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"time"
-
 	"github.com/google/uuid"
-	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/constants"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
-	payerrs "github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/errors"
 )
 
 // RechargeWallet crea una solicitud de recarga pendiente
@@ -20,8 +16,8 @@ func (uc *walletUseCase) RechargeWallet(ctx context.Context, dto *dtos.RechargeW
 		Float64("amount", dto.Amount).
 		Msg("Processing wallet recharge request")
 
-	if dto.Amount < constants.WalletMinRechargeAmount {
-		return nil, fmt.Errorf("%w: minimum is %d", payerrs.ErrMinimumRechargeAmount, constants.WalletMinRechargeAmount)
+	if dto.Amount <= 0 {
+		return nil, fmt.Errorf("amount must be greater than 0")
 	}
 
 	wallet, err := uc.GetWallet(ctx, dto.BusinessID)
@@ -35,13 +31,17 @@ func (uc *walletUseCase) RechargeWallet(ctx context.Context, dto *dtos.RechargeW
 		reference = "MANUAL_" + uuid.New().String()
 	}
 
+	// Generar llave dinámica para Nequi (simulación)
+	// En producción, esta llave vendría de la API de Nequi
+	nequiKey := fmt.Sprintf("%010d", dto.BusinessID*1000000+uint(dto.Amount)%1000000)
+
 	tx := &entities.WalletTransaction{
 		WalletID:  wallet.ID,
 		Amount:    dto.Amount,
 		Type:      entities.WalletTxTypeRecharge,
 		Status:    entities.WalletTxStatusPending,
 		Reference: reference,
-		QrCode:    "STATIC_QR",
+		QrCode:    nequiKey,
 	}
 
 	if err := uc.repo.CreateWalletTransaction(ctx, tx); err != nil {
@@ -51,23 +51,7 @@ func (uc *walletUseCase) RechargeWallet(ctx context.Context, dto *dtos.RechargeW
 	uc.log.Info(ctx).
 		Str("tx_id", tx.ID.String()).
 		Float64("amount", dto.Amount).
-		Msg("Wallet recharge request created - will be approved automatically in 5 seconds")
-
-	// Lógica de aprobación automática con delay de 5 segundos
-	// Se usa una goroutine para que la respuesta sea inmediata pero el saldo se refleje después
-	go func() {
-		// Esperar 5 segundos
-		time.Sleep(5 * time.Second)
-
-		// Usar Background() ya que el ctx original probablemente se cancelará al terminar el request
-		bgCtx := context.Background()
-		if err := uc.approveTransactionInternal(bgCtx, tx); err != nil {
-			uc.log.Error(bgCtx).
-				Err(err).
-				Str("tx_id", tx.ID.String()).
-				Msg("❌ Failed to automatically approve wallet recharge after delay")
-		}
-	}()
+		Msg("Wallet recharge request created - awaiting payment confirmation from Nequi webhook or manual admin approval")
 
 	return tx, nil
 }

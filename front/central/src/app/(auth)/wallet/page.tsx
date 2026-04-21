@@ -14,6 +14,7 @@ import {
     manualDebitAction,
     getWalletHistoryAction,
     clearRechargeHistoryAction,
+    adminAdjustBalanceAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
@@ -384,7 +385,7 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
         }
         setLoading(true);
         try {
-            const res = await rechargeWalletAction(Number(amount), businessId, reason);
+            const res = await adminAdjustBalanceAction(businessId, Number(amount), reason);
             if (res.success) {
                 setIsOpen(false);
                 setAmount('');
@@ -605,6 +606,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const [message, setMessage] = useState<{ type: 'success' | 'warning' | 'error', text: string } | null>(null);
     const [processing, setProcessing] = useState(false);
     const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+    const [qrCode, setQrCode] = useState<string | null>(null);
 
     const QUICK_AMOUNTS = [15000, 50000, 100000, 200000, 500000];
 
@@ -642,14 +644,8 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     }, [fetchBalance, fetchHistory]);
 
     const handleRechargeRequest = () => {
-        if (!rechargeAmount || isNaN(Number(rechargeAmount))) {
+        if (!rechargeAmount || isNaN(Number(rechargeAmount)) || Number(rechargeAmount) <= 0) {
             setMessage({ type: 'error', text: 'Ingrese un monto válido' });
-            return;
-        }
-
-        const amount = Number(rechargeAmount);
-        if (amount < 15000) {
-            setMessage({ type: 'error', text: 'El monto mínimo de recarga es de $15.000' });
             return;
         }
 
@@ -673,6 +669,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
 
             if (res.data?.ID) {
                 setCurrentRequestId(res.data.ID);
+            }
+
+            if (res.data?.qr_code) {
+                setQrCode(res.data.qr_code);
             }
 
             setShowQrModal(true);
@@ -849,8 +849,13 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 size="md"
             >
                 <div className="flex flex-col items-center justify-center p-2 text-center">
-                    <div className="bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-100 dark:border-gray-700 mb-4 w-full max-w-[200px] flex justify-center">
-                        <img src="/QR.png" alt="Nequi QR" className="w-full h-auto object-contain mix-blend-multiply" />
+                    {/* QR Nequi - Imagen estática */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 mb-4 w-full max-w-[380px] flex justify-center">
+                        <img
+                            src="/QR_Cuenta_de_probability.jpeg"
+                            alt="Nequi QR - Probability"
+                            className="w-full h-auto object-contain"
+                        />
                     </div>
 
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
@@ -864,9 +869,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         <h4 className="font-semibold text-blue-900 dark:text-blue-200 text-xs mb-1">Siguientes pasos:</h4>
                         <ul className="list-disc list-inside text-[11px] text-blue-800 dark:text-blue-200 space-y-0.5">
                             <li>Escanea el código QR desde tu App bancaria.</li>
-                            <li>Verifica que el monto sea exacto.</li>
+                            <li>Verifica que el monto y la llave sean correctos.</li>
                             <li>Realiza el pago.</li>
-                            <li>Tu saldo se verá reflejado en aprox. 2 horas.</li>
+                            <li>Tu saldo se verá reflejado cuando Nequi confirme la transacción.</li>
                         </ul>
                     </div>
 
@@ -887,6 +892,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         onClick={() => {
                             setShowQrModal(false);
                             setRechargeAmount('');
+                            setQrCode(null);
                         }}
                         className="w-full py-2 text-sm"
                     >
@@ -957,7 +963,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                     </h3>
 
                     <p className="text-gray-600 dark:text-gray-300 mb-6 text-base leading-relaxed">
-                        Revisaremos su pago y será acreditado en unos minutos.
+                        Tu pago está en estado <strong>PENDIENTE</strong> de revisión. Será acreditado a tu billetera cuando Nequi confirme la transacción o un administrador lo apruebe manualmente.
                     </p>
 
                     <Button
