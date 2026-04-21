@@ -656,12 +656,17 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const handleSelectNequi = async () => {
         setShowPaymentSelector(false);
         setProcessing(true);
+        setMessage(null);
 
         try {
             // Si no hay businessId (vista de usuario normal), usar el del permissions
             const targetBusinessId = businessId || permissions?.business_id;
 
+            console.log('Iniciando recarga:', { amount: rechargeAmount, businessId: targetBusinessId });
+
             const res = await rechargeWalletAction(Number(rechargeAmount), targetBusinessId);
+
+            console.log('Respuesta recarga:', res);
 
             if (!res.success) {
                 throw new Error(res.error || 'Error al reportar pago');
@@ -677,7 +682,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
 
             setShowQrModal(true);
         } catch (err: any) {
-            setMessage({ type: 'error', text: err.message });
+            console.error('Error en handleSelectNequi:', err);
+            setMessage({ type: 'error', text: err.message || 'Error al procesar la recarga' });
+            setShowPaymentSelector(true);
         } finally {
             setProcessing(false);
         }
@@ -852,7 +859,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                     {/* QR Nequi - Imagen estática */}
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 mb-4 w-full max-w-[380px] flex justify-center">
                         <img
-                            src="/QR_Cuenta_de_probability.jpeg"
+                            src="https://images-cam93.s3.us-east-1.amazonaws.com/QR_Cuenta_de_probability.jpeg"
                             alt="Nequi QR - Probability"
                             className="w-full h-auto object-contain"
                         />
