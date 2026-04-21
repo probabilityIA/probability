@@ -883,13 +883,13 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                     </div>
 
                     <Button
-                        variant="secondary"
+                        variant="primary"
                         onClick={async () => {
                             setShowQrModal(false);
                             setShowConfirmationModal(true);
                             setCurrentRequestId(null);
                         }}
-                        className="w-full mb-2 bg-[#7c3aed] hover:bg-[#6d28d9] border-[#7c3aed] py-2 text-sm text-white"
+                        className="w-full mb-2"
                     >
                         Ya generé el pago
                     </Button>
