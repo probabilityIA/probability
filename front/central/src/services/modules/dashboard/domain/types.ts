@@ -25,9 +25,10 @@ export interface DashboardStats {
     shipments_by_day_of_week: ShipmentsByDayOfWeek[];
     orders_by_department: OrdersByDepartment[];
 
-    // Nuevas: Órdenes por mes y semana
+    // Nuevas: Órdenes por mes, semana y fecha
     orders_by_month?: OrdersByMonth[];
     orders_by_week?: OrdersByWeek[];
+    orders_by_date?: OrdersByDate[];
 
     // Nuevas: Businesses (solo si es super admin)
     orders_by_business?: OrdersByBusiness[];
@@ -126,6 +127,19 @@ export interface OrdersByMonth {
     year: number;           // 2026
     count: number;
     percentage: number;
+}
+
+export interface OrdersByDate {
+    date: string;                   // "2026-03-20"
+    count: number;                  // Total de órdenes ese día
+    // Campos calculados por el backend (optimización de rendimiento)
+    heightPercent?: number;         // (count / maxCount) * 100
+    opacity?: number;               // [1, 0.82, 0.66, 0.5, 0.36][index]
+    dayName?: string;               // "viernes" (nombre completo)
+    dayShort?: string;              // "vie" (abreviado)
+    rank?: number;                  // posición en top 5 (1-5)
+    maxCount?: number;              // máximo del período
+    weekdayCount?: number;          // cuántas veces aparece este día en top 5
 }
 
 // Businesses (solo super admin)

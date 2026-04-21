@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { DashboardStats, OrdersByWeek, OrdersByMonth, ShipmentsByDayOfWeek, ShipmentsByCarrier } from '../../domain/types';
+import { CarrierDistributionCard } from '@/shared/ui/carrier-distribution-card';
+import { TopDaysChart } from './TopDaysChart';
 import {
   ComposedChart,
   BarChart,
@@ -525,109 +527,23 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
         )}
 
         {/* TAB 3: TOP 5 Días de Mayor Demanda */}
-        {activeTab === 'demand' && demandData && (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart
-              data={demandData}
-              layout="vertical"
-              margin={{ top: 5, right: 30, left: 140, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-              <XAxis type="number" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-              <YAxis
-                dataKey="label"
-                type="category"
-                tick={{ fontSize: 12, fill: '#9CA3AF' }}
-                width={135}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                formatter={(value) => value ? `${(value as number).toLocaleString()} órdenes` : '0 órdenes'}
-              />
-              <Bar
-                dataKey="orders"
-                radius={[0, 4, 4, 0]}
-              >
-                {demandData?.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.isTop ? COLORS.primary : 'rgba(139, 92, 246, 0.2)'}
-                  />
-                ))}
-                <LabelList dataKey="orders" position="right" fontSize={12} fill="#6B7280" />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        {activeTab === 'demand' && (
+          <TopDaysChart
+            data={stats?.orders_by_date ?? demandData?.map(d => ({ date: d.date, count: d.orders })) ?? []}
+          />
         )}
 
         {/* TAB 4: Por Transportadora */}
         {activeTab === 'carrier' && carrierData && (
-          <div className="flex flex-col items-center gap-8">
-            {/* PieChart Donut con Centro Customizado */}
-            <div className="w-80 relative">
-              <ResponsiveContainer width="100%" height={320}>
-                <PieChart>
-                  <Pie
-                    data={carrierData.carriers}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    dataKey="value"
-                    isAnimationActive={true}
-                    animationBegin={0}
-                    animationDuration={800}
-                    label={({ index, percent }) => {
-                      const carrier = carrierData.carriers[index || 0];
-                      return `${carrier?.displayName || 'Unknown'} ${((percent || 0) * 100).toFixed(0)}%`;
-                    }}
-                    labelLine={true}
-                  >
-                    {carrierData.carriers.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.fill}
-                        stroke="white"
-                        strokeWidth={3}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => value ? `${(value as number).toLocaleString()} envíos` : '0 envíos'}
-                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Centro del Donut */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-xs font-medium text-gray-600">Total</div>
-                <div className="text-3xl font-bold text-gray-900">{carrierData.totalShipments.toLocaleString()}</div>
-              </div>
-            </div>
-
-            {/* Metric Cards por Transportadora */}
-            <div className="w-full grid grid-cols-3 gap-4">
-              {carrierData.carrierMetrics?.map((carrier) => (
-                <div
-                  key={carrier.displayName}
-                  className="p-4 bg-white rounded-lg border border-gray-200"
-                  style={{
-                    borderTop: `3px solid ${carrier.fill}`,
-                  }}
-                >
-                  <div className="text-sm font-semibold text-gray-900 mb-2">{carrier.displayName}</div>
-                  <div className="text-2xl font-bold text-gray-900">{carrier.value.toLocaleString()}</div>
-                  <div
-                    className="text-xs font-medium mt-2 px-2 py-1 rounded-full text-white w-fit"
-                    style={{ backgroundColor: carrier.fill }}
-                  >
-                    {carrier.percentage}%
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CarrierDistributionCard
+            data={carrierData.carriers.map((c) => ({
+              carrier: c.displayName,
+              count: c.value,
+            }))}
+            title="Envíos por Transportadora"
+            subtitle="Distribución de envíos por operador logístico"
+            valueLabel="count"
+          />
         )}
       </div>
     </div>
