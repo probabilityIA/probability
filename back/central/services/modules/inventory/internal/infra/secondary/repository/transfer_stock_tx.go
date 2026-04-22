@@ -30,13 +30,13 @@ func (r *Repository) TransferStockTx(ctx context.Context, params dtos.TransferSt
 		}
 
 		// 1. SELECT FOR UPDATE del primer nivel (menor WarehouseID)
-		firstLevel, err := r.getOrCreateLevelTx(tx, params.ProductID, firstWH, firstLoc, params.BusinessID)
+		firstLevel, err := r.getOrCreateLevelKeyTx(tx, params.ProductID, firstWH, firstLoc, params.LotID, params.StateID, params.BusinessID)
 		if err != nil {
 			return fmt.Errorf("getOrCreateLevelTx first: %w", err)
 		}
 
 		// 2. SELECT FOR UPDATE del segundo nivel (mayor WarehouseID)
-		secondLevel, err := r.getOrCreateLevelTx(tx, params.ProductID, secondWH, secondLoc, params.BusinessID)
+		secondLevel, err := r.getOrCreateLevelKeyTx(tx, params.ProductID, secondWH, secondLoc, params.LotID, params.StateID, params.BusinessID)
 		if err != nil {
 			return fmt.Errorf("getOrCreateLevelTx second: %w", err)
 		}
@@ -80,6 +80,9 @@ func (r *Repository) TransferStockTx(ctx context.Context, params dtos.TransferSt
 			ProductID:      params.ProductID,
 			WarehouseID:    params.FromWarehouseID,
 			LocationID:     params.FromLocationID,
+			LotID:          params.LotID,
+			ToStateID:      params.StateID,
+			UomID:          params.UomID,
 			BusinessID:     params.BusinessID,
 			MovementTypeID: params.MovementTypeID,
 			Reason:         params.Reason,
@@ -99,6 +102,9 @@ func (r *Repository) TransferStockTx(ctx context.Context, params dtos.TransferSt
 			ProductID:      params.ProductID,
 			WarehouseID:    params.ToWarehouseID,
 			LocationID:     params.ToLocationID,
+			LotID:          params.LotID,
+			ToStateID:      params.StateID,
+			UomID:          params.UomID,
 			BusinessID:     params.BusinessID,
 			MovementTypeID: params.MovementTypeID,
 			Reason:         params.Reason,

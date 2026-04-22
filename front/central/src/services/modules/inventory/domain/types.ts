@@ -83,6 +83,9 @@ export interface AdjustStockDTO {
     product_id: string;
     warehouse_id: number;
     location_id?: number | null;
+    lot_id?: number | null;
+    state_id?: number | null;
+    uom_id?: number | null;
     quantity: number;
     reason: string;
     notes?: string;
@@ -94,6 +97,9 @@ export interface TransferStockDTO {
     to_warehouse_id: number;
     from_location_id?: number | null;
     to_location_id?: number | null;
+    lot_id?: number | null;
+    state_id?: number | null;
+    uom_id?: number | null;
     quantity: number;
     reason?: string;
     notes?: string;

@@ -27,16 +27,15 @@ func (r *Repository) migrateInventoryAudit(ctx context.Context) error {
 
 func (r *Repository) seedCountAdjustmentMovementType(ctx context.Context) error {
 	db := r.db.Conn(ctx)
+	if err := db.Exec(`SELECT setval(pg_get_serial_sequence('stock_movement_types', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM stock_movement_types), 1), 1))`).Error; err != nil {
+		return err
+	}
 	var existing models.StockMovementType
-	if err := db.Where("code = ?", "count_adjustment").First(&existing).Error; err == nil {
+	if err := db.Unscoped().Where("code = ?", "count_adjustment").First(&existing).Error; err == nil {
 		return nil
 	}
-	mt := models.StockMovementType{
-		Code:        "count_adjustment",
-		Name:        "Ajuste por conteo ciclico",
-		Description: "Movimiento generado por aprobacion de discrepancia en conteo ciclico",
-		Direction:   "neutral",
-		IsActive:    true,
-	}
-	return db.Create(&mt).Error
+	sql := `INSERT INTO stock_movement_types (created_at, updated_at, code, name, description, is_active, direction)
+		VALUES (NOW(), NOW(), 'count_adjustment', 'Ajuste por conteo ciclico', 'Movimiento generado por aprobacion de discrepancia en conteo ciclico', true, 'neutral')
+		ON CONFLICT (code) DO NOTHING`
+	return db.Exec(sql).Error
 }

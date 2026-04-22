@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/request"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/response"
 )
 
 func (h *handlers) CreateLPN(c *gin.Context) {
@@ -37,7 +38,7 @@ func (h *handlers) CreateLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, lpn)
+	c.JSON(http.StatusCreated, response.LicensePlateFromEntity(lpn))
 }
 
 func (h *handlers) GetLPN(c *gin.Context) {
@@ -60,7 +61,7 @@ func (h *handlers) GetLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, lpn)
+	c.JSON(http.StatusOK, response.LicensePlateFromEntity(lpn))
 }
 
 func (h *handlers) ListLPNs(c *gin.Context) {
@@ -88,12 +89,16 @@ func (h *handlers) ListLPNs(c *gin.Context) {
 		pageSize = 10
 	}
 	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
-	c.JSON(http.StatusOK, gin.H{
-		"data":        lpns,
-		"total":       total,
-		"page":        page,
-		"page_size":   pageSize,
-		"total_pages": totalPages,
+	data := make([]response.LicensePlateResponse, len(lpns))
+	for i := range lpns {
+		data[i] = response.LicensePlateFromEntity(&lpns[i])
+	}
+	c.JSON(http.StatusOK, response.LicensePlateListResponse{
+		Data:       data,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
 	})
 }
 
@@ -129,7 +134,7 @@ func (h *handlers) UpdateLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, lpn)
+	c.JSON(http.StatusOK, response.LicensePlateFromEntity(lpn))
 }
 
 func (h *handlers) DeleteLPN(c *gin.Context) {
@@ -182,7 +187,7 @@ func (h *handlers) AddToLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, line)
+	c.JSON(http.StatusCreated, response.LicensePlateLineFromEntity(*line))
 }
 
 func (h *handlers) MoveLPN(c *gin.Context) {
@@ -210,7 +215,7 @@ func (h *handlers) MoveLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, lpn)
+	c.JSON(http.StatusOK, response.LicensePlateFromEntity(lpn))
 }
 
 func (h *handlers) DissolveLPN(c *gin.Context) {
@@ -259,7 +264,7 @@ func (h *handlers) MergeLPN(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, lpn)
+	c.JSON(http.StatusOK, response.LicensePlateFromEntity(lpn))
 }
 
 func (h *handlers) Scan(c *gin.Context) {
@@ -289,7 +294,11 @@ func (h *handlers) Scan(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, response.ScanResponse{
+		Resolved:   result.Resolved,
+		Resolution: response.ScanResolutionFromEntity(result.Resolution),
+		Event:      response.ScanEventFromEntity(result.Event),
+	})
 }
 
 func (h *handlers) InboundSync(c *gin.Context) {
@@ -317,7 +326,10 @@ func (h *handlers) InboundSync(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, response.InboundSyncResultResponse{
+		Log:       response.SyncLogFromEntity(result.Log),
+		Duplicate: result.Duplicate,
+	})
 }
 
 func (h *handlers) ListSyncLogs(c *gin.Context) {
@@ -345,11 +357,17 @@ func (h *handlers) ListSyncLogs(c *gin.Context) {
 		pageSize = 10
 	}
 	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
-	c.JSON(http.StatusOK, gin.H{
-		"data":        logs,
-		"total":       total,
-		"page":        page,
-		"page_size":   pageSize,
-		"total_pages": totalPages,
+	data := make([]response.InventorySyncLogResponse, len(logs))
+	for i := range logs {
+		if log := response.SyncLogFromEntity(&logs[i]); log != nil {
+			data[i] = *log
+		}
+	}
+	c.JSON(http.StatusOK, response.InventorySyncLogListResponse{
+		Data:       data,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
 	})
 }

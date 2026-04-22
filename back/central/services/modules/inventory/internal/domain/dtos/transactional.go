@@ -7,6 +7,9 @@ type AdjustStockTxParams struct {
 	ProductID      string
 	WarehouseID    uint
 	LocationID     *uint
+	LotID          *uint
+	StateID        *uint
+	UomID          *uint
 	BusinessID     uint
 	Quantity       int
 	MovementTypeID uint
@@ -30,6 +33,9 @@ type TransferStockTxParams struct {
 	ToWarehouseID   uint
 	FromLocationID  *uint
 	ToLocationID    *uint
+	LotID           *uint
+	StateID         *uint
+	UomID           *uint
 	BusinessID      uint
 	Quantity        int
 	MovementTypeID  uint

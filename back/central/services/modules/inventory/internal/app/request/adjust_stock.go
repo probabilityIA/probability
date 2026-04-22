@@ -4,6 +4,9 @@ type AdjustStockDTO struct {
 	ProductID   string
 	WarehouseID uint
 	LocationID  *uint
+	LotID       *uint
+	StateID     *uint
+	UomID       *uint
 	BusinessID  uint
 	Quantity    int
 	Reason      string
@@ -17,6 +20,9 @@ type TransferStockDTO struct {
 	ToWarehouseID   uint
 	FromLocationID  *uint
 	ToLocationID    *uint
+	LotID           *uint
+	StateID         *uint
+	UomID           *uint
 	BusinessID      uint
 	Quantity        int
 	Reason          string

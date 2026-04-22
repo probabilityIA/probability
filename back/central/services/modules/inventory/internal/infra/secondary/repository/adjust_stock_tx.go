@@ -19,7 +19,7 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. SELECT FOR UPDATE del inventory_level (o crear si no existe)
-		level, err := r.getOrCreateLevelTx(tx, params.ProductID, params.WarehouseID, params.LocationID, params.BusinessID)
+		level, err := r.getOrCreateLevelKeyTx(tx, params.ProductID, params.WarehouseID, params.LocationID, params.LotID, params.StateID, params.BusinessID)
 		if err != nil {
 			return fmt.Errorf("getOrCreateLevelTx: %w", err)
 		}
@@ -44,6 +44,9 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 			ProductID:      params.ProductID,
 			WarehouseID:    params.WarehouseID,
 			LocationID:     params.LocationID,
+			LotID:          params.LotID,
+			ToStateID:      params.StateID,
+			UomID:          params.UomID,
 			BusinessID:     params.BusinessID,
 			MovementTypeID: params.MovementTypeID,
 			Reason:         params.Reason,

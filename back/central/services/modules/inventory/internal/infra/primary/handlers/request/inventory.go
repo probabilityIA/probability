@@ -5,6 +5,9 @@ type AdjustStockRequest struct {
 	ProductID   string `json:"product_id" binding:"required"`
 	WarehouseID uint   `json:"warehouse_id" binding:"required,min=1"`
 	LocationID  *uint  `json:"location_id"`
+	LotID       *uint  `json:"lot_id"`
+	StateID     *uint  `json:"state_id"`
+	UomID       *uint  `json:"uom_id"`
 	Quantity    int    `json:"quantity" binding:"required"`
 	Reason      string `json:"reason" binding:"required,min=2,max=255"`
 	Notes       string `json:"notes" binding:"omitempty,max=1000"`
@@ -33,6 +36,9 @@ type TransferStockRequest struct {
 	ToWarehouseID   uint   `json:"to_warehouse_id" binding:"required,min=1"`
 	FromLocationID  *uint  `json:"from_location_id"`
 	ToLocationID    *uint  `json:"to_location_id"`
+	LotID           *uint  `json:"lot_id"`
+	StateID         *uint  `json:"state_id"`
+	UomID           *uint  `json:"uom_id"`
 	Quantity        int    `json:"quantity" binding:"required,min=1"`
 	Reason          string `json:"reason" binding:"omitempty,max=255"`
 	Notes           string `json:"notes" binding:"omitempty,max=1000"`

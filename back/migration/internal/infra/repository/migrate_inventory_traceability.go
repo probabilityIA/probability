@@ -24,6 +24,10 @@ func (r *Repository) migrateInventoryTraceability(ctx context.Context) error {
 		return fmt.Errorf("failed to auto-migrate inventory_levels/stock_movements with traceability: %w", err)
 	}
 
+	if err := db.Exec(`DROP INDEX IF EXISTS idx_inventory_product_warehouse`).Error; err != nil {
+		return fmt.Errorf("failed to drop legacy unique index idx_inventory_product_warehouse: %w", err)
+	}
+
 	if err := r.seedInventoryStates(ctx); err != nil {
 		return fmt.Errorf("failed to seed inventory states: %w", err)
 	}
