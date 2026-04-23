@@ -96,9 +96,8 @@ type IIntegrationCore interface {
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
-	// GetCachedPlatformCredentials retorna las credenciales de plataforma cacheadas por integration_type_id.
-	// Usado por módulos como WhatsApp para leer verify_token/webhook_secret sin acceder a Redis directamente.
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
+	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
 }
 
 // ============================================
@@ -270,4 +269,23 @@ func (ic *integrationCore) GetCachedPlatformCredentials(ctx context.Context, int
 	_ = ic.cache.SetPlatformCredentials(ctx, integrationTypeID, creds)
 
 	return creds, nil
+}
+
+func (ic *integrationCore) GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error) {
+	if cached, err := ic.cache.GetByBusinessAndType(ctx, businessID, integrationTypeID); err == nil && cached != nil {
+		return cached.ID, nil
+	}
+
+	bizID := businessID
+	integration, err := ic.repo.GetActiveIntegrationByIntegrationTypeID(ctx, integrationTypeID, &bizID)
+	if err != nil {
+		return 0, fmt.Errorf("integration not found for business %d type %d: %w", businessID, integrationTypeID, err)
+	}
+	if integration == nil || integration.ID == 0 {
+		return 0, fmt.Errorf("no active integration for business %d type %d", businessID, integrationTypeID)
+	}
+
+	_ = ic.cache.SetBusinessTypeIndex(ctx, businessID, integrationTypeID, integration.ID)
+
+	return integration.ID, nil
 }

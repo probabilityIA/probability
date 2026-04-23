@@ -7,37 +7,27 @@ import (
 )
 
 const (
-	ttlMetadata            = 24 * time.Hour
-	ttlCredentials         = 24 * time.Hour
-	ttlPlatformCredentials = 0
+	ttlMetadata            time.Duration = 0
+	ttlCredentials         time.Duration = 0
+	ttlPlatformCredentials time.Duration = 0
 )
 
-// integrationKey retorna la key de metadata de integración
-// Formato: integration:meta:{id}
 func integrationKey(id uint) string {
 	return "integration:meta:" + strconv.Itoa(int(id))
 }
 
-// credentialsKey retorna la key de credentials
-// Formato: integration:creds:{id}
 func credentialsKey(id uint) string {
 	return "integration:creds:" + strconv.Itoa(int(id))
 }
 
-// codeKey retorna la key del índice por código
-// Formato: integration:code:{code}
 func codeKey(code string) string {
 	return "integration:code:" + code
 }
 
-// businessTypeIndexKey retorna la key del índice por business+type
-// Formato: integration:idx:biz:{biz}:type:{type}
 func businessTypeIndexKey(businessID, typeID uint) string {
 	return fmt.Sprintf("integration:idx:biz:%d:type:%d", businessID, typeID)
 }
 
-// platformCredentialsKey retorna la key de credenciales de plataforma por integration_type_id
-// Formato: integration:platform_creds:{integration_type_id}
 func platformCredentialsKey(integrationTypeID uint) string {
 	return fmt.Sprintf("integration:platform_creds:%d", integrationTypeID)
 }

@@ -124,10 +124,9 @@ type IAIForwarder interface {
 	ForwardToAI(ctx context.Context, phoneNumber, messageText, messageID, messageType string) error
 }
 
-// IPlatformCredentialsGetter obtiene credenciales de plataforma cacheadas por tipo de integración.
-// Implementado por integrations/core — evita que WhatsApp dependa de Redis directamente.
 type IPlatformCredentialsGetter interface {
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
+	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
 }
 
 // ISSEEventPublisher publica eventos SSE al exchange de eventos (para notificar al frontend en tiempo real).

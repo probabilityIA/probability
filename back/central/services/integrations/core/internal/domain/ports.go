@@ -178,12 +178,13 @@ type IIntegrationCache interface {
 	SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error
 	GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error)
 
-	// Invalidación
 	InvalidateIntegration(ctx context.Context, integrationID uint) error
 	InvalidateMetadata(ctx context.Context, integrationID uint) error
 	InvalidatePlatformCredentials(ctx context.Context, integrationTypeID uint) error
+	InvalidateBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID uint) error
+	InvalidateCodeIndex(ctx context.Context, code string) error
 
-	// Búsquedas indexadas
 	GetByCode(ctx context.Context, code string) (*CachedIntegration, error)
 	GetByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (*CachedIntegration, error)
+	SetBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID, integrationID uint) error
 }

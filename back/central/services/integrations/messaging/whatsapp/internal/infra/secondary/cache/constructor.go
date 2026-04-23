@@ -6,9 +6,13 @@ import (
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// New crea las instancias de cache para WhatsApp (conversation + credentials)
-func New(redis redisclient.IRedis, logger log.ILogger) (ports.IConversationCache, ports.ICredentialsCache) {
+type ICredentialsCacheMutable interface {
+	ports.ICredentialsCache
+	SetResolver(resolver ports.IPlatformCredentialsGetter)
+}
+
+func New(redis redisclient.IRedis, logger log.ILogger) (ports.IConversationCache, ICredentialsCacheMutable) {
 	convCache := newConversationCache(redis, logger)
-	credsCache := newCredentialsCache(redis, logger)
+	credsCache := newCredentialsCache(logger)
 	return convCache, credsCache
 }

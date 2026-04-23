@@ -79,6 +79,21 @@ func (m *CacheMock) InvalidatePlatformCredentials(ctx context.Context, integrati
 	return args.Error(0)
 }
 
+func (m *CacheMock) InvalidateBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID uint) error {
+	args := m.Called(ctx, businessID, integrationTypeID)
+	return args.Error(0)
+}
+
+func (m *CacheMock) InvalidateCodeIndex(ctx context.Context, code string) error {
+	args := m.Called(ctx, code)
+	return args.Error(0)
+}
+
+func (m *CacheMock) SetBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID, integrationID uint) error {
+	args := m.Called(ctx, businessID, integrationTypeID, integrationID)
+	return args.Error(0)
+}
+
 func (m *CacheMock) GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error) {
 	args := m.Called(ctx, integrationTypeID)
 	if args.Get(0) == nil {

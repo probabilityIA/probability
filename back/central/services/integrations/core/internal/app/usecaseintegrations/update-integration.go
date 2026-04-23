@@ -20,12 +20,11 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
 	}
 
-	// Actualizar campos si se proporcionan
+	oldCode := existing.Code
 	if dto.Name != nil {
 		existing.Name = *dto.Name
 	}
 	if dto.Code != nil {
-		// Validar que el nuevo código no exista
 		exists, err := uc.repo.ExistsIntegrationByCode(ctx, *dto.Code, existing.BusinessID)
 		if err != nil {
 			return nil, fmt.Errorf("error al verificar código: %w", err)
@@ -139,6 +138,12 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		Description:         existing.Description,
 		CreatedAt:           existing.CreatedAt,
 		UpdatedAt:           existing.UpdatedAt,
+	}
+
+	if oldCode != "" && oldCode != existing.Code {
+		if err := uc.cache.InvalidateCodeIndex(ctx, oldCode); err != nil {
+			uc.log.Warn(ctx).Err(err).Str("old_code", oldCode).Msg("Failed to invalidate old code index")
+		}
 	}
 
 	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {

@@ -165,9 +165,9 @@ func TestSetIntegration_Exitoso(t *testing.T) {
 		Code:              "shopify_store",
 		BusinessID:        &bizID,
 		IntegrationTypeID: 1,
+		IsActive:          true,
 	}
 
-	// El mock responde OK a los tres Set (metadata, code index, biz+type index)
 	r.On("Set", mock.Anything, "integration:meta:1", mock.Anything, ttlMetadata).Return(nil)
 	r.On("Set", mock.Anything, "integration:code:shopify_store", mock.Anything, ttlMetadata).Return(nil)
 	r.On("Set", mock.Anything, "integration:idx:biz:10:type:1", mock.Anything, ttlMetadata).Return(nil)

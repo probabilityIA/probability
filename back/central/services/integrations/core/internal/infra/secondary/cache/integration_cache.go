@@ -25,38 +25,46 @@ func New(redisClient redis.IRedis, logger log.ILogger) domain.IIntegrationCache 
 	}
 }
 
-// SetIntegration cachea metadata + secondary indexes
 func (c *IntegrationCache) SetIntegration(ctx context.Context, integration *domain.CachedIntegration) error {
-	// 1. Serializar metadata
 	data, err := json.Marshal(integration)
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to marshal integration")
 		return err
 	}
 
-	// 2. Set metadata key
 	key := integrationKey(integration.ID)
 	if err := c.redis.Set(ctx, key, string(data), ttlMetadata); err != nil {
 		c.log.Error(ctx).Err(err).Uint("integration_id", integration.ID).Msg("Failed to cache integration")
 		return err
 	}
 
-	// 3. Set secondary indexes
 	if integration.Code != "" {
 		codeIdx := codeKey(integration.Code)
-		if err := c.redis.Set(ctx, codeIdx, strconv.Itoa(int(integration.ID)), ttlMetadata); err != nil {
-			c.log.Warn(ctx).Err(err).Str("code", integration.Code).Msg("Failed to cache code index")
+		if integration.IsActive {
+			if err := c.redis.Set(ctx, codeIdx, strconv.Itoa(int(integration.ID)), ttlMetadata); err != nil {
+				c.log.Warn(ctx).Err(err).Str("code", integration.Code).Msg("Failed to cache code index")
+			}
+		} else {
+			if err := c.redis.Delete(ctx, codeIdx); err != nil {
+				c.log.Warn(ctx).Err(err).Str("code", integration.Code).Msg("Failed to remove stale code index")
+			}
 		}
 	}
 
 	if integration.BusinessID != nil {
 		bizTypeIdx := businessTypeIndexKey(*integration.BusinessID, integration.IntegrationTypeID)
-		if err := c.redis.Set(ctx, bizTypeIdx, strconv.Itoa(int(integration.ID)), ttlMetadata); err != nil {
-			c.log.Warn(ctx).Err(err).Msg("Failed to cache business+type index")
+		if integration.IsActive {
+			if err := c.redis.Set(ctx, bizTypeIdx, strconv.Itoa(int(integration.ID)), ttlMetadata); err != nil {
+				c.log.Warn(ctx).Err(err).Msg("Failed to cache business+type index")
+			}
+		} else {
+			if err := c.redis.Delete(ctx, bizTypeIdx); err != nil {
+				c.log.Warn(ctx).Err(err).Msg("Failed to remove stale business+type index")
+			}
 		}
 	}
 
-	c.log.Debug(ctx).Uint("integration_id", integration.ID).Msg("✅ Integration cached")
+	c.log.Debug(ctx).Uint("integration_id", integration.ID).Msg("Integration cached")
 	return nil
 }
 
@@ -214,6 +222,36 @@ func (c *IntegrationCache) InvalidateMetadata(ctx context.Context, integrationID
 	}
 
 	c.log.Info(ctx).Uint("integration_id", integrationID).Msg("🗑️ Metadata cache invalidated")
+	return nil
+}
+
+func (c *IntegrationCache) InvalidateBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID uint) error {
+	key := businessTypeIndexKey(businessID, integrationTypeID)
+	if err := c.redis.Delete(ctx, key); err != nil {
+		c.log.Warn(ctx).Err(err).Str("key", key).Msg("Failed to delete business+type index cache")
+		return err
+	}
+	return nil
+}
+
+func (c *IntegrationCache) InvalidateCodeIndex(ctx context.Context, code string) error {
+	if code == "" {
+		return nil
+	}
+	key := codeKey(code)
+	if err := c.redis.Delete(ctx, key); err != nil {
+		c.log.Warn(ctx).Err(err).Str("code", code).Msg("Failed to delete code index cache")
+		return err
+	}
+	return nil
+}
+
+func (c *IntegrationCache) SetBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID, integrationID uint) error {
+	key := businessTypeIndexKey(businessID, integrationTypeID)
+	if err := c.redis.Set(ctx, key, strconv.Itoa(int(integrationID)), ttlMetadata); err != nil {
+		c.log.Warn(ctx).Err(err).Str("key", key).Msg("Failed to set business+type index cache")
+		return err
+	}
 	return nil
 }
 

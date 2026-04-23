@@ -29,9 +29,20 @@ func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint) er
 		return fmt.Errorf("error al eliminar integración: %w", err)
 	}
 
-	// ✅ NUEVO - Invalidar cache (seguridad)
 	if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
 		uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate deleted integration")
+	}
+
+	if integration.Code != "" {
+		if err := uc.cache.InvalidateCodeIndex(ctx, integration.Code); err != nil {
+			uc.log.Warn(ctx).Err(err).Str("code", integration.Code).Msg("Failed to invalidate code index")
+		}
+	}
+
+	if integration.BusinessID != nil {
+		if err := uc.cache.InvalidateBusinessTypeIndex(ctx, *integration.BusinessID, integration.IntegrationTypeID); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate business+type index")
+		}
 	}
 
 	uc.log.Info(ctx).Uint("id", id).Msg("Integración eliminada exitosamente")

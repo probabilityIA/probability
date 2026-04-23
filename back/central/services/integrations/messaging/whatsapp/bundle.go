@@ -40,6 +40,7 @@ type bundle struct {
 	useCase     usecasemessaging.IUseCase
 	testUsecase usecasetestconnection.ITestConnectionUseCase
 	handler     handlers.IHandler
+	credsCache  cache.ICredentialsCacheMutable
 }
 
 // New crea una nueva instancia del bundle de WhatsApp con todas sus dependencias.
@@ -149,6 +150,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		useCase:     useCase,
 		testUsecase: testUsecase,
 		handler:     handler,
+		credsCache:  credsCache,
 	}
 }
 
@@ -157,9 +159,11 @@ func (b *bundle) RegisterRoutes(router *gin.RouterGroup) {
 	b.handler.RegisterRoutes(router)
 }
 
-// SetPlatformCredsGetter inyecta el getter de credenciales de plataforma (de core)
 func (b *bundle) SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter) {
 	b.handler.SetPlatformCredsGetter(getter)
+	if b.credsCache != nil {
+		b.credsCache.SetResolver(getter)
+	}
 }
 
 // SendMessage expone el método simplificado para enviar mensajes (legacy)
