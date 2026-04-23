@@ -20,8 +20,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa el módulo de orders y retorna el caso de uso de create para integraciones
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue) ports.IOrderCreateUseCase {
+type Bundle struct {
+	CreateUC                ports.IOrderCreateUseCase
+	SendGuideNotificationUC ports.ISendGuideNotificationUseCase
+	RequestConfirmationUC   ports.IRequestConfirmationUseCase
+}
+
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue) *Bundle {
 	// 1. Inicializar Repository
 	// Nota: El repositorio de orders incluye métodos de consulta a tablas de estados
 	// (order_statuses, payment_statuses, fulfillment_statuses) replicados localmente.
@@ -48,11 +53,14 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, sendGuideNotificationUC, statusUC, logger)
 	h.RegisterRoutes(router)
 
-	// 5. Inicializar Consumers (background goroutines)
 	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo, integrationEventPub)
 	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
 
-	return createUC
+	return &Bundle{
+		CreateUC:                createUC,
+		SendGuideNotificationUC: sendGuideNotificationUC,
+		RequestConfirmationUC:   requestConfirmationUC,
+	}
 }
 
 // initRabbitPublisher inicializa el publicador de RabbitMQ

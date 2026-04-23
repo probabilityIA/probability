@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
+	"github.com/secamc93/probability/back/central/services/modules/notification_backfill"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
@@ -48,12 +49,13 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
-	orders.New(router, database, logger, environment, rabbitMQ)
+	ordersBundle := orders.New(router, database, logger, environment, rabbitMQ)
 	probability.New(database, logger, rabbitMQ)
 	products.New(router, database, logger, environment, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
+	notification_backfill.New(database, rabbitMQ, logger, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
 	dashboard.New(router, database, logger)
 	pay.New(router, database, logger, environment, rabbitMQ, redisClient)

@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { NotificationEventTypeList } from '@/services/modules/notification-config/ui/components/NotificationEventTypeList';
 import { NotificationEventTypeForm } from '@/services/modules/notification-config/ui/components/NotificationEventTypeForm';
 import { Modal } from '@/shared/ui/modal';
+import { Button } from '@/shared/ui/button';
+import { BackfillModal } from '@/services/modules/notification-backfill/ui/components/BackfillModal';
 import type { NotificationEventType } from '@/services/modules/notification-config/domain/types';
 
 export default function NotificationEventTypesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBackfillOpen, setIsBackfillOpen] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<NotificationEventType | undefined>(undefined);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -29,11 +32,16 @@ export default function NotificationEventTypesPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Tipos de Eventos</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            Gestiona los tipos de eventos de notificación
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Tipos de Eventos</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              Gestiona los tipos de eventos de notificación
+            </p>
+          </div>
+          <Button variant="secondary" onClick={() => setIsBackfillOpen(true)}>
+            Enviar masivo a faltantes
+          </Button>
         </div>
 
         <NotificationEventTypeList
@@ -55,6 +63,8 @@ export default function NotificationEventTypesPage() {
           onCancel={() => setIsModalOpen(false)}
         />
       </Modal>
+
+      <BackfillModal isOpen={isBackfillOpen} onClose={() => setIsBackfillOpen(false)} />
     </div>
   );
 }
