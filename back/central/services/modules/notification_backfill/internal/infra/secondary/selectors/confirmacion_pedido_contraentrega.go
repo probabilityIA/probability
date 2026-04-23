@@ -56,6 +56,26 @@ func (s *confirmationSelector) Preview(ctx context.Context, filter dtos.Backfill
 		Where("orders.customer_phone IS NOT NULL AND TRIM(orders.customer_phone) <> ''").
 		Where("orders.status IN ?", confirmationEligibleStatuses).
 		Where("orders.created_at >= NOW() - (? * INTERVAL '1 day')", days).
+		Where(`EXISTS (
+			SELECT 1
+			FROM integrations i
+			WHERE i.business_id = orders.business_id
+			  AND i.integration_type_id = 2
+			  AND i.is_active = true
+			  AND i.deleted_at IS NULL
+		)`).
+		Where(`EXISTS (
+			SELECT 1
+			FROM business_notification_configs bnc
+			JOIN notification_event_types net ON net.id = bnc.notification_event_type_id
+			WHERE bnc.business_id = orders.business_id
+			  AND net.event_code = 'order.created'
+			  AND net.notification_type_id = 2
+			  AND bnc.enabled = true
+			  AND bnc.deleted_at IS NULL
+			  AND net.deleted_at IS NULL
+			  AND net.is_active = true
+		)`).
 		Where(`NOT EXISTS (
 			SELECT 1
 			FROM whatsapp_message_logs ml

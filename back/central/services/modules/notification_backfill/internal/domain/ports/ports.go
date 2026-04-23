@@ -32,6 +32,10 @@ type IProgressPublisher interface {
 	PublishProgress(ctx context.Context, job *entities.JobState)
 }
 
+type IBusinessNameResolver interface {
+	ResolveNames(ctx context.Context, ids []uint) (map[uint]string, error)
+}
+
 type IUseCase interface {
 	ListEvents(ctx context.Context) []dtos.RegisteredEventResponse
 	Preview(ctx context.Context, filter dtos.BackfillFilter) (*dtos.PreviewResponse, error)

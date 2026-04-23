@@ -1093,7 +1093,7 @@ export default function Dashboard() {
         const targetYear = targetDate.getFullYear();
 
         // Encontrar el mes en los datos
-        let targetMonthData = ordersByMonth.find((m: any) =>
+        const targetMonthData = ordersByMonth.find((m: any) =>
             m.month_number === targetMonthNumber && m.year === targetYear
         );
 

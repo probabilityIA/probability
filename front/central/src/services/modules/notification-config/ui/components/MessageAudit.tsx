@@ -21,11 +21,6 @@ function formatDate(days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-function maskPhone(phone: string): string {
-  if (phone.length <= 6) return phone;
-  return phone.slice(0, 3) + '***' + phone.slice(-4);
-}
-
 const statusBadge: Record<string, { bg: string; text: string; label: string }> = {
   sent: { bg: 'bg-purple-100 dark:bg-purple-600', text: 'text-purple-700 dark:text-white', label: 'Enviado' },
   delivered: { bg: 'bg-green-100 dark:bg-green-600', text: 'text-green-700 dark:text-white', label: 'Entregado' },
@@ -205,7 +200,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                         })}
                       </td>
                       <td className="py-2 px-2 text-gray-700 dark:text-white font-mono">
-                        {maskPhone(log.phone_number)}
+                        {log.phone_number}
                       </td>
                       <td className="py-2 px-2 text-gray-600 dark:text-white">
                         {log.order_number || '-'}

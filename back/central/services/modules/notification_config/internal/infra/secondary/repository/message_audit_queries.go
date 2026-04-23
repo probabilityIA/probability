@@ -377,7 +377,6 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		BusinessID:   businessID,
 	}
 
-	// Map mensajes
 	messages := make([]entities.ConversationMessage, len(rows))
 	for i, row := range rows {
 		messages[i] = entities.ConversationMessage{
@@ -385,7 +384,7 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 			Direction:    row.Direction,
 			MessageID:    row.MessageID,
 			TemplateName: row.TemplateName,
-			Content:      row.Content,
+			Content:      normalizeMessageContent(row.TemplateName, row.Content),
 			Status:       row.Status,
 			DeliveredAt:  row.DeliveredAt,
 			ReadAt:       row.ReadAt,

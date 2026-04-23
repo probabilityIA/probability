@@ -858,7 +858,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 1: Origin/Destination/Package */}
                     {currentStep === 1 && (
-                        // eslint-disable-next-line react-hooks/refs
+                         
                         <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-4">

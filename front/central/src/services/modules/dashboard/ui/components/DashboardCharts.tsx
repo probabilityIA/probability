@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/preserve-manual-memoization, react-hooks/static-components */
 
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';

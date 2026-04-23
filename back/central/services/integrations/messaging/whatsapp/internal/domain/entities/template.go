@@ -1,17 +1,19 @@
 package entities
 
 import (
+	"strings"
+
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 )
 
-// TemplateDefinition define la estructura de una plantilla de WhatsApp
 type TemplateDefinition struct {
-	Name         string   // Nombre de la plantilla en Meta
-	Language     string   // Código de idioma (ej: "es", "en")
-	Variables    []string // Lista de variables {{1}}, {{2}}, etc
-	HasButtons   bool     // Si la plantilla tiene botones
-	ButtonLabels []string // Etiquetas de los botones Quick Reply
-	Description  string   // Descripción de la plantilla
+	Name         string
+	Language     string
+	Variables    []string
+	HasButtons   bool
+	ButtonLabels []string
+	Description  string
+	Body         string
 }
 
 // Templates contiene el catálogo completo de las 11 plantillas aprobadas
@@ -20,11 +22,11 @@ var Templates = map[string]TemplateDefinition{
 		Name:     "confirmacion_pedido_contraentrega",
 		Language: "es",
 		Variables: []string{
-			"nombre",           // {{1}}
-			"tienda",           // {{2}}
-			"numero_orden",     // {{3}}
-			"direccion",        // {{4}}
-			"productos",        // {{5}}
+			"nombre",
+			"tienda",
+			"numero_orden",
+			"direccion",
+			"productos",
 		},
 		HasButtons: true,
 		ButtonLabels: []string{
@@ -32,6 +34,12 @@ var Templates = map[string]TemplateDefinition{
 			"No confirmar",
 		},
 		Description: "Plantilla inicial de confirmación de pedido contra entrega",
+		Body: "Hola {{1}} 👋\n" +
+			"Recibimos tu pedido en {{2}}.\n\n" +
+			"🧾 Pedido: {{3}}\n" +
+			"📍 Envío a: {{4}}\n" +
+			"🛒 Productos: {{5}}\n\n" +
+			"¿Confirmas tu pedido?",
 	},
 	"pedido_confirmado_v2": {
 		Name:     "pedido_confirmado_v2",
@@ -159,16 +167,33 @@ var Templates = map[string]TemplateDefinition{
 		Name:     "guia_envio_generada",
 		Language: "es",
 		Variables: []string{
-			"nombre",        // {{1}} Nombre del cliente
-			"tienda",        // {{2}} Nombre del negocio
-			"numero_pedido", // {{3}} Número de pedido
-			"numero_guia",   // {{4}} Número de guía / tracking
-			"transportadora", // {{5}} Nombre de la transportadora
+			"nombre",
+			"tienda",
+			"numero_pedido",
+			"numero_guia",
+			"transportadora",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
 		Description:  "Notificación de guía de envío generada con datos de tracking",
+		Body: "Hola {{1}} 👋\n" +
+			"Somos {{2}}. Tu pedido {{3}} ya fue despachado 📦\n\n" +
+			"📑 Guía: {{4}}\n" +
+			"🚚 Transportadora: {{5}}\n\n" +
+			"Gracias por tu compra.",
 	},
+}
+
+func RenderTemplateBody(templateName string, variables map[string]string) string {
+	tpl, ok := Templates[templateName]
+	if !ok || tpl.Body == "" {
+		return ""
+	}
+	body := tpl.Body
+	for key, value := range variables {
+		body = strings.ReplaceAll(body, "{{"+key+"}}", value)
+	}
+	return body
 }
 
 // GetTemplateDefinition retorna la definición de una plantilla por su nombre

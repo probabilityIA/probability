@@ -33,4 +33,6 @@ type Candidate struct {
 	CustomerPhone  string
 	TrackingNumber string
 	Status         string
+	Carrier        string
+	CarrierLogoURL string
 }

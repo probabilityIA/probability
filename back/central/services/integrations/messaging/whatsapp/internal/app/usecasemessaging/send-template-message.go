@@ -110,7 +110,7 @@ func (u *usecases) SendTemplate(
 		Direction:      entities.MessageDirectionOutbound,
 		MessageID:      messageID,
 		TemplateName:   templateName,
-		Content:        fmt.Sprintf("Template: %s, Variables: %v", templateName, variables),
+		Content:        buildTemplateContent(templateName, variables),
 		Status:         entities.MessageStatusSent,
 		CreatedAt:      time.Now(),
 	}
@@ -211,7 +211,7 @@ func (u *usecases) SendTemplateWithConversation(
 		Direction:      entities.MessageDirectionOutbound,
 		MessageID:      messageID,
 		TemplateName:   templateName,
-		Content:        fmt.Sprintf("Template: %s", templateName),
+		Content:        buildTemplateContent(templateName, nil),
 		Status:         entities.MessageStatusSent,
 		CreatedAt:      time.Now(),
 	}
@@ -322,4 +322,14 @@ func (u *usecases) getOrCreateConversation(
 		Msg("[WhatsApp UseCase] - nueva conversación creada")
 
 	return newConversation, nil
+}
+
+func buildTemplateContent(templateName string, variables map[string]string) string {
+	if rendered := entities.RenderTemplateBody(templateName, variables); rendered != "" {
+		return rendered
+	}
+	if len(variables) == 0 {
+		return fmt.Sprintf("Plantilla: %s", templateName)
+	}
+	return fmt.Sprintf("Plantilla: %s (variables: %v)", templateName, variables)
 }

@@ -726,7 +726,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             const { order_id, currency, amount, hash, public_key, redirection_url } = res.data;
 
             // 3. Abrir checkout de Bold
-            // @ts-ignore
+            // @ts-expect-error BoldCheckout is loaded from external script, no TS types available
             const checkout = new BoldCheckout({
                 orderId: order_id,
                 currency: currency,

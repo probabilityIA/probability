@@ -2,6 +2,7 @@ package selectors
 
 import (
 	"context"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_backfill/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/notification_backfill/internal/domain/entities"
@@ -22,16 +23,18 @@ var guideEligibleStatuses = []string{
 }
 
 type guideSelector struct {
-	db       db.IDatabase
-	log      log.ILogger
-	dispatch func(context.Context, entities.Candidate) error
+	db           db.IDatabase
+	log          log.ILogger
+	dispatch     func(context.Context, entities.Candidate) error
+	imageURLBase string
 }
 
-func NewGuideSelector(database db.IDatabase, logger log.ILogger, dispatcher GuideDispatcher) ports.IEligibilitySelector {
+func NewGuideSelector(database db.IDatabase, logger log.ILogger, dispatcher GuideDispatcher, imageURLBase string) ports.IEligibilitySelector {
 	return &guideSelector{
-		db:       database,
-		log:      logger.WithModule("notification_backfill.selector.guia"),
-		dispatch: NewGuideDispatchAdapter(dispatcher),
+		db:           database,
+		log:          logger.WithModule("notification_backfill.selector.guia"),
+		dispatch:     NewGuideDispatchAdapter(dispatcher),
+		imageURLBase: imageURLBase,
 	}
 }
 
@@ -51,7 +54,17 @@ func (s *guideSelector) Preview(ctx context.Context, filter dtos.BackfillFilter)
 
 	q := s.db.Conn(ctx).
 		Table("orders").
-		Select("orders.id, orders.order_number, orders.business_id, orders.customer_phone, orders.tracking_number, orders.status").
+		Select(`orders.id,
+			orders.order_number,
+			orders.business_id,
+			orders.customer_phone,
+			orders.tracking_number,
+			orders.status,
+			COALESCE(orders.carrier, '') AS carrier,
+			COALESCE(it.image_url, '') AS carrier_image_url`).
+		Joins(`LEFT JOIN integration_types it
+			ON it.deleted_at IS NULL
+			AND LOWER(TRIM(it.code)) = LOWER(TRIM(orders.carrier))`).
 		Where("orders.deleted_at IS NULL").
 		Where("COALESCE(orders.is_test, false) = false").
 		Where("orders.tracking_number IS NOT NULL AND TRIM(orders.tracking_number) <> ''").
@@ -59,6 +72,26 @@ func (s *guideSelector) Preview(ctx context.Context, filter dtos.BackfillFilter)
 		Where("orders.delivered_at IS NULL").
 		Where("orders.status IN ?", guideEligibleStatuses).
 		Where("orders.created_at >= NOW() - (? * INTERVAL '1 day')", days).
+		Where(`EXISTS (
+			SELECT 1
+			FROM integrations i
+			WHERE i.business_id = orders.business_id
+			  AND i.integration_type_id = 2
+			  AND i.is_active = true
+			  AND i.deleted_at IS NULL
+		)`).
+		Where(`EXISTS (
+			SELECT 1
+			FROM business_notification_configs bnc
+			JOIN notification_event_types net ON net.id = bnc.notification_event_type_id
+			WHERE bnc.business_id = orders.business_id
+			  AND net.event_code = 'shipment.guide_generated'
+			  AND net.notification_type_id = 2
+			  AND bnc.enabled = true
+			  AND bnc.deleted_at IS NULL
+			  AND net.deleted_at IS NULL
+			  AND net.is_active = true
+		)`).
 		Where(`NOT EXISTS (
 			SELECT 1
 			FROM whatsapp_message_logs ml
@@ -74,12 +107,14 @@ func (s *guideSelector) Preview(ctx context.Context, filter dtos.BackfillFilter)
 	}
 
 	type row struct {
-		ID             string
-		OrderNumber    string
-		BusinessID     uint
-		CustomerPhone  string
-		TrackingNumber string
-		Status         string
+		ID              string
+		OrderNumber     string
+		BusinessID      uint
+		CustomerPhone   string
+		TrackingNumber  string
+		Status          string
+		Carrier         string
+		CarrierImageURL string
 	}
 
 	var rows []row
@@ -96,9 +131,25 @@ func (s *guideSelector) Preview(ctx context.Context, filter dtos.BackfillFilter)
 			CustomerPhone:  r.CustomerPhone,
 			TrackingNumber: r.TrackingNumber,
 			Status:         r.Status,
+			Carrier:        r.Carrier,
+			CarrierLogoURL: s.resolveLogoURL(r.CarrierImageURL),
 		})
 	}
 	return out, nil
+}
+
+func (s *guideSelector) resolveLogoURL(path string) string {
+	if path == "" {
+		return ""
+	}
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		return path
+	}
+	if s.imageURLBase == "" {
+		return path
+	}
+	base := strings.TrimRight(s.imageURLBase, "/")
+	return base + "/" + strings.TrimLeft(path, "/")
 }
 
 func (s *guideSelector) Dispatch(ctx context.Context, c entities.Candidate) error {

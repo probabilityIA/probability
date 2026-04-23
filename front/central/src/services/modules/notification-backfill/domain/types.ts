@@ -4,13 +4,21 @@ export interface BackfillEvent {
     channel: string;
 }
 
-export interface BackfillCandidate {
+export interface OrderCandidate {
     order_id: string;
     order_number: string;
-    business_id: number;
     customer_phone: string;
     tracking_number?: string;
     status: string;
+    carrier?: string;
+    carrier_logo_url?: string;
+}
+
+export interface BusinessGroup {
+    business_id: number;
+    business_name: string;
+    count: number;
+    orders: OrderCandidate[];
 }
 
 export interface PreviewRequest {
@@ -23,8 +31,7 @@ export interface PreviewRequest {
 export interface PreviewResponse {
     event_code: string;
     total_eligible: number;
-    breakdown_by_business: Record<string, number>;
-    sample: BackfillCandidate[];
+    businesses: BusinessGroup[];
 }
 
 export interface RunRequest extends PreviewRequest { }

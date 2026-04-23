@@ -21,11 +21,6 @@ interface WhatsAppConversationsProps {
 
 // ─── Helpers ───────────────────────────────────────────
 
-function maskPhone(phone: string): string {
-  if (phone.length <= 6) return phone;
-  return phone.slice(0, 3) + '***' + phone.slice(-4);
-}
-
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -404,7 +399,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                         {/* Row 1: phone + time */}
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                            {maskPhone(conv.phone_number)}
+                            {conv.phone_number}
                           </span>
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 shrink-0 ml-2">
                             {timeAgo(conv.last_activity)}
@@ -495,7 +490,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                   {detail.phone_number.slice(-2)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{maskPhone(detail.phone_number)}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{detail.phone_number}</p>
                   <div className="flex items-center gap-2">
                     {detail.order_number && (
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">Orden #{detail.order_number}</span>

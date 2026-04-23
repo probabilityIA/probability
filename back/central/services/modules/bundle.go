@@ -55,7 +55,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	customers.New(router, database, logger, rabbitMQ)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
-	notification_backfill.New(database, rabbitMQ, logger, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
+	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
 	dashboard.New(router, database, logger)
 	pay.New(router, database, logger, environment, rabbitMQ, redisClient)

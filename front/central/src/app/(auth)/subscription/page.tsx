@@ -339,7 +339,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                     {/* QR de pago */}
                     <div className="flex flex-col items-center gap-2 flex-shrink-0">
                         <div className="w-48 h-48 rounded-xl border-2 border-violet-200 dark:border-violet-700 overflow-hidden bg-white p-1 shadow-sm">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            { }
                             <img src="/QR.png" alt="QR de pago Nequi" className="w-full h-full object-contain" />
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Escanear con Nequi</p>

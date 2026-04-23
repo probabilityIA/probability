@@ -9,20 +9,27 @@ type BackfillFilter struct {
 	Limit      int
 }
 
-type PreviewResponse struct {
-	EventCode        string                `json:"event_code"`
-	TotalEligible    int                   `json:"total_eligible"`
-	BreakdownByBiz   map[uint]int          `json:"breakdown_by_business"`
-	Sample           []CandidateResponse   `json:"sample"`
-}
-
-type CandidateResponse struct {
+type OrderCandidateResponse struct {
 	OrderID        string `json:"order_id"`
 	OrderNumber    string `json:"order_number"`
-	BusinessID     uint   `json:"business_id"`
 	CustomerPhone  string `json:"customer_phone"`
 	TrackingNumber string `json:"tracking_number,omitempty"`
 	Status         string `json:"status"`
+	Carrier        string `json:"carrier,omitempty"`
+	CarrierLogoURL string `json:"carrier_logo_url,omitempty"`
+}
+
+type BusinessGroup struct {
+	BusinessID   uint                     `json:"business_id"`
+	BusinessName string                   `json:"business_name"`
+	Count        int                      `json:"count"`
+	Orders       []OrderCandidateResponse `json:"orders"`
+}
+
+type PreviewResponse struct {
+	EventCode     string          `json:"event_code"`
+	TotalEligible int             `json:"total_eligible"`
+	Businesses    []BusinessGroup `json:"businesses"`
 }
 
 type RunRequest struct {
