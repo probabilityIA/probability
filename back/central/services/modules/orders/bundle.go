@@ -70,19 +70,15 @@ func initRabbitPublisher(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IOr
 	return publisher
 }
 
-// setupOrdersExchange configura el exchange de órdenes y sus bindings
 func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 	ctx := context.Background()
-	// 1. Declarar exchange tipo fanout (envía a TODAS las colas bindeadas)
 	if err := rabbitMQ.DeclareExchange(rabbitmq.ExchangeOrderEvents, "fanout", true); err != nil {
 		logger.Error(ctx).Err(err).Msg("Error al declarar exchange de órdenes")
 		return
 	}
 
-	// 2. Declarar y bindear las 5 colas destino
 	queues := []string{
 		rabbitmq.QueueOrdersToInvoicing,
-		rabbitmq.QueueOrdersToWhatsApp,
 		rabbitmq.QueueOrdersToScore,
 		rabbitmq.QueueOrdersToInventory,
 		rabbitmq.QueueOrdersToEvents,

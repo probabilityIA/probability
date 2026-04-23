@@ -17,8 +17,6 @@ const (
 
 	QueueOrdersToInvoicing = "orders.events.invoicing"
 
-	QueueOrdersToWhatsApp = "orders.events.whatsapp"
-
 	QueueOrdersToScore = "orders.events.score"
 
 	QueueOrdersToInventory = "orders.events.inventory"

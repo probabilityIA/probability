@@ -300,7 +300,7 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, _ string, mes
 		Str("order_id", message.OrderID).
 		Str("event_type", message.EventType).
 		Str("exchange", rabbitmq.ExchangeOrderEvents).
-		Msg("✅ Order event published to exchange (will be distributed to invoicing, whatsapp, score, inventory)")
+		Msg("Order event published to fanout (invoicing, score, inventory, events, customers)")
 
 	return nil
 }
