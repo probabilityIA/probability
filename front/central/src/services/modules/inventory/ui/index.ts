@@ -4,3 +4,6 @@ export { default as AdjustStockModal } from './components/AdjustStockModal';
 export { default as TransferStockModal } from './components/TransferStockModal';
 export { default as BulkLoadInventoryModal } from './components/BulkLoadInventoryModal';
 export { default as InventoryManager } from './components/InventoryManager';
+export { default as ProductInventoryView } from './components/ProductInventoryView';
+export { default as WarehouseInventoryView } from './components/WarehouseInventoryView';
+export { default as InventoryAnalyticsView } from './components/InventoryAnalyticsView';
