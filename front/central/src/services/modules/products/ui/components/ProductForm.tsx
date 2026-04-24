@@ -161,6 +161,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
         for (const v of variants) {
             const variantLabel = v.attributes.variant?.trim() || undefined;
+            const hasAttrs = Object.values(v.attributes).some(val => val.trim());
+            const variantAttributes = hasAttrs ? { ...v.attributes } : undefined;
             try {
                 const res = await createProductAction({
                     business_id: defaultBusinessId,
@@ -174,6 +176,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     manage_stock: sharedTrackInventory,
                     family_id: selectedFamilyId || undefined,
                     variant_label: variantLabel,
+                    variant_attributes: variantAttributes,
                 }, businessId);
 
                 if (res.success) {
