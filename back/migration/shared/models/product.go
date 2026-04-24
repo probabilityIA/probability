@@ -24,15 +24,20 @@ type Product struct {
 	BusinessID uint `gorm:"not null;index;uniqueIndex:idx_business_product_sku,priority:1"`
 
 	// SKU único dentro del negocio
-	SKU string `gorm:"size:128;not null;uniqueIndex:idx_business_product_sku,priority:2"`
+	SKU      string  `gorm:"size:128;not null;uniqueIndex:idx_business_product_sku,priority:2"`
+	Barcode  *string `gorm:"size:255;index" json:"barcode,omitempty"`
+	FamilyID *uint   `gorm:"index;uniqueIndex:idx_family_variant_signature,priority:1" json:"family_id,omitempty"`
 
 	// Información Básica
-	Name             string `gorm:"size:255;not null" json:"name"`
-	Title            string `gorm:"size:500" json:"title"`             // Título descriptivo largo
-	Description      string `gorm:"type:text" json:"description"`      // Descripción detallada
-	ShortDescription string `gorm:"size:500" json:"short_description"` // Descripción corta
-	Slug             string `gorm:"size:255;index" json:"slug"`        // URL-friendly identifier
-	ExternalID       string `gorm:"size:255;index" json:"external_id"` // ID en sistemas externos
+	Name              string         `gorm:"size:255;not null" json:"name"`
+	Title             string         `gorm:"size:500" json:"title"`             // Título descriptivo largo
+	Description       string         `gorm:"type:text" json:"description"`      // Descripción detallada
+	ShortDescription  string         `gorm:"size:500" json:"short_description"` // Descripción corta
+	Slug              string         `gorm:"size:255;index" json:"slug"`        // URL-friendly identifier
+	ExternalID        string         `gorm:"size:255;index" json:"external_id"` // ID en sistemas externos
+	VariantLabel      string         `gorm:"size:255" json:"variant_label"`
+	VariantAttributes datatypes.JSON `gorm:"type:jsonb" json:"variant_attributes,omitempty"`
+	VariantSignature  string         `gorm:"size:1024;uniqueIndex:idx_family_variant_signature,priority:2" json:"-"`
 
 	// Pricing
 	Price          float64  `gorm:"type:decimal(15,2);default:0" json:"price"`            // Precio base
@@ -67,13 +72,14 @@ type Product struct {
 	// Estado
 	Status     string `gorm:"size:50;default:'active';index" json:"status"` // Estado: active, draft, archived
 	IsActive   bool   `gorm:"default:true;index" json:"is_active"`          // Si está activo
-	IsFeatured bool   `gorm:"default:false;index" json:"is_featured"`      // Si es destacado
+	IsFeatured bool   `gorm:"default:false;index" json:"is_featured"`       // Si es destacado
 
 	// Metadata
 	Metadata datatypes.JSON `gorm:"type:jsonb" json:"metadata,omitempty"` // Datos adicionales flexibles
 
 	// Relaciones
 	Business                    Business                     `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Family                      *ProductFamily               `gorm:"foreignKey:FamilyID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	ProductBusinessIntegrations []ProductBusinessIntegration `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 

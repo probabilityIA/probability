@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +42,7 @@ func (h *Handlers) GetProductByID(c *gin.Context) {
 	// Llamar al caso de uso (valida que el producto pertenezca al negocio)
 	product, err := h.uc.GetProductByID(c.Request.Context(), businessID, id)
 	if err != nil {
-		if err == domain.ErrProductNotFound {
+		if errors.Is(err, domain.ErrProductNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "Producto no encontrado",

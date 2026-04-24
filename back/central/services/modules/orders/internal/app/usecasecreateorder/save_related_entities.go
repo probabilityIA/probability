@@ -43,7 +43,7 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 	orderItems := make([]*entities.ProbabilityOrderItem, len(dto.OrderItems))
 	for i, itemDTO := range dto.OrderItems {
 		// Validar/Crear Producto
-		product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
+		product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, dto.IntegrationID, itemDTO)
 		if err != nil {
 			return fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
 		}
@@ -54,28 +54,28 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 		}
 
 		orderItems[i] = &entities.ProbabilityOrderItem{
-			OrderID:          order.ID,
-			ProductID:        productID,
-			ProductSKU:       itemDTO.ProductSKU,
-			ProductName:      itemDTO.ProductName,
-			ProductTitle:     itemDTO.ProductTitle,
-			VariantID:        itemDTO.VariantID,
-			Quantity:         itemDTO.Quantity,
-			UnitPrice:        itemDTO.UnitPrice,
-			TotalPrice:       itemDTO.TotalPrice,
-			Currency:         itemDTO.Currency,
-			Discount:         itemDTO.Discount,
-			DiscountPercent:  itemDTO.DiscountPercent,
-			Tax:              itemDTO.Tax,
-			TaxRate:          itemDTO.TaxRate,
+			OrderID:                  order.ID,
+			ProductID:                productID,
+			ProductSKU:               itemDTO.ProductSKU,
+			ProductName:              itemDTO.ProductName,
+			ProductTitle:             itemDTO.ProductTitle,
+			VariantID:                itemDTO.VariantID,
+			Quantity:                 itemDTO.Quantity,
+			UnitPrice:                itemDTO.UnitPrice,
+			TotalPrice:               itemDTO.TotalPrice,
+			Currency:                 itemDTO.Currency,
+			Discount:                 itemDTO.Discount,
+			DiscountPercent:          itemDTO.DiscountPercent,
+			Tax:                      itemDTO.Tax,
+			TaxRate:                  itemDTO.TaxRate,
 			UnitPriceBase:            itemDTO.UnitPriceBase,
 			UnitPriceBasePresentment: itemDTO.UnitPriceBasePresentment,
-			ImageURL:         itemDTO.ImageURL,
-			ProductURL:       itemDTO.ProductURL,
-			Weight:           itemDTO.Weight,
-			RequiresShipping: true,
-			IsGiftCard:       false,
-			Metadata:         itemDTO.Metadata,
+			ImageURL:                 itemDTO.ImageURL,
+			ProductURL:               itemDTO.ProductURL,
+			Weight:                   itemDTO.Weight,
+			RequiresShipping:         true,
+			IsGiftCard:               false,
+			Metadata:                 itemDTO.Metadata,
 			// Precios en moneda local
 			UnitPricePresentment:  itemDTO.UnitPricePresentment,
 			TotalPricePresentment: itemDTO.TotalPricePresentment,
@@ -84,7 +84,15 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 		}
 	}
 
-	return uc.repo.CreateOrderItems(ctx, orderItems)
+	if err := uc.repo.CreateOrderItems(ctx, orderItems); err != nil {
+		return err
+	}
+
+	for _, item := range orderItems {
+		order.OrderItems = append(order.OrderItems, *item)
+	}
+
+	return nil
 }
 
 // saveAddresses guarda las direcciones de la orden

@@ -24,6 +24,9 @@ func ToDBProductIntegration(pi *domain.ProductBusinessIntegration) *models.Produ
 		BusinessID:        pi.BusinessID,
 		IntegrationID:     pi.IntegrationID,
 		ExternalProductID: pi.ExternalProductID,
+		ExternalVariantID: pi.ExternalVariantID,
+		ExternalSKU:       pi.ExternalSKU,
+		ExternalBarcode:   pi.ExternalBarcode,
 	}
 	if pi.DeletedAt != nil {
 		dbPI.DeletedAt = gorm.DeletedAt{Time: *pi.DeletedAt, Valid: true}
@@ -50,6 +53,9 @@ func ToDomainProductIntegration(pi *models.ProductBusinessIntegration) *domain.P
 		BusinessID:        pi.BusinessID,
 		IntegrationID:     pi.IntegrationID,
 		ExternalProductID: pi.ExternalProductID,
+		ExternalVariantID: pi.ExternalVariantID,
+		ExternalSKU:       pi.ExternalSKU,
+		ExternalBarcode:   pi.ExternalBarcode,
 	}
 
 	// Incluir información de la integración si está disponible (Preload)

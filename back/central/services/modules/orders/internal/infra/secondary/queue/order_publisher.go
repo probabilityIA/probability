@@ -118,29 +118,27 @@ func (p *OrderRabbitPublisher) PublishOrderEvent(ctx context.Context, event *ent
 
 // PublishConfirmationRequested publica un evento cuando una orden requiere confirmación
 func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
-	// Construir resumen de items
 	itemsSummary := buildItemsSummary(order)
 
-	// Construir dirección de envío
-	shippingAddress := buildShippingAddress(order)
-
-	// Construir evento
 	event := map[string]any{
-		"event_type":        "order.confirmation_requested",
-		"order_id":          order.ID,
-		"order_number":      order.OrderNumber,
-		"business_id":       order.BusinessID,
-		"customer_name":     order.CustomerName,
-		"customer_phone":    order.CustomerPhone,
-		"customer_email":    order.CustomerEmail,
-		"total_amount":      order.TotalAmount,
-		"currency":          order.Currency,
-		"items_summary":     itemsSummary,
-		"shipping_address":  shippingAddress,
-		"payment_method_id": order.PaymentMethodID,
-		"integration_id":    order.IntegrationID,
-		"platform":          order.Platform,
-		"timestamp":         time.Now().Unix(),
+		"event_type":          "order.confirmation_requested",
+		"order_id":            order.ID,
+		"order_number":        order.OrderNumber,
+		"business_id":         order.BusinessID,
+		"customer_name":       order.CustomerName,
+		"customer_phone":      order.CustomerPhone,
+		"customer_email":      order.CustomerEmail,
+		"total_amount":        order.TotalAmount,
+		"currency":            order.Currency,
+		"items_summary":       itemsSummary,
+		"shipping_address":    order.ShippingStreet,
+		"shipping_city":       order.ShippingCity,
+		"shipping_state":      order.ShippingState,
+		"payment_method_id":   order.PaymentMethodID,
+		"payment_method_name": order.PaymentMethodName,
+		"integration_id":      order.IntegrationID,
+		"platform":            order.Platform,
+		"timestamp":           time.Now().Unix(),
 	}
 
 	// Serializar a JSON
@@ -172,44 +170,25 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 	return nil
 }
 
-// buildItemsSummary construye un resumen de los items de la orden
 func buildItemsSummary(order *entities.ProbabilityOrder) string {
 	if len(order.OrderItems) == 0 {
 		return "Sin items"
 	}
 
-	summary := ""
-	for i, item := range order.OrderItems {
+	lines := make([]string, 0, len(order.OrderItems)*2)
+	for _, item := range order.OrderItems {
+		lines = append(lines, fmt.Sprintf("- %s", item.ProductName))
+		lines = append(lines, fmt.Sprintf("  Cant: %d", item.Quantity))
+	}
+
+	result := ""
+	for i, l := range lines {
 		if i > 0 {
-			summary += ", "
+			result += "\n"
 		}
-		summary += fmt.Sprintf("%dx %s", item.Quantity, item.ProductName)
+		result += l
 	}
-
-	return summary
-}
-
-// buildShippingAddress construye un resumen de la dirección de envío
-func buildShippingAddress(order *entities.ProbabilityOrder) string {
-	if order.ShippingStreet == "" && order.ShippingCity == "" {
-		return "Sin dirección"
-	}
-
-	address := order.ShippingStreet
-	if order.ShippingCity != "" {
-		if address != "" {
-			address += ", "
-		}
-		address += order.ShippingCity
-	}
-	if order.ShippingState != "" {
-		if address != "" {
-			address += ", "
-		}
-		address += order.ShippingState
-	}
-
-	return address
+	return result
 }
 
 // PublishGuideNotificationRequested publica un evento cuando se solicita enviar la guia por WhatsApp
@@ -219,14 +198,22 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 		trackingNumber = *order.TrackingNumber
 	}
 
+	carrier := ""
+	if len(order.Shipments) > 0 && order.Shipments[0].Carrier != nil {
+		carrier = *order.Shipments[0].Carrier
+	}
+
 	event := map[string]any{
 		"event_type":      "order.guide_notification_requested",
 		"order_id":        order.ID,
 		"order_number":    order.OrderNumber,
 		"business_id":     order.BusinessID,
+		"business_name":   order.BusinessName,
 		"customer_name":   order.CustomerName,
 		"customer_phone":  order.CustomerPhone,
 		"tracking_number": trackingNumber,
+		"carrier":         carrier,
+		"total_amount":    order.TotalAmount,
 		"integration_id":  order.IntegrationID,
 		"platform":        order.Platform,
 		"timestamp":       time.Now().Unix(),

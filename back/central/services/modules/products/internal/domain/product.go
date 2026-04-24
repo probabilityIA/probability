@@ -6,6 +6,29 @@ import (
 	"gorm.io/datatypes"
 )
 
+// ProductFamily representa el producto padre o familia de variantes.
+type ProductFamily struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+
+	BusinessID uint
+
+	Name         string
+	Title        string
+	Description  string
+	Slug         string
+	Category     string
+	Brand        string
+	ImageURL     string
+	Status       string
+	IsActive     bool
+	VariantAxes  datatypes.JSON
+	Metadata     datatypes.JSON
+	VariantCount int64
+}
+
 // Product representa un producto en el dominio
 type Product struct {
 	ID        string
@@ -17,13 +40,18 @@ type Product struct {
 	BusinessID uint
 	SKU        string
 	ExternalID string
+	Barcode    *string
+	FamilyID   *uint
 
 	// Información Básica
-	Name             string
-	Title            string
-	Description      string
-	ShortDescription string
-	Slug             string
+	Name              string
+	Title             string
+	Description       string
+	ShortDescription  string
+	Slug              string
+	VariantLabel      string
+	VariantAttributes datatypes.JSON
+	VariantSignature  string
 
 	// Pricing
 	Price          float64
@@ -62,6 +90,9 @@ type Product struct {
 
 	// Metadata
 	Metadata datatypes.JSON
+
+	// Relaciones
+	Family *ProductFamily
 }
 
 // ProductBusinessIntegration representa la asociación de un producto con una integración
@@ -74,6 +105,9 @@ type ProductBusinessIntegration struct {
 	BusinessID        uint
 	IntegrationID     uint
 	ExternalProductID string
+	ExternalVariantID *string
+	ExternalSKU       *string
+	ExternalBarcode   *string
 
 	// Información de la integración (opcional, se incluye cuando se hace Preload)
 	IntegrationName string

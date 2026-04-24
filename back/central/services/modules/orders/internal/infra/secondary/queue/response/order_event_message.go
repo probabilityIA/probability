@@ -56,6 +56,9 @@ type OrderSnapshot struct {
 	ShippingLng         *float64 `json:"shipping_lng,omitempty"`
 	ItemsSummary        string  `json:"items_summary,omitempty"`
 	ShippingAddress     string  `json:"shipping_address,omitempty"`
+	PaymentMethodName   string  `json:"payment_method_name,omitempty"`
+	TrackingNumber      string  `json:"tracking_number,omitempty"`
+	Carrier             string  `json:"carrier,omitempty"`
 	IsPaid              bool    `json:"is_paid"`
 	DeliveryProbability float64 `json:"delivery_probability,omitempty"`
 	Status              string  `json:"status,omitempty"`

@@ -1,6 +1,15 @@
-// ============================================
-// ENTIDADES
-// ============================================
+export interface PaginationParams {
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaginatedResponse<T> {
+    data: T[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
 
 export interface InventoryLevel {
     id: number;
@@ -57,21 +66,13 @@ export interface MovementType {
     updated_at: string;
 }
 
-// ============================================
-// DTOs
-// ============================================
-
-export interface GetInventoryParams {
-    page?: number;
-    page_size?: number;
+export interface GetInventoryParams extends PaginationParams {
     search?: string;
     low_stock?: boolean;
     business_id?: number;
 }
 
-export interface GetMovementsParams {
-    page?: number;
-    page_size?: number;
+export interface GetMovementsParams extends PaginationParams {
     product_id?: string;
     warehouse_id?: number;
     type?: string;
@@ -82,6 +83,9 @@ export interface AdjustStockDTO {
     product_id: string;
     warehouse_id: number;
     location_id?: number | null;
+    lot_id?: number | null;
+    state_id?: number | null;
+    uom_id?: number | null;
     quantity: number;
     reason: string;
     notes?: string;
@@ -93,6 +97,9 @@ export interface TransferStockDTO {
     to_warehouse_id: number;
     from_location_id?: number | null;
     to_location_id?: number | null;
+    lot_id?: number | null;
+    state_id?: number | null;
+    uom_id?: number | null;
     quantity: number;
     reason?: string;
     notes?: string;
@@ -133,30 +140,6 @@ export interface BulkLoadAccepted {
     total_items: number;
 }
 
-// ============================================
-// RESPONSES
-// ============================================
-
-export interface InventoryListResponse {
-    data: InventoryLevel[];
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-}
-
-export interface MovementListResponse {
-    data: StockMovement[];
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-}
-
-export interface MovementTypeListResponse {
-    data: MovementType[];
-    total: number;
-    page: number;
-    page_size: number;
-    total_pages: number;
-}
+export type InventoryListResponse = PaginatedResponse<InventoryLevel>;
+export type MovementListResponse = PaginatedResponse<StockMovement>;
+export type MovementTypeListResponse = PaginatedResponse<MovementType>;

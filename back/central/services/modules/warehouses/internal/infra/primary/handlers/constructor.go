@@ -7,7 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/app"
 )
 
-// IHandlers define la interfaz de handlers del módulo warehouses
 type IHandlers interface {
 	ListWarehouses(c *gin.Context)
 	GetWarehouse(c *gin.Context)
@@ -18,28 +17,45 @@ type IHandlers interface {
 	CreateLocation(c *gin.Context)
 	UpdateLocation(c *gin.Context)
 	DeleteLocation(c *gin.Context)
+
+	GetWarehouseTree(c *gin.Context)
+	CreateZone(c *gin.Context)
+	GetZone(c *gin.Context)
+	ListZones(c *gin.Context)
+	UpdateZone(c *gin.Context)
+	DeleteZone(c *gin.Context)
+	CreateAisle(c *gin.Context)
+	GetAisle(c *gin.Context)
+	ListAisles(c *gin.Context)
+	UpdateAisle(c *gin.Context)
+	DeleteAisle(c *gin.Context)
+	CreateRack(c *gin.Context)
+	GetRack(c *gin.Context)
+	ListRacks(c *gin.Context)
+	UpdateRack(c *gin.Context)
+	DeleteRack(c *gin.Context)
+	CreateRackLevel(c *gin.Context)
+	GetRackLevel(c *gin.Context)
+	ListRackLevels(c *gin.Context)
+	UpdateRackLevel(c *gin.Context)
+	DeleteRackLevel(c *gin.Context)
+
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
-// Handlers contiene el use case
 type Handlers struct {
 	uc app.IUseCase
 }
 
-// New crea una nueva instancia de los handlers
 func New(uc app.IUseCase) IHandlers {
 	return &Handlers{uc: uc}
 }
 
-// resolveBusinessID obtiene el business_id efectivo.
-// Para usuarios normales usa el del JWT.
-// Para super admins (business_id=0 en JWT) lee el query param ?business_id=X.
 func (h *Handlers) resolveBusinessID(c *gin.Context) (uint, bool) {
 	businessID := c.GetUint("business_id")
 	if businessID > 0 {
 		return businessID, true
 	}
-	// Super admin: leer de query param
 	if param := c.Query("business_id"); param != "" {
 		if id, err := strconv.ParseUint(param, 10, 64); err == nil && id > 0 {
 			return uint(id), true

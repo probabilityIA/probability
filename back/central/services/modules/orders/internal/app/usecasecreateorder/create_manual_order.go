@@ -12,15 +12,16 @@ import (
 // rawItemJSON es el formato de cada item dentro del campo JSONB items de la orden manual.
 // Ejemplos: {"sku":"PT01015","name":"Colágeno","price":64918,"quantity":1}
 type rawItemJSON struct {
-	SKU        string   `json:"sku"`
-	Name       string   `json:"name"`
-	Price      float64  `json:"price"`
-	Quantity   int      `json:"quantity"`
-	Tax        float64  `json:"tax"`
-	TaxRate    *float64 `json:"tax_rate"`
-	Discount   float64  `json:"discount"`
-	ProductID  *string  `json:"product_id"`
-	VariantID  *string  `json:"variant_id"`
+	SKU             string   `json:"sku"`
+	Name            string   `json:"name"`
+	Price           float64  `json:"price"`
+	Quantity        int      `json:"quantity"`
+	Tax             float64  `json:"tax"`
+	TaxRate         *float64 `json:"tax_rate"`
+	Discount        float64  `json:"discount"`
+	ProductID       *string  `json:"product_id"`
+	VariantID       *string  `json:"variant_id"`
+	ExternalBarcode *string  `json:"external_barcode"`
 }
 
 // CreateManualOrder crea una orden manual pasando por el pipeline completo de MapAndSaveOrder.
@@ -241,17 +242,22 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		if err := json.Unmarshal(req.Items, &rawItems); err == nil {
 			orderItems := make([]dtos.ProbabilityOrderItemDTO, 0, len(rawItems))
 			for _, raw := range rawItems {
-				totalPrice := raw.Price * float64(raw.Quantity)
+				qty := raw.Quantity
+				if qty <= 0 {
+					qty = 1
+				}
+				totalPrice := raw.Price * float64(qty)
 				var discountPct float64
-				if raw.Price > 0 && raw.Quantity > 0 && raw.Discount > 0 {
-					discountPct = (raw.Discount / (raw.Price * float64(raw.Quantity))) * 100
+				if raw.Price > 0 && raw.Discount > 0 {
+					discountPct = (raw.Discount / totalPrice) * 100
 				}
 				orderItems = append(orderItems, dtos.ProbabilityOrderItemDTO{
 					ProductID:       raw.ProductID,
 					ProductSKU:      raw.SKU,
 					ProductName:     raw.Name,
 					VariantID:       raw.VariantID,
-					Quantity:        raw.Quantity,
+					ExternalBarcode: raw.ExternalBarcode,
+					Quantity:        qty,
 					UnitPrice:       raw.Price,
 					TotalPrice:      totalPrice,
 					Currency:        req.Currency,

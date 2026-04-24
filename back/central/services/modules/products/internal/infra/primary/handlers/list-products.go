@@ -21,6 +21,8 @@ import (
 // @Param        integration_type query    string  false  "Filtrar por tipo de integración (ej: shopify, whatsapp)"
 // @Param        sku             query    string  false  "Filtrar por SKU (búsqueda parcial, case-insensitive)"
 // @Param        skus            query    string  false  "Filtrar por múltiples SKUs separados por coma (búsqueda exacta)"
+// @Param        family_id       query    int     false  "Filtrar por ID de familia de producto"
+// @Param        barcode         query    string  false  "Filtrar por código de barras exacto"
 // @Param        name            query    string  false  "Filtrar por nombre (búsqueda parcial, case-insensitive)"
 // @Param        external_id     query    string  false  "Filtrar por ID externo (búsqueda exacta)"
 // @Param        external_ids    query    string  false  "Filtrar por múltiples IDs externos separados por coma"
@@ -105,6 +107,16 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		if len(trimmedSKUs) > 0 {
 			filters["skus"] = trimmedSKUs
 		}
+	}
+
+	if familyID := c.Query("family_id"); familyID != "" {
+		if id, err := strconv.ParseUint(familyID, 10, 32); err == nil && id > 0 {
+			filters["family_id"] = uint(id)
+		}
+	}
+
+	if barcode := c.Query("barcode"); barcode != "" {
+		filters["barcode"] = strings.TrimSpace(barcode)
 	}
 
 	// Filtro por nombre (búsqueda parcial)

@@ -33,5 +33,29 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate webhook logs: %w", err)
 	}
 
+	if err := r.migrateWarehouseHierarchy(ctx); err != nil {
+		return fmt.Errorf("failed to migrate warehouse hierarchy: %w", err)
+	}
+
+	if err := r.migrateInventoryTraceability(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory traceability: %w", err)
+	}
+
+	if err := r.migrateInventoryOperations(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory operations: %w", err)
+	}
+
+	if err := r.migrateInventoryAudit(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory audit: %w", err)
+	}
+
+	if err := r.migrateInventoryCapture(ctx); err != nil {
+		return fmt.Errorf("failed to migrate inventory capture: %w", err)
+	}
+
+	if err := r.migrateProductVariants(ctx); err != nil {
+		return fmt.Errorf("failed to migrate product variants: %w", err)
+	}
+
 	return nil
 }

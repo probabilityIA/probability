@@ -30,14 +30,14 @@ type ProbabilityOrderDTO struct {
 	CodTotal     *float64 `json:"cod_total,omitempty"`
 
 	// Precios en moneda presentment (presentment_money - moneda local)
-	SubtotalPresentment     float64 `json:"subtotal_presentment"`
-	TaxPresentment          float64 `json:"tax_presentment"`
-	DiscountPresentment     float64 `json:"discount_presentment"`
+	SubtotalPresentment         float64 `json:"subtotal_presentment"`
+	TaxPresentment              float64 `json:"tax_presentment"`
+	DiscountPresentment         float64 `json:"discount_presentment"`
 	ShippingCostPresentment     float64 `json:"shipping_cost_presentment"`
 	ShippingDiscount            float64 `json:"shipping_discount"`
 	ShippingDiscountPresentment float64 `json:"shipping_discount_presentment"`
-	TotalAmountPresentment  float64 `json:"total_amount_presentment"`
-	CurrencyPresentment     string  `json:"currency_presentment"`
+	TotalAmountPresentment      float64 `json:"total_amount_presentment"`
+	CurrencyPresentment         string  `json:"currency_presentment"`
 
 	// Información del cliente
 	CustomerID         *uint   `json:"customer_id,omitempty"`
@@ -105,15 +105,16 @@ type ProbabilityOrderDTO struct {
 
 // ProbabilityOrderItemDTO representa un item/producto de la orden
 type ProbabilityOrderItemDTO struct {
-	ProductID    *string  `json:"product_id,omitempty"`
-	ProductSKU   string   `json:"product_sku"`
-	ProductName  string   `json:"product_name"`
-	ProductTitle string   `json:"product_title"`
-	VariantID    *string  `json:"variant_id,omitempty"`
-	Quantity     int      `json:"quantity"`
-	UnitPrice    float64  `json:"unit_price"`
-	TotalPrice   float64  `json:"total_price"`
-	Currency     string   `json:"currency"`
+	ProductID       *string  `json:"product_id,omitempty"`
+	ProductSKU      string   `json:"product_sku"`
+	ProductName     string   `json:"product_name"`
+	ProductTitle    string   `json:"product_title"`
+	VariantID       *string  `json:"variant_id,omitempty"`
+	ExternalBarcode *string  `json:"external_barcode,omitempty"`
+	Quantity        int      `json:"quantity"`
+	UnitPrice       float64  `json:"unit_price"`
+	TotalPrice      float64  `json:"total_price"`
+	Currency        string   `json:"currency"`
 	Discount        float64  `json:"discount"`
 	DiscountPercent float64  `json:"discount_percent"`
 	Tax             float64  `json:"tax"`

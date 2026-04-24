@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
@@ -321,7 +322,7 @@ func TestTransferStock_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestTransferStock_MismasBodegas_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		TransferStockFn: func(ctx context.Context, dto dtos.TransferStockDTO) error {
+		TransferStockFn: func(ctx context.Context, dto apprequest.TransferStockDTO) error {
 			return domainerrors.ErrSameWarehouse
 		},
 	}
@@ -343,7 +344,7 @@ func TestTransferStock_MismasBodegas_RetornaBadRequest(t *testing.T) {
 func TestTransferStock_Exitoso_RetornaOKConMensaje(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{
-		TransferStockFn: func(ctx context.Context, dto dtos.TransferStockDTO) error {
+		TransferStockFn: func(ctx context.Context, dto apprequest.TransferStockDTO) error {
 			return nil
 		},
 	}

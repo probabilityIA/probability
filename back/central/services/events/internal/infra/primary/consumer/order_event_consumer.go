@@ -13,47 +13,47 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// orderEventMessage es una struct local para deserializar mensajes del fanout de órdenes.
-// Replica la estructura de OrderEventMessage del módulo orders sin importarlo.
 type orderEventMessage struct {
-	EventID       string                 `json:"event_id"`
-	EventType     string                 `json:"event_type"`
-	OrderID       string                 `json:"order_id"`
-	BusinessID    *uint                  `json:"business_id"`
-	IntegrationID *uint                  `json:"integration_id"`
-	Timestamp     time.Time              `json:"timestamp"`
-	Order         *orderSnapshot         `json:"order"`
-	Changes       map[string]interface{} `json:"changes,omitempty"`
-	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	EventID       string         `json:"event_id"`
+	EventType     string         `json:"event_type"`
+	OrderID       string         `json:"order_id"`
+	BusinessID    *uint          `json:"business_id"`
+	IntegrationID *uint          `json:"integration_id"`
+	Timestamp     time.Time      `json:"timestamp"`
+	Order         *orderSnapshot `json:"order"`
+	Changes       map[string]any `json:"changes,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
-// orderSnapshot replica los campos necesarios del OrderSnapshot del módulo orders.
 type orderSnapshot struct {
-	ID              string  `json:"id"`
-	OrderNumber     string  `json:"order_number"`
-	InternalNumber  string  `json:"internal_number"`
-	ExternalID      string  `json:"external_id"`
-	TotalAmount     float64 `json:"total_amount"`
-	Currency        string  `json:"currency"`
-	CustomerName    string  `json:"customer_name"`
-	CustomerEmail   string  `json:"customer_email,omitempty"`
-	CustomerPhone   string  `json:"customer_phone,omitempty"`
-	Platform        string  `json:"platform"`
-	IntegrationID   uint    `json:"integration_id"`
-	BusinessName    string  `json:"business_name,omitempty"`
-	ItemsSummary    string  `json:"items_summary,omitempty"`
-	ShippingAddress string  `json:"shipping_address,omitempty"`
-	OrderStatusID   *uint   `json:"order_status_id,omitempty"`
+	ID                string  `json:"id"`
+	OrderNumber       string  `json:"order_number"`
+	InternalNumber    string  `json:"internal_number"`
+	ExternalID        string  `json:"external_id"`
+	TotalAmount       float64 `json:"total_amount"`
+	Currency          string  `json:"currency"`
+	CustomerName      string  `json:"customer_name"`
+	CustomerEmail     string  `json:"customer_email,omitempty"`
+	CustomerPhone     string  `json:"customer_phone,omitempty"`
+	Platform          string  `json:"platform"`
+	IntegrationID     uint    `json:"integration_id"`
+	BusinessName      string  `json:"business_name,omitempty"`
+	ItemsSummary      string  `json:"items_summary,omitempty"`
+	ShippingAddress   string  `json:"shipping_address,omitempty"`
+	ShippingCity      string  `json:"shipping_city,omitempty"`
+	ShippingState     string  `json:"shipping_state,omitempty"`
+	PaymentMethodName string  `json:"payment_method_name,omitempty"`
+	TrackingNumber    string  `json:"tracking_number,omitempty"`
+	Carrier           string  `json:"carrier,omitempty"`
+	OrderStatusID     *uint   `json:"order_status_id,omitempty"`
 }
 
-// OrderEventConsumer consume eventos de órdenes desde el fanout y los despacha al EventDispatcher
 type OrderEventConsumer struct {
 	rabbitMQ   rabbitmq.IQueue
 	dispatcher ports.IEventDispatcher
 	logger     log.ILogger
 }
 
-// NewOrderEventConsumer crea un nuevo consumer de eventos de órdenes
 func NewOrderEventConsumer(
 	rabbitMQ rabbitmq.IQueue,
 	dispatcher ports.IEventDispatcher,
@@ -66,18 +66,16 @@ func NewOrderEventConsumer(
 	}
 }
 
-// Start inicia el consumer en background
 func (c *OrderEventConsumer) Start(ctx context.Context) error {
 	c.logger.Info(ctx).
 		Str("queue", rabbitmq.QueueOrdersToEvents).
-		Msg("Iniciando consumer de eventos de órdenes (fanout -> events dispatcher)")
+		Msg("Iniciando consumer de eventos de ordenes (fanout -> events dispatcher)")
 
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueOrdersToEvents, func(body []byte) error {
 		return c.handleMessage(ctx, body)
 	})
 }
 
-// handleMessage deserializa un OrderEventMessage y lo transforma a entities.Event
 func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) error {
 	var msg orderEventMessage
 	if err := json.Unmarshal(body, &msg); err != nil {
@@ -86,10 +84,9 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 			Err(wrappedErr).
 			Str("body", string(body)).
 			Msg("Error deserializando evento de orden desde fanout")
-		return nil // No requeue mensajes malformados
+		return nil
 	}
 
-	// Extraer business_id e integration_id
 	var businessID uint
 	if msg.BusinessID != nil {
 		businessID = *msg.BusinessID
@@ -99,8 +96,7 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		integrationID = *msg.IntegrationID
 	}
 
-	// Construir Data map con campos del snapshot y changes
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 
 	if msg.Order != nil {
 		data["order_id"] = msg.Order.ID
@@ -116,14 +112,17 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["business_name"] = msg.Order.BusinessName
 		data["items_summary"] = msg.Order.ItemsSummary
 		data["shipping_address"] = msg.Order.ShippingAddress
+		data["shipping_city"] = msg.Order.ShippingCity
+		data["shipping_state"] = msg.Order.ShippingState
+		data["payment_method_name"] = msg.Order.PaymentMethodName
+		data["tracking_number"] = msg.Order.TrackingNumber
+		data["carrier"] = msg.Order.Carrier
 
-		// Extraer order_status_id del snapshot (disponible en todos los eventos)
 		if msg.Order.OrderStatusID != nil {
 			data["order_status_id"] = *msg.Order.OrderStatusID
 		}
 	}
 
-	// Extraer current_status de Changes (disponible en status_changed/updated)
 	if msg.Changes != nil {
 		if currentStatus, ok := msg.Changes["current_status"]; ok {
 			data["current_status"] = currentStatus

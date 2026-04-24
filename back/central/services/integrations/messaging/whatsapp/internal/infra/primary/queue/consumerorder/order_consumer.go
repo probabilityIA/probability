@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -11,9 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// Start inicia el consumidor de órdenes
 func (c *consumer) Start(ctx context.Context) error {
-	// Declarar cola durable
 	queueName := rabbitmq.QueueOrdersConfirmationRequested
 	if err := c.queue.DeclareQueue(queueName, true); err != nil {
 		c.log.Error().
@@ -23,7 +22,6 @@ func (c *consumer) Start(ctx context.Context) error {
 		return err
 	}
 
-	// Consumir mensajes
 	go func() {
 		if err := c.queue.Consume(ctx, queueName, c.handleMessage); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming order confirmation queue")
@@ -33,11 +31,9 @@ func (c *consumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleMessage procesa cada mensaje de confirmación de orden
 func (c *consumer) handleMessage(messageBody []byte) error {
 	var event request.OrderConfirmationEvent
 	if err := json.Unmarshal(messageBody, &event); err != nil {
-		// Mensaje malformado: no tiene sentido reencolar, ACK y descartar
 		c.log.Warn().
 			Err(err).
 			Msg("Malformed order confirmation message - discarding (ACK)")
@@ -50,47 +46,29 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		Str("customer_phone", event.CustomerPhone).
 		Msg("Processing order confirmation request")
 
-	// Validar que tenga teléfono
 	if event.CustomerPhone == "" {
 		c.log.Warn().
 			Str("order_id", event.OrderID).
 			Str("order_number", event.OrderNumber).
 			Msg("Order has no customer phone - skipping confirmation")
-		return nil // No error, solo skip
+		return nil
 	}
 
-	// Determinar plantilla a usar (desde config o fallback)
 	templateName := event.TemplateName
 	if templateName == "" {
-		// Fallback a plantilla por defecto
 		templateName = "confirmacion_pedido_contraentrega"
 	}
 
-	// Construir variables para la plantilla
-	// Según el plan, la plantilla "confirmacion_pedido_contraentrega" usa:
-	// 1: customer_name
-	// 2: business_name
-	// 3: order_number
-	// 4: shipping_address
-	// 5: items_summary
-	variables := map[string]string{
-		"1": orDefault(event.CustomerName, "Cliente"),
-		"2": orDefault(event.BusinessName, "Probability"),
-		"3": orDefault(event.OrderNumber, "N/A"),
-		"4": orDefault(event.ShippingAddress, "No especificada"),
-		"5": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
-	}
+	variables := buildVariables(templateName, event)
 
-	// Obtener BusinessID (puede ser nulo)
 	businessID := uint(0)
 	if event.BusinessID != nil {
 		businessID = *event.BusinessID
 	}
 
-	// Enviar plantilla configurada
 	messageID, err := c.useCase.SendTemplate(
 		context.Background(),
-		templateName, // <- Ahora viene del evento (o fallback)
+		templateName,
 		event.CustomerPhone,
 		variables,
 		event.OrderNumber,
@@ -99,8 +77,6 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 
 	if err != nil {
 		if isNonRetryableError(err) {
-			// Error de configuración/datos: no tiene sentido reencolar.
-			// ACK el mensaje para que RabbitMQ no lo reprocese indefinidamente.
 			c.log.Warn().
 				Err(err).
 				Str("order_id", event.OrderID).
@@ -128,7 +104,46 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	return nil
 }
 
-// orDefault retorna el valor si no está vacío, o el default
+func buildVariables(templateName string, event request.OrderConfirmationEvent) map[string]string {
+	switch templateName {
+	case "pedido_en_reparto":
+		return map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.TrackingNumber, "N/A"),
+			"5": orDefault(event.Carrier, "Transportadora"),
+			"6": formatTotalAmount(event.TotalAmount, event.Currency),
+		}
+	case "pedido_entregado":
+		return map[string]string{
+			"1":  orDefault(event.CustomerName, "Cliente"),
+			"2":  orDefault(event.BusinessName, "Probability"),
+			"3":  orDefault(event.OrderNumber, "N/A"),
+			"4":  orDefault(event.ShippingAddress, "No especificada"),
+			"5":  orDefault(event.ShippingCity, ""),
+			"6":  orDefault(event.ShippingState, ""),
+			"7":  orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
+			"8":  orDefault(event.PaymentMethodName, "contra entrega"),
+			"9":  orDefault(event.TrackingNumber, "N/A"),
+			"10": orDefault(event.Carrier, "Transportadora"),
+			"11": formatTotalAmount(event.TotalAmount, event.Currency),
+		}
+	default:
+		return map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.ShippingAddress, "No especificada"),
+			"5": orDefault(event.ShippingCity, ""),
+			"6": orDefault(event.ShippingState, ""),
+			"7": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
+			"8": orDefault(event.PaymentMethodName, "contra entrega"),
+			"9": formatTotalAmount(event.TotalAmount, event.Currency),
+		}
+	}
+}
+
 func orDefault(value, defaultValue string) string {
 	if strings.TrimSpace(value) == "" {
 		return defaultValue
@@ -136,11 +151,20 @@ func orDefault(value, defaultValue string) string {
 	return value
 }
 
-// isNonRetryableError determina si un error no debe provocar reencolar el mensaje.
-// Los errores de configuración o datos inválidos nunca se resolverán reintentando:
-// reencolarlos causa bucles infinitos en RabbitMQ.
+func formatTotalAmount(amount float64, _ string) string {
+	intVal := int64(amount)
+	formatted := ""
+	s := fmt.Sprintf("%d", intVal)
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			formatted += "."
+		}
+		formatted += string(c)
+	}
+	return "$" + formatted
+}
+
 func isNonRetryableError(err error) bool {
-	// Errores tipados del dominio: siempre no-retriables
 	var templateNotFound *whaErrors.ErrTemplateNotFound
 	if errors.As(err, &templateNotFound) {
 		return true
@@ -150,20 +174,19 @@ func isNonRetryableError(err error) bool {
 		return true
 	}
 
-	// Errores de cache (Redis key not found): la integración no está configurada
 	errMsg := err.Error()
 	nonRetryablePhrases := []string{
-		"key not found",               // Redis cache miss
-		"no se encontró integración",  // business sin integración WA
-		"credenciales no encontradas", // integration sin credenciales en cache
-		"número de teléfono inválido", // teléfono inválido
-		"phone_number_id no encontrado", // credenciales incompletas
-		"access_token no encontrado",    // credenciales incompletas
-		"Required parameter is missing", // Meta: variable vacía en template
-		"does not exist in",             // Meta: template no aprobado
-		"131008",                        // Meta: parámetro requerido faltante
-		"132001",                        // Meta: template no existe
-		"131009",                        // Meta: parámetro inválido
+		"key not found",
+		"no se encontró integración",
+		"credenciales no encontradas",
+		"número de teléfono inválido",
+		"phone_number_id no encontrado",
+		"access_token no encontrado",
+		"Required parameter is missing",
+		"does not exist in",
+		"131008",
+		"132001",
+		"131009",
 	}
 	for _, phrase := range nonRetryablePhrases {
 		if strings.Contains(errMsg, phrase) {

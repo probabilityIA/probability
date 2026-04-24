@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/request"
 )
@@ -29,12 +29,15 @@ func (h *handlers) TransferStock(c *gin.Context) {
 		createdByID = &userID
 	}
 
-	dto := dtos.TransferStockDTO{
+	dto := apprequest.TransferStockDTO{
 		ProductID:       req.ProductID,
 		FromWarehouseID: req.FromWarehouseID,
 		ToWarehouseID:   req.ToWarehouseID,
 		FromLocationID:  req.FromLocationID,
 		ToLocationID:    req.ToLocationID,
+		LotID:           req.LotID,
+		StateID:         req.StateID,
+		UomID:           req.UomID,
 		BusinessID:      businessID,
 		Quantity:        req.Quantity,
 		Reason:          req.Reason,

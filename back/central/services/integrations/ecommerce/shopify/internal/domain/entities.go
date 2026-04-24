@@ -57,14 +57,14 @@ type ShopifyOrder struct {
 	RawData         []byte
 
 	// Precios en moneda presentment (presentment_money - moneda local)
-	SubtotalPresentment     float64
-	TaxPresentment          float64
-	DiscountPresentment     float64
+	SubtotalPresentment         float64
+	TaxPresentment              float64
+	DiscountPresentment         float64
 	ShippingCostPresentment     float64
 	ShippingDiscount            float64
 	ShippingDiscountPresentment float64
-	TotalAmountPresentment  float64
-	CurrencyPresentment     string
+	TotalAmountPresentment      float64
+	CurrencyPresentment         string
 }
 
 type ShopifyCustomer struct {
@@ -105,8 +105,8 @@ type ShopifyOrderItem struct {
 	Weight       *float64 // Peso en gramos
 
 	// Precio base sin impuestos (UnitPrice / (1 + TaxRate))
-	UnitPriceBase             float64
-	UnitPriceBasePresentment  float64
+	UnitPriceBase            float64
+	UnitPriceBasePresentment float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment float64
@@ -131,14 +131,14 @@ type ProbabilityOrderDTO struct {
 	CodTotal        *float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
-	SubtotalPresentment     float64
-	TaxPresentment          float64
-	DiscountPresentment     float64
+	SubtotalPresentment         float64
+	TaxPresentment              float64
+	DiscountPresentment         float64
 	ShippingCostPresentment     float64
 	ShippingDiscount            float64
 	ShippingDiscountPresentment float64
-	TotalAmountPresentment  float64
-	CurrencyPresentment     string
+	TotalAmountPresentment      float64
+	CurrencyPresentment         string
 
 	CustomerID         *uint
 	CustomerName       string
@@ -178,15 +178,16 @@ type ProbabilityOrderDTO struct {
 }
 
 type ProbabilityOrderItemDTO struct {
-	ProductID    *string
-	ProductSKU   string
-	ProductName  string
-	ProductTitle string
-	VariantID    *string
-	Quantity     int
-	UnitPrice    float64
-	TotalPrice   float64
-	Currency     string
+	ProductID       *string
+	ProductSKU      string
+	ProductName     string
+	ProductTitle    string
+	VariantID       *string
+	ExternalBarcode *string
+	Quantity        int
+	UnitPrice       float64
+	TotalPrice      float64
+	Currency        string
 	Discount        float64
 	DiscountPercent float64
 	Tax             float64
@@ -194,10 +195,10 @@ type ProbabilityOrderItemDTO struct {
 	// Precio base sin impuestos
 	UnitPriceBase            float64
 	UnitPriceBasePresentment float64
-	ImageURL        *string
-	ProductURL      *string
-	Weight          *float64
-	Metadata        []byte
+	ImageURL                 *string
+	ProductURL               *string
+	Weight                   *float64
+	Metadata                 []byte
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64

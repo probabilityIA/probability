@@ -1,10 +1,13 @@
 package repository
 
 import (
+	"encoding/json"
+
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 )
 
 // Repository implementa ports.IRepository
@@ -59,16 +62,35 @@ func warehouseModelToEntity(m *models.Warehouse) *entities.Warehouse {
 }
 
 func locationModelToEntity(m *models.WarehouseLocation) *entities.WarehouseLocation {
-	return &entities.WarehouseLocation{
+	e := &entities.WarehouseLocation{
 		ID:            m.ID,
 		WarehouseID:   m.WarehouseID,
+		LevelID:       m.LevelID,
 		Name:          m.Name,
 		Code:          m.Code,
 		Type:          m.Type,
 		IsActive:      m.IsActive,
 		IsFulfillment: m.IsFulfillment,
 		Capacity:      m.Capacity,
+		MaxWeightKg:   m.MaxWeightKg,
+		MaxVolumeCm3:  m.MaxVolumeCm3,
+		LengthCm:      m.LengthCm,
+		WidthCm:       m.WidthCm,
+		HeightCm:      m.HeightCm,
+		Priority:      m.Priority,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,
 	}
+	if len(m.Flags) > 0 {
+		_ = json.Unmarshal(m.Flags, &e.Flags)
+	}
+	return e
+}
+
+func locationFlagsToJSON(f entities.WarehouseLocationFlags) datatypes.JSON {
+	b, err := json.Marshal(f)
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(b)
 }

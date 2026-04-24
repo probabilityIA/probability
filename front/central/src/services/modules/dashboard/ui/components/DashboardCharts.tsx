@@ -82,6 +82,38 @@ const calculateLinearRegression = (data: number[]): { slope: number; intercept: 
   return { slope, intercept };
 };
 
+function CustomTooltip({ active, payload }: any) {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+
+    if (data.week && data.dateRange) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
+          <p className="text-sm font-semibold text-gray-900">
+            {data.week} · {data.dateRange}
+          </p>
+          <p className="text-sm text-gray-700">
+            {data.orders.toLocaleString()} órdenes
+          </p>
+          {data.upper && (
+            <p className="text-xs text-gray-500 mt-1">±{((data.upper - data.lower) / 2 / data.orders * 100).toFixed(0)}%</p>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-md">
+        <p className="text-sm font-semibold text-gray-900">{data.week || data.month || data.day}</p>
+        <p className="text-sm text-gray-700">
+          {data.orders !== undefined ? `${data.orders.toLocaleString()} órdenes` : `${data.value} envíos`}
+        </p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function DashboardCharts({ stats, selectedBusinessId }: DashboardChartsProps) {
   const defaultTabs = [
     { id: 'forecast', label: 'Pronóstico de Órdenes', icon: '📈' },
@@ -146,7 +178,6 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     setDraggedTab(null);
   };
 
-  // Tab 1: Pronóstico de Órdenes
   const forecastData = useMemo(() => {
     if (!stats?.orders_by_week || stats.orders_by_week.length === 0) return null;
 
@@ -183,9 +214,8 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     });
 
     return [...historicalWeeks, ...forecastWeeks];
-  }, [stats?.orders_by_week]);
+  }, [stats]);
 
-  // KPIs para Pronóstico
   const forecastKPIs = useMemo(() => {
     if (!forecastData || forecastData.length === 0) return null;
 
@@ -197,7 +227,6 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
       ? Math.round(historicalOrders.reduce((a, b) => a + b, 0) / historicalOrders.length)
       : 0;
 
-    const lastHistoricalWeek = historicalData[historicalData.length - 1]?.orders || 0;
     const projectedLastWeek = forecastDataPoints[0]?.forecast || 0;
 
     return {
@@ -209,7 +238,7 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     };
   }, [forecastData]);
 
-  // Tab 2: Órdenes por Mes
+
   const monthlyData = useMemo(() => {
     if (!stats?.orders_by_month || stats.orders_by_month.length === 0) return null;
 
@@ -229,10 +258,9 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     }));
 
     return trendData;
-  }, [stats?.orders_by_month]);
+  }, [stats]);
 
-  // Tab 3: TOP 5 Días de Mayor Demanda (fechas específicas)
-  // Cargar desde endpoint backend GET /api/v1/dashboard/top-selling-days
+
   useMemo(() => {
     const fetchTopDays = async () => {
       try {
@@ -309,12 +337,10 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     return { carriers: carrierList, carrierMetrics, totalShipments };
   }, [stats?.shipments_by_carrier]);
 
-  // Custom Tooltip con Dark Theme
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
 
-      // Filtrar items sin valor
       const filteredPayload = payload.filter((p: any) => p.value !== null && p.value !== undefined);
 
       if (data.week && data.dateRange) {

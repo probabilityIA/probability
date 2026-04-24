@@ -33,7 +33,9 @@ type mockRepository struct {
 	CreateShipmentsFn                                    func(ctx context.Context, shipments []*entities.ProbabilityShipment) error
 	CreateChannelMetadataFn                              func(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error
 	GetProductBySKUFn                                    func(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
+	ResolveProductForOrderItemFn                         func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)
 	CreateProductFn                                      func(ctx context.Context, product *entities.Product) error
+	UpsertProductIntegrationMappingFn                    func(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error
 	GetClientByEmailFn                                   func(ctx context.Context, businessID uint, email string) (*entities.Client, error)
 	GetClientByDNIFn                                     func(ctx context.Context, businessID uint, dni string) (*entities.Client, error)
 	CreateClientFn                                       func(ctx context.Context, client *entities.Client) error
@@ -168,9 +170,21 @@ func (m *mockRepository) GetProductBySKU(ctx context.Context, businessID uint, s
 	}
 	return nil, nil
 }
+func (m *mockRepository) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+	if m.ResolveProductForOrderItemFn != nil {
+		return m.ResolveProductForOrderItemFn(ctx, businessID, integrationID, item)
+	}
+	return nil, nil
+}
 func (m *mockRepository) CreateProduct(ctx context.Context, product *entities.Product) error {
 	if m.CreateProductFn != nil {
 		return m.CreateProductFn(ctx, product)
+	}
+	return nil
+}
+func (m *mockRepository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
+	if m.UpsertProductIntegrationMappingFn != nil {
+		return m.UpsertProductIntegrationMappingFn(ctx, productID, businessID, integrationID, item)
 	}
 	return nil
 }
@@ -225,6 +239,9 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return nil
 }
+func (m *mockRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
+	return nil
+}
 func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	if m.CreateOrderHistoryFn != nil {
 		return m.CreateOrderHistoryFn(ctx, history)
@@ -237,13 +254,13 @@ func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([
 
 // Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {
-	PublishOrderCreatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderUpdatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderCancelledFn        func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderStatusChangedFn    func(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error
-	PublishConfirmationRequestedFn func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderEventFn                    func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
-	PublishGuideNotificationRequestedFn    func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderCreatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderUpdatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderCancelledFn             func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderStatusChangedFn         func(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error
+	PublishConfirmationRequestedFn      func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderEventFn                 func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+	PublishGuideNotificationRequestedFn func(ctx context.Context, order *entities.ProbabilityOrder) error
 }
 
 func (m *mockRabbitPublisher) PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error {
@@ -384,6 +401,10 @@ func newTestCreateUseCase(
 
 func newBusinessID(id uint) *uint {
 	return &id
+}
+
+func stringPtr(v string) *string {
+	return &v
 }
 
 func newUint(v uint) *uint {
@@ -904,7 +925,7 @@ func TestGetOrCreateProduct_SinSKU_RetornaError(t *testing.T) {
 		ProductSKU: "", // Sin SKU
 	}
 
-	product, err := uc.GetOrCreateProduct(context.Background(), 1, itemDTO)
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 10, itemDTO)
 
 	if err == nil {
 		t.Fatal("se esperaba error cuando el SKU está vacío")
@@ -920,7 +941,7 @@ func TestGetOrCreateProduct_ProductoExistente_RetornaExistente(t *testing.T) {
 		SKU: "SKU-ABC",
 	}
 	repo := &mockRepository{
-		GetProductBySKUFn: func(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
+		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
 			return existingProduct, nil
 		},
 	}
@@ -929,7 +950,7 @@ func TestGetOrCreateProduct_ProductoExistente_RetornaExistente(t *testing.T) {
 		ProductSKU: "SKU-ABC",
 	}
 
-	product, err := uc.GetOrCreateProduct(context.Background(), 1, itemDTO)
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 10, itemDTO)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
@@ -944,8 +965,9 @@ func TestGetOrCreateProduct_ProductoExistente_RetornaExistente(t *testing.T) {
 
 func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 	createProductCalled := false
+	upsertMappingCalled := false
 	repo := &mockRepository{
-		GetProductBySKUFn: func(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
+		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
 			return nil, nil // No existe
 		},
 		CreateProductFn: func(ctx context.Context, product *entities.Product) error {
@@ -953,14 +975,20 @@ func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 			product.ID = "PROD-NUEVO"
 			return nil
 		},
+		UpsertProductIntegrationMappingFn: func(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
+			upsertMappingCalled = true
+			return nil
+		},
 	}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	itemDTO := dtos.ProbabilityOrderItemDTO{
 		ProductSKU:  "SKU-NUEVO",
 		ProductName: "Producto Nuevo",
+		ProductID:   stringPtr("ext-prod-1"),
+		VariantID:   stringPtr("ext-var-1"),
 	}
 
-	product, err := uc.GetOrCreateProduct(context.Background(), 1, itemDTO)
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 10, itemDTO)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
@@ -970,6 +998,97 @@ func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 	}
 	if !createProductCalled {
 		t.Error("se esperaba que CreateProduct fuera llamado")
+	}
+	if !upsertMappingCalled {
+		t.Error("se esperaba que UpsertProductIntegrationMapping fuera llamado")
+	}
+}
+
+func TestGetOrCreateProduct_MatchPorVariantID_PriorizaReferenciaExterna(t *testing.T) {
+	existingProduct := &entities.Product{
+		ID:  "PROD-VARIANT",
+		SKU: "SKU-LOCAL",
+	}
+	repo := &mockRepository{
+		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+			if item.VariantID == nil || *item.VariantID != "shopify-var-123" {
+				t.Fatalf("variant_id no propagado correctamente: %+v", item.VariantID)
+			}
+			return existingProduct, nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+	itemDTO := dtos.ProbabilityOrderItemDTO{
+		ProductSKU: "SKU-QUE-NO-COINCIDE",
+		VariantID:  stringPtr("shopify-var-123"),
+	}
+
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 99, itemDTO)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
+	}
+	if product == nil || product.ID != "PROD-VARIANT" {
+		t.Fatalf("se esperaba producto resuelto por variant_id, se obtuvo: %#v", product)
+	}
+}
+
+func TestGetOrCreateProduct_MatchPorExternalBarcode_PriorizaBarcodeExterno(t *testing.T) {
+	existingProduct := &entities.Product{
+		ID:  "PROD-BARCODE",
+		SKU: "SKU-LOCAL",
+	}
+	repo := &mockRepository{
+		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+			if item.ExternalBarcode == nil || *item.ExternalBarcode != "7709990001112" {
+				t.Fatalf("external_barcode no propagado correctamente: %+v", item.ExternalBarcode)
+			}
+			if item.ProductSKU != "SKU-DISTINTO" {
+				t.Fatalf("sku inesperado propagado: %s", item.ProductSKU)
+			}
+			return existingProduct, nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+	itemDTO := dtos.ProbabilityOrderItemDTO{
+		ProductSKU:      "SKU-DISTINTO",
+		ExternalBarcode: stringPtr("7709990001112"),
+	}
+
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 99, itemDTO)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
+	}
+	if product == nil || product.ID != "PROD-BARCODE" {
+		t.Fatalf("se esperaba producto resuelto por external_barcode, se obtuvo: %#v", product)
+	}
+}
+
+func TestGetOrCreateProduct_SinSKU_GeneraFallbackConVariantID(t *testing.T) {
+	repo := &mockRepository{
+		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+			return nil, nil
+		},
+		CreateProductFn: func(ctx context.Context, product *entities.Product) error {
+			if product.SKU != "VAR-200" {
+				t.Fatalf("sku fallback esperado VAR-200, obtenido %s", product.SKU)
+			}
+			product.ID = "PROD-200"
+			return nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+
+	product, err := uc.GetOrCreateProduct(context.Background(), 1, 20, dtos.ProbabilityOrderItemDTO{
+		ProductName: "Producto sin sku",
+		VariantID:   stringPtr("200"),
+	})
+	if err != nil {
+		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
+	}
+	if product == nil || product.ID != "PROD-200" {
+		t.Fatalf("se esperaba producto creado, se obtuvo %#v", product)
 	}
 }
 

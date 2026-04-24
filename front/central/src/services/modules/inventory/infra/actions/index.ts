@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { InventoryApiRepository } from '../repository/api-repository';
 import { InventoryUseCases } from '../../app/use-cases';
 import {
@@ -16,6 +17,11 @@ async function getUseCases() {
     const token = cookieStore.get('session_token')?.value || null;
     const repository = new InventoryApiRepository(token);
     return new InventoryUseCases(repository);
+}
+
+function revalidateInventory() {
+    revalidatePath('/inventory');
+    revalidatePath('/inventory/movements');
 }
 
 export const getProductInventoryAction = async (productId: string, businessId?: number) => {
@@ -37,6 +43,7 @@ export const getWarehouseInventoryAction = async (warehouseId: number, params?: 
 export const adjustStockAction = async (data: AdjustStockDTO, businessId?: number) => {
     try {
         const result = await (await getUseCases()).adjustStock(data, businessId);
+        revalidateInventory();
         return { success: true as const, data: result };
     } catch (error: any) {
         return { success: false as const, error: error.message || 'Error al ajustar stock' };
@@ -46,6 +53,7 @@ export const adjustStockAction = async (data: AdjustStockDTO, businessId?: numbe
 export const transferStockAction = async (data: TransferStockDTO, businessId?: number) => {
     try {
         const result = await (await getUseCases()).transferStock(data, businessId);
+        revalidateInventory();
         return { success: true as const, data: result };
     } catch (error: any) {
         return { success: false as const, error: error.message || 'Error al transferir stock' };
@@ -58,6 +66,7 @@ export const bulkLoadInventoryAction = async (data: BulkLoadDTO, businessId?: nu
         const token = cookieStore.get('session_token')?.value || null;
         const repository = new InventoryApiRepository(token);
         const result = await repository.bulkLoadInventory(data, businessId);
+        revalidateInventory();
         return { success: true as const, data: result };
     } catch (error: any) {
         return { success: false as const, error: error.message || 'Error en carga masiva' };

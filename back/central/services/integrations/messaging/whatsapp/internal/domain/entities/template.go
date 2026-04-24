@@ -16,7 +16,6 @@ type TemplateDefinition struct {
 	Body         string
 }
 
-// Templates contiene el catálogo completo de las 11 plantillas aprobadas
 var Templates = map[string]TemplateDefinition{
 	"confirmacion_pedido_contraentrega": {
 		Name:     "confirmacion_pedido_contraentrega",
@@ -26,120 +25,104 @@ var Templates = map[string]TemplateDefinition{
 			"tienda",
 			"numero_orden",
 			"direccion",
+			"ciudad",
+			"departamento",
 			"productos",
+			"metodo_pago",
+			"valor_recaudar",
 		},
-		HasButtons: true,
-		ButtonLabels: []string{
-			"Confirmar pedido",
-			"No confirmar",
-		},
-		Description: "Plantilla inicial de confirmación de pedido contra entrega",
-		Body: "Hola {{1}} 👋\n" +
-			"Recibimos tu pedido en {{2}}.\n\n" +
-			"🧾 Pedido: {{3}}\n" +
-			"📍 Envío a: {{4}}\n" +
-			"🛒 Productos: {{5}}\n\n" +
-			"¿Confirmas tu pedido?",
+		HasButtons:   true,
+		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
+		Description:  "Confirmacion de pedido con direccion desglosada, metodo de pago y valor a recaudar",
 	},
 	"pedido_confirmado_v2": {
 		Name:     "pedido_confirmado_v2",
 		Language: "es",
 		Variables: []string{
-			"nombre",        // {{1}}
-			"numero_pedido", // {{2}}
-			"tienda",        // {{3}}
-			"direccion",     // {{4}}
-			"productos",     // {{5}}
+			"nombre",
+			"numero_pedido",
+			"tienda",
+			"direccion",
+			"productos",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de que el pedido ha sido confirmado exitosamente (con resumen e iconos)",
+		Description:  "Confirmacion de que el pedido ha sido confirmado exitosamente",
 	},
 	"menu_no_confirmacion": {
 		Name:     "menu_no_confirmacion",
 		Language: "es",
 		Variables: []string{
-			"numero_pedido", // {{1}}
+			"numero_pedido",
 		},
-		HasButtons: true,
-		ButtonLabels: []string{
-			"Presentar novedad",
-			"Cancelar pedido",
-			"Asesor",
-		},
-		Description: "Menú de opciones cuando el usuario no confirma el pedido",
+		HasButtons:   true,
+		ButtonLabels: []string{"Presentar novedad", "Cancelar pedido", "Asesor"},
+		Description:  "Menu de opciones cuando el usuario no confirma el pedido",
 	},
 	"tipo_novedad_pedido": {
 		Name:         "tipo_novedad_pedido",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   true,
-		ButtonLabels: []string{
-			"Cambio de dirección",
-			"Cambio de productos",
-			"Cambio medio de pago",
-		},
-		Description: "Menú de selección del tipo de novedad",
+		ButtonLabels: []string{"Cambio de dirección", "Cambio de productos", "Cambio medio de pago"},
+		Description:  "Menu de seleccion del tipo de novedad",
 	},
 	"confirmar_cancelacion_pedido": {
 		Name:     "confirmar_cancelacion_pedido",
 		Language: "es",
 		Variables: []string{
-			"numero_pedido", // {{1}}
+			"numero_pedido",
 		},
-		HasButtons: true,
-		ButtonLabels: []string{
-			"Sí, cancelar",
-			"No, volver",
-		},
-		Description: "Confirmación antes de cancelar el pedido",
+		HasButtons:   true,
+		ButtonLabels: []string{"Sí, cancelar", "No, volver"},
+		Description:  "Confirmacion antes de cancelar el pedido",
 	},
 	"motivo_cancelacion_pedido": {
 		Name:         "motivo_cancelacion_pedido",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Solicita al usuario que escriba el motivo de cancelación (texto libre)",
+		Description:  "Solicita al usuario que escriba el motivo de cancelacion (texto libre)",
 	},
 	"pedido_cancelado": {
 		Name:     "pedido_cancelado",
 		Language: "es",
 		Variables: []string{
-			"numero_pedido", // {{1}}
+			"numero_pedido",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de que el pedido ha sido cancelado",
+		Description:  "Confirmacion de que el pedido ha sido cancelado",
 	},
 	"novedad_cambio_direccion": {
 		Name:         "novedad_cambio_direccion",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de recepción de solicitud de cambio de dirección",
+		Description:  "Confirmacion de recepcion de solicitud de cambio de direccion",
 	},
 	"novedad_cambio_productos": {
 		Name:         "novedad_cambio_productos",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de recepción de solicitud de cambio de productos",
+		Description:  "Confirmacion de recepcion de solicitud de cambio de productos",
 	},
 	"novedad_cambio_medio_pago": {
 		Name:         "novedad_cambio_medio_pago",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de recepción de solicitud de cambio de medio de pago",
+		Description:  "Confirmacion de recepcion de solicitud de cambio de medio de pago",
 	},
 	"handoff_asesor": {
 		Name:         "handoff_asesor",
 		Language:     "es",
-		Variables:    []string{}, // No tiene variables
+		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
 		Description:  "Mensaje de espera mientras se conecta con un asesor humano",
@@ -150,14 +133,14 @@ var Templates = map[string]TemplateDefinition{
 		Variables:    []string{},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Mensaje de prueba para verificar conexión de WhatsApp",
+		Description:  "Mensaje de prueba para verificar conexion de WhatsApp",
 	},
 	"alerta_servidor": {
 		Name:     "alerta_servidor",
 		Language: "es",
 		Variables: []string{
-			"tipo_alerta", // {{1}} ej: "RAM"
-			"descripcion", // {{2}} ej: "87.3% - supera umbral de 85%"
+			"tipo_alerta",
+			"descripcion",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
@@ -172,15 +155,51 @@ var Templates = map[string]TemplateDefinition{
 			"numero_pedido",
 			"numero_guia",
 			"transportadora",
+			"valor_recaudar",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Notificación de guía de envío generada con datos de tracking",
-		Body: "Hola {{1}} 👋\n" +
-			"Somos {{2}}. Tu pedido {{3}} ya fue despachado 📦\n\n" +
-			"📑 Guía: {{4}}\n" +
-			"🚚 Transportadora: {{5}}\n\n" +
+		Description:  "Notificacion de guia de envio generada con datos de tracking y valor a recaudar",
+		Body: "Hola {{1}} \U0001f44b\n" +
+			"Somos {{2}}. Tu pedido {{3}} ya fue despachado \U0001f4e6\n\n" +
+			"\U0001f4d1 Guía: {{4}}\n" +
+			"\U0001f69a Transportadora: {{5}}\n\n" +
 			"Gracias por tu compra.",
+	},
+	"pedido_en_reparto": {
+		Name:     "pedido_en_reparto",
+		Language: "es",
+		Variables: []string{
+			"nombre",
+			"tienda",
+			"numero_pedido",
+			"numero_guia",
+			"transportadora",
+			"valor_recaudar",
+		},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Notificacion al cliente cuando su pedido esta en reparto (ultima milla)",
+	},
+	"pedido_entregado": {
+		Name:     "pedido_entregado",
+		Language: "es",
+		Variables: []string{
+			"nombre",
+			"tienda",
+			"numero_pedido",
+			"direccion",
+			"ciudad",
+			"departamento",
+			"productos",
+			"metodo_pago",
+			"numero_guia",
+			"transportadora",
+			"valor_recaudado",
+		},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Confirmacion de entrega exitosa con detalle completo del pedido",
 	},
 }
 
@@ -196,13 +215,11 @@ func RenderTemplateBody(templateName string, variables map[string]string) string
 	return body
 }
 
-// GetTemplateDefinition retorna la definición de una plantilla por su nombre
 func GetTemplateDefinition(templateName string) (TemplateDefinition, bool) {
 	template, exists := Templates[templateName]
 	return template, exists
 }
 
-// ValidateTemplateVariables verifica que se provean todas las variables requeridas
 func ValidateTemplateVariables(templateName string, providedVars map[string]string) error {
 	template, exists := Templates[templateName]
 	if !exists {
@@ -210,7 +227,7 @@ func ValidateTemplateVariables(templateName string, providedVars map[string]stri
 	}
 
 	for i, varName := range template.Variables {
-		varKey := string(rune('1' + i)) // "1", "2", "3", etc
+		varKey := string(rune('1' + i))
 		if _, ok := providedVars[varKey]; !ok {
 			return &errors.ErrMissingVariable{
 				TemplateName: templateName,

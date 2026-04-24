@@ -42,7 +42,7 @@ En una plataforma multi-tenant como Probability, cada negocio:
 |  3. VALIDACIÓN Y ENRIQUECIMIENTO                               |
 |  -> Verificar si orden ya existe (evitar duplicados)            |
 |  -> Validar/Crear cliente (por email o DNI)                     |
-|  -> Validar/Crear productos (por SKU)                           |
+|  -> Validar/Crear productos (por variant_id, mappings externos, SKU o barcode) |
 |  -> Mapear estados específicos a estados Probability            |
 +----------------------------------------------------------------+
                             v
@@ -141,11 +141,16 @@ type ProbabilityOrderDTO struct {
 
 **Validación de Productos:**
 - Para cada item de la orden:
-  - Busca producto por **SKU**
-  - Si no existe -> Crea nuevo producto automáticamente
+  - Busca producto por `external_variant_id`
+  - Si no existe, intenta por `external_sku`
+  - Si no existe, intenta por `external_barcode`
+  - Si no existe, intenta por `SKU` interno
+  - Si no existe, intenta por `barcode` interno
+  - Si no existe, intenta por `external_product_id`
+  - Si aun no existe -> Crea nuevo producto automáticamente y registra el mapping externo
   - Asigna `product_id` al item
 
-**Beneficio**: Las órdenes nunca fallan por falta de cliente/producto. El sistema los crea automáticamente.
+**Beneficio**: Las ordenes nunca fallan por falta de cliente/producto y, ademas, evitan duplicar variantes cuando el canal envia un `variant_id` distinto al `SKU`.
 
 ---
 
@@ -467,7 +472,7 @@ type ProbabilityOrderItem struct {
     ProductID   *uint   // FK a products
     ProductSKU  string
     ProductName string
-    VariantID   string
+    VariantID   string  // ID de variante en el canal, si existe
 
     // Cantidades y precios
     Quantity   int
@@ -888,8 +893,9 @@ Response: 200 OK
    - Busca por email: `juan@example.com`
    - Si no existe -> Crea cliente nuevo
 6. **Valida/Crea Productos**:
-   - Para cada item, busca por SKU
-   - Si no existe -> Crea producto nuevo
+   - Para cada item, busca primero por `variant_id`
+   - Si no existe, intenta por mappings externos, `SKU` y `barcode`
+   - Si no existe -> Crea producto nuevo y registra el mapping externo
 7. **Mapea Estados**:
    - `financial_status: "paid"` -> `payment_status_id: 2` (paid)
    - `fulfillment_status: "unfulfilled"` -> `fulfillment_status_id: 1` (unfulfilled)

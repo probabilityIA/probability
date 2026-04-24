@@ -67,7 +67,7 @@ Todos los proveedores mapean sus ordenes a `ProbabilityOrderDTO` antes de public
 | Entidad                        | Descripcion                                                        |
 |--------------------------------|--------------------------------------------------------------------|
 | `ProbabilityOrderDTO`          | Orden completa: financieros, cliente, estado, metadata, presentment|
-| `ProbabilityOrderItemDTO`      | Linea de producto: SKU, precios, descuentos, impuestos, peso      |
+| `ProbabilityOrderItemDTO`      | Linea de producto: SKU, variant_id, external_barcode, precios, descuentos, impuestos, peso |
 | `ProbabilityAddressDTO`        | Direccion (shipping/billing) con coordenadas opcionales            |
 | `ProbabilityPaymentDTO`        | Pago: metodo, gateway, estado, transaccion, reembolso              |
 | `ProbabilityShipmentDTO`       | Envio: tracking, transportadora, guia, dimensiones, warehouse      |

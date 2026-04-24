@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
@@ -84,11 +85,11 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
-		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").      // Precargar PaymentStatus
-		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
-		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").                         // Precargar PaymentStatus
+		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
+		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
 		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
 			return db.Order("created_at DESC").Limit(1)
 		}).
@@ -113,11 +114,11 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
-		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").      // Precargar PaymentStatus
-		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
-		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").                         // Precargar PaymentStatus
+		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
+		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
 		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
 			return db.Order("created_at DESC").Limit(1)
 		}).
@@ -142,11 +143,11 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
-		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").      // Precargar PaymentStatus
-		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
-		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("OrderStatus").                           // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").                         // Precargar PaymentStatus
+		Preload("FulfillmentStatus").                     // Precargar FulfillmentStatus
+		Preload("OrderItems.Product").                    // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").                       // Precargar ChannelMetadata para acceso a RawData en scoring
 		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
 			return db.Order("created_at DESC").Limit(1)
 		}).
@@ -336,11 +337,11 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	query = query.Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
-		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
-		Preload("PaymentStatus").     // Precargar PaymentStatus
-		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
+		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").      // Precargar PaymentStatus
+		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("Shipments") // Cargar TODOS los shipments, luego filteramos en código
+		Preload("Shipments")           // Cargar TODOS los shipments, luego filteramos en código
 
 	offset := (page - 1) * pageSize
 	if err := query.Offset(offset).Limit(pageSize).Find(&dbOrders).Error; err != nil {
@@ -701,6 +702,111 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 	return mappers.ToDomainProduct(&product), nil
 }
 
+// ResolveProductForOrderItem intenta resolver el producto usando referencias externas de variante antes que el SKU local.
+func (r *Repository) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+	if integrationID > 0 && item.VariantID != nil && *item.VariantID != "" {
+		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_variant_id", *item.VariantID)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+	}
+
+	if integrationID > 0 && item.ProductSKU != "" {
+		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_sku", item.ProductSKU)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+	}
+
+	if integrationID > 0 && item.ExternalBarcode != nil && *item.ExternalBarcode != "" {
+		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_barcode", *item.ExternalBarcode)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+	}
+
+	if item.ProductSKU != "" {
+		product, err := r.GetProductBySKU(ctx, businessID, item.ProductSKU)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+
+		var barcodeProduct models.Product
+		err = r.db.Conn(ctx).
+			Where("business_id = ? AND barcode = ?", businessID, item.ProductSKU).
+			First(&barcodeProduct).Error
+		if err == nil {
+			return mappers.ToDomainProduct(&barcodeProduct), nil
+		}
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+
+	if item.ExternalBarcode != nil && *item.ExternalBarcode != "" {
+		var barcodeProduct models.Product
+		err := r.db.Conn(ctx).
+			Where("business_id = ? AND barcode = ?", businessID, *item.ExternalBarcode).
+			First(&barcodeProduct).Error
+		if err == nil {
+			return mappers.ToDomainProduct(&barcodeProduct), nil
+		}
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+
+	if item.ProductID != nil && *item.ProductID != "" {
+		var byExternalID models.Product
+		err := r.db.Conn(ctx).
+			Where("business_id = ? AND external_id = ?", businessID, *item.ProductID).
+			First(&byExternalID).Error
+		if err == nil {
+			return mappers.ToDomainProduct(&byExternalID), nil
+		}
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+	}
+
+	return nil, nil
+}
+
+func (r *Repository) findProductByIntegrationField(ctx context.Context, businessID uint, integrationID uint, field string, value string) (*entities.Product, error) {
+	if value == "" {
+		return nil, nil
+	}
+
+	var products []models.Product
+	err := r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Joins("INNER JOIN product_business_integrations ON product_business_integrations.product_id = products.id").
+		Where("products.business_id = ? AND product_business_integrations.integration_id = ? AND product_business_integrations."+field+" = ?", businessID, integrationID, value).
+		Limit(2).
+		Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if len(products) == 1 {
+		return mappers.ToDomainProduct(&products[0]), nil
+	}
+
+	return nil, nil
+}
+
 // CreateProduct crea un nuevo producto
 func (r *Repository) CreateProduct(ctx context.Context, product *entities.Product) error {
 	dbProduct := mappers.ToDBProduct(product)
@@ -709,6 +815,60 @@ func (r *Repository) CreateProduct(ctx context.Context, product *entities.Produc
 	}
 	product.ID = dbProduct.ID
 	return nil
+}
+
+// UpsertProductIntegrationMapping crea o actualiza el mapping externo del producto para la integración.
+func (r *Repository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
+	var existing models.ProductBusinessIntegration
+	err := r.db.Conn(ctx).
+		Where("product_id = ? AND integration_id = ?", productID, integrationID).
+		First(&existing).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+
+	externalProductID := ""
+	if item.ProductID != nil {
+		externalProductID = *item.ProductID
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		record := &models.ProductBusinessIntegration{
+			ProductID:         productID,
+			BusinessID:        businessID,
+			IntegrationID:     integrationID,
+			ExternalProductID: externalProductID,
+			ExternalVariantID: item.VariantID,
+			ExternalSKU:       stringPtrOrNil(item.ProductSKU),
+			ExternalBarcode:   item.ExternalBarcode,
+		}
+		return r.db.Conn(ctx).Create(record).Error
+	}
+
+	existing.BusinessID = businessID
+	if externalProductID != "" {
+		existing.ExternalProductID = externalProductID
+	}
+	if item.VariantID != nil && *item.VariantID != "" {
+		existing.ExternalVariantID = item.VariantID
+	}
+	if item.ProductSKU != "" {
+		existing.ExternalSKU = stringPtrOrNil(item.ProductSKU)
+	}
+	if item.ExternalBarcode != nil && *item.ExternalBarcode != "" {
+		existing.ExternalBarcode = item.ExternalBarcode
+	}
+
+	return r.db.Conn(ctx).Save(&existing).Error
+}
+
+func stringPtrOrNil(value string) *string {
+	if value == "" {
+		return nil
+	}
+	v := value
+	return &v
 }
 
 // UpdateProductPrice actualiza el precio de un producto por su ID

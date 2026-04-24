@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app"
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -55,7 +55,7 @@ func (c *BulkLoadConsumer) Start(ctx context.Context) {
 }
 
 func (c *BulkLoadConsumer) handleMessage(ctx context.Context, body []byte) {
-	var dto dtos.BulkLoadDTO
+	var dto request.BulkLoadDTO
 	if err := json.Unmarshal(body, &dto); err != nil {
 		c.logger.Error(ctx).Err(err).Msg("Failed to unmarshal bulk load message")
 		return
@@ -79,7 +79,7 @@ func (c *BulkLoadConsumer) handleMessage(ctx context.Context, body []byte) {
 				EventType:   "bulk_load.failed",
 				BusinessID:  dto.BusinessID,
 				WarehouseID: dto.WarehouseID,
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"error":       err.Error(),
 					"total_items": len(dto.Items),
 				},
@@ -101,7 +101,7 @@ func (c *BulkLoadConsumer) handleMessage(ctx context.Context, body []byte) {
 			EventType:   "bulk_load.completed",
 			BusinessID:  dto.BusinessID,
 			WarehouseID: dto.WarehouseID,
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"total_items":   result.TotalItems,
 				"success_count": result.SuccessCount,
 				"failure_count": result.FailureCount,

@@ -24,19 +24,49 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 		return nil, domain.ErrProductAlreadyExists
 	}
 
+	family, err := uc.resolveProductFamily(ctx, req.BusinessID, req.FamilyID, req.Family)
+	if err != nil {
+		return nil, err
+	}
+
+	variantAttributes, variantSignature, err := domain.CanonicalizeVariantAttributes(req.VariantAttributes)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", domain.ErrInvalidProductData, err.Error())
+	}
+
+	if family != nil && variantSignature != "" {
+		exists, err := uc.repo.VariantExistsInFamily(ctx, req.BusinessID, family.ID, variantSignature, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error checking variant uniqueness: %w", err)
+		}
+		if exists {
+			return nil, domain.ErrVariantAlreadyExists
+		}
+	}
+
 	// Crear el modelo de producto con todos los campos
 	product := &domain.Product{
 		// Identificadores
 		BusinessID: req.BusinessID,
 		SKU:        req.SKU,
 		ExternalID: req.ExternalID,
+		Barcode:    req.Barcode,
+		FamilyID: func() *uint {
+			if family == nil {
+				return nil
+			}
+			return &family.ID
+		}(),
 
 		// Información Básica
-		Name:             req.Name,
-		Title:            req.Title,
-		Description:      req.Description,
-		ShortDescription: req.ShortDescription,
-		Slug:             req.Slug,
+		Name:              req.Name,
+		Title:             req.Title,
+		Description:       req.Description,
+		ShortDescription:  req.ShortDescription,
+		Slug:              req.Slug,
+		VariantLabel:      req.VariantLabel,
+		VariantAttributes: variantAttributes,
+		VariantSignature:  variantSignature,
 
 		// Pricing
 		Price:          req.Price,
@@ -75,6 +105,7 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 
 		// Metadata
 		Metadata: req.Metadata,
+		Family:   family,
 	}
 
 	// Guardar en la base de datos
@@ -184,6 +215,17 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id
 	if req.ExternalID != nil {
 		product.ExternalID = *req.ExternalID
 	}
+	if req.Barcode != nil {
+		product.Barcode = req.Barcode
+	}
+	if req.FamilyID != nil {
+		family, err := uc.repo.GetProductFamilyByID(ctx, product.BusinessID, *req.FamilyID)
+		if err != nil {
+			return nil, err
+		}
+		product.FamilyID = &family.ID
+		product.Family = family
+	}
 
 	// Información Básica
 	if req.Name != nil {
@@ -200,6 +242,26 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id
 	}
 	if req.Slug != nil {
 		product.Slug = *req.Slug
+	}
+	if req.VariantLabel != nil {
+		product.VariantLabel = *req.VariantLabel
+	}
+	if req.VariantAttributes != nil {
+		variantAttributes, variantSignature, err := domain.CanonicalizeVariantAttributes(req.VariantAttributes)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %s", domain.ErrInvalidProductData, err.Error())
+		}
+		product.VariantAttributes = variantAttributes
+		product.VariantSignature = variantSignature
+		if product.FamilyID != nil && variantSignature != "" {
+			exists, err := uc.repo.VariantExistsInFamily(ctx, product.BusinessID, *product.FamilyID, variantSignature, &product.ID)
+			if err != nil {
+				return nil, fmt.Errorf("error checking variant uniqueness: %w", err)
+			}
+			if exists {
+				return nil, domain.ErrVariantAlreadyExists
+			}
+		}
 	}
 
 	// Pricing
@@ -337,13 +399,17 @@ func mapProductToResponse(product *domain.Product) *domain.ProductResponse {
 		BusinessID: product.BusinessID,
 		SKU:        product.SKU,
 		ExternalID: product.ExternalID,
+		Barcode:    product.Barcode,
+		FamilyID:   product.FamilyID,
 
 		// Información Básica
-		Name:             product.Name,
-		Title:            product.Title,
-		Description:      product.Description,
-		ShortDescription: product.ShortDescription,
-		Slug:             product.Slug,
+		Name:              product.Name,
+		Title:             product.Title,
+		Description:       product.Description,
+		ShortDescription:  product.ShortDescription,
+		Slug:              product.Slug,
+		VariantLabel:      product.VariantLabel,
+		VariantAttributes: product.VariantAttributes,
 
 		// Pricing
 		Price:          product.Price,
@@ -382,5 +448,66 @@ func mapProductToResponse(product *domain.Product) *domain.ProductResponse {
 
 		// Metadata
 		Metadata: product.Metadata,
+		Family:   mapProductFamilyToResponse(product.Family),
 	}
+}
+
+func mapProductFamilyToResponse(family *domain.ProductFamily) *domain.ProductFamilySummaryResponse {
+	if family == nil {
+		return nil
+	}
+
+	return &domain.ProductFamilySummaryResponse{
+		ID:          family.ID,
+		BusinessID:  family.BusinessID,
+		Name:        family.Name,
+		Title:       family.Title,
+		Description: family.Description,
+		Slug:        family.Slug,
+		Category:    family.Category,
+		Brand:       family.Brand,
+		ImageURL:    family.ImageURL,
+		Status:      family.Status,
+		IsActive:    family.IsActive,
+		VariantAxes: family.VariantAxes,
+		Metadata:    family.Metadata,
+		CreatedAt:   family.CreatedAt,
+		UpdatedAt:   family.UpdatedAt,
+	}
+}
+
+func (uc *UseCaseProduct) resolveProductFamily(ctx context.Context, businessID uint, familyID *uint, familyReq *domain.CreateProductFamilyRequest) (*domain.ProductFamily, error) {
+	if familyID != nil {
+		return uc.repo.GetProductFamilyByID(ctx, businessID, *familyID)
+	}
+
+	if familyReq == nil {
+		return nil, nil
+	}
+
+	isActive := true
+	if familyReq.IsActive != nil {
+		isActive = *familyReq.IsActive
+	}
+
+	family := &domain.ProductFamily{
+		BusinessID:  businessID,
+		Name:        familyReq.Name,
+		Title:       familyReq.Title,
+		Description: familyReq.Description,
+		Slug:        familyReq.Slug,
+		Category:    familyReq.Category,
+		Brand:       familyReq.Brand,
+		ImageURL:    familyReq.ImageURL,
+		Status:      familyReq.Status,
+		IsActive:    isActive,
+		VariantAxes: familyReq.VariantAxes,
+		Metadata:    familyReq.Metadata,
+	}
+
+	if err := uc.repo.CreateProductFamily(ctx, family); err != nil {
+		return nil, fmt.Errorf("error creating product family: %w", err)
+	}
+
+	return family, nil
 }

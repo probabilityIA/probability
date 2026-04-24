@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	apprequest "github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/response"
@@ -31,7 +31,7 @@ func (h *handlers) UpdateMovementType(c *gin.Context) {
 		return
 	}
 
-	dto := dtos.UpdateStockMovementTypeDTO{
+	dto := apprequest.UpdateStockMovementTypeDTO{
 		ID:          uint(id),
 		Name:        req.Name,
 		Description: req.Description,

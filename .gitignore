@@ -81,6 +81,8 @@ probability.pem
 # Claude Code configuration and cache
 .claude
 .claude/
+.codex
+.codex/
 .playwright-mcp/
 .vscode/
 

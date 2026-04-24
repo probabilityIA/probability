@@ -29,6 +29,38 @@ type RepositoryMock struct {
 	UpdateLocationFn        func(ctx context.Context, location *entities.WarehouseLocation) (*entities.WarehouseLocation, error)
 	DeleteLocationFn        func(ctx context.Context, warehouseID, locationID uint) error
 	LocationExistsByCodeFn  func(ctx context.Context, warehouseID uint, code string, excludeID *uint) (bool, error)
+
+	WarehouseExistsFn func(ctx context.Context, businessID, warehouseID uint) (bool, error)
+
+	CreateZoneFn        func(ctx context.Context, zone *entities.WarehouseZone) (*entities.WarehouseZone, error)
+	GetZoneByIDFn       func(ctx context.Context, businessID, zoneID uint) (*entities.WarehouseZone, error)
+	ListZonesFn         func(ctx context.Context, params dtos.ListZonesParams) ([]entities.WarehouseZone, int64, error)
+	UpdateZoneFn        func(ctx context.Context, zone *entities.WarehouseZone) (*entities.WarehouseZone, error)
+	DeleteZoneFn        func(ctx context.Context, businessID, zoneID uint) error
+	ZoneExistsByCodeFn  func(ctx context.Context, warehouseID uint, code string, excludeID *uint) (bool, error)
+
+	CreateAisleFn       func(ctx context.Context, aisle *entities.WarehouseAisle) (*entities.WarehouseAisle, error)
+	GetAisleByIDFn      func(ctx context.Context, businessID, aisleID uint) (*entities.WarehouseAisle, error)
+	ListAislesFn        func(ctx context.Context, params dtos.ListAislesParams) ([]entities.WarehouseAisle, int64, error)
+	UpdateAisleFn       func(ctx context.Context, aisle *entities.WarehouseAisle) (*entities.WarehouseAisle, error)
+	DeleteAisleFn       func(ctx context.Context, businessID, aisleID uint) error
+	AisleExistsByCodeFn func(ctx context.Context, zoneID uint, code string, excludeID *uint) (bool, error)
+
+	CreateRackFn       func(ctx context.Context, rack *entities.WarehouseRack) (*entities.WarehouseRack, error)
+	GetRackByIDFn      func(ctx context.Context, businessID, rackID uint) (*entities.WarehouseRack, error)
+	ListRacksFn        func(ctx context.Context, params dtos.ListRacksParams) ([]entities.WarehouseRack, int64, error)
+	UpdateRackFn       func(ctx context.Context, rack *entities.WarehouseRack) (*entities.WarehouseRack, error)
+	DeleteRackFn       func(ctx context.Context, businessID, rackID uint) error
+	RackExistsByCodeFn func(ctx context.Context, aisleID uint, code string, excludeID *uint) (bool, error)
+
+	CreateRackLevelFn       func(ctx context.Context, level *entities.WarehouseRackLevel) (*entities.WarehouseRackLevel, error)
+	GetRackLevelByIDFn      func(ctx context.Context, businessID, levelID uint) (*entities.WarehouseRackLevel, error)
+	ListRackLevelsFn        func(ctx context.Context, params dtos.ListRackLevelsParams) ([]entities.WarehouseRackLevel, int64, error)
+	UpdateRackLevelFn       func(ctx context.Context, level *entities.WarehouseRackLevel) (*entities.WarehouseRackLevel, error)
+	DeleteRackLevelFn       func(ctx context.Context, businessID, levelID uint) error
+	RackLevelExistsByCodeFn func(ctx context.Context, rackID uint, code string, excludeID *uint) (bool, error)
+
+	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
 }
 
 // --- Implementación de ports.IRepository ---

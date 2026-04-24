@@ -6,6 +6,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -18,7 +19,7 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		// 1. SELECT FOR UPDATE del inventory_level (o crear si no existe)
-		level, err := r.getOrCreateLevelTx(tx, params.ProductID, params.WarehouseID, params.LocationID, params.BusinessID)
+		level, err := r.getOrCreateLevelKeyTx(tx, params.ProductID, params.WarehouseID, params.LocationID, params.LotID, params.StateID, params.BusinessID)
 		if err != nil {
 			return fmt.Errorf("getOrCreateLevelTx: %w", err)
 		}
@@ -43,6 +44,9 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 			ProductID:      params.ProductID,
 			WarehouseID:    params.WarehouseID,
 			LocationID:     params.LocationID,
+			LotID:          params.LotID,
+			ToStateID:      params.StateID,
+			UomID:          params.UomID,
 			BusinessID:     params.BusinessID,
 			MovementTypeID: params.MovementTypeID,
 			Reason:         params.Reason,
@@ -58,9 +62,9 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 		}
 
 		// Construir resultado
-		levelEntity := inventoryLevelModelToEntity(level)
+		levelEntity := mappers.LevelModelToEntity(level)
 		result = dtos.AdjustStockTxResult{
-			Movement:    stockMovementModelToEntity(movement),
+			Movement:    mappers.MovementModelToEntity(movement),
 			NewQuantity: newQty,
 			Level:       levelEntity,
 		}

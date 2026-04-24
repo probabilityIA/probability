@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/request"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/mocks"
@@ -23,7 +23,7 @@ func TestCreateMovementType_Exitoso_RetornaTipoCreado(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.CreateStockMovementTypeDTO{
+	dto := request.CreateStockMovementTypeDTO{
 		Code:        "devoluciones",
 		Name:        "Devoluciones de clientes",
 		Description: "Stock devuelto por clientes",
@@ -60,7 +60,7 @@ func TestCreateMovementType_CodigoYaExiste_RetornaError(t *testing.T) {
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.CreateStockMovementTypeDTO{
+	dto := request.CreateStockMovementTypeDTO{
 		Code:      "inbound",
 		Name:      "Entrada duplicada",
 		Direction: "in",
@@ -100,7 +100,7 @@ func TestUpdateMovementType_TipoExiste_ActualizaCampos(t *testing.T) {
 	uc := buildUseCase(repo, nil, nil)
 
 	isActive := false
-	dto := dtos.UpdateStockMovementTypeDTO{
+	dto := request.UpdateStockMovementTypeDTO{
 		ID:          5,
 		Name:        "Ajuste actualizado",
 		Description: "Nueva descripcion",
@@ -151,7 +151,7 @@ func TestUpdateMovementType_CamposVacios_NoModifica(t *testing.T) {
 	uc := buildUseCase(repo, nil, nil)
 
 	// DTO con campos vacíos: no debe modificar los valores existentes
-	dto := dtos.UpdateStockMovementTypeDTO{
+	dto := request.UpdateStockMovementTypeDTO{
 		ID:       5,
 		Name:     "",        // vacío -> no cambiar
 		IsActive: nil,       // nil -> no cambiar
@@ -182,7 +182,7 @@ func TestUpdateMovementType_TipoNoExiste_RetornaErrMovementTypeNotFound(t *testi
 	}
 	uc := buildUseCase(repo, nil, nil)
 
-	dto := dtos.UpdateStockMovementTypeDTO{
+	dto := request.UpdateStockMovementTypeDTO{
 		ID:   999,
 		Name: "Inexistente",
 	}

@@ -6,53 +6,39 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 )
 
-// AddProductIntegration asocia un producto con una integración
 func (uc *UseCaseProduct) AddProductIntegration(ctx context.Context, businessID uint, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
-	// Validar que el producto existe y pertenece al negocio
 	product, err := uc.repo.GetProductByID(ctx, businessID, productID)
 	if err != nil {
 		return nil, err
 	}
-
-	// Agregar la integración (el repositorio valida que pertenezca al mismo negocio)
-	integration, err := uc.repo.AddProductIntegration(
-		ctx,
-		product.ID,
-		req.IntegrationID,
-		req.ExternalProductID,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return integration, nil
+	return uc.repo.AddProductIntegration(ctx, product.ID, req.IntegrationID, req.ExternalProductID, req.ExternalVariantID, req.ExternalSKU, req.ExternalBarcode)
 }
 
-// RemoveProductIntegration remueve la asociación entre un producto y una integración
+func (uc *UseCaseProduct) UpdateProductIntegration(ctx context.Context, businessID uint, productID string, integrationID uint, req *domain.UpdateProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
+	if _, err := uc.repo.GetProductByID(ctx, businessID, productID); err != nil {
+		return nil, err
+	}
+	return uc.repo.UpdateProductIntegration(ctx, productID, integrationID, req)
+}
+
 func (uc *UseCaseProduct) RemoveProductIntegration(ctx context.Context, businessID uint, productID string, integrationID uint) error {
-	// Validar que el producto existe y pertenece al negocio
-	_, err := uc.repo.GetProductByID(ctx, businessID, productID)
-	if err != nil {
+	if _, err := uc.repo.GetProductByID(ctx, businessID, productID); err != nil {
 		return err
 	}
-
-	// Remover la integración
 	return uc.repo.RemoveProductIntegration(ctx, productID, integrationID)
 }
 
-// GetProductIntegrations obtiene todas las integraciones asociadas a un producto
 func (uc *UseCaseProduct) GetProductIntegrations(ctx context.Context, businessID uint, productID string) ([]domain.ProductBusinessIntegration, error) {
-	// Validar que el producto existe y pertenece al negocio
-	_, err := uc.repo.GetProductByID(ctx, businessID, productID)
-	if err != nil {
+	if _, err := uc.repo.GetProductByID(ctx, businessID, productID); err != nil {
 		return nil, err
 	}
-
-	// Obtener las integraciones
 	return uc.repo.GetProductIntegrations(ctx, productID)
 }
 
-// GetProductsByIntegration obtiene todos los productos asociados a una integración
 func (uc *UseCaseProduct) GetProductsByIntegration(ctx context.Context, integrationID uint) ([]domain.Product, error) {
 	return uc.repo.GetProductsByIntegration(ctx, integrationID)
+}
+
+func (uc *UseCaseProduct) LookupProductByExternalRef(ctx context.Context, businessID uint, integrationID uint, externalVariantID, externalSKU, externalProductID, externalBarcode *string) (*domain.Product, error) {
+	return uc.repo.LookupProductByExternalRef(ctx, businessID, integrationID, externalVariantID, externalSKU, externalProductID, externalBarcode)
 }

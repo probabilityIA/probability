@@ -14,12 +14,6 @@ import (
 
 const queueName = rabbitmq.QueueOrdersToInventory
 
-// ============================================
-// STRUCTS LOCALES REPLICADOS
-// (No importar del módulo orders — aislamiento)
-// ============================================
-
-// orderEventMessage replica la estructura de OrderEventMessage del módulo orders
 type orderEventMessage struct {
 	EventID       string                 `json:"event_id"`
 	EventType     string                 `json:"event_type"`
@@ -28,11 +22,10 @@ type orderEventMessage struct {
 	IntegrationID *uint                  `json:"integration_id"`
 	Timestamp     time.Time              `json:"timestamp"`
 	Order         *orderSnapshot         `json:"order"`
-	Changes       map[string]interface{} `json:"changes,omitempty"`
-	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	Changes       map[string]any `json:"changes,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
-// orderSnapshot replica OrderSnapshot del módulo orders
 type orderSnapshot struct {
 	ID                  string              `json:"id"`
 	OrderNumber         string              `json:"order_number"`
@@ -46,21 +39,25 @@ type orderSnapshot struct {
 	CreatedAt           time.Time           `json:"created_at"`
 }
 
-// orderItemSnapshot replica OrderItemSnapshot del módulo orders
 type orderItemSnapshot struct {
 	ProductID *string `json:"product_id,omitempty"`
 	SKU       string  `json:"sku"`
 	Quantity  int     `json:"quantity"`
 }
 
-// OrderConsumer consume eventos de órdenes desde RabbitMQ para mover inventario
+type inventoryFeedbackMessage struct {
+	OrderID    string `json:"order_id"`
+	BusinessID uint   `json:"business_id"`
+	Success    bool   `json:"success"`
+	EventType  string `json:"event_type"`
+}
+
 type OrderConsumer struct {
 	queue  rabbitmq.IQueue
 	uc     app.IUseCase
 	logger log.ILogger
 }
 
-// NewOrderConsumer crea un nuevo consumer de eventos de órdenes
 func NewOrderConsumer(queue rabbitmq.IQueue, uc app.IUseCase, logger log.ILogger) *OrderConsumer {
 	return &OrderConsumer{
 		queue:  queue,
@@ -69,17 +66,19 @@ func NewOrderConsumer(queue rabbitmq.IQueue, uc app.IUseCase, logger log.ILogger
 	}
 }
 
-// Start inicia el consumer en una goroutine
 func (c *OrderConsumer) Start(ctx context.Context) {
 	if c.queue == nil {
 		c.logger.Warn(ctx).Msg("RabbitMQ not available, inventory order consumer disabled")
 		return
 	}
 
-	// Declarar la cola (ya debería estar creada por orders/bundle.go, pero por seguridad)
 	if err := c.queue.DeclareQueue(queueName, true); err != nil {
 		c.logger.Error(ctx).Err(err).Msg("Failed to declare inventory queue")
 		return
+	}
+
+	if err := c.queue.DeclareQueue(rabbitmq.QueueInventoryOrderFeedback, true); err != nil {
+		c.logger.Error(ctx).Err(err).Msg("Failed to declare inventory feedback queue")
 	}
 
 	c.logger.Info(ctx).Str("queue", queueName).Msg("Starting inventory order consumer")
@@ -87,7 +86,7 @@ func (c *OrderConsumer) Start(ctx context.Context) {
 	go func() {
 		err := c.queue.Consume(ctx, queueName, func(body []byte) error {
 			c.handleMessage(ctx, body)
-			return nil // Siempre ACK — best-effort
+			return nil
 		})
 		if err != nil {
 			c.logger.Error(ctx).Err(err).Msg("Inventory order consumer stopped with error")
@@ -95,7 +94,6 @@ func (c *OrderConsumer) Start(ctx context.Context) {
 	}()
 }
 
-// handleMessage procesa un mensaje de evento de orden
 func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 	var msg orderEventMessage
 	if err := json.Unmarshal(body, &msg); err != nil {
@@ -108,10 +106,14 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 		return
 	}
 
-	// Extraer items con ProductID
 	items := c.extractItems(msg.Order.Items)
 	if len(items) == 0 {
-		return // Sin items con ProductID -> nada que hacer
+		c.logger.Warn(ctx).
+			Str("event_type", msg.EventType).
+			Str("order_id", msg.OrderID).
+			Int("raw_items", len(msg.Order.Items)).
+			Msg("No trackable items in order event, skipping inventory")
+		return
 	}
 
 	businessID := uint(0)
@@ -145,9 +147,6 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 
 	case "order.status_changed":
 		c.handleStatusChanged(ctx, msg, businessID, items)
-
-	default:
-		// Eventos no relevantes para inventario
 	}
 }
 
@@ -155,12 +154,26 @@ func (c *OrderConsumer) handleReserve(ctx context.Context, msg orderEventMessage
 	result, err := c.uc.ReserveStockForOrder(ctx, msg.OrderID, businessID, msg.Order.WarehouseID, items)
 	if err != nil {
 		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to reserve stock")
+		c.publishFeedback(msg.OrderID, businessID, false)
 		return
 	}
+
+	allSufficient := true
+	for _, item := range result.ItemResults {
+		if !item.Sufficient {
+			allSufficient = false
+			break
+		}
+	}
+
 	c.logger.Info(ctx).
 		Str("order_id", msg.OrderID).
-		Bool("success", result.Success).
-		Msg("Stock reserved for order")
+		Bool("all_sufficient", allSufficient).
+		Msg("Stock reserve result for order")
+
+	if !allSufficient {
+		c.publishFeedback(msg.OrderID, businessID, false)
+	}
 }
 
 func (c *OrderConsumer) handleRelease(ctx context.Context, msg orderEventMessage, businessID uint, items []dtos.OrderInventoryItem) {
@@ -199,7 +212,6 @@ func (c *OrderConsumer) handleReturn(ctx context.Context, msg orderEventMessage,
 		Msg("Stock returned for refunded order")
 }
 
-// handleStatusChanged routea cambios de status a la acción correcta
 func (c *OrderConsumer) handleStatusChanged(ctx context.Context, msg orderEventMessage, businessID uint, items []dtos.OrderInventoryItem) {
 	currentStatus, _ := msg.Changes["current_status"].(string)
 	if currentStatus == "" {
@@ -218,15 +230,56 @@ func (c *OrderConsumer) handleStatusChanged(ctx context.Context, msg orderEventM
 	}
 }
 
-// extractItems convierte items del snapshot a DTOs de inventario
-// Solo incluye items que tienen ProductID (necesario para mover inventario)
+func (c *OrderConsumer) publishFeedback(orderID string, businessID uint, success bool) {
+	if c.queue == nil {
+		return
+	}
+
+	eventType := "inventory.reserved"
+	if !success {
+		eventType = "inventory.insufficient"
+	}
+
+	msg := inventoryFeedbackMessage{
+		OrderID:    orderID,
+		BusinessID: businessID,
+		Success:    success,
+		EventType:  eventType,
+	}
+
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+
+	go func() {
+		_ = c.queue.Publish(context.Background(), rabbitmq.QueueInventoryOrderFeedback, body)
+	}()
+}
+
 func (c *OrderConsumer) extractItems(snapshotItems []orderItemSnapshot) []dtos.OrderInventoryItem {
 	var items []dtos.OrderInventoryItem
-	for _, si := range snapshotItems {
+	for i, si := range snapshotItems {
+		productIDStr := ""
+		if si.ProductID != nil {
+			productIDStr = *si.ProductID
+		}
 		if si.ProductID == nil || *si.ProductID == "" {
+			c.logger.Warn(context.Background()).
+				Int("item_index", i).
+				Str("sku", si.SKU).
+				Int("quantity", si.Quantity).
+				Str("product_id", productIDStr).
+				Msg("Item skipped: product_id is nil or empty")
 			continue
 		}
 		if si.Quantity <= 0 {
+			c.logger.Warn(context.Background()).
+				Int("item_index", i).
+				Str("sku", si.SKU).
+				Str("product_id", productIDStr).
+				Int("quantity", si.Quantity).
+				Msg("Item skipped: quantity is zero or negative")
 			continue
 		}
 		items = append(items, dtos.OrderInventoryItem{

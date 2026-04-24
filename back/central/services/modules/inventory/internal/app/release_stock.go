@@ -3,26 +3,23 @@ package app
 import (
 	"context"
 
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app/response"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 )
 
-// ReleaseStockForOrder libera reservas cuando una orden es cancelada.
-// ReservedQty -= qty, AvailableQty += qty.
-func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
-	// Resolver warehouse
+func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error) {
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Obtener movement type
 	movTypeID, err := uc.repo.GetMovementTypeIDByCode(ctx, "release")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get release movement type")
 		return nil, err
 	}
 
-	result := &dtos.OrderStockResult{
+	result := &response.OrderStockResult{
 		OrderID:     orderID,
 		BusinessID:  businessID,
 		WarehouseID: whID,
@@ -30,13 +27,12 @@ func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, bus
 	}
 
 	for _, item := range items {
-		itemResult := dtos.ItemStockResult{
+		itemResult := response.ItemStockResult{
 			ProductID: item.ProductID,
 			SKU:       item.SKU,
 			Requested: item.Quantity,
 		}
 
-		// Verificar producto y tracking
 		_, _, trackInventory, err := uc.repo.GetProductByID(ctx, item.ProductID, businessID)
 		if err != nil {
 			itemResult.ErrorMessage = "producto no encontrado"
@@ -50,7 +46,6 @@ func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, bus
 			continue
 		}
 
-		// Ejecutar liberación transaccional
 		err = uc.repo.ReleaseStockTx(ctx, dtos.ReleaseTxParams{
 			ProductID:      item.ProductID,
 			WarehouseID:    whID,
@@ -70,11 +65,9 @@ func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, bus
 		itemResult.Sufficient = true
 		result.ItemResults = append(result.ItemResults, itemResult)
 
-		// Actualizar stock total del producto (best-effort)
 		uc.updateProductTotalStock(ctx, item.ProductID, businessID)
 	}
 
-	// Publicar evento
 	uc.publishEvent(ctx, "inventory.released", orderID, businessID, whID, result)
 
 	return result, nil

@@ -89,19 +89,25 @@ func MapVTEXOrderToProbability(order *domain.VTEXOrder, rawJSON []byte) *canonic
 			detailURL = &item.DetailURL
 		}
 
+		var externalBarcode *string
+		if item.EANID != "" {
+			externalBarcode = &item.EANID
+		}
+
 		dto.OrderItems = append(dto.OrderItems, canonical.ProbabilityOrderItemDTO{
-			ProductID:    &productID,
-			ProductSKU:   item.RefID,
-			ProductName:  item.Name,
-			ProductTitle: item.SKUName,
-			VariantID:    &skuID,
-			Quantity:     item.Quantity,
-			UnitPrice:    unitPrice,
-			TotalPrice:   totalPrice,
-			Currency:     currency,
-			Tax:          itemTax,
-			ImageURL:     imageURL,
-			ProductURL:   detailURL,
+			ProductID:       &productID,
+			ProductSKU:      item.RefID,
+			ProductName:     item.Name,
+			ProductTitle:    item.SKUName,
+			VariantID:       &skuID,
+			ExternalBarcode: externalBarcode,
+			Quantity:        item.Quantity,
+			UnitPrice:       unitPrice,
+			TotalPrice:      totalPrice,
+			Currency:        currency,
+			Tax:             itemTax,
+			ImageURL:        imageURL,
+			ProductURL:      detailURL,
 		})
 	}
 
