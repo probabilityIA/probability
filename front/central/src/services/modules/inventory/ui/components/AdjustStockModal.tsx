@@ -18,7 +18,7 @@ interface ProductOption {
 }
 
 interface AdjustStockModalProps {
-    warehouseId: number;
+    warehouseId?: number;
     businessId?: number;
     productId?: string;
     onSuccess: () => void;
@@ -26,7 +26,7 @@ interface AdjustStockModalProps {
 }
 
 export default function AdjustStockModal({ warehouseId, businessId, productId, onSuccess, onClose }: AdjustStockModalProps) {
-    const [selectedWarehouseId, setSelectedWarehouseId] = useState<number>(warehouseId);
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState<number>(warehouseId ?? 0);
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
     const [searchName, setSearchName] = useState('');
