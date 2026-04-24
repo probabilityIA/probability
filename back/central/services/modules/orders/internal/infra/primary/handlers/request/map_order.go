@@ -21,15 +21,15 @@ type MapOrder struct {
 	InternalNumber string `json:"internal_number" binding:"max=128"`
 
 	// Información financiera
-	Subtotal     float64  `json:"subtotal" binding:"required,min=0"`
-	Tax          float64  `json:"tax" binding:"min=0"`
-	Discount     float64  `json:"discount" binding:"min=0"`
+	Subtotal                    float64  `json:"subtotal" binding:"required,min=0"`
+	Tax                         float64  `json:"tax" binding:"min=0"`
+	Discount                    float64  `json:"discount" binding:"min=0"`
 	ShippingCost                float64  `json:"shipping_cost" binding:"min=0"`
 	ShippingDiscount            float64  `json:"shipping_discount" binding:"min=0"`
 	ShippingDiscountPresentment float64  `json:"shipping_discount_presentment,omitempty"`
 	TotalAmount                 float64  `json:"total_amount" binding:"required,min=0"`
-	Currency     string   `json:"currency" binding:"max=10"`
-	CodTotal     *float64 `json:"cod_total"`
+	Currency                    string   `json:"currency" binding:"max=10"`
+	CodTotal                    *float64 `json:"cod_total"`
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
@@ -96,15 +96,16 @@ type MapOrder struct {
 
 // MapOrderItem representa un item de la orden en HTTP
 type MapOrderItem struct {
-	ProductID    *string  `json:"product_id"`
-	ProductSKU   string   `json:"product_sku" binding:"required,max=128"`
-	ProductName  string   `json:"product_name" binding:"required,max=255"`
-	ProductTitle string   `json:"product_title" binding:"max=255"`
-	VariantID    *string  `json:"variant_id"`
-	Quantity     int      `json:"quantity" binding:"required,min=1"`
-	UnitPrice    float64  `json:"unit_price" binding:"required,min=0"`
-	TotalPrice   float64  `json:"total_price" binding:"required,min=0"`
-	Currency     string   `json:"currency" binding:"max=10"`
+	ProductID       *string  `json:"product_id"`
+	ProductSKU      string   `json:"product_sku" binding:"required,max=128"`
+	ProductName     string   `json:"product_name" binding:"required,max=255"`
+	ProductTitle    string   `json:"product_title" binding:"max=255"`
+	VariantID       *string  `json:"variant_id"`
+	ExternalBarcode *string  `json:"external_barcode"`
+	Quantity        int      `json:"quantity" binding:"required,min=1"`
+	UnitPrice       float64  `json:"unit_price" binding:"required,min=0"`
+	TotalPrice      float64  `json:"total_price" binding:"required,min=0"`
+	Currency        string   `json:"currency" binding:"max=10"`
 	Discount        float64  `json:"discount" binding:"min=0"`
 	DiscountPercent float64  `json:"discount_percent" binding:"min=0"`
 	Tax             float64  `json:"tax" binding:"min=0"`

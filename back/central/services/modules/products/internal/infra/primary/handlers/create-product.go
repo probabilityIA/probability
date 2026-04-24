@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,10 +48,37 @@ func (h *Handlers) CreateProduct(c *gin.Context) {
 	product, err := h.uc.CreateProduct(c.Request.Context(), &req)
 	if err != nil {
 		// Verificar si es un error de duplicado
-		if err == domain.ErrProductAlreadyExists {
+		if errors.Is(err, domain.ErrProductAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"success": false,
 				"message": "Producto ya existe",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrVariantAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{
+				"success": false,
+				"message": "Ya existe una variante con esos atributos en la familia",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrProductFamilyNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "Familia de producto no encontrada",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrInvalidProductData) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "Datos de variante inválidos",
 				"error":   err.Error(),
 			})
 			return

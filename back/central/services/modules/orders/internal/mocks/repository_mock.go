@@ -3,6 +3,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"github.com/stretchr/testify/mock"
 )
@@ -157,8 +158,21 @@ func (m *RepositoryMock) GetProductBySKU(ctx context.Context, businessID uint, s
 	return args.Get(0).(*entities.Product), args.Error(1)
 }
 
+func (m *RepositoryMock) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+	args := m.Called(ctx, businessID, integrationID, item)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.Product), args.Error(1)
+}
+
 func (m *RepositoryMock) CreateProduct(ctx context.Context, product *entities.Product) error {
 	args := m.Called(ctx, product)
+	return args.Error(0)
+}
+
+func (m *RepositoryMock) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
+	args := m.Called(ctx, productID, businessID, integrationID, item)
 	return args.Error(0)
 }
 

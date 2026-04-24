@@ -74,22 +74,23 @@ type ProbabilityOrderDTO struct {
 }
 
 type ProbabilityOrderItemDTO struct {
-	ProductID    *string
-	ProductSKU   string
-	ProductName  string
-	ProductTitle string
-	VariantID    *string
-	Quantity     int
-	UnitPrice    float64
-	TotalPrice   float64
-	Currency     string
-	Discount     float64
-	Tax          float64
-	TaxRate      *float64
-	ImageURL     *string
-	ProductURL   *string
-	Weight       *float64
-	Metadata     []byte
+	ProductID       *string
+	ProductSKU      string
+	ProductName     string
+	ProductTitle    string
+	VariantID       *string
+	ExternalBarcode *string
+	Quantity        int
+	UnitPrice       float64
+	TotalPrice      float64
+	Currency        string
+	Discount        float64
+	Tax             float64
+	TaxRate         *float64
+	ImageURL        *string
+	ProductURL      *string
+	Weight          *float64
+	Metadata        []byte
 
 	// Precios en moneda presentment
 	UnitPricePresentment  float64

@@ -59,7 +59,9 @@ type IRepository interface {
 
 	// Products
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
+	ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)
 	CreateProduct(ctx context.Context, product *entities.Product) error
+	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error
 	UpdateProductPrice(ctx context.Context, productID string, price float64) error
 
 	// Clients

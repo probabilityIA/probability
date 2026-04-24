@@ -20,7 +20,10 @@ type ProductBusinessIntegration struct {
 
 	// ID del producto en el sistema externo de la integración
 	// Por ejemplo: el product_id de Shopify, el item_id de Mercado Libre, etc.
-	ExternalProductID string `gorm:"size:255;not null;index"`
+	ExternalProductID string  `gorm:"size:255;not null;index"`
+	ExternalVariantID *string `gorm:"size:255;index"`
+	ExternalSKU       *string `gorm:"size:255;index"`
+	ExternalBarcode   *string `gorm:"size:255;index"`
 
 	// Relaciones
 	Product     Product     `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

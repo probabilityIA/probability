@@ -56,22 +56,23 @@ type SerializableProbabilityOrderDTO struct {
 }
 
 type SerializableOrderItemDTO struct {
-	ProductID    *string         `json:"product_id"`
-	ProductSKU   string          `json:"product_sku"`
-	ProductName  string          `json:"product_name"`
-	ProductTitle string          `json:"product_title"`
-	VariantID    *string         `json:"variant_id"`
-	Quantity     int             `json:"quantity"`
-	UnitPrice    float64         `json:"unit_price"`
-	TotalPrice   float64         `json:"total_price"`
-	Currency     string          `json:"currency"`
-	Discount     float64         `json:"discount"`
-	Tax          float64         `json:"tax"`
-	TaxRate      *float64        `json:"tax_rate"`
-	ImageURL     *string         `json:"image_url"`
-	ProductURL   *string         `json:"product_url"`
-	Weight       *float64        `json:"weight"`
-	Metadata     json.RawMessage `json:"metadata,omitempty"`
+	ProductID       *string         `json:"product_id"`
+	ProductSKU      string          `json:"product_sku"`
+	ProductName     string          `json:"product_name"`
+	ProductTitle    string          `json:"product_title"`
+	VariantID       *string         `json:"variant_id"`
+	ExternalBarcode *string         `json:"external_barcode"`
+	Quantity        int             `json:"quantity"`
+	UnitPrice       float64         `json:"unit_price"`
+	TotalPrice      float64         `json:"total_price"`
+	Currency        string          `json:"currency"`
+	Discount        float64         `json:"discount"`
+	Tax             float64         `json:"tax"`
+	TaxRate         *float64        `json:"tax_rate"`
+	ImageURL        *string         `json:"image_url"`
+	ProductURL      *string         `json:"product_url"`
+	Weight          *float64        `json:"weight"`
+	Metadata        json.RawMessage `json:"metadata,omitempty"`
 }
 
 type SerializableAddressDTO struct {

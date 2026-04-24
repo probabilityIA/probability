@@ -12,15 +12,16 @@ import (
 // rawItemJSON es el formato de cada item dentro del campo JSONB items de la orden manual.
 // Ejemplos: {"sku":"PT01015","name":"Colágeno","price":64918,"quantity":1}
 type rawItemJSON struct {
-	SKU        string   `json:"sku"`
-	Name       string   `json:"name"`
-	Price      float64  `json:"price"`
-	Quantity   int      `json:"quantity"`
-	Tax        float64  `json:"tax"`
-	TaxRate    *float64 `json:"tax_rate"`
-	Discount   float64  `json:"discount"`
-	ProductID  *string  `json:"product_id"`
-	VariantID  *string  `json:"variant_id"`
+	SKU             string   `json:"sku"`
+	Name            string   `json:"name"`
+	Price           float64  `json:"price"`
+	Quantity        int      `json:"quantity"`
+	Tax             float64  `json:"tax"`
+	TaxRate         *float64 `json:"tax_rate"`
+	Discount        float64  `json:"discount"`
+	ProductID       *string  `json:"product_id"`
+	VariantID       *string  `json:"variant_id"`
+	ExternalBarcode *string  `json:"external_barcode"`
 }
 
 // CreateManualOrder crea una orden manual pasando por el pipeline completo de MapAndSaveOrder.
@@ -251,6 +252,7 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 					ProductSKU:      raw.SKU,
 					ProductName:     raw.Name,
 					VariantID:       raw.VariantID,
+					ExternalBarcode: raw.ExternalBarcode,
 					Quantity:        raw.Quantity,
 					UnitPrice:       raw.Price,
 					TotalPrice:      totalPrice,

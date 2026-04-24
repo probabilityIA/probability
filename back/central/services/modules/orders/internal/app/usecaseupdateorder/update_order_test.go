@@ -33,7 +33,9 @@ type mockRepository struct {
 	CreateShipmentsFn                                    func(ctx context.Context, shipments []*entities.ProbabilityShipment) error
 	CreateChannelMetadataFn                              func(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error
 	GetProductBySKUFn                                    func(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
+	ResolveProductForOrderItemFn                         func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)
 	CreateProductFn                                      func(ctx context.Context, product *entities.Product) error
+	UpsertProductIntegrationMappingFn                    func(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error
 	GetClientByEmailFn                                   func(ctx context.Context, businessID uint, email string) (*entities.Client, error)
 	GetClientByDNIFn                                     func(ctx context.Context, businessID uint, dni string) (*entities.Client, error)
 	CreateClientFn                                       func(ctx context.Context, client *entities.Client) error
@@ -168,9 +170,21 @@ func (m *mockRepository) GetProductBySKU(ctx context.Context, businessID uint, s
 	}
 	return nil, nil
 }
+func (m *mockRepository) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+	if m.ResolveProductForOrderItemFn != nil {
+		return m.ResolveProductForOrderItemFn(ctx, businessID, integrationID, item)
+	}
+	return nil, nil
+}
 func (m *mockRepository) CreateProduct(ctx context.Context, product *entities.Product) error {
 	if m.CreateProductFn != nil {
 		return m.CreateProductFn(ctx, product)
+	}
+	return nil
+}
+func (m *mockRepository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) error {
+	if m.UpsertProductIntegrationMappingFn != nil {
+		return m.UpsertProductIntegrationMappingFn(ctx, productID, businessID, integrationID, item)
 	}
 	return nil
 }
@@ -237,13 +251,13 @@ func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([
 
 // Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {
-	PublishOrderCreatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderUpdatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderCancelledFn        func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderStatusChangedFn    func(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error
-	PublishConfirmationRequestedFn func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderEventFn                    func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
-	PublishGuideNotificationRequestedFn    func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderCreatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderUpdatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderCancelledFn             func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderStatusChangedFn         func(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error
+	PublishConfirmationRequestedFn      func(ctx context.Context, order *entities.ProbabilityOrder) error
+	PublishOrderEventFn                 func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+	PublishGuideNotificationRequestedFn func(ctx context.Context, order *entities.ProbabilityOrder) error
 }
 
 func (m *mockRabbitPublisher) PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error {
@@ -346,7 +360,6 @@ func (m *mockLogger) With() zerolog.Context {
 func (m *mockLogger) WithService(service string) log.ILogger     { return m }
 func (m *mockLogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLogger) WithBusinessID(businessID uint) log.ILogger { return m }
-
 
 func newTestUpdateUseCase(
 	repo *mockRepository,

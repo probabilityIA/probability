@@ -3,13 +3,11 @@ package domain
 import "errors"
 
 var (
-	// ErrProductNotFound se retorna cuando un producto no existe
-	ErrProductNotFound = errors.New("product not found")
-
-	// ErrProductAlreadyExists se retorna cuando un producto con el mismo SKU ya existe
-	ErrProductAlreadyExists = errors.New("product with this SKU already exists for this business")
-
-	// ErrInvalidProductData se retorna cuando los datos del producto son inválidos
-	ErrInvalidProductData = errors.New("invalid product data")
+	ErrProductNotFound            = errors.New("product not found")
+	ErrProductAlreadyExists       = errors.New("product with this SKU already exists for this business")
+	ErrInvalidProductData         = errors.New("invalid product data")
+	ErrProductFamilyNotFound      = errors.New("product family not found")
+	ErrVariantAlreadyExists       = errors.New("product variant with the same attributes already exists for this family")
+	ErrProductIntegrationNotFound = errors.New("product integration mapping not found")
+	ErrFamilyHasActiveVariants    = errors.New("cannot delete family with active variants")
 )
-

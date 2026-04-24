@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -55,7 +56,7 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 	// Llamar al caso de uso (valida que el producto pertenezca al negocio)
 	product, err := h.uc.UpdateProduct(c.Request.Context(), businessID, id, &req)
 	if err != nil {
-		if err == domain.ErrProductNotFound {
+		if errors.Is(err, domain.ErrProductNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "Producto no encontrado",
@@ -64,10 +65,37 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 			return
 		}
 
-		if err == domain.ErrProductAlreadyExists {
+		if errors.Is(err, domain.ErrProductAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"success": false,
 				"message": "Producto con este SKU ya existe",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrVariantAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{
+				"success": false,
+				"message": "Ya existe una variante con esos atributos en la familia",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrProductFamilyNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "Familia de producto no encontrada",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		if errors.Is(err, domain.ErrInvalidProductData) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "Datos de variante inválidos",
 				"error":   err.Error(),
 			})
 			return
