@@ -304,7 +304,7 @@ func (r *Repository) GetProductFamilyByID(ctx context.Context, businessID uint, 
 		Model(&models.ProductFamily{}).
 		Select("product_families.*, COUNT(products.id) AS variant_count").
 		Joins("LEFT JOIN products ON products.family_id = product_families.id AND products.deleted_at IS NULL").
-		Where("id = ? AND business_id = ?", familyID, businessID).
+		Where("product_families.id = ? AND product_families.business_id = ?", familyID, businessID).
 		Group("product_families.id").
 		First(&family).Error
 
