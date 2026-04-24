@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+
 import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import InventoryLevelList from './InventoryLevelList';
 import StockMovementList from './StockMovementList';
