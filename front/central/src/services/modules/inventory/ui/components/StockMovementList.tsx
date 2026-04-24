@@ -15,15 +15,44 @@ interface StockMovementListProps {
 const DIRECTION_STYLES: Record<string, { bg: string; text: string; prefix: string }> = {
     in: { bg: 'bg-green-100', text: 'text-green-800', prefix: '+' },
     out: { bg: 'bg-red-100', text: 'text-red-800', prefix: '-' },
-    neutral: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100 dark:text-gray-100', prefix: '' },
+    reserve: { bg: 'bg-blue-100', text: 'text-blue-800', prefix: '' },
+    release: { bg: 'bg-amber-100', text: 'text-amber-800', prefix: '' },
+    confirm: { bg: 'bg-red-100', text: 'text-red-800', prefix: '-' },
+    neutral: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-100', prefix: '' },
 };
 
 function getDirectionFromCode(code: string): string {
-    const inCodes = ['inbound', 'return', 'adjustment_in'];
+    const inCodes = ['inbound', 'return_stock', 'adjustment_in'];
     const outCodes = ['outbound', 'sale', 'adjustment_out'];
     if (inCodes.includes(code)) return 'in';
     if (outCodes.includes(code)) return 'out';
+    if (code === 'reserve') return 'reserve';
+    if (code === 'release') return 'release';
+    if (code === 'confirm_sale') return 'confirm';
     return 'neutral';
+}
+
+interface ParsedNotes {
+    reserved: number | null;
+    availPrev: number | null;
+    availNew: number | null;
+    confirmed: number | null;
+    rsvReleased: number | null;
+}
+
+function parseMovementNotes(notes: string): ParsedNotes {
+    const rsvMatch = notes?.match(/Reservado:\s*(-?\d+)/i);
+    const liberadoMatch = notes?.match(/Liberado:\s*(-?\d+)/i);
+    const dispMatch = notes?.match(/Disponible:\s*(\d+)\s*->\s*(\d+)/i);
+    const confirmedMatch = notes?.match(/Confirmado:\s*(\d+)/i);
+    const rsvReleasedMatch = notes?.match(/Reserva liberada:\s*(\d+)/i);
+    return {
+        reserved: rsvMatch ? parseInt(rsvMatch[1], 10) : null,
+        availPrev: dispMatch ? parseInt(dispMatch[1], 10) : null,
+        availNew: dispMatch ? parseInt(dispMatch[2], 10) : null,
+        confirmed: confirmedMatch ? parseInt(confirmedMatch[1], 10) : null,
+        rsvReleased: rsvReleasedMatch ? parseInt(rsvReleasedMatch[1], 10) : (liberadoMatch ? parseInt(liberadoMatch[1], 10) : null),
+    };
 }
 
 export default function StockMovementList({ warehouseId, selectedBusinessId, onRefreshRef }: StockMovementListProps) {
@@ -73,13 +102,18 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
         { key: 'product', label: 'Producto' },
         { key: 'type', label: 'Tipo', align: 'center' as const },
         { key: 'quantity', label: 'Cantidad', align: 'center' as const },
-        { key: 'before_after', label: 'Antes / Después', align: 'center' as const },
+        { key: 'before_after', label: 'Stock Total', align: 'center' as const },
+        { key: 'reserved_info', label: 'Reservado / Disponible', align: 'center' as const },
         { key: 'reason', label: 'Razón' },
     ];
 
     const renderRow = (movement: StockMovement) => {
         const direction = getDirectionFromCode(movement.movement_type_code);
         const style = DIRECTION_STYLES[direction] || DIRECTION_STYLES.neutral;
+        const isReservation = movement.movement_type_code === 'reserve';
+        const isRelease = movement.movement_type_code === 'release';
+        const isConfirmSale = movement.movement_type_code === 'confirm_sale';
+        const parsed = (isReservation || isRelease || isConfirmSale) ? parseMovementNotes(movement.notes || '') : null;
 
         return {
             date: (
@@ -109,8 +143,12 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
                 </div>
             ),
             quantity: (
-                <span className={`text-sm font-semibold ${direction === 'in' ? 'text-green-700' : direction === 'out' ? 'text-red-700' : 'text-gray-700 dark:text-gray-200'}`}>
-                    {style.prefix}{Math.abs(movement.quantity)}
+                <span className={`text-sm font-semibold ${direction === 'in' ? 'text-green-700' : direction === 'out' || direction === 'confirm' ? 'text-red-700' : 'text-gray-700 dark:text-gray-200'}`}>
+                    {isReservation || isRelease ? (
+                        <span className="text-gray-400 dark:text-gray-500 text-xs">—</span>
+                    ) : (
+                        <>{style.prefix}{Math.abs(movement.quantity)}</>
+                    )}
                 </span>
             ),
             before_after: (
@@ -118,12 +156,42 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
                     {movement.previous_qty} &rarr; {movement.new_qty}
                 </span>
             ),
+            reserved_info: (() => {
+                if (!parsed) return <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>;
+
+                if (isConfirmSale && parsed.rsvReleased !== null) {
+                    return (
+                        <div className="flex flex-col items-center gap-0.5">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">
+                                -{parsed.rsvReleased} rsv
+                            </span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">liberado</span>
+                        </div>
+                    );
+                }
+
+                if ((isReservation || isRelease) && (parsed.reserved !== null || parsed.availPrev !== null)) {
+                    return (
+                        <div className="flex flex-col items-center gap-0.5">
+                            {parsed.reserved !== null && (
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${isReservation ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>
+                                    {isReservation ? '+' : '-'}{Math.abs(parsed.reserved)} rsv
+                                </span>
+                            )}
+                            {parsed.availPrev !== null && parsed.availNew !== null && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    disp: {parsed.availPrev} &rarr; {parsed.availNew}
+                                </span>
+                            )}
+                        </div>
+                    );
+                }
+
+                return <span className="text-gray-300 dark:text-gray-600 text-xs">—</span>;
+            })(),
             reason: (
                 <div>
                     <span className="text-sm text-gray-700 dark:text-gray-200">{movement.reason}</span>
-                    {movement.notes && (
-                        <span className="block text-xs text-gray-400 dark:text-gray-500 truncate max-w-[200px]">{movement.notes}</span>
-                    )}
                 </div>
             ),
         };

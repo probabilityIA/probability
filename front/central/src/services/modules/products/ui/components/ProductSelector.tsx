@@ -60,7 +60,7 @@ export default function ProductSelector({
     const handleAdd = (product: Product) => {
         const alreadySelected = selectedProducts.find(p => p.id === product.id);
         if (!alreadySelected) {
-            onSelect([...selectedProducts, product]);
+            onSelect([...selectedProducts, { ...product, quantity: product.quantity || 1 }]);
         }
         setShowResults(false);
         setSearchTerm('');

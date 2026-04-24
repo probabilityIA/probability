@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Modal } from '@/shared/ui';
 import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import ProductFamilyList, { ProductFamilyListHandle } from '@/services/modules/products/ui/components/ProductFamilyList';
 import ProductFamilyForm from '@/services/modules/products/ui/components/ProductFamilyForm';
+import ProductTour from '@/services/modules/products/ui/components/ProductTour';
 import { Product, ProductFamily } from '@/services/modules/products/domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
@@ -28,6 +29,16 @@ export default function ProductsPage() {
     const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
     const [selectedFamily, setSelectedFamily] = useState<ProductFamily | undefined>(undefined);
     const familyListRef = useRef<ProductFamilyListHandle>(null);
+
+    const [isTourOpen, setIsTourOpen] = useState(false);
+    const [pulseTour, setPulseTour] = useState(false);
+
+    useEffect(() => {
+        try {
+            const seen = localStorage.getItem('products_tour_seen_v1');
+            if (!seen) setPulseTour(true);
+        } catch {}
+    }, []);
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
@@ -148,6 +159,16 @@ export default function ProductsPage() {
                                 </div>
                             )}
                             <div className="flex gap-3 flex-shrink-0">
+                                <button
+                                    onClick={() => { setIsTourOpen(true); setPulseTour(false); }}
+                                    title={pulseTour ? '¡Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
+                                    className={`p-3 rounded-lg border-2 transition-all duration-300 text-[#7c3aed] dark:text-[#a855f7] border-[#7c3aed]/40 hover:border-[#7c3aed] bg-white dark:bg-gray-700 shadow-sm hover:shadow-md ${pulseTour ? 'animate-pulse' : ''}`}
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                    </svg>
+                                </button>
                                 <button
                                     onClick={handleRefresh}
                                     className="group px-6 py-3 bg-white dark:bg-gray-700 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] text-[#7c3aed] dark:text-[#a855f7] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md flex items-center gap-2 whitespace-nowrap"
@@ -289,6 +310,8 @@ export default function ProductsPage() {
                     />
                 </div>
             </Modal>
+
+            <ProductTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
         </div>
     );
 }

@@ -73,7 +73,7 @@ function LotsSection({ hook, businessId }: { hook: ReturnType<typeof useLots>; b
     const formatDate = (iso: string | null) => (iso ? format(new Date(iso), 'dd/MM/yyyy') : '—');
     const daysUntil = (iso: string | null) => {
         if (!iso) return null;
-        return Math.ceil((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        return Math.ceil((new Date(iso).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
     };
 
     const statusStyles: Record<string, string> = {

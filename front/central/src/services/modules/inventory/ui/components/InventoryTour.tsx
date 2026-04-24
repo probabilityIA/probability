@@ -169,16 +169,6 @@ export default function InventoryTour({ isOpen, onClose, initialStep = 0 }: Prop
         if (isOpen) setCurrentStep(initialStep);
     }, [isOpen, initialStep]);
 
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isOpen) handleClose();
-            if (e.key === 'ArrowRight' && isOpen) next();
-            if (e.key === 'ArrowLeft' && isOpen) prev();
-        };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [isOpen, currentStep]);
-
     const handleClose = () => {
         try { localStorage.setItem(STORAGE_KEY, 'true'); } catch {}
         onClose();
@@ -192,6 +182,16 @@ export default function InventoryTour({ isOpen, onClose, initialStep = 0 }: Prop
     const prev = () => {
         if (currentStep > 0) setCurrentStep(currentStep - 1);
     };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isOpen) handleClose();
+            if (e.key === 'ArrowRight' && isOpen) next();
+            if (e.key === 'ArrowLeft' && isOpen) prev();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, currentStep]);
 
     if (!isOpen) return null;
 

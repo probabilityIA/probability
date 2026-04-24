@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -47,20 +46,18 @@ export const DashboardPanel = ({ isDark }: DashboardPanelProps) => {
   ];
 
   // Calcular métricas
-  const metrics = useMemo(() => {
-    const totalOrders = ordersByStatusData.reduce((sum, item) => sum + item.orders, 0);
-    const totalRevenue = totalOrders * 285000; // Promedio $285k por orden
-    const avgOrderValue = totalRevenue / totalOrders;
-    const last7DaysTotal = last7DaysData.reduce((sum, item) => sum + item.orders, 0);
-    const avgDaily = Math.round(last7DaysTotal / 7);
+  const totalOrders = ordersByStatusData.reduce((sum, item) => sum + item.orders, 0);
+  const totalRevenue = totalOrders * 285000;
+  const avgOrderValue = totalRevenue / totalOrders;
+  const last7DaysTotal = last7DaysData.reduce((sum, item) => sum + item.orders, 0);
+  const avgDaily = Math.round(last7DaysTotal / 7);
 
-    return {
-      totalOrders,
-      totalRevenue,
-      avgOrderValue,
-      avgDaily,
-    };
-  }, []);
+  const metrics = {
+    totalOrders,
+    totalRevenue,
+    avgOrderValue,
+    avgDaily,
+  };
 
   const colors = {
     text: isDark ? '#ffffff' : '#1a1a2e',

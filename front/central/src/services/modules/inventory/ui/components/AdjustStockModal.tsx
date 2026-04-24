@@ -72,7 +72,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         (async () => {
             try {
                 const r = await getLocationsAction(warehouseId, businessId);
-                setLocations(r.data || r || []);
+                setLocations(r || []);
             } catch { setLocations([]); }
         })();
     }, [warehouseId, businessId]);

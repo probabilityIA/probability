@@ -61,10 +61,10 @@ type ProbabilityOrder struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
-	// Información de pago
-	PaymentMethodID uint
-	IsPaid          bool
-	PaidAt          *time.Time
+	PaymentMethodID   uint
+	PaymentMethodName string
+	IsPaid            bool
+	PaidAt            *time.Time
 
 	// Información de envío/logística
 	TrackingNumber      *string

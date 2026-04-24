@@ -70,6 +70,7 @@ export interface Product {
     manage_stock: boolean;
     track_inventory: boolean;
     allow_backorder?: boolean;
+    quantity?: number;
     low_stock_threshold?: number;
 
     weight?: number;

@@ -72,8 +72,8 @@ export default function MapGLComponent({ data, height = 500, onDepartmentMapChan
         };
 
         data.forEach(item => {
-            let state = item.fullName.split(', ')[1] || item.fullName;
-            let upperState = normalizeDepartment(state);
+            const state = item.fullName.split(', ')[1] || item.fullName;
+            const upperState = normalizeDepartment(state);
 
             if (map.has(upperState)) {
                 const current = map.get(upperState)!;

@@ -184,6 +184,7 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		ShippingLat:             o.ShippingLat,
 		ShippingLng:             o.ShippingLng,
 		PaymentMethodID:         o.PaymentMethodID,
+		PaymentMethodName:       o.PaymentMethod.Name,
 		IsPaid:                  o.IsPaid,
 		PaidAt:                  o.PaidAt,
 		TrackingNumber:          o.TrackingNumber,

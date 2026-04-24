@@ -52,6 +52,9 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		ShippingLng:         order.ShippingLng,
 		ItemsSummary:        BuildItemsSummary(order.OrderItems),
 		ShippingAddress:     BuildShippingAddress(order),
+		PaymentMethodName:   order.PaymentMethodName,
+		TrackingNumber:      derefString(order.TrackingNumber),
+		Carrier:             extractCarrier(order),
 		IsPaid:              order.IsPaid,
 		DeliveryProbability: derefFloat64(order.DeliveryProbability),
 		Status:              order.Status,
@@ -172,4 +175,18 @@ func derefFloat64(p *float64) float64 {
 		return 0
 	}
 	return *p
+}
+
+func derefString(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
+func extractCarrier(order *entities.ProbabilityOrder) string {
+	if len(order.Shipments) > 0 && order.Shipments[0].Carrier != nil {
+		return *order.Shipments[0].Carrier
+	}
+	return ""
 }

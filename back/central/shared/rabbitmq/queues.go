@@ -132,6 +132,8 @@ const (
 
 const (
 	QueueInventoryBulkLoad = "inventory.bulk_load.requests"
+
+	QueueInventoryOrderFeedback = "inventory.orders.feedback"
 )
 
 const (

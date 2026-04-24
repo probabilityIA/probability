@@ -239,6 +239,9 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return nil
 }
+func (m *mockRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
+	return nil
+}
 func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	if m.CreateOrderHistoryFn != nil {
 		return m.CreateOrderHistoryFn(ctx, history)

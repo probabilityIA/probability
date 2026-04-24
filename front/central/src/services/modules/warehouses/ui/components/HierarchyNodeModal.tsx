@@ -15,6 +15,11 @@ import {
 
 export type NodeType = 'zone' | 'aisle' | 'rack' | 'level';
 
+function generateCode(name: string, prefix: string): string {
+    const slug = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 15);
+    return slug || prefix + '-' + Math.random().toString(36).slice(2, 5).toUpperCase();
+}
+
 interface Props {
     warehouseId: number;
     businessId?: number;
@@ -58,29 +63,35 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
         setError(null);
         try {
             let result: { success: boolean; error?: string };
+            const prefixes: Record<NodeType, string> = { zone: 'Z', aisle: 'A', rack: 'R', level: 'L' };
+            const resolvedCode = mode === 'edit'
+                ? form.code
+                : type === 'level'
+                    ? `L-${String(form.ordinal).padStart(2, '0')}`
+                    : generateCode(form.name, prefixes[type]);
             if (type === 'zone') {
                 if (mode === 'create') {
-                    result = await createZoneAction({ warehouse_id: warehouseId, code: form.code, name: form.name, purpose: form.purpose, color_hex: form.color_hex, is_active: form.is_active }, businessId);
+                    result = await createZoneAction({ warehouse_id: warehouseId, code: resolvedCode, name: form.name, purpose: form.purpose, color_hex: form.color_hex, is_active: form.is_active }, businessId);
                 } else {
-                    result = await updateZoneAction(initial!.id, warehouseId, { code: form.code, name: form.name, purpose: form.purpose, color_hex: form.color_hex, is_active: form.is_active }, businessId);
+                    result = await updateZoneAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, purpose: form.purpose, color_hex: form.color_hex, is_active: form.is_active }, businessId);
                 }
             } else if (type === 'aisle') {
                 if (mode === 'create') {
-                    result = await createAisleAction({ zone_id: parentId!, code: form.code, name: form.name, is_active: form.is_active }, warehouseId, businessId);
+                    result = await createAisleAction({ zone_id: parentId!, code: resolvedCode, name: form.name, is_active: form.is_active }, warehouseId, businessId);
                 } else {
-                    result = await updateAisleAction(initial!.id, warehouseId, { code: form.code, name: form.name, is_active: form.is_active }, businessId);
+                    result = await updateAisleAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, is_active: form.is_active }, businessId);
                 }
             } else if (type === 'rack') {
                 if (mode === 'create') {
-                    result = await createRackAction({ aisle_id: parentId!, code: form.code, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, warehouseId, businessId);
+                    result = await createRackAction({ aisle_id: parentId!, code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, warehouseId, businessId);
                 } else {
-                    result = await updateRackAction(initial!.id, warehouseId, { code: form.code, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, businessId);
+                    result = await updateRackAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, businessId);
                 }
             } else {
                 if (mode === 'create') {
-                    result = await createRackLevelAction({ rack_id: parentId!, code: form.code, ordinal: Number(form.ordinal) || 1, is_active: form.is_active }, warehouseId, businessId);
+                    result = await createRackLevelAction({ rack_id: parentId!, code: resolvedCode, ordinal: Number(form.ordinal) || 1, is_active: form.is_active }, warehouseId, businessId);
                 } else {
-                    result = await updateRackLevelAction(initial!.id, warehouseId, { code: form.code, ordinal: Number(form.ordinal) || 1, is_active: form.is_active }, businessId);
+                    result = await updateRackLevelAction(initial!.id, warehouseId, { code: resolvedCode, ordinal: Number(form.ordinal) || 1, is_active: form.is_active }, businessId);
                 }
             }
             if (!result.success) {
@@ -100,31 +111,18 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div className="grid grid-cols-2 gap-4">
+                {type !== 'level' && (
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Codigo *</label>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Nombre *</label>
                         <input
                             type="text"
                             required
-                            value={form.code}
-                            onChange={(e) => handleChange('code', e.target.value.toUpperCase())}
+                            value={form.name}
+                            onChange={(e) => handleChange('name', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500"
-                            placeholder={type === 'zone' ? 'Z-01' : type === 'aisle' ? 'A-01' : type === 'rack' ? 'R-01' : 'L-01'}
                         />
                     </div>
-                    {type !== 'level' && (
-                        <div>
-                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Nombre *</label>
-                            <input
-                                type="text"
-                                required
-                                value={form.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500"
-                            />
-                        </div>
-                    )}
-                </div>
+                )}
 
                 {type === 'zone' && (
                     <div className="grid grid-cols-2 gap-4">

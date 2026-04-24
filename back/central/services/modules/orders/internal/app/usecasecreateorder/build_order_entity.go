@@ -124,7 +124,6 @@ func (uc *UseCaseCreateOrder) assignPaymentMethodID(order *entities.ProbabilityO
 
 // populateOrderFields popula campos planos de dirección desde Addresses
 func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
-	// Popular campos planos de dirección (flat fields)
 	for _, addr := range dto.Addresses {
 		if addr.Type == "shipping" {
 			order.ShippingStreet = addr.Street
@@ -137,8 +136,15 @@ func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrd
 
 			if addr.Street2 != "" {
 				order.ShippingStreet = fmt.Sprintf("%s %s", order.ShippingStreet, addr.Street2)
-				order.Address2 = addr.Street2 // Populate for scoring
+				order.Address2 = addr.Street2
 			}
+			break
+		}
+	}
+
+	for _, ship := range dto.Shipments {
+		if ship.WarehouseID != nil {
+			order.WarehouseID = ship.WarehouseID
 			break
 		}
 	}

@@ -84,7 +84,15 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 		}
 	}
 
-	return uc.repo.CreateOrderItems(ctx, orderItems)
+	if err := uc.repo.CreateOrderItems(ctx, orderItems); err != nil {
+		return err
+	}
+
+	for _, item := range orderItems {
+		order.OrderItems = append(order.OrderItems, *item)
+	}
+
+	return nil
 }
 
 // saveAddresses guarda las direcciones de la orden

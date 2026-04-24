@@ -8,14 +8,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// RepositoryMock es un mock del repositorio de órdenes usando testify/mock
 type RepositoryMock struct {
 	mock.Mock
 }
-
-// ============================================
-// CRUD OPERATIONS
-// ============================================
 
 func (m *RepositoryMock) CreateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	args := m.Called(ctx, order)
@@ -100,10 +95,6 @@ func (m *RepositoryMock) GetPlatformIntegrationIDByBusinessID(ctx context.Contex
 	return args.Get(0).(uint), args.Error(1)
 }
 
-// ============================================
-// VALIDATION
-// ============================================
-
 func (m *RepositoryMock) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {
 	args := m.Called(ctx, externalID, integrationID)
 	return args.Bool(0), args.Error(1)
@@ -116,10 +107,6 @@ func (m *RepositoryMock) GetOrderByExternalID(ctx context.Context, externalID st
 	}
 	return args.Get(0).(*entities.ProbabilityOrder), args.Error(1)
 }
-
-// ============================================
-// TABLAS RELACIONADAS
-// ============================================
 
 func (m *RepositoryMock) CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error {
 	args := m.Called(ctx, items)
@@ -145,10 +132,6 @@ func (m *RepositoryMock) CreateChannelMetadata(ctx context.Context, metadata *en
 	args := m.Called(ctx, metadata)
 	return args.Error(0)
 }
-
-// ============================================
-// CATÁLOGO (VALIDACIÓN)
-// ============================================
 
 func (m *RepositoryMock) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
 	args := m.Called(ctx, businessID, sku)
@@ -207,10 +190,6 @@ func (m *RepositoryMock) CreateOrderError(ctx context.Context, orderError *entit
 	return args.Error(0)
 }
 
-// ============================================
-// CONSULTAS A TABLAS DE ESTADOS
-// ============================================
-
 func (m *RepositoryMock) GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error) {
 	args := m.Called(ctx, integrationTypeID, originalStatus)
 	if args.Get(0) == nil {
@@ -243,9 +222,10 @@ func (m *RepositoryMock) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	return args.Get(0).(*uint), args.Error(1)
 }
 
-// ============================================
-// HISTORIAL DE CAMBIOS DE ESTADO
-// ============================================
+func (m *RepositoryMock) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
+	args := m.Called(ctx, orderID, status, statusID)
+	return args.Error(0)
+}
 
 func (m *RepositoryMock) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	args := m.Called(ctx, history)

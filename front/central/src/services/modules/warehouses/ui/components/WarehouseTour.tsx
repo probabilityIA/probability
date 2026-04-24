@@ -146,17 +146,6 @@ export default function WarehouseTour({ isOpen, onClose }: Props) {
         if (isOpen) setCurrentStep(0);
     }, [isOpen]);
 
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (!isOpen) return;
-            if (e.key === 'Escape') handleClose();
-            if (e.key === 'ArrowRight') next();
-            if (e.key === 'ArrowLeft') prev();
-        };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [isOpen, currentStep]);
-
     const handleClose = () => {
         try { localStorage.setItem(STORAGE_KEY, 'true'); } catch {}
         onClose();
@@ -170,6 +159,17 @@ export default function WarehouseTour({ isOpen, onClose }: Props) {
     const prev = () => {
         if (currentStep > 0) setCurrentStep(currentStep - 1);
     };
+
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (!isOpen) return;
+            if (e.key === 'Escape') handleClose();
+            if (e.key === 'ArrowRight') next();
+            if (e.key === 'ArrowLeft') prev();
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, currentStep]);
 
     if (!isOpen) return null;
 

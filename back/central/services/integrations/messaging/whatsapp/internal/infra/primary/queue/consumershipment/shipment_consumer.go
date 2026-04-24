@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -56,14 +57,13 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		return nil
 	}
 
-	// Build template variables for "guia_envio_generada"
-	// {{1}}=nombre, {{2}}=tienda, {{3}}=numero_pedido, {{4}}=numero_guia, {{5}}=transportadora
 	variables := map[string]string{
 		"1": orDefault(event.CustomerName, "Cliente"),
 		"2": orDefault(event.BusinessName, "Probability"),
 		"3": orDefault(event.OrderNumber, "N/A"),
 		"4": orDefault(event.TrackingNumber, "N/A"),
 		"5": orDefault(event.Carrier, "Transportadora"),
+		"6": formatTotalAmount(event.TotalAmount),
 	}
 
 	businessID := uint(0)
@@ -111,7 +111,6 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	return nil
 }
 
-// orDefault retorna el valor si no está vacío, o el default
 func orDefault(value, defaultValue string) string {
 	if strings.TrimSpace(value) == "" {
 		return defaultValue
@@ -119,7 +118,19 @@ func orDefault(value, defaultValue string) string {
 	return value
 }
 
-// isNonRetryableError determina si un error no debe provocar reencolar el mensaje
+func formatTotalAmount(amount float64) string {
+	intVal := int64(amount)
+	s := fmt.Sprintf("%d", intVal)
+	formatted := ""
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			formatted += "."
+		}
+		formatted += string(c)
+	}
+	return "$" + formatted
+}
+
 func isNonRetryableError(err error) bool {
 	var templateNotFound *whaErrors.ErrTemplateNotFound
 	if errors.As(err, &templateNotFound) {

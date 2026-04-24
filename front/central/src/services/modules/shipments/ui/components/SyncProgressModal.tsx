@@ -324,7 +324,7 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
                                         </div>
                                         {u.rawStatus && u.rawStatus !== STATUS_LABELS[u.newStatus] && (
                                             <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 italic">
-                                                Reporte carrier: "{u.rawStatus}"
+                                                Reporte carrier: &quot;{u.rawStatus}&quot;
                                             </p>
                                         )}
                                     </div>

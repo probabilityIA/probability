@@ -12,7 +12,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// whatsAppConfirmationQueue usa la constante centralizada.
 const whatsAppConfirmationQueue = rabbitmq.QueueOrdersConfirmationRequested
 
 type channelPublisher struct {
@@ -20,7 +19,6 @@ type channelPublisher struct {
 	logger   log.ILogger
 }
 
-// New crea un nuevo ChannelPublisher para publicar a canales destino (WhatsApp, etc.)
 func New(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IChannelPublisher {
 	return &channelPublisher{
 		rabbitMQ: rabbitMQ,
@@ -28,9 +26,7 @@ func New(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IChannelPublisher {
 	}
 }
 
-// PublishToWhatsApp publica un evento a la queue de WhatsApp apropiada según la categoría
 func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	// Route by category
 	switch event.Category {
 	case "shipment":
 		return p.publishShipmentToWhatsApp(ctx, event, config)
@@ -39,21 +35,35 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	}
 }
 
-// publishOrderToWhatsApp publica un evento de orden a la queue de confirmación de WhatsApp
+func eventCodeToTemplateName(eventCode string) string {
+	switch eventCode {
+	case "order.shipped":
+		return "pedido_en_reparto"
+	case "order.delivered":
+		return "pedido_entregado"
+	default:
+		return "confirmacion_pedido_contraentrega"
+	}
+}
+
 func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	payload := map[string]interface{}{
+	templateName := eventCodeToTemplateName(config.EventCode)
+
+	payload := map[string]any{
 		"event_type":        "order.confirmation_requested",
 		"business_id":       event.BusinessID,
 		"integration_id":    event.IntegrationID,
 		"config_id":         config.ID,
 		"notification_type": "whatsapp",
+		"template_name":     templateName,
 	}
 
 	dataFields := []string{
 		"order_id", "order_number", "internal_number", "external_id",
 		"customer_name", "customer_phone", "customer_email",
 		"total_amount", "currency", "platform",
-		"items_summary", "shipping_address", "business_name",
+		"items_summary", "shipping_address", "shipping_city", "shipping_state",
+		"business_name", "payment_method_name", "tracking_number", "carrier",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {
@@ -72,13 +82,12 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 		return fmt.Errorf("%w: WhatsApp queue: %v", domainerrors.ErrPublishFailed, err)
 	}
 
-	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("queue", whatsAppConfirmationQueue).Msg("Evento encolado para WhatsApp")
+	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("template_name", templateName).Str("queue", whatsAppConfirmationQueue).Msg("Evento encolado para WhatsApp")
 	return nil
 }
 
-// publishShipmentToWhatsApp publica un evento de envío a la queue de guía generada para WhatsApp
 func (p *channelPublisher) publishShipmentToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"event_type":        event.Type,
 		"business_id":       event.BusinessID,
 		"integration_id":    event.IntegrationID,
@@ -89,7 +98,7 @@ func (p *channelPublisher) publishShipmentToWhatsApp(ctx context.Context, event 
 	dataFields := []string{
 		"shipment_id", "tracking_number", "label_url", "carrier",
 		"customer_name", "customer_phone", "order_number", "business_name",
-		"correlation_id",
+		"correlation_id", "total_amount",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {
@@ -109,6 +118,6 @@ func (p *channelPublisher) publishShipmentToWhatsApp(ctx context.Context, event 
 		return fmt.Errorf("%w: WhatsApp shipment queue: %v", domainerrors.ErrPublishFailed, err)
 	}
 
-	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("queue", targetQueue).Msg("Evento de envío encolado para WhatsApp")
+	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("queue", targetQueue).Msg("Evento de envio encolado para WhatsApp")
 	return nil
 }

@@ -24,6 +24,7 @@ import { WarehouseTree, TreeZone, TreeAisle, TreeRack, TreeLevel, TreePosition }
 import HierarchyNodeModal, { NodeType } from './HierarchyNodeModal';
 
 type NodeKind = 'zone' | 'aisle' | 'rack' | 'level' | 'position';
+type StructureMode = 'simple' | 'zones' | 'wms';
 
 interface Props {
     businessId?: number;
@@ -52,6 +53,7 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
     const [modal, setModal] = useState<ModalState>(null);
     const [deletingWh, setDeletingWh] = useState<Warehouse | null>(null);
     const [deletingNode, setDeletingNode] = useState<{ warehouseId: number; type: NodeKind; id: number; label: string } | null>(null);
+    const [structureModes, setStructureModes] = useState<Record<number, StructureMode>>({});
 
     const fetchList = useCallback(async () => {
         setLoading(true);
@@ -67,6 +69,15 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
     }, [businessId, search]);
 
     useEffect(() => { fetchList(); }, [fetchList, refreshKey]);
+
+    useEffect(() => {
+        const modes: Record<number, StructureMode> = {};
+        for (const w of warehouses) {
+            const stored = localStorage.getItem(`wh_struct_${w.id}`);
+            modes[w.id] = (stored === 'zones' || stored === 'wms') ? stored : 'simple';
+        }
+        setStructureModes(modes);
+    }, [warehouses]);
 
     const loadTree = useCallback(async (warehouseId: number) => {
         setLoadingTree((p) => ({ ...p, [warehouseId]: true }));
@@ -157,6 +168,7 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                     <th style={{ width: 40 }}></th>
                                     <th>Bodega</th>
                                     <th>Código</th>
+                                    <th>Tipo</th>
                                     <th>Ubicación</th>
                                     <th style={{ minWidth: 220 }}>Jerarquía</th>
                                     <th style={{ textAlign: 'center' }}>Estado</th>
@@ -165,26 +177,33 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                             </thead>
                             <tbody>
                                 {warehouses.length === 0 && !loading && (
-                                    <tr><td colSpan={7} className="text-center py-10 text-gray-400">No hay bodegas registradas</td></tr>
+                                    <tr><td colSpan={8} className="text-center py-10 text-gray-400">No hay bodegas registradas</td></tr>
                                 )}
                                 {warehouses.map((w) => {
-                                    const isOpen = !!expanded[w.id];
+                                    const mode = structureModes[w.id] ?? 'simple';
+                                    const isSimple = mode === 'simple';
+                                    const isOpen = !isSimple && !!expanded[w.id];
                                     const tree = trees[w.id];
                                     const stats = countStats(tree);
                                     return (
                                         <WhRowGroup key={`wh-${w.id}`}>
                                             <tr className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                                 <td className="px-2">
-                                                    <button
-                                                        onClick={() => toggleWh(w)}
-                                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-300"
-                                                        title={isOpen ? 'Contraer' : 'Expandir jerarquía'}
-                                                    >
-                                                        {isOpen ? <ChevronDownIcon className="w-5 h-5" /> : <ChevronRightIcon className="w-5 h-5" />}
-                                                    </button>
+                                                    {isSimple ? (
+                                                        <span className="block w-7 h-7" />
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => toggleWh(w)}
+                                                            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-300"
+                                                            title={isOpen ? 'Contraer' : 'Expandir jerarquía'}
+                                                        >
+                                                            {isOpen ? <ChevronDownIcon className="w-5 h-5" /> : <ChevronRightIcon className="w-5 h-5" />}
+                                                        </button>
+                                                    )}
                                                 </td>
                                                 <td><span className="font-medium text-gray-900 dark:text-white">{w.name}</span></td>
                                                 <td><span className="text-sm font-mono text-gray-600 dark:text-gray-300">{w.code}</span></td>
+                                                <td><StructureBadge mode={mode} /></td>
                                                 <td>
                                                     <div className="text-sm">
                                                         {w.address && <p className="text-gray-900 dark:text-white truncate max-w-[200px]" title={w.address}>{w.address}</p>}
@@ -193,13 +212,17 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    {tree ? (
+                                                    {isSimple ? (
+                                                        <span className="text-gray-400 text-sm">—</span>
+                                                    ) : tree ? (
                                                         <div className="flex items-center gap-2 text-xs">
                                                             <StatPill color="text-indigo-600 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40" label="Z" value={stats.z} />
-                                                            <StatPill color="text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40" label="P" value={stats.a} />
-                                                            <StatPill color="text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/40" label="R" value={stats.r} />
-                                                            <StatPill color="text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40" label="N" value={stats.l} />
-                                                            <StatPill color="text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/40" label="POS" value={stats.p} />
+                                                            <StatPill color="text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40" label={mode === 'zones' ? 'S' : 'P'} value={stats.a} />
+                                                            {mode === 'wms' && <>
+                                                                <StatPill color="text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/40" label="R" value={stats.r} />
+                                                                <StatPill color="text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40" label="N" value={stats.l} />
+                                                                <StatPill color="text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/40" label="POS" value={stats.p} />
+                                                            </>}
                                                         </div>
                                                     ) : (
                                                         <button onClick={() => toggleWh(w)} className="text-xs text-gray-400 hover:text-gray-600 italic">click para cargar</button>
@@ -221,13 +244,14 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                             {isOpen && (
                                                 <tr className="bg-gray-50/60 dark:bg-gray-900/40">
                                                     <td></td>
-                                                    <td colSpan={6} className="p-4">
+                                                    <td colSpan={7} className="p-4">
                                                         {loadingTree[w.id] ? (
                                                             <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando jerarquía...</div>
                                                         ) : tree ? (
                                                             <TreeInline
                                                                 tree={tree}
                                                                 warehouseId={w.id}
+                                                                mode={mode}
                                                                 expandedNodes={expandedNodes}
                                                                 toggleNode={toggleNode}
                                                                 onAdd={(type, parentId) => setModal({ mode: 'create', warehouseId: w.id, type, parentId })}
@@ -291,6 +315,16 @@ function WhRowGroup({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
 }
 
+function StructureBadge({ mode }: { mode: StructureMode }) {
+    const cfg: Record<StructureMode, { label: string; cls: string }> = {
+        simple: { label: 'Simple', cls: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' },
+        zones: { label: 'Con Zonas', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+        wms: { label: 'WMS', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+    };
+    const { label, cls } = cfg[mode];
+    return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>{label}</span>;
+}
+
 function StatPill({ color, label, value }: { color: string; label: string; value: number }) {
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${color} text-xs font-semibold`}>
@@ -300,9 +334,10 @@ function StatPill({ color, label, value }: { color: string; label: string; value
     );
 }
 
-function TreeInline({ tree, warehouseId, expandedNodes, toggleNode, onAdd, onEdit, onDelete }: {
+function TreeInline({ tree, warehouseId, mode, expandedNodes, toggleNode, onAdd, onEdit, onDelete }: {
     tree: WarehouseTree;
     warehouseId: number;
+    mode: StructureMode;
     expandedNodes: Record<string, boolean>;
     toggleNode: (key: string) => void;
     onAdd: (type: NodeType, parentId: number | null) => void;
@@ -314,7 +349,9 @@ function TreeInline({ tree, warehouseId, expandedNodes, toggleNode, onAdd, onEdi
     if (tree.zones.length === 0) {
         return (
             <div className="p-4 text-center bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-700 rounded">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Sin jerarquía configurada.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {mode === 'wms' ? 'Sin jerarquía configurada.' : 'Sin zonas configuradas.'}
+                </p>
                 <button onClick={() => onAdd('zone', null)} className="inline-flex items-center gap-1 px-3 py-1.5 btn-business-primary text-white text-xs rounded-md">
                     <PlusIcon className="w-3.5 h-3.5" /> Crear primera zona
                 </button>
@@ -332,6 +369,7 @@ function TreeInline({ tree, warehouseId, expandedNodes, toggleNode, onAdd, onEdi
 
             {tree.zones.map((z) => {
                 const zKey = key('z', z.id);
+                const isZones = mode === 'zones';
                 const zOpen = expandedNodes[zKey] ?? false;
                 return (
                     <div key={zKey} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
@@ -342,19 +380,39 @@ function TreeInline({ tree, warehouseId, expandedNodes, toggleNode, onAdd, onEdi
                             code={z.code}
                             name={z.name}
                             meta={z.purpose ? `· ${z.purpose}` : ''}
-                            count={`(${z.aisles.length} pasillos)`}
+                            count={isZones ? `(${z.aisles.length} secc.)` : `(${z.aisles.length} pasillos)`}
                             isOpen={zOpen}
                             onToggle={() => toggleNode(zKey)}
                             onAddChild={() => onAdd('aisle', z.id)}
-                            addChildLabel="pasillo"
+                            addChildLabel={isZones ? 'seccion' : 'pasillo'}
                             onEdit={() => onEdit('zone', z.id, z)}
                             onDelete={() => onDelete('zone', z.id, 'zona')}
                         />
                         {zOpen && (
                             <div className="bg-gray-50/40 dark:bg-gray-900/30">
-                                {z.aisles.length === 0 && <div className="pl-10 py-2 text-xs text-gray-400 italic">Sin pasillos</div>}
+                                {z.aisles.length === 0 && (
+                                    <div className="pl-10 py-2 text-xs text-gray-400 italic">
+                                        {isZones ? 'Sin secciones' : 'Sin pasillos'}
+                                    </div>
+                                )}
                                 {z.aisles.map((a) => {
                                     const aKey = key('a', a.id);
+                                    if (isZones) {
+                                        return (
+                                            <Row
+                                                key={aKey}
+                                                depth={1}
+                                                badge="SEC"
+                                                badgeColor="text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-900/40"
+                                                code={a.code}
+                                                name={a.name}
+                                                isOpen={null}
+                                                onToggle={() => {}}
+                                                onEdit={() => onEdit('aisle', a.id, a)}
+                                                onDelete={() => onDelete('aisle', a.id, 'seccion')}
+                                            />
+                                        );
+                                    }
                                     const aOpen = expandedNodes[aKey] ?? false;
                                     return (
                                         <div key={aKey}>
@@ -475,7 +533,7 @@ function Row({
                 {count && <span className="text-xs text-gray-400 ml-auto flex-shrink-0">{count}</span>}
             </div>
 
-            <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                 {onAddChild && addChildLabel && (
                     <button onClick={onAddChild} className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-300" title={`Agregar ${addChildLabel}`}>
                         <PlusIcon className="w-3.5 h-3.5" />
