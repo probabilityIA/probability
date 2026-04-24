@@ -7,3 +7,6 @@ export { default as InventoryManager } from './components/InventoryManager';
 export { default as ProductInventoryView } from './components/ProductInventoryView';
 export { default as WarehouseInventoryView } from './components/WarehouseInventoryView';
 export { default as InventoryAnalyticsView } from './components/InventoryAnalyticsView';
+export { default as MovementsByProductView } from './components/MovementsByProductView';
+export { default as MovementsByWarehouseView } from './components/MovementsByWarehouseView';
+export { default as MovementsByFamilyView } from './components/MovementsByFamilyView';
