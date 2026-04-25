@@ -256,8 +256,10 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "") || "11001000";
 
                 const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
+                const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0);
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
+                    totalCost: guideTotalCost,
                     myShipmentReference: "Orden " + (order.internal_number || order.order_number),
                     external_order_id: order.order_number,
                     order_uuid: order.id,

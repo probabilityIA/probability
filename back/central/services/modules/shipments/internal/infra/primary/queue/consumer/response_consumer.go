@@ -222,6 +222,22 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
 
+			if !response.IsTest && shipment.TotalCost != nil && *shipment.TotalCost > 0 && businessID != 0 {
+				if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber); err != nil {
+					c.log.Error(ctx).Err(err).
+						Uint("business_id", businessID).
+						Float64("amount", *shipment.TotalCost).
+						Str("tracking_number", trackingNumber).
+						Msg("Failed to debit wallet for guide")
+				} else {
+					c.log.Info(ctx).
+						Uint("business_id", businessID).
+						Float64("amount", *shipment.TotalCost).
+						Str("tracking_number", trackingNumber).
+						Msg("Wallet debited for guide")
+				}
+			}
+
 			// Sync guide_link, tracking_number, and carrier to the order immediately
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
 				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber, carrier); err != nil {

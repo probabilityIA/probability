@@ -8,7 +8,7 @@ import { Input, Button, Stepper } from "@/shared/ui";
 import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
-import { getWalletBalanceAction, debitForGuideAction } from "@/services/modules/wallet/infra/actions";
+import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
 import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
@@ -411,26 +411,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setTrackingNumber(data.tracking_number);
                 if (data.carrier) setSelectedCarrier(data.carrier);
 
-                // Debit from wallet for async guide generation
                 if (selectedRate) {
                     const insuranceCost = step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
                     const totalCost = selectedRate.flete + insuranceCost;
-                    const debitResponse = await debitForGuideAction(totalCost, data.tracking_number, order?.business_id);
-                    if (debitResponse.success) {
-                        // Update wallet balance
-                        const balanceResponse = await getWalletBalanceAction();
-                        if (balanceResponse.success && balanceResponse.data) {
-                            setWalletBalance(balanceResponse.data.Balance);
-                        }
-                        // Show success message with carrier from selectedRate (since backend carrier not reliable yet)
-                        const carrierName = (selectedRate?.carrier || data.carrier) ?? null;
-                        if (carrierName) setSelectedCarrier(carrierName);
-                        const carrierText = carrierName ? ` con ${carrierName}` : '';
-                        setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
-                    } else {
-                        console.warn('Warning: Could not debit wallet:', debitResponse.error);
-                        // Don't fail the entire flow, just warn the user
+                    const balanceResponse = await getWalletBalanceAction();
+                    if (balanceResponse.success && balanceResponse.data) {
+                        setWalletBalance(balanceResponse.data.Balance);
                     }
+                    const carrierName = (selectedRate?.carrier || data.carrier) ?? null;
+                    if (carrierName) setSelectedCarrier(carrierName);
+                    const carrierText = carrierName ? ` con ${carrierName}` : '';
+                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
                 }
 
                 // Fallback to selectedRate.carrier if data.carrier is empty
@@ -772,24 +763,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setTrackingNumber(tracker);
                 if (carrier) setSelectedCarrier(carrier);
 
-                // Debit from wallet
-                const debitResponse = await debitForGuideAction(totalCost, tracker, order?.business_id);
-                if (debitResponse.success) {
-                    // Update wallet balance
-                    const balanceResponse = await getWalletBalanceAction();
-                    if (balanceResponse.success && balanceResponse.data) {
-                        setWalletBalance(balanceResponse.data.Balance);
-                    }
-                    // Show success message
-                    const carrier = (response.data?.data as any)?.carrier;
-                    const carrierText = carrier ? ` con ${carrier}` : '';
-                    if (carrier) setSelectedCarrier(carrier);
-                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
-                } else {
-                    console.warn('Warning: Could not debit wallet:', debitResponse.error);
-                    // Don't fail the entire flow, just warn the user
-                    setError(`Guía generada pero hubo un problema al descontar de la billetera: ${debitResponse.error}`);
+                const balanceResponse = await getWalletBalanceAction();
+                if (balanceResponse.success && balanceResponse.data) {
+                    setWalletBalance(balanceResponse.data.Balance);
                 }
+                const syncCarrier = (response.data?.data as any)?.carrier;
+                const carrierText = syncCarrier ? ` con ${syncCarrier}` : '';
+                if (syncCarrier) setSelectedCarrier(syncCarrier);
+                setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
 
                 if (onGuideGenerated && tracker) {
                     onGuideGenerated({
