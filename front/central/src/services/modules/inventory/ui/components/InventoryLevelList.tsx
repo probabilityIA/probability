@@ -83,6 +83,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
 
     const columns = [
         { key: 'product', label: 'Producto' },
+        { key: 'nivel', label: 'Nivel / Ubicacion' },
         { key: 'quantity', label: 'Cantidad', align: 'center' as const },
         { key: 'reserved', label: 'Reservado', align: 'center' as const },
         { key: 'available', label: 'Disponible', align: 'center' as const },
@@ -98,7 +99,22 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 {level.product_sku && (
                     <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.product_sku}</span>
                 )}
+                {level.state_name && (
+                    <span className="inline-flex mt-0.5 items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300">
+                        {level.state_name}
+                    </span>
+                )}
             </div>
+        ),
+        nivel: level.location_name ? (
+            <div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{level.location_name}</span>
+                {level.location_code && (
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.location_code}</span>
+                )}
+            </div>
+        ) : (
+            <span className="text-xs text-gray-400 dark:text-gray-500">General</span>
         ),
         quantity: (
             <span className="text-sm font-medium text-gray-900 dark:text-white">{level.quantity}</span>
@@ -215,6 +231,21 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                         },
                     }}
                 />
+                {!loading && levels.length > 0 && (() => {
+                    const totalQty = levels.reduce((s, l) => s + l.quantity, 0);
+                    const totalReserved = levels.reduce((s, l) => s + l.reserved_qty, 0);
+                    const totalAvailable = levels.reduce((s, l) => s + l.available_qty, 0);
+                    const colCount = columns.length;
+                    return (
+                        <div className="border-t-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50 px-4 py-2 flex items-center gap-6 text-sm">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300 mr-2">Total</span>
+                            <span className="text-gray-500 dark:text-gray-400">Cantidad: <span className="font-bold text-gray-900 dark:text-white">{totalQty}</span></span>
+                            <span className="text-gray-500 dark:text-gray-400">Reservado: <span className={`font-bold ${totalReserved > 0 ? 'text-orange-600' : 'text-gray-900 dark:text-white'}`}>{totalReserved}</span></span>
+                            <span className="text-gray-500 dark:text-gray-400">Disponible: <span className="font-bold text-gray-900 dark:text-white">{totalAvailable}</span></span>
+                            {colCount > 0 && <span className="ml-auto text-xs text-gray-400">{levels.length} {levels.length === 1 ? 'registro' : 'registros'}</span>}
+                        </div>
+                    );
+                })()}
             </div>
         </div>
     );

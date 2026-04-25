@@ -6,6 +6,7 @@ import { StockMovement } from '../../domain/types';
 import { ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Spinner } from '@/shared/ui';
 import MovementsInlineTable from './MovementsInlineTable';
+import { getProductByIdAction } from '@/services/modules/products/infra/actions';
 
 interface Props {
     businessId?: number;
@@ -15,10 +16,16 @@ interface ProductRow {
     id: string;
     name: string;
     sku: string;
+    variant: string;
     count: number;
 }
 
 const CLIENT_PAGE_SIZE = 15;
+
+function formatVariantAttrs(attrs: any): string {
+    if (!attrs || typeof attrs !== 'object') return '';
+    return Object.values(attrs).filter(Boolean).join(' / ');
+}
 
 export default function MovementsByProductView({ businessId }: Props) {
     const [products, setProducts] = useState<ProductRow[]>([]);
@@ -40,13 +47,25 @@ export default function MovementsByProductView({ businessId }: Props) {
             const map = new Map<string, ProductRow>();
             movements.forEach((m) => {
                 if (!map.has(m.product_id)) {
-                    map.set(m.product_id, { id: m.product_id, name: m.product_name || m.product_id, sku: m.product_sku || '', count: 0 });
+                    map.set(m.product_id, { id: m.product_id, name: m.product_name || m.product_id, sku: m.product_sku || '', variant: '', count: 0 });
                 }
                 map.get(m.product_id)!.count++;
             });
 
             const list = Array.from(map.values()).sort((a, b) => b.count - a.count);
-            setProducts(list);
+
+            const withVariants = await Promise.all(
+                list.map(async (row) => {
+                    try {
+                        const prod = await getProductByIdAction(row.id, businessId);
+                        return { ...row, variant: formatVariantAttrs((prod as any)?.data?.variant_attributes) };
+                    } catch {
+                        return row;
+                    }
+                })
+            );
+
+            setProducts(withVariants);
         } finally {
             setLoading(false);
         }
@@ -56,7 +75,7 @@ export default function MovementsByProductView({ businessId }: Props) {
 
     useEffect(() => {
         const q = search.toLowerCase();
-        setFiltered(q ? products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)) : products);
+        setFiltered(q ? products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.variant.toLowerCase().includes(q)) : products);
         setPage(1);
     }, [products, search]);
 
@@ -92,20 +111,27 @@ export default function MovementsByProductView({ businessId }: Props) {
                             <tr>
                                 <th className="text-left">Producto</th>
                                 <th className="text-left">SKU</th>
+                                <th className="text-left">Variante</th>
                                 <th className="text-center">Movimientos</th>
                                 <th className="text-center w-12"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={4} className="py-12 text-center"><div className="flex justify-center items-center gap-3"><div className="spinner"></div><span className="text-sm text-gray-500">Cargando...</span></div></td></tr>
+                                <tr><td colSpan={5} className="py-12 text-center"><div className="flex justify-center items-center gap-3"><div className="spinner"></div><span className="text-sm text-gray-500">Cargando...</span></div></td></tr>
                             ) : paged.length === 0 ? (
-                                <tr><td colSpan={4} className="py-12 text-center text-sm text-gray-500">{search ? 'Sin resultados.' : 'Sin movimientos registrados.'}</td></tr>
+                                <tr><td colSpan={5} className="py-12 text-center text-sm text-gray-500">{search ? 'Sin resultados.' : 'Sin movimientos registrados.'}</td></tr>
                             ) : (
                                 paged.map((p) => (
                                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="font-medium text-gray-900 dark:text-white">{p.name}</td>
                                         <td className="text-sm text-gray-500 font-mono">{p.sku}</td>
+                                        <td className="text-sm text-gray-500">
+                                            {p.variant
+                                                ? <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">{p.variant}</span>
+                                                : <span className="text-gray-300">&mdash;</span>
+                                            }
+                                        </td>
                                         <td className="text-center">
                                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">{p.count}</span>
                                         </td>
@@ -140,7 +166,10 @@ export default function MovementsByProductView({ businessId }: Props) {
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                             <div>
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{selected.name}</h2>
-                                <p className="text-sm text-gray-500 font-mono mt-0.5">{selected.sku}</p>
+                                <p className="text-sm text-gray-500 font-mono mt-0.5">
+                                    {selected.sku}
+                                    {selected.variant && <span className="ml-2 text-gray-400">&bull; {selected.variant}</span>}
+                                </p>
                             </div>
                             <button onClick={() => setSelected(null)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"><XMarkIcon className="w-5 h-5" /></button>
                         </div>

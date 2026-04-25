@@ -11,6 +11,7 @@ func LevelModelToEntity(m *models.InventoryLevel) *entities.InventoryLevel {
 		ProductID:    m.ProductID,
 		WarehouseID:  m.WarehouseID,
 		LocationID:   m.LocationID,
+		StateID:      m.StateID,
 		BusinessID:   m.BusinessID,
 		Quantity:     m.Quantity,
 		ReservedQty:  m.ReservedQty,

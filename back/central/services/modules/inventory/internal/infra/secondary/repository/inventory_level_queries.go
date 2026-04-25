@@ -33,7 +33,6 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 	for i, m := range modelsList {
 		e := mappers.LevelModelToEntity(&m)
 
-		// Enriquecer con nombre de bodega
 		var wh struct {
 			Name string
 			Code string
@@ -41,6 +40,12 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 		r.db.Conn(ctx).Model(&models.Warehouse{}).Select("name, code").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&wh)
 		e.WarehouseName = wh.Name
 		e.WarehouseCode = wh.Code
+
+		if m.StateID != nil {
+			var state struct{ Name string }
+			r.db.Conn(ctx).Table("inventory_states").Select("name").Where("id = ?", *m.StateID).Scan(&state)
+			e.StateName = state.Name
+		}
 
 		levels[i] = *e
 	}
@@ -81,7 +86,6 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 	for i, m := range modelsList {
 		e := mappers.LevelModelToEntity(&m)
 
-		// Enriquecer con nombre del producto
 		var prod struct {
 			Name string
 			SKU  string
@@ -89,6 +93,22 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
 		e.ProductName = prod.Name
 		e.ProductSKU = prod.SKU
+
+		if m.StateID != nil {
+			var state struct{ Name string }
+			r.db.Conn(ctx).Table("inventory_states").Select("name").Where("id = ?", *m.StateID).Scan(&state)
+			e.StateName = state.Name
+		}
+
+		if m.LocationID != nil {
+			var loc struct {
+				Name string
+				Code string
+			}
+			r.db.Conn(ctx).Table("warehouse_locations").Select("name, code").Where("id = ? AND deleted_at IS NULL", *m.LocationID).Scan(&loc)
+			e.LocationName = loc.Name
+			e.LocationCode = loc.Code
+		}
 
 		levels[i] = *e
 	}

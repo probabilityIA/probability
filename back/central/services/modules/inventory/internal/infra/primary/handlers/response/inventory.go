@@ -13,6 +13,7 @@ type InventoryLevelResponse struct {
 	ProductID     string    `json:"product_id"`
 	WarehouseID   uint      `json:"warehouse_id"`
 	LocationID    *uint     `json:"location_id"`
+	StateID       *uint     `json:"state_id"`
 	BusinessID    uint      `json:"business_id"`
 	Quantity      int       `json:"quantity"`
 	ReservedQty   int       `json:"reserved_qty"`
@@ -24,6 +25,9 @@ type InventoryLevelResponse struct {
 	ProductSKU    string    `json:"product_sku,omitempty"`
 	WarehouseName string    `json:"warehouse_name,omitempty"`
 	WarehouseCode string    `json:"warehouse_code,omitempty"`
+	StateName     string    `json:"state_name,omitempty"`
+	LocationName  string    `json:"location_name,omitempty"`
+	LocationCode  string    `json:"location_code,omitempty"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
@@ -117,6 +121,7 @@ func InventoryLevelFromEntity(e *entities.InventoryLevel) InventoryLevelResponse
 		ProductID:     e.ProductID,
 		WarehouseID:   e.WarehouseID,
 		LocationID:    e.LocationID,
+		StateID:       e.StateID,
 		BusinessID:    e.BusinessID,
 		Quantity:      e.Quantity,
 		ReservedQty:   e.ReservedQty,
@@ -128,6 +133,9 @@ func InventoryLevelFromEntity(e *entities.InventoryLevel) InventoryLevelResponse
 		ProductSKU:    e.ProductSKU,
 		WarehouseName: e.WarehouseName,
 		WarehouseCode: e.WarehouseCode,
+		StateName:     e.StateName,
+		LocationName:  e.LocationName,
+		LocationCode:  e.LocationCode,
 		CreatedAt:     e.CreatedAt,
 		UpdatedAt:     e.UpdatedAt,
 	}

@@ -14,6 +14,48 @@ interface ProductRow {
     family?: string;
 }
 
+interface WarehouseSummary {
+    warehouse_id: number;
+    warehouse_name: string;
+    warehouse_code: string;
+    quantity: number;
+    reserved_qty: number;
+    available_qty: number;
+    min_stock: number | null;
+    max_stock: number | null;
+    locations: number;
+    product_id: string;
+}
+
+function aggregateByWarehouse(levels: InventoryLevel[]): WarehouseSummary[] {
+    const map = new Map<number, WarehouseSummary>();
+    for (const l of levels) {
+        const existing = map.get(l.warehouse_id);
+        if (existing) {
+            existing.quantity += l.quantity;
+            existing.reserved_qty += l.reserved_qty;
+            existing.available_qty += l.available_qty;
+            existing.locations += 1;
+            if (l.min_stock != null) existing.min_stock = Math.min(existing.min_stock ?? l.min_stock, l.min_stock);
+            if (l.max_stock != null) existing.max_stock = (existing.max_stock ?? 0) + l.max_stock;
+        } else {
+            map.set(l.warehouse_id, {
+                warehouse_id: l.warehouse_id,
+                warehouse_name: l.warehouse_name || String(l.warehouse_id),
+                warehouse_code: l.warehouse_code || '',
+                quantity: l.quantity,
+                reserved_qty: l.reserved_qty,
+                available_qty: l.available_qty,
+                min_stock: l.min_stock ?? null,
+                max_stock: l.max_stock ?? null,
+                locations: 1,
+                product_id: l.product_id,
+            });
+        }
+    }
+    return Array.from(map.values()).sort((a, b) => b.quantity - a.quantity);
+}
+
 interface ProductInventoryViewProps {
     businessId?: number;
     onAdjust?: (productId: string, warehouseId: number) => void;
@@ -38,7 +80,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
     const [stockCounts, setStockCounts] = useState<Record<string, number | null>>({});
 
     const [selectedProduct, setSelectedProduct] = useState<ProductRow | null>(null);
-    const [levels, setLevels] = useState<InventoryLevel[]>([]);
+    const [warehouses, setWarehouses] = useState<WarehouseSummary[]>([]);
     const [loadingLevels, setLoadingLevels] = useState(false);
     const [modalPage, setModalPage] = useState(1);
 
@@ -60,8 +102,9 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                     rows.map(async (p) => {
                         try {
                             const data = await getProductInventoryAction(p.id, businessId);
-                            const count = Array.isArray(data) ? data.filter((l) => l.quantity > 0).length : 0;
-                            return [p.id, count] as const;
+                            const levels = Array.isArray(data) ? data : [];
+                            const uniqueWarehouses = new Set(levels.filter((l) => l.quantity > 0).map((l) => l.warehouse_id)).size;
+                            return [p.id, uniqueWarehouses] as const;
                         } catch {
                             return [p.id, 0] as const;
                         }
@@ -84,14 +127,15 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
 
     const openModal = async (p: ProductRow) => {
         setSelectedProduct(p);
-        setLevels([]);
+        setWarehouses([]);
         setModalPage(1);
         setLoadingLevels(true);
         try {
             const data = await getProductInventoryAction(p.id, businessId);
-            setLevels(Array.isArray(data) ? data : []);
+            const levels = Array.isArray(data) ? data : [];
+            setWarehouses(aggregateByWarehouse(levels));
         } catch {
-            setLevels([]);
+            setWarehouses([]);
         } finally {
             setLoadingLevels(false);
         }
@@ -99,7 +143,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
 
     const closeModal = () => {
         setSelectedProduct(null);
-        setLevels([]);
+        setWarehouses([]);
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -115,9 +159,8 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
         setPage(1);
     };
 
-    const isLowStock = (l: InventoryLevel) => {
-        if (l.reorder_point != null) return l.available_qty <= l.reorder_point;
-        if (l.min_stock != null) return l.available_qty <= l.min_stock;
+    const isLowStock = (w: WarehouseSummary) => {
+        if (w.min_stock != null) return w.available_qty <= w.min_stock;
         return false;
     };
 
@@ -132,8 +175,8 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
         return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">{count} {count === 1 ? 'bodega' : 'bodegas'}</span>;
     };
 
-    const modalTotalPages = Math.max(1, Math.ceil(levels.length / MODAL_PAGE_SIZE));
-    const pagedLevels = levels.slice((modalPage - 1) * MODAL_PAGE_SIZE, modalPage * MODAL_PAGE_SIZE);
+    const modalTotalPages = Math.max(1, Math.ceil(warehouses.length / MODAL_PAGE_SIZE));
+    const pagedWarehouses = warehouses.slice((modalPage - 1) * MODAL_PAGE_SIZE, modalPage * MODAL_PAGE_SIZE);
 
     return (
         <>
@@ -263,7 +306,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                 <div className="flex justify-center items-center py-16">
                                     <Spinner size="lg" />
                                 </div>
-                            ) : levels.length === 0 ? (
+                            ) : warehouses.length === 0 ? (
                                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-16">
                                     Este producto no tiene stock en ninguna bodega.
                                 </p>
@@ -272,7 +315,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                     <thead>
                                         <tr>
                                             <th className="text-left">Bodega</th>
-                                            <th className="text-center">Cantidad</th>
+                                            <th className="text-center">Total</th>
                                             <th className="text-center">Reservado</th>
                                             <th className="text-center">Disponible</th>
                                             <th className="text-center">Min / Max</th>
@@ -281,22 +324,27 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {pagedLevels.map((l) => (
-                                            <tr key={l.id} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        {pagedWarehouses.map((w) => (
+                                            <tr key={w.warehouse_id} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                                 <td>
-                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">{l.warehouse_name || l.warehouse_id}</span>
-                                                    {l.warehouse_code && <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{l.warehouse_code}</span>}
+                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">{w.warehouse_name}</span>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        {w.warehouse_code && <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{w.warehouse_code}</span>}
+                                                        {w.locations > 1 && (
+                                                            <span className="text-xs text-gray-400 dark:text-gray-500">{w.locations} ubicaciones</span>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="text-center text-sm font-medium text-gray-900 dark:text-white">{l.quantity}</td>
+                                                <td className="text-center text-sm font-medium text-gray-900 dark:text-white">{w.quantity}</td>
                                                 <td className="text-center text-sm">
-                                                    <span className={l.reserved_qty > 0 ? 'text-orange-600 font-medium' : 'text-gray-400 dark:text-gray-500'}>{l.reserved_qty}</span>
+                                                    <span className={w.reserved_qty > 0 ? 'text-orange-600 font-medium' : 'text-gray-400 dark:text-gray-500'}>{w.reserved_qty}</span>
                                                 </td>
-                                                <td className="text-center text-sm font-semibold text-gray-900 dark:text-white">{l.available_qty}</td>
+                                                <td className="text-center text-sm font-semibold text-gray-900 dark:text-white">{w.available_qty}</td>
                                                 <td className="text-center text-xs text-gray-500 dark:text-gray-400">
-                                                    {l.min_stock != null ? l.min_stock : '—'} / {l.max_stock != null ? l.max_stock : '—'}
+                                                    {w.min_stock != null ? w.min_stock : '—'} / {w.max_stock != null ? w.max_stock : '—'}
                                                 </td>
                                                 <td className="text-center">
-                                                    {isLowStock(l) ? (
+                                                    {isLowStock(w) ? (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Stock bajo</span>
                                                     ) : (
                                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">OK</span>
@@ -305,7 +353,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                                 {onAdjust && (
                                                     <td className="text-center">
                                                         <button
-                                                            onClick={() => { onAdjust(l.product_id, l.warehouse_id); closeModal(); }}
+                                                            onClick={() => { onAdjust(w.product_id, w.warehouse_id); closeModal(); }}
                                                             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
                                                             title="Ajustar stock"
                                                         >
@@ -320,7 +368,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                             )}
                         </div>
 
-                        {!loadingLevels && levels.length > MODAL_PAGE_SIZE && (
+                        {!loadingLevels && warehouses.length > MODAL_PAGE_SIZE && (
                             <div className="flex items-center justify-center gap-3 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                                 <button
                                     onClick={() => setModalPage((p) => Math.max(1, p - 1))}
@@ -330,7 +378,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                     &larr; Anterior
                                 </button>
                                 <span className="pagination-info">
-                                    Pagina {modalPage} de {modalTotalPages} ({levels.length} bodegas)
+                                    Pagina {modalPage} de {modalTotalPages} ({warehouses.length} bodegas)
                                 </span>
                                 <button
                                     onClick={() => setModalPage((p) => Math.min(modalTotalPages, p + 1))}
