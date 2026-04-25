@@ -216,3 +216,7 @@ func (m *RepositoryMock) ListShipmentsForSync(ctx context.Context, filter domain
 func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error) {
 	return 0, "", nil
 }
+
+func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string) error {
+	return nil
+}
