@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon, ArrowUpTrayIcon, BuildingStorefrontIcon, CubeIcon } from '@heroicons/react/24/outline';
 import InventoryLevelList from './InventoryLevelList';
+import ProductInventoryView from './ProductInventoryView';
 import StockMovementList from './StockMovementList';
 import AdjustStockModal from './AdjustStockModal';
 import TransferStockModal from './TransferStockModal';
@@ -14,6 +15,7 @@ import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusine
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 
+type StockView = 'warehouse' | 'product';
 type Tab = 'stock' | 'movements';
 type ModalType = 'adjust' | 'transfer' | 'bulk-load' | null;
 
@@ -26,38 +28,31 @@ export default function InventoryManager() {
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null);
     const [loadingWarehouses, setLoadingWarehouses] = useState(false);
 
+    const [stockView, setStockView] = useState<StockView>('warehouse');
     const [activeTab, setActiveTab] = useState<Tab>('stock');
     const [modalType, setModalType] = useState<ModalType>(null);
+    const [adjustProductId, setAdjustProductId] = useState<string | undefined>(undefined);
+    const [adjustWarehouseId, setAdjustWarehouseId] = useState<number | null>(null);
     const [refreshStock, setRefreshStock] = useState<(() => void) | null>(null);
     const [refreshMovements, setRefreshMovements] = useState<(() => void) | null>(null);
+    const [refreshProductView, setRefreshProductView] = useState<(() => void) | null>(null);
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
 
-    // Load warehouses when business changes
     useEffect(() => {
         if (isSuperAdmin && selectedBusinessId === null) {
             setWarehouses([]);
             setSelectedWarehouseId(null);
             return;
         }
-
         const loadWarehouses = async () => {
             setLoadingWarehouses(true);
             try {
-                const response = await getWarehousesAction({
-                    page: 1,
-                    page_size: 100,
-                    is_active: true,
-                    business_id: effectiveBusinessId,
-                });
+                const response = await getWarehousesAction({ page: 1, page_size: 100, is_active: true, business_id: effectiveBusinessId });
                 const whs = response.data || [];
                 setWarehouses(whs);
-                // Auto-select first warehouse
-                if (whs.length > 0) {
-                    setSelectedWarehouseId(whs[0].id);
-                } else {
-                    setSelectedWarehouseId(null);
-                }
+                if (whs.length > 0) setSelectedWarehouseId(whs[0].id);
+                else setSelectedWarehouseId(null);
             } catch {
                 setWarehouses([]);
                 setSelectedWarehouseId(null);
@@ -68,25 +63,41 @@ export default function InventoryManager() {
         loadWarehouses();
     }, [isSuperAdmin, selectedBusinessId, effectiveBusinessId]);
 
-    const handleStockRefreshRef = useCallback((ref: () => void) => {
-        setRefreshStock(() => ref);
-    }, []);
-
-    const handleMovementRefreshRef = useCallback((ref: () => void) => {
-        setRefreshMovements(() => ref);
-    }, []);
+    const handleStockRefreshRef = useCallback((ref: () => void) => { setRefreshStock(() => ref); }, []);
+    const handleMovementRefreshRef = useCallback((ref: () => void) => { setRefreshMovements(() => ref); }, []);
+    const handleProductViewRefreshRef = useCallback((ref: () => void) => { setRefreshProductView(() => ref); }, []);
 
     const handleModalSuccess = () => {
         setModalType(null);
+        setAdjustProductId(undefined);
+        setAdjustWarehouseId(null);
         refreshStock?.();
         refreshMovements?.();
+        refreshProductView?.();
+    };
+
+    const handleAdjustFromProduct = (productId: string, warehouseId: number) => {
+        setAdjustProductId(productId);
+        setAdjustWarehouseId(warehouseId);
+        setModalType('adjust');
     };
 
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
+    const canShowActions = stockView === 'warehouse' ? (selectedWarehouseId && !requiresBusinessSelection) : !requiresBusinessSelection;
+
+    const tabCls = (active: boolean) =>
+        `py-3 px-1 text-sm font-medium border-b-2 transition-colors ${active
+            ? 'border-blue-500 text-blue-600'
+            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'}`;
+
+    const viewBtnCls = (active: boolean) =>
+        `flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${active
+            ? 'bg-teal-700 text-white'
+            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'}`;
+
     return (
         <div className="space-y-4">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Inventario</h1>
@@ -94,13 +105,13 @@ export default function InventoryManager() {
                         Gestiona el stock y movimientos de inventario
                     </p>
                 </div>
-                {selectedWarehouseId && !requiresBusinessSelection && (
+                {canShowActions && (
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => setModalType('bulk-load')}>
                             <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
                             Cargar inventario
                         </Button>
-                        <Button variant="outline" onClick={() => setModalType('adjust')}>
+                        <Button variant="outline" onClick={() => { setAdjustProductId(undefined); setAdjustWarehouseId(null); setModalType('adjust'); }}>
                             <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
                             Ajustar stock
                         </Button>
@@ -112,7 +123,6 @@ export default function InventoryManager() {
                 )}
             </div>
 
-            {/* Selector de negocio para super admin */}
             {isSuperAdmin && (
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
@@ -124,24 +134,18 @@ export default function InventoryManager() {
                     ) : (
                         <select
                             value={selectedBusinessId?.toString() ?? ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setSelectedBusinessId(val ? Number(val) : null);
-                            }}
+                            onChange={(e) => { const val = e.target.value; setSelectedBusinessId(val ? Number(val) : null); }}
                             className="w-full max-w-sm px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                         >
                             <option value="">— Selecciona un negocio —</option>
                             {businesses.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name} (ID: {b.id})
-                                </option>
+                                <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
                             ))}
                         </select>
                     )}
                 </div>
             )}
 
-            {/* Gate: super admin debe seleccionar negocio */}
             {requiresBusinessSelection ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,80 +155,78 @@ export default function InventoryManager() {
                 </div>
             ) : (
                 <>
-                    {/* Selector de bodega */}
-                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Bodega</label>
-                        {loadingWarehouses ? (
-                            <div className="flex items-center gap-2">
-                                <Spinner size="sm" />
-                                <span className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</span>
-                            </div>
-                        ) : warehouses.length === 0 ? (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
-                        ) : (
-                            <select
-                                value={selectedWarehouseId?.toString() ?? ''}
-                                onChange={(e) => setSelectedWarehouseId(e.target.value ? Number(e.target.value) : null)}
-                                className="w-full max-w-sm px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                            >
-                                {warehouses.map((w) => (
-                                    <option key={w.id} value={w.id}>
-                                        {w.name} ({w.code})
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                    </div>
-
-                    {/* Tabs */}
-                    {selectedWarehouseId && (
-                        <>
-                            <div className="border-b border-gray-200 dark:border-gray-700">
-                                <nav className="flex gap-6" aria-label="Tabs">
-                                    <button
-                                        onClick={() => setActiveTab('stock')}
-                                        className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                                            activeTab === 'stock'
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'
-                                        }`}
-                                    >
-                                        Stock
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('movements')}
-                                        className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-                                            activeTab === 'movements'
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'
-                                        }`}
-                                    >
-                                        Movimientos
-                                    </button>
-                                </nav>
-                            </div>
+                    <div className="border-b border-gray-200 dark:border-gray-700">
+                        <nav className="flex items-center gap-6" aria-label="Tabs">
+                            <button onClick={() => setActiveTab('stock')} className={tabCls(activeTab === 'stock')}>Stock</button>
+                            <button onClick={() => setActiveTab('movements')} className={tabCls(activeTab === 'movements')}>Movimientos</button>
 
                             {activeTab === 'stock' && (
+                                <div className="ml-auto flex gap-2 pb-2">
+                                    <button onClick={() => setStockView('warehouse')} className={viewBtnCls(stockView === 'warehouse')}>
+                                        <BuildingStorefrontIcon className="w-4 h-4" />
+                                        Por bodega
+                                    </button>
+                                    <button onClick={() => setStockView('product')} className={viewBtnCls(stockView === 'product')}>
+                                        <CubeIcon className="w-4 h-4" />
+                                        Por producto
+                                    </button>
+                                </div>
+                            )}
+                        </nav>
+                    </div>
+
+                    {activeTab === 'stock' && stockView === 'warehouse' && (
+                        <>
+                            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Bodega</label>
+                                {loadingWarehouses ? (
+                                    <div className="flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        <span className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</span>
+                                    </div>
+                                ) : warehouses.length === 0 ? (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el modulo de Bodegas.</p>
+                                ) : (
+                                    <select
+                                        value={selectedWarehouseId?.toString() ?? ''}
+                                        onChange={(e) => setSelectedWarehouseId(e.target.value ? Number(e.target.value) : null)}
+                                        className="w-full max-w-sm px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                                    >
+                                        {warehouses.map((w) => (
+                                            <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
+                            {selectedWarehouseId && (
                                 <InventoryLevelList
                                     warehouseId={selectedWarehouseId}
                                     selectedBusinessId={effectiveBusinessId}
                                     onRefreshRef={handleStockRefreshRef}
                                 />
                             )}
-
-                            {activeTab === 'movements' && (
-                                <StockMovementList
-                                    warehouseId={selectedWarehouseId}
-                                    selectedBusinessId={effectiveBusinessId}
-                                    onRefreshRef={handleMovementRefreshRef}
-                                />
-                            )}
                         </>
+                    )}
+
+                    {activeTab === 'stock' && stockView === 'product' && (
+                        <ProductInventoryView
+                            businessId={effectiveBusinessId}
+                            onAdjust={handleAdjustFromProduct}
+                            onRefreshRef={handleProductViewRefreshRef}
+                        />
+                    )}
+
+                    {activeTab === 'movements' && (
+                        <StockMovementList
+                            warehouseId={selectedWarehouseId ?? undefined}
+                            selectedBusinessId={effectiveBusinessId}
+                            onRefreshRef={handleMovementRefreshRef}
+                        />
                     )}
                 </>
             )}
 
-            {/* Modals */}
             {modalType === 'bulk-load' && selectedWarehouseId && (
                 <BulkLoadInventoryModal
                     warehouseId={selectedWarehouseId}
@@ -234,12 +236,13 @@ export default function InventoryManager() {
                 />
             )}
 
-            {modalType === 'adjust' && selectedWarehouseId && (
+            {modalType === 'adjust' && (
                 <AdjustStockModal
-                    warehouseId={selectedWarehouseId}
+                    warehouseId={adjustWarehouseId ?? selectedWarehouseId ?? warehouses[0]?.id}
                     businessId={effectiveBusinessId}
+                    productId={adjustProductId}
                     onSuccess={handleModalSuccess}
-                    onClose={() => setModalType(null)}
+                    onClose={() => { setModalType(null); setAdjustProductId(undefined); setAdjustWarehouseId(null); }}
                 />
             )}
 
