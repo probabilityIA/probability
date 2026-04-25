@@ -1,49 +1,69 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getProductsAction } from '@/services/modules/products/infra/actions';
-import { Product } from '@/services/modules/products/domain/types';
+import { getMovementsAction } from '../../infra/actions';
+import { StockMovement } from '../../domain/types';
 import { ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Spinner } from '@/shared/ui';
 import MovementsInlineTable from './MovementsInlineTable';
 
 interface Props {
     businessId?: number;
 }
 
-const PAGE_SIZE = 15;
+interface ProductRow {
+    id: string;
+    name: string;
+    sku: string;
+    count: number;
+}
+
+const CLIENT_PAGE_SIZE = 15;
 
 export default function MovementsByProductView({ businessId }: Props) {
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<ProductRow[]>([]);
+    const [filtered, setFiltered] = useState<ProductRow[]>([]);
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
-    const [totalPages, setTotalPages] = useState(1);
     const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
-    const [selected, setSelected] = useState<Product | null>(null);
+    const [page, setPage] = useState(1);
+    const [selected, setSelected] = useState<ProductRow | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const params: any = { page, page_size: PAGE_SIZE };
+            const params: any = { page: 1, page_size: 500 };
             if (businessId) params.business_id = businessId;
-            if (search) params.search = search;
-            const res = await getProductsAction(params);
-            setProducts((res as any).data ?? []);
-            setTotal((res as any).total ?? 0);
-            setTotalPages((res as any).total_pages ?? 1);
+            const res = await getMovementsAction(params);
+            const movements: StockMovement[] = res.data ?? [];
+
+            const map = new Map<string, ProductRow>();
+            movements.forEach((m) => {
+                if (!map.has(m.product_id)) {
+                    map.set(m.product_id, { id: m.product_id, name: m.product_name || m.product_id, sku: m.product_sku || '', count: 0 });
+                }
+                map.get(m.product_id)!.count++;
+            });
+
+            const list = Array.from(map.values()).sort((a, b) => b.count - a.count);
+            setProducts(list);
         } finally {
             setLoading(false);
         }
-    }, [page, search, businessId]);
+    }, [businessId]);
 
     useEffect(() => { load(); }, [load]);
-    useEffect(() => { setPage(1); }, [search, businessId]);
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        setSearch(searchInput);
-    };
+    useEffect(() => {
+        const q = search.toLowerCase();
+        setFiltered(q ? products.filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)) : products);
+        setPage(1);
+    }, [products, search]);
+
+    const totalPages = Math.ceil(filtered.length / CLIENT_PAGE_SIZE);
+    const paged = filtered.slice((page - 1) * CLIENT_PAGE_SIZE, page * CLIENT_PAGE_SIZE);
+
+    const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setSearch(searchInput); };
 
     return (
         <>
@@ -60,11 +80,7 @@ export default function MovementsByProductView({ businessId }: Props) {
                         Buscar
                     </button>
                     {search && (
-                        <button
-                            type="button"
-                            onClick={() => { setSearch(''); setSearchInput(''); }}
-                            className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
+                        <button type="button" onClick={() => { setSearch(''); setSearchInput(''); }} className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                             Limpiar
                         </button>
                     )}
@@ -76,38 +92,25 @@ export default function MovementsByProductView({ businessId }: Props) {
                             <tr>
                                 <th className="text-left">Producto</th>
                                 <th className="text-left">SKU</th>
-                                <th className="text-left">Familia</th>
+                                <th className="text-center">Movimientos</th>
                                 <th className="text-center w-12"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan={4} className="py-12 text-center">
-                                        <div className="flex justify-center items-center gap-3">
-                                            <div className="spinner"></div>
-                                            <span className="text-sm text-gray-500">Cargando...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : products.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="py-12 text-center text-sm text-gray-500">
-                                        Sin productos.
-                                    </td>
-                                </tr>
+                                <tr><td colSpan={4} className="py-12 text-center"><div className="flex justify-center items-center gap-3"><div className="spinner"></div><span className="text-sm text-gray-500">Cargando...</span></div></td></tr>
+                            ) : paged.length === 0 ? (
+                                <tr><td colSpan={4} className="py-12 text-center text-sm text-gray-500">{search ? 'Sin resultados.' : 'Sin movimientos registrados.'}</td></tr>
                             ) : (
-                                products.map((p) => (
+                                paged.map((p) => (
                                     <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="font-medium text-gray-900 dark:text-white">{p.name}</td>
                                         <td className="text-sm text-gray-500 font-mono">{p.sku}</td>
-                                        <td className="text-sm text-gray-500">{(p as any).family?.name || <span className="text-gray-300">&mdash;</span>}</td>
                                         <td className="text-center">
-                                            <button
-                                                onClick={() => setSelected(p)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                title="Ver movimientos"
-                                            >
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">{p.count}</span>
+                                        </td>
+                                        <td className="text-center">
+                                            <button onClick={() => setSelected(p)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Ver movimientos">
                                                 <ChevronRightIcon className="w-4 h-4" />
                                             </button>
                                         </td>
@@ -120,23 +123,11 @@ export default function MovementsByProductView({ businessId }: Props) {
 
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between px-1">
-                        <span className="text-xs text-gray-500">{total} productos</span>
+                        <span className="text-xs text-gray-500">{filtered.length} productos con movimientos</span>
                         <div className="flex items-center gap-1">
-                            <button
-                                disabled={page <= 1}
-                                onClick={() => setPage((p) => p - 1)}
-                                className="px-3 py-1.5 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Anterior
-                            </button>
+                            <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700">Anterior</button>
                             <span className="text-xs text-gray-600 px-2">{page} / {totalPages}</span>
-                            <button
-                                disabled={page >= totalPages}
-                                onClick={() => setPage((p) => p + 1)}
-                                className="px-3 py-1.5 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Siguiente
-                            </button>
+                            <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700">Siguiente</button>
                         </div>
                     </div>
                 )}
@@ -151,12 +142,7 @@ export default function MovementsByProductView({ businessId }: Props) {
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{selected.name}</h2>
                                 <p className="text-sm text-gray-500 font-mono mt-0.5">{selected.sku}</p>
                             </div>
-                            <button
-                                onClick={() => setSelected(null)}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                <XMarkIcon className="w-5 h-5" />
-                            </button>
+                            <button onClick={() => setSelected(null)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"><XMarkIcon className="w-5 h-5" /></button>
                         </div>
                         <div className="overflow-auto flex-1 p-5">
                             <MovementsInlineTable productId={selected.id} businessId={businessId} />

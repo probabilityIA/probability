@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { BuildingStorefrontIcon, CubeIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
-import { MovementsByProductView, MovementsByWarehouseView, MovementsByFamilyView } from '@/services/modules/inventory/ui';
+import { BuildingStorefrontIcon, CubeIcon, RectangleGroupIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { MovementsByProductView, MovementsByWarehouseView, MovementsByFamilyView, StockMovementList } from '@/services/modules/inventory/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 
-type MovView = 'product' | 'warehouse' | 'family';
+type MovView = 'all' | 'product' | 'warehouse' | 'family';
 
 export default function InventoryMovementsPage() {
     const { isSuperAdmin } = usePermissions();
     const { selectedBusinessId } = useInventoryBusiness();
-    const [view, setView] = useState<MovView>('warehouse');
+    const [view, setView] = useState<MovView>('all');
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
@@ -33,7 +33,11 @@ export default function InventoryMovementsPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                            <button onClick={() => setView('all')} className={viewBtnCls(view === 'all')}>
+                                <ClockIcon className="w-4 h-4" />
+                                Todos
+                            </button>
                             <button onClick={() => setView('warehouse')} className={viewBtnCls(view === 'warehouse')}>
                                 <BuildingStorefrontIcon className="w-4 h-4" />
                                 Por bodega
@@ -48,6 +52,9 @@ export default function InventoryMovementsPage() {
                             </button>
                         </div>
 
+                        {view === 'all' && (
+                            <StockMovementList selectedBusinessId={effectiveBusinessId} />
+                        )}
                         {view === 'warehouse' && (
                             <MovementsByWarehouseView businessId={effectiveBusinessId} />
                         )}
