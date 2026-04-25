@@ -57,6 +57,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 			Tracker          interface{} `json:"tracker"`
 			IDOrder          interface{} `json:"idOrder"`
 			URL              string      `json:"url"`
+			Carrier          string      `json:"carrier"`
 			MyGuideReference string      `json:"myGuideReference"`
 		} `json:"data"`
 	}
@@ -99,6 +100,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 			LabelURL:         raw.Data.URL,
 			MyGuideReference: raw.Data.MyGuideReference,
 			IDOrder:          idOrder,
+			Carrier:          raw.Data.Carrier,
 		},
 	}
 

@@ -270,6 +270,12 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 		return c.errorResponse(request, err.Error())
 	}
 
+	if resp.Data.Carrier == "" {
+		if carrierFromPayload, ok := request.Payload["carrier"].(string); ok && carrierFromPayload != "" {
+			resp.Data.Carrier = carrierFromPayload
+		}
+	}
+
 	return &queue.TransportResponseMessage{
 		ShipmentID:    request.ShipmentID,
 		BusinessID:    request.BusinessID,
