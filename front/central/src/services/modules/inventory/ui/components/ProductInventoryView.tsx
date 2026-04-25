@@ -12,6 +12,9 @@ interface ProductRow {
     name: string;
     sku: string;
     family?: string;
+    familyId?: number;
+    variantLabel?: string;
+    variantAttributes?: any;
 }
 
 interface WarehouseSummary {
@@ -93,7 +96,15 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
             if (skuFilter) params.sku = skuFilter;
             const response = await getProductsAction(params);
             if (response.success && response.data) {
-                const rows = response.data.map((p) => ({ id: p.id, name: p.name, sku: p.sku, family: (p as any).family?.name }));
+                const rows = response.data.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    sku: p.sku,
+                    family: (p as any).family?.name,
+                    familyId: p.family_id,
+                    variantLabel: p.variant_label,
+                    variantAttributes: p.variant_attributes
+                }));
                 setProducts(rows);
                 setTotal((response as any).total ?? rows.length);
                 setTotalPages((response as any).total_pages ?? 1);
@@ -164,6 +175,26 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
         return false;
     };
 
+    const getVariantDisplay = (p: ProductRow) => {
+        if (!p.familyId) {
+            return <span className="text-gray-300 dark:text-gray-600">&mdash;</span>;
+        }
+
+        if (p.variantLabel) {
+            return <span className="text-sm text-gray-700 dark:text-gray-300">{p.variantLabel}</span>;
+        }
+
+        if (p.variantAttributes && typeof p.variantAttributes === 'object') {
+            const attrs = Object.values(p.variantAttributes)
+                .filter(Boolean)
+                .map(String)
+                .join(' - ');
+            return <span className="text-sm text-gray-700 dark:text-gray-300">{attrs || '-'}</span>;
+        }
+
+        return <span className="text-sm text-gray-700 dark:text-gray-300">Variante</span>;
+    };
+
     const renderStockBadge = (productId: string) => {
         const count = stockCounts[productId];
         if (count === undefined) {
@@ -217,16 +248,17 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                         <thead>
                             <tr>
                                 <th className="text-left">Producto</th>
+                                <th className="text-left">Variante</th>
                                 <th className="text-left">Familia</th>
                                 <th className="text-left">SKU</th>
                                 <th className="text-center">Stock</th>
-                                <th className="text-center w-12"></th>
+                                <th className="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loadingProducts ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                         <div className="flex justify-center items-center gap-3">
                                             <div className="spinner"></div>
                                             <span>Cargando...</span>
@@ -235,7 +267,7 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                 </tr>
                             ) : products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                                         No se encontraron productos
                                     </td>
                                 </tr>
@@ -244,9 +276,10 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                                     const hasStock = (stockCounts[p.id] ?? 0) > 0;
                                     return (
                                         <tr key={p.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                            <td className="font-medium text-gray-900 dark:text-white">{p.name}</td>
-                                            <td className="text-sm text-gray-500 dark:text-gray-400">{p.family ?? <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}</td>
-                                            <td className="text-sm text-gray-500 dark:text-gray-400 font-mono">{p.sku}</td>
+                                            <td className="text-left font-medium text-gray-900 dark:text-white">{p.name}</td>
+                                            <td className="text-left text-sm text-gray-500 dark:text-gray-400">{getVariantDisplay(p)}</td>
+                                            <td className="text-left text-sm text-gray-500 dark:text-gray-400">{p.family ?? <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}</td>
+                                            <td className="text-left text-sm text-gray-500 dark:text-gray-400 font-mono">{p.sku}</td>
                                             <td className="text-center">{renderStockBadge(p.id)}</td>
                                             <td className="text-center">
                                                 {hasStock && (

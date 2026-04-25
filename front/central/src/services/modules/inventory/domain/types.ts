@@ -16,7 +16,6 @@ export interface InventoryLevel {
     product_id: string;
     warehouse_id: number;
     location_id: number | null;
-    state_id?: number | null;
     business_id: number;
     quantity: number;
     reserved_qty: number;
@@ -28,9 +27,10 @@ export interface InventoryLevel {
     product_sku?: string;
     warehouse_name?: string;
     warehouse_code?: string;
-    state_name?: string;
-    location_name?: string;
-    location_code?: string;
+    family_id?: number | null;
+    family_name?: string;
+    variant_label?: string;
+    variant_attributes?: string;
     created_at: string;
     updated_at: string;
 }

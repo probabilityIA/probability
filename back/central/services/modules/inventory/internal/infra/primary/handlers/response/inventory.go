@@ -9,27 +9,27 @@ import (
 
 // InventoryLevelResponse respuesta de nivel de inventario
 type InventoryLevelResponse struct {
-	ID            uint      `json:"id"`
-	ProductID     string    `json:"product_id"`
-	WarehouseID   uint      `json:"warehouse_id"`
-	LocationID    *uint     `json:"location_id"`
-	StateID       *uint     `json:"state_id"`
-	BusinessID    uint      `json:"business_id"`
-	Quantity      int       `json:"quantity"`
-	ReservedQty   int       `json:"reserved_qty"`
-	AvailableQty  int       `json:"available_qty"`
-	MinStock      *int      `json:"min_stock"`
-	MaxStock      *int      `json:"max_stock"`
-	ReorderPoint  *int      `json:"reorder_point"`
-	ProductName   string    `json:"product_name,omitempty"`
-	ProductSKU    string    `json:"product_sku,omitempty"`
-	WarehouseName string    `json:"warehouse_name,omitempty"`
-	WarehouseCode string    `json:"warehouse_code,omitempty"`
-	StateName     string    `json:"state_name,omitempty"`
-	LocationName  string    `json:"location_name,omitempty"`
-	LocationCode  string    `json:"location_code,omitempty"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID                uint      `json:"id"`
+	ProductID         string    `json:"product_id"`
+	WarehouseID       uint      `json:"warehouse_id"`
+	LocationID        *uint     `json:"location_id"`
+	BusinessID        uint      `json:"business_id"`
+	Quantity          int       `json:"quantity"`
+	ReservedQty       int       `json:"reserved_qty"`
+	AvailableQty      int       `json:"available_qty"`
+	MinStock          *int      `json:"min_stock"`
+	MaxStock          *int      `json:"max_stock"`
+	ReorderPoint      *int      `json:"reorder_point"`
+	ProductName       string    `json:"product_name,omitempty"`
+	ProductSKU        string    `json:"product_sku,omitempty"`
+	WarehouseName     string    `json:"warehouse_name,omitempty"`
+	WarehouseCode     string    `json:"warehouse_code,omitempty"`
+	FamilyID          *uint     `json:"family_id,omitempty"`
+	FamilyName        string    `json:"family_name,omitempty"`
+	VariantLabel      string    `json:"variant_label,omitempty"`
+	VariantAttributes string    `json:"variant_attributes,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 // StockMovementResponse respuesta de movimiento de stock
@@ -117,27 +117,27 @@ type MovementListResponse struct {
 // InventoryLevelFromEntity convierte entidad a response
 func InventoryLevelFromEntity(e *entities.InventoryLevel) InventoryLevelResponse {
 	return InventoryLevelResponse{
-		ID:            e.ID,
-		ProductID:     e.ProductID,
-		WarehouseID:   e.WarehouseID,
-		LocationID:    e.LocationID,
-		StateID:       e.StateID,
-		BusinessID:    e.BusinessID,
-		Quantity:      e.Quantity,
-		ReservedQty:   e.ReservedQty,
-		AvailableQty:  e.AvailableQty,
-		MinStock:      e.MinStock,
-		MaxStock:      e.MaxStock,
-		ReorderPoint:  e.ReorderPoint,
-		ProductName:   e.ProductName,
-		ProductSKU:    e.ProductSKU,
-		WarehouseName: e.WarehouseName,
-		WarehouseCode: e.WarehouseCode,
-		StateName:     e.StateName,
-		LocationName:  e.LocationName,
-		LocationCode:  e.LocationCode,
-		CreatedAt:     e.CreatedAt,
-		UpdatedAt:     e.UpdatedAt,
+		ID:                e.ID,
+		ProductID:         e.ProductID,
+		WarehouseID:       e.WarehouseID,
+		LocationID:        e.LocationID,
+		BusinessID:        e.BusinessID,
+		Quantity:          e.Quantity,
+		ReservedQty:       e.ReservedQty,
+		AvailableQty:      e.AvailableQty,
+		MinStock:          e.MinStock,
+		MaxStock:          e.MaxStock,
+		ReorderPoint:      e.ReorderPoint,
+		ProductName:       e.ProductName,
+		ProductSKU:        e.ProductSKU,
+		WarehouseName:     e.WarehouseName,
+		WarehouseCode:     e.WarehouseCode,
+		FamilyID:          e.FamilyID,
+		FamilyName:        e.FamilyName,
+		VariantLabel:      e.VariantLabel,
+		VariantAttributes: e.VariantAttributes,
+		CreatedAt:         e.CreatedAt,
+		UpdatedAt:         e.UpdatedAt,
 	}
 }
 

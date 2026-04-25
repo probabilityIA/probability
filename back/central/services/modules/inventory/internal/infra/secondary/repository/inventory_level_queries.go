@@ -33,6 +33,7 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 	for i, m := range modelsList {
 		e := mappers.LevelModelToEntity(&m)
 
+		// Enriquecer con datos de bodega
 		var wh struct {
 			Name string
 			Code string
@@ -41,10 +42,30 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 		e.WarehouseName = wh.Name
 		e.WarehouseCode = wh.Code
 
-		if m.StateID != nil {
-			var state struct{ Name string }
-			r.db.Conn(ctx).Table("inventory_states").Select("name").Where("id = ?", *m.StateID).Scan(&state)
-			e.StateName = state.Name
+		// Enriquecer con datos del producto y familia (variant discrimination)
+		var prodData struct {
+			FamilyID          *uint
+			VariantLabel      string
+			VariantAttributes string
+		}
+		r.db.Conn(ctx).Model(&models.Product{}).
+			Select("family_id, variant_label, variant_attributes").
+			Where("id = ? AND deleted_at IS NULL", m.ProductID).
+			Scan(&prodData)
+		e.FamilyID = prodData.FamilyID
+		e.VariantLabel = prodData.VariantLabel
+		e.VariantAttributes = prodData.VariantAttributes
+
+		// Si existe familia, enriquecer con nombre de la familia
+		if prodData.FamilyID != nil {
+			var familyName struct {
+				Name string
+			}
+			r.db.Conn(ctx).Model(&models.ProductFamily{}).
+				Select("name").
+				Where("id = ? AND deleted_at IS NULL", *prodData.FamilyID).
+				Scan(&familyName)
+			e.FamilyName = familyName.Name
 		}
 
 		levels[i] = *e
@@ -86,28 +107,34 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 	for i, m := range modelsList {
 		e := mappers.LevelModelToEntity(&m)
 
-		var prod struct {
-			Name string
-			SKU  string
+		// Enriquecer con datos del producto y familia (variant discrimination)
+		var prodData struct {
+			Name               string
+			SKU                string
+			FamilyID           *uint
+			VariantLabel       string
+			VariantAttributes  string
 		}
-		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
-		e.ProductName = prod.Name
-		e.ProductSKU = prod.SKU
+		r.db.Conn(ctx).Model(&models.Product{}).
+			Select("name, sku, family_id, variant_label, variant_attributes").
+			Where("id = ? AND deleted_at IS NULL", m.ProductID).
+			Scan(&prodData)
+		e.ProductName = prodData.Name
+		e.ProductSKU = prodData.SKU
+		e.FamilyID = prodData.FamilyID
+		e.VariantLabel = prodData.VariantLabel
+		e.VariantAttributes = prodData.VariantAttributes
 
-		if m.StateID != nil {
-			var state struct{ Name string }
-			r.db.Conn(ctx).Table("inventory_states").Select("name").Where("id = ?", *m.StateID).Scan(&state)
-			e.StateName = state.Name
-		}
-
-		if m.LocationID != nil {
-			var loc struct {
+		// Si existe familia, enriquecer con nombre de la familia
+		if prodData.FamilyID != nil {
+			var familyName struct {
 				Name string
-				Code string
 			}
-			r.db.Conn(ctx).Table("warehouse_locations").Select("name, code").Where("id = ? AND deleted_at IS NULL", *m.LocationID).Scan(&loc)
-			e.LocationName = loc.Name
-			e.LocationCode = loc.Code
+			r.db.Conn(ctx).Model(&models.ProductFamily{}).
+				Select("name").
+				Where("id = ? AND deleted_at IS NULL", *prodData.FamilyID).
+				Scan(&familyName)
+			e.FamilyName = familyName.Name
 		}
 
 		levels[i] = *e
