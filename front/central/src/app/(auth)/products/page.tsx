@@ -98,51 +98,51 @@ export default function ProductsPage() {
 
     const tabClass = (tab: Tab) =>
         `px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${activeTab === tab
-            ? 'bg-[#7c3aed] text-white shadow-md'
-            : 'text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-gray-700'
+            ? 'btn-business-primary'
+            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`;
 
     return (
         <div className="space-y-6 p-8">
             <div className="flex items-start gap-6">
                 <div className="flex-shrink-0 min-w-fit">
-                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">Productos</h1>
-                    <p className="text-slate-600 dark:text-slate-300 text-base">
+                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Productos</h1>
+                    <p className="text-gray-600 dark:text-gray-300 text-base">
                         Gestiona el catalogo de productos de tu negocio
                     </p>
                 </div>
 
                 {!requiresBusinessSelection && (
-                    <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 dark:border-[#7c3aed]/60 transition-all duration-300 backdrop-blur-sm flex-1">
+                    <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 flex-1">
                         <div className="flex justify-between items-end gap-4">
                             {activeTab === 'products' ? (
                                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">Nombre</label>
+                                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-2.5">Nombre</label>
                                         <input
                                             type="text"
                                             placeholder="Ej: Camiseta..."
                                             value={searchName}
                                             onChange={e => setSearchName(e.target.value)}
-                                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-gray-700 transition-all text-sm"
+                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">SKU</label>
+                                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-2.5">SKU</label>
                                         <input
                                             type="text"
                                             placeholder="Ej: PROD-001..."
                                             value={searchSku}
                                             onChange={e => setSearchSku(e.target.value)}
-                                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] text-slate-900 dark:text-white placeholder:text-slate-400 bg-white dark:bg-gray-700 transition-all text-sm"
+                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">Integraciones</label>
+                                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-2.5">Integraciones</label>
                                         <select
                                             value={searchIntegration}
                                             onChange={e => setSearchIntegration(e.target.value)}
-                                            className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] text-slate-900 dark:text-white bg-white dark:bg-gray-700 transition-all text-sm"
+                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition-all text-sm"
                                         >
                                             <option value="">Todas las integraciones</option>
                                             <option value="shopify">Shopify</option>
@@ -153,7 +153,7 @@ export default function ProductsPage() {
                                 </div>
                             ) : (
                                 <div className="flex-1 flex items-center">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         Agrupa tus SKUs en familias para organizar variantes por color, talla u otro eje.
                                     </p>
                                 </div>
@@ -161,8 +161,8 @@ export default function ProductsPage() {
                             <div className="flex gap-3 flex-shrink-0">
                                 <button
                                     onClick={() => { setIsTourOpen(true); setPulseTour(false); }}
-                                    title={pulseTour ? '¡Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
-                                    className={`p-3 rounded-lg border-2 transition-all duration-300 text-[#7c3aed] dark:text-[#a855f7] border-[#7c3aed]/40 hover:border-[#7c3aed] bg-white dark:bg-gray-700 shadow-sm hover:shadow-md ${pulseTour ? 'animate-pulse' : ''}`}
+                                    title={pulseTour ? 'Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
+                                    className={`p-3 rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200 ${pulseTour ? 'animate-pulse' : ''}`}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -171,14 +171,14 @@ export default function ProductsPage() {
                                 </button>
                                 <button
                                     onClick={handleRefresh}
-                                    className="group px-6 py-3 bg-white dark:bg-gray-700 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] text-[#7c3aed] dark:text-[#a855f7] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md flex items-center gap-2 whitespace-nowrap"
+                                    className="group px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-business-primary text-business-primary font-bold rounded-lg transition-all duration-200 text-sm shadow-sm flex items-center gap-2 whitespace-nowrap"
                                 >
                                     <span className="inline-block transition-transform duration-500 group-hover:rotate-180">&#8635;</span>
                                     Actualizar
                                 </button>
                                 <button
                                     onClick={handleCreate}
-                                    className="px-5 py-3 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 text-2xl font-black"
+                                    className="px-5 py-2.5 btn-business-primary text-white font-bold rounded-lg shadow-md transition-all duration-200 text-2xl"
                                 >
                                     +
                                 </button>
@@ -197,7 +197,7 @@ export default function ProductsPage() {
                 </div>
             ) : (
                 <>
-                    <div className="flex gap-2 bg-slate-100 dark:bg-gray-800 p-1.5 rounded-xl w-fit">
+                    <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl w-fit">
                         <button onClick={() => setActiveTab('products')} className={tabClass('products')}>
                             SKUs / Productos
                         </button>

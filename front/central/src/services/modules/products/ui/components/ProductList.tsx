@@ -147,7 +147,7 @@ const ProductList = forwardRef(function ProductList(
                 <div className="overflow-x-auto">
                     <table className="min-w-full table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px', background: 'transparent' }}>
                         <thead>
-                            <tr style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}>
+                            <tr>
                                 <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider rounded-l-lg">
                                     Producto
                                 </th>
@@ -220,7 +220,7 @@ const ProductList = forwardRef(function ProductList(
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                                             {product.family ? (
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 max-w-[140px] truncate">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 max-w-[140px] truncate">
                                                         <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" /></svg>
                                                         <span className="truncate">{product.family.name}</span>
                                                     </span>
@@ -280,7 +280,7 @@ const ProductList = forwardRef(function ProductList(
                                                 <button
                                                     onClick={() => { setSelectedProduct(product); setIsIntegrationsModalOpen(true); }}
                                                     title="Integraciones"
-                                                    className="p-1.5 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200"
+                                                    className="p-1.5 btn-business-primary rounded-md transition-colors duration-200"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                                                 </button>
@@ -431,8 +431,6 @@ const ProductList = forwardRef(function ProductList(
           }
 
           .productTable :global(.table th) {
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: #fff;
             position: sticky;
             top: 0;
             z-index: 1;
