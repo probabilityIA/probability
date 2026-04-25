@@ -5,8 +5,8 @@ import { getProductFamiliesAction, getProductsAction } from '@/services/modules/
 import { ProductFamilySummary, Product } from '@/services/modules/products/domain/types';
 import { getMovementsAction } from '../../infra/actions';
 import { StockMovement } from '../../domain/types';
-import { ChevronRightIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import MovementsInlineTable from './MovementsInlineTable';
+import { ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Spinner } from '@/shared/ui';
 
 interface Props {
     businessId?: number;
@@ -16,9 +16,45 @@ interface FamilyWithCount extends ProductFamilySummary {
     movCount: number;
 }
 
-type ModalState =
-    | { stage: 'products'; family: FamilyWithCount; products: Product[]; loadingProducts: boolean }
-    | { stage: 'movements'; family: FamilyWithCount; product: Product };
+const DIRECTION_STYLES: Record<string, { bg: string; text: string; prefix: string }> = {
+    in: { bg: 'bg-green-100', text: 'text-green-800', prefix: '+' },
+    out: { bg: 'bg-red-100', text: 'text-red-800', prefix: '-' },
+    reserve: { bg: 'bg-blue-100', text: 'text-blue-800', prefix: '' },
+    release: { bg: 'bg-amber-100', text: 'text-amber-800', prefix: '' },
+    confirm: { bg: 'bg-red-100', text: 'text-red-800', prefix: '-' },
+    neutral: { bg: 'bg-gray-100', text: 'text-gray-800', prefix: '' },
+};
+
+function getDirectionFromCode(code: string): string {
+    if (['inbound', 'return_stock', 'adjustment_in'].includes(code)) return 'in';
+    if (['outbound', 'sale', 'adjustment_out'].includes(code)) return 'out';
+    if (code === 'reserve') return 'reserve';
+    if (code === 'release') return 'release';
+    if (code === 'confirm_sale') return 'confirm';
+    return 'neutral';
+}
+
+function parseNotes(notes: string) {
+    const rsvMatch = notes?.match(/Reservado:\s*(-?\d+)/i);
+    const liberadoMatch = notes?.match(/Liberado:\s*(-?\d+)/i);
+    const dispMatch = notes?.match(/Disponible:\s*(\d+)\s*->\s*(\d+)/i);
+    const rsvReleasedMatch = notes?.match(/Reserva liberada:\s*(\d+)/i);
+    return {
+        reserved: rsvMatch ? parseInt(rsvMatch[1], 10) : null,
+        availPrev: dispMatch ? parseInt(dispMatch[1], 10) : null,
+        availNew: dispMatch ? parseInt(dispMatch[2], 10) : null,
+        rsvReleased: rsvReleasedMatch ? parseInt(rsvReleasedMatch[1], 10) : (liberadoMatch ? parseInt(liberadoMatch[1], 10) : null),
+    };
+}
+
+const MODAL_PAGE = 15;
+
+interface ModalState {
+    family: FamilyWithCount;
+    movements: StockMovement[];
+    loading: boolean;
+    page: number;
+}
 
 export default function MovementsByFamilyView({ businessId }: Props) {
     const [families, setFamilies] = useState<FamilyWithCount[]>([]);
@@ -66,31 +102,35 @@ export default function MovementsByFamilyView({ businessId }: Props) {
     useEffect(() => { load(); }, [load]);
 
     const openFamily = async (family: FamilyWithCount) => {
-        setModal({ stage: 'products', family, products: [], loadingProducts: true });
+        setModal({ family, movements: [], loading: true, page: 1 });
         try {
             const params: any = { page: 1, page_size: 100, family_id: family.id };
             if (businessId) params.business_id = businessId;
-            const res = await getProductsAction(params);
-            const products: Product[] = (res as any).data ?? [];
-            setModal({ stage: 'products', family, products, loadingProducts: false });
+            const prodRes = await getProductsAction(params);
+            const products: Product[] = (prodRes as any).data ?? [];
+
+            const allMovements = await Promise.all(
+                products.map((p) =>
+                    getMovementsAction({ product_id: p.id, page: 1, page_size: 200, business_id: businessId })
+                        .then((r) => r.data ?? [])
+                        .catch(() => [] as StockMovement[])
+                )
+            );
+
+            const merged = allMovements
+                .flat()
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            setModal({ family, movements: merged, loading: false, page: 1 });
         } catch {
-            setModal({ stage: 'products', family, products: [], loadingProducts: false });
+            setModal({ family, movements: [], loading: false, page: 1 });
         }
     };
 
-    const backToProducts = async () => {
-        if (!modal) return;
-        const family = modal.family;
-        setModal({ stage: 'products', family, products: [], loadingProducts: true });
-        try {
-            const params: any = { page: 1, page_size: 100, family_id: family.id };
-            if (businessId) params.business_id = businessId;
-            const res = await getProductsAction(params);
-            setModal({ stage: 'products', family, products: (res as any).data ?? [], loadingProducts: false });
-        } catch {
-            setModal({ stage: 'products', family, products: [], loadingProducts: false });
-        }
-    };
+    const pagedMovements = modal
+        ? modal.movements.slice((modal.page - 1) * MODAL_PAGE, modal.page * MODAL_PAGE)
+        : [];
+    const totalPages = modal ? Math.ceil(modal.movements.length / MODAL_PAGE) : 1;
 
     return (
         <>
@@ -136,55 +176,98 @@ export default function MovementsByFamilyView({ businessId }: Props) {
                     <div className="absolute inset-0 bg-black/50" onClick={() => setModal(null)} />
                     <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                            <div className="flex items-center gap-3">
-                                {modal.stage === 'movements' && (
-                                    <button onClick={backToProducts} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors" title="Volver">
-                                        <ArrowLeftIcon className="w-4 h-4" />
-                                    </button>
-                                )}
-                                <div>
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                        {modal.stage === 'products' ? modal.family.name : modal.product.name}
-                                    </h2>
-                                    <p className="text-sm text-gray-500 mt-0.5">
-                                        {modal.stage === 'products' ? 'Selecciona un producto' : <span className="font-mono">{modal.product.sku} &mdash; {modal.family.name}</span>}
-                                    </p>
-                                </div>
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{modal.family.name}</h2>
+                                <p className="text-sm text-gray-500 mt-0.5">
+                                    {modal.loading ? 'Cargando movimientos...' : `${modal.movements.length} movimientos`}
+                                </p>
                             </div>
-                            <button onClick={() => setModal(null)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"><XMarkIcon className="w-5 h-5" /></button>
+                            <button onClick={() => setModal(null)} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
                         </div>
-                        <div className="overflow-auto flex-1 p-5">
-                            {modal.stage === 'products' ? (
-                                modal.loadingProducts ? (
-                                    <div className="flex justify-center py-12"><div className="spinner"></div></div>
-                                ) : modal.products.length === 0 ? (
-                                    <p className="text-center text-sm text-gray-400 py-12">Sin productos.</p>
-                                ) : (
-                                    <table className="w-full text-left border-collapse">
-                                        <thead>
-                                            <tr className="border-b border-gray-200">
-                                                <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Producto</th>
-                                                <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">SKU</th>
-                                                <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 text-center w-12"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {modal.products.map((p) => (
-                                                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-3 py-2 font-medium text-gray-900">{p.name}</td>
-                                                    <td className="px-3 py-2 text-sm text-gray-500 font-mono">{p.sku}</td>
-                                                    <td className="px-3 py-2 text-center">
-                                                        <button onClick={() => setModal({ stage: 'movements', family: modal.family, product: p })} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
-                                                            <ChevronRightIcon className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )
+
+                        <div className="overflow-auto flex-1 p-5 flex flex-col gap-3">
+                            {modal.loading ? (
+                                <div className="flex justify-center py-12"><Spinner size="lg" /></div>
+                            ) : modal.movements.length === 0 ? (
+                                <p className="text-center text-sm text-gray-400 py-12">Sin movimientos.</p>
                             ) : (
-                                <MovementsInlineTable productId={modal.product.id} businessId={businessId} />
+                                <>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="border-b border-gray-200">
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Fecha</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Producto</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Bodega</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Tipo</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 text-center">Cantidad</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50 text-center">Stock Total</th>
+                                                    <th className="px-3 py-2 text-xs font-semibold text-gray-500 bg-gray-50">Razon</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {pagedMovements.map((m) => {
+                                                    const direction = getDirectionFromCode(m.movement_type_code);
+                                                    const style = DIRECTION_STYLES[direction] || DIRECTION_STYLES.neutral;
+                                                    const isReservation = m.movement_type_code === 'reserve';
+                                                    const isRelease = m.movement_type_code === 'release';
+                                                    const parsed = (isReservation || isRelease) ? parseNotes(m.notes || '') : null;
+                                                    return (
+                                                        <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
+                                                                {new Date(m.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                            </td>
+                                                            <td className="px-3 py-2">
+                                                                <span className="text-sm font-medium text-gray-900">{m.product_name || m.product_id}</span>
+                                                                {m.product_sku && <span className="block text-xs text-gray-400 font-mono">{m.product_sku}</span>}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-sm text-gray-600">{m.warehouse_name || '-'}</td>
+                                                            <td className="px-3 py-2">
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+                                                                    {m.movement_type_name || m.movement_type_code}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-center">
+                                                                <span className={`text-sm font-semibold ${direction === 'in' ? 'text-green-700' : direction === 'out' || direction === 'confirm' ? 'text-red-700' : 'text-gray-600'}`}>
+                                                                    {isReservation || isRelease ? <span className="text-gray-300 text-xs">&mdash;</span> : <>{style.prefix}{Math.abs(m.quantity)}</>}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-3 py-2 text-center text-xs text-gray-500">
+                                                                {m.previous_qty} &rarr; {m.new_qty}
+                                                            </td>
+                                                            <td className="px-3 py-2 text-sm text-gray-600 max-w-[160px] truncate">{m.reason}</td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {totalPages > 1 && (
+                                        <div className="flex items-center justify-between px-2">
+                                            <span className="text-xs text-gray-500">{modal.movements.length} movimientos totales</span>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    disabled={modal.page <= 1}
+                                                    onClick={() => setModal((prev) => prev ? { ...prev, page: prev.page - 1 } : prev)}
+                                                    className="px-2 py-1 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50"
+                                                >
+                                                    Ant
+                                                </button>
+                                                <span className="text-xs text-gray-600 px-2">{modal.page} / {totalPages}</span>
+                                                <button
+                                                    disabled={modal.page >= totalPages}
+                                                    onClick={() => setModal((prev) => prev ? { ...prev, page: prev.page + 1 } : prev)}
+                                                    className="px-2 py-1 text-xs rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-50"
+                                                >
+                                                    Sig
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
