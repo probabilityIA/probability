@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TrackingSearchInput from './tracking/TrackingSearchInput';
 import TrackingProgressBar from './tracking/TrackingProgressBar';
 import TrackingDetails from './tracking/TrackingDetails';
@@ -21,6 +21,21 @@ export default function TrackingClient() {
   const [history, setHistory] = useState<TrackingHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialQuery, setInitialQuery] = useState<string>('');
+  const autoTriggered = useRef(false);
+
+  useEffect(() => {
+    if (autoTriggered.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const tracking = params.get('tracking') || params.get('q');
+    if (tracking && tracking.trim()) {
+      autoTriggered.current = true;
+      setInitialQuery(tracking.trim());
+      handleSearch(tracking.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
@@ -94,7 +109,7 @@ export default function TrackingClient() {
     <div class="space-y-8">
       {/* Search Section */}
       <div class="bg-white rounded-2xl shadow-lg p-8">
-        <TrackingSearchInput onSearch={handleSearch} isLoading={isLoading} />
+        <TrackingSearchInput onSearch={handleSearch} isLoading={isLoading} initialValue={initialQuery} />
       </div>
 
       {/* Error State */}

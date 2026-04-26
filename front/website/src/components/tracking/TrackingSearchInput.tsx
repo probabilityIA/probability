@@ -1,16 +1,24 @@
 /** @jsxImportSource react */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface TrackingSearchInputProps {
   onSearch: (query: string) => void;
   isLoading?: boolean;
+  initialValue?: string;
 }
 
 export default function TrackingSearchInput({
   onSearch,
   isLoading = false,
+  initialValue = '',
 }: TrackingSearchInputProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialValue);
+
+  useEffect(() => {
+    if (initialValue && initialValue !== query) {
+      setQuery(initialValue);
+    }
+  }, [initialValue]);
 
   const handleSubmit = (e: Event) => {
     e.preventDefault();
