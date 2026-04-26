@@ -102,7 +102,17 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 			o.shipping_street, o.shipping_city, o.shipping_state, o.shipping_postal_code,
 			o.created_at, o.occurred_at`).
 		Joins("LEFT JOIN business b ON b.id = o.business_id").
+		Joins(`LEFT JOIN LATERAL (
+			SELECT 1 AS has_real
+			FROM shipments s
+			WHERE s.order_id = o.id
+			  AND s.deleted_at IS NULL
+			  AND s.tracking_number IS NOT NULL
+			  AND s.tracking_number <> ''
+			LIMIT 1
+		) shp ON true`).
 		Where("o.order_number = ? AND o.deleted_at IS NULL", orderNumber).
+		Order("shp.has_real DESC NULLS LAST, o.created_at DESC").
 		Limit(1).
 		Scan(&result).Error
 	if err != nil {

@@ -88,7 +88,14 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 			return
 		}
 
-		if len(shipments) == 0 {
+		realShipments := make([]domain.Shipment, 0, len(shipments))
+		for _, s := range shipments {
+			if s.TrackingNumber != nil && *s.TrackingNumber != "" {
+				realShipments = append(realShipments, s)
+			}
+		}
+
+		if len(realShipments) == 0 {
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"message": "Pedido encontrado",
@@ -98,6 +105,7 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 			})
 			return
 		}
+		shipments = realShipments
 
 		// Convertir el primer envío a ShipmentResponse
 		firstShipment := shipments[0]
