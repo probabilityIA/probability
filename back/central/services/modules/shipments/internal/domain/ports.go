@@ -64,7 +64,7 @@ type IRepository interface {
 	GetOrderCODInfo(ctx context.Context, orderID string) (*OrderCODInfo, error)
 	MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error
 
-	GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string) (*OrderPublicTracking, error)
+	GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string, businessID uint) (*OrderPublicTracking, error)
 }
 
 type OrderPublicTracking struct {

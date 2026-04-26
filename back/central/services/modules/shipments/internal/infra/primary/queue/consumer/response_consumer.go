@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -270,7 +271,11 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				CodTotal:      shipment.CodTotal,
 			}
 			if trackingNumber != "" {
-				notification.TrackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + trackingNumber
+				url := "https://www.probabilityia.com.co/rastreo?tracking=" + trackingNumber
+				if businessID > 0 {
+					url += "&b=" + strconv.FormatUint(uint64(businessID), 10)
+				}
+				notification.TrackingURL = url
 			}
 
 			// Fetch business name

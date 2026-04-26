@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -24,6 +25,12 @@ import (
 func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 	trackingNumber := c.Query("tracking_number")
 	orderNumber := c.Query("order_number")
+	var businessID uint
+	if bs := c.Query("business_id"); bs != "" {
+		if id, perr := strconv.ParseUint(bs, 10, 64); perr == nil {
+			businessID = uint(id)
+		}
+	}
 
 	if trackingNumber == "" && orderNumber == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -41,7 +48,7 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 		shipment, err = h.uc.GetShipmentByTrackingNumber(c.Request.Context(), trackingNumber)
 		if err != nil {
 			if err == domain.ErrShipmentNotFound {
-				if order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), trackingNumber); oerr == nil && order != nil {
+				if order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), trackingNumber, businessID); oerr == nil && order != nil {
 					c.JSON(http.StatusOK, gin.H{
 						"success": true,
 						"message": "Pedido encontrado",
@@ -63,7 +70,7 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 			return
 		}
 	} else if orderNumber != "" {
-		order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), orderNumber)
+		order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), orderNumber, businessID)
 		if oerr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,

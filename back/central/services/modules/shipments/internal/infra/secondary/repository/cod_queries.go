@@ -71,7 +71,7 @@ func (r *Repository) ListCODShipments(ctx context.Context, filter domain.CODFilt
 	return out, total, nil
 }
 
-func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string) (*domain.OrderPublicTracking, error) {
+func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string, businessID uint) (*domain.OrderPublicTracking, error) {
 	if orderNumber == "" {
 		return nil, fmt.Errorf("order_number requerido")
 	}
@@ -94,7 +94,7 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 		CreatedAt          time.Time  `gorm:"column:created_at"`
 		OccurredAt         *time.Time `gorm:"column:occurred_at"`
 	}
-	err := r.db.Conn(ctx).
+	query := r.db.Conn(ctx).
 		Table("orders o").
 		Select(`o.id, o.order_number, o.business_id, COALESCE(b.name,'') AS business_name,
 			o.status, o.is_paid, o.total_amount, o.cod_total, o.currency,
@@ -111,7 +111,13 @@ func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNu
 			  AND s.tracking_number <> ''
 			LIMIT 1
 		) shp ON true`).
-		Where("o.order_number = ? AND o.deleted_at IS NULL", orderNumber).
+		Where("o.order_number = ? AND o.deleted_at IS NULL", orderNumber)
+
+	if businessID > 0 {
+		query = query.Where("o.business_id = ?", businessID)
+	}
+
+	err := query.
 		Order("shp.has_real DESC NULLS LAST, o.created_at DESC").
 		Limit(1).
 		Scan(&result).Error

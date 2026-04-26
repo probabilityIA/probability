@@ -27,11 +27,15 @@ export default function TrackingClient() {
   const [initialQuery, setInitialQuery] = useState<string>('');
   const autoTriggered = useRef(false);
 
+  const businessIdFromURL = useRef<string>('');
+
   useEffect(() => {
     if (autoTriggered.current) return;
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const tracking = params.get('tracking') || params.get('q') || params.get('order');
+    const bid = params.get('b') || params.get('business_id');
+    if (bid) businessIdFromURL.current = bid;
     if (tracking && tracking.trim()) {
       autoTriggered.current = true;
       setInitialQuery(tracking.trim());
@@ -53,8 +57,9 @@ export default function TrackingClient() {
       const apiUrl = getApiUrl();
       const isOrderNumber = /^prob-\d+$/i.test(query.trim());
       const param = isOrderNumber ? 'order_number' : 'tracking_number';
+      const bidParam = businessIdFromURL.current ? `&business_id=${encodeURIComponent(businessIdFromURL.current)}` : '';
       const response = await fetch(
-        `${apiUrl}/tracking/search?${param}=${encodeURIComponent(query)}`
+        `${apiUrl}/tracking/search?${param}=${encodeURIComponent(query)}${bidParam}`
       );
 
       if (!response.ok && response.status !== 404) {

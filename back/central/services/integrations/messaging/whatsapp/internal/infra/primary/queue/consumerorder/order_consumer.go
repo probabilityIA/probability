@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -108,6 +109,9 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 	trackingURL := "https://www.probabilityia.com.co/rastreo"
 	if event.TrackingNumber != "" {
 		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
+		if event.BusinessID != nil && *event.BusinessID > 0 {
+			trackingURL += "&b=" + strconv.FormatUint(uint64(*event.BusinessID), 10)
+		}
 	}
 	switch templateName {
 	case "pedido_en_reparto":
