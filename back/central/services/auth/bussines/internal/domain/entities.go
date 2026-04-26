@@ -19,6 +19,7 @@ type Business struct {
 	ID             uint
 	Name           string
 	Code           string
+	OrderPrefix    string
 	BusinessTypeID uint
 	BusinessType   *BusinessType // Relación con tipo de business
 	Timezone       string

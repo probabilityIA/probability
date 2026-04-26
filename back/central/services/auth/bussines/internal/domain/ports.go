@@ -31,6 +31,8 @@ type IBusinessRepository interface {
 	ToggleBusinessResourceActive(ctx context.Context, businessID uint, resourceID uint, active bool) error
 	ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error
 	CreatePlatformIntegration(ctx context.Context, businessID uint) error
+
+	GetExistingOrderPrefixes(ctx context.Context) ([]string, error)
 }
 
 // IS3Service define las operaciones de almacenamiento en S3

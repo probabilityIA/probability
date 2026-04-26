@@ -72,6 +72,7 @@ func ToBusinessModel(entity domain.Business) models.Business {
 	return models.Business{
 		Name:            entity.Name,
 		Code:            entity.Code,
+		OrderPrefix:     entity.OrderPrefix,
 		BusinessTypeID:  entity.BusinessTypeID,
 		Timezone:        entity.Timezone,
 		Address:         entity.Address,

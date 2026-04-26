@@ -948,27 +948,61 @@ func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, b
 }
 
 // GetLastManualOrderNumber obtiene el último número de secuencia para órdenes manuales
+// considerando tanto el prefijo legacy 'prob-' como el prefijo actual del negocio.
 func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
-	var lastOrder models.Order
-	err := r.db.Conn(ctx).
-		Where("business_id = ? AND platform = 'manual' AND order_number LIKE 'prob-%'", businessID).
-		Order("order_number DESC").
-		First(&lastOrder).Error
+	prefix, _ := r.GetBusinessOrderPrefix(ctx, businessID)
 
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return 0, nil
+	patterns := []string{"prob-%"}
+	if prefix != "" {
+		patterns = append(patterns, prefix+"-%")
+	}
+
+	var orders []models.Order
+	q := r.db.Conn(ctx).
+		Where("business_id = ? AND platform = 'manual'", businessID).
+		Order("created_at DESC").
+		Limit(50)
+	for i, p := range patterns {
+		if i == 0 {
+			q = q.Where("order_number LIKE ?", p)
+		} else {
+			q = q.Or("business_id = ? AND platform = 'manual' AND order_number LIKE ?", businessID, p)
 		}
+	}
+	if err := q.Find(&orders).Error; err != nil {
 		return 0, err
 	}
 
-	// Parsear el número de 'prob-XXXX'
-	var num int
-	_, err = fmt.Sscanf(lastOrder.OrderNumber, "prob-%d", &num)
-	if err != nil {
-		return 0, nil // Si no se puede parsear, empezamos de nuevo
+	max := 0
+	for _, o := range orders {
+		var num int
+		if _, err := fmt.Sscanf(o.OrderNumber, "prob-%d", &num); err == nil && num > max {
+			max = num
+		}
+		if prefix != "" {
+			if _, err := fmt.Sscanf(o.OrderNumber, prefix+"-%d", &num); err == nil && num > max {
+				max = num
+			}
+		}
 	}
-	return num, nil
+	return max, nil
+}
+
+// GetBusinessOrderPrefix retorna el prefijo del negocio (replicado para aislamiento).
+func (r *Repository) GetBusinessOrderPrefix(ctx context.Context, businessID uint) (string, error) {
+	var result struct {
+		OrderPrefix string `gorm:"column:order_prefix"`
+	}
+	err := r.db.Conn(ctx).
+		Table("business").
+		Select("order_prefix").
+		Where("id = ? AND deleted_at IS NULL", businessID).
+		Limit(1).
+		Scan(&result).Error
+	if err != nil {
+		return "", err
+	}
+	return result.OrderPrefix, nil
 }
 
 // CreateOrderError guarda un error ocurrido durante el procesamiento de una orden

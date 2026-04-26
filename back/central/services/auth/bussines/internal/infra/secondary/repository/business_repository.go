@@ -223,6 +223,18 @@ func (r *Repository) ToggleBusinessActive(ctx context.Context, businessID uint, 
 }
 
 // CreatePlatformIntegration crea la integración de plataforma para un negocio si no existe
+func (r *Repository) GetExistingOrderPrefixes(ctx context.Context) ([]string, error) {
+	var prefixes []string
+	err := r.database.Conn(ctx).
+		Model(&models.Business{}).
+		Where("order_prefix IS NOT NULL AND order_prefix <> '' AND deleted_at IS NULL").
+		Pluck("order_prefix", &prefixes).Error
+	if err != nil {
+		return nil, err
+	}
+	return prefixes, nil
+}
+
 func (r *Repository) CreatePlatformIntegration(ctx context.Context, businessID uint) error {
 	var count int64
 	r.database.Conn(ctx).Model(&models.Integration{}).

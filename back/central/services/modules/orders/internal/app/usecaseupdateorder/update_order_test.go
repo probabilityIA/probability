@@ -110,6 +110,9 @@ func (m *mockRepository) GetLastManualOrderNumber(ctx context.Context, businessI
 	}
 	return 0, nil
 }
+func (m *mockRepository) GetBusinessOrderPrefix(ctx context.Context, businessID uint) (string, error) {
+	return "", nil
+}
 func (m *mockRepository) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	if m.GetFirstIntegrationIDByBusinessIDFn != nil {
 		return m.GetFirstIntegrationIDByBusinessIDFn(ctx, businessID)

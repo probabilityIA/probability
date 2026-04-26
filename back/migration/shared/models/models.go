@@ -69,6 +69,8 @@ type Business struct {
 	CustomDomain    *string `gorm:"size:100;unique"`          // dominio personalizado
 	IsActive        bool    `gorm:"default:true"`
 
+	OrderPrefix string `gorm:"size:8;index"`
+
 	// Configuración de suscripción
 	SubscriptionStatus  string     `gorm:"size:20;default:'active'"` // 'active', 'expired', 'cancelled'
 	SubscriptionEndDate *time.Time // Fecha en la que vence la suscripción

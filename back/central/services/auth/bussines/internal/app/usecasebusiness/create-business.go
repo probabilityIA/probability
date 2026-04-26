@@ -12,6 +12,40 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/domain"
 )
 
+func (uc *BusinessUseCase) resolveOrderPrefix(ctx context.Context, name string) string {
+	letters := make([]rune, 0, 3)
+	for _, r := range name {
+		if unicode.IsLetter(r) {
+			letters = append(letters, unicode.ToUpper(r))
+			if len(letters) == 3 {
+				break
+			}
+		}
+	}
+	if len(letters) == 0 {
+		letters = []rune{'B', 'I', 'Z'}
+	}
+	for len(letters) < 3 {
+		letters = append(letters, 'X')
+	}
+	base := string(letters)
+
+	taken := map[string]bool{}
+	if existing, err := uc.repository.GetExistingOrderPrefixes(ctx); err == nil {
+		for _, p := range existing {
+			taken[strings.ToUpper(p)] = true
+		}
+	}
+
+	prefix := base
+	suffix := 2
+	for taken[prefix] {
+		prefix = fmt.Sprintf("%s%d", base, suffix)
+		suffix++
+	}
+	return prefix
+}
+
 // generateCodeFromName genera un código único basado en el nombre del negocio
 func generateCodeFromName(name string) string {
 	// Normalizar el nombre: convertir a minúsculas, eliminar espacios y caracteres especiales
@@ -134,10 +168,13 @@ func (uc *BusinessUseCase) CreateBusiness(ctx context.Context, request domain.Bu
 		navbarImageURL = path
 	}
 
+	orderPrefix := uc.resolveOrderPrefix(ctx, request.Name)
+
 	// Crear entidad
 	business := domain.Business{
 		Name:               request.Name,
 		Code:               businessCode, // Usar el código generado o proporcionado
+		OrderPrefix:        orderPrefix,
 		BusinessTypeID:     request.BusinessTypeID,
 		Timezone:           request.Timezone,
 		Address:            request.Address,

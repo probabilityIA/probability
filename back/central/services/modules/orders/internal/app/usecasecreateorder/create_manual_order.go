@@ -77,7 +77,11 @@ func (uc *UseCaseCreateOrder) applyManualDefaults(ctx context.Context, req *dtos
 		if err != nil {
 			return fmt.Errorf("error getting last manual order number: %w", err)
 		}
-		req.OrderNumber = fmt.Sprintf("prob-%04d", lastNum+1)
+		prefix, _ := uc.repo.GetBusinessOrderPrefix(ctx, *req.BusinessID)
+		if prefix == "" {
+			prefix = "prob"
+		}
+		req.OrderNumber = fmt.Sprintf("%s-%04d", prefix, lastNum+1)
 	}
 
 	// Defaults

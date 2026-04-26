@@ -57,5 +57,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate product variants: %w", err)
 	}
 
+	if err := r.migrateBusinessOrderPrefix(ctx); err != nil {
+		return fmt.Errorf("failed to migrate business order_prefix: %w", err)
+	}
+
 	return nil
 }
