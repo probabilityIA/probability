@@ -105,6 +105,10 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 }
 
 func buildVariables(templateName string, event request.OrderConfirmationEvent) map[string]string {
+	trackingURL := "https://www.probabilityia.com.co/rastreo"
+	if event.TrackingNumber != "" {
+		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
+	}
 	switch templateName {
 	case "pedido_en_reparto":
 		return map[string]string{
@@ -114,6 +118,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"4": orDefault(event.TrackingNumber, "N/A"),
 			"5": orDefault(event.Carrier, "Transportadora"),
 			"6": formatTotalAmount(event.TotalAmount, event.Currency),
+			"7": trackingURL,
 		}
 	case "pedido_entregado":
 		return map[string]string{
@@ -128,6 +133,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"9":  orDefault(event.TrackingNumber, "N/A"),
 			"10": orDefault(event.Carrier, "Transportadora"),
 			"11": formatTotalAmount(event.TotalAmount, event.Currency),
+			"12": trackingURL,
 		}
 	default:
 		return map[string]string{

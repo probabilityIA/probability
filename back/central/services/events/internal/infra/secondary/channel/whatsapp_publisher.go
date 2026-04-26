@@ -98,7 +98,7 @@ func (p *channelPublisher) publishShipmentToWhatsApp(ctx context.Context, event 
 	dataFields := []string{
 		"shipment_id", "tracking_number", "label_url", "carrier",
 		"customer_name", "customer_phone", "order_number", "business_name",
-		"correlation_id", "total_amount",
+		"correlation_id", "total_amount", "cod_total", "tracking_url",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {

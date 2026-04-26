@@ -57,13 +57,23 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		return nil
 	}
 
+	codAmount := event.CodTotal
+	if codAmount == 0 {
+		codAmount = event.TotalAmount
+	}
+	trackingURL := event.TrackingURL
+	if trackingURL == "" && event.TrackingNumber != "" {
+		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
+	}
+
 	variables := map[string]string{
 		"1": orDefault(event.CustomerName, "Cliente"),
 		"2": orDefault(event.BusinessName, "Probability"),
 		"3": orDefault(event.OrderNumber, "N/A"),
 		"4": orDefault(event.TrackingNumber, "N/A"),
 		"5": orDefault(event.Carrier, "Transportadora"),
-		"6": formatTotalAmount(event.TotalAmount),
+		"6": formatTotalAmount(codAmount),
+		"7": orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo"),
 	}
 
 	businessID := uint(0)

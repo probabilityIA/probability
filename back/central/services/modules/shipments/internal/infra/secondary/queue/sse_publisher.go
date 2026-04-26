@@ -55,6 +55,12 @@ func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uin
 		data["order_number"] = notification.OrderNumber
 		data["business_name"] = notification.BusinessName
 		data["integration_id"] = notification.IntegrationID
+		if notification.CodTotal != nil {
+			data["cod_total"] = *notification.CodTotal
+		}
+		if notification.TrackingURL != "" {
+			data["tracking_url"] = notification.TrackingURL
+		}
 	}
 
 	p.publish(ctx, "shipment.guide_generated", businessID, data)

@@ -267,6 +267,10 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				CustomerName:  shipment.CustomerName,
 				CustomerPhone: shipment.CustomerPhone,
 				OrderNumber:   shipment.OrderNumber,
+				CodTotal:      shipment.CodTotal,
+			}
+			if trackingNumber != "" {
+				notification.TrackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + trackingNumber
 			}
 
 			// Fetch business name

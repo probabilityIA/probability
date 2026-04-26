@@ -15,4 +15,6 @@ type ShipmentGuideEvent struct {
 	BusinessName   string  `json:"business_name"`
 	CorrelationID  string  `json:"correlation_id"`
 	TotalAmount    float64 `json:"total_amount"`
+	CodTotal       float64 `json:"cod_total"`
+	TrackingURL    string  `json:"tracking_url"`
 }

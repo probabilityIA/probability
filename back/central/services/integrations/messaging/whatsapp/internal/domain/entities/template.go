@@ -156,15 +156,11 @@ var Templates = map[string]TemplateDefinition{
 			"numero_guia",
 			"transportadora",
 			"valor_recaudar",
+			"link_rastreo",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
 		Description:  "Notificacion de guia de envio generada con datos de tracking y valor a recaudar",
-		Body: "Hola {{1}} \U0001f44b\n" +
-			"Somos {{2}}. Tu pedido {{3}} ya fue despachado \U0001f4e6\n\n" +
-			"\U0001f4d1 Guía: {{4}}\n" +
-			"\U0001f69a Transportadora: {{5}}\n\n" +
-			"Gracias por tu compra.",
 	},
 	"pedido_en_reparto": {
 		Name:     "pedido_en_reparto",
@@ -176,6 +172,7 @@ var Templates = map[string]TemplateDefinition{
 			"numero_guia",
 			"transportadora",
 			"valor_recaudar",
+			"link_rastreo",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
@@ -196,6 +193,7 @@ var Templates = map[string]TemplateDefinition{
 			"numero_guia",
 			"transportadora",
 			"valor_recaudado",
+			"link_rastreo",
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
