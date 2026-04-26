@@ -102,6 +102,8 @@ export interface EnvioClickAddress {
     crossStreet?: string;
     reference?: string;
     daneCode: string;
+    city?: string;
+    state?: string;
 }
 
 export interface EnvioClickPackage {
