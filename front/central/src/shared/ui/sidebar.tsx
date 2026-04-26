@@ -105,6 +105,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
+  const canViewTickets = true;
 
   // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
@@ -528,6 +529,34 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Clientes</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {canViewTickets && (
+                <li>
+                  <Link
+                    href="/tickets"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/tickets')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/tickets') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h6m-6 4h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Tickets</span>
                     )}
                   </Link>
                 </li>

@@ -24,6 +24,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
+	"github.com/secamc93/probability/back/central/services/modules/tickets"
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
@@ -68,6 +69,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	storefront.New(router, database, logger, rabbitMQ, environment)
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
+	tickets.New(router, database, logger, s3)
 
 	subModule := subscriptions.Setup(database)
 	subModule.RegisterRoutes(router)

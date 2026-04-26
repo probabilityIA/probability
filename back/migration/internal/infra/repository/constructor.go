@@ -69,5 +69,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to backfill shipment destination geo: %w", err)
 	}
 
+	if err := r.migrateTickets(ctx); err != nil {
+		return fmt.Errorf("failed to migrate tickets: %w", err)
+	}
+
 	return nil
 }
