@@ -25,3 +25,22 @@ export interface TrackingHistory {
   description: string;
   location: string;
 }
+
+export interface OrderPublicTracking {
+  ID: string;
+  OrderNumber: string;
+  BusinessName: string;
+  Status: string;
+  IsPaid: boolean;
+  TotalAmount: number;
+  CodTotal?: number | null;
+  Currency: string;
+  CustomerName: string;
+  CustomerPhone: string;
+  ShippingStreet: string;
+  ShippingCity: string;
+  ShippingState: string;
+  ShippingPostalCode: string;
+  CreatedAt: string;
+  OccurredAt?: string | null;
+}

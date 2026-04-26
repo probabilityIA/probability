@@ -4,7 +4,8 @@ import TrackingSearchInput from './tracking/TrackingSearchInput';
 import TrackingProgressBar from './tracking/TrackingProgressBar';
 import TrackingDetails from './tracking/TrackingDetails';
 import TrackingTimeline from './tracking/TrackingTimeline';
-import type { TrackingSearchResult, TrackingHistory } from '../types/tracking';
+import type { TrackingSearchResult, TrackingHistory, OrderPublicTracking } from '../types/tracking';
+import OrderOnlyView from './tracking/OrderOnlyView';
 import { getApiUrl } from '../config/api';
 
 interface SearchResult {
@@ -13,11 +14,13 @@ interface SearchResult {
   data?: {
     shipment?: TrackingSearchResult;
     history?: TrackingHistory[];
+    order?: OrderPublicTracking;
   };
 }
 
 export default function TrackingClient() {
   const [shipment, setShipment] = useState<TrackingSearchResult | null>(null);
+  const [orderOnly, setOrderOnly] = useState<OrderPublicTracking | null>(null);
   const [history, setHistory] = useState<TrackingHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export default function TrackingClient() {
     if (autoTriggered.current) return;
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
-    const tracking = params.get('tracking') || params.get('q');
+    const tracking = params.get('tracking') || params.get('q') || params.get('order');
     if (tracking && tracking.trim()) {
       autoTriggered.current = true;
       setInitialQuery(tracking.trim());
@@ -43,16 +46,18 @@ export default function TrackingClient() {
     setIsLoading(true);
     setError(null);
     setShipment(null);
+    setOrderOnly(null);
     setHistory([]);
 
     try {
-      // Llamar al endpoint del backend
       const apiUrl = getApiUrl();
+      const isOrderNumber = /^prob-\d+$/i.test(query.trim());
+      const param = isOrderNumber ? 'order_number' : 'tracking_number';
       const response = await fetch(
-        `${apiUrl}/tracking/search?tracking_number=${encodeURIComponent(query)}`
+        `${apiUrl}/tracking/search?${param}=${encodeURIComponent(query)}`
       );
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 404) {
         throw new Error(`Error: ${response.status}`);
       }
 
@@ -64,6 +69,13 @@ export default function TrackingClient() {
       }
 
       const foundShipment = result.data?.shipment;
+      const foundOrder = result.data?.order;
+
+      if (!foundShipment && foundOrder) {
+        setOrderOnly(foundOrder);
+        return;
+      }
+
       if (!foundShipment) {
         setError('No se encontró información del envío');
         return;
@@ -101,6 +113,7 @@ export default function TrackingClient() {
 
   const handleReset = () => {
     setShipment(null);
+    setOrderOnly(null);
     setHistory([]);
     setError(null);
   };
@@ -112,8 +125,23 @@ export default function TrackingClient() {
         <TrackingSearchInput onSearch={handleSearch} isLoading={isLoading} initialValue={initialQuery} />
       </div>
 
+      {/* Order-only View (no shipment yet) */}
+      {orderOnly && !shipment && (
+        <div class="animate-fade-in">
+          <OrderOnlyView order={orderOnly} />
+          <div class="flex justify-center mt-6">
+            <button
+              onClick={handleReset}
+              class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors"
+            >
+              Rastrear Otro Pedido
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Error State */}
-      {error && !shipment && (
+      {error && !shipment && !orderOnly && (
         <div class="bg-red-50 border-2 border-red-200 rounded-xl p-6 flex gap-4">
           <svg class="w-6 h-6 text-red-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -166,7 +194,7 @@ export default function TrackingClient() {
       )}
 
       {/* Initial State */}
-      {!shipment && !error && !isLoading && (
+      {!shipment && !orderOnly && !error && !isLoading && (
         <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
           <div class="flex justify-center mb-4">
             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
