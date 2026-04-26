@@ -23,7 +23,9 @@ import {
     changeTicketStatusAction,
     escalateTicketAction,
     deleteTicketAction,
+    assignTicketAction,
 } from '../../infra/actions';
+import { getUsersAction } from '@/services/auth/users/infra/actions';
 import { StatusBadge, PriorityBadge, TypeBadge } from './TicketBadges';
 
 interface Props {
@@ -43,6 +45,8 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
     const [posting, setPosting] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [statusNote, setStatusNote] = useState('');
+    const [users, setUsers] = useState<{ id: number; name: string; email: string }[]>([]);
+    const [assigning, setAssigning] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const refreshAll = async () => {
@@ -62,6 +66,29 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
     };
 
     useEffect(() => { refreshAll(); }, [ticket.id]);
+
+    useEffect(() => {
+        if (!isSuperAdmin) return;
+        (async () => {
+            try {
+                const r: any = await getUsersAction({ page: 1, page_size: 200 } as any);
+                const list = (r?.data || []) as Array<{ id: number; name: string; email: string }>;
+                setUsers(list.filter((u) => !!u.name));
+            } catch {}
+        })();
+    }, [isSuperAdmin]);
+
+    const handleAssign = async (val: string) => {
+        setAssigning(true);
+        try {
+            const id = val === '' ? null : Number(val);
+            await assignTicketAction(ticket.id, id);
+            await refreshAll();
+            onChanged();
+        } finally {
+            setAssigning(false);
+        }
+    };
 
     const submitComment = async () => {
         if (!newComment.trim()) return;
@@ -150,6 +177,23 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">
                 {ticket.description}
             </div>
+
+            {isSuperAdmin && (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-2">
+                    <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">Asignar a</div>
+                    <select
+                        value={ticket.assigned_to_id ?? ''}
+                        onChange={(e) => handleAssign(e.target.value)}
+                        disabled={assigning}
+                        className="block w-full sm:w-80 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm px-3 py-2"
+                    >
+                        <option value="">Sin asignar</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
                 <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">Cambiar estado</div>
