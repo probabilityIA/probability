@@ -34,7 +34,7 @@ func (r *Repository) NextCode(ctx context.Context) (string, error) {
 
 func (r *Repository) UserExists(ctx context.Context, userID uint) (bool, error) {
 	var count int64
-	err := r.db.Conn(ctx).Table("users").Where("id = ? AND deleted_at IS NULL", userID).Count(&count).Error
+	err := r.db.Conn(ctx).Table("user").Where("id = ? AND deleted_at IS NULL", userID).Count(&count).Error
 	if err != nil {
 		return false, err
 	}
