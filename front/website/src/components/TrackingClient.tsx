@@ -140,14 +140,13 @@ export default function TrackingClient() {
             clientName={shipment.client_name}
             trackingNumber={shipment.tracking_number}
             carrier={shipment.carrier}
+            hasGuide={!!(shipment.guide_url || shipment.tracking_number)}
           />
 
           {/* Details */}
-          {shipment.destination_address && (
-            <div class="bg-white rounded-2xl shadow-lg p-8">
-              <TrackingDetails shipment={shipment} />
-            </div>
-          )}
+          <div class="bg-white rounded-2xl shadow-lg p-8">
+            <TrackingDetails shipment={shipment} />
+          </div>
 
           {/* Timeline */}
           <div class="bg-white rounded-2xl shadow-lg p-8">

@@ -66,19 +66,33 @@ export default function TrackingDetails({ shipment }: TrackingDetailsProps) {
         </div>
       </div>
 
-      {/* Action Button */}
-      {shipment.tracking_url && (
-        <div class="pt-2">
-          <a
-            href={shipment.tracking_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95"
-          >
-            <span>🔗</span>
-            Ver en Sitio del Transportista
-            <span>→</span>
-          </a>
+      {/* Action Buttons */}
+      {(shipment.guide_url || shipment.tracking_url) && (
+        <div class="pt-2 flex flex-col sm:flex-row gap-3">
+          {shipment.guide_url && (
+            <a
+              href={shipment.guide_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95"
+            >
+              <span>📄</span>
+              Ver Guía (PDF)
+              <span>→</span>
+            </a>
+          )}
+          {shipment.tracking_url && (
+            <a
+              href={shipment.tracking_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold transition-all shadow-lg hover:shadow-xl active:scale-95"
+            >
+              <span>🔗</span>
+              Ver en Sitio del Transportista
+              <span>→</span>
+            </a>
+          )}
         </div>
       )}
     </div>

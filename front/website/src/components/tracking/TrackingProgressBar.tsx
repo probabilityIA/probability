@@ -6,6 +6,7 @@ interface TrackingProgressBarProps {
   clientName?: string;
   trackingNumber?: string;
   carrier?: string;
+  hasGuide?: boolean;
 }
 
 const STATUS_CONFIG: Record<TrackingStatus, { label: string; color: string }> = {
@@ -26,7 +27,15 @@ const STATUS_TO_STEP: Record<TrackingStatus, number> = {
   failed: -1,
 };
 
-const STEPS = [
+const STEPS_WITH_GUIDE = [
+  { label: 'Guía Generada', icon: '📄' },
+  { label: 'Recogido', icon: '✅' },
+  { label: 'En Tránsito', icon: '🚚' },
+  { label: 'En Reparto', icon: '🚙' },
+  { label: 'Entregado', icon: '✅' },
+];
+
+const STEPS_NO_GUIDE = [
   { label: 'Creado', icon: '📦' },
   { label: 'Recogido', icon: '✅' },
   { label: 'En Tránsito', icon: '🚚' },
@@ -39,7 +48,9 @@ export default function TrackingProgressBar({
   clientName,
   trackingNumber,
   carrier,
+  hasGuide,
 }: TrackingProgressBarProps) {
+  const STEPS = hasGuide ? STEPS_WITH_GUIDE : STEPS_NO_GUIDE;
   const config = STATUS_CONFIG[status];
   const currentStep = STATUS_TO_STEP[status];
   const isFailed = status === 'failed';
@@ -58,6 +69,18 @@ export default function TrackingProgressBar({
           title: 'No se pudo entregar',
           description: 'Contacta al transportista para más información',
         };
+      case 'pending':
+        return hasGuide
+          ? {
+              icon: '📄',
+              title: '¡Guía generada!',
+              description: 'Tu envío fue registrado con la transportadora. Pronto será recogido',
+            }
+          : {
+              icon: '📦',
+              title: 'Pedido registrado',
+              description: 'Tu pedido fue creado y está pendiente de despacho',
+            };
       default:
         return {
           icon: '📍',
