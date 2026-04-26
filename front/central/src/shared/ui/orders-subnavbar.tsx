@@ -38,9 +38,11 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         // Exact match
         if (pathname === path) return true;
 
-        // For /shipments, only match if NOT /shipments/origin-addresses
+        // For /shipments, only match if NOT /shipments/origin-addresses or /shipments/cod
         if (path === '/shipments') {
-            return pathname.startsWith('/shipments') && !pathname.startsWith('/shipments/origin-addresses');
+            return pathname.startsWith('/shipments')
+                && !pathname.startsWith('/shipments/origin-addresses')
+                && !pathname.startsWith('/shipments/cod');
         }
 
         // For other paths, use startsWith
@@ -52,6 +54,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         { section: 'OPERACIONES', items: [
             canViewOrders && { href: '/orders', label: 'Órdenes', icon: '📦' },
             canViewShipments && { href: '/shipments', label: 'Envíos', icon: '🚚' },
+            canViewShipments && { href: '/shipments/cod', label: 'Contra entrega', icon: '💵' },
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
             canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },

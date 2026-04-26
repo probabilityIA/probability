@@ -138,6 +138,25 @@ type ShipmentResponse struct {
 	CustomerPhone string `json:"customer_phone,omitempty"`
 	CustomerDNI   string `json:"customer_dni,omitempty"`
 	OrderNumber   string `json:"order_number,omitempty"`
+
+	CodTotal           *float64   `json:"cod_total,omitempty"`
+	IsPaid             bool       `json:"is_paid"`
+	PaidAt             *time.Time `json:"paid_at,omitempty"`
+	PaymentMethodCode  string     `json:"payment_method_code,omitempty"`
+	OrderTotalAmount   *float64   `json:"order_total_amount,omitempty"`
+	OrderCurrency      string     `json:"order_currency,omitempty"`
+}
+
+type CODFilter struct {
+	BusinessID uint
+	Status     string
+	IsPaid     *bool
+	Page       int
+	PageSize   int
+}
+
+type CollectCODRequest struct {
+	Notes string `json:"notes" binding:"omitempty,max=500"`
 }
 
 // ShipmentsListResponse representa la respuesta paginada de envíos

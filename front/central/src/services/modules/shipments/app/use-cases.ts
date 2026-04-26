@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, CreateShipmentRequest } from '../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, CreateShipmentRequest, GetCODShipmentsParams, CollectCODRequest } from '../domain/types';
 
 export class ShipmentUseCases {
     private repository: IShipmentRepository;
@@ -51,5 +51,13 @@ export class ShipmentUseCases {
 
     async deleteOriginAddress(id: number, businessId?: number) {
         return this.repository.deleteOriginAddress(id, businessId);
+    }
+
+    async getCODShipments(params?: GetCODShipmentsParams): Promise<PaginatedResponse<Shipment>> {
+        return this.repository.getCODShipments(params);
+    }
+
+    async collectCOD(shipmentId: number, req: CollectCODRequest, businessId?: number) {
+        return this.repository.collectCOD(shipmentId, req, businessId);
     }
 }

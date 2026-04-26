@@ -1,4 +1,4 @@
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest } from './types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest } from './types';
 
 export interface IShipmentRepository {
     getShipments(params?: GetShipmentsParams): Promise<PaginatedResponse<Shipment>>;
@@ -14,4 +14,7 @@ export interface IShipmentRepository {
     createOriginAddress(req: CreateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;
     updateOriginAddress(id: number, req: UpdateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;
     deleteOriginAddress(id: number, businessId?: number): Promise<{ message: string }>;
+
+    getCODShipments(params?: GetCODShipmentsParams): Promise<PaginatedResponse<Shipment>>;
+    collectCOD(shipmentId: number, req: CollectCODRequest, businessId?: number): Promise<{ success: boolean; message: string; data?: Shipment }>;
 }

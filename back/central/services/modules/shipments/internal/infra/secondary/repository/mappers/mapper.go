@@ -114,6 +114,12 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		shipment.CustomerPhone = s.Order.CustomerPhone
 		shipment.CustomerDNI = s.Order.CustomerDNI
 		shipment.OrderNumber = s.Order.OrderNumber
+		shipment.CodTotal = s.Order.CodTotal
+		shipment.IsPaid = s.Order.IsPaid
+		shipment.PaidAt = s.Order.PaidAt
+		total := s.Order.TotalAmount
+		shipment.OrderTotalAmount = &total
+		shipment.OrderCurrency = s.Order.Currency
 	}
 
 	return shipment

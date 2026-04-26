@@ -1,9 +1,10 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { ShipmentApiRepository } from '../repository/api-repository';
 import { ShipmentUseCases } from '../../app/use-cases';
-import { GetShipmentsParams, CreateShipmentRequest } from '../../domain/types';
+import { GetShipmentsParams, CreateShipmentRequest, GetCODShipmentsParams, CollectCODRequest } from '../../domain/types';
 
 const getUseCases = async () => {
     const token = await getAuthToken();
@@ -135,6 +136,34 @@ export const deleteOriginAddressAction = async (id: number, businessId?: number)
     } catch (error: any) {
         console.error('Delete Origin Address Action Error:', error.message);
         return { success: false, message: error.message || 'Error al eliminar dirección de origen' };
+    }
+};
+
+export const getCODShipmentsAction = async (params?: GetCODShipmentsParams) => {
+    try {
+        return await (await getUseCases()).getCODShipments(params);
+    } catch (error: any) {
+        console.error('Get COD Shipments Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al obtener envios contra entrega',
+            data: [],
+            total: 0,
+            page: params?.page || 1,
+            page_size: params?.page_size || 10,
+            total_pages: 0,
+        };
+    }
+};
+
+export const collectCODAction = async (shipmentId: number, req: CollectCODRequest, businessId?: number) => {
+    try {
+        const data = await (await getUseCases()).collectCOD(shipmentId, req, businessId);
+        revalidatePath('/shipments/cod');
+        return data;
+    } catch (error: any) {
+        console.error('Collect COD Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al registrar el cobro' };
     }
 };
 

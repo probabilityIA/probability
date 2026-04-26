@@ -14,5 +14,9 @@ var (
 
 	// ErrOrderIDRequired se retorna cuando el order_id es requerido
 	ErrOrderIDRequired = errors.New("order_id is required")
+
+	ErrShipmentNotDelivered = errors.New("shipment must be delivered before collecting COD")
+	ErrOrderAlreadyPaid     = errors.New("order is already paid")
+	ErrOrderNotCOD          = errors.New("order is not a cash on delivery order")
 )
 

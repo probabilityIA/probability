@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest } from '../../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
@@ -130,6 +130,27 @@ export class ShipmentApiRepository implements IShipmentRepository {
     async deleteOriginAddress(id: number, businessId?: number): Promise<{ message: string }> {
         return this.fetch<{ message: string }>(`/shipments/origin-addresses/${id}${this.businessQuery(businessId)}`, {
             method: 'DELETE',
+        });
+    }
+
+    async getCODShipments(params?: GetCODShipmentsParams): Promise<PaginatedResponse<Shipment>> {
+        const searchParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    searchParams.append(key, String(value));
+                }
+            });
+        }
+        return this.fetch<PaginatedResponse<Shipment>>(`/shipments/cod?${searchParams.toString()}`, {
+            cache: 'no-store',
+        } as RequestInit);
+    }
+
+    async collectCOD(shipmentId: number, req: CollectCODRequest, businessId?: number): Promise<{ success: boolean; message: string; data?: Shipment }> {
+        return this.fetch<{ success: boolean; message: string; data?: Shipment }>(`/shipments/${shipmentId}/collect-cod${this.businessQuery(businessId)}`, {
+            method: 'POST',
+            body: JSON.stringify(req || {}),
         });
     }
 }

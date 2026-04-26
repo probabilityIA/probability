@@ -60,6 +60,21 @@ type IRepository interface {
 	DeleteOriginAddress(ctx context.Context, id uint) error
 	SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error
 
+	ListCODShipments(ctx context.Context, filter CODFilter) ([]Shipment, int64, error)
+	GetOrderCODInfo(ctx context.Context, orderID string) (*OrderCODInfo, error)
+	MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error
+}
+
+type OrderCODInfo struct {
+	OrderID            string
+	BusinessID         uint
+	CodTotal           *float64
+	TotalAmount        float64
+	Currency           string
+	IsPaid             bool
+	PaidAt             *time.Time
+	PaymentMethodID    uint
+	PaymentMethodCode  string
 }
 
 //
@@ -116,6 +131,8 @@ type GuideNotificationData struct {
 	OrderNumber   string
 	BusinessName  string
 	IntegrationID uint
+	CodTotal      *float64
+	TrackingURL   string
 }
 
 // IShipmentSSEPublisher defines the contract for publishing shipment SSE events via Redis

@@ -220,3 +220,15 @@ func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, busin
 func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string) error {
 	return nil
 }
+
+func (m *RepositoryMock) ListCODShipments(ctx context.Context, filter domain.CODFilter) ([]domain.Shipment, int64, error) {
+	return nil, 0, nil
+}
+
+func (m *RepositoryMock) GetOrderCODInfo(ctx context.Context, orderID string) (*domain.OrderCODInfo, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error {
+	return nil
+}

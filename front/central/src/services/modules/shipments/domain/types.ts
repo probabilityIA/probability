@@ -34,6 +34,24 @@ export interface Shipment {
     customer_dni?: string;
     order_number?: string;
     metadata?: any;
+    cod_total?: number;
+    is_paid?: boolean;
+    paid_at?: string;
+    payment_method_code?: string;
+    order_total_amount?: number;
+    order_currency?: string;
+}
+
+export interface GetCODShipmentsParams {
+    page?: number;
+    page_size?: number;
+    status?: string;
+    is_paid?: boolean;
+    business_id?: number;
+}
+
+export interface CollectCODRequest {
+    notes?: string;
 }
 
 export interface GetShipmentsParams {
