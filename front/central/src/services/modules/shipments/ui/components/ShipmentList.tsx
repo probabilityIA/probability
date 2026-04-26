@@ -196,11 +196,20 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                     <Building2 size={11} className="text-blue-600 dark:text-blue-400" />
                                     <p className="text-[10px] text-blue-700 dark:text-blue-300 uppercase font-bold tracking-wider">Origen</p>
                                 </div>
-                                <p className="text-xs text-blue-900 dark:text-blue-100 truncate" title={shipment.warehouse_name || 'Bodega principal'}>
+                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 truncate" title={shipment.warehouse_name || 'Bodega principal'}>
                                     {shipment.warehouse_name || 'Bodega principal'}
                                 </p>
+                                {shipment.origin_address && (
+                                    <p className="text-[11px] text-blue-800/80 dark:text-blue-200/80 truncate" title={`${shipment.origin_address}, ${shipment.origin_city || ''}`}>
+                                        {shipment.origin_address}{shipment.origin_city ? `, ${shipment.origin_city}` : ''}
+                                    </p>
+                                )}
                             </div>
-                            <MiniAddressMap address={shipment.warehouse_name || 'Medellín'} city="Medellín" color="blue" />
+                            {shipment.origin_address ? (
+                                <MiniAddressMap key={`origin-${shipment.id}`} address={`${shipment.origin_address}, ${shipment.origin_city || ''}`} city={shipment.origin_city || 'Colombia'} color="blue" />
+                            ) : (
+                                <MiniAddressMap key={`origin-empty-${shipment.id}`} color="blue" />
+                            )}
                         </div>
                         <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/40 rounded-lg overflow-hidden">
                             <div className="px-3 pt-2 pb-1.5">
@@ -208,11 +217,25 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                     <MapPin size={11} className="text-emerald-600 dark:text-emerald-400" />
                                     <p className="text-[10px] text-emerald-700 dark:text-emerald-300 uppercase font-bold tracking-wider">Destino</p>
                                 </div>
-                                <p className="text-xs text-emerald-900 dark:text-emerald-100 truncate" title={shipment.destination_address}>
+                                <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 truncate" title={shipment.destination_address}>
                                     {shipment.destination_address || 'Sin destino'}
                                 </p>
+                                {shipment.destination_suburb && (
+                                    <p className="text-[11px] text-emerald-800/80 dark:text-emerald-200/80 truncate">
+                                        Barrio: {shipment.destination_suburb}
+                                    </p>
+                                )}
+                                {(shipment.destination_city || shipment.destination_state) && (
+                                    <p className="text-[11px] text-emerald-800/80 dark:text-emerald-200/80 truncate">
+                                        {[shipment.destination_city, shipment.destination_state].filter(Boolean).join(', ')}
+                                    </p>
+                                )}
                             </div>
-                            <MiniAddressMap address={shipment.destination_address || 'Colombia'} color="emerald" />
+                            {shipment.destination_address ? (
+                                <MiniAddressMap key={`dest-${shipment.id}`} address={`${shipment.destination_address}, ${shipment.destination_city || ''}`} city={shipment.destination_city || undefined} color="emerald" />
+                            ) : (
+                                <MiniAddressMap key={`dest-empty-${shipment.id}`} color="emerald" />
+                            )}
                         </div>
                     </div>
                 </div>

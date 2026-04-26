@@ -61,5 +61,13 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate business order_prefix: %w", err)
 	}
 
+	if err := r.migrateShipmentDestinationGeo(ctx); err != nil {
+		return fmt.Errorf("failed to migrate shipment destination geo: %w", err)
+	}
+
+	if err := r.backfillShipmentDestinationGeo(ctx); err != nil {
+		return fmt.Errorf("failed to backfill shipment destination geo: %w", err)
+	}
+
 	return nil
 }

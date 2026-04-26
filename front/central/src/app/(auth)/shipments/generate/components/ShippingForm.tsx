@@ -249,7 +249,9 @@ export const ShippingForm = () => {
                 ...data.destination,
                 company: data.destination.company || "",
                 crossStreet: data.destination.crossStreet || "",
-                reference: data.destination.reference || ""
+                reference: data.destination.reference || "",
+                city: (daneCodes[data.destination.daneCode as keyof typeof daneCodes] as any)?.ciudad || "",
+                state: (daneCodes[data.destination.daneCode as keyof typeof daneCodes] as any)?.departamento || "",
             },
         };
     };

@@ -130,8 +130,14 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		firstName, _ := dest["firstName"].(string)
 		lastName, _ := dest["lastName"].(string)
 		address, _ := dest["address"].(string)
+		city, _ := dest["city"].(string)
+		state, _ := dest["state"].(string)
+		suburb, _ := dest["suburb"].(string)
 		req.ClientName = fmt.Sprintf("%s %s", firstName, lastName)
 		req.DestinationAddress = address
+		req.DestinationCity = city
+		req.DestinationState = state
+		req.DestinationSuburb = suburb
 	}
 
 	// packages[0] -> dimensions

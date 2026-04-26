@@ -17,6 +17,12 @@ type Shipment struct {
 
 	ClientName         string `json:"client_name"`
 	DestinationAddress string `json:"destination_address"`
+	DestinationCity    string `json:"destination_city,omitempty"`
+	DestinationState   string `json:"destination_state,omitempty"`
+	DestinationSuburb  string `json:"destination_suburb,omitempty"`
+	OriginAddress      string `json:"origin_address,omitempty"`
+	OriginCity         string `json:"origin_city,omitempty"`
+	OriginState        string `json:"origin_state,omitempty"`
 
 	TrackingNumber *string `json:"tracking_number"`
 	TrackingURL    *string `json:"tracking_url"`

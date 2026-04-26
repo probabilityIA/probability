@@ -281,10 +281,40 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		return nil, 0, err
 	}
 
-	// Convertir a dominio
 	domainShipments := make([]domain.Shipment, len(shipments))
+	businessIDs := map[uint]bool{}
 	for i, shipment := range shipments {
 		domainShipments[i] = *mappers.ToDomainShipment(&shipment)
+		if shipment.Order != nil && shipment.Order.BusinessID != nil && *shipment.Order.BusinessID > 0 {
+			businessIDs[*shipment.Order.BusinessID] = true
+		}
+	}
+
+	if len(businessIDs) > 0 {
+		ids := make([]uint, 0, len(businessIDs))
+		for id := range businessIDs {
+			ids = append(ids, id)
+		}
+		var origins []models.OriginAddress
+		if err := r.db.Conn(ctx).
+			Where("business_id IN ? AND is_default = true AND deleted_at IS NULL", ids).
+			Find(&origins).Error; err == nil {
+			defaults := map[uint]models.OriginAddress{}
+			for _, o := range origins {
+				defaults[o.BusinessID] = o
+			}
+			for i := range domainShipments {
+				bid := uint(0)
+				if shipments[i].Order != nil && shipments[i].Order.BusinessID != nil {
+					bid = *shipments[i].Order.BusinessID
+				}
+				if origin, ok := defaults[bid]; ok {
+					domainShipments[i].OriginAddress = origin.Street
+					domainShipments[i].OriginCity = origin.City
+					domainShipments[i].OriginState = origin.State
+				}
+			}
+		}
 	}
 
 	return domainShipments, total, nil

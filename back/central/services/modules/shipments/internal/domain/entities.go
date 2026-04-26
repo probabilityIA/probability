@@ -16,6 +16,9 @@ type CreateShipmentRequest struct {
 
 	ClientName         string `json:"client_name" binding:"omitempty"`
 	DestinationAddress string `json:"destination_address" binding:"omitempty"`
+	DestinationCity    string `json:"destination_city" binding:"omitempty,max=128"`
+	DestinationState   string `json:"destination_state" binding:"omitempty,max=128"`
+	DestinationSuburb  string `json:"destination_suburb" binding:"omitempty,max=128"`
 
 	TrackingNumber *string `json:"tracking_number" binding:"omitempty,max=128"`
 	TrackingURL    *string `json:"tracking_url" binding:"omitempty,max=512"`
@@ -98,6 +101,12 @@ type ShipmentResponse struct {
 
 	ClientName         string `json:"client_name"`
 	DestinationAddress string `json:"destination_address"`
+	DestinationCity    string `json:"destination_city,omitempty"`
+	DestinationState   string `json:"destination_state,omitempty"`
+	DestinationSuburb  string `json:"destination_suburb,omitempty"`
+	OriginAddress      string `json:"origin_address,omitempty"`
+	OriginCity         string `json:"origin_city,omitempty"`
+	OriginState        string `json:"origin_state,omitempty"`
 
 	TrackingNumber *string `json:"tracking_number,omitempty"`
 	TrackingURL    *string `json:"tracking_url,omitempty"`

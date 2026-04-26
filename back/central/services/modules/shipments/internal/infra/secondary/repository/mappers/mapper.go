@@ -23,6 +23,9 @@ func ToDBShipment(s *domain.Shipment) *models.Shipment {
 		OrderID:            s.OrderID,
 		ClientName:         s.ClientName,
 		DestinationAddress: s.DestinationAddress,
+		DestinationCity:    s.DestinationCity,
+		DestinationState:   s.DestinationState,
+		DestinationSuburb:  s.DestinationSuburb,
 		TrackingNumber:     s.TrackingNumber,
 		TrackingURL:        s.TrackingURL,
 		Carrier:            s.Carrier,
@@ -79,6 +82,9 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		OrderID:            s.OrderID,
 		ClientName:         s.ClientName,
 		DestinationAddress: s.DestinationAddress,
+		DestinationCity:    s.DestinationCity,
+		DestinationState:   s.DestinationState,
+		DestinationSuburb:  s.DestinationSuburb,
 		TrackingNumber:     s.TrackingNumber,
 		TrackingURL:        s.TrackingURL,
 		Carrier:            s.Carrier,
@@ -107,7 +113,6 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		Metadata:           s.Metadata,
 	}
 
-	// Incluir datos del cliente desde la orden si existe
 	if s.Order != nil {
 		shipment.CustomerName = s.Order.CustomerName
 		shipment.CustomerEmail = s.Order.CustomerEmail
@@ -120,6 +125,15 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		total := s.Order.TotalAmount
 		shipment.OrderTotalAmount = &total
 		shipment.OrderCurrency = s.Order.Currency
+		if shipment.DestinationCity == "" {
+			shipment.DestinationCity = s.Order.ShippingCity
+		}
+		if shipment.DestinationState == "" {
+			shipment.DestinationState = s.Order.ShippingState
+		}
+		if shipment.DestinationAddress == "" {
+			shipment.DestinationAddress = s.Order.ShippingStreet
+		}
 	}
 
 	return shipment

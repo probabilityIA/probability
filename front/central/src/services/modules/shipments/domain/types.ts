@@ -5,6 +5,12 @@ export interface Shipment {
     order_id?: string;
     client_name?: string;
     destination_address?: string;
+    destination_city?: string;
+    destination_state?: string;
+    destination_suburb?: string;
+    origin_address?: string;
+    origin_city?: string;
+    origin_state?: string;
     tracking_number?: string;
     tracking_url?: string;
     carrier?: string;
@@ -209,6 +215,11 @@ export interface CreateShipmentRequest {
     order_id?: string;
     client_name?: string;
     destination_address?: string;
+    destination_city?: string;
+    destination_state?: string;
+    origin_address?: string;
+    origin_city?: string;
+    origin_state?: string;
     tracking_number?: string;
     carrier?: string;
     status?: string;
