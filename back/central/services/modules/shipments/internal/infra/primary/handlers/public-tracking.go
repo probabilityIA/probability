@@ -63,7 +63,23 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 			return
 		}
 	} else if orderNumber != "" {
-		shipments, err := h.uc.GetShipmentsByOrderID(c.Request.Context(), orderNumber)
+		order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), orderNumber)
+		if oerr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error al buscar pedido",
+			})
+			return
+		}
+		if order == nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "Pedido no encontrado",
+			})
+			return
+		}
+
+		shipments, err := h.uc.GetShipmentsByOrderID(c.Request.Context(), order.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -73,27 +89,12 @@ func (h *Handlers) PublicSearchTracking(c *gin.Context) {
 		}
 
 		if len(shipments) == 0 {
-			order, oerr := h.uc.Repo().GetOrderPublicTrackingByNumber(c.Request.Context(), orderNumber)
-			if oerr != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"success": false,
-					"message": "Error al buscar pedido",
-				})
-				return
-			}
-			if order != nil {
-				c.JSON(http.StatusOK, gin.H{
-					"success": true,
-					"message": "Pedido encontrado",
-					"data": gin.H{
-						"order": order,
-					},
-				})
-				return
-			}
-			c.JSON(http.StatusNotFound, gin.H{
-				"success": false,
-				"message": "Pedido no encontrado",
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"message": "Pedido encontrado",
+				"data": gin.H{
+					"order": order,
+				},
 			})
 			return
 		}
