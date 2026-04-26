@@ -156,9 +156,12 @@ func (h *Handlers) ListShipments(c *gin.Context) {
 		filters["guide_id"] = strings.TrimSpace(guideID)
 	}
 
-	// Filtro por customer_name (búsqueda parcial)
 	if customerName := c.Query("customer_name"); customerName != "" {
 		filters["customer_name"] = strings.TrimSpace(customerName)
+	}
+
+	if orderNumber := c.Query("order_number"); orderNumber != "" {
+		filters["order_number"] = strings.TrimSpace(orderNumber)
 	}
 
 	// Filtro por warehouse_id

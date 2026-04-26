@@ -148,9 +148,12 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.guide_id = ?", guideID)
 	}
 
-	// Filtro por customer_name (búsqueda parcial en la orden asociada)
 	if customerName, ok := filters["customer_name"].(string); ok && customerName != "" {
 		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.customer_name ILIKE ?)", "%"+customerName+"%")
+	}
+
+	if orderNumber, ok := filters["order_number"].(string); ok && orderNumber != "" {
+		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.order_number ILIKE ?)", "%"+orderNumber+"%")
 	}
 
 	// Filtro por warehouse_id

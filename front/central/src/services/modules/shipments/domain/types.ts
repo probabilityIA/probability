@@ -62,6 +62,7 @@ export interface GetShipmentsParams {
     carrier?: string;
     status?: string;
     customer_name?: string;
+    order_number?: string;
     business_id?: number;
     start_date?: string;
     end_date?: string;

@@ -15,6 +15,7 @@ import {
     DollarSign, Box, User, Building2, Hash, StickyNote,
     PackageCheck, MapPinned, PauseCircle, RotateCcw
 } from 'lucide-react';
+import { getOrdersAction } from '@/services/modules/orders/infra/actions';
 import { ManualShipmentModal } from './ManualShipmentModal';
 import { SyncProgressModal } from './SyncProgressModal';
 import { MiniAddressMap } from './MiniAddressMap';
@@ -458,7 +459,109 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
     );
 }
 
-// ─── Main Component ─────────────────────────────────────────────────────────
+interface OrderNumberFilterProps {
+    value: string;
+    onChange: (orderNumber: string | undefined) => void;
+    businessId?: number;
+}
+
+function OrderNumberFilter({ value, onChange, businessId }: OrderNumberFilterProps) {
+    const [input, setInput] = useState(value);
+    const [suggestions, setSuggestions] = useState<{ order_number: string; customer_name?: string }[]>([]);
+    const [open, setOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => { setInput(value); }, [value]);
+
+    useEffect(() => {
+        if (!open) return;
+        const term = input.trim();
+        if (term.length < 2) { setSuggestions([]); return; }
+        const t = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const res = await getOrdersAction({
+                    page: 1,
+                    page_size: 10,
+                    order_number: term,
+                    business_id: businessId,
+                } as any);
+                if (res?.success && Array.isArray(res.data)) {
+                    setSuggestions(res.data.map((o: any) => ({ order_number: o.order_number, customer_name: o.customer_name })));
+                } else {
+                    setSuggestions([]);
+                }
+            } catch {
+                setSuggestions([]);
+            } finally {
+                setLoading(false);
+            }
+        }, 250);
+        return () => clearTimeout(t);
+    }, [input, open, businessId]);
+
+    return (
+        <div className="relative min-w-[220px]">
+            <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <input
+                type="text"
+                placeholder="Filtrar por # de orden..."
+                className="w-full pl-9 pr-8 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:text-gray-500 transition-colors"
+                value={input}
+                onChange={(e) => { setInput(e.target.value); setOpen(true); }}
+                onFocus={() => setOpen(true)}
+                onBlur={() => setTimeout(() => setOpen(false), 150)}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        onChange(input.trim() || undefined);
+                        setOpen(false);
+                    } else if (e.key === 'Escape') {
+                        setOpen(false);
+                    }
+                }}
+            />
+            {input && (
+                <button
+                    type="button"
+                    onClick={() => { setInput(''); onChange(undefined); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                    <X size={14} />
+                </button>
+            )}
+            {open && (suggestions.length > 0 || loading || input.trim().length >= 2) && (
+                <div className="absolute z-30 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {loading && (
+                        <div className="px-3 py-2 text-xs text-gray-400 flex items-center gap-2">
+                            <RefreshCw size={12} className="animate-spin" /> Buscando...
+                        </div>
+                    )}
+                    {!loading && suggestions.length === 0 && input.trim().length >= 2 && (
+                        <div className="px-3 py-2 text-xs text-gray-400">Sin coincidencias</div>
+                    )}
+                    {suggestions.map((s) => (
+                        <button
+                            key={s.order_number}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                                setInput(s.order_number);
+                                onChange(s.order_number);
+                                setOpen(false);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+                        >
+                            <span className="font-semibold text-gray-700 dark:text-gray-200">{s.order_number}</span>
+                            {s.customer_name && (
+                                <span className="text-xs text-gray-400 truncate">{s.customer_name}</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
 interface ShipmentListProps {
     selectedBusinessId?: number | null;
@@ -516,6 +619,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
         carrier: searchParams.get('carrier') || undefined,
         status: searchParams.get('status') || undefined,
         customer_name: searchParams.get('customer_name') || undefined,
+        order_number: searchParams.get('order_number') || undefined,
         is_test: searchParams.get('is_test') !== null ? searchParams.get('is_test') === 'true' : undefined,
         business_id: defaultBusinessId,
     });
@@ -696,6 +800,11 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                             onChange={(e) => updateFilters({ customer_name: e.target.value || undefined })}
                         />
                     </div>
+                    <OrderNumberFilter
+                        value={filters.order_number || ''}
+                        onChange={(v) => updateFilters({ order_number: v })}
+                        businessId={isSuperAdmin ? (selectedBusinessId ?? undefined) : defaultBusinessId}
+                    />
                     {/* Select estado */}
                     <select
                         className="px-3 py-2 border border-gray-200 dark:border-gray-600 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
