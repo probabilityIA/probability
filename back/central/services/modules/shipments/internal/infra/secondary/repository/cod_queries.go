@@ -71,6 +71,73 @@ func (r *Repository) ListCODShipments(ctx context.Context, filter domain.CODFilt
 	return out, total, nil
 }
 
+func (r *Repository) GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string) (*domain.OrderPublicTracking, error) {
+	if orderNumber == "" {
+		return nil, fmt.Errorf("order_number requerido")
+	}
+	var result struct {
+		ID                 string
+		OrderNumber        string     `gorm:"column:order_number"`
+		BusinessID         *uint      `gorm:"column:business_id"`
+		BusinessName       string     `gorm:"column:business_name"`
+		Status             string
+		IsPaid             bool       `gorm:"column:is_paid"`
+		TotalAmount        float64    `gorm:"column:total_amount"`
+		CodTotal           *float64   `gorm:"column:cod_total"`
+		Currency           string
+		CustomerName       string     `gorm:"column:customer_name"`
+		CustomerPhone      string     `gorm:"column:customer_phone"`
+		ShippingStreet     string     `gorm:"column:shipping_street"`
+		ShippingCity       string     `gorm:"column:shipping_city"`
+		ShippingState      string     `gorm:"column:shipping_state"`
+		ShippingPostalCode string     `gorm:"column:shipping_postal_code"`
+		CreatedAt          time.Time  `gorm:"column:created_at"`
+		OccurredAt         *time.Time `gorm:"column:occurred_at"`
+	}
+	err := r.db.Conn(ctx).
+		Table("orders o").
+		Select(`o.id, o.order_number, o.business_id, COALESCE(b.name,'') AS business_name,
+			o.status, o.is_paid, o.total_amount, o.cod_total, o.currency,
+			o.customer_name, o.customer_phone,
+			o.shipping_street, o.shipping_city, o.shipping_state, o.shipping_postal_code,
+			o.created_at, o.occurred_at`).
+		Joins("LEFT JOIN business b ON b.id = o.business_id").
+		Where("o.order_number = ? AND o.deleted_at IS NULL", orderNumber).
+		Limit(1).
+		Scan(&result).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if result.ID == "" {
+		return nil, nil
+	}
+	out := &domain.OrderPublicTracking{
+		ID:                 result.ID,
+		OrderNumber:        result.OrderNumber,
+		BusinessName:       result.BusinessName,
+		Status:             result.Status,
+		IsPaid:             result.IsPaid,
+		TotalAmount:        result.TotalAmount,
+		CodTotal:           result.CodTotal,
+		Currency:           result.Currency,
+		CustomerName:       result.CustomerName,
+		CustomerPhone:      result.CustomerPhone,
+		ShippingStreet:     result.ShippingStreet,
+		ShippingCity:       result.ShippingCity,
+		ShippingState:      result.ShippingState,
+		ShippingPostalCode: result.ShippingPostalCode,
+		CreatedAt:          result.CreatedAt,
+		OccurredAt:         result.OccurredAt,
+	}
+	if result.BusinessID != nil {
+		out.BusinessID = *result.BusinessID
+	}
+	return out, nil
+}
+
 func (r *Repository) GetOrderCODInfo(ctx context.Context, orderID string) (*domain.OrderCODInfo, error) {
 	var result struct {
 		ID                string

@@ -232,3 +232,7 @@ func (m *RepositoryMock) GetOrderCODInfo(ctx context.Context, orderID string) (*
 func (m *RepositoryMock) MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error {
 	return nil
 }
+
+func (m *RepositoryMock) GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string) (*domain.OrderPublicTracking, error) {
+	return nil, nil
+}

@@ -63,6 +63,28 @@ type IRepository interface {
 	ListCODShipments(ctx context.Context, filter CODFilter) ([]Shipment, int64, error)
 	GetOrderCODInfo(ctx context.Context, orderID string) (*OrderCODInfo, error)
 	MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error
+
+	GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string) (*OrderPublicTracking, error)
+}
+
+type OrderPublicTracking struct {
+	ID                 string
+	OrderNumber        string
+	BusinessID         uint
+	BusinessName       string
+	Status             string
+	IsPaid             bool
+	TotalAmount        float64
+	CodTotal           *float64
+	Currency           string
+	CustomerName       string
+	CustomerPhone      string
+	ShippingStreet     string
+	ShippingCity       string
+	ShippingState      string
+	ShippingPostalCode string
+	CreatedAt          time.Time
+	OccurredAt         *time.Time
 }
 
 type OrderCODInfo struct {
