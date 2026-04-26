@@ -947,42 +947,29 @@ func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, b
 	return integration.ID, nil
 }
 
-// GetLastManualOrderNumber obtiene el último número de secuencia para órdenes manuales
-// considerando tanto el prefijo legacy 'prob-' como el prefijo actual del negocio.
+// GetLastManualOrderNumber retorna el ultimo numero usado para el prefix
+// actual del negocio. Cuando un negocio estrena prefix, parte desde 0
+// (la siguiente orden sera 0001) sin importar cuantas ordenes 'prob-' tenga.
 func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
 	prefix, _ := r.GetBusinessOrderPrefix(ctx, businessID)
-
-	patterns := []string{"prob-%"}
-	if prefix != "" {
-		patterns = append(patterns, prefix+"-%")
+	if prefix == "" {
+		prefix = "prob"
 	}
 
 	var orders []models.Order
-	q := r.db.Conn(ctx).
-		Where("business_id = ? AND platform = 'manual'", businessID).
+	if err := r.db.Conn(ctx).
+		Where("business_id = ? AND platform = 'manual' AND order_number LIKE ?", businessID, prefix+"-%").
 		Order("created_at DESC").
-		Limit(50)
-	for i, p := range patterns {
-		if i == 0 {
-			q = q.Where("order_number LIKE ?", p)
-		} else {
-			q = q.Or("business_id = ? AND platform = 'manual' AND order_number LIKE ?", businessID, p)
-		}
-	}
-	if err := q.Find(&orders).Error; err != nil {
+		Limit(50).
+		Find(&orders).Error; err != nil {
 		return 0, err
 	}
 
 	max := 0
 	for _, o := range orders {
 		var num int
-		if _, err := fmt.Sscanf(o.OrderNumber, "prob-%d", &num); err == nil && num > max {
+		if _, err := fmt.Sscanf(o.OrderNumber, prefix+"-%d", &num); err == nil && num > max {
 			max = num
-		}
-		if prefix != "" {
-			if _, err := fmt.Sscanf(o.OrderNumber, prefix+"-%d", &num); err == nil && num > max {
-				max = num
-			}
 		}
 	}
 	return max, nil
