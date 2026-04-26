@@ -72,8 +72,8 @@ export default function TicketDetail({ ticket, isSuperAdmin, onClose, onChanged 
         (async () => {
             try {
                 const r: any = await getUsersAction({ page: 1, page_size: 100 } as any);
-                const list = (r?.data || []) as Array<{ id: number; name: string; email: string }>;
-                setUsers(list.filter((u) => !!u.name));
+                const list = (r?.data || []) as Array<{ id: number; name: string; email: string; scope_code?: string; is_super_user?: boolean }>;
+                setUsers(list.filter((u) => !!u.name && (u.scope_code === 'platform' || u.is_super_user)));
             } catch {}
         })();
     }, [isSuperAdmin]);
