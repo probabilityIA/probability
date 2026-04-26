@@ -16,7 +16,6 @@
 coverage.*
 *.coverprofile
 profile.cov
-CLAUDE.md
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -28,6 +27,7 @@ go.work.sum
 # env file
 .env
 .env.*
+!.env.ai.example
 
 # Editor/IDE
 # .idea/
@@ -78,9 +78,8 @@ probability.pem
 .cursor
 .cursor/
 
-# Claude Code configuration and cache
-.claude
-.claude/
+# Claude Code: compartir reglas/agentes/skills/testing con el equipo.
+# Solo personal queda fuera del repo.
 .codex
 .codex/
 .playwright-mcp/
@@ -93,4 +92,5 @@ probability.pem
 .mcp.json
 .claude/mcp.json
 .claude/settings.json
+.claude/settings.local.json
 .claude.json
