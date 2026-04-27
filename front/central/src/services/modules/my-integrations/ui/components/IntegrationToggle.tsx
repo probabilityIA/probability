@@ -50,7 +50,6 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                 )}
             </div>
 
-            {/* Editar */}
             <button
                 onClick={() => onEdit?.(integration)}
                 className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex-shrink-0"
@@ -59,7 +58,6 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                 <PencilSquareIcon className="w-4 h-4" />
             </button>
 
-            {/* Toggle */}
             <button
                 onClick={() => onToggle(integration)}
                 disabled={isToggling}
