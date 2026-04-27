@@ -16,9 +16,9 @@ func (h *walletHandler) RegisterWalletRoutes(router *gin.RouterGroup) {
 		wallet.GET("/history", h.GetHistory)
 		wallet.POST("/debit-guide", h.DebitForGuide)
 
-		// Bold Integration
-		wallet.POST("/bold/signature", h.BoldGenerateSignature)
+		wallet.GET("/bold/signature", h.BoldGenerateSignature)
 		wallet.GET("/bold/status/:id", h.GetBoldStatus)
+		wallet.POST("/bold/simulate", h.BoldSimulatePayment)
 
 		// Rutas de admin
 		wallet.GET("/all", h.GetAllWallets)

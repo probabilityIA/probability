@@ -95,6 +95,14 @@ export class TicketApiRepository implements ITicketRepository {
         });
     }
 
+    changeArea(id: number, area: string, note?: string): Promise<Ticket> {
+        return this.request<Ticket>(`/tickets/${id}/area`, {
+            method: 'PATCH',
+            headers: this.headers({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ area, note: note ?? '' }),
+        });
+    }
+
     escalate(id: number, note?: string): Promise<Ticket> {
         return this.request<Ticket>(`/tickets/${id}/escalate`, {
             method: 'PATCH',

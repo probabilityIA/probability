@@ -21,7 +21,7 @@ import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusine
 import { VirtualCard } from './virtual-card';
 import { FinancialStatsView } from './financial-stats';
 import { getActionError } from '@/shared/utils/action-result';
-import { getBoldSignatureAction } from '@/services/modules/pay/infra/actions';
+import { getBoldSignatureAction, simulateBoldPaymentAction } from '@/services/modules/pay/infra/actions';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -706,36 +706,51 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
         setMessage(null);
 
         try {
-            // 1. Cargar script de Bold si no está cargado
-            if (!window.hasOwnProperty('BoldCheckout')) {
-                const script = document.createElement('script');
-                script.src = 'https://checkout.bold.co/library/bold.js';
-                script.async = true;
-                document.body.appendChild(script);
-                await new Promise((resolve) => script.onload = resolve);
-            }
-
-            // 2. Obtener firma del backend
             const targetBusinessId = businessId || permissions?.business_id;
             const res = await getBoldSignatureAction(Number(rechargeAmount), targetBusinessId);
 
-            if (!res.success) {
-                throw new Error(res.message || 'Error al obtener firma de Bold');
+            if (!res?.success) {
+                throw new Error(res?.message || 'Error al obtener firma de Bold');
             }
 
-            const { order_id, currency, amount, hash, public_key, redirection_url } = res.data;
+            const { order_id, currency, amount, hash, public_key, redirection_url, is_sandbox } = res.data;
 
-            // 3. Abrir checkout de Bold
-            // @ts-expect-error BoldCheckout is loaded from external script, no TS types available
+            if (is_sandbox) {
+                const sim = await simulateBoldPaymentAction(order_id, amount, targetBusinessId);
+                if (!sim?.success) {
+                    throw new Error(sim?.message || 'Error simulando pago Bold');
+                }
+                setMessage({
+                    type: 'success',
+                    text: `Pago simulado (sandbox) por ${formatCurrency(sim.data.amount)}. Nuevo saldo: ${formatCurrency(sim.data.new_balance)}`,
+                });
+                await fetchBalance();
+                await fetchHistory();
+                return;
+            }
+
+            if (!window.hasOwnProperty('BoldCheckout')) {
+                await new Promise<void>((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.bold.co/library/bold.js';
+                    script.async = true;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error('No se pudo cargar el script de Bold (revisa conexion)'));
+                    document.body.appendChild(script);
+                    setTimeout(() => reject(new Error('Timeout cargando script de Bold')), 10000);
+                });
+            }
+
+            // @ts-expect-error BoldCheckout is loaded from external script
             const checkout = new BoldCheckout({
                 orderId: order_id,
-                currency: currency,
-                amount: amount,
+                currency,
+                amount,
                 apiKey: public_key,
                 integritySignature: hash,
                 description: `Recarga de Billetera Probability - Orden ${order_id}`,
                 redirectionUrl: redirection_url,
-                tax: 0, // Generalmente 0 para recargas de servicios
+                tax: 0,
             });
 
             checkout.open();
@@ -1023,6 +1038,30 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
             key: 'Reference',
             label: 'Referencia',
             render: (val) => <span className="text-gray-500 dark:text-gray-400 text-sm">{(val as string) || '---'}</span>
+        },
+        {
+            key: 'integration_name',
+            label: 'Metodo',
+            render: (val, row) => {
+                const r = row as any;
+                const name = (val as string) || r.integration_name || '---';
+                const imgUrl = r.integration_image_url as string | undefined;
+                if (name === '---') return <span className="text-gray-400 text-sm">---</span>;
+                const colorMap: Record<string, string> = {
+                    'Bold': 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
+                    'Nequi': 'bg-pink-50 text-pink-800 border-pink-200 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-800',
+                    'Debito manual': 'bg-gray-50 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
+                };
+                return (
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium border ${colorMap[name] || 'bg-gray-50 text-gray-800 border-gray-200'}`}>
+                        {imgUrl && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={imgUrl} alt={name} className="h-4 w-4 object-contain" />
+                        )}
+                        {name}
+                    </span>
+                );
+            }
         },
         {
             key: 'Amount',

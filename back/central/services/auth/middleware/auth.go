@@ -273,7 +273,20 @@ func GetScope(c *gin.Context) string {
 	return "business"
 }
 
-// RequireRole and RequireAnyRole logic
+func RequireSuperAdmin() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !IsSuperAdmin(c) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Acceso denegado: requiere super administrador",
+				"code":  "SUPER_ADMIN_REQUIRED",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func RequireRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roles, exists := GetUserRoles(c)

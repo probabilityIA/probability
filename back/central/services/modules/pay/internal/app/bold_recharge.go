@@ -5,91 +5,178 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/errors"
 )
 
-// BoldGenerateSignature genera la firma de integridad SHA256 para Bold.co
-// Hash = SHA256(Identificador + Monto + Divisa + LlaveSecreta)
-func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, amount float64, currency string) (*dtos.BoldSignatureResponse, error) {
-	orderID := "WLT" + uuid.New().String()
-	// Bold requiere el monto sin decimales (como entero en string)
-	amountInt := int64(amount)
-	
-	identityKey := uc.config.Get("BOLD_IDENTITY_KEY")
-	secretKey := uc.config.Get("BOLD_SECRET_KEY")
+const boldStatusEndpoint = "/online/link/v1/%s"
 
-	// Formato: {Identificador}{Monto}{Divisa}{LlaveSecreta}
-	rawString := fmt.Sprintf("%s%d%s%s", orderID, amountInt, currency, secretKey)
-	
+func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error) {
+	creds, err := uc.repo.GetBoldCredentials(ctx)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Msg("Failed to load Bold credentials")
+		return nil, err
+	}
+
+	orderID := "WLT" + uuid.New().String()
+	amountInt := int64(amount)
+
+	rawString := fmt.Sprintf("%s%d%s%s", orderID, amountInt, currency, creds.SecretKey)
 	hash := sha256.Sum256([]byte(rawString))
 	signature := hex.EncodeToString(hash[:])
 
+	isSandbox := creds.Environment == "sandbox"
+
+	wallet, err := uc.GetWallet(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+
+	bizIntegration, _ := uc.repo.GetBoldIntegrationForBusiness(ctx, businessID)
+	var integrationTypeID, integrationID *uint
+	if bizIntegration != nil {
+		if bizIntegration.IntegrationTypeID != 0 {
+			id := bizIntegration.IntegrationTypeID
+			integrationTypeID = &id
+		}
+		if bizIntegration.IntegrationID != 0 {
+			id := bizIntegration.IntegrationID
+			integrationID = &id
+		}
+	}
+	if integrationTypeID == nil && creds.IntegrationTypeID != 0 {
+		id := creds.IntegrationTypeID
+		integrationTypeID = &id
+	}
+
+	gatewayRequest, _ := json.Marshal(map[string]any{
+		"order_id":     orderID,
+		"amount":       amount,
+		"currency":     currency,
+		"public_key":   creds.APIKey,
+		"hash":         signature,
+		"environment":  creds.Environment,
+		"is_sandbox":   isSandbox,
+		"generated_at": time.Now().Format(time.RFC3339),
+	})
+
+	pendingTx := &entities.WalletTransaction{
+		WalletID:          wallet.ID,
+		Amount:            amount,
+		Type:              entities.WalletTxTypeRecharge,
+		Status:            entities.WalletTxStatusPending,
+		Reference:         orderID,
+		IntegrationTypeID: integrationTypeID,
+		IntegrationID:     integrationID,
+		GatewayRequest:    gatewayRequest,
+	}
+	if err := uc.repo.CreateWalletTransaction(ctx, pendingTx); err != nil {
+		uc.log.Error(ctx).Err(err).Msg("Failed to create pending Bold wallet transaction")
+		return nil, err
+	}
+
 	uc.log.Info(ctx).
 		Str("order_id", orderID).
+		Str("wallet_tx_id", pendingTx.ID.String()).
 		Float64("amount", amount).
-		Msg("Generated Bold.co integrity signature")
+		Str("environment", creds.Environment).
+		Bool("is_sandbox", isSandbox).
+		Msg("Generated Bold integrity signature and created pending tx")
 
 	return &dtos.BoldSignatureResponse{
-		OrderID:            orderID,
-		IntegritySignature: signature,
-		Amount:             amount,
-		Currency:           currency,
-		IdentityKey:        identityKey,
+		OrderID:   orderID,
+		Hash:      signature,
+		Amount:    amount,
+		Currency:  currency,
+		PublicKey: creds.APIKey,
+		IsSandbox: isSandbox,
 	}, nil
 }
 
-// GetBoldStatus consulta el estado de una orden directamente con la API de Bold.co
 func (uc *walletUseCase) GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error) {
-	apiKey := uc.config.Get("BOLD_SECRET_KEY") // Para el API de consulta se suele usar la Secret Key
-	
-	url := fmt.Sprintf("https://api.bold.co/v2/payment-orders/%s", boldOrderID)
-	
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if boldOrderID == "" {
+		return nil, fmt.Errorf("bold order id is required")
+	}
+
+	creds, err := uc.repo.GetBoldCredentials(ctx)
 	if err != nil {
 		return nil, err
 	}
-	
-	req.Header.Add("Authorization", "Bearer "+apiKey)
-	
-	client := &http.Client{}
-	resp, err := client.Do(req)
+
+	client := resty.New().
+		SetTimeout(10 * time.Second).
+		SetRetryCount(3).
+		SetRetryWaitTime(500 * time.Millisecond).
+		SetRetryMaxWaitTime(3 * time.Second).
+		AddRetryCondition(func(r *resty.Response, err error) bool {
+			if err != nil {
+				return true
+			}
+			return r.StatusCode() >= 500 || r.StatusCode() == 429
+		})
+
+	resp, err := client.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "x-api-key "+creds.APIKey).
+		SetHeader("Accept", "application/json").
+		Get(creds.BaseURL + fmt.Sprintf(boldStatusEndpoint, boldOrderID))
+
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Str("bold_order_id", boldOrderID).Msg("Failed to call Bold API")
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Bold API error: status %d", resp.StatusCode)
+		uc.log.Error(ctx).Err(err).Str("bold_order_id", boldOrderID).Msg("Bold status request failed")
+		return nil, stderrors.Join(domainerrors.ErrBoldUpstreamUnavailable, err)
 	}
 
-	var boldData struct {
+	switch resp.StatusCode() {
+	case http.StatusOK:
+	case http.StatusNotFound:
+		return nil, domainerrors.ErrBoldOrderNotFound
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return nil, domainerrors.ErrBoldUnauthorized
+	default:
+		uc.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("body", resp.String()).
+			Str("bold_order_id", boldOrderID).
+			Msg("Bold status returned non-OK")
+		return nil, fmt.Errorf("%w: status %d", domainerrors.ErrBoldUpstreamUnavailable, resp.StatusCode())
+	}
+
+	var data struct {
 		ID            string  `json:"id"`
 		PaymentStatus string  `json:"payment_status"`
+		Status        string  `json:"status"`
 		Amount        float64 `json:"amount"`
 		Currency      string  `json:"currency"`
 		PaymentMethod string  `json:"payment_method"`
 	}
+	if err := json.Unmarshal(resp.Body(), &data); err != nil {
+		return nil, fmt.Errorf("decode bold response: %w", err)
+	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&boldData); err != nil {
-		return nil, err
+	status := data.PaymentStatus
+	if status == "" {
+		status = data.Status
 	}
 
 	uc.log.Info(ctx).
 		Str("bold_order_id", boldOrderID).
-		Str("status", boldData.PaymentStatus).
-		Msg("Fetched Bold.co transaction status")
+		Str("status", status).
+		Msg("Fetched Bold transaction status")
 
 	return &dtos.BoldStatusResponse{
-		BoldOrderID:   boldData.ID,
-		Status:        strings.ToUpper(boldData.PaymentStatus),
-		Amount:        boldData.Amount,
-		Currency:      boldData.Currency,
-		PaymentMethod: boldData.PaymentMethod,
+		BoldOrderID:   data.ID,
+		Status:        strings.ToUpper(status),
+		Amount:        data.Amount,
+		Currency:      data.Currency,
+		PaymentMethod: data.PaymentMethod,
 	}, nil
 }

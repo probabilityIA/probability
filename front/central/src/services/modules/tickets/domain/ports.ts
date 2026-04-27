@@ -17,6 +17,7 @@ export interface ITicketRepository {
     remove(id: number): Promise<void>;
     changeStatus(id: number, status: string, note?: string): Promise<Ticket>;
     assign(id: number, assignedToId: number | null): Promise<Ticket>;
+    changeArea(id: number, area: string, note?: string): Promise<Ticket>;
     escalate(id: number, note?: string): Promise<Ticket>;
 
     listComments(id: number, businessId?: number): Promise<TicketComment[]>;

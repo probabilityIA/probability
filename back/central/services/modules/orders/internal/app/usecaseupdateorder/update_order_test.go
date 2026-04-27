@@ -245,6 +245,9 @@ func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID strin
 func (m *mockRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
 	return nil
 }
+func (m *mockRepository) CheckStockForOrder(ctx context.Context, businessID uint, warehouseID *uint, items []dtos.StockCheckItem) ([]dtos.StockCheckResult, error) {
+	return nil, nil
+}
 func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	if m.CreateOrderHistoryFn != nil {
 		return m.CreateOrderHistoryFn(ctx, history)

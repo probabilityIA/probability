@@ -35,19 +35,49 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	}
 }
 
-func eventCodeToTemplateName(eventCode string) string {
+const paymentMethodIDCOD uint = 6
+
+func isCODEvent(event entities.Event) bool {
+	val, ok := event.Data["payment_method_id"]
+	if !ok || val == nil {
+		return false
+	}
+	switch v := val.(type) {
+	case uint:
+		return v == paymentMethodIDCOD
+	case int:
+		return uint(v) == paymentMethodIDCOD
+	case int64:
+		return uint(v) == paymentMethodIDCOD
+	case float64:
+		return uint(v) == paymentMethodIDCOD
+	default:
+		return false
+	}
+}
+
+func eventCodeToTemplateName(eventCode string, isCOD bool) string {
 	switch eventCode {
 	case "order.shipped":
+		if isCOD {
+			return "pedido_en_reparto_cod"
+		}
 		return "pedido_en_reparto"
 	case "order.delivered":
+		if isCOD {
+			return "pedido_entregado_cod"
+		}
 		return "pedido_entregado"
 	default:
-		return "confirmacion_pedido_contraentrega"
+		if isCOD {
+			return "confirmacion_pedido_contraentrega"
+		}
+		return "confirmacion_pedido"
 	}
 }
 
 func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	templateName := eventCodeToTemplateName(config.EventCode)
+	templateName := eventCodeToTemplateName(config.EventCode, isCODEvent(event))
 
 	payload := map[string]any{
 		"event_type":        "order.confirmation_requested",
@@ -62,8 +92,8 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 		"order_id", "order_number", "internal_number", "external_id",
 		"customer_name", "customer_phone", "customer_email",
 		"total_amount", "currency", "platform",
-		"items_summary", "shipping_address", "shipping_city", "shipping_state",
-		"business_name", "payment_method_name", "tracking_number", "carrier",
+		"items_summary", "shipping_address", "shipping_street", "shipping_city", "shipping_state",
+		"business_name", "payment_method_id", "payment_method_name", "tracking_number", "carrier",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {

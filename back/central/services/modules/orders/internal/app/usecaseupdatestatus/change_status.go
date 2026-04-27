@@ -45,6 +45,13 @@ func (uc *UseCaseUpdateStatus) ChangeStatus(ctx context.Context, orderID string,
 		return nil, fmt.Errorf("%w: cannot transition from %s to %s", domainerrors.ErrInvalidStatusTransition, order.Status, req.Status)
 	}
 
+	// 4.1 Validar inventario al regresar de Novedad de inventario a Seleccionando productos
+	if currentStatus == entities.OrderStatusInventoryIssue && targetStatus == entities.OrderStatusPicking {
+		if err := uc.validateStockForPicking(ctx, order); err != nil {
+			return nil, err
+		}
+	}
+
 	// 5. Guardar estado anterior
 	previousStatus := order.Status
 

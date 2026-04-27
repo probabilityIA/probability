@@ -51,6 +51,13 @@ func (uc *UseCase) Update(ctx context.Context, dto dtos.UpdateTicketDTO) (*entit
 		}
 		updates["severity"] = v
 	}
+	if dto.Area != nil {
+		v := strings.ToLower(strings.TrimSpace(*dto.Area))
+		if !validAreas[v] {
+			return nil, dom.ErrInvalidArea
+		}
+		updates["area"] = v
+	}
 	if dto.AssignedToID != nil {
 		exists, err := uc.repo.UserExists(ctx, *dto.AssignedToID)
 		if err != nil {

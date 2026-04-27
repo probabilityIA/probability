@@ -47,7 +47,7 @@ export class PayGatewayApiRepository implements IPayGatewayRepository {
     }
 
     async getBoldSignature(amount: number, businessId?: number): Promise<any> {
-        let url = `${this.baseUrl}/pay/wallet/bold/signature?amount=${amount}`;
+        let url = `${this.baseUrl}/pay/wallet/bold/signature?amount=${amount}&currency=COP`;
         if (businessId) {
             url += `&business_id=${businessId}`;
         }
@@ -60,11 +60,33 @@ export class PayGatewayApiRepository implements IPayGatewayRepository {
             cache: 'no-store',
         });
 
+        const json = await res.json().catch(() => ({ success: false, message: 'Respuesta invalida del servidor' }));
         if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Error al obtener firma de Bold: ${errorText}`);
+            return { success: false, message: json?.message || `HTTP ${res.status}` };
+        }
+        return json;
+    }
+
+    async simulateBoldPayment(orderId: string, amount: number, businessId?: number): Promise<any> {
+        let url = `${this.baseUrl}/pay/wallet/bold/simulate`;
+        if (businessId) {
+            url += `?business_id=${businessId}`;
         }
 
-        return await res.json();
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+            body: JSON.stringify({ order_id: orderId, amount }),
+        });
+
+        const json = await res.json().catch(() => ({ success: false, message: 'Respuesta invalida del servidor' }));
+        if (!res.ok) {
+            return { success: false, message: json?.message || `HTTP ${res.status}` };
+        }
+        return json;
     }
 }

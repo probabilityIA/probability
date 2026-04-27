@@ -41,6 +41,12 @@ var validSources = map[string]bool{
 	"business": true,
 }
 
+var validAreas = map[string]bool{
+	"comercial":  true,
+	"soporte":    true,
+	"desarrollo": true,
+}
+
 var closedStatuses = map[string]bool{
 	"resolved": true,
 	"closed":   true,

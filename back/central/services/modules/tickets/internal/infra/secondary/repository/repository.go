@@ -25,7 +25,7 @@ func New(database db.IDatabase) ports.IRepository {
 
 func (r *Repository) NextCode(ctx context.Context) (string, error) {
 	var maxID uint
-	row := r.db.Conn(ctx).Model(&models.Ticket{}).Select("COALESCE(MAX(id), 0)").Row()
+	row := r.db.Conn(ctx).Unscoped().Model(&models.Ticket{}).Select("COALESCE(MAX(id), 0)").Row()
 	if err := row.Scan(&maxID); err != nil {
 		return "", err
 	}
@@ -113,6 +113,9 @@ func (r *Repository) List(ctx context.Context, params dtos.ListTicketsParams) ([
 	if len(params.Type) > 0 {
 		q = q.Where("type IN ?", params.Type)
 	}
+	if len(params.Area) > 0 {
+		q = q.Where("area IN ?", params.Area)
+	}
 	if params.Source != "" {
 		q = q.Where("source = ?", params.Source)
 	}
@@ -129,9 +132,27 @@ func (r *Repository) List(ctx context.Context, params dtos.ListTicketsParams) ([
 		return nil, 0, err
 	}
 
+	allowedSort := map[string]string{
+		"created_at": "created_at",
+		"updated_at": "updated_at",
+		"priority":   "priority",
+		"status":     "status",
+		"area":       "area",
+		"code":       "code",
+		"due_date":   "due_date",
+	}
+	sortCol, ok := allowedSort[strings.ToLower(strings.TrimSpace(params.SortBy))]
+	if !ok {
+		sortCol = "created_at"
+	}
+	sortDir := strings.ToLower(strings.TrimSpace(params.SortOrder))
+	if sortDir != "asc" {
+		sortDir = "desc"
+	}
+
 	var ms []models.Ticket
 	offset := (params.Page - 1) * params.PageSize
-	if err := q.Order("created_at DESC").Limit(params.PageSize).Offset(offset).Find(&ms).Error; err != nil {
+	if err := q.Order(sortCol + " " + sortDir).Limit(params.PageSize).Offset(offset).Find(&ms).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -160,7 +181,7 @@ func (r *Repository) Update(ctx context.Context, id uint, updates map[string]any
 }
 
 func (r *Repository) Delete(ctx context.Context, id uint) error {
-	return r.db.Conn(ctx).Delete(&models.Ticket{}, id).Error
+	return r.db.Conn(ctx).Unscoped().Delete(&models.Ticket{}, id).Error
 }
 
 func (r *Repository) AddComment(ctx context.Context, dto dtos.CreateCommentDTO) (*entities.TicketComment, error) {
@@ -229,7 +250,7 @@ func (r *Repository) GetAttachment(ctx context.Context, id uint) (*entities.Tick
 }
 
 func (r *Repository) DeleteAttachment(ctx context.Context, id uint) error {
-	return r.db.Conn(ctx).Delete(&models.TicketAttachment{}, id).Error
+	return r.db.Conn(ctx).Unscoped().Delete(&models.TicketAttachment{}, id).Error
 }
 
 func (r *Repository) ListAttachments(ctx context.Context, ticketID uint) ([]entities.TicketAttachment, error) {
@@ -248,8 +269,21 @@ func (r *Repository) ListAttachments(ctx context.Context, ticketID uint) ([]enti
 func (r *Repository) AddHistory(ctx context.Context, ticketID uint, fromStatus, toStatus string, changedByID uint, note string) error {
 	m := models.TicketStatusHistory{
 		TicketID:    ticketID,
+		ChangeType:  "status",
 		FromStatus:  fromStatus,
 		ToStatus:    toStatus,
+		ChangedByID: changedByID,
+		Note:        note,
+	}
+	return r.db.Conn(ctx).Create(&m).Error
+}
+
+func (r *Repository) AddAreaHistory(ctx context.Context, ticketID uint, fromArea, toArea string, changedByID uint, note string) error {
+	m := models.TicketStatusHistory{
+		TicketID:    ticketID,
+		ChangeType:  "area",
+		FromArea:    fromArea,
+		ToArea:      toArea,
 		ChangedByID: changedByID,
 		Note:        note,
 	}

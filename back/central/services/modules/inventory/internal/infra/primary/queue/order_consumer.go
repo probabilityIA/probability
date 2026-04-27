@@ -171,9 +171,7 @@ func (c *OrderConsumer) handleReserve(ctx context.Context, msg orderEventMessage
 		Bool("all_sufficient", allSufficient).
 		Msg("Stock reserve result for order")
 
-	if !allSufficient {
-		c.publishFeedback(msg.OrderID, businessID, false)
-	}
+	c.publishFeedback(msg.OrderID, businessID, allSufficient)
 }
 
 func (c *OrderConsumer) handleRelease(ctx context.Context, msg orderEventMessage, businessID uint, items []dtos.OrderInventoryItem) {

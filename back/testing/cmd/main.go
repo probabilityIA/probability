@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"github.com/secamc93/probability/back/testing/integrations/bold"
 	"github.com/secamc93/probability/back/testing/integrations/envioclick"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
@@ -59,6 +60,18 @@ func main() {
 		}
 	}()
 
+	// 3b. Start Bold HTTP mock (background)
+	boldPort := getEnv("BOLD_MOCK_PORT", "9094")
+	boldWebhookTarget := getEnv("BOLD_MOCK_WEBHOOK_TARGET", "http://localhost:3050/api/v1/webhooks/bold")
+	boldServer := bold.New(logger, boldPort, boldWebhookTarget)
+
+	go func() {
+		if err := boldServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting Bold mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
@@ -90,6 +103,7 @@ func main() {
 	fmt.Printf("Testing Server - Simuladores\n")
 	fmt.Printf("Softpymes HTTP:    http://localhost:%s\n", softpymesPort)
 	fmt.Printf("EnvioClick HTTP:   http://localhost:%s\n", envioclickPort)
+	fmt.Printf("Bold HTTP:         http://localhost:%s\n", boldPort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")

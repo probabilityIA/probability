@@ -40,8 +40,10 @@ type orderSnapshot struct {
 	BusinessName      string  `json:"business_name,omitempty"`
 	ItemsSummary      string  `json:"items_summary,omitempty"`
 	ShippingAddress   string  `json:"shipping_address,omitempty"`
+	ShippingStreet    string  `json:"shipping_street,omitempty"`
 	ShippingCity      string  `json:"shipping_city,omitempty"`
 	ShippingState     string  `json:"shipping_state,omitempty"`
+	PaymentMethodID   uint    `json:"payment_method_id,omitempty"`
 	PaymentMethodName string  `json:"payment_method_name,omitempty"`
 	TrackingNumber    string  `json:"tracking_number,omitempty"`
 	Carrier           string  `json:"carrier,omitempty"`
@@ -112,8 +114,10 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["business_name"] = msg.Order.BusinessName
 		data["items_summary"] = msg.Order.ItemsSummary
 		data["shipping_address"] = msg.Order.ShippingAddress
+		data["shipping_street"] = msg.Order.ShippingStreet
 		data["shipping_city"] = msg.Order.ShippingCity
 		data["shipping_state"] = msg.Order.ShippingState
+		data["payment_method_id"] = msg.Order.PaymentMethodID
 		data["payment_method_name"] = msg.Order.PaymentMethodName
 		data["tracking_number"] = msg.Order.TrackingNumber
 		data["carrier"] = msg.Order.Carrier
@@ -150,5 +154,47 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		Str("order_id", msg.OrderID).
 		Msg("Evento de orden recibido desde fanout, despachando a EventDispatcher")
 
-	return c.dispatcher.HandleEvent(ctx, event)
+	if err := c.dispatcher.HandleEvent(ctx, event); err != nil {
+		return err
+	}
+
+	if event.Type == "order.status_changed" {
+		for _, derived := range deriveStatusEvents(data) {
+			derivedEvent := event
+			derivedEvent.Type = derived
+			c.logger.Info(ctx).
+				Str("event_id", derivedEvent.ID).
+				Str("derived_event_type", derived).
+				Str("source_event_type", event.Type).
+				Uint("business_id", derivedEvent.BusinessID).
+				Str("order_id", msg.OrderID).
+				Msg("Despachando evento derivado de cambio de estado")
+			if err := c.dispatcher.HandleEvent(ctx, derivedEvent); err != nil {
+				c.logger.Error(ctx).Err(err).Str("derived_event_type", derived).Msg("Error despachando evento derivado")
+			}
+		}
+	}
+
+	return nil
+}
+
+func deriveStatusEvents(data map[string]any) []string {
+	statusVal, ok := data["current_status"]
+	if !ok {
+		return nil
+	}
+	status, ok := statusVal.(string)
+	if !ok || status == "" {
+		return nil
+	}
+	switch status {
+	case "shipped":
+		return []string{"order.shipped"}
+	case "delivered":
+		return []string{"order.shipped", "order.delivered"}
+	case "completed":
+		return []string{"order.delivered"}
+	default:
+		return nil
+	}
 }

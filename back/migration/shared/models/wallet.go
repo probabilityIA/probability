@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 //
@@ -32,8 +33,12 @@ type WalletTransaction struct {
 	Status               string    `gorm:"type:varchar(50);not null;default:'PENDING'"` // PENDING|COMPLETED|FAILED
 	Reference            string    `gorm:"type:varchar(255)"`
 	QrCode               string    `gorm:"type:text"`
-	PaymentTransactionID *uint     `gorm:"index"`  // FK opcional a payment_transactions
-	UserID               *uint     `gorm:"index"`  // Usuario que generó la transacción
+	PaymentTransactionID *uint     `gorm:"index"`
+	UserID               *uint     `gorm:"index"`
+	IntegrationTypeID    *uint          `gorm:"index"`
+	IntegrationID        *uint          `gorm:"index"`
+	GatewayRequest       datatypes.JSON `gorm:"type:jsonb"`
+	GatewayResponse      datatypes.JSON `gorm:"type:jsonb"`
 	CreatedAt            time.Time
 
 	// Relaciones

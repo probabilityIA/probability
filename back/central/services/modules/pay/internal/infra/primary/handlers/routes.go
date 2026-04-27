@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
-// RegisterRoutes registra las rutas del módulo de pagos
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	pay := router.Group("/pay")
 	pay.Use(middleware.JWT())

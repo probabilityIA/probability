@@ -114,7 +114,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 		}
 	}
 	switch templateName {
-	case "pedido_en_reparto":
+	case "pedido_en_reparto_cod":
 		return map[string]string{
 			"1": orDefault(event.CustomerName, "Cliente"),
 			"2": orDefault(event.BusinessName, "Probability"),
@@ -124,12 +124,21 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"6": formatTotalAmount(event.TotalAmount, event.Currency),
 			"7": trackingURL,
 		}
-	case "pedido_entregado":
+	case "pedido_en_reparto":
+		return map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.TrackingNumber, "N/A"),
+			"5": orDefault(event.Carrier, "Transportadora"),
+			"6": trackingURL,
+		}
+	case "pedido_entregado_cod":
 		return map[string]string{
 			"1":  orDefault(event.CustomerName, "Cliente"),
 			"2":  orDefault(event.BusinessName, "Probability"),
 			"3":  orDefault(event.OrderNumber, "N/A"),
-			"4":  orDefault(event.ShippingAddress, "No especificada"),
+			"4":  orDefault(event.ShippingStreet, orDefault(event.ShippingAddress, "No especificada")),
 			"5":  orDefault(event.ShippingCity, ""),
 			"6":  orDefault(event.ShippingState, ""),
 			"7":  orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
@@ -139,12 +148,35 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"11": formatTotalAmount(event.TotalAmount, event.Currency),
 			"12": trackingURL,
 		}
+	case "pedido_entregado":
+		return map[string]string{
+			"1":  orDefault(event.CustomerName, "Cliente"),
+			"2":  orDefault(event.BusinessName, "Probability"),
+			"3":  orDefault(event.OrderNumber, "N/A"),
+			"4":  orDefault(event.ShippingStreet, orDefault(event.ShippingAddress, "No especificada")),
+			"5":  orDefault(event.ShippingCity, ""),
+			"6":  orDefault(event.ShippingState, ""),
+			"7":  orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
+			"8":  orDefault(event.TrackingNumber, "N/A"),
+			"9":  orDefault(event.Carrier, "Transportadora"),
+			"10": trackingURL,
+		}
+	case "confirmacion_pedido":
+		return map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.ShippingStreet, orDefault(event.ShippingAddress, "No especificada")),
+			"5": orDefault(event.ShippingCity, ""),
+			"6": orDefault(event.ShippingState, ""),
+			"7": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
+		}
 	default:
 		return map[string]string{
 			"1": orDefault(event.CustomerName, "Cliente"),
 			"2": orDefault(event.BusinessName, "Probability"),
 			"3": orDefault(event.OrderNumber, "N/A"),
-			"4": orDefault(event.ShippingAddress, "No especificada"),
+			"4": orDefault(event.ShippingStreet, orDefault(event.ShippingAddress, "No especificada")),
 			"5": orDefault(event.ShippingCity, ""),
 			"6": orDefault(event.ShippingState, ""),
 			"7": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),

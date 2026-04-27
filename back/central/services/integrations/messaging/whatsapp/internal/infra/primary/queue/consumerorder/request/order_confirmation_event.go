@@ -13,6 +13,7 @@ type OrderConfirmationEvent struct {
 	Currency          string  `json:"currency"`
 	ItemsSummary      string  `json:"items_summary"`
 	ShippingAddress   string  `json:"shipping_address"`
+	ShippingStreet    string  `json:"shipping_street"`
 	ShippingCity      string  `json:"shipping_city"`
 	ShippingState     string  `json:"shipping_state"`
 	PaymentMethodID   uint    `json:"payment_method_id"`

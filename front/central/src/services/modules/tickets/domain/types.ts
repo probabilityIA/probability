@@ -23,6 +23,7 @@ export type TicketType =
 
 export type TicketSeverity = 'low' | 'medium' | 'high' | '';
 export type TicketSource = 'internal' | 'business';
+export type TicketArea = 'comercial' | 'soporte' | 'desarrollo';
 
 export interface Ticket {
     id: number;
@@ -31,8 +32,10 @@ export interface Ticket {
     business_name?: string;
     created_by_id: number;
     created_by_name?: string;
+    created_by_avatar_url?: string;
     assigned_to_id?: number | null;
     assigned_to_name?: string;
+    assigned_to_avatar_url?: string;
     title: string;
     description: string;
     type: TicketType;
@@ -41,6 +44,7 @@ export interface Ticket {
     status: TicketStatus;
     source: TicketSource;
     severity?: TicketSeverity;
+    area?: TicketArea;
     escalated_to_dev: boolean;
     escalated_at?: string | null;
     due_date?: string | null;
@@ -96,6 +100,7 @@ export interface CreateTicketDTO {
     priority?: TicketPriority;
     severity?: TicketSeverity;
     source?: TicketSource;
+    area?: TicketArea;
     assigned_to_id?: number | null;
     due_date?: string | null;
 }
@@ -107,6 +112,7 @@ export interface UpdateTicketDTO {
     category?: string;
     priority?: TicketPriority;
     severity?: TicketSeverity;
+    area?: TicketArea;
     assigned_to_id?: number | null;
     due_date?: string | null;
     clear_due_date?: boolean;
@@ -119,12 +125,15 @@ export interface ListTicketsParams {
     status?: string;
     priority?: string;
     type?: string;
+    area?: string;
     source?: string;
     escalated?: boolean;
     search?: string;
     only_mine?: boolean;
     assigned_to_id?: number;
     created_by_id?: number;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
 }
 
 export interface PaginatedTickets {
@@ -168,3 +177,10 @@ export const TYPE_META: Record<TicketType, { label: string; icon: string }> = {
 export const TICKET_STATUSES: TicketStatus[] = ['open', 'in_review', 'in_development', 'testing', 'blocked', 'resolved', 'closed', 'wont_fix'];
 export const TICKET_PRIORITIES: TicketPriority[] = ['low', 'medium', 'high', 'critical'];
 export const TICKET_TYPES: TicketType[] = ['bug', 'improvement', 'feature', 'data', 'integration', 'support', 'complaint', 'claim', 'question'];
+export const TICKET_AREAS: TicketArea[] = ['comercial', 'soporte', 'desarrollo'];
+
+export const AREA_META: Record<TicketArea, { label: string; color: string; bg: string }> = {
+    comercial:  { label: 'Comercial',  color: 'text-pink-700 dark:text-pink-200',     bg: 'bg-pink-100 dark:bg-pink-900/40' },
+    soporte:    { label: 'Soporte',    color: 'text-cyan-700 dark:text-cyan-200',     bg: 'bg-cyan-100 dark:bg-cyan-900/40' },
+    desarrollo: { label: 'Desarrollo', color: 'text-purple-700 dark:text-purple-200', bg: 'bg-purple-100 dark:bg-purple-900/40' },
+};

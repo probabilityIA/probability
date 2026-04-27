@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-const boldBaseURL = "https://integrations.api.bold.co"
+const boldDefaultBaseURL = "https://integrations.api.bold.co"
 
 // Estructuras de request Bold
 type boldAmount struct {
@@ -71,7 +71,11 @@ func (c *BoldClient) CreatePaymentLink(ctx context.Context, config *ports.BoldCo
 	}
 
 	var result boldCreateLinkResponse
-	client := resty.New().SetBaseURL(boldBaseURL)
+	baseURL := config.BaseURL
+	if baseURL == "" {
+		baseURL = boldDefaultBaseURL
+	}
+	client := resty.New().SetBaseURL(baseURL)
 
 	resp, err := client.R().
 		SetContext(ctx).

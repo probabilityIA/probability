@@ -61,22 +61,29 @@ func (c *InventoryConsumer) handleMessage(ctx context.Context, body []byte) {
 		return
 	}
 
-	if msg.Success || msg.OrderID == "" {
+	if msg.OrderID == "" {
 		return
+	}
+
+	targetCode := "picking"
+	if !msg.Success {
+		targetCode = "inventory_issue"
 	}
 
 	c.logger.Info(ctx).
 		Str("order_id", msg.OrderID).
 		Uint("business_id", msg.BusinessID).
-		Msg("Inventory insufficient - updating order status to inventory_issue")
+		Bool("success", msg.Success).
+		Str("target_status", targetCode).
+		Msg("Inventory feedback received - updating order status")
 
-	statusID, err := c.repo.GetOrderStatusIDByCode(ctx, "inventory_issue")
+	statusID, err := c.repo.GetOrderStatusIDByCode(ctx, targetCode)
 	if err != nil || statusID == nil {
-		c.logger.Warn(ctx).Str("order_id", msg.OrderID).Msg("inventory_issue status not found, skipping")
+		c.logger.Warn(ctx).Str("order_id", msg.OrderID).Str("status", targetCode).Msg("status not found, skipping")
 		return
 	}
 
-	if err := c.repo.UpdateOrderStatus(ctx, msg.OrderID, "inventory_issue", statusID); err != nil {
-		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to update order status to inventory_issue")
+	if err := c.repo.UpdateOrderStatus(ctx, msg.OrderID, targetCode, statusID); err != nil {
+		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Str("status", targetCode).Msg("Failed to update order status")
 	}
 }

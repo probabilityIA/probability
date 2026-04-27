@@ -19,6 +19,7 @@ func entityToModel(t *entities.Ticket) *models.Ticket {
 		Status:         t.Status,
 		Source:         t.Source,
 		Severity:       t.Severity,
+		Area:           t.Area,
 		EscalatedToDev: t.EscalatedToDev,
 		EscalatedAt:    t.EscalatedAt,
 		DueDate:        t.DueDate,
@@ -42,6 +43,7 @@ func modelToEntity(m *models.Ticket) *entities.Ticket {
 		Status:         m.Status,
 		Source:         m.Source,
 		Severity:       m.Severity,
+		Area:           m.Area,
 		EscalatedToDev: m.EscalatedToDev,
 		EscalatedAt:    m.EscalatedAt,
 		DueDate:        m.DueDate,
@@ -54,8 +56,10 @@ func modelToEntity(m *models.Ticket) *entities.Ticket {
 		out.BusinessName = m.Business.Name
 	}
 	out.CreatedByName = m.CreatedBy.Name
+	out.CreatedByAvatarURL = m.CreatedBy.AvatarURL
 	if m.AssignedTo != nil {
 		out.AssignedToName = m.AssignedTo.Name
+		out.AssignedToAvatarURL = m.AssignedTo.AvatarURL
 	}
 	return out
 }
@@ -95,8 +99,11 @@ func historyToEntity(m *models.TicketStatusHistory) *entities.TicketStatusHistor
 	return &entities.TicketStatusHistory{
 		ID:            m.ID,
 		TicketID:      m.TicketID,
+		ChangeType:    m.ChangeType,
 		FromStatus:    m.FromStatus,
 		ToStatus:      m.ToStatus,
+		FromArea:      m.FromArea,
+		ToArea:        m.ToArea,
 		ChangedByID:   m.ChangedByID,
 		ChangedByName: m.ChangedBy.Name,
 		Note:          m.Note,

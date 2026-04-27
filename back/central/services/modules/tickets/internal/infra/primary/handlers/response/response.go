@@ -7,29 +7,32 @@ import (
 )
 
 type TicketResponse struct {
-	ID             uint       `json:"id"`
-	Code           string     `json:"code"`
-	BusinessID     *uint      `json:"business_id"`
-	BusinessName   string     `json:"business_name,omitempty"`
-	CreatedByID    uint       `json:"created_by_id"`
-	CreatedByName  string     `json:"created_by_name,omitempty"`
-	AssignedToID   *uint      `json:"assigned_to_id"`
-	AssignedToName string     `json:"assigned_to_name,omitempty"`
-	Title          string     `json:"title"`
-	Description    string     `json:"description"`
-	Type           string     `json:"type"`
-	Category       string     `json:"category,omitempty"`
-	Priority       string     `json:"priority"`
-	Status         string     `json:"status"`
-	Source         string     `json:"source"`
-	Severity       string     `json:"severity,omitempty"`
-	EscalatedToDev bool       `json:"escalated_to_dev"`
-	EscalatedAt    *time.Time `json:"escalated_at,omitempty"`
-	DueDate        *time.Time `json:"due_date,omitempty"`
-	ResolvedAt     *time.Time `json:"resolved_at,omitempty"`
-	ClosedAt       *time.Time `json:"closed_at,omitempty"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	ID                  uint       `json:"id"`
+	Code                string     `json:"code"`
+	BusinessID          *uint      `json:"business_id"`
+	BusinessName        string     `json:"business_name,omitempty"`
+	CreatedByID         uint       `json:"created_by_id"`
+	CreatedByName       string     `json:"created_by_name,omitempty"`
+	CreatedByAvatarURL  string     `json:"created_by_avatar_url,omitempty"`
+	AssignedToID        *uint      `json:"assigned_to_id"`
+	AssignedToName      string     `json:"assigned_to_name,omitempty"`
+	AssignedToAvatarURL string     `json:"assigned_to_avatar_url,omitempty"`
+	Title               string     `json:"title"`
+	Description         string     `json:"description"`
+	Type                string     `json:"type"`
+	Category            string     `json:"category,omitempty"`
+	Priority            string     `json:"priority"`
+	Status              string     `json:"status"`
+	Source              string     `json:"source"`
+	Severity            string     `json:"severity,omitempty"`
+	Area                string     `json:"area,omitempty"`
+	EscalatedToDev      bool       `json:"escalated_to_dev"`
+	EscalatedAt         *time.Time `json:"escalated_at,omitempty"`
+	DueDate             *time.Time `json:"due_date,omitempty"`
+	ResolvedAt          *time.Time `json:"resolved_at,omitempty"`
+	ClosedAt            *time.Time `json:"closed_at,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
 
 	CommentsCount    int64 `json:"comments_count"`
 	AttachmentsCount int64 `json:"attachments_count"`
@@ -62,8 +65,11 @@ type AttachmentResponse struct {
 type HistoryResponse struct {
 	ID            uint      `json:"id"`
 	TicketID      uint      `json:"ticket_id"`
-	FromStatus    string    `json:"from_status"`
-	ToStatus      string    `json:"to_status"`
+	ChangeType    string    `json:"change_type"`
+	FromStatus    string    `json:"from_status,omitempty"`
+	ToStatus      string    `json:"to_status,omitempty"`
+	FromArea      string    `json:"from_area,omitempty"`
+	ToArea        string    `json:"to_area,omitempty"`
 	ChangedByID   uint      `json:"changed_by_id"`
 	ChangedByName string    `json:"changed_by_name"`
 	Note          string    `json:"note"`
@@ -72,31 +78,34 @@ type HistoryResponse struct {
 
 func FromTicket(t *entities.Ticket) TicketResponse {
 	return TicketResponse{
-		ID:               t.ID,
-		Code:             t.Code,
-		BusinessID:       t.BusinessID,
-		BusinessName:     t.BusinessName,
-		CreatedByID:      t.CreatedByID,
-		CreatedByName:    t.CreatedByName,
-		AssignedToID:     t.AssignedToID,
-		AssignedToName:   t.AssignedToName,
-		Title:            t.Title,
-		Description:      t.Description,
-		Type:             t.Type,
-		Category:         t.Category,
-		Priority:         t.Priority,
-		Status:           t.Status,
-		Source:           t.Source,
-		Severity:         t.Severity,
-		EscalatedToDev:   t.EscalatedToDev,
-		EscalatedAt:      t.EscalatedAt,
-		DueDate:          t.DueDate,
-		ResolvedAt:       t.ResolvedAt,
-		ClosedAt:         t.ClosedAt,
-		CreatedAt:        t.CreatedAt,
-		UpdatedAt:        t.UpdatedAt,
-		CommentsCount:    t.CommentsCount,
-		AttachmentsCount: t.AttachmentsCount,
+		ID:                  t.ID,
+		Code:                t.Code,
+		BusinessID:          t.BusinessID,
+		BusinessName:        t.BusinessName,
+		CreatedByID:         t.CreatedByID,
+		CreatedByName:       t.CreatedByName,
+		CreatedByAvatarURL:  t.CreatedByAvatarURL,
+		AssignedToID:        t.AssignedToID,
+		AssignedToName:      t.AssignedToName,
+		AssignedToAvatarURL: t.AssignedToAvatarURL,
+		Title:               t.Title,
+		Description:         t.Description,
+		Type:                t.Type,
+		Category:            t.Category,
+		Priority:            t.Priority,
+		Status:              t.Status,
+		Source:              t.Source,
+		Severity:            t.Severity,
+		Area:                t.Area,
+		EscalatedToDev:      t.EscalatedToDev,
+		EscalatedAt:         t.EscalatedAt,
+		DueDate:             t.DueDate,
+		ResolvedAt:          t.ResolvedAt,
+		ClosedAt:            t.ClosedAt,
+		CreatedAt:           t.CreatedAt,
+		UpdatedAt:           t.UpdatedAt,
+		CommentsCount:       t.CommentsCount,
+		AttachmentsCount:    t.AttachmentsCount,
 	}
 }
 
@@ -135,8 +144,11 @@ func FromHistory(h *entities.TicketStatusHistory) HistoryResponse {
 	return HistoryResponse{
 		ID:            h.ID,
 		TicketID:      h.TicketID,
+		ChangeType:    h.ChangeType,
 		FromStatus:    h.FromStatus,
 		ToStatus:      h.ToStatus,
+		FromArea:      h.FromArea,
+		ToArea:        h.ToArea,
 		ChangedByID:   h.ChangedByID,
 		ChangedByName: h.ChangedByName,
 		Note:          h.Note,

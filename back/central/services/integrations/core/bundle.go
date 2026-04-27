@@ -98,6 +98,7 @@ type IIntegrationCore interface {
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
+	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
 }
 
 // ============================================
@@ -269,6 +270,10 @@ func (ic *integrationCore) GetCachedPlatformCredentials(ctx context.Context, int
 	_ = ic.cache.SetPlatformCredentials(ctx, integrationTypeID, creds)
 
 	return creds, nil
+}
+
+func (ic *integrationCore) GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error) {
+	return ic.repo.GetIntegrationTypeByCode(ctx, code)
 }
 
 func (ic *integrationCore) GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error) {

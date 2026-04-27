@@ -35,6 +35,8 @@ type IRepository interface {
 	// Integration Categories
 	GetIntegrationCategoryByID(ctx context.Context, id uint) (*IntegrationCategory, error)
 	ListIntegrationCategories(ctx context.Context) ([]*IntegrationCategory, error)
+
+	RecordCredentialReveal(ctx context.Context, audit *CredentialRevealAudit) error
 }
 
 type IEncryptionService interface {

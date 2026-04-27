@@ -240,6 +240,14 @@ func (m *RepositoryMock) UpdateOrderStatus(ctx context.Context, orderID string, 
 	return args.Error(0)
 }
 
+func (m *RepositoryMock) CheckStockForOrder(ctx context.Context, businessID uint, warehouseID *uint, items []dtos.StockCheckItem) ([]dtos.StockCheckResult, error) {
+	args := m.Called(ctx, businessID, warehouseID, items)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]dtos.StockCheckResult), args.Error(1)
+}
+
 func (m *RepositoryMock) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
 	args := m.Called(ctx, history)
 	return args.Error(0)

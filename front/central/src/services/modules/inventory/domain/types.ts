@@ -31,6 +31,9 @@ export interface InventoryLevel {
     family_name?: string;
     variant_label?: string;
     variant_attributes?: string;
+    state_name?: string;
+    location_code?: string;
+    location_name?: string;
     created_at: string;
     updated_at: string;
 }

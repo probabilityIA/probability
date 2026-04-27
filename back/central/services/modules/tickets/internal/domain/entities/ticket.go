@@ -16,6 +16,7 @@ type Ticket struct {
 	Status      string
 	Source      string
 	Severity    string
+	Area        string
 	EscalatedToDev bool
 	EscalatedAt    *time.Time
 	DueDate     *time.Time
@@ -26,7 +27,9 @@ type Ticket struct {
 
 	BusinessName  string
 	CreatedByName string
+	CreatedByAvatarURL string
 	AssignedToName string
+	AssignedToAvatarURL string
 
 	CommentsCount    int64
 	AttachmentsCount int64
@@ -64,8 +67,11 @@ type TicketAttachment struct {
 type TicketStatusHistory struct {
 	ID            uint
 	TicketID      uint
+	ChangeType    string
 	FromStatus    string
 	ToStatus      string
+	FromArea      string
+	ToArea        string
 	ChangedByID   uint
 	ChangedByName string
 	Note          string

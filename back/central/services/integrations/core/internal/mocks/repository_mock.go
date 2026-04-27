@@ -186,3 +186,8 @@ func (m *RepositoryMock) ListIntegrationCategories(ctx context.Context) ([]*doma
 	}
 	return args.Get(0).([]*domain.IntegrationCategory), args.Error(1)
 }
+
+func (m *RepositoryMock) RecordCredentialReveal(ctx context.Context, audit *domain.CredentialRevealAudit) error {
+	args := m.Called(ctx, audit)
+	return args.Error(0)
+}

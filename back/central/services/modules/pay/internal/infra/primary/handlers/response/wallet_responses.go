@@ -13,13 +13,19 @@ type WalletResponse struct {
 
 // WalletTransactionResponse respuesta HTTP de una transacción de billetera
 type WalletTransactionResponse struct {
-	ID                   string  `json:"ID"`
-	WalletID             string  `json:"WalletID"`
-	Amount               float64 `json:"Amount"`
-	Type                 string  `json:"Type"`
-	Status               string  `json:"Status"`
-	Reference            string  `json:"Reference"`
-	QrCode               string  `json:"QrCode"`
-	PaymentTransactionID *uint   `json:"PaymentTransactionID,omitempty"`
+	ID                   string    `json:"ID"`
+	WalletID             string    `json:"WalletID"`
+	Amount               float64   `json:"Amount"`
+	Type                 string    `json:"Type"`
+	Status               string    `json:"Status"`
+	Reference            string    `json:"Reference"`
+	QrCode               string    `json:"QrCode"`
+	PaymentTransactionID *uint     `json:"PaymentTransactionID,omitempty"`
+	IntegrationTypeID    *uint     `json:"integration_type_id,omitempty"`
+	IntegrationID        *uint     `json:"integration_id,omitempty"`
+	IntegrationName      string    `json:"integration_name,omitempty"`
+	IntegrationImageURL  string    `json:"integration_image_url,omitempty"`
+	GatewayRequest       any       `json:"gateway_request,omitempty"`
+	GatewayResponse      any       `json:"gateway_response,omitempty"`
 	CreatedAt            time.Time `json:"CreatedAt"`
 }

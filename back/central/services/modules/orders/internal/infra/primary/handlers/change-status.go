@@ -59,6 +59,8 @@ func (h *Handlers) ChangeStatus(c *gin.Context) {
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		case errors.Is(err, domainerrors.ErrOrderInTerminalState):
 			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		case errors.Is(err, domainerrors.ErrInsufficientStock):
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

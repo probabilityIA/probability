@@ -75,11 +75,11 @@ func Init(ctx context.Context) error {
 	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
 	events.New(v1Group, logger, rabbitMQ, redisClient)
 
-	// Initialize Order Module (and others)
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient)
+	// Initialize Integrations Module first so core is available for modules
+	integrationCore := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
-	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
-	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
+	// Initialize Order Module (and others) — receives integrationCore for shared platform-credentials access
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

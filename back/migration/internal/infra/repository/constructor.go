@@ -20,58 +20,12 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 	}
 }
 
+// Migrate ejecuta SOLO la migracion activa actual.
+// Las migraciones pasadas ya estan aplicadas en produccion y no deben re-correr.
+// Para una nueva migracion: dejar UNA sola llamada activa aqui, ejecutar, y volver a vaciar.
 func (r *Repository) Migrate(ctx context.Context) error {
-	if err := r.migrateAnnouncements(ctx); err != nil {
-		return fmt.Errorf("failed to migrate announcements: %w", err)
+	if err := r.migrateTicketArea(ctx); err != nil {
+		return fmt.Errorf("failed to migrate ticket area columns: %w", err)
 	}
-
-	if err := r.migrateCustomerAddressCoords(ctx); err != nil {
-		return fmt.Errorf("failed to migrate customer address coords: %w", err)
-	}
-
-	if err := r.migrateWebhookLogs(ctx); err != nil {
-		return fmt.Errorf("failed to migrate webhook logs: %w", err)
-	}
-
-	if err := r.migrateWarehouseHierarchy(ctx); err != nil {
-		return fmt.Errorf("failed to migrate warehouse hierarchy: %w", err)
-	}
-
-	if err := r.migrateInventoryTraceability(ctx); err != nil {
-		return fmt.Errorf("failed to migrate inventory traceability: %w", err)
-	}
-
-	if err := r.migrateInventoryOperations(ctx); err != nil {
-		return fmt.Errorf("failed to migrate inventory operations: %w", err)
-	}
-
-	if err := r.migrateInventoryAudit(ctx); err != nil {
-		return fmt.Errorf("failed to migrate inventory audit: %w", err)
-	}
-
-	if err := r.migrateInventoryCapture(ctx); err != nil {
-		return fmt.Errorf("failed to migrate inventory capture: %w", err)
-	}
-
-	if err := r.migrateProductVariants(ctx); err != nil {
-		return fmt.Errorf("failed to migrate product variants: %w", err)
-	}
-
-	if err := r.migrateBusinessOrderPrefix(ctx); err != nil {
-		return fmt.Errorf("failed to migrate business order_prefix: %w", err)
-	}
-
-	if err := r.migrateShipmentDestinationGeo(ctx); err != nil {
-		return fmt.Errorf("failed to migrate shipment destination geo: %w", err)
-	}
-
-	if err := r.backfillShipmentDestinationGeo(ctx); err != nil {
-		return fmt.Errorf("failed to backfill shipment destination geo: %w", err)
-	}
-
-	if err := r.migrateTickets(ctx); err != nil {
-		return fmt.Errorf("failed to migrate tickets: %w", err)
-	}
-
 	return nil
 }

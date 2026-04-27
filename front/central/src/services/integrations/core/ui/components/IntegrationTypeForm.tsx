@@ -8,10 +8,12 @@ import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
 import { getIntegrationCategoriesAction, getIntegrationTypePlatformCredentialsAction } from '../../infra/actions';
 import { WhatsAppTypeCredentialsForm } from '@/services/integrations/messages/whatsapp/ui/components';
 import type { WhatsAppPlatformCredentials } from '@/services/integrations/messages/whatsapp/ui/components';
+import { BoldTypeCredentialsForm } from '@/services/integrations/pay/bold/ui/components';
+import type { BoldPlatformCredentials } from '@/services/integrations/pay/bold/ui/components';
 import { getActionError } from '@/shared/utils/action-result';
 
-// IDs de tipos de integración con formularios de credenciales dedicados
 const WHATSAPP_TYPE_ID = 2;
+const BOLD_TYPE_ID = 23;
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
@@ -58,6 +60,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         ai_sales_max_tool_iterations: '5',
         ai_sales_demo_business_id: '1',
     });
+    const [boldCredentials, setBoldCredentials] = useState<BoldPlatformCredentials>({
+        api_key: '',
+        secret_key: '',
+        test_api_key: '',
+        test_secret_key: '',
+    });
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -98,7 +106,6 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     .then((res) => {
                         if (res.success && res.data && Object.keys(res.data).length > 0) {
                             if (integrationType.id === WHATSAPP_TYPE_ID) {
-                                // Poblar campos estructurados de WhatsApp
                                 const d = res.data as Record<string, unknown>;
                                 setWhatsappCredentials({
                                     whatsapp_url: String(d.whatsapp_url || ''),
@@ -113,6 +120,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     ai_sales_session_ttl_minutes: String(d.ai_sales_session_ttl_minutes || '20'),
                                     ai_sales_max_tool_iterations: String(d.ai_sales_max_tool_iterations || '5'),
                                     ai_sales_demo_business_id: String(d.ai_sales_demo_business_id || '1'),
+                                });
+                            } else if (integrationType.id === BOLD_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setBoldCredentials({
+                                    api_key: String(d.api_key || ''),
+                                    secret_key: String(d.secret_key || ''),
+                                    test_api_key: String(d.test_api_key || ''),
+                                    test_secret_key: String(d.test_secret_key || ''),
                                 });
                             } else {
                                 setFormData((prev) => ({
@@ -168,6 +183,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (whatsappCredentials.ai_sales_max_tool_iterations.trim()) wa.ai_sales_max_tool_iterations = Number(whatsappCredentials.ai_sales_max_tool_iterations);
                 if (whatsappCredentials.ai_sales_demo_business_id.trim()) wa.ai_sales_demo_business_id = Number(whatsappCredentials.ai_sales_demo_business_id);
                 if (Object.keys(wa).length > 0) platformCredentials = wa;
+            } else if (integrationType?.id === BOLD_TYPE_ID) {
+                const bold: Record<string, unknown> = {};
+                if (boldCredentials.api_key.trim()) bold.api_key = boldCredentials.api_key.trim();
+                if (boldCredentials.secret_key.trim()) bold.secret_key = boldCredentials.secret_key.trim();
+                if (boldCredentials.test_api_key.trim()) bold.test_api_key = boldCredentials.test_api_key.trim();
+                if (boldCredentials.test_secret_key.trim()) bold.test_secret_key = boldCredentials.test_secret_key.trim();
+                if (Object.keys(bold).length > 0) platformCredentials = bold;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -428,11 +450,16 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </p>
             </div>
 
-            {/* Platform Credentials (encrypted) - Each integration type has its own form */}
             {integrationType?.id === WHATSAPP_TYPE_ID ? (
                 <WhatsAppTypeCredentialsForm
                     credentials={whatsappCredentials}
                     onChange={setWhatsappCredentials}
+                    isEditing={!!integrationType}
+                />
+            ) : integrationType?.id === BOLD_TYPE_ID ? (
+                <BoldTypeCredentialsForm
+                    credentials={boldCredentials}
+                    onChange={setBoldCredentials}
                     isEditing={!!integrationType}
                 />
             ) : (
@@ -482,17 +509,30 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </div>
             )}
 
-            {/* Active Checkbox */}
-            <div className="flex items-center space-x-4">
-                <label className="flex items-center">
-                    <input
-                        type="checkbox"
-                        checked={formData.is_active}
-                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+            <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={formData.is_active}
+                    onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
+                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 mt-0.5 ${
+                        formData.is_active ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-500'
+                    }`}
+                >
+                    <span
+                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                            formData.is_active ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">Activo</span>
-                </label>
+                </button>
+                <div className="flex-1">
+                    <span className={`block text-base font-semibold ${formData.is_active ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {formData.is_active ? 'Activo' : 'Desactivado'}
+                    </span>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                        {formData.is_active ? 'Este tipo de integracion esta disponible para los negocios.' : 'Este tipo de integracion esta oculto para los negocios.'}
+                    </p>
+                </div>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4 border-t">

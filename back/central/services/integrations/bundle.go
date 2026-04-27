@@ -46,7 +46,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	transport.New(router, db, logger, rabbitMQ, integrationCore)
 
 	// Pay: todos los proveedores de pago (Nequi, etc.) + router de colas
-	pay.New(config, logger, db, rabbitMQ)
+	pay.New(router, config, logger, db, rabbitMQ, integrationCore)
 
 	// Storefront: Tienda y Tienda Web
 	integrationCore.RegisterIntegration(core.IntegrationTypeTienda, storefrontprovider.New())

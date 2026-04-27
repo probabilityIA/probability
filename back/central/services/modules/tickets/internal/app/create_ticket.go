@@ -49,6 +49,14 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateTicketDTO) (*entit
 		src = "internal"
 	}
 
+	area := strings.ToLower(strings.TrimSpace(dto.Area))
+	if area == "" {
+		area = "soporte"
+	}
+	if !validAreas[area] {
+		return nil, dom.ErrInvalidArea
+	}
+
 	if dto.AssignedToID != nil {
 		exists, err := uc.repo.UserExists(ctx, *dto.AssignedToID)
 		if err != nil {
@@ -84,6 +92,7 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateTicketDTO) (*entit
 		Status:       "open",
 		Source:       src,
 		Severity:     sv,
+		Area:         area,
 		DueDate:      due,
 	}
 

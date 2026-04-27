@@ -26,6 +26,7 @@ type IRepository interface {
 	ListAttachments(ctx context.Context, ticketID uint) ([]entities.TicketAttachment, error)
 
 	AddHistory(ctx context.Context, ticketID uint, fromStatus, toStatus string, changedByID uint, note string) error
+	AddAreaHistory(ctx context.Context, ticketID uint, fromArea, toArea string, changedByID uint, note string) error
 	ListHistory(ctx context.Context, ticketID uint) ([]entities.TicketStatusHistory, error)
 }
 

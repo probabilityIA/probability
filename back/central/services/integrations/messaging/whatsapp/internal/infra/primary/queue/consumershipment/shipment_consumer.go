@@ -12,7 +12,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// Start inicia el consumidor de guías de envío
 func (c *consumer) Start(ctx context.Context) error {
 	queueName := rabbitmq.QueueShipmentsWhatsAppGuideNotification
 	if err := c.queue.DeclareQueue(queueName, true); err != nil {
@@ -32,7 +31,6 @@ func (c *consumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleMessage procesa cada mensaje de notificación de guía de envío
 func (c *consumer) handleMessage(messageBody []byte) error {
 	var event request.ShipmentGuideEvent
 	if err := json.Unmarshal(messageBody, &event); err != nil {
@@ -48,7 +46,6 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		Str("customer_phone", event.CustomerPhone).
 		Msg("Processing shipment guide notification")
 
-	// Validate phone
 	if event.CustomerPhone == "" {
 		c.log.Warn().
 			Str("order_number", event.OrderNumber).
@@ -57,31 +54,43 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		return nil
 	}
 
-	codAmount := event.CodTotal
-	if codAmount == 0 {
-		codAmount = event.TotalAmount
-	}
 	trackingURL := event.TrackingURL
 	if trackingURL == "" && event.TrackingNumber != "" {
 		trackingURL = "https://www.probabilityia.com.co/rastreo?tracking=" + event.TrackingNumber
 	}
+	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
 
-	variables := map[string]string{
-		"1": orDefault(event.CustomerName, "Cliente"),
-		"2": orDefault(event.BusinessName, "Probability"),
-		"3": orDefault(event.OrderNumber, "N/A"),
-		"4": orDefault(event.TrackingNumber, "N/A"),
-		"5": orDefault(event.Carrier, "Transportadora"),
-		"6": formatTotalAmount(codAmount),
-		"7": orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo"),
+	isCOD := event.CodTotal > 0
+
+	var templateName string
+	var variables map[string]string
+	if isCOD {
+		templateName = "guia_envio_generada_cod"
+		variables = map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.TrackingNumber, "N/A"),
+			"5": orDefault(event.Carrier, "Transportadora"),
+			"6": formatTotalAmount(event.CodTotal),
+			"7": trackingURL,
+		}
+	} else {
+		templateName = "guia_envio_generada"
+		variables = map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.TrackingNumber, "N/A"),
+			"5": orDefault(event.Carrier, "Transportadora"),
+			"6": trackingURL,
+		}
 	}
 
 	businessID := uint(0)
 	if event.BusinessID != nil {
 		businessID = *event.BusinessID
 	}
-
-	templateName := "guia_envio_generada"
 
 	messageID, err := c.useCase.SendTemplate(
 		context.Background(),

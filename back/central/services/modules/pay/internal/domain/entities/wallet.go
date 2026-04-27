@@ -39,5 +39,10 @@ type WalletTransaction struct {
 	QrCode               string
 	PaymentTransactionID *uint
 	UserID               *uint
+	IntegrationTypeID    *uint
+	IntegrationID        *uint
+	GatewayRequest       []byte
+	GatewayResponse      []byte
+	IntegrationImageURL  string
 	CreatedAt            time.Time
 }
