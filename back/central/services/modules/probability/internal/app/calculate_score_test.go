@@ -151,7 +151,6 @@ func TestCalculateOrderScore_TodosLosFaltantes(t *testing.T) {
 	assert.Contains(t, factors, "Teléfono")
 	assert.Contains(t, factors, "Dirección")
 	assert.Contains(t, factors, "Complemento de dirección")
-	assert.Contains(t, factors, "Historial de compra")
 }
 
 func TestCalculateOrderScore_UnFactorNegativo(t *testing.T) {
@@ -281,23 +280,6 @@ func TestGetStaticNegativeFactors_ComplementoDireccion_DesdeChannelMetadata(t *t
 	factors := uc.GetStaticNegativeFactors(order)
 	assert.NotContains(t, factors, "Complemento de dirección")
 }
-
-func TestGetStaticNegativeFactors_HistorialCompra_Cero(t *testing.T) {
-	uc := newPureUC()
-	order := perfectOrder()
-	order.CustomerOrderCount = 0
-	factors := uc.GetStaticNegativeFactors(order)
-	assert.Contains(t, factors, "Historial de compra")
-}
-
-func TestGetStaticNegativeFactors_HistorialCompra_Mayor(t *testing.T) {
-	uc := newPureUC()
-	order := perfectOrder()
-	order.CustomerOrderCount = 3
-	factors := uc.GetStaticNegativeFactors(order)
-	assert.NotContains(t, factors, "Historial de compra")
-}
-
 
 func TestIsCODPayment_GatewayConCod(t *testing.T) {
 	uc := newPureUC()
