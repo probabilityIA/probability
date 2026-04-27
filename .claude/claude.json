@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "mcp-server-postgres-multi-schema",
+      "args": [
+        "postgresql://postgres:8dqGjXh292YJbw66NzqH@database-1.capmmoe4cw2e.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require"
+      ]
+    }
+  }
+}

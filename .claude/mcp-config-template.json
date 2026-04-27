@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["chrome-devtools-mcp@latest"],
+      "description": "Browser automation and debugging. Good for interactive browser testing and Chrome DevTools Protocol access."
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "description": "Automated testing and web scraping. Supports Chrome, Firefox, WebKit."
+    },
+    "postgres-probability": {
+      "command": "node",
+      "args": ["/Users/danielcamacho/.claude/mcp-postgres.js"],
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:8dqGjXh292YJbw66NzqH@database-1.capmmoe4cw2e.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require"
+      },
+      "description": "Direct PostgreSQL database access for Probability app. Allows queries, table inspection, schema analysis."
+    }
+  },
+  "_instructions": {
+    "how_to_use": "Copy the mcpServers section into your ~/.claude.json file (your global Claude Code config)",
+    "important_notes": [
+      "The postgres-probability MCP requires the mcp-postgres.js script at /Users/danielcamacho/.claude/mcp-postgres.js",
+      "DATABASE_URL contains credentials - NEVER commit this file or share publicly",
+      "After adding MCPs to ~/.claude.json, restart Claude Code completely (not just the session)",
+      "Run 'nvm use' in the project directory to load Node.js 20.19.0 (required by chrome-devtools)",
+      "Each developer gets their own ~/.claude.json - these are NOT shared via the repository"
+    ],
+    "new_mcps": "See .claude/MCP_SETUP_GUIDE.md for instructions on adding new MCPs"
+  }
+}
