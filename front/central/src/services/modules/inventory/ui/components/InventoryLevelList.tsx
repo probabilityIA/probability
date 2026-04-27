@@ -99,18 +99,13 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 {level.product_sku && (
                     <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.product_sku}</span>
                 )}
-                {level.state_name && (
-                    <span className="inline-flex mt-0.5 items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300">
-                        {level.state_name}
-                    </span>
-                )}
             </div>
         ),
-        nivel: level.location_name ? (
+        nivel: level.warehouse_name ? (
             <div>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{level.location_name}</span>
-                {level.location_code && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.location_code}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{level.warehouse_name}</span>
+                {level.warehouse_code && (
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.warehouse_code}</span>
                 )}
             </div>
         ) : (

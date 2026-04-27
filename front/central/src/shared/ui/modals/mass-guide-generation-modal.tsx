@@ -195,6 +195,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         for (let i = 0; i < selectedOrders.length; i++) {
             const order = selectedOrders[i];
             try {
+                const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
                 const orderCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const quotePayload: EnvioClickQuoteRequest = {
                     packages: [{
@@ -209,11 +210,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     includeGuideCost: false,
                     codPaymentMethod: orderCodValue ? 'cash' : '',
                     origin: {
-                        daneCode: selectedWarehouse?.city_dane_code || '11001000',
+                        daneCode: selectedWarehouse?.city_dane_code || '',
                         address: selectedWarehouse?.street || selectedWarehouse?.address || 'Direccion no especificada',
                     },
                     destination: {
-                        daneCode: findDaneCode(order.shipping_city || "", order.shipping_state || "") || '11001001',
+                        daneCode: destDane || '',
                         address: order.shipping_street || 'Direccion no especificada',
                     },
                 };
@@ -253,7 +254,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         for (let i = 0; i < ordersToGenerate.length; i++) {
             const order = ordersToGenerate[i];
             try {
-                const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "") || "11001000";
+                const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
 
                 const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
                 const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0);
@@ -278,7 +279,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         length: order.length || 10,
                     }],
                     origin: {
-                        daneCode: selectedWarehouse?.city_dane_code || '11001000',
+                        daneCode: selectedWarehouse?.city_dane_code || '',
                         address: selectedWarehouse?.street || selectedWarehouse?.address || 'Dirección no especificada',
                         company: selectedWarehouse?.company || selectedWarehouse?.name || 'Mi Empresa',
                         firstName: selectedWarehouse?.first_name || selectedWarehouse?.contact_name?.split(' ')[0] || 'Admin',
@@ -290,7 +291,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         reference: '',
                     },
                     destination: {
-                        daneCode: destDane,
+                        daneCode: destDane || '',
                         address: order.shipping_street || 'Dirección no especificada',
                         company: order.customer_name || 'Cliente',
                         firstName: order.customer_name?.split(' ')[0] || 'Cliente',

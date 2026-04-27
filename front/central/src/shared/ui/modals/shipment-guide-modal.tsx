@@ -104,11 +104,10 @@ interface ShipmentGuideModalProps {
     recommendedCarrier?: string;
 }
 
-// Step 1: Origin/Destination/Package Schema
 const step1Schema = z.object({
-    originDaneCode: z.string().min(8, "Código DANE de origen requerido"),
+    originDaneCode: z.string().min(1, "Código DANE de origen requerido"),
     originAddress: z.string().min(2, "Dirección de origen requerida").max(50),
-    destDaneCode: z.string().min(8, "Código DANE de destino requerido"),
+    destDaneCode: z.string().min(1, "Código DANE de destino requerido"),
     destAddress: z.string().min(8, "Dirección de destino requerida").max(50),
     weight: z.number().min(1).max(1000),
     height: z.number().min(1).max(300),
@@ -228,9 +227,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         resolver: zodResolver(step1Schema),
         mode: 'onChange',
         defaultValues: {
-            originDaneCode: "11001000",
+            originDaneCode: "",
             originAddress: "",
-            destDaneCode: "11001000",
+            destDaneCode: "",
             destAddress: "",
             weight: 1,
             height: 10,
@@ -274,10 +273,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
-        // Step 1
-        step1Form.setValue("originDaneCode", wh.city_dane_code || "11001000", { shouldValidate: true });
+        if (wh.city_dane_code) {
+            step1Form.setValue("originDaneCode", wh.city_dane_code, { shouldValidate: true });
+            setOriginSearch(`${wh.city} (${wh.state})`);
+        }
         step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
-        setOriginSearch(`${wh.city} (${wh.state})`);
 
         // Step 3
         step3Form.setValue("originCompany", wh.company || wh.name);
@@ -331,14 +331,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 step1Form.setValue("length", order.length || 10, { shouldValidate: true });
             }
 
-            // Try to find DANE code by city
             const mappedDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
-            const finalDane = mappedDane || "11001000"; // Fallback to Bogota
-
-            step1Form.setValue("destDaneCode", finalDane, { shouldValidate: true });
-            const cityData = danes[finalDane as keyof typeof danes];
-            if (cityData) {
-                setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
+            if (mappedDane) {
+                step1Form.setValue("destDaneCode", mappedDane, { shouldValidate: true });
+                const cityData = danes[mappedDane as keyof typeof danes];
+                if (cityData) {
+                    setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
+                }
             }
 
             if (order.cod_total && order.cod_total > 0) {
@@ -489,11 +488,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Step 1: Quote (async - sends to queue, result arrives via SSE)
     const handleStep1Submit = async (data: Step1Values) => {
-        // Autocompletar el paso 3 con las direcciones del paso 1
+        if (!data.originDaneCode || !data.destDaneCode) {
+            setError("⚠️ Por favor selecciona códigos DANE válidos para origen y destino");
+            setLoading(false);
+            return;
+        }
+
         step3Form.setValue("originCrossStreet", data.originAddress);
         step3Form.setValue("destCrossStreet", data.destAddress);
 
-        // Check for validation errors
         const errors = step1Form.formState.errors;
         if (Object.keys(errors).length > 0) {
             const fieldLabels: { [key: string]: string } = {

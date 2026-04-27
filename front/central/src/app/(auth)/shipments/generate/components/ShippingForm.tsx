@@ -186,14 +186,13 @@ export const ShippingForm = () => {
             setValue("destination.crossStreet", "");
             setValue("destination.reference", "");
 
-            // Set DANE code and city search label
             const mappedDane = findDaneCode(order.shipping_city, order.shipping_state);
-            const finalDane = mappedDane || "11001000"; // Fallback to Bogota if not found
-
-            setValue("destination.daneCode", finalDane);
-            const cityData = daneCodes[finalDane as keyof typeof daneCodes];
-            if (cityData) {
-                setDestSearch((cityData as any).ciudad);
+            if (mappedDane) {
+                setValue("destination.daneCode", mappedDane);
+                const cityData = daneCodes[mappedDane as keyof typeof daneCodes];
+                if (cityData) {
+                    setDestSearch((cityData as any).ciudad);
+                }
             }
 
             setValue("contentValue", order.total_amount);

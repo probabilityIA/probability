@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO } from '../../domain/types';
 import { createWarehouseAction, updateWarehouseAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
 import AddressAutocomplete, { AddressSuggestion } from '@/services/modules/orders/ui/components/AddressAutocomplete';
+import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
 
@@ -104,7 +105,45 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
         is_active: warehouse?.is_active ?? true,
         latitude: warehouse?.latitude != null ? String(warehouse.latitude) : '',
         longitude: warehouse?.longitude != null ? String(warehouse.longitude) : '',
+        city_dane_code: '',
     });
+
+    const [citySearch, setCitySearch] = useState('');
+    const [showCityResults, setShowCityResults] = useState(false);
+    const cityRef = useRef<HTMLDivElement>(null);
+
+    const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
+        value: code,
+        label: `${data.ciudad} (${data.departamento})`,
+        ciudad: data.ciudad,
+        departamento: data.departamento
+    })).sort((a, b) => a.label.localeCompare(b.label));
+
+    const filteredCityOptions = daneOptions.filter(opt =>
+        opt.label.toLowerCase().includes(citySearch.toLowerCase())
+    );
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
+                setShowCityResults(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleCitySelect = (option: any) => {
+        setFormData({
+            ...formData,
+            city: option.ciudad,
+            state: option.departamento,
+            city_dane_code: option.value
+        });
+        setCitySearch(option.label);
+        setShowCityResults(false);
+    };
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -147,6 +186,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     country: formData.country || undefined,
                     zip_code: formData.zip_code || undefined,
                     suburb: formData.suburb || undefined,
+                    city_dane_code: formData.city_dane_code || undefined,
                     phone: formData.phone || undefined,
                     contact_name: formData.contact_name || undefined,
                     contact_email: formData.contact_email || undefined,
@@ -167,6 +207,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     country: formData.country || undefined,
                     zip_code: formData.zip_code || undefined,
                     suburb: formData.suburb || undefined,
+                    city_dane_code: formData.city_dane_code || undefined,
                     phone: formData.phone || undefined,
                     contact_name: formData.contact_name || undefined,
                     contact_email: formData.contact_email || undefined,
@@ -309,25 +350,40 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Ciudad</label>
-                                    <Input
-                                        type="text"
-                                        value={formData.city}
-                                        onChange={(e) => handleChange('city', e.target.value)}
-                                        placeholder="Bogota"
-                                        maxLength={100}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Departamento</label>
-                                    <Input
-                                        type="text"
-                                        value={formData.state}
-                                        onChange={(e) => handleChange('state', e.target.value)}
-                                        placeholder="Cundinamarca"
-                                        maxLength={100}
-                                    />
+                                <div className="col-span-2" ref={cityRef}>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Ciudad / Departamento (DANE)</label>
+                                    <div className="relative">
+                                        <Input
+                                            type="text"
+                                            value={citySearch}
+                                            onChange={(e) => {
+                                                setCitySearch(e.target.value);
+                                                setShowCityResults(true);
+                                            }}
+                                            onFocus={() => setShowCityResults(true)}
+                                            placeholder="Buscar ciudad y departamento..."
+                                        />
+                                        {showCityResults && filteredCityOptions.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg z-10 max-h-48 overflow-y-auto">
+                                                {filteredCityOptions.map((opt) => (
+                                                    <button
+                                                        key={opt.value}
+                                                        type="button"
+                                                        onClick={() => handleCitySelect(opt)}
+                                                        className="w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 border-b border-gray-200 dark:border-gray-600 last:border-b-0"
+                                                    >
+                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{opt.label}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">Código DANE: {opt.value}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {formData.city_dane_code && (
+                                        <div className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
+                                            ✓ {formData.city} ({formData.state}) - DANE: {formData.city_dane_code}
+                                        </div>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pais</label>
