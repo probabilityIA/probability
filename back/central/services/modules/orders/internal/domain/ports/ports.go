@@ -51,6 +51,8 @@ type IRepository interface {
 
 	UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error
 
+	CheckStockForOrder(ctx context.Context, businessID uint, warehouseID *uint, items []dtos.StockCheckItem) ([]dtos.StockCheckResult, error)
+
 	CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error
 	GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error)
 }

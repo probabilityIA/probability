@@ -13,4 +13,6 @@ var (
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 	// ErrOrderInTerminalState indicates that the order is in a terminal state and cannot be changed
 	ErrOrderInTerminalState = errors.New("order is in a terminal state and cannot be changed")
+	// ErrInsufficientStock indica que no hay inventario suficiente para mover la orden a Seleccionando productos
+	ErrInsufficientStock = errors.New("inventario insuficiente para mover la orden a Seleccionando productos")
 )

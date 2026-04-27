@@ -215,6 +215,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		OrderStatusURL:         dto.OrderStatusURL,
 		GuideLink:              dto.GuideLink,
 		IsPaid:                 dto.IsPaid,
+		CodTotal:               dto.CodTotal,
 		IsConfirmed:            dto.IsConfirmed,
 		Novelty:                dto.Novelty,
 		IsTest:                 dto.IsTest,

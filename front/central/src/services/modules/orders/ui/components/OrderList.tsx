@@ -182,6 +182,11 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                 <div className="flex flex-col items-center gap-1">
+                    {(order.cod_total || 0) > 0 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                            Contra Entrega
+                        </span>
+                    )}
                     {order.payment_status?.name ? (
                         getStatusBadge(order.payment_status.name, order.payment_status.color)
                     ) : order.is_paid ? (
