@@ -54,6 +54,12 @@ export const assignTicketAction = async (id: number, assignedToId: number | null
     return r;
 };
 
+export const changeTicketAreaAction = async (id: number, area: string, note?: string) => {
+    const r = await (await getUseCases()).changeArea(id, area, note);
+    revalidatePath('/tickets');
+    return r;
+};
+
 export const escalateTicketAction = async (id: number, note?: string) => {
     const r = await (await getUseCases()).escalate(id, note);
     revalidatePath('/tickets');

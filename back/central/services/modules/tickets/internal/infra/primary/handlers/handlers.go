@@ -43,6 +43,7 @@ func (h *Handlers) Create(c *gin.Context) {
 		Priority:     req.Priority,
 		Severity:     req.Severity,
 		Source:       source,
+		Area:         req.Area,
 		AssignedToID: req.AssignedToID,
 		DueDate:      req.DueDate,
 	}
@@ -84,9 +85,12 @@ func (h *Handlers) List(c *gin.Context) {
 		Status:        h.splitCSV(c.Query("status")),
 		Priority:      h.splitCSV(c.Query("priority")),
 		Type:          h.splitCSV(c.Query("type")),
+		Area:          h.splitCSV(c.Query("area")),
 		Source:        c.Query("source"),
 		EscalatedOnly: c.Query("escalated") == "true",
 		Search:        c.Query("search"),
+		SortBy:        c.Query("sort_by"),
+		SortOrder:     c.Query("sort_order"),
 		OnlyMine:      c.Query("only_mine") == "true",
 		UserID:        userID,
 		IsSuperAdmin:  isSuperAdmin,
@@ -158,6 +162,7 @@ func (h *Handlers) Update(c *gin.Context) {
 		Category:     req.Category,
 		Priority:     req.Priority,
 		Severity:     req.Severity,
+		Area:         req.Area,
 		AssignedToID: req.AssignedToID,
 		DueDate:      req.DueDate,
 		ClearDueDate: req.ClearDueDate,
@@ -199,6 +204,30 @@ func (h *Handlers) ChangeStatus(c *gin.Context) {
 	t, err := h.uc.ChangeStatus(c.Request.Context(), dtos.ChangeStatusDTO{
 		TicketID:    id,
 		NewStatus:   req.Status,
+		Note:        req.Note,
+		ChangedByID: userID,
+	})
+	if err != nil {
+		h.handleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, response.FromTicket(t))
+}
+
+func (h *Handlers) ChangeArea(c *gin.Context) {
+	id, ok := h.parseUintParam(c, "id")
+	if !ok {
+		return
+	}
+	var req request.ChangeAreaRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userID, _, _ := h.requesterContext(c)
+	t, err := h.uc.ChangeArea(c.Request.Context(), dtos.ChangeAreaDTO{
+		TicketID:    id,
+		NewArea:     req.Area,
 		Note:        req.Note,
 		ChangedByID: userID,
 	})

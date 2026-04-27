@@ -10,9 +10,13 @@ type ListTicketsParams struct {
 	Status        []string
 	Priority      []string
 	Type          []string
+	Area          []string
 	Source        string
 	EscalatedOnly bool
 	Search        string
+
+	SortBy    string // created_at | updated_at | priority | status | code
+	SortOrder string // asc | desc
 
 	OnlyMine     bool
 	UserID       uint
@@ -29,6 +33,7 @@ type CreateTicketDTO struct {
 	Priority    string
 	Severity    string
 	Source      string
+	Area        string
 	AssignedToID *uint
 	DueDate      *string
 }
@@ -41,9 +46,17 @@ type UpdateTicketDTO struct {
 	Category     *string
 	Priority     *string
 	Severity     *string
+	Area         *string
 	AssignedToID *uint
 	DueDate      *string
 	ClearDueDate bool
+}
+
+type ChangeAreaDTO struct {
+	TicketID    uint
+	NewArea     string
+	Note        string
+	ChangedByID uint
 }
 
 type ChangeStatusDTO struct {

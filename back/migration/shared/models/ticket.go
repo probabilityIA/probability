@@ -29,6 +29,7 @@ type Ticket struct {
 	Status   string `gorm:"size:32;not null;index;default:'open'"`
 	Source   string `gorm:"size:16;not null;index;default:'internal'"`
 	Severity string `gorm:"size:16;index"`
+	Area     string `gorm:"size:32;index;default:'soporte'"`
 
 	EscalatedToDev bool       `gorm:"default:false;index"`
 	EscalatedAt    *time.Time `gorm:"index"`

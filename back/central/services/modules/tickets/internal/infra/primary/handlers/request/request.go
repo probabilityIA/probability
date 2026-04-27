@@ -9,6 +9,7 @@ type CreateTicketRequest struct {
 	Priority     string  `json:"priority"`
 	Severity     string  `json:"severity"`
 	Source       string  `json:"source"`
+	Area         string  `json:"area"`
 	AssignedToID *uint   `json:"assigned_to_id"`
 	DueDate      *string `json:"due_date"`
 }
@@ -20,6 +21,7 @@ type UpdateTicketRequest struct {
 	Category     *string `json:"category"`
 	Priority     *string `json:"priority"`
 	Severity     *string `json:"severity"`
+	Area         *string `json:"area"`
 	AssignedToID *uint   `json:"assigned_to_id"`
 	DueDate      *string `json:"due_date"`
 	ClearDueDate bool    `json:"clear_due_date"`
@@ -28,6 +30,11 @@ type UpdateTicketRequest struct {
 type ChangeStatusRequest struct {
 	Status string `json:"status" binding:"required"`
 	Note   string `json:"note"`
+}
+
+type ChangeAreaRequest struct {
+	Area string `json:"area" binding:"required"`
+	Note string `json:"note"`
 }
 
 type AssignRequest struct {

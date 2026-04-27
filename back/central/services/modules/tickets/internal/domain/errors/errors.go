@@ -11,6 +11,7 @@ var (
 	ErrInvalidPriority     = errors.New("invalid priority")
 	ErrInvalidType         = errors.New("invalid type")
 	ErrInvalidSeverity     = errors.New("invalid severity")
+	ErrInvalidArea         = errors.New("invalid area")
 	ErrTitleRequired       = errors.New("title is required")
 	ErrDescriptionRequired = errors.New("description is required")
 	ErrAssigneeNotFound    = errors.New("assigned user not found")

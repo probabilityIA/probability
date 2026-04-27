@@ -11,6 +11,7 @@ export class TicketUseCases {
     remove(id: number) { return this.repo.remove(id); }
     changeStatus(id: number, status: string, note?: string) { return this.repo.changeStatus(id, status, note); }
     assign(id: number, assignedToId: number | null) { return this.repo.assign(id, assignedToId); }
+    changeArea(id: number, area: string, note?: string) { return this.repo.changeArea(id, area, note); }
     escalate(id: number, note?: string) { return this.repo.escalate(id, note); }
 
     listComments(id: number, businessId?: number) { return this.repo.listComments(id, businessId); }

@@ -16,6 +16,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 
 		g.PATCH(":id/status", h.ChangeStatus)
 		g.PATCH(":id/assign", h.Assign)
+		g.PATCH(":id/area", h.ChangeArea)
 		g.PATCH(":id/escalate", h.Escalate)
 
 		g.GET(":id/comments", h.ListComments)
