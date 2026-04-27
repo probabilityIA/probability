@@ -17,6 +17,7 @@ interface ProductRow {
     name: string;
     sku: string;
     variant: string;
+    variantLabel?: string;
     count: number;
 }
 
@@ -46,26 +47,23 @@ export default function MovementsByProductView({ businessId }: Props) {
 
             const map = new Map<string, ProductRow>();
             movements.forEach((m) => {
-                if (!map.has(m.product_id)) {
-                    map.set(m.product_id, { id: m.product_id, name: m.product_name || m.product_id, sku: m.product_sku || '', variant: '', count: 0 });
+                const variantLabel = m.variant_label || 'sin-variante';
+                const key = `${m.product_id}|${variantLabel}`;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        id: m.product_id,
+                        name: m.product_name || m.product_id,
+                        sku: m.product_sku || '',
+                        variant: formatVariantAttrs((m as any)?.variant_attributes),
+                        variantLabel: m.variant_label || undefined,
+                        count: 0
+                    });
                 }
-                map.get(m.product_id)!.count++;
+                map.get(key)!.count++;
             });
 
             const list = Array.from(map.values()).sort((a, b) => b.count - a.count);
-
-            const withVariants = await Promise.all(
-                list.map(async (row) => {
-                    try {
-                        const prod = await getProductByIdAction(row.id, businessId);
-                        return { ...row, variant: formatVariantAttrs((prod as any)?.data?.variant_attributes) };
-                    } catch {
-                        return row;
-                    }
-                })
-            );
-
-            setProducts(withVariants);
+            setProducts(list);
         } finally {
             setLoading(false);
         }

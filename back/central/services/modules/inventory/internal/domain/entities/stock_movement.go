@@ -22,9 +22,11 @@ type StockMovement struct {
 	CreatedAt      time.Time
 
 	// Datos enriquecidos (no en DB)
-	MovementTypeCode string
-	MovementTypeName string
-	ProductName      string
-	ProductSKU       string
-	WarehouseName    string
+	MovementTypeCode    string
+	MovementTypeName    string
+	ProductName         string
+	ProductSKU          string
+	WarehouseName       string
+	VariantLabel        *string
+	VariantAttributes   *string
 }

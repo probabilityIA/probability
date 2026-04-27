@@ -75,12 +75,16 @@ func (r *Repository) ListMovements(ctx context.Context, params dtos.ListMovement
 
 		// Enriquecer con nombre del producto y bodega
 		var prod struct {
-			Name string
-			SKU  string
+			Name              string
+			SKU               string
+			VariantLabel      *string
+			VariantAttributes *string
 		}
-		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
+		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku, variant_label, variant_attributes").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
 		e.ProductName = prod.Name
 		e.ProductSKU = prod.SKU
+		e.VariantLabel = prod.VariantLabel
+		e.VariantAttributes = prod.VariantAttributes
 
 		var whName string
 		r.db.Conn(ctx).Model(&models.Warehouse{}).Select("name").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&whName)

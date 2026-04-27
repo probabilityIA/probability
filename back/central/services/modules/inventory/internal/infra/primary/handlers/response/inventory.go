@@ -34,27 +34,29 @@ type InventoryLevelResponse struct {
 
 // StockMovementResponse respuesta de movimiento de stock
 type StockMovementResponse struct {
-	ID               uint      `json:"id"`
-	ProductID        string    `json:"product_id"`
-	WarehouseID      uint      `json:"warehouse_id"`
-	LocationID       *uint     `json:"location_id"`
-	BusinessID       uint      `json:"business_id"`
-	MovementTypeID   uint      `json:"movement_type_id"`
-	MovementTypeCode string    `json:"movement_type_code"`
-	MovementTypeName string    `json:"movement_type_name"`
-	Reason           string    `json:"reason"`
-	Quantity         int       `json:"quantity"`
-	PreviousQty      int       `json:"previous_qty"`
-	NewQty           int       `json:"new_qty"`
-	ReferenceType    *string   `json:"reference_type"`
-	ReferenceID      *string   `json:"reference_id"`
-	IntegrationID    *uint     `json:"integration_id"`
-	Notes            string    `json:"notes"`
-	CreatedByID      *uint     `json:"created_by_id"`
-	ProductName      string    `json:"product_name,omitempty"`
-	ProductSKU       string    `json:"product_sku,omitempty"`
-	WarehouseName    string    `json:"warehouse_name,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
+	ID                uint      `json:"id"`
+	ProductID         string    `json:"product_id"`
+	WarehouseID       uint      `json:"warehouse_id"`
+	LocationID        *uint     `json:"location_id"`
+	BusinessID        uint      `json:"business_id"`
+	MovementTypeID    uint      `json:"movement_type_id"`
+	MovementTypeCode  string    `json:"movement_type_code"`
+	MovementTypeName  string    `json:"movement_type_name"`
+	Reason            string    `json:"reason"`
+	Quantity          int       `json:"quantity"`
+	PreviousQty       int       `json:"previous_qty"`
+	NewQty            int       `json:"new_qty"`
+	ReferenceType     *string   `json:"reference_type"`
+	ReferenceID       *string   `json:"reference_id"`
+	IntegrationID     *uint     `json:"integration_id"`
+	Notes             string    `json:"notes"`
+	CreatedByID       *uint     `json:"created_by_id"`
+	ProductName       string    `json:"product_name,omitempty"`
+	ProductSKU        string    `json:"product_sku,omitempty"`
+	WarehouseName     string    `json:"warehouse_name,omitempty"`
+	VariantLabel      *string   `json:"variant_label,omitempty"`
+	VariantAttributes *string   `json:"variant_attributes,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 // BulkLoadResultResponse respuesta de carga masiva
@@ -144,26 +146,28 @@ func InventoryLevelFromEntity(e *entities.InventoryLevel) InventoryLevelResponse
 // StockMovementFromEntity convierte entidad a response
 func StockMovementFromEntity(e *entities.StockMovement) StockMovementResponse {
 	return StockMovementResponse{
-		ID:               e.ID,
-		ProductID:        e.ProductID,
-		WarehouseID:      e.WarehouseID,
-		LocationID:       e.LocationID,
-		BusinessID:       e.BusinessID,
-		MovementTypeID:   e.MovementTypeID,
-		MovementTypeCode: e.MovementTypeCode,
-		MovementTypeName: e.MovementTypeName,
-		Reason:           e.Reason,
-		Quantity:         e.Quantity,
-		PreviousQty:      e.PreviousQty,
-		NewQty:           e.NewQty,
-		ReferenceType:    e.ReferenceType,
-		ReferenceID:      e.ReferenceID,
-		IntegrationID:    e.IntegrationID,
-		Notes:            e.Notes,
-		CreatedByID:      e.CreatedByID,
-		ProductName:      e.ProductName,
-		ProductSKU:       e.ProductSKU,
-		WarehouseName:    e.WarehouseName,
-		CreatedAt:        e.CreatedAt,
+		ID:                e.ID,
+		ProductID:         e.ProductID,
+		WarehouseID:       e.WarehouseID,
+		LocationID:        e.LocationID,
+		BusinessID:        e.BusinessID,
+		MovementTypeID:    e.MovementTypeID,
+		MovementTypeCode:  e.MovementTypeCode,
+		MovementTypeName:  e.MovementTypeName,
+		Reason:            e.Reason,
+		Quantity:          e.Quantity,
+		PreviousQty:       e.PreviousQty,
+		NewQty:            e.NewQty,
+		ReferenceType:     e.ReferenceType,
+		ReferenceID:       e.ReferenceID,
+		IntegrationID:     e.IntegrationID,
+		Notes:             e.Notes,
+		CreatedByID:       e.CreatedByID,
+		ProductName:       e.ProductName,
+		ProductSKU:        e.ProductSKU,
+		WarehouseName:     e.WarehouseName,
+		VariantLabel:      e.VariantLabel,
+		VariantAttributes: e.VariantAttributes,
+		CreatedAt:         e.CreatedAt,
 	}
 }

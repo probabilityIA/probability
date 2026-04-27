@@ -56,6 +56,8 @@ export interface StockMovement {
     product_name?: string;
     product_sku?: string;
     warehouse_name?: string;
+    variant_label?: string | null;
+    variant_attributes?: string | null;
     created_at: string;
 }
 

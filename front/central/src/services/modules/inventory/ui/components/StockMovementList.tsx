@@ -130,6 +130,9 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
             product: (
                 <div>
                     <span className="font-medium text-gray-900 dark:text-white">{movement.product_name || movement.product_id}</span>
+                    {movement.variant_label && (
+                        <span className="block text-xs text-purple-600 dark:text-purple-400 font-medium">Variante: {movement.variant_label}</span>
+                    )}
                     {movement.product_sku && (
                         <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{movement.product_sku}</span>
                     )}
