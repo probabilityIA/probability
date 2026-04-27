@@ -4,14 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import { Spinner } from '@/shared/ui';
-import { XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import InventoryLevelList from './InventoryLevelList';
 import { getWarehouseInventoryAction } from '../../infra/actions';
 
 interface WarehouseInventoryViewProps {
     businessId?: number;
-    onAdjust?: (productId: string, warehouseId: number) => void;
-    onRefreshRef?: (ref: () => void) => void;
 }
 
 interface WarehouseStats {
@@ -20,12 +16,10 @@ interface WarehouseStats {
     loading: boolean;
 }
 
-export default function WarehouseInventoryView({ businessId, onAdjust, onRefreshRef }: WarehouseInventoryViewProps) {
+export default function WarehouseInventoryView({ businessId }: WarehouseInventoryViewProps) {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<Record<number, WarehouseStats>>({});
-    const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
-    const [refreshInner, setRefreshInner] = useState<(() => void) | null>(null);
 
     const fetchWarehouses = useCallback(async () => {
         setLoading(true);
@@ -55,18 +49,6 @@ export default function WarehouseInventoryView({ businessId, onAdjust, onRefresh
 
     useEffect(() => { fetchWarehouses(); }, [fetchWarehouses]);
 
-    useEffect(() => {
-        onRefreshRef?.(() => { fetchWarehouses(); refreshInner?.(); });
-    }, [fetchWarehouses, onRefreshRef, refreshInner]);
-
-    const handleInnerRefreshRef = useCallback((ref: () => void) => {
-        setRefreshInner(() => ref);
-    }, []);
-
-    const handleAdjust = selectedWarehouse && onAdjust
-        ? (productId: string) => { onAdjust(productId, selectedWarehouse.id); setSelectedWarehouse(null); }
-        : undefined;
-
     return (
         <>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -78,7 +60,6 @@ export default function WarehouseInventoryView({ businessId, onAdjust, onRefresh
                             <th className="text-left">Ciudad</th>
                             <th className="text-center">Productos</th>
                             <th className="text-center">Inventario total</th>
-                            <th className="text-center w-12"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -128,15 +109,6 @@ export default function WarehouseInventoryView({ businessId, onAdjust, onRefresh
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="text-center">
-                                            <button
-                                                onClick={() => setSelectedWarehouse(w)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
-                                                title="Ver inventario"
-                                            >
-                                                <ChevronRightIcon className="w-4 h-4" />
-                                            </button>
-                                        </td>
                                     </tr>
                                 );
                             })
@@ -144,36 +116,6 @@ export default function WarehouseInventoryView({ businessId, onAdjust, onRefresh
                     </tbody>
                 </table>
             </div>
-
-            {selectedWarehouse && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedWarehouse(null)} />
-                    <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedWarehouse.name}</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-0.5">
-                                    {selectedWarehouse.code}{selectedWarehouse.city ? ` — ${selectedWarehouse.city}` : ''}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setSelectedWarehouse(null)}
-                                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                            >
-                                <XMarkIcon className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="overflow-auto flex-1 p-4">
-                            <InventoryLevelList
-                                warehouseId={selectedWarehouse.id}
-                                selectedBusinessId={businessId}
-                                onRefreshRef={handleInnerRefreshRef}
-                                onAdjust={handleAdjust}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }

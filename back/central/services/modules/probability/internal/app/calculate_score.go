@@ -302,11 +302,6 @@ func (uc *UseCaseScore) GetStaticNegativeFactors(order *entities.ScoreOrder) []s
 		factors = append(factors, "Complemento de dirección")
 	}
 
-	// 7. Historial de compra
-	if order.CustomerOrderCount == 0 {
-		factors = append(factors, "Historial de compra")
-	}
-
 	return factors
 }
 

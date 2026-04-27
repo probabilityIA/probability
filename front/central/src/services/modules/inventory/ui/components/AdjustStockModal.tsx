@@ -15,6 +15,7 @@ interface ProductOption {
     id: string;
     name: string;
     sku: string;
+    variant_label?: string;
 }
 
 interface AdjustStockModalProps {
@@ -37,6 +38,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const [quantity, setQuantity] = useState(0);
+    const [isAdding, setIsAdding] = useState(true);
     const [reason, setReason] = useState('');
     const [notes, setNotes] = useState('');
 
@@ -77,7 +79,11 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         (async () => {
             try {
                 const r = await getWarehousesAction({ page: 1, page_size: 100, is_active: true, business_id: businessId });
-                setWarehouses(r.data || []);
+                const warehouseList = r.data || [];
+                setWarehouses(warehouseList);
+                if (warehouseList.length === 1 && !warehouseId) {
+                    setSelectedWarehouseId(warehouseList[0].id);
+                }
             } catch { setWarehouses([]); }
         })();
     }, [businessId]);
@@ -136,7 +142,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         try {
             const response = await getProductsAction({ business_id: businessId, ...params, page: 1, page_size: 10 });
             if (response.success && response.data) {
-                setSearchResults(response.data.map((p) => ({ id: p.id, name: p.name, sku: p.sku })));
+                setSearchResults(response.data.map((p) => ({ id: p.id, name: p.name, sku: p.sku, variant_label: p.variant_label })));
             }
         } catch {} finally { setSearchLoading(false); }
     }, [businessId]);
@@ -171,6 +177,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         if (!selectedProduct) return;
         setLoading(true); setError(null); setSuccess(null);
 
+        const finalQuantity = isAdding ? Math.abs(quantity) : -Math.abs(quantity);
         const dto: AdjustStockDTO = {
             product_id: selectedProduct.id,
             warehouse_id: selectedWarehouseId,
@@ -178,7 +185,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
             lot_id: selectedLotId,
             state_id: selectedStateId,
             uom_id: selectedUomId,
-            quantity,
+            quantity: finalQuantity,
             reason: reason.trim(),
             notes: notes.trim() || undefined,
         };
@@ -231,9 +238,12 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                         <label className={labelCls}>Producto <span className="text-red-500">*</span></label>
                         {selectedProduct && !productId ? (
                             <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                <div>
+                                <div className="flex-1">
                                     <span className="text-sm font-medium text-gray-900 dark:text-white">{selectedProduct.name}</span>
-                                    {selectedProduct.sku && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">SKU: {selectedProduct.sku}</span>}
+                                    <div className="flex items-center gap-2 mt-1">
+                                        {selectedProduct.sku && <span className="text-xs text-gray-500 dark:text-gray-400">SKU: {selectedProduct.sku}</span>}
+                                        {selectedProduct.variant_label && <span className="text-xs text-purple-600 dark:text-purple-400">• {selectedProduct.variant_label}</span>}
+                                    </div>
                                 </div>
                                 <button type="button" onClick={() => setSelectedProduct(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2">&times;</button>
                             </div>
@@ -259,9 +269,12 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                             <ul>
                                                 {searchResults.map((p) => (
                                                     <li key={p.id}>
-                                                        <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-between">
-                                                            <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{p.name}</span>
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2 shrink-0">{p.sku}</span>
+                                                        <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-between gap-3">
+                                                            <div className="flex-1 min-w-0">
+                                                                <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">{p.name}</span>
+                                                                {p.variant_label && <span className="text-xs text-purple-600 dark:text-purple-400 truncate block">{p.variant_label}</span>}
+                                                            </div>
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">{p.sku}</span>
                                                         </button>
                                                     </li>
                                                 ))}
@@ -295,9 +308,40 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     {/* Fila 3: Cantidad + Estado */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className={labelCls}>Cantidad <span className="text-red-500">*</span></label>
-                            <Input type="number" value={quantity.toString()} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} placeholder="+ agrega, - quita" required />
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Positivo agrega, negativo quita.</p>
+                            <div className="flex items-center gap-2 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    {isAdding ? 'Agregar' : 'Quitar'} <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAdding(!isAdding)}
+                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                        isAdding
+                                            ? 'bg-green-500 dark:bg-green-600'
+                                            : 'bg-red-500 dark:bg-red-600'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-lg transition-transform ${
+                                            isAdding ? 'translate-x-0.5' : 'translate-x-4'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    value={quantity.toString()}
+                                    onChange={(e) => setQuantity(Math.abs(parseInt(e.target.value) || 0))}
+                                    placeholder="Ej: 10"
+                                    required
+                                />
+                                {quantity > 0 && (
+                                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200">
+                                        {isAdding ? `+${quantity}` : `-${quantity}`}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         {states.length > 0 && (
                             <div>

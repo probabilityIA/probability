@@ -96,6 +96,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
         state: warehouse?.state || '',
         country: warehouse?.country || '',
         zip_code: warehouse?.zip_code || '',
+        suburb: warehouse?.suburb || '',
         phone: warehouse?.phone || '',
         contact_name: warehouse?.contact_name || '',
         contact_email: warehouse?.contact_email || '',
@@ -145,6 +146,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     state: formData.state || undefined,
                     country: formData.country || undefined,
                     zip_code: formData.zip_code || undefined,
+                    suburb: formData.suburb || undefined,
                     phone: formData.phone || undefined,
                     contact_name: formData.contact_name || undefined,
                     contact_email: formData.contact_email || undefined,
@@ -164,6 +166,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     state: formData.state || undefined,
                     country: formData.country || undefined,
                     zip_code: formData.zip_code || undefined,
+                    suburb: formData.suburb || undefined,
                     phone: formData.phone || undefined,
                     contact_name: formData.contact_name || undefined,
                     contact_email: formData.contact_email || undefined,
@@ -344,6 +347,16 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                         onChange={(e) => handleChange('zip_code', e.target.value)}
                                         placeholder="110111"
                                         maxLength={20}
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Barrio</label>
+                                    <Input
+                                        type="text"
+                                        value={formData.suburb}
+                                        onChange={(e) => handleChange('suburb', e.target.value)}
+                                        placeholder="Centro, Zona Rosa, etc."
+                                        maxLength={100}
                                     />
                                 </div>
                             </div>

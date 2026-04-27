@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
-	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
@@ -24,12 +23,8 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 			return fmt.Errorf("getOrCreateLevelTx: %w", err)
 		}
 
-		// 2. Validar que no quede negativo
+		// 2. Calcular nueva cantidad (permite negativo para pérdidas/daños)
 		newQty := level.Quantity + params.Quantity
-		if newQty < 0 {
-			return domainerrors.ErrInsufficientStock
-		}
-
 		previousQty := level.Quantity
 
 		// 3. UPDATE inventory_level dentro del tx

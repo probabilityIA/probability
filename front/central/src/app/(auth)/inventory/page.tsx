@@ -19,24 +19,13 @@ export default function InventoryStockPage() {
     const [modalType, setModalType] = useState<ModalType>(null);
     const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
     const [adjustWarehouseId, setAdjustWarehouseId] = useState<number | null>(null);
-    const [refreshWarehouseView, setRefreshWarehouseView] = useState<(() => void) | null>(null);
     const [refreshProductView, setRefreshProductView] = useState<(() => void) | null>(null);
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-    const handleWarehouseViewRefreshRef = useCallback((ref: () => void) => {
-        setRefreshWarehouseView(() => ref);
-    }, []);
-
     const handleProductViewRefreshRef = useCallback((ref: () => void) => {
         setRefreshProductView(() => ref);
-    }, []);
-
-    const handleAdjustFromWarehouse = useCallback((productId: string, warehouseId: number) => {
-        setSelectedProductId(productId);
-        setAdjustWarehouseId(warehouseId);
-        setModalType('adjust');
     }, []);
 
     const handleAdjustFromProduct = useCallback((productId: string, warehouseId: number) => {
@@ -49,8 +38,10 @@ export default function InventoryStockPage() {
         setModalType(null);
         setSelectedProductId(undefined);
         setAdjustWarehouseId(null);
-        refreshWarehouseView?.();
-        refreshProductView?.();
+        // Pequeño delay para asegurar que el backend procesó la actualización
+        setTimeout(() => {
+            refreshProductView?.();
+        }, 300);
     };
 
     const canShowActions = !requiresBusinessSelection;
@@ -108,15 +99,12 @@ export default function InventoryStockPage() {
                         {stockView === 'warehouse' && (
                             <WarehouseInventoryView
                                 businessId={effectiveBusinessId}
-                                onAdjust={handleAdjustFromWarehouse}
-                                onRefreshRef={handleWarehouseViewRefreshRef}
                             />
                         )}
 
                         {stockView === 'product' && (
                             <ProductInventoryView
                                 businessId={effectiveBusinessId}
-                                onAdjust={handleAdjustFromProduct}
                                 onRefreshRef={handleProductViewRefreshRef}
                             />
                         )}
