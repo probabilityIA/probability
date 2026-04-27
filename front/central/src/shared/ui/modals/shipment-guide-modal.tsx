@@ -273,7 +273,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
-        step1Form.setValue("originDaneCode", wh.city_dane_code || "", { shouldValidate: true });
+        const daneCode = wh.city_dane_code || findDaneCode(wh.city || "", wh.state || "") || "";
+        step1Form.setValue("originDaneCode", daneCode, { shouldValidate: true });
         step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
         setOriginSearch(`${wh.city} (${wh.state})`);
 
