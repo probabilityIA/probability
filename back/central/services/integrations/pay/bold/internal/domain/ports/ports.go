@@ -7,7 +7,16 @@ import (
 // BoldConfig contiene las credenciales de Bold
 type BoldConfig struct {
 	APIKey      string
+	Secret      string
 	Environment string // "sandbox" | "production"
+	BaseURL     string
+}
+
+func (c *BoldConfig) SecretKey() (string, bool) {
+	if c == nil || c.Secret == "" {
+		return "", false
+	}
+	return c.Secret, true
 }
 
 // IBoldClient define las operaciones del cliente HTTP de Bold

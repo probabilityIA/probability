@@ -14,12 +14,18 @@ interface IntegrationToggleProps {
 export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }: IntegrationToggleProps) {
     const icon = CATEGORY_ICONS[integration.category] || '🔗';
     const isToggling = togglingId === integration.id;
-    const typeName = integration.integration_type?.name;
+    const isEnvioClick = integration.integration_type?.code === 'envioclick';
+    const typeName = isEnvioClick ? 'Transportadora' : integration.integration_type?.name;
+    const hideLogo = isEnvioClick;
+    const hideInstanceName = isEnvioClick;
 
     return (
         <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-            {/* Logo */}
-            {integration.integration_type?.image_url ? (
+            {hideLogo ? (
+                <div className="w-7 h-7 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs">{icon}</span>
+                </div>
+            ) : integration.integration_type?.image_url ? (
                 <img
                     src={integration.integration_type.image_url}
                     alt={typeName || integration.name}
@@ -31,16 +37,17 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                 </div>
             )}
 
-            {/* Nombre del tipo + nombre de la integración */}
             <div className="flex flex-col min-w-0 flex-1">
                 {typeName && (
                     <span className="text-xs font-semibold text-gray-800 dark:text-gray-100 dark:text-gray-200 truncate leading-tight">
                         {typeName}
                     </span>
                 )}
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight">
-                    {integration.name}
-                </span>
+                {!hideInstanceName && (
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight">
+                        {integration.name}
+                    </span>
+                )}
             </div>
 
             {/* Editar */}

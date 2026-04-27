@@ -78,6 +78,24 @@ func (m *mockIntegrationTypeUseCase) GetPlatformCredentials(ctx context.Context,
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
 
+func (m *mockIntegrationTypeUseCase) GetPlatformCredentialsByCode(ctx context.Context, code string) (map[string]interface{}, *domain.IntegrationType, error) {
+	args := m.Called(ctx, code)
+	var creds map[string]interface{}
+	var intType *domain.IntegrationType
+	if args.Get(0) != nil {
+		creds = args.Get(0).(map[string]interface{})
+	}
+	if args.Get(1) != nil {
+		intType = args.Get(1).(*domain.IntegrationType)
+	}
+	return creds, intType, args.Error(2)
+}
+
+func (m *mockIntegrationTypeUseCase) RecordRevealAudit(ctx context.Context, audit *domain.CredentialRevealAudit) error {
+	args := m.Called(ctx, audit)
+	return args.Error(0)
+}
+
 func (m *mockIntegrationTypeUseCase) ListActiveIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {

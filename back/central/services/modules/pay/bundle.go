@@ -15,9 +15,9 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 )
 
-// New inicializa el módulo de pagos
 func New(
 	router *gin.RouterGroup,
 	database db.IDatabase,
@@ -25,13 +25,12 @@ func New(
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redis.IRedis,
+	integrationCore core.IIntegrationCore,
 ) {
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("pay")
 
-	// 1. INFRAESTRUCTURA SECUNDARIA
-
-	repo := repository.New(database, moduleLogger)
+	repo := repository.New(database, moduleLogger, integrationCore)
 	requestPublisher := payqueue.New(rabbitMQ, moduleLogger)
 
 	var ssePublisher = payredis.NewNoopSSEPublisher()
@@ -66,7 +65,13 @@ func New(
 
 		go consumers.Retry.Start(ctx)
 
-		moduleLogger.Info(ctx).Msg("Consumers de pagos iniciados: responses, retry")
+		go func() {
+			if err := consumers.BoldWebhook.Start(ctx); err != nil {
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de bold webhook events")
+			}
+		}()
+
+		moduleLogger.Info(ctx).Msg("Consumers de pagos iniciados: responses, retry, bold_webhook")
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de pagos deshabilitados")
 	}

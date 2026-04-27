@@ -34,6 +34,8 @@ type IRepository interface {
 	// WalletTransactions
 	CreateWalletTransaction(ctx context.Context, tx *entities.WalletTransaction) error
 	GetWalletTransactionByID(ctx context.Context, id uuid.UUID) (*entities.WalletTransaction, error)
+	GetWalletTransactionByReference(ctx context.Context, reference string) (*entities.WalletTransaction, error)
+	SaveWalletTransactionGatewayResponse(ctx context.Context, id uuid.UUID, response []byte) error
 	UpdateWalletTransaction(ctx context.Context, tx *entities.WalletTransaction) error
 	GetTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) ([]*entities.WalletTransaction, error)
 	GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
@@ -41,8 +43,14 @@ type IRepository interface {
 	DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType string) error
 	DeleteAllTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) error
 
-	// Financial Stats
 	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)
+
+	GetBoldCredentials(ctx context.Context) (*dtos.BoldCredentials, error)
+	GetBoldIntegrationForBusiness(ctx context.Context, businessID uint) (*dtos.BoldBusinessIntegration, error)
+
+	RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (created bool, err error)
+	MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error
+	LinkBoldWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error
 }
 
 // IRequestPublisher publica solicitudes de pago a la cola pay.requests
@@ -64,6 +72,7 @@ type IUseCase interface {
 	RetryPayment(ctx context.Context, transactionID uint) error
 	GetPayment(ctx context.Context, id uint) (*entities.PaymentTransaction, error)
 	ListPayments(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.PaymentTransaction, int64, error)
+	ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.BoldWebhookMessage) error
 }
 
 // IWalletUseCase define los casos de uso de la billetera
@@ -82,7 +91,7 @@ type IWalletUseCase interface {
 	AdminAdjustBalance(ctx context.Context, dto *dtos.AdminAdjustBalanceDTO) error
 	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)
 
-	// Bold Integration
-	BoldGenerateSignature(ctx context.Context, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
+	BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
 	GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error)
+	BoldSimulatePayment(ctx context.Context, dto *dtos.BoldSimulateDTO) (*dtos.BoldSimulateResponse, error)
 }

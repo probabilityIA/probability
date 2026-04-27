@@ -88,6 +88,8 @@ const (
 	QueuePayEPaycoRequests = "pay.epayco.requests"
 
 	QueuePayMeliPagoRequests = "pay.melipago.requests"
+
+	QueuePayBoldWebhookEvents = "pay.bold.webhook.events"
 )
 
 const (

@@ -1,6 +1,8 @@
 package pay
 
 import (
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/bold"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/epayco"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/melipago"
@@ -15,23 +17,21 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa todas las integraciones de pago y el router
 func New(
+	apiRouter *gin.RouterGroup,
 	config env.IConfig,
 	logger log.ILogger,
 	database db.IDatabase,
 	rabbitMQ rabbitmq.IQueue,
+	coreSvc core.IIntegrationCore,
 ) {
-	// Inicializar gateways de pago
 	nequi.New(config, logger, database, rabbitMQ)
-	bold.New(config, logger, database, rabbitMQ)
+	bold.New(apiRouter, coreSvc, logger, rabbitMQ)
 	wompi.New(config, logger, database, rabbitMQ)
 	stripe.New(config, logger, database, rabbitMQ)
 	payu.New(config, logger, database, rabbitMQ)
 	epayco.New(config, logger, database, rabbitMQ)
 	melipago.New(config, logger, database, rabbitMQ)
 
-	// Router: consume pay.requests y enruta al gateway correcto
-	// Se inicializa al final para que las colas de gateways ya estén declaradas
 	router.New(logger, rabbitMQ)
 }

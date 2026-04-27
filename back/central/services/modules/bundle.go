@@ -2,6 +2,7 @@ package modules
 
 import (
 	"github.com/gin-gonic/gin"
+	integrationsCore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
 	"github.com/secamc93/probability/back/central/services/modules/announcements"
@@ -46,7 +47,7 @@ type ModuleBundles struct {
 	redisClient redis.IRedis
 }
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock) *ModuleBundles {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore) *ModuleBundles {
 	announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
@@ -59,7 +60,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
 	dashboard.New(router, database, logger)
-	pay.New(router, database, logger, environment, rabbitMQ, redisClient)
+	pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
 	warehouses.New(router, database)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)

@@ -17,10 +17,11 @@ type IIntegrationTypeUseCase interface {
 	ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*domain.IntegrationType, error)
 	ListActiveIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error)
 
-	// Platform credentials (admin only — returns decrypted map)
 	GetPlatformCredentials(ctx context.Context, id uint) (map[string]interface{}, error)
+	GetPlatformCredentialsByCode(ctx context.Context, code string) (creds map[string]interface{}, integrationType *domain.IntegrationType, err error)
 
-	// Integration Categories
+	RecordRevealAudit(ctx context.Context, audit *domain.CredentialRevealAudit) error
+
 	ListIntegrationCategories(ctx context.Context) ([]*domain.IntegrationCategory, error)
 }
 

@@ -6,6 +6,15 @@ import (
 	"gorm.io/datatypes"
 )
 
+type CredentialRevealAudit struct {
+	UserID            uint
+	BusinessID        uint
+	IntegrationTypeID uint
+	IntegrationCode   string
+	IPAddress         string
+	UserAgent         string
+}
+
 type IntegrationCategory struct {
 	ID               uint
 	Code             string

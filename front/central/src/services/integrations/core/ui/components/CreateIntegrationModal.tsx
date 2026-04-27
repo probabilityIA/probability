@@ -29,6 +29,7 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
 import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
 import { getActionError } from '@/shared/utils/action-result';
@@ -55,6 +56,7 @@ const INTEGRATION_TYPE_IDS = {
     AMAZON: 19,
     FALABELLA: 20,
     EXITO: 21,
+    BOLD: 23,
     TIENDA: 30,
     TIENDA_WEB: 31,
 } as const;
@@ -260,6 +262,16 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     <HelisaConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.BOLD:
+                return (
+                    <BoldConfigForm
+                        integrationTypeId={integrationType.id}
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 

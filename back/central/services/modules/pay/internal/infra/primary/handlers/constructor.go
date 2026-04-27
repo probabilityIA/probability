@@ -6,7 +6,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IHandler define la interfaz del handler de pagos
 type IHandler interface {
 	RegisterRoutes(router *gin.RouterGroup)
 	CreatePayment(c *gin.Context)
@@ -14,13 +13,11 @@ type IHandler interface {
 	ListPayments(c *gin.Context)
 }
 
-// handler implementa IHandler
 type handler struct {
 	useCase ports.IUseCase
 	log     log.ILogger
 }
 
-// New crea una nueva instancia del handler de pagos
 func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,

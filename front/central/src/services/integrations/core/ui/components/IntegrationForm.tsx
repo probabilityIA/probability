@@ -22,6 +22,7 @@ import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecom
 import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
+import { BoldConfigForm, BoldEditForm } from '@/services/integrations/pay/bold/ui/components';
 import { getActionError } from '@/shared/utils/action-result';
 
 // IDs constantes de tipos de integración (tabla integration_types)
@@ -46,6 +47,7 @@ const INTEGRATION_TYPE_IDS = {
     AMAZON: 19,
     FALABELLA: 20,
     EXITO: 21,
+    BOLD: 23,
 } as const;
 
 interface IntegrationFormProps {
@@ -451,7 +453,24 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
-        // Show edit form for EnvioClick
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.BOLD) {
+            return (
+                <BoldEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
         if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK) {
             console.log('✅ Usando EnvioClickEditForm');
             return (
@@ -823,6 +842,15 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
+                    {selectedType.id === INTEGRATION_TYPE_IDS.BOLD && (
+                        <BoldConfigForm
+                            integrationTypeId={selectedType.id}
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
                     {selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK && (
                         <EnvioClickConfigForm
                             onSuccess={onSuccess}
@@ -912,7 +940,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                      selectedType.id !== INTEGRATION_TYPE_IDS.MAGENTO &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.AMAZON &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.FALABELLA &&
-                     selectedType.id !== INTEGRATION_TYPE_IDS.EXITO && (
+                     selectedType.id !== INTEGRATION_TYPE_IDS.EXITO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.BOLD && (
                         <Alert type="warning">
                             <div className="space-y-3">
                                 <p className="font-semibold">Formulario No Disponible</p>
