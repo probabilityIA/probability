@@ -59,7 +59,13 @@ export default function ProductSelector({
 
     const handleAdd = (product: Product) => {
         const alreadySelected = selectedProducts.find(p => p.id === product.id);
-        if (!alreadySelected) {
+        if (alreadySelected) {
+            onSelect(selectedProducts.map(p =>
+                p.id === product.id
+                    ? { ...p, quantity: (p.quantity || 1) + 1 }
+                    : p
+            ));
+        } else {
             onSelect([...selectedProducts, { ...product, quantity: product.quantity || 1 }]);
         }
         setShowResults(false);
@@ -68,6 +74,22 @@ export default function ProductSelector({
 
     const handleRemove = (productId: string) => {
         onSelect(selectedProducts.filter(p => p.id !== productId));
+    };
+
+    const handleIncrement = (productId: string) => {
+        onSelect(selectedProducts.map(p =>
+            p.id === productId
+                ? { ...p, quantity: (p.quantity || 1) + 1 }
+                : p
+        ));
+    };
+
+    const handleDecrement = (productId: string) => {
+        onSelect(selectedProducts.map(p =>
+            p.id === productId
+                ? { ...p, quantity: Math.max(1, (p.quantity || 1) - 1) }
+                : p
+        ));
     };
 
     return (
@@ -163,6 +185,7 @@ export default function ProductSelector({
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Producto</th>
+                                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cantidad</th>
                                 <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Precio</th>
                                 <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
                             </tr>
@@ -181,6 +204,29 @@ export default function ProductSelector({
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-4 py-2 whitespace-nowrap text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDecrement(product.id)}
+                                                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                title="Disminuir cantidad"
+                                            >
+                                                −
+                                            </button>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white w-6 text-center">
+                                                {product.quantity || 1}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleIncrement(product.id)}
+                                                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                title="Aumentar cantidad"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </td>
                                     <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
                                         {product.currency} {product.price.toLocaleString()}
                                     </td>
@@ -189,6 +235,7 @@ export default function ProductSelector({
                                             type="button"
                                             onClick={() => handleRemove(product.id)}
                                             className="text-red-600 hover:text-red-900"
+                                            title="Eliminar producto"
                                         >
                                             <X className="h-4 w-4" />
                                         </button>
