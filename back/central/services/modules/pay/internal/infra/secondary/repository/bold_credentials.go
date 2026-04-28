@@ -10,6 +10,19 @@ import (
 const boldIntegrationTypeCode = "bold_pay"
 
 func (r *Repository) GetBoldCredentials(ctx context.Context) (*dtos.BoldCredentials, error) {
+	return r.getBoldCredentials(ctx, nil)
+}
+
+func (r *Repository) GetBoldCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error) {
+	biz, err := r.GetBoldIntegrationForBusiness(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+	isTesting := biz != nil && biz.IsTesting
+	return r.getBoldCredentials(ctx, &isTesting)
+}
+
+func (r *Repository) getBoldCredentials(ctx context.Context, forceTesting *bool) (*dtos.BoldCredentials, error) {
 	if r.integrationCore == nil {
 		return nil, domainerrors.ErrBoldConfigNotFound
 	}
@@ -29,12 +42,20 @@ func (r *Repository) GetBoldCredentials(ctx context.Context) (*dtos.BoldCredenti
 	testAPIKey, _ := creds["test_api_key"].(string)
 	testSecretKey, _ := creds["test_secret_key"].(string)
 
-	environment, _ := creds["environment"].(string)
-	if environment == "" {
-		if testAPIKey != "" && testSecretKey != "" {
-			environment = "sandbox"
-		} else {
-			environment = "production"
+	var environment string
+	switch {
+	case forceTesting != nil && *forceTesting:
+		environment = "sandbox"
+	case forceTesting != nil && !*forceTesting:
+		environment = "production"
+	default:
+		environment, _ = creds["environment"].(string)
+		if environment == "" {
+			if testAPIKey != "" && testSecretKey != "" {
+				environment = "sandbox"
+			} else {
+				environment = "production"
+			}
 		}
 	}
 
@@ -78,10 +99,11 @@ func (r *Repository) GetBoldIntegrationForBusiness(ctx context.Context, business
 	}
 
 	var row struct {
-		ID uint
+		ID        uint
+		IsTesting bool
 	}
 	err = r.db.Conn(ctx).Table("integrations").
-		Select("id").
+		Select("id, is_testing").
 		Where("business_id = ? AND integration_type_id = ? AND is_active = true", businessID, intType.ID).
 		Limit(1).
 		Take(&row).Error
@@ -91,5 +113,6 @@ func (r *Repository) GetBoldIntegrationForBusiness(ctx context.Context, business
 	return &dtos.BoldBusinessIntegration{
 		IntegrationID:     row.ID,
 		IntegrationTypeID: intType.ID,
+		IsTesting:         row.IsTesting,
 	}, nil
 }

@@ -21,7 +21,7 @@ import (
 const boldStatusEndpoint = "/online/link/v1/%s"
 
 func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error) {
-	creds, err := uc.repo.GetBoldCredentials(ctx)
+	creds, err := uc.repo.GetBoldCredentialsForBusiness(ctx, businessID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to load Bold credentials")
 		return nil, err

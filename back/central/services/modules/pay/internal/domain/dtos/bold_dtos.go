@@ -29,6 +29,7 @@ type BoldCredentials struct {
 type BoldBusinessIntegration struct {
 	IntegrationID     uint
 	IntegrationTypeID uint
+	IsTesting         bool
 }
 
 type BoldSimulateDTO struct {
