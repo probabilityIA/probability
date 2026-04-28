@@ -750,7 +750,6 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 apiKey: public_key,
                 integritySignature: hash,
                 description: `Recarga de Billetera Probability - Orden ${order_id}`,
-                tax: 0,
             };
             if (redirection_url) {
                 checkoutConfig.redirectionUrl = redirection_url;
