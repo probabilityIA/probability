@@ -74,6 +74,7 @@ type IUseCase interface {
 	GetPayment(ctx context.Context, id uint) (*entities.PaymentTransaction, error)
 	ListPayments(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.PaymentTransaction, int64, error)
 	ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.BoldWebhookMessage) error
+	ApplyWalletRechargeStatus(ctx context.Context, in *dtos.WalletRechargeStatusInput) error
 }
 
 // IWalletUseCase define los casos de uso de la billetera
@@ -94,5 +95,6 @@ type IWalletUseCase interface {
 
 	BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
 	GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error)
+	SyncBoldRecharge(ctx context.Context, businessID uint, orderID string) (*dtos.BoldStatusResponse, error)
 	BoldSimulatePayment(ctx context.Context, dto *dtos.BoldSimulateDTO) (*dtos.BoldSimulateResponse, error)
 }

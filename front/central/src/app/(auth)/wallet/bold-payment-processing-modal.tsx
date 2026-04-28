@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Spinner } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
+import { syncBoldRechargeAction } from '@/services/modules/pay/infra/actions';
 
 type Status = 'waiting' | 'success' | 'failed' | 'timeout';
 
@@ -17,6 +18,8 @@ interface BoldPaymentProcessingModalProps {
 }
 
 const TIMEOUT_MS = 90_000;
+const POLLING_INTERVAL_MS = 5_000;
+const POLLING_FIRST_DELAY_MS = 8_000;
 const EVENT_OK = 'wallet.recharge.completed';
 const EVENT_FAIL = 'wallet.recharge.failed';
 
@@ -63,6 +66,31 @@ export function BoldPaymentProcessingModal({
         }, 1000);
         return () => clearInterval(interval);
     }, [open, status, onResolved]);
+
+    useEffect(() => {
+        if (!open || status !== 'waiting' || !orderId) return;
+
+        let cancelled = false;
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
+        const tick = async () => {
+            if (cancelled || resolvedRef.current) return;
+            try {
+                await syncBoldRechargeAction(orderId, businessId);
+            } catch {
+                // Ignore — el SSE seguirá escuchando y al próximo intento volvemos a probar
+            }
+            if (!cancelled && !resolvedRef.current) {
+                timer = setTimeout(tick, POLLING_INTERVAL_MS);
+            }
+        };
+
+        timer = setTimeout(tick, POLLING_FIRST_DELAY_MS);
+        return () => {
+            cancelled = true;
+            if (timer) clearTimeout(timer);
+        };
+    }, [open, status, orderId, businessId]);
 
     useSSE({
         enabled: open && status === 'waiting' && !!orderId,

@@ -46,3 +46,17 @@ type BoldSimulateResponse struct {
 	NewBalance    float64 `json:"new_balance"`
 	Status        string  `json:"status"`
 }
+
+const (
+	WalletRechargeOutcomeApproved = "approved"
+	WalletRechargeOutcomeRejected = "rejected"
+)
+
+type WalletRechargeStatusInput struct {
+	OrderID         string
+	Outcome         string
+	Source          string
+	BoldEventID     string
+	GatewayResponse []byte
+	Reason          string
+}

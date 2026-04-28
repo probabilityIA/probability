@@ -61,6 +61,28 @@ func (h *walletHandler) GetBoldStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": resp})
 }
 
+func (h *walletHandler) SyncBoldRecharge(c *gin.Context) {
+	businessID, ok := resolveBusinessID(c)
+	if !ok {
+		return
+	}
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "order id is required"})
+		return
+	}
+
+	resp, err := h.walletUC.SyncBoldRecharge(c.Request.Context(), businessID, orderID)
+	if err != nil {
+		status, body := mapBoldError(err)
+		h.log.Error(c.Request.Context()).Err(err).Str("order_id", orderID).Int("status", status).Msg("SyncBoldRecharge failed")
+		c.JSON(status, body)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": resp})
+}
+
 func (h *walletHandler) BoldSimulatePayment(c *gin.Context) {
 	businessID, ok := resolveBusinessID(c)
 	if !ok {

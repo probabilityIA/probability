@@ -148,20 +148,8 @@ func isWalletRechargeReference(ref string) bool {
 }
 
 func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos.BoldWebhookEvent, msg *dtos.BoldWebhookMessage, rawPayload []byte) error {
-	walletTx, err := uc.repo.GetWalletTransactionByReference(ctx, msg.MerchantReference)
-	if err != nil {
-		return fmt.Errorf("lookup wallet transaction by reference: %w", err)
-	}
-	if walletTx == nil {
-		uc.log.Warn(ctx).
-			Str("bold_event_id", msg.BoldEventID).
-			Str("merchant_reference", msg.MerchantReference).
-			Msg("bold webhook: wallet transaction not found, ignoring")
-		return nil
-	}
-
-	newStatus := mapBoldEventToWalletStatus(msg.Type)
-	if newStatus == "" {
+	outcome := mapBoldEventToOutcome(msg.Type)
+	if outcome == "" {
 		uc.log.Warn(ctx).
 			Str("bold_event_id", msg.BoldEventID).
 			Str("type", msg.Type).
@@ -169,12 +157,66 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 		return nil
 	}
 
+	in := &dtos.WalletRechargeStatusInput{
+		OrderID:         msg.MerchantReference,
+		Outcome:         outcome,
+		Source:          "webhook",
+		BoldEventID:     msg.BoldEventID,
+		GatewayResponse: rawPayload,
+		Reason:          msg.Type,
+	}
+	if err := uc.ApplyWalletRechargeStatus(ctx, in); err != nil {
+		return err
+	}
+	if event != nil && event.ID != uuid.Nil {
+		walletTx, lookupErr := uc.repo.GetWalletTransactionByReference(ctx, msg.MerchantReference)
+		if lookupErr == nil && walletTx != nil {
+			if linkErr := uc.repo.LinkBoldWebhookToWalletTransaction(ctx, event.ID, walletTx.ID); linkErr != nil {
+				uc.log.Warn(ctx).Err(linkErr).Msg("bold webhook: failed to link webhook event to wallet tx")
+			}
+		}
+	}
+	return nil
+}
+
+func (uc *useCase) ApplyWalletRechargeStatus(ctx context.Context, in *dtos.WalletRechargeStatusInput) error {
+	if in == nil || in.OrderID == "" {
+		return fmt.Errorf("apply wallet recharge: missing order id")
+	}
+
+	walletTx, err := uc.repo.GetWalletTransactionByReference(ctx, in.OrderID)
+	if err != nil {
+		return fmt.Errorf("lookup wallet transaction by reference: %w", err)
+	}
+	if walletTx == nil {
+		uc.log.Warn(ctx).
+			Str("source", in.Source).
+			Str("order_id", in.OrderID).
+			Msg("wallet recharge: transaction not found, ignoring")
+		return nil
+	}
+
+	var newStatus string
+	switch in.Outcome {
+	case dtos.WalletRechargeOutcomeApproved:
+		newStatus = entities.WalletTxStatusCompleted
+	case dtos.WalletRechargeOutcomeRejected:
+		newStatus = entities.WalletTxStatusFailed
+	default:
+		uc.log.Warn(ctx).
+			Str("source", in.Source).
+			Str("outcome", in.Outcome).
+			Msg("wallet recharge: unknown outcome, ignoring")
+		return nil
+	}
+
 	if walletTx.Status != entities.WalletTxStatusPending {
 		uc.log.Info(ctx).
+			Str("source", in.Source).
 			Str("wallet_tx_id", walletTx.ID.String()).
 			Str("current_status", walletTx.Status).
-			Str("new_status", newStatus).
-			Msg("bold webhook: wallet transaction not pending, skipping")
+			Str("target_status", newStatus).
+			Msg("wallet recharge: transaction not pending, skipping")
 		return nil
 	}
 
@@ -183,14 +225,9 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 		return fmt.Errorf("update wallet transaction: %w", err)
 	}
 
-	if len(rawPayload) > 0 {
-		if err := uc.repo.SaveWalletTransactionGatewayResponse(ctx, walletTx.ID, rawPayload); err != nil {
-			uc.log.Warn(ctx).Err(err).Str("wallet_tx_id", walletTx.ID.String()).Msg("bold webhook: failed to save gateway_response")
-		}
-	}
-	if event != nil && event.ID != uuid.Nil {
-		if err := uc.repo.LinkBoldWebhookToWalletTransaction(ctx, event.ID, walletTx.ID); err != nil {
-			uc.log.Warn(ctx).Err(err).Msg("bold webhook: failed to link webhook event to wallet tx")
+	if len(in.GatewayResponse) > 0 {
+		if saveErr := uc.repo.SaveWalletTransactionGatewayResponse(ctx, walletTx.ID, in.GatewayResponse); saveErr != nil {
+			uc.log.Warn(ctx).Err(saveErr).Str("wallet_tx_id", walletTx.ID.String()).Msg("wallet recharge: failed to save gateway_response")
 		}
 	}
 
@@ -204,19 +241,21 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 			return fmt.Errorf("update wallet balance: %w", err)
 		}
 		uc.log.Info(ctx).
+			Str("source", in.Source).
 			Str("wallet_tx_id", walletTx.ID.String()).
-			Str("merchant_reference", msg.MerchantReference).
+			Str("order_id", in.OrderID).
 			Float64("amount", walletTx.Amount).
 			Float64("new_balance", wallet.Balance).
-			Msg("bold webhook: wallet recharge approved and credited")
-		uc.publishWalletRechargeEvent(ctx, eventWalletRechargeOK, wallet.BusinessID, walletTx, msg, &wallet.Balance, "")
+			Msg("wallet recharge approved and credited")
+		uc.publishWalletRechargeEventRaw(ctx, eventWalletRechargeOK, wallet.BusinessID, walletTx, in.OrderID, in.BoldEventID, &wallet.Balance, "")
 		return nil
 	}
 
 	uc.log.Info(ctx).
+		Str("source", in.Source).
 		Str("wallet_tx_id", walletTx.ID.String()).
 		Str("status", newStatus).
-		Msg("bold webhook: wallet recharge marked failed")
+		Msg("wallet recharge marked failed")
 	wallet, _ := uc.repo.GetWalletByID(ctx, walletTx.WalletID)
 	var businessID uint
 	var balancePtr *float64
@@ -224,16 +263,28 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 		businessID = wallet.BusinessID
 		balancePtr = &wallet.Balance
 	}
-	uc.publishWalletRechargeEvent(ctx, eventWalletRechargeFail, businessID, walletTx, msg, balancePtr, msg.Type)
+	uc.publishWalletRechargeEventRaw(ctx, eventWalletRechargeFail, businessID, walletTx, in.OrderID, in.BoldEventID, balancePtr, in.Reason)
 	return nil
 }
 
-func (uc *useCase) publishWalletRechargeEvent(
+func mapBoldEventToOutcome(eventType string) string {
+	switch strings.ToUpper(eventType) {
+	case "SALE_APPROVED":
+		return dtos.WalletRechargeOutcomeApproved
+	case "SALE_REJECTED", "VOID_APPROVED":
+		return dtos.WalletRechargeOutcomeRejected
+	default:
+		return ""
+	}
+}
+
+func (uc *useCase) publishWalletRechargeEventRaw(
 	ctx context.Context,
 	eventType string,
 	businessID uint,
 	walletTx *entities.WalletTransaction,
-	msg *dtos.BoldWebhookMessage,
+	orderID string,
+	boldEventID string,
 	newBalance *float64,
 	reason string,
 ) {
@@ -241,11 +292,13 @@ func (uc *useCase) publishWalletRechargeEvent(
 		return
 	}
 	data := map[string]interface{}{
-		"order_id":              msg.MerchantReference,
+		"order_id":              orderID,
 		"wallet_transaction_id": walletTx.ID.String(),
 		"amount":                walletTx.Amount,
 		"gateway":               boldGatewayCode,
-		"bold_event_id":         msg.BoldEventID,
+	}
+	if boldEventID != "" {
+		data["bold_event_id"] = boldEventID
 	}
 	if newBalance != nil {
 		data["new_balance"] = *newBalance
@@ -261,18 +314,7 @@ func (uc *useCase) publishWalletRechargeEvent(
 		Data:       data,
 	}
 	if err := rabbitmq.PublishEvent(ctx, uc.queue, envelope); err != nil {
-		uc.log.Warn(ctx).Err(err).Str("event_type", eventType).Msg("bold webhook: failed to publish wallet recharge event")
-	}
-}
-
-func mapBoldEventToWalletStatus(eventType string) string {
-	switch strings.ToUpper(eventType) {
-	case "SALE_APPROVED":
-		return entities.WalletTxStatusCompleted
-	case "SALE_REJECTED", "VOID_APPROVED":
-		return entities.WalletTxStatusFailed
-	default:
-		return ""
+		uc.log.Warn(ctx).Err(err).Str("event_type", eventType).Msg("wallet recharge: failed to publish event")
 	}
 }
 

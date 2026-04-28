@@ -30,6 +30,18 @@ export async function getBoldSignatureAction(amount: number, businessId?: number
     }
 }
 
+export async function syncBoldRechargeAction(orderId: string, businessId?: number): Promise<any> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || null;
+        const repo = new PayGatewayApiRepository(token);
+        return await repo.syncBoldRecharge(orderId, businessId);
+    } catch (error: any) {
+        console.error('syncBoldRechargeAction error:', error.message);
+        return { success: false, message: error.message };
+    }
+}
+
 export async function simulateBoldPaymentAction(orderId: string, amount: number, businessId?: number): Promise<any> {
     try {
         const cookieStore = await cookies();

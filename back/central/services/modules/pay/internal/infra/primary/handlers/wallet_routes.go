@@ -18,6 +18,7 @@ func (h *walletHandler) RegisterWalletRoutes(router *gin.RouterGroup) {
 
 		wallet.GET("/bold/signature", h.BoldGenerateSignature)
 		wallet.GET("/bold/status/:id", h.GetBoldStatus)
+		wallet.POST("/bold/sync/:id", h.SyncBoldRecharge)
 		wallet.POST("/bold/simulate", h.BoldSimulatePayment)
 
 		// Rutas de admin

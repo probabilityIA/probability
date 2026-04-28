@@ -204,3 +204,63 @@ func (uc *walletUseCase) GetBoldStatus(ctx context.Context, boldOrderID string) 
 		PaymentMethod: data.PaymentMethod,
 	}, nil
 }
+
+func (uc *walletUseCase) SyncBoldRecharge(ctx context.Context, businessID uint, orderID string) (*dtos.BoldStatusResponse, error) {
+	if orderID == "" {
+		return nil, fmt.Errorf("order id is required")
+	}
+
+	walletTx, err := uc.repo.GetWalletTransactionByReference(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("lookup wallet transaction: %w", err)
+	}
+	if walletTx == nil {
+		return nil, fmt.Errorf("wallet transaction not found for order %s", orderID)
+	}
+
+	statusResp, err := uc.GetBoldStatus(ctx, orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	outcome := mapBoldStatusToOutcome(statusResp.Status)
+	if outcome == "" {
+		uc.log.Info(ctx).
+			Str("order_id", orderID).
+			Str("bold_status", statusResp.Status).
+			Msg("SyncBoldRecharge: still pending, no action")
+		return statusResp, nil
+	}
+
+	gatewayResponse, _ := json.Marshal(map[string]any{
+		"source":         "polling_sync",
+		"bold_status":    statusResp.Status,
+		"amount":         statusResp.Amount,
+		"currency":       statusResp.Currency,
+		"payment_method": statusResp.PaymentMethod,
+		"synced_at":      time.Now().Format(time.RFC3339),
+	})
+
+	in := &dtos.WalletRechargeStatusInput{
+		OrderID:         orderID,
+		Outcome:         outcome,
+		Source:          "polling_sync",
+		GatewayResponse: gatewayResponse,
+		Reason:          "bold_status_" + statusResp.Status,
+	}
+	if err := uc.paymentUseCase.ApplyWalletRechargeStatus(ctx, in); err != nil {
+		return nil, fmt.Errorf("apply recharge status: %w", err)
+	}
+	return statusResp, nil
+}
+
+func mapBoldStatusToOutcome(status string) string {
+	switch strings.ToUpper(status) {
+	case "APPROVED", "PAID", "SUCCESS":
+		return dtos.WalletRechargeOutcomeApproved
+	case "REJECTED", "FAILED", "VOIDED", "CANCELLED", "EXPIRED":
+		return dtos.WalletRechargeOutcomeRejected
+	default:
+		return ""
+	}
+}
