@@ -29,7 +29,9 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
-    const businessIdForConfig = isSuperAdmin && selectedBusinessId ? selectedBusinessId : 0;
+    const businessIdForConfig = isSuperAdmin
+        ? (selectedBusinessId || 0)
+        : (permissions?.business_id || 0);
     const { config: businessConfig, loading: businessConfigLoading } = useResourceConfig(businessIdForConfig);
     const businessActiveResources = businessConfig?.resources
         ?.filter((r: any) => r.is_active)
@@ -38,11 +40,10 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const allow = (resource: string) => {
         if (permissionsNotLoaded) return true;
-        if (isSuperAdmin) {
-            if (!selectedBusinessId) return true;
-            if (businessConfigLoading) return true;
-            return businessActiveSet.has(resource);
-        }
+        if (isSuperAdmin && !selectedBusinessId) return true;
+        if (businessConfigLoading) return true;
+        if (!businessActiveSet.has(resource)) return false;
+        if (isSuperAdmin) return true;
         return hasPermission(resource, 'Read');
     };
 
