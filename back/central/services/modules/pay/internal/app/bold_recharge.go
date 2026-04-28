@@ -27,7 +27,7 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		return nil, err
 	}
 
-	orderID := "WLT" + uuid.New().String()
+	orderID := "WLT" + strings.ReplaceAll(uuid.New().String(), "-", "")[:25]
 	amountInt := int64(amount)
 
 	rawString := fmt.Sprintf("%s%d%s%s", orderID, amountInt, currency, creds.SecretKey)
