@@ -10,6 +10,7 @@ import { useInventoryBusiness } from '@/shared/contexts/inventory-business-conte
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 import InventoryTour from '@/services/modules/inventory/ui/components/InventoryTour';
+import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const [tourOpen, setTourOpen] = useState(false);
@@ -28,21 +29,35 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
-    const allow = (resource: string) =>
-        permissionsNotLoaded || isSuperAdmin || hasPermission(resource, 'Read');
+    const businessIdForConfig = isSuperAdmin && selectedBusinessId ? selectedBusinessId : 0;
+    const { config: businessConfig, loading: businessConfigLoading } = useResourceConfig(businessIdForConfig);
+    const businessActiveResources = businessConfig?.resources
+        ?.filter((r: any) => r.is_active)
+        .map((r: any) => r.resource_name) ?? [];
+    const businessActiveSet = new Set<string>(businessActiveResources);
+
+    const allow = (resource: string) => {
+        if (permissionsNotLoaded) return true;
+        if (isSuperAdmin) {
+            if (!selectedBusinessId) return true;
+            if (businessConfigLoading) return true;
+            return businessActiveSet.has(resource);
+        }
+        return hasPermission(resource, 'Read');
+    };
 
     const canViewProducts     = allow('Productos') || allow('Products');
     const canViewWarehouses   = allow('Bodegas')   || allow('Warehouses');
-    const canViewStock        = allow('Inventario-Stock')        || allow('Inventario');
-    const canViewMovements    = allow('Inventario-Movimientos')  || allow('Inventario');
-    const canViewTraceability = allow('Inventario-Trazabilidad') || allow('Inventario');
-    const canViewKardex       = allow('Inventario-Kardex')       || allow('Inventario');
-    const canViewOperations   = allow('Inventario-Operaciones')  || allow('Inventario');
-    const canViewSlotting     = allow('Inventario-Slotting')     || allow('Inventario');
-    const canViewAudit        = allow('Inventario-Auditoria')    || allow('Inventario');
-    const canViewLPN          = allow('Inventario-LPN')          || allow('Inventario');
-    const canViewScan         = allow('Inventario-Scan')         || allow('Inventario');
-    const canViewSyncLogs     = allow('Inventario-Sync-Logs')    || allow('Inventario');
+    const canViewStock        = allow('Inventario-Stock');
+    const canViewMovements    = allow('Inventario-Movimientos');
+    const canViewTraceability = allow('Inventario-Trazabilidad');
+    const canViewKardex       = allow('Inventario-Kardex');
+    const canViewOperations   = allow('Inventario-Operaciones');
+    const canViewSlotting     = allow('Inventario-Slotting');
+    const canViewAudit        = allow('Inventario-Auditoria');
+    const canViewLPN          = allow('Inventario-LPN');
+    const canViewScan         = allow('Inventario-Scan');
+    const canViewSyncLogs     = allow('Inventario-Sync-Logs');
 
     const isInInventoryModule = pathname.startsWith('/products') ||
                                 pathname.startsWith('/warehouses') ||
