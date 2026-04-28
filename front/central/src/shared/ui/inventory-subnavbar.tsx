@@ -40,10 +40,11 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const isInventarioSub = (r: string) => r.startsWith('Inventario-');
 
+    const isResourcesLoading = permissionsNotLoaded || (businessIdForConfig > 0 && businessConfigLoading);
+
     const allow = (resource: string) => {
-        if (permissionsNotLoaded) return true;
+        if (isResourcesLoading) return false;
         if (isSuperAdmin && !selectedBusinessId) return true;
-        if (businessConfigLoading) return true;
         if (!businessActiveSet.has(resource)) return false;
         if (isSuperAdmin) return true;
         if (hasPermission(resource, 'Read')) return true;
@@ -108,7 +109,7 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const populatedSections = menuItems.filter((s) => s.items.length > 0);
 
-    if (populatedSections.length === 0) {
+    if (populatedSections.length === 0 && !isResourcesLoading) {
         return null;
     }
 
