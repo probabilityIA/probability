@@ -38,13 +38,17 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
         .map((r: any) => r.resource_name) ?? [];
     const businessActiveSet = new Set<string>(businessActiveResources);
 
+    const isInventarioSub = (r: string) => r.startsWith('Inventario-');
+
     const allow = (resource: string) => {
         if (permissionsNotLoaded) return true;
         if (isSuperAdmin && !selectedBusinessId) return true;
         if (businessConfigLoading) return true;
         if (!businessActiveSet.has(resource)) return false;
         if (isSuperAdmin) return true;
-        return hasPermission(resource, 'Read');
+        if (hasPermission(resource, 'Read')) return true;
+        if (isInventarioSub(resource) && hasPermission('Inventario', 'Read')) return true;
+        return false;
     };
 
     const canViewProducts     = allow('Productos') || allow('Products');
