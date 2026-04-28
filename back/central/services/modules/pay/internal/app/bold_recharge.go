@@ -127,13 +127,19 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 }
 
 func (uc *walletUseCase) GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error) {
-	if boldOrderID == "" {
-		return nil, fmt.Errorf("bold order id is required")
-	}
-
 	creds, err := uc.repo.GetBoldCredentials(ctx)
 	if err != nil {
 		return nil, err
+	}
+	return uc.fetchBoldStatus(ctx, creds, boldOrderID)
+}
+
+func (uc *walletUseCase) fetchBoldStatus(ctx context.Context, creds *dtos.BoldCredentials, boldOrderID string) (*dtos.BoldStatusResponse, error) {
+	if boldOrderID == "" {
+		return nil, fmt.Errorf("bold order id is required")
+	}
+	if creds == nil {
+		return nil, domainerrors.ErrBoldCredentialsMissing
 	}
 
 	client := resty.New().
@@ -218,7 +224,11 @@ func (uc *walletUseCase) SyncBoldRecharge(ctx context.Context, businessID uint, 
 		return nil, fmt.Errorf("wallet transaction not found for order %s", orderID)
 	}
 
-	statusResp, err := uc.GetBoldStatus(ctx, orderID)
+	creds, err := uc.repo.GetBoldCredentialsForBusiness(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+	statusResp, err := uc.fetchBoldStatus(ctx, creds, orderID)
 	if err != nil {
 		return nil, err
 	}
