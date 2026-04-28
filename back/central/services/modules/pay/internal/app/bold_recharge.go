@@ -84,21 +84,36 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		return nil, err
 	}
 
+	redirectionURL := uc.config.Get("WEBHOOK_BASE_URL")
+	if redirectionURL == "" {
+		redirectionURL = uc.config.Get("URL_BASE_SWAGGER")
+	}
+	if redirectionURL != "" {
+		redirectionURL = strings.TrimRight(redirectionURL, "/") + "/wallet?bold_order_id=" + orderID
+	}
+
 	uc.log.Info(ctx).
 		Str("order_id", orderID).
 		Str("wallet_tx_id", pendingTx.ID.String()).
 		Float64("amount", amount).
+		Int64("amount_int", amountInt).
+		Str("currency", currency).
+		Str("raw_string_preview", fmt.Sprintf("%s%d%s***", orderID, amountInt, currency)).
+		Str("hash_preview", signature[:16]+"...").
+		Str("api_key_preview", creds.APIKey[:8]+"...").
+		Str("redirection_url", redirectionURL).
 		Str("environment", creds.Environment).
 		Bool("is_sandbox", isSandbox).
 		Msg("Generated Bold integrity signature and created pending tx")
 
 	return &dtos.BoldSignatureResponse{
-		OrderID:   orderID,
-		Hash:      signature,
-		Amount:    amount,
-		Currency:  currency,
-		PublicKey: creds.APIKey,
-		IsSandbox: isSandbox,
+		OrderID:        orderID,
+		Hash:           signature,
+		Amount:         amount,
+		Currency:       currency,
+		PublicKey:      creds.APIKey,
+		RedirectionURL: redirectionURL,
+		IsSandbox:      isSandbox,
 	}, nil
 }
 

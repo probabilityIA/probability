@@ -743,17 +743,20 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 });
             }
 
-            // @ts-expect-error BoldCheckout is loaded from external script
-            const checkout = new BoldCheckout({
+            const checkoutConfig: Record<string, unknown> = {
                 orderId: order_id,
                 currency,
                 amount,
                 apiKey: public_key,
                 integritySignature: hash,
                 description: `Recarga de Billetera Probability - Orden ${order_id}`,
-                redirectionUrl: redirection_url,
                 tax: 0,
-            });
+            };
+            if (redirection_url) {
+                checkoutConfig.redirectionUrl = redirection_url;
+            }
+            // @ts-expect-error BoldCheckout is loaded from external script
+            const checkout = new BoldCheckout(checkoutConfig);
 
             checkout.open();
             setBoldProcessing({ orderId: order_id, amount });
