@@ -8,6 +8,7 @@ type BoldSignatureResponse struct {
 	PublicKey      string  `json:"public_key"`
 	RedirectionURL string  `json:"redirection_url,omitempty"`
 	IsSandbox      bool    `json:"is_sandbox"`
+	PollingEnabled bool    `json:"polling_enabled"`
 }
 
 type BoldStatusResponse struct {

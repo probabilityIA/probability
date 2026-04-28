@@ -47,6 +47,7 @@ type IRepository interface {
 
 	GetBoldCredentials(ctx context.Context) (*dtos.BoldCredentials, error)
 	GetBoldCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error)
+	GetBoldLinkCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error)
 	GetBoldIntegrationForBusiness(ctx context.Context, businessID uint) (*dtos.BoldBusinessIntegration, error)
 
 	RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (created bool, err error)

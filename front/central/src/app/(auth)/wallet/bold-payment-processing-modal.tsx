@@ -13,6 +13,7 @@ interface BoldPaymentProcessingModalProps {
     orderId: string;
     amount: number;
     businessId?: number;
+    pollingEnabled?: boolean;
     onClose: () => void;
     onResolved: (status: 'success' | 'failed' | 'timeout', payload?: { newBalance?: number; reason?: string }) => void;
 }
@@ -31,6 +32,7 @@ export function BoldPaymentProcessingModal({
     orderId,
     amount,
     businessId,
+    pollingEnabled = false,
     onClose,
     onResolved,
 }: BoldPaymentProcessingModalProps) {
@@ -68,6 +70,7 @@ export function BoldPaymentProcessingModal({
     }, [open, status, onResolved]);
 
     useEffect(() => {
+        if (!pollingEnabled) return;
         if (!open || status !== 'waiting' || !orderId) return;
 
         let cancelled = false;
@@ -90,7 +93,7 @@ export function BoldPaymentProcessingModal({
             cancelled = true;
             if (timer) clearTimeout(timer);
         };
-    }, [open, status, orderId, businessId]);
+    }, [open, status, orderId, businessId, pollingEnabled]);
 
     useSSE({
         enabled: open && status === 'waiting' && !!orderId,

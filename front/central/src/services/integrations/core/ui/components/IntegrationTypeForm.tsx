@@ -65,6 +65,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         secret_key: '',
         test_api_key: '',
         test_secret_key: '',
+        link_api_key: '',
+        link_secret_key: '',
+        test_link_api_key: '',
+        test_link_secret_key: '',
     });
     const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
 
@@ -129,6 +133,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     secret_key: String(d.secret_key || ''),
                                     test_api_key: String(d.test_api_key || ''),
                                     test_secret_key: String(d.test_secret_key || ''),
+                                    link_api_key: String(d.link_api_key || ''),
+                                    link_secret_key: String(d.link_secret_key || ''),
+                                    test_link_api_key: String(d.test_link_api_key || ''),
+                                    test_link_secret_key: String(d.test_link_secret_key || ''),
                                 });
                                 if (res.webhook_urls) {
                                     setBoldWebhookUrls({
@@ -196,6 +204,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (boldCredentials.secret_key.trim()) bold.secret_key = boldCredentials.secret_key.trim();
                 if (boldCredentials.test_api_key.trim()) bold.test_api_key = boldCredentials.test_api_key.trim();
                 if (boldCredentials.test_secret_key.trim()) bold.test_secret_key = boldCredentials.test_secret_key.trim();
+                if (boldCredentials.link_api_key.trim()) bold.link_api_key = boldCredentials.link_api_key.trim();
+                if (boldCredentials.link_secret_key.trim()) bold.link_secret_key = boldCredentials.link_secret_key.trim();
+                if (boldCredentials.test_link_api_key.trim()) bold.test_link_api_key = boldCredentials.test_link_api_key.trim();
+                if (boldCredentials.test_link_secret_key.trim()) bold.test_link_secret_key = boldCredentials.test_link_secret_key.trim();
                 if (Object.keys(bold).length > 0) platformCredentials = bold;
             } else {
                 try {

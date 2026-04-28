@@ -18,6 +18,10 @@ export interface BoldPlatformCredentials {
     secret_key: string;
     test_api_key: string;
     test_secret_key: string;
+    link_api_key: string;
+    link_secret_key: string;
+    test_link_api_key: string;
+    test_link_secret_key: string;
 }
 
 interface BoldTypeCredentialsFormProps {
@@ -195,47 +199,113 @@ export default function BoldTypeCredentialsForm({
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="space-y-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800">
-                    <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800">
-                        <GlobeAltIcon className="w-5 h-5 text-emerald-700" />
-                        <h4 className="font-semibold text-emerald-900 dark:text-emerald-200">Producción</h4>
-                    </div>
-                    <SecretInput
-                        label="Identity Key (api_key)"
-                        value={credentials.api_key}
-                        onChange={(v) => onChange({ ...credentials, api_key: v })}
-                        placeholder={placeholderProd}
-                        helper="Llave pública de identidad de Bold (panel Comercios → Integraciones)."
-                    />
-                    <SecretInput
-                        label="Secret Key"
-                        value={credentials.secret_key}
-                        onChange={(v) => onChange({ ...credentials, secret_key: v })}
-                        placeholder={placeholderProd}
-                        helper="Firma requests y valida webhooks (HMAC-SHA256)."
-                    />
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <KeyIcon className="w-4 h-4 text-blue-600" />
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Botón de Pago (checkout embebido)
+                    </h4>
                 </div>
-
-                <div className="space-y-3 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                    <div className="flex items-center gap-2 pb-2 border-b border-amber-200 dark:border-amber-800">
-                        <BeakerIcon className="w-5 h-5 text-amber-700" />
-                        <h4 className="font-semibold text-amber-900 dark:text-amber-200">Sandbox (Pruebas)</h4>
+                <p className="text-xs text-gray-600 dark:text-gray-300">
+                    Llaves del producto <strong>Botón de Pago</strong>. Se usan para generar la firma de integridad del checkout y validar los webhooks que Bold envía.
+                </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800">
+                        <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800">
+                            <GlobeAltIcon className="w-5 h-5 text-emerald-700" />
+                            <h4 className="font-semibold text-emerald-900 dark:text-emerald-200">Producción</h4>
+                        </div>
+                        <SecretInput
+                            label="Identity Key (api_key)"
+                            value={credentials.api_key}
+                            onChange={(v) => onChange({ ...credentials, api_key: v })}
+                            placeholder={placeholderProd}
+                            helper="Llave pública de identidad del Botón de Pago."
+                        />
+                        <SecretInput
+                            label="Secret Key"
+                            value={credentials.secret_key}
+                            onChange={(v) => onChange({ ...credentials, secret_key: v })}
+                            placeholder={placeholderProd}
+                            helper="Firma requests y valida webhooks (HMAC-SHA256)."
+                        />
                     </div>
-                    <SecretInput
-                        label="Identity Key (api_key)"
-                        value={credentials.test_api_key}
-                        onChange={(v) => onChange({ ...credentials, test_api_key: v })}
-                        placeholder={placeholderTest}
-                        helper="Llave de identidad para el ambiente de pruebas / mock interno."
-                    />
-                    <SecretInput
-                        label="Secret Key"
-                        value={credentials.test_secret_key}
-                        onChange={(v) => onChange({ ...credentials, test_secret_key: v })}
-                        placeholder={placeholderTest}
-                        helper="Secret usado para firmar/validar en sandbox."
-                    />
+
+                    <div className="space-y-3 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                        <div className="flex items-center gap-2 pb-2 border-b border-amber-200 dark:border-amber-800">
+                            <BeakerIcon className="w-5 h-5 text-amber-700" />
+                            <h4 className="font-semibold text-amber-900 dark:text-amber-200">Sandbox (Pruebas)</h4>
+                        </div>
+                        <SecretInput
+                            label="Identity Key (api_key)"
+                            value={credentials.test_api_key}
+                            onChange={(v) => onChange({ ...credentials, test_api_key: v })}
+                            placeholder={placeholderTest}
+                            helper="Llave de identidad para sandbox del Botón de Pago."
+                        />
+                        <SecretInput
+                            label="Secret Key"
+                            value={credentials.test_secret_key}
+                            onChange={(v) => onChange({ ...credentials, test_secret_key: v })}
+                            placeholder={placeholderTest}
+                            helper="Secret usado para firmar/validar en sandbox."
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <KeyIcon className="w-4 h-4 text-purple-600" />
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        API Payment Links (consultas server-to-server)
+                    </h4>
+                </div>
+                <p className="text-xs text-gray-600 dark:text-gray-300">
+                    Llaves del producto <strong>API de Payment Links</strong> (host <code>integrations.api.bold.co</code>). Se usan para consultar el estado de una transacción cuando el webhook tarde o no llegue (polling sync) y para crear payment links en los flujos de orden.
+                </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800">
+                        <div className="flex items-center gap-2 pb-2 border-b border-emerald-200 dark:border-emerald-800">
+                            <GlobeAltIcon className="w-5 h-5 text-emerald-700" />
+                            <h4 className="font-semibold text-emerald-900 dark:text-emerald-200">Producción</h4>
+                        </div>
+                        <SecretInput
+                            label="Identity Key API (link_api_key)"
+                            value={credentials.link_api_key}
+                            onChange={(v) => onChange({ ...credentials, link_api_key: v })}
+                            placeholder={placeholderProd}
+                            helper="Llave pública del API de Payment Links de Bold."
+                        />
+                        <SecretInput
+                            label="Secret Key API"
+                            value={credentials.link_secret_key}
+                            onChange={(v) => onChange({ ...credentials, link_secret_key: v })}
+                            placeholder={placeholderProd}
+                            helper="Secret del API (firma de requests salientes)."
+                        />
+                    </div>
+
+                    <div className="space-y-3 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                        <div className="flex items-center gap-2 pb-2 border-b border-amber-200 dark:border-amber-800">
+                            <BeakerIcon className="w-5 h-5 text-amber-700" />
+                            <h4 className="font-semibold text-amber-900 dark:text-amber-200">Sandbox (Pruebas)</h4>
+                        </div>
+                        <SecretInput
+                            label="Identity Key API (test_link_api_key)"
+                            value={credentials.test_link_api_key}
+                            onChange={(v) => onChange({ ...credentials, test_link_api_key: v })}
+                            placeholder={placeholderTest}
+                            helper="Llave de identidad del API de Payment Links en sandbox."
+                        />
+                        <SecretInput
+                            label="Secret Key API"
+                            value={credentials.test_link_secret_key}
+                            onChange={(v) => onChange({ ...credentials, test_link_secret_key: v })}
+                            placeholder={placeholderTest}
+                            helper="Secret del API en sandbox."
+                        />
+                    </div>
                 </div>
             </div>
         </div>

@@ -10,7 +10,7 @@ import (
 const boldIntegrationTypeCode = "bold_pay"
 
 func (r *Repository) GetBoldCredentials(ctx context.Context) (*dtos.BoldCredentials, error) {
-	return r.getBoldCredentials(ctx, nil)
+	return r.getBoldCredentials(ctx, nil, "button")
 }
 
 func (r *Repository) GetBoldCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error) {
@@ -19,10 +19,19 @@ func (r *Repository) GetBoldCredentialsForBusiness(ctx context.Context, business
 		return nil, err
 	}
 	isTesting := biz != nil && biz.IsTesting
-	return r.getBoldCredentials(ctx, &isTesting)
+	return r.getBoldCredentials(ctx, &isTesting, "button")
 }
 
-func (r *Repository) getBoldCredentials(ctx context.Context, forceTesting *bool) (*dtos.BoldCredentials, error) {
+func (r *Repository) GetBoldLinkCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error) {
+	biz, err := r.GetBoldIntegrationForBusiness(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+	isTesting := biz != nil && biz.IsTesting
+	return r.getBoldCredentials(ctx, &isTesting, "link")
+}
+
+func (r *Repository) getBoldCredentials(ctx context.Context, forceTesting *bool, product string) (*dtos.BoldCredentials, error) {
 	if r.integrationCore == nil {
 		return nil, domainerrors.ErrBoldConfigNotFound
 	}
@@ -37,10 +46,22 @@ func (r *Repository) getBoldCredentials(ctx context.Context, forceTesting *bool)
 		return nil, domainerrors.ErrBoldCredentialsMissing
 	}
 
-	prodAPIKey, _ := creds["api_key"].(string)
-	prodSecretKey, _ := creds["secret_key"].(string)
-	testAPIKey, _ := creds["test_api_key"].(string)
-	testSecretKey, _ := creds["test_secret_key"].(string)
+	var (
+		prodAPIKey, prodSecretKey string
+		testAPIKey, testSecretKey string
+	)
+	switch product {
+	case "link":
+		prodAPIKey, _ = creds["link_api_key"].(string)
+		prodSecretKey, _ = creds["link_secret_key"].(string)
+		testAPIKey, _ = creds["test_link_api_key"].(string)
+		testSecretKey, _ = creds["test_link_secret_key"].(string)
+	default:
+		prodAPIKey, _ = creds["api_key"].(string)
+		prodSecretKey, _ = creds["secret_key"].(string)
+		testAPIKey, _ = creds["test_api_key"].(string)
+		testSecretKey, _ = creds["test_secret_key"].(string)
+	}
 
 	var environment string
 	switch {
@@ -78,6 +99,7 @@ func (r *Repository) getBoldCredentials(ctx context.Context, forceTesting *bool)
 	r.log.Info(ctx).
 		Uint("integration_type_id", intType.ID).
 		Str("environment", environment).
+		Str("product", product).
 		Msg("Bold credentials retrieved via core")
 
 	return &dtos.BoldCredentials{

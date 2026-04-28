@@ -608,7 +608,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const [processing, setProcessing] = useState(false);
     const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
-    const [boldProcessing, setBoldProcessing] = useState<{ orderId: string; amount: number } | null>(null);
+    const [boldProcessing, setBoldProcessing] = useState<{ orderId: string; amount: number; pollingEnabled: boolean } | null>(null);
 
     const QUICK_AMOUNTS = [15000, 50000, 100000, 200000, 500000];
 
@@ -715,7 +715,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 throw new Error(res?.message || 'Error al obtener firma de Bold');
             }
 
-            const { order_id, currency, amount, hash, public_key, redirection_url, is_sandbox } = res.data;
+            const { order_id, currency, amount, hash, public_key, redirection_url, is_sandbox, polling_enabled } = res.data;
 
             if (is_sandbox) {
                 const sim = await simulateBoldPaymentAction(order_id, amount, targetBusinessId);
@@ -758,7 +758,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             const checkout = new BoldCheckout(checkoutConfig);
 
             checkout.open();
-            setBoldProcessing({ orderId: order_id, amount });
+            setBoldProcessing({ orderId: order_id, amount, pollingEnabled: !!polling_enabled });
         } catch (err: any) {
             console.error('Bold error:', err);
             setMessage({ type: 'error', text: err.message || 'Error al iniciar pago con Bold' });
@@ -943,6 +943,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 orderId={boldProcessing?.orderId || ''}
                 amount={boldProcessing?.amount || 0}
                 businessId={businessId}
+                pollingEnabled={boldProcessing?.pollingEnabled ?? false}
                 onClose={() => {
                     setBoldProcessing(null);
                     fetchBalance();

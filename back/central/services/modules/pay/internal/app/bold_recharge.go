@@ -18,7 +18,11 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/errors"
 )
 
-const boldStatusEndpoint = "/online/link/v1/%s"
+const (
+	boldStatusEndpoint       = "/online/link/v1/%s"
+	boldButtonStatusEndpoint = "/v2/payment-voucher/%s"
+	boldButtonAPIBaseURL     = "https://payments.api.bold.co"
+)
 
 func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error) {
 	creds, err := uc.repo.GetBoldCredentialsForBusiness(ctx, businessID)
@@ -115,6 +119,8 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		Bool("is_sandbox", isSandbox).
 		Msg("Generated Bold integrity signature and created pending tx")
 
+	pollingEnabled := strings.EqualFold(uc.config.Get("BOLD_POLLING_ENABLED"), "true")
+
 	return &dtos.BoldSignatureResponse{
 		OrderID:        orderID,
 		Hash:           signature,
@@ -123,6 +129,7 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		PublicKey:      creds.APIKey,
 		RedirectionURL: redirectionURL,
 		IsSandbox:      isSandbox,
+		PollingEnabled: pollingEnabled,
 	}, nil
 }
 
@@ -132,6 +139,98 @@ func (uc *walletUseCase) GetBoldStatus(ctx context.Context, boldOrderID string) 
 		return nil, err
 	}
 	return uc.fetchBoldStatus(ctx, creds, boldOrderID)
+}
+
+func (uc *walletUseCase) fetchBoldButtonVoucher(ctx context.Context, creds *dtos.BoldCredentials, orderID string) (*dtos.BoldStatusResponse, error) {
+	if orderID == "" {
+		return nil, fmt.Errorf("order id is required")
+	}
+	if creds == nil {
+		return nil, domainerrors.ErrBoldCredentialsMissing
+	}
+
+	client := resty.New().
+		SetTimeout(10 * time.Second).
+		SetRetryCount(3).
+		SetRetryWaitTime(500 * time.Millisecond).
+		SetRetryMaxWaitTime(3 * time.Second).
+		AddRetryCondition(func(r *resty.Response, err error) bool {
+			if err != nil {
+				return true
+			}
+			return r.StatusCode() >= 500 || r.StatusCode() == 429
+		})
+
+	url := boldButtonAPIBaseURL + fmt.Sprintf(boldButtonStatusEndpoint, orderID)
+	resp, err := client.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "x-api-key "+creds.APIKey).
+		SetHeader("Accept", "application/json").
+		Get(url)
+
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Str("order_id", orderID).Msg("Bold button voucher request failed")
+		return nil, stderrors.Join(domainerrors.ErrBoldUpstreamUnavailable, err)
+	}
+
+	switch resp.StatusCode() {
+	case http.StatusOK, http.StatusNotFound:
+	case http.StatusUnauthorized, http.StatusForbidden:
+		uc.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("body", resp.String()).
+			Str("order_id", orderID).
+			Msg("Bold button voucher returned unauthorized")
+		return nil, domainerrors.ErrBoldUnauthorized
+	default:
+		uc.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("body", resp.String()).
+			Str("order_id", orderID).
+			Msg("Bold button voucher returned non-OK")
+		return nil, fmt.Errorf("%w: status %d", domainerrors.ErrBoldUpstreamUnavailable, resp.StatusCode())
+	}
+
+	var data struct {
+		LinkID          string  `json:"link_id"`
+		TransactionID   string  `json:"transaction_id"`
+		Total           float64 `json:"total"`
+		Subtotal        float64 `json:"subtotal"`
+		Description     string  `json:"description"`
+		ReferenceID     string  `json:"reference_id"`
+		PaymentMethod   string  `json:"payment_method"`
+		PayerEmail      string  `json:"payer_email"`
+		TransactionDate string  `json:"transaction_date"`
+		PaymentStatus   string  `json:"payment_status"`
+		Code            string  `json:"code"`
+		Message         string  `json:"message"`
+	}
+	if err := json.Unmarshal(resp.Body(), &data); err != nil {
+		return nil, fmt.Errorf("decode bold button voucher response: %w", err)
+	}
+
+	status := strings.ToUpper(data.PaymentStatus)
+	if status == "" && strings.EqualFold(data.Code, "NO_TRANSACTION_FOUND") {
+		status = "NO_TRANSACTION_FOUND"
+	}
+	if status == "" && resp.StatusCode() == http.StatusNotFound {
+		status = "NO_TRANSACTION_FOUND"
+	}
+
+	uc.log.Info(ctx).
+		Str("order_id", orderID).
+		Str("transaction_id", data.TransactionID).
+		Str("payment_status", status).
+		Float64("total", data.Total).
+		Msg("Fetched Bold button voucher")
+
+	return &dtos.BoldStatusResponse{
+		BoldOrderID:   data.TransactionID,
+		Status:        status,
+		Amount:        data.Total,
+		Currency:      "COP",
+		PaymentMethod: data.PaymentMethod,
+	}, nil
 }
 
 func (uc *walletUseCase) fetchBoldStatus(ctx context.Context, creds *dtos.BoldCredentials, boldOrderID string) (*dtos.BoldStatusResponse, error) {
@@ -228,7 +327,7 @@ func (uc *walletUseCase) SyncBoldRecharge(ctx context.Context, businessID uint, 
 	if err != nil {
 		return nil, err
 	}
-	statusResp, err := uc.fetchBoldStatus(ctx, creds, orderID)
+	statusResp, err := uc.fetchBoldButtonVoucher(ctx, creds, orderID)
 	if err != nil {
 		return nil, err
 	}
