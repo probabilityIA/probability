@@ -223,7 +223,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
 
-			if !response.IsTest && shipment.TotalCost != nil && *shipment.TotalCost > 0 && businessID != 0 {
+			if shipment.TotalCost != nil && *shipment.TotalCost > 0 && businessID != 0 {
 				if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber); err != nil {
 					c.log.Error(ctx).Err(err).
 						Uint("business_id", businessID).
