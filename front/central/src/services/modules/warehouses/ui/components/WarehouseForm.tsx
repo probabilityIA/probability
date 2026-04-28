@@ -105,11 +105,21 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
         is_active: warehouse?.is_active ?? true,
         latitude: warehouse?.latitude != null ? String(warehouse.latitude) : '',
         longitude: warehouse?.longitude != null ? String(warehouse.longitude) : '',
-        city_dane_code: '',
+        city_dane_code: warehouse?.city_dane_code || '',
     });
 
-    const [citySearch, setCitySearch] = useState('');
+    const [citySearch, setCitySearch] = useState(
+        warehouse?.city && warehouse?.state ? `${warehouse.city} (${warehouse.state})` : ''
+    );
     const [showCityResults, setShowCityResults] = useState(false);
+    const [buildingReference, setBuildingReference] = useState(() => {
+        if (warehouse?.id) {
+            try {
+                return localStorage.getItem(`wh_building_${warehouse.id}`) || '';
+            } catch {}
+        }
+        return '';
+    });
     const cityRef = useRef<HTMLDivElement>(null);
 
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
@@ -151,6 +161,15 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
     const handleChange = (field: string, value: string | boolean) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleBuildingReferenceChange = (value: string) => {
+        setBuildingReference(value);
+        if (warehouse?.id) {
+            try {
+                localStorage.setItem(`wh_building_${warehouse.id}`, value);
+            } catch {}
+        }
     };
 
     const handleAddressSelect = (s: AddressSuggestion) => {
@@ -379,11 +398,6 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                             </div>
                                         )}
                                     </div>
-                                    {formData.city_dane_code && (
-                                        <div className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">
-                                            ✓ {formData.city} ({formData.state}) - DANE: {formData.city_dane_code}
-                                        </div>
-                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Pais</label>
@@ -413,6 +427,16 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                         onChange={(e) => handleChange('suburb', e.target.value)}
                                         placeholder="Centro, Zona Rosa, etc."
                                         maxLength={100}
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Edificio / Casa (se autorellena en cotización)</label>
+                                    <Input
+                                        type="text"
+                                        value={buildingReference}
+                                        onChange={(e) => handleBuildingReferenceChange(e.target.value)}
+                                        placeholder="Ej: Edificio A, Casa #123, Apto 501, etc."
+                                        maxLength={50}
                                     />
                                 </div>
                             </div>

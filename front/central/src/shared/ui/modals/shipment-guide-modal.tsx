@@ -278,6 +278,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
         setOriginSearch(`${wh.city} (${wh.state})`);
 
+        let buildingRef = "";
+        if (wh.id) {
+            try {
+                buildingRef = localStorage.getItem(`wh_building_${wh.id}`) || "";
+            } catch {}
+        }
+
         // Step 3
         step3Form.setValue("originCompany", wh.company || wh.name);
         step3Form.setValue("originFirstName", wh.first_name || wh.contact_name?.split(' ')[0] || "");
@@ -286,7 +293,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         step3Form.setValue("originPhone", wh.phone || "");
         step3Form.setValue("originSuburb", wh.suburb || "");
         step3Form.setValue("originCrossStreet", wh.street || wh.address || "");
-        step3Form.setValue("originReference", wh.city || wh.state || "");
+        step3Form.setValue("originReference", buildingRef);
     };
 
     useEffect(() => {
