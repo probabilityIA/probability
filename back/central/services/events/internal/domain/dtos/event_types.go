@@ -85,6 +85,14 @@ const (
 	InventoryLowStock        = "inventory.low_stock"
 )
 
+// WALLET / PAY EVENT TYPES
+
+const (
+	WalletRechargeProcessing = "wallet.recharge.processing"
+	WalletRechargeCompleted  = "wallet.recharge.completed"
+	WalletRechargeFailed     = "wallet.recharge.failed"
+)
+
 // WHATSAPP EVENT TYPES
 
 const (

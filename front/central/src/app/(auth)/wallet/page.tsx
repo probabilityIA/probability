@@ -20,6 +20,7 @@ import {
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { VirtualCard } from './virtual-card';
 import { FinancialStatsView } from './financial-stats';
+import { BoldPaymentProcessingModal } from './bold-payment-processing-modal';
 import { getActionError } from '@/shared/utils/action-result';
 import { getBoldSignatureAction, simulateBoldPaymentAction } from '@/services/modules/pay/infra/actions';
 
@@ -607,6 +608,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const [processing, setProcessing] = useState(false);
     const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
+    const [boldProcessing, setBoldProcessing] = useState<{ orderId: string; amount: number } | null>(null);
 
     const QUICK_AMOUNTS = [15000, 50000, 100000, 200000, 500000];
 
@@ -732,7 +734,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             if (!window.hasOwnProperty('BoldCheckout')) {
                 await new Promise<void>((resolve, reject) => {
                     const script = document.createElement('script');
-                    script.src = 'https://checkout.bold.co/library/bold.js';
+                    script.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
                     script.async = true;
                     script.onload = () => resolve();
                     script.onerror = () => reject(new Error('No se pudo cargar el script de Bold (revisa conexion)'));
@@ -754,6 +756,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             });
 
             checkout.open();
+            setBoldProcessing({ orderId: order_id, amount });
         } catch (err: any) {
             console.error('Bold error:', err);
             setMessage({ type: 'error', text: err.message || 'Error al iniciar pago con Bold' });
@@ -930,6 +933,30 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 amount={rechargeAmount}
                 onSelectNequi={handleSelectNequi}
                 onSelectOther={handleSelectOtherGateway}
+            />
+
+            {/* Bold Payment Processing Modal (SSE) */}
+            <BoldPaymentProcessingModal
+                open={boldProcessing !== null}
+                orderId={boldProcessing?.orderId || ''}
+                amount={boldProcessing?.amount || 0}
+                businessId={businessId}
+                onClose={() => {
+                    setBoldProcessing(null);
+                    fetchBalance();
+                    fetchHistory();
+                }}
+                onResolved={(status) => {
+                    if (status === 'success') {
+                        fetchBalance();
+                        fetchHistory();
+                        setMessage({ type: 'success', text: 'Pago confirmado por Bold. Saldo actualizado.' });
+                    } else if (status === 'failed') {
+                        setMessage({ type: 'error', text: 'Bold rechazó el pago.' });
+                    } else if (status === 'timeout') {
+                        setMessage({ type: 'warning', text: 'Pago en proceso. Aparecerá en el historial cuando Bold confirme.' });
+                    }
+                }}
             />
 
             {/* Coming Soon Modal */}

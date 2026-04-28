@@ -43,7 +43,7 @@ func New(
 
 	// 2. CAPA DE APLICACIÓN
 
-	useCase := app.New(repo, requestPublisher, ssePublisher, config, moduleLogger)
+	useCase := app.New(repo, requestPublisher, ssePublisher, rabbitMQ, config, moduleLogger)
 	walletUC := app.NewWalletUseCase(repo, useCase, config, moduleLogger)
 
 	// 3. INFRAESTRUCTURA PRIMARIA

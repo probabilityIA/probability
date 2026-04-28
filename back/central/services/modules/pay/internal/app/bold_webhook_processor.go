@@ -5,11 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/constants"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+)
+
+const (
+	eventCategoryPay         = "pay"
+	eventWalletRechargeOK    = "wallet.recharge.completed"
+	eventWalletRechargeFail  = "wallet.recharge.failed"
 )
 
 const boldGatewayCode = "bold"
@@ -201,6 +209,7 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 			Float64("amount", walletTx.Amount).
 			Float64("new_balance", wallet.Balance).
 			Msg("bold webhook: wallet recharge approved and credited")
+		uc.publishWalletRechargeEvent(ctx, eventWalletRechargeOK, wallet.BusinessID, walletTx, msg, &wallet.Balance, "")
 		return nil
 	}
 
@@ -208,7 +217,52 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 		Str("wallet_tx_id", walletTx.ID.String()).
 		Str("status", newStatus).
 		Msg("bold webhook: wallet recharge marked failed")
+	wallet, _ := uc.repo.GetWalletByID(ctx, walletTx.WalletID)
+	var businessID uint
+	var balancePtr *float64
+	if wallet != nil {
+		businessID = wallet.BusinessID
+		balancePtr = &wallet.Balance
+	}
+	uc.publishWalletRechargeEvent(ctx, eventWalletRechargeFail, businessID, walletTx, msg, balancePtr, msg.Type)
 	return nil
+}
+
+func (uc *useCase) publishWalletRechargeEvent(
+	ctx context.Context,
+	eventType string,
+	businessID uint,
+	walletTx *entities.WalletTransaction,
+	msg *dtos.BoldWebhookMessage,
+	newBalance *float64,
+	reason string,
+) {
+	if uc.queue == nil {
+		return
+	}
+	data := map[string]interface{}{
+		"order_id":              msg.MerchantReference,
+		"wallet_transaction_id": walletTx.ID.String(),
+		"amount":                walletTx.Amount,
+		"gateway":               boldGatewayCode,
+		"bold_event_id":         msg.BoldEventID,
+	}
+	if newBalance != nil {
+		data["new_balance"] = *newBalance
+	}
+	if reason != "" {
+		data["reason"] = reason
+	}
+	envelope := rabbitmq.EventEnvelope{
+		Type:       eventType,
+		Category:   eventCategoryPay,
+		BusinessID: businessID,
+		Timestamp:  time.Now(),
+		Data:       data,
+	}
+	if err := rabbitmq.PublishEvent(ctx, uc.queue, envelope); err != nil {
+		uc.log.Warn(ctx).Err(err).Str("event_type", eventType).Msg("bold webhook: failed to publish wallet recharge event")
+	}
 }
 
 func mapBoldEventToWalletStatus(eventType string) string {

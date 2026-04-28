@@ -4,6 +4,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // useCase implementa todos los casos de uso del módulo de pagos
@@ -11,6 +12,7 @@ type useCase struct {
 	repo             ports.IRepository
 	requestPublisher ports.IRequestPublisher
 	ssePublisher     ports.ISSEPublisher
+	queue            rabbitmq.IQueue
 	config           env.IConfig
 	log              log.ILogger
 }
@@ -20,6 +22,7 @@ func New(
 	repo ports.IRepository,
 	requestPublisher ports.IRequestPublisher,
 	ssePublisher ports.ISSEPublisher,
+	queue rabbitmq.IQueue,
 	config env.IConfig,
 	logger log.ILogger,
 ) ports.IUseCase {
@@ -27,6 +30,7 @@ func New(
 		repo:             repo,
 		requestPublisher: requestPublisher,
 		ssePublisher:     ssePublisher,
+		queue:            queue,
 		config:           config,
 		log:              logger.WithModule("pay.usecase"),
 	}

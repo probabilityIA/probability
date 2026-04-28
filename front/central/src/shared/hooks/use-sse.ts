@@ -8,6 +8,8 @@ interface UseSSEOptions {
     eventTypes?: string[];
     integrationId?: number;
     businessId?: number;
+    orderIds?: string[];
+    enabled?: boolean;
 }
 
 export const useSSE = (options: UseSSEOptions = {}) => {
@@ -28,21 +30,26 @@ export const useSSE = (options: UseSSEOptions = {}) => {
 
     // Memoize connection parameters to avoid unnecessary reconnects
     // We use JSON.stringify to compare arrays/objects by value
+    const enabled = options.enabled ?? true;
     const connectionParams = JSON.stringify({
         eventTypes: options.eventTypes,
         integrationId: options.integrationId,
-        businessId: options.businessId
+        businessId: options.businessId,
+        orderIds: options.orderIds,
+        enabled,
     });
 
     const connect = useCallback(() => {
-        // Parse params inside callback to use them
-        const { eventTypes, integrationId, businessId } = JSON.parse(connectionParams);
+        const { eventTypes, integrationId, businessId, orderIds, enabled: paramsEnabled } = JSON.parse(connectionParams);
 
         if (eventSourceRef.current) {
             eventSourceRef.current.close();
+            eventSourceRef.current = null;
+        }
+        if (!paramsEnabled) {
+            return;
         }
 
-        // Construct URL with query params
         const params = new URLSearchParams();
         if (eventTypes && eventTypes.length > 0) {
             params.append('event_types', eventTypes.join(','));
@@ -52,6 +59,9 @@ export const useSSE = (options: UseSSEOptions = {}) => {
         }
         if (businessId) {
             params.append('business_id', businessId.toString());
+        }
+        if (orderIds && orderIds.length > 0) {
+            params.append('order_ids', orderIds.join(','));
         }
 
         // SSE debe ir directo al backend, no a través de Next.js proxy
