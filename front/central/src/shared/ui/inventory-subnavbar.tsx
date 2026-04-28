@@ -28,9 +28,21 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
-    const canViewProducts = permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read') || hasPermission('Products', 'Read');
-    const canViewWarehouses = permissionsNotLoaded || isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
-    const canViewInventory = permissionsNotLoaded || isSuperAdmin || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read');
+    const allow = (resource: string) =>
+        permissionsNotLoaded || isSuperAdmin || hasPermission(resource, 'Read');
+
+    const canViewProducts     = allow('Productos') || allow('Products');
+    const canViewWarehouses   = allow('Bodegas')   || allow('Warehouses');
+    const canViewStock        = allow('Inventario-Stock')        || allow('Inventario');
+    const canViewMovements    = allow('Inventario-Movimientos')  || allow('Inventario');
+    const canViewTraceability = allow('Inventario-Trazabilidad') || allow('Inventario');
+    const canViewKardex       = allow('Inventario-Kardex')       || allow('Inventario');
+    const canViewOperations   = allow('Inventario-Operaciones')  || allow('Inventario');
+    const canViewSlotting     = allow('Inventario-Slotting')     || allow('Inventario');
+    const canViewAudit        = allow('Inventario-Auditoria')    || allow('Inventario');
+    const canViewLPN          = allow('Inventario-LPN')          || allow('Inventario');
+    const canViewScan         = allow('Inventario-Scan')         || allow('Inventario');
+    const canViewSyncLogs     = allow('Inventario-Sync-Logs')    || allow('Inventario');
 
     const isInInventoryModule = pathname.startsWith('/products') ||
                                 pathname.startsWith('/warehouses') ||
@@ -57,20 +69,20 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
             canViewWarehouses && { href: '/warehouses', label: 'Bodegas', icon: '🏭' },
         ].filter(Boolean) },
         { section: 'INVENTARIO', items: [
-            canViewInventory && { href: '/inventory', label: 'Stock', icon: '📊' },
-            canViewInventory && { href: '/inventory/movements', label: 'Movimientos', icon: '🔄' },
-            canViewInventory && { href: '/inventory/traceability', label: 'Trazabilidad', icon: '🏷️' },
-            canViewInventory && { href: '/inventory/kardex', label: 'Kardex', icon: '📑' },
+            canViewStock && { href: '/inventory', label: 'Stock', icon: '📊' },
+            canViewMovements && { href: '/inventory/movements', label: 'Movimientos', icon: '🔄' },
+            canViewTraceability && { href: '/inventory/traceability', label: 'Trazabilidad', icon: '🏷️' },
+            canViewKardex && { href: '/inventory/kardex', label: 'Kardex', icon: '📑' },
         ].filter(Boolean) },
         { section: 'OPERACIONES', items: [
-            canViewInventory && { href: '/inventory/operations', label: 'Operaciones', icon: '📥' },
-            canViewInventory && { href: '/inventory/analytics/slotting', label: 'Slotting ABC', icon: '📈' },
-            canViewInventory && { href: '/inventory/audit', label: 'Auditoría', icon: '✅' },
+            canViewOperations && { href: '/inventory/operations', label: 'Operaciones', icon: '📥' },
+            canViewSlotting && { href: '/inventory/analytics/slotting', label: 'Slotting ABC', icon: '📈' },
+            canViewAudit && { href: '/inventory/audit', label: 'Auditoría', icon: '✅' },
         ].filter(Boolean) },
         { section: 'CAPTURE', items: [
-            canViewInventory && { href: '/inventory/lpn', label: 'LPN', icon: '📦' },
-            canViewInventory && { href: '/inventory/mobile', label: 'Scan', icon: '📱' },
-            canViewInventory && { href: '/inventory/sync/logs', label: 'Sync Logs', icon: '🔄' },
+            canViewLPN && { href: '/inventory/lpn', label: 'LPN', icon: '📦' },
+            canViewScan && { href: '/inventory/mobile', label: 'Scan', icon: '📱' },
+            canViewSyncLogs && { href: '/inventory/sync/logs', label: 'Sync Logs', icon: '🔄' },
         ].filter(Boolean) },
     ];
 

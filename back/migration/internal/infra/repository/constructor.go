@@ -24,8 +24,8 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 // Las migraciones pasadas ya estan aplicadas en produccion y no deben re-correr.
 // Para una nueva migracion: dejar UNA sola llamada activa aqui, ejecutar, y volver a vaciar.
 func (r *Repository) Migrate(ctx context.Context) error {
-	if err := r.migrateTicketArea(ctx); err != nil {
-		return fmt.Errorf("failed to migrate ticket area columns: %w", err)
+	if err := r.migrateInventorySubmoduleResources(ctx); err != nil {
+		return fmt.Errorf("failed to seed inventory submodule resources: %w", err)
 	}
 	return nil
 }
