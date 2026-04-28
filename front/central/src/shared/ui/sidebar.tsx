@@ -109,7 +109,18 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
-  const canViewInventory = isSuperAdmin || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read');
+  const canViewInventory = isSuperAdmin
+    || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read')
+    || hasPermission('Inventario-Stock', 'Read')
+    || hasPermission('Inventario-Movimientos', 'Read')
+    || hasPermission('Inventario-Trazabilidad', 'Read')
+    || hasPermission('Inventario-Kardex', 'Read')
+    || hasPermission('Inventario-Operaciones', 'Read')
+    || hasPermission('Inventario-Slotting', 'Read')
+    || hasPermission('Inventario-Auditoria', 'Read')
+    || hasPermission('Inventario-LPN', 'Read')
+    || hasPermission('Inventario-Scan', 'Read')
+    || hasPermission('Inventario-Sync-Logs', 'Read');
 
   // Configuracion de Ordenes: Solo para super admins (Plataforma)
   const canViewOrderStatus = isSuperAdmin;
