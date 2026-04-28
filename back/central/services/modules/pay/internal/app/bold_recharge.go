@@ -84,12 +84,21 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		return nil, err
 	}
 
-	redirectionURL := uc.config.Get("WEBHOOK_BASE_URL")
-	if redirectionURL == "" {
-		redirectionURL = uc.config.Get("URL_BASE_SWAGGER")
+	redirectionBase := uc.config.Get("FRONTEND_BASE_URL")
+	if redirectionBase == "" {
+		redirectionBase = uc.config.Get("WEBHOOK_BASE_URL")
+		if redirectionBase == "" {
+			redirectionBase = uc.config.Get("URL_BASE_SWAGGER")
+		}
+		redirectionBase = strings.TrimRight(redirectionBase, "/")
+		if idx := strings.LastIndex(redirectionBase, "/api/v"); idx > 0 {
+			redirectionBase = redirectionBase[:idx]
+		}
 	}
-	if redirectionURL != "" {
-		redirectionURL = strings.TrimRight(redirectionURL, "/") + "/wallet?bold_order_id=" + orderID
+	redirectionBase = strings.TrimRight(redirectionBase, "/")
+	var redirectionURL string
+	if redirectionBase != "" {
+		redirectionURL = redirectionBase + "/wallet?bold_order_id=" + orderID
 	}
 
 	uc.log.Info(ctx).
