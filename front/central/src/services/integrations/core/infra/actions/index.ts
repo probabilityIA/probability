@@ -146,12 +146,12 @@ export const deleteIntegrationTypeAction = async (id: number, token?: string | n
     return safeAction(() => getUseCases(token).then(uc => uc.deleteIntegrationType(id)));
 };
 
-export const getIntegrationTypePlatformCredentialsAction = async (id: number, token?: string | null) => {
+export const getIntegrationTypePlatformCredentialsAction = async (id: number, token?: string | null): Promise<{ success: boolean; message: string; data: Record<string, unknown>; webhook_urls?: Record<string, string> }> => {
     try {
         return await (await getUseCases(token)).getIntegrationTypePlatformCredentials(id);
     } catch (error: any) {
         console.error('Get Integration Type Platform Credentials Action Error:', error.message);
-        return { success: false, message: error.message, data: {} as Record<string, string> };
+        return { success: false, message: error.message, data: {} };
     }
 };
 

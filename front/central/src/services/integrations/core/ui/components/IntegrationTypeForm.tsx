@@ -66,6 +66,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         test_api_key: '',
         test_secret_key: '',
     });
+    const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -129,6 +130,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     test_api_key: String(d.test_api_key || ''),
                                     test_secret_key: String(d.test_secret_key || ''),
                                 });
+                                if (res.webhook_urls) {
+                                    setBoldWebhookUrls({
+                                        production: res.webhook_urls.production,
+                                        sandbox: res.webhook_urls.sandbox,
+                                    });
+                                }
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -461,6 +468,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     credentials={boldCredentials}
                     onChange={setBoldCredentials}
                     isEditing={!!integrationType}
+                    webhookUrlProd={boldWebhookUrls.production}
+                    webhookUrlTest={boldWebhookUrls.sandbox}
                 />
             ) : (
                 /* Editor JSON genérico para otros tipos */

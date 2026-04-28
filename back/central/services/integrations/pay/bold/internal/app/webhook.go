@@ -46,12 +46,12 @@ type cloudEventsEnvelope struct {
 	} `json:"data"`
 }
 
-func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte) error {
+func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte, isTest bool) error {
 	if len(body) == 0 {
 		return fmt.Errorf("empty body")
 	}
 
-	cfg, err := uc.repo.GetBoldConfig(ctx)
+	cfg, err := uc.repo.GetBoldConfigForMode(ctx, isTest)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("bold webhook: cannot load config")
 		return err
@@ -90,6 +90,7 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 		Currency:          envelope.Data.Currency,
 		PaymentMethod:     envelope.Data.PaymentMethod,
 		PayerEmail:        envelope.Data.PayerEmail,
+		IsTest:            isTest,
 		RawPayload:        body,
 	}
 

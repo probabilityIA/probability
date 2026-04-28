@@ -17,6 +17,7 @@ type BoldWebhookMessage struct {
 	Currency          string     `json:"currency"`
 	PaymentMethod     string     `json:"payment_method"`
 	PayerEmail        string     `json:"payer_email,omitempty"`
+	IsTest            bool       `json:"is_test"`
 	RawPayload        []byte     `json:"raw_payload"`
 }
 
@@ -25,5 +26,5 @@ type IWebhookPublisher interface {
 }
 
 type IWebhookUseCase interface {
-	HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte) error
+	HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte, isTest bool) error
 }

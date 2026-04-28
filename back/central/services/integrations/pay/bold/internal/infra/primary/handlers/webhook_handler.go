@@ -26,10 +26,17 @@ func NewWebhookHandlers(useCase ports.IWebhookUseCase, logger log.ILogger) *Webh
 }
 
 func (h *WebhookHandlers) RegisterRoutes(router *gin.RouterGroup) {
-	router.POST("/webhooks/bold", h.HandleWebhook)
+	router.POST("/webhooks/bold", h.handle(false))
+	router.POST("/webhooks/bold/test", h.handle(true))
 }
 
-func (h *WebhookHandlers) HandleWebhook(c *gin.Context) {
+func (h *WebhookHandlers) handle(isTest bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		h.HandleWebhook(c, isTest)
+	}
+}
+
+func (h *WebhookHandlers) HandleWebhook(c *gin.Context, isTest bool) {
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		h.log.Error(c.Request.Context()).Err(err).Msg("bold webhook read body failed")
@@ -39,7 +46,7 @@ func (h *WebhookHandlers) HandleWebhook(c *gin.Context) {
 
 	signature := c.GetHeader(boldSignatureHeader)
 
-	if err := h.useCase.HandleIncomingWebhook(c.Request.Context(), signature, body); err != nil {
+	if err := h.useCase.HandleIncomingWebhook(c.Request.Context(), signature, body, isTest); err != nil {
 		switch {
 		case stderrors.Is(err, boldErrors.ErrInvalidSignature):
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature", "code": "BOLD_UNAUTHORIZED"})

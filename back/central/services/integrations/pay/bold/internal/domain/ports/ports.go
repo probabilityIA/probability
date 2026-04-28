@@ -27,6 +27,7 @@ type IBoldClient interface {
 // IIntegrationRepository obtiene credenciales de Bold desde integration_types
 type IIntegrationRepository interface {
 	GetBoldConfig(ctx context.Context) (*BoldConfig, error)
+	GetBoldConfigForMode(ctx context.Context, testMode bool) (*BoldConfig, error)
 }
 
 // IResponsePublisher publica respuestas al módulo de pagos

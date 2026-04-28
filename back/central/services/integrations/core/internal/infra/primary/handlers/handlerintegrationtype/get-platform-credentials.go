@@ -3,12 +3,31 @@ package handlerintegrationtype
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype/response"
 )
+
+func (h *IntegrationTypeHandler) buildWebhookURLs(code string) map[string]string {
+	base := strings.TrimRight(h.env.Get("WEBHOOK_BASE_URL"), "/")
+	if base == "" {
+		base = strings.TrimRight(h.env.Get("URL_BASE_SWAGGER"), "/")
+	}
+	if base == "" {
+		return nil
+	}
+	switch code {
+	case "bold_pay":
+		return map[string]string{
+			"production": base + "/api/v1/webhooks/bold",
+			"sandbox":    base + "/api/v1/webhooks/bold/test",
+		}
+	}
+	return nil
+}
 
 func (h *IntegrationTypeHandler) GetPlatformCredentialsHandler(c *gin.Context) {
 	idStr := c.Param("id")
@@ -35,11 +54,17 @@ func (h *IntegrationTypeHandler) GetPlatformCredentialsHandler(c *gin.Context) {
 	intType, _ := h.usecase.GetIntegrationTypeByID(c.Request.Context(), uint(id))
 	h.recordAudit(c, intType, uint(id))
 
-	c.JSON(http.StatusOK, gin.H{
+	resp := gin.H{
 		"success": true,
 		"message": "Credenciales de plataforma obtenidas exitosamente",
 		"data":    creds,
-	})
+	}
+	if intType != nil {
+		if urls := h.buildWebhookURLs(intType.Code); urls != nil {
+			resp["webhook_urls"] = urls
+		}
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *IntegrationTypeHandler) GetPlatformCredentialsByCodeHandler(c *gin.Context) {
@@ -65,7 +90,7 @@ func (h *IntegrationTypeHandler) GetPlatformCredentialsByCodeHandler(c *gin.Cont
 
 	h.recordAudit(c, intType, intType.ID)
 
-	c.JSON(http.StatusOK, gin.H{
+	resp := gin.H{
 		"success": true,
 		"message": "Credenciales de plataforma obtenidas exitosamente",
 		"data":    creds,
@@ -74,7 +99,11 @@ func (h *IntegrationTypeHandler) GetPlatformCredentialsByCodeHandler(c *gin.Cont
 			"code":                intType.Code,
 			"name":                intType.Name,
 		},
-	})
+	}
+	if urls := h.buildWebhookURLs(intType.Code); urls != nil {
+		resp["webhook_urls"] = urls
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 func (h *IntegrationTypeHandler) recordAudit(c *gin.Context, intType *domain.IntegrationType, fallbackID uint) {
