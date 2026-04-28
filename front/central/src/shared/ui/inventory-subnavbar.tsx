@@ -43,10 +43,9 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const isResourcesLoading = permissionsNotLoaded || (businessIdForConfig > 0 && businessConfigLoading);
 
     const allow = (resource: string) => {
-        if (isResourcesLoading) return false;
-        if (isSuperAdmin && !selectedBusinessId) return true;
-        if (!businessActiveSet.has(resource)) return false;
         if (isSuperAdmin) return true;
+        if (isResourcesLoading) return false;
+        if (!businessActiveSet.has(resource)) return false;
         if (hasPermission(resource, 'Read')) return true;
         if (isInventarioSub(resource) && hasPermission('Inventario', 'Read')) return true;
         return false;
