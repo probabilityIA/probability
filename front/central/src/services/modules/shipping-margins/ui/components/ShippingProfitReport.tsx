@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Spinner, Alert } from '@/shared/ui';
-import { ProfitReportResponse } from '../../domain/types';
-import { shippingProfitReportAction } from '../../infra/actions';
+import { ProfitReportResponse, ProfitReportDetailResponse } from '../../domain/types';
+import { shippingProfitReportAction, shippingProfitReportDetailAction } from '../../infra/actions';
 import { getActionError } from '@/shared/utils/action-result';
 import ShippingProfitDetailModal from './ShippingProfitDetailModal';
 
@@ -21,6 +21,15 @@ const toISO = (d: Date) => {
 };
 
 type PresetKey = 'today' | 'week' | 'month' | '3months' | 'custom';
+type ViewMode = 'grouped' | 'detail';
+
+const fmtDate = (s: string) => {
+    try {
+        return new Date(s).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+        return s;
+    }
+};
 
 function rangeFor(preset: PresetKey): { from: string; to: string } {
     const today = new Date();
@@ -53,6 +62,11 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [detailCarrier, setDetailCarrier] = useState<{ code: string; label: string } | null>(null);
+    const [view, setView] = useState<ViewMode>('grouped');
+    const [detailData, setDetailData] = useState<ProfitReportDetailResponse | null>(null);
+    const [detailPage, setDetailPage] = useState(1);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const detailPageSize = 20;
 
     const applyPreset = (p: PresetKey) => {
         setPreset(p);
@@ -83,7 +97,35 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
         fetchReport();
     }, [fetchReport]);
 
+    const fetchDetail = useCallback(async () => {
+        setDetailLoading(true);
+        setError(null);
+        try {
+            const r = await shippingProfitReportDetailAction({
+                business_id: selectedBusinessId,
+                from,
+                to,
+                page: detailPage,
+                page_size: detailPageSize,
+            });
+            setDetailData(r);
+        } catch (err: any) {
+            setError(getActionError(err, 'Error al cargar el detalle'));
+        } finally {
+            setDetailLoading(false);
+        }
+    }, [selectedBusinessId, from, to, detailPage]);
+
+    useEffect(() => {
+        if (view === 'detail') fetchDetail();
+    }, [view, fetchDetail]);
+
+    useEffect(() => {
+        setDetailPage(1);
+    }, [from, to, selectedBusinessId]);
+
     const totalRow = data?.totals;
+    const detailTotalPages = detailData?.total_pages ?? 0;
 
     return (
         <div className="space-y-4">
@@ -148,6 +190,22 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                 </div>
             )}
 
+            <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700">
+                <button
+                    onClick={() => setView('grouped')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${view === 'grouped' ? 'border-purple-600 text-purple-700 dark:text-purple-300' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                >
+                    Agrupado por transportadora
+                </button>
+                <button
+                    onClick={() => setView('detail')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${view === 'detail' ? 'border-purple-600 text-purple-700 dark:text-purple-300' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                >
+                    Detalle general
+                </button>
+            </div>
+
+            {view === 'grouped' && (
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
                 <table className="w-full text-sm">
                     <thead className="bg-gray-100 dark:bg-gray-700">
@@ -197,6 +255,67 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                     )}
                 </table>
             </div>
+            )}
+
+            {view === 'detail' && (
+                <div className="space-y-3">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-gray-100 dark:bg-gray-700">
+                                <tr>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Fecha</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Orden</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guia</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Transportadora</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
+                                    <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Cobrado</th>
+                                    <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Costo carrier</th>
+                                    <th className="text-right px-4 py-3 font-semibold text-emerald-700 dark:text-emerald-300">Ganancia</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {detailLoading ? (
+                                    <tr><td colSpan={8} className="text-center py-10"><Spinner size="lg" /></td></tr>
+                                ) : detailData?.data && detailData.data.length > 0 ? (
+                                    detailData.data.map((r) => (
+                                        <tr key={r.shipment_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-200 whitespace-nowrap">{fmtDate(r.created_at)}</td>
+                                            <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{r.order_number || '-'}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-200 font-mono text-xs">{r.tracking_number || '-'}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.carrier}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.status}</td>
+                                            <td className="px-4 py-3 text-right text-blue-700 dark:text-blue-300">{fmt(r.customer_charge)}</td>
+                                            <td className="px-4 py-3 text-right text-orange-700 dark:text-orange-300">{fmt(r.carrier_cost)}</td>
+                                            <td className="px-4 py-3 text-right font-semibold text-emerald-700 dark:text-emerald-300">{fmt(r.profit)}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr><td colSpan={8} className="text-center py-10 text-gray-400">Sin guias en el rango</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    {detailData && detailTotalPages > 1 && (
+                        <div className="flex items-center justify-between text-sm">
+                            <div className="text-gray-600 dark:text-gray-300">
+                                Pagina <span className="font-semibold">{detailData.page}</span> de <span className="font-semibold">{detailTotalPages}</span> &middot; {detailData.total} guias
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setDetailPage((p) => Math.max(1, p - 1))}
+                                    disabled={detailPage <= 1 || detailLoading}
+                                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 text-gray-700 dark:text-gray-200"
+                                >Anterior</button>
+                                <button
+                                    onClick={() => setDetailPage((p) => Math.min(detailTotalPages, p + 1))}
+                                    disabled={detailPage >= detailTotalPages || detailLoading}
+                                    className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 text-gray-700 dark:text-gray-200"
+                                >Siguiente</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {detailCarrier && (
                 <ShippingProfitDetailModal

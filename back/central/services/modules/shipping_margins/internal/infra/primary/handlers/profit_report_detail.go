@@ -20,10 +20,6 @@ func (h *Handlers) ProfitReportDetail(c *gin.Context) {
 	}
 
 	carrier := c.Query("carrier")
-	if carrier == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "carrier is required"})
-		return
-	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))

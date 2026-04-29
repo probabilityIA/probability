@@ -57,7 +57,7 @@ export interface ProfitReportDetailParams {
     business_id?: number;
     from?: string;
     to?: string;
-    carrier: string;
+    carrier?: string;
     page?: number;
     page_size?: number;
 }
