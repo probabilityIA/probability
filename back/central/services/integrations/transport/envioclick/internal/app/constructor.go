@@ -8,13 +8,14 @@ import (
 )
 
 // IUseCase defines the operations available for the EnvioClick transport provider.
+// Callers MAY pass a non-nil *[]domain.SyncMeta to collect HTTP call metadata for persistence.
 type IUseCase interface {
-	Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.QuoteResponse, error)
-	Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error)
-	Track(ctx context.Context, baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error)
-	TrackByOrdersBatch(ctx context.Context, baseURL, apiKey string, orders []int64) (*domain.TrackingResponse, error)
-	Cancel(ctx context.Context, baseURL, apiKey string, trackingNumber string, idOrder int64) (*domain.CancelResponse, error)
-	CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error)
+	Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.QuoteResponse, error)
+	Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.GenerateResponse, error)
+	Track(ctx context.Context, baseURL, apiKey string, trackingNumber string, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error)
+	TrackByOrdersBatch(ctx context.Context, baseURL, apiKey string, orders []int64, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error)
+	Cancel(ctx context.Context, baseURL, apiKey string, trackingNumber string, idOrder int64, metas *[]domain.SyncMeta) (*domain.CancelResponse, error)
+	CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest, metas *[]domain.SyncMeta) (*domain.CancelBatchResponse, error)
 }
 
 // useCase handles EnvioClick transport operations

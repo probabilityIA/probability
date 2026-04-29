@@ -72,7 +72,7 @@ func (uc *syncUseCase) processIndividualTracks(ctx context.Context, req domain.S
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			resp, err := uc.client.Track(req.BaseURL, req.APIKey, it.TrackingNumber)
+			resp, err := uc.client.Track(req.BaseURL, req.APIKey, it.TrackingNumber, nil)
 			if err != nil {
 				uc.recordFailure(ctx, req, it, err.Error(), result)
 				return

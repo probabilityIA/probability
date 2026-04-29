@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
 // Track obtiene el estado de tracking de un envío en EnvioClick usando trackingCode
 // Endpoint: POST /track
-func (c *Client) Track(baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
+func (c *Client) Track(baseURL, apiKey string, trackingNumber string, meta *domain.SyncMeta) (*domain.TrackingResponse, error) {
 	ctx := context.Background()
 
 	if baseURL == "" {
@@ -24,14 +25,16 @@ func (c *Client) Track(baseURL, apiKey string, trackingNumber string) (*domain.T
 	payload := map[string]string{"trackingCode": trackingNumber}
 
 	var apiResp domain.TrackingResponse
-
+	url := strings.TrimRight(baseURL, "/") + "/track"
+	started := time.Now()
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(payload).
 		SetResult(&apiResp).
 		SetDebug(true).
-		Post(strings.TrimRight(baseURL, "/") + "/track")
+		Post(url)
+	captureMeta(meta, "POST", url, payload, started, resp, err)
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick track request failed")
@@ -56,7 +59,7 @@ func (c *Client) Track(baseURL, apiKey string, trackingNumber string) (*domain.T
 
 // TrackByOrdersBatch obtiene el estado de múltiples envíos usando sus idOrder
 // Endpoint: POST /track-by-orders
-func (c *Client) TrackByOrdersBatch(baseURL, apiKey string, orders []int64) (*domain.TrackingResponse, error) {
+func (c *Client) TrackByOrdersBatch(baseURL, apiKey string, orders []int64, meta *domain.SyncMeta) (*domain.TrackingResponse, error) {
 	ctx := context.Background()
 
 	if baseURL == "" {
@@ -70,13 +73,15 @@ func (c *Client) TrackByOrdersBatch(baseURL, apiKey string, orders []int64) (*do
 	payload := map[string]interface{}{"orders": orders}
 
 	var apiResp domain.TrackingResponse
-
+	url := strings.TrimRight(baseURL, "/") + "/track-by-orders"
+	started := time.Now()
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(payload).
 		SetResult(&apiResp).
-		Post(strings.TrimRight(baseURL, "/") + "/track-by-orders")
+		Post(url)
+	captureMeta(meta, "POST", url, payload, started, resp, err)
 
 	if err != nil {
 		return nil, fmt.Errorf("error de red: %w", err)

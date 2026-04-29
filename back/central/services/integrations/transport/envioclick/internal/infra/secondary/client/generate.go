@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
 // Generate crea un envío (genera guía) en EnvioClick
 // Endpoint: POST /shipment
-func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error) {
+func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest, meta *domain.SyncMeta) (*domain.GenerateResponse, error) {
 	ctx := context.Background()
 
 	if baseURL == "" {
@@ -28,14 +29,15 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		Int64("rate_id", req.IDRate).
 		Msg("🚀 Generating EnvioClick shipment")
 
-	// No usar SetResult para evitar error de unmarshal cuando EnvioClick
-	// devuelve el campo "tracker" como número en lugar de string
+	url := strings.TrimRight(baseURL, "/") + "/shipment"
+	started := time.Now()
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
 		SetDebug(true).
-		Post(strings.TrimRight(baseURL, "/") + "/shipment")
+		Post(url)
+	captureMeta(meta, "POST", url, req, started, resp, err)
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick generate request failed - network error")

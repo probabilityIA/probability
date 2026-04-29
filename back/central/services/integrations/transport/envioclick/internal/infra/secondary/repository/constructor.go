@@ -12,3 +12,7 @@ type Repository struct {
 func New(database db.IDatabase) domain.IWebhookLogRepository {
 	return &Repository{db: database}
 }
+
+func NewSyncLog(database db.IDatabase) domain.ISyncLogRepository {
+	return &Repository{db: database}
+}

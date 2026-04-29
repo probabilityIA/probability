@@ -49,6 +49,7 @@ type TransportRequestConsumer struct {
 	syncUseCase        app.ISyncUseCase
 	responsePublisher  *queue.ResponsePublisher
 	credentialResolver ICredentialResolver
+	syncLogRepo        domain.ISyncLogRepository
 	log                log.ILogger
 }
 
@@ -59,6 +60,7 @@ func NewTransportRequestConsumer(
 	syncUseCase app.ISyncUseCase,
 	responsePublisher *queue.ResponsePublisher,
 	credentialResolver ICredentialResolver,
+	syncLogRepo domain.ISyncLogRepository,
 	logger log.ILogger,
 ) *TransportRequestConsumer {
 	return &TransportRequestConsumer{
@@ -67,7 +69,63 @@ func NewTransportRequestConsumer(
 		syncUseCase:        syncUseCase,
 		responsePublisher:  responsePublisher,
 		credentialResolver: credentialResolver,
+		syncLogRepo:        syncLogRepo,
 		log:                logger.WithModule("transport.envioclick.consumer"),
+	}
+}
+
+// persistSyncLogs persists each captured HTTP call meta as a shipment_sync_logs row.
+// Errors are logged but do not break the consumer flow (logging is best-effort).
+func (c *TransportRequestConsumer) persistSyncLogs(ctx context.Context, request *TransportRequestMessage, operation string, metas []domain.SyncMeta, opErr error) {
+	if c.syncLogRepo == nil || len(metas) == 0 {
+		return
+	}
+	for i := range metas {
+		m := metas[i]
+		status := "success"
+		if m.ResponseStatus >= 400 || m.ResponseStatus == 0 {
+			status = "failed"
+		}
+		var errMsg *string
+		if opErr != nil && i == len(metas)-1 {
+			s := opErr.Error()
+			errMsg = &s
+			status = "failed"
+		}
+		var completed *time.Time
+		if !m.CompletedAt.IsZero() {
+			t := m.CompletedAt
+			completed = &t
+		}
+		var duration *int
+		if m.DurationMs > 0 {
+			d := m.DurationMs
+			duration = &d
+		}
+		log := &domain.SyncLog{
+			ShipmentID:     request.ShipmentID,
+			OperationType:  operation,
+			Provider:       "envioclick",
+			Status:         status,
+			RequestURL:     m.URL,
+			RequestMethod:  m.Method,
+			RequestPayload: m.RequestBody,
+			ResponseStatus: m.ResponseStatus,
+			ResponseBody:   m.ResponseBody,
+			ErrorMessage:   errMsg,
+			CorrelationID:  request.CorrelationID,
+			TriggeredBy:    "auto",
+			StartedAt:      m.StartedAt,
+			CompletedAt:    completed,
+			Duration:       duration,
+		}
+		if err := c.syncLogRepo.SaveSyncLog(ctx, log); err != nil {
+			c.log.Warn(ctx).
+				Err(err).
+				Str("operation", operation).
+				Str("correlation_id", request.CorrelationID).
+				Msg("Failed to persist shipment sync log")
+		}
 	}
 }
 
@@ -235,7 +293,9 @@ func (c *TransportRequestConsumer) processQuote(ctx context.Context, request *Tr
 		return c.errorResponse(request, "Failed to unmarshal payload as QuoteRequest: "+err.Error())
 	}
 
-	resp, err := c.useCase.Quote(ctx, baseURL, apiKey, req)
+	var metas []domain.SyncMeta
+	resp, err := c.useCase.Quote(ctx, baseURL, apiKey, req, &metas)
+	c.persistSyncLogs(ctx, request, "quote", metas, err)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}
@@ -265,7 +325,9 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 		return c.errorResponse(request, "Failed to unmarshal payload as QuoteRequest: "+err.Error())
 	}
 
-	resp, err := c.useCase.Generate(ctx, baseURL, apiKey, req)
+	var metas []domain.SyncMeta
+	resp, err := c.useCase.Generate(ctx, baseURL, apiKey, req, &metas)
+	c.persistSyncLogs(ctx, request, "generate", metas, err)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}
@@ -296,7 +358,9 @@ func (c *TransportRequestConsumer) processTrack(ctx context.Context, request *Tr
 		return c.errorResponse(request, "tracking_number is required in payload")
 	}
 
-	resp, err := c.useCase.Track(ctx, baseURL, apiKey, trackingNumber)
+	var metas []domain.SyncMeta
+	resp, err := c.useCase.Track(ctx, baseURL, apiKey, trackingNumber, &metas)
+	c.persistSyncLogs(ctx, request, "track", metas, err)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}
@@ -337,7 +401,9 @@ func (c *TransportRequestConsumer) processCancel(ctx context.Context, request *T
 		return c.errorResponse(request, "tracking_number (o id_shipment) es requerido")
 	}
 
-	resp, err := c.useCase.Cancel(ctx, baseURL, apiKey, trackingNumber, idOrder)
+	var metas []domain.SyncMeta
+	resp, err := c.useCase.Cancel(ctx, baseURL, apiKey, trackingNumber, idOrder, &metas)
+	c.persistSyncLogs(ctx, request, "cancel", metas, err)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}
@@ -367,7 +433,9 @@ func (c *TransportRequestConsumer) processCancelBatch(ctx context.Context, reque
 		return c.errorResponse(request, "Failed to unmarshal payload as CancelBatchRequest: "+err.Error())
 	}
 
-	resp, err := c.useCase.CancelBatch(ctx, baseURL, apiKey, req)
+	var metas []domain.SyncMeta
+	resp, err := c.useCase.CancelBatch(ctx, baseURL, apiKey, req, &metas)
+	c.persistSyncLogs(ctx, request, "cancel_batch", metas, err)
 	if err != nil {
 		return c.errorResponse(request, err.Error())
 	}

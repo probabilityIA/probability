@@ -36,6 +36,7 @@ func New(
 	webhookRepo := repository.New(database)
 	webhookPublisher := queue.NewWebhookResponsePublisher(responsePublisher)
 	syncUseCase := app.NewSyncUseCase(httpClient, webhookRepo, webhookPublisher, logger)
+	syncLogRepo := repository.NewSyncLog(database)
 
 	if rabbit != nil {
 		requestConsumer := consumer.NewTransportRequestConsumer(
@@ -44,6 +45,7 @@ func New(
 			syncUseCase,
 			responsePublisher,
 			credentialResolver,
+			syncLogRepo,
 			logger,
 		)
 		logger.Info(context.Background()).Msg("✅ EnvioClick transport request consumer initialized")

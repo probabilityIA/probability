@@ -7,12 +7,16 @@ import (
 )
 
 type IEnvioClickClient interface {
-	Quote(baseURL, apiKey string, req QuoteRequest) (*QuoteResponse, error)
-	Generate(baseURL, apiKey string, req QuoteRequest) (*GenerateResponse, error)
-	Track(baseURL, apiKey string, trackingNumber string) (*TrackingResponse, error)
-	TrackByOrdersBatch(baseURL, apiKey string, orders []int64) (*TrackingResponse, error)
-	Cancel(baseURL, apiKey string, idShipment string) (*CancelResponse, error)
-	CancelBatch(baseURL, apiKey string, req CancelBatchRequest) (*CancelBatchResponse, error)
+	Quote(baseURL, apiKey string, req QuoteRequest, meta *SyncMeta) (*QuoteResponse, error)
+	Generate(baseURL, apiKey string, req QuoteRequest, meta *SyncMeta) (*GenerateResponse, error)
+	Track(baseURL, apiKey string, trackingNumber string, meta *SyncMeta) (*TrackingResponse, error)
+	TrackByOrdersBatch(baseURL, apiKey string, orders []int64, meta *SyncMeta) (*TrackingResponse, error)
+	Cancel(baseURL, apiKey string, idShipment string, meta *SyncMeta) (*CancelResponse, error)
+	CancelBatch(baseURL, apiKey string, req CancelBatchRequest, meta *SyncMeta) (*CancelBatchResponse, error)
+}
+
+type ISyncLogRepository interface {
+	SaveSyncLog(ctx context.Context, log *SyncLog) error
 }
 
 type IWebhookLogRepository interface {

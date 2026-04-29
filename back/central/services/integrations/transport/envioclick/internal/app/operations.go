@@ -8,28 +8,45 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
-func (uc *useCase) Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.QuoteResponse, error) {
+func appendMeta(metas *[]domain.SyncMeta, m domain.SyncMeta) {
+	if metas != nil {
+		*metas = append(*metas, m)
+	}
+}
+
+func (uc *useCase) Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.QuoteResponse, error) {
 	uc.log.Info(ctx).Msg("Quoting shipment")
-	return uc.client.Quote(baseURL, apiKey, req)
+	var meta domain.SyncMeta
+	resp, err := uc.client.Quote(baseURL, apiKey, req, &meta)
+	appendMeta(metas, meta)
+	return resp, err
 }
 
-func (uc *useCase) Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error) {
+func (uc *useCase) Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.GenerateResponse, error) {
 	uc.log.Info(ctx).Msg("Generating guide")
-	return uc.client.Generate(baseURL, apiKey, req)
+	var meta domain.SyncMeta
+	resp, err := uc.client.Generate(baseURL, apiKey, req, &meta)
+	appendMeta(metas, meta)
+	return resp, err
 }
 
-func (uc *useCase) Track(ctx context.Context, baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
+func (uc *useCase) Track(ctx context.Context, baseURL, apiKey string, trackingNumber string, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error) {
 	uc.log.Info(ctx).Str("tracking_number", trackingNumber).Msg("Tracking shipment")
-	return uc.client.Track(baseURL, apiKey, trackingNumber)
+	var meta domain.SyncMeta
+	resp, err := uc.client.Track(baseURL, apiKey, trackingNumber, &meta)
+	appendMeta(metas, meta)
+	return resp, err
 }
 
-func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, trackingNumber string, idOrder int64) (*domain.CancelResponse, error) {
+func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, trackingNumber string, idOrder int64, metas *[]domain.SyncMeta) (*domain.CancelResponse, error) {
 	uc.log.Info(ctx).
 		Str("tracking_number", trackingNumber).
 		Int64("id_order", idOrder).
 		Msg("Verifying and canceling shipment")
 
-	trackResp, err := uc.client.Track(baseURL, apiKey, trackingNumber)
+	var trackMeta domain.SyncMeta
+	trackResp, err := uc.client.Track(baseURL, apiKey, trackingNumber, &trackMeta)
+	appendMeta(metas, trackMeta)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Str("tracking_number", trackingNumber).Msg("Verification failed: tracking failed")
 		return nil, fmt.Errorf("no se pudo verificar el estado del envio: %w", err)
@@ -56,9 +73,11 @@ func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, trackingN
 
 	if idOrder != 0 {
 		uc.log.Info(ctx).Int64("id_order", idOrder).Msg("Proceeding to cancel via Batch API v2")
+		var batchMeta domain.SyncMeta
 		batchResp, err := uc.client.CancelBatch(baseURL, apiKey, domain.CancelBatchRequest{
 			IDOrders: []int64{idOrder},
-		})
+		}, &batchMeta)
+		appendMeta(metas, batchMeta)
 		if err != nil {
 			return nil, err
 		}
@@ -77,16 +96,24 @@ func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, trackingN
 	}
 
 	uc.log.Warn(ctx).Str("tracking_number", trackingNumber).Msg("No idOrder provided, falling back to singular DELETE")
-	return uc.client.Cancel(baseURL, apiKey, trackingNumber)
+	var cancelMeta domain.SyncMeta
+	resp, err := uc.client.Cancel(baseURL, apiKey, trackingNumber, &cancelMeta)
+	appendMeta(metas, cancelMeta)
+	return resp, err
 }
 
-func (uc *useCase) CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+func (uc *useCase) CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest, metas *[]domain.SyncMeta) (*domain.CancelBatchResponse, error) {
 	uc.log.Info(ctx).Int("order_count", len(req.IDOrders)).Msg("Canceling shipments in batch")
-	return uc.client.CancelBatch(baseURL, apiKey, req)
+	var meta domain.SyncMeta
+	resp, err := uc.client.CancelBatch(baseURL, apiKey, req, &meta)
+	appendMeta(metas, meta)
+	return resp, err
 }
 
-func (uc *useCase) TrackByOrdersBatch(ctx context.Context, baseURL, apiKey string, orders []int64) (*domain.TrackingResponse, error) {
+func (uc *useCase) TrackByOrdersBatch(ctx context.Context, baseURL, apiKey string, orders []int64, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error) {
 	uc.log.Info(ctx).Int("order_count", len(orders)).Msg("Tracking shipments in batch")
-	return uc.client.TrackByOrdersBatch(baseURL, apiKey, orders)
+	var meta domain.SyncMeta
+	resp, err := uc.client.TrackByOrdersBatch(baseURL, apiKey, orders, &meta)
+	appendMeta(metas, meta)
+	return resp, err
 }
-

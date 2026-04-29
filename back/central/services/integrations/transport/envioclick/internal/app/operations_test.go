@@ -39,7 +39,7 @@ func TestCancel_Success_WithIdOrder(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error, se obtuvo: %v", err)
@@ -76,7 +76,7 @@ func TestCancel_Success_CaseInsensitive(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 99)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 99, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error con status en minusculas, se obtuvo: %v", err)
@@ -115,7 +115,7 @@ func TestCancel_Success_FallbackSingular(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 0)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 0, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error con idOrder=0, se obtuvo: %v", err)
@@ -143,7 +143,7 @@ func TestCancel_Error_NotCancellable(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42, nil)
 
 	if err == nil {
 		t.Fatal("se esperaba error para status no cancelable, se obtuvo nil")
@@ -168,7 +168,7 @@ func TestCancel_Error_TrackFails(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 42, nil)
 
 	if err == nil {
 		t.Fatal("se esperaba error cuando Track falla, se obtuvo nil")
@@ -206,7 +206,7 @@ func TestCancel_Error_BatchReturnsNotValid(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, orderID)
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, orderID, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error (la logica retorna CancelResponse con status error, no un error Go), se obtuvo: %v", err)
@@ -249,7 +249,7 @@ func TestQuote_Success(t *testing.T) {
 		},
 	}
 
-	result, err := uc.Quote(ctx, testBaseURL, testAPIKey, req)
+	result, err := uc.Quote(ctx, testBaseURL, testAPIKey, req, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error, se obtuvo: %v", err)
@@ -291,7 +291,7 @@ func TestGenerate_Success(t *testing.T) {
 		Description: "Pedido 1234",
 	}
 
-	result, err := uc.Generate(ctx, testBaseURL, testAPIKey, req)
+	result, err := uc.Generate(ctx, testBaseURL, testAPIKey, req, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error, se obtuvo: %v", err)
@@ -331,7 +331,7 @@ func TestTrack_Success(t *testing.T) {
 
 	uc := New(client, &mocks.LoggerMock{})
 
-	result, err := uc.Track(ctx, testBaseURL, testAPIKey, testTrackingNumber)
+	result, err := uc.Track(ctx, testBaseURL, testAPIKey, testTrackingNumber, nil)
 
 	if err != nil {
 		t.Fatalf("se esperaba nil error, se obtuvo: %v", err)

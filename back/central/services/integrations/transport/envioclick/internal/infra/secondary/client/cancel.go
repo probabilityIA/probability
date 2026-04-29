@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
 // Cancel cancela un envío en EnvioClick
 // Endpoint: DELETE /shipment/{idShipment}
-func (c *Client) Cancel(baseURL, apiKey string, idShipment string) (*domain.CancelResponse, error) {
+func (c *Client) Cancel(baseURL, apiKey string, idShipment string, meta *domain.SyncMeta) (*domain.CancelResponse, error) {
 	ctx := context.Background()
 
 	if baseURL == "" {
@@ -22,13 +23,15 @@ func (c *Client) Cancel(baseURL, apiKey string, idShipment string) (*domain.Canc
 		Msg("🗑️ Cancelling EnvioClick shipment")
 
 	var apiResp domain.CancelResponse
-
+	url := strings.TrimRight(baseURL, "/") + fmt.Sprintf("/shipment/%s", idShipment)
+	started := time.Now()
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetResult(&apiResp).
 		SetDebug(true).
-		Delete(strings.TrimRight(baseURL, "/") + fmt.Sprintf("/shipment/%s", idShipment))
+		Delete(url)
+	captureMeta(meta, "DELETE", url, nil, started, resp, err)
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel request failed - network error")

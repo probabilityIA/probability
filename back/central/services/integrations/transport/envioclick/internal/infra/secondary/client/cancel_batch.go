@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick/internal/domain"
 )
 
 // CancelBatch cancela envíos en lote en EnvioClick
 // Endpoint: POST /v2cancellation/batch/order
-func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchRequest, meta *domain.SyncMeta) (*domain.CancelBatchResponse, error) {
 	ctx := context.Background()
 
 	if baseURL == "" {
@@ -22,14 +23,16 @@ func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchReque
 		Msg("🗑️ Cancelling EnvioClick shipments in batch")
 
 	var apiResp domain.CancelBatchResponse
-
+	url := strings.TrimRight(baseURL, "/") + "/cancellation/batch/order"
+	started := time.Now()
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
 		SetResult(&apiResp).
 		SetDebug(true).
-		Post(strings.TrimRight(baseURL, "/") + "/cancellation/batch/order")
+		Post(url)
+	captureMeta(meta, "POST", url, req, started, resp, err)
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel batch request failed")
