@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
@@ -31,7 +32,16 @@ func (uc *UseCaseCreateOrder) CreateManualOrder(ctx context.Context, req *dtos.C
 		return nil, fmt.Errorf("business_id is required")
 	}
 
-	// 1. Aplicar defaults para órdenes manuales
+	if strings.TrimSpace(req.ShippingStreet) == "" {
+		return nil, fmt.Errorf("shipping_street is required")
+	}
+	if strings.TrimSpace(req.ShippingCity) == "" {
+		return nil, fmt.Errorf("shipping_city is required")
+	}
+	if strings.TrimSpace(req.ShippingState) == "" {
+		return nil, fmt.Errorf("shipping_state is required")
+	}
+
 	if err := uc.applyManualDefaults(ctx, req); err != nil {
 		return nil, fmt.Errorf("error applying manual defaults: %w", err)
 	}

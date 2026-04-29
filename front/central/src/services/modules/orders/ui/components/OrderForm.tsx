@@ -315,9 +315,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         setError(null);
 
         try {
-            // Validation
             if ((!formData.customer_name && !formData.customer_first_name) || !formData.total_amount) {
                 throw new Error('Por favor completa los campos requeridos');
+            }
+            if (!formData.shipping_street?.trim() || !formData.shipping_city?.trim() || !formData.shipping_state?.trim()) {
+                throw new Error('La direccion de envio (calle, ciudad y departamento) es obligatoria');
             }
 
             const parts = [formData.shipping_street || ''];
