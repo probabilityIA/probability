@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { ShippingMarginApiRepository } from '../repository/api-repository';
 import { ShippingMarginUseCases } from '../../app/use-cases';
-import { GetShippingMarginsParams, CreateShippingMarginDTO, UpdateShippingMarginDTO, ProfitReportParams } from '../../domain/types';
+import { GetShippingMarginsParams, CreateShippingMarginDTO, UpdateShippingMarginDTO, ProfitReportParams, ProfitReportDetailParams } from '../../domain/types';
 
 async function getUseCases() {
     const cookieStore = await cookies();
@@ -47,6 +47,14 @@ export const updateShippingMarginAction = async (id: number, data: UpdateShippin
 export const shippingProfitReportAction = async (params: ProfitReportParams) => {
     try {
         return await (await getUseCases()).profitReport(params);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const shippingProfitReportDetailAction = async (params: ProfitReportDetailParams) => {
+    try {
+        return await (await getUseCases()).profitReportDetail(params);
     } catch (error: any) {
         throw new Error(error.message);
     }

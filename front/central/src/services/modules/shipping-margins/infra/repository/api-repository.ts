@@ -8,6 +8,8 @@ import {
     UpdateShippingMarginDTO,
     ProfitReportParams,
     ProfitReportResponse,
+    ProfitReportDetailParams,
+    ProfitReportDetailResponse,
 } from '../../domain/types';
 
 export class ShippingMarginApiRepository implements IShippingMarginRepository {
@@ -79,5 +81,14 @@ export class ShippingMarginApiRepository implements IShippingMarginRepository {
         });
         const q = sp.toString();
         return this.fetch<ProfitReportResponse>(`/shipping-margins/profit-report${q ? `?${q}` : ''}`);
+    }
+
+    async profitReportDetail(params: ProfitReportDetailParams): Promise<ProfitReportDetailResponse> {
+        const sp = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') sp.append(k, String(v));
+        });
+        const q = sp.toString();
+        return this.fetch<ProfitReportDetailResponse>(`/shipping-margins/profit-report/detail${q ? `?${q}` : ''}`);
     }
 }

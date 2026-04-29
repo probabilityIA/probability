@@ -28,6 +28,7 @@ COALESCE(SUM(s.total_cost - s.carrier_cost), 0) AS profit_total`).
 		Where("s.deleted_at IS NULL").
 		Where("s.tracking_number IS NOT NULL AND s.tracking_number <> ''").
 		Where("s.total_cost IS NOT NULL").
+		Where("s.status <> ?", "cancelled").
 		Group("COALESCE(NULLIF(s.carrier, ''), 'Sin transportadora')")
 
 	if params.BusinessID > 0 {
