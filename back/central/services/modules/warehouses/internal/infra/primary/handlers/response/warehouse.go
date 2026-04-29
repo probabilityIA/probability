@@ -24,6 +24,11 @@ type WarehouseResponse struct {
 	IsDefault     bool      `json:"is_default"`
 	IsFulfillment bool      `json:"is_fulfillment"`
 	StructureType string    `json:"structure_type"`
+	ZoneCount     int       `json:"zone_count"`
+	AisleCount    int       `json:"aisle_count"`
+	RackCount     int       `json:"rack_count"`
+	LevelCount    int       `json:"level_count"`
+	PositionCount int       `json:"position_count"`
 	Company       string    `json:"company"`
 	FirstName     string    `json:"first_name"`
 	LastName      string    `json:"last_name"`
@@ -86,6 +91,11 @@ func FromEntity(w *entities.Warehouse) WarehouseResponse {
 		IsDefault:     w.IsDefault,
 		IsFulfillment: w.IsFulfillment,
 		StructureType: w.StructureType,
+		ZoneCount:     w.ZoneCount,
+		AisleCount:    w.AisleCount,
+		RackCount:     w.RackCount,
+		LevelCount:    w.LevelCount,
+		PositionCount: w.PositionCount,
 		Company:       w.Company,
 		FirstName:     w.FirstName,
 		LastName:      w.LastName,

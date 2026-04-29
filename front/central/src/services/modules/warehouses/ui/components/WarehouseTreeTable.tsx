@@ -203,18 +203,16 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                                 <td>
                                                     {isSimple ? (
                                                         <span className="text-gray-400 text-sm">—</span>
-                                                    ) : tree ? (
+                                                    ) : (
                                                         <div className="flex items-center gap-2 text-xs">
-                                                            <StatPill color="text-indigo-600 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40" label="Z" value={stats.z} />
-                                                            <StatPill color="text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40" label={mode === 'zones' ? 'S' : 'P'} value={stats.a} />
+                                                            <StatPill color="text-indigo-600 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40" label="Z" value={tree ? stats.z : (w.zone_count ?? 0)} />
+                                                            <StatPill color="text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40" label={mode === 'zones' ? 'S' : 'P'} value={tree ? stats.a : (w.aisle_count ?? 0)} />
                                                             {mode === 'wms' && <>
-                                                                <StatPill color="text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/40" label="R" value={stats.r} />
-                                                                <StatPill color="text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40" label="N" value={stats.l} />
-                                                                <StatPill color="text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/40" label="POS" value={stats.p} />
+                                                                <StatPill color="text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/40" label="R" value={tree ? stats.r : (w.rack_count ?? 0)} />
+                                                                <StatPill color="text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40" label="N" value={tree ? stats.l : (w.level_count ?? 0)} />
+                                                                <StatPill color="text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/40" label="POS" value={tree ? stats.p : (w.position_count ?? 0)} />
                                                             </>}
                                                         </div>
-                                                    ) : (
-                                                        <button onClick={() => toggleWh(w)} className="text-xs text-gray-400 hover:text-gray-600 italic">click para cargar</button>
                                                     )}
                                                 </td>
                                                 <td style={{ textAlign: 'center' }}>

@@ -63,6 +63,7 @@ type RepositoryMock struct {
 
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
 	HierarchyDepthFn   func(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error)
+	HierarchyCountsFn  func(ctx context.Context, warehouseIDs []uint) (map[uint]ports.HierarchyCounts, error)
 }
 
 func (m *RepositoryMock) HierarchyDepth(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error) {
@@ -70,6 +71,13 @@ func (m *RepositoryMock) HierarchyDepth(ctx context.Context, warehouseID uint) (
 		return m.HierarchyDepthFn(ctx, warehouseID)
 	}
 	return ports.HierarchyDepth{}, nil
+}
+
+func (m *RepositoryMock) HierarchyCounts(ctx context.Context, warehouseIDs []uint) (map[uint]ports.HierarchyCounts, error) {
+	if m.HierarchyCountsFn != nil {
+		return m.HierarchyCountsFn(ctx, warehouseIDs)
+	}
+	return map[uint]ports.HierarchyCounts{}, nil
 }
 
 // --- Implementación de ports.IRepository ---

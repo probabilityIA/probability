@@ -21,6 +21,11 @@ export interface Warehouse {
     is_default: boolean;
     is_fulfillment: boolean;
     structure_type?: WarehouseStructureType;
+    zone_count?: number;
+    aisle_count?: number;
+    rack_count?: number;
+    level_count?: number;
+    position_count?: number;
     company: string;
     first_name: string;
     last_name: string;

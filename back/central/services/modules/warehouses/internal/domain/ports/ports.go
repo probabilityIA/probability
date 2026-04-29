@@ -55,9 +55,18 @@ type IRepository interface {
 	GetWarehouseTree(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
 
 	HierarchyDepth(ctx context.Context, warehouseID uint) (HierarchyDepth, error)
+	HierarchyCounts(ctx context.Context, warehouseIDs []uint) (map[uint]HierarchyCounts, error)
 }
 
 type HierarchyDepth struct {
 	HasZones bool
 	HasRacks bool
+}
+
+type HierarchyCounts struct {
+	Zones     int
+	Aisles    int
+	Racks     int
+	Levels    int
+	Positions int
 }

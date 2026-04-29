@@ -20,6 +20,11 @@ type Warehouse struct {
 	IsDefault     bool
 	IsFulfillment bool
 	StructureType string
+	ZoneCount     int
+	AisleCount    int
+	RackCount     int
+	LevelCount    int
+	PositionCount int
 	Company       string
 	FirstName     string
 	LastName      string
