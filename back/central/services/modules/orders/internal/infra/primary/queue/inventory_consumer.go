@@ -17,16 +17,18 @@ type inventoryFeedbackMessage struct {
 }
 
 type InventoryConsumer struct {
-	queue  rabbitmq.IQueue
-	repo   ports.IRepository
-	logger log.ILogger
+	queue           rabbitmq.IQueue
+	repo            ports.IRepository
+	rabbitPublisher ports.IOrderRabbitPublisher
+	logger          log.ILogger
 }
 
-func NewInventoryConsumer(queue rabbitmq.IQueue, repo ports.IRepository, logger log.ILogger) *InventoryConsumer {
+func NewInventoryConsumer(queue rabbitmq.IQueue, repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher, logger log.ILogger) *InventoryConsumer {
 	return &InventoryConsumer{
-		queue:  queue,
-		repo:   repo,
-		logger: logger.WithModule("orders.inventory.consumer"),
+		queue:           queue,
+		repo:            repo,
+		rabbitPublisher: rabbitPublisher,
+		logger:          logger.WithModule("orders.inventory.consumer"),
 	}
 }
 
@@ -83,7 +85,34 @@ func (c *InventoryConsumer) handleMessage(ctx context.Context, body []byte) {
 		return
 	}
 
+	order, err := c.repo.GetOrderByID(ctx, msg.OrderID)
+	if err != nil {
+		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to get order before status update")
+		return
+	}
+
+	previousStatus := order.Status
+	if previousStatus == targetCode {
+		return
+	}
+
 	if err := c.repo.UpdateOrderStatus(ctx, msg.OrderID, targetCode, statusID); err != nil {
 		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Str("status", targetCode).Msg("Failed to update order status")
+		return
+	}
+
+	if c.rabbitPublisher == nil {
+		return
+	}
+
+	order.Status = targetCode
+	order.StatusID = statusID
+	if err := c.rabbitPublisher.PublishOrderStatusChanged(ctx, order, previousStatus, targetCode); err != nil {
+		c.logger.Error(ctx).
+			Err(err).
+			Str("order_id", msg.OrderID).
+			Str("previous_status", previousStatus).
+			Str("current_status", targetCode).
+			Msg("Failed to publish order.status_changed event after inventory feedback")
 	}
 }

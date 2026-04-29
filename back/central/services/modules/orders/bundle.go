@@ -46,7 +46,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo, integrationEventPub)
 	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
-	startInventoryFeedbackConsumer(rabbitMQ, logger, repo)
+	startInventoryFeedbackConsumer(rabbitMQ, logger, repo, rabbitPublisher)
 
 	return &Bundle{
 		CreateUC:                createUC,
@@ -152,11 +152,11 @@ func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo po
 	}()
 }
 
-func startInventoryFeedbackConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo ports.IRepository) {
+func startInventoryFeedbackConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher) {
 	if rabbitMQ == nil {
 		return
 	}
 
-	consumer := queue.NewInventoryConsumer(rabbitMQ, repo, logger)
+	consumer := queue.NewInventoryConsumer(rabbitMQ, repo, rabbitPublisher, logger)
 	consumer.Start(context.Background())
 }
