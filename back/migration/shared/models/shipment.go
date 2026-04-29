@@ -45,9 +45,11 @@ type Shipment struct {
 	ShippingAddress   *Address `gorm:"foreignKey:ShippingAddressID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
 	// Costos
-	ShippingCost  *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
-	InsuranceCost *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
-	TotalCost     *float64 `gorm:"type:decimal(12,2)"` // Costo total
+	ShippingCost   *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
+	InsuranceCost  *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
+	TotalCost      *float64 `gorm:"type:decimal(12,2)"` // Costo total cobrado al cliente (con margen)
+	CarrierCost    *float64 `gorm:"type:decimal(12,2)"` // Costo real cobrado por la transportadora
+	AppliedMargin  *float64 `gorm:"type:decimal(12,2)"` // Margen aplicado al momento de generar la guia
 
 	// Dimensiones y peso
 	Weight *float64 `gorm:"type:decimal(10,2)"` // Peso en kg

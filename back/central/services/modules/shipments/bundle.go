@@ -23,13 +23,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 1. Init Repositories
 	repo := repository.New(database)
 
-	// 2. Init Use Cases
-	uc := usecases.New(repo)
-
-	// 3. Transport Request Publisher (async via queue)
 	transportPub := queue.NewTransportRequestPublisher(rabbitMQ, logger)
 
-	// 4. Init SSE Publisher (RabbitMQ -> central events dispatcher)
 	var ssePublisher domain.IShipmentSSEPublisher
 	if rabbitMQ != nil {
 		ssePublisher = queue.NewSSEPublisher(rabbitMQ, logger)
@@ -38,6 +33,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 
 	marginReader := cache.NewShippingMarginReader(redisClient, database, logger)
+
+	uc := usecases.New(repo, marginReader)
 
 	// 5. Transport Response Consumer
 	if rabbitMQ != nil {

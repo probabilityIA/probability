@@ -125,6 +125,8 @@ type ShipmentResponse struct {
 	ShippingCost  *float64 `json:"shipping_cost,omitempty"`
 	InsuranceCost *float64 `json:"insurance_cost,omitempty"`
 	TotalCost     *float64 `json:"total_cost,omitempty"`
+	CarrierCost   *float64 `json:"carrier_cost,omitempty"`
+	AppliedMargin *float64 `json:"applied_margin,omitempty"`
 
 	Weight *float64 `json:"weight,omitempty"`
 	Height *float64 `json:"height,omitempty"`

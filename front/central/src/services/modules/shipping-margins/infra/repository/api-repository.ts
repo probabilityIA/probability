@@ -6,6 +6,8 @@ import {
     GetShippingMarginsParams,
     CreateShippingMarginDTO,
     UpdateShippingMarginDTO,
+    ProfitReportParams,
+    ProfitReportResponse,
 } from '../../domain/types';
 
 export class ShippingMarginApiRepository implements IShippingMarginRepository {
@@ -68,5 +70,14 @@ export class ShippingMarginApiRepository implements IShippingMarginRepository {
             method: 'PUT',
             body: JSON.stringify(data),
         });
+    }
+
+    async profitReport(params: ProfitReportParams): Promise<ProfitReportResponse> {
+        const sp = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null && v !== '') sp.append(k, String(v));
+        });
+        const q = sp.toString();
+        return this.fetch<ProfitReportResponse>(`/shipping-margins/profit-report${q ? `?${q}` : ''}`);
     }
 }

@@ -13,6 +13,7 @@ type IHandlers interface {
 	Get(c *gin.Context)
 	Create(c *gin.Context)
 	Update(c *gin.Context)
+	ProfitReport(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

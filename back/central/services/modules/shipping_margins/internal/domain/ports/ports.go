@@ -14,6 +14,8 @@ type IRepository interface {
 	List(ctx context.Context, params dtos.ListShippingMarginsParams) ([]entities.ShippingMargin, int64, error)
 	Update(ctx context.Context, m *entities.ShippingMargin) (*entities.ShippingMargin, error)
 	ExistsByCarrier(ctx context.Context, businessID uint, carrierCode string, excludeID *uint) (bool, error)
+
+	ProfitReport(ctx context.Context, params dtos.ProfitReportParams) (*dtos.ProfitReportResponse, error)
 }
 
 type ICacheWriter interface {

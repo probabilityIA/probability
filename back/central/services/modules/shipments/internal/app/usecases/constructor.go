@@ -18,10 +18,10 @@ type UseCases struct {
 }
 
 // New crea una nueva instancia de UseCases
-func New(repo domain.IRepository) *UseCases {
+func New(repo domain.IRepository, marginReader domain.IShippingMarginReader) *UseCases {
 	return &UseCases{
 		repo:          repo,
-		ShipmentCRUD:  usecaseshipment.New(repo),
+		ShipmentCRUD:  usecaseshipment.New(repo, marginReader),
 		OriginAddress: usecaseoriginaddress.New(repo),
 	}
 }
@@ -93,6 +93,8 @@ func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {
 		ShippingCost:      shipment.ShippingCost,
 		InsuranceCost:     shipment.InsuranceCost,
 		TotalCost:         shipment.TotalCost,
+		CarrierCost:       shipment.CarrierCost,
+		AppliedMargin:     shipment.AppliedMargin,
 		Weight:            shipment.Weight,
 		Height:            shipment.Height,
 		Width:             shipment.Width,

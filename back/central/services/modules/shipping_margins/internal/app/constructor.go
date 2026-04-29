@@ -13,6 +13,7 @@ type IUseCase interface {
 	Get(ctx context.Context, businessID, id uint) (*entities.ShippingMargin, error)
 	List(ctx context.Context, params dtos.ListShippingMarginsParams) ([]entities.ShippingMargin, int64, error)
 	Update(ctx context.Context, dto dtos.UpdateShippingMarginDTO) (*entities.ShippingMargin, error)
+	ProfitReport(ctx context.Context, params dtos.ProfitReportParams) (*dtos.ProfitReportResponse, error)
 }
 
 type UseCase struct {

@@ -32,6 +32,27 @@ export interface GetShippingMarginsParams {
     business_id?: number;
 }
 
+export interface ProfitReportRow {
+    carrier: string;
+    carrier_code: string;
+    shipments: number;
+    carrier_cost_total: number;
+    customer_charge_total: number;
+    profit_total: number;
+}
+
+export interface ProfitReportResponse {
+    rows: ProfitReportRow[];
+    totals: ProfitReportRow;
+}
+
+export interface ProfitReportParams {
+    business_id?: number;
+    from?: string;
+    to?: string;
+    carrier?: string;
+}
+
 export interface ShippingMarginsListResponse {
     data: ShippingMargin[];
     total: number;

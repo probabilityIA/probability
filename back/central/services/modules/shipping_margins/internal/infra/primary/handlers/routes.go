@@ -10,6 +10,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	g.Use(middleware.JWT())
 	{
 		g.GET("", h.List)
+		g.GET("/profit-report", h.ProfitReport)
 		g.GET("/:id", h.Get)
 		g.POST("", h.Create)
 		g.PUT("/:id", h.Update)

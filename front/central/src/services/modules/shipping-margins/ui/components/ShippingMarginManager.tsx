@@ -5,10 +5,12 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { ShippingMargin } from '../../domain/types';
 import ShippingMarginList from './ShippingMarginList';
 import ShippingMarginForm from './ShippingMarginForm';
+import ShippingProfitReport from './ShippingProfitReport';
 import { Button } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
 type ModalMode = 'create' | 'edit' | null;
+type Tab = 'config' | 'report';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -16,6 +18,7 @@ interface Props {
 
 export default function ShippingMarginManager({ selectedBusinessId = null }: Props) {
     const { isSuperAdmin } = usePermissions();
+    const [tab, setTab] = useState<Tab>('config');
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [selected, setSelected] = useState<ShippingMargin | null>(null);
     const [refreshList, setRefreshList] = useState<(() => void) | null>(null);
@@ -52,15 +55,40 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Margenes de envio</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        Configura el margen comercial por transportadora aplicado a cada guia
+                        {tab === 'config'
+                            ? 'Configura el margen comercial por transportadora aplicado a cada guia'
+                            : 'Reporte de ganancias por guia (precio cobrado al cliente vs costo real del carrier)'}
                     </p>
                 </div>
-                {!requiresBusinessSelection && (
+                {tab === 'config' && !requiresBusinessSelection && (
                     <Button variant="purple" onClick={openCreate}>
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Nuevo margen
                     </Button>
                 )}
+            </div>
+
+            <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+                <button
+                    onClick={() => setTab('config')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        tab === 'config'
+                            ? 'border-purple-600 text-purple-700 dark:text-purple-300'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`}
+                >
+                    Configuracion
+                </button>
+                <button
+                    onClick={() => setTab('report')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        tab === 'report'
+                            ? 'border-purple-600 text-purple-700 dark:text-purple-300'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    }`}
+                >
+                    Reporte de ganancias
+                </button>
             </div>
 
             {requiresBusinessSelection ? (
@@ -69,13 +97,17 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
                     <p className="text-gray-500 dark:text-gray-400 text-sm">
-                        Selecciona un negocio para ver y configurar sus margenes de envio
+                        Selecciona un negocio para ver la informacion
                     </p>
                 </div>
-            ) : (
+            ) : tab === 'config' ? (
                 <ShippingMarginList
                     onEdit={openEdit}
                     onRefreshRef={handleRefreshRef}
+                    selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
+                />
+            ) : (
+                <ShippingProfitReport
                     selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
                 />
             )}
