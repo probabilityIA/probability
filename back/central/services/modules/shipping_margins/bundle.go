@@ -11,10 +11,15 @@ import (
 	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, redisClient redis.IRedis) {
+type Bundle struct {
+	UseCase app.IUseCase
+}
+
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, redisClient redis.IRedis) *Bundle {
 	repo := repository.New(database)
 	cacheWriter := cache.New(redisClient, logger)
 	uc := app.New(repo, cacheWriter)
 	h := handlers.New(uc)
 	h.RegisterRoutes(router)
+	return &Bundle{UseCase: uc}
 }

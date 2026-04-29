@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	integrationsCore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
@@ -57,7 +59,19 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
-	shipping_margins.New(router, database, logger, redisClient)
+	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
+
+	transportTypes := []int{12, 13, 14, 15}
+	for _, t := range transportTypes {
+		integrationCore.OnIntegrationCreated(t, func(ctx context.Context, pi *integrationsCore.PublicIntegration) {
+			if pi == nil || pi.BusinessID == nil || *pi.BusinessID == 0 {
+				return
+			}
+			if err := shippingMarginsBundle.UseCase.EnsureDefaultsForBusiness(ctx, *pi.BusinessID); err != nil {
+				logger.Warn(ctx).Err(err).Uint("business_id", *pi.BusinessID).Msg("Failed to seed default shipping margins")
+			}
+		})
+	}
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
