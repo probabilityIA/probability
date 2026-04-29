@@ -5,6 +5,7 @@ import { Spinner, Alert } from '@/shared/ui';
 import { ProfitReportResponse } from '../../domain/types';
 import { shippingProfitReportAction } from '../../infra/actions';
 import { getActionError } from '@/shared/utils/action-result';
+import ShippingProfitDetailModal from './ShippingProfitDetailModal';
 
 interface Props {
     selectedBusinessId?: number;
@@ -28,6 +29,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
     const [data, setData] = useState<ProfitReportResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [detailCarrier, setDetailCarrier] = useState<{ code: string; label: string } | null>(null);
 
     const fetchReport = useCallback(async () => {
         setLoading(true);
@@ -110,8 +112,12 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                             </tr>
                         ) : data?.rows && data.rows.length > 0 ? (
                             data.rows.map((r, i) => (
-                                <tr key={`${r.carrier_code}-${i}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                    <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{r.carrier}</td>
+                                <tr
+                                    key={`${r.carrier_code}-${i}`}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                                    onClick={() => setDetailCarrier({ code: r.carrier_code, label: r.carrier })}
+                                >
+                                    <td className="px-4 py-3 text-gray-900 dark:text-white font-medium underline decoration-dotted">{r.carrier}</td>
                                     <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-200">{r.shipments}</td>
                                     <td className="px-4 py-3 text-right text-blue-700 dark:text-blue-300">{fmt(r.customer_charge_total)}</td>
                                     <td className="px-4 py-3 text-right text-orange-700 dark:text-orange-300">{fmt(r.carrier_cost_total)}</td>
@@ -137,6 +143,18 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                     )}
                 </table>
             </div>
+
+            {detailCarrier && (
+                <ShippingProfitDetailModal
+                    isOpen={!!detailCarrier}
+                    onClose={() => setDetailCarrier(null)}
+                    carrier={detailCarrier.code}
+                    carrierLabel={detailCarrier.label}
+                    from={from}
+                    to={to}
+                    selectedBusinessId={selectedBusinessId}
+                />
+            )}
         </div>
     );
 }

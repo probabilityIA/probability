@@ -16,6 +16,7 @@ type IRepository interface {
 	ExistsByCarrier(ctx context.Context, businessID uint, carrierCode string, excludeID *uint) (bool, error)
 
 	ProfitReport(ctx context.Context, params dtos.ProfitReportParams) (*dtos.ProfitReportResponse, error)
+	ProfitReportDetail(ctx context.Context, params dtos.ProfitReportDetailParams) (*dtos.ProfitReportDetailResponse, error)
 }
 
 type ICacheWriter interface {

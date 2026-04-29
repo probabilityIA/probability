@@ -1,5 +1,5 @@
 import { IShippingMarginRepository } from '../domain/ports';
-import { GetShippingMarginsParams, CreateShippingMarginDTO, UpdateShippingMarginDTO, ProfitReportParams } from '../domain/types';
+import { GetShippingMarginsParams, CreateShippingMarginDTO, UpdateShippingMarginDTO, ProfitReportParams, ProfitReportDetailParams } from '../domain/types';
 
 export class ShippingMarginUseCases {
     constructor(private repository: IShippingMarginRepository) {}
@@ -22,5 +22,9 @@ export class ShippingMarginUseCases {
 
     async profitReport(params: ProfitReportParams) {
         return this.repository.profitReport(params);
+    }
+
+    async profitReportDetail(params: ProfitReportDetailParams) {
+        return this.repository.profitReportDetail(params);
     }
 }

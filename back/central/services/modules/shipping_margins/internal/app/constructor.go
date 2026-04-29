@@ -14,6 +14,7 @@ type IUseCase interface {
 	List(ctx context.Context, params dtos.ListShippingMarginsParams) ([]entities.ShippingMargin, int64, error)
 	Update(ctx context.Context, dto dtos.UpdateShippingMarginDTO) (*entities.ShippingMargin, error)
 	ProfitReport(ctx context.Context, params dtos.ProfitReportParams) (*dtos.ProfitReportResponse, error)
+	ProfitReportDetail(ctx context.Context, params dtos.ProfitReportDetailParams) (*dtos.ProfitReportDetailResponse, error)
 	EnsureDefaultsForBusiness(ctx context.Context, businessID uint) error
 }
 
