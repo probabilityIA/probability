@@ -34,6 +34,7 @@ type CreateWarehouseDTO struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	StructureType string
 	Company       string
 	FirstName     string
 	LastName      string
@@ -63,6 +64,7 @@ type UpdateWarehouseDTO struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	StructureType string
 	Company       string
 	FirstName     string
 	LastName      string

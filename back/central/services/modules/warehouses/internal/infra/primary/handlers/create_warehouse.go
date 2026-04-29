@@ -44,6 +44,7 @@ func (h *Handlers) CreateWarehouse(c *gin.Context) {
 		IsActive:      isActive,
 		IsDefault:     req.IsDefault,
 		IsFulfillment: req.IsFulfillment,
+		StructureType: req.StructureType,
 		Company:       req.Company,
 		FirstName:     req.FirstName,
 		LastName:      req.LastName,

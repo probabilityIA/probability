@@ -1,3 +1,5 @@
+export type WarehouseStructureType = 'simple' | 'zones' | 'wms';
+
 // ============================================
 // ENTIDADES
 // ============================================
@@ -18,6 +20,7 @@ export interface Warehouse {
     is_active: boolean;
     is_default: boolean;
     is_fulfillment: boolean;
+    structure_type?: WarehouseStructureType;
     company: string;
     first_name: string;
     last_name: string;
@@ -66,6 +69,7 @@ export interface CreateWarehouseDTO {
     contact_email?: string;
     is_default?: boolean;
     is_fulfillment?: boolean;
+    structure_type?: WarehouseStructureType;
     company?: string;
     first_name?: string;
     last_name?: string;
@@ -92,6 +96,7 @@ export interface UpdateWarehouseDTO {
     is_active?: boolean;
     is_default?: boolean;
     is_fulfillment?: boolean;
+    structure_type?: WarehouseStructureType;
     company?: string;
     first_name?: string;
     last_name?: string;

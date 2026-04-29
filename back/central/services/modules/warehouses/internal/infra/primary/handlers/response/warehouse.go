@@ -23,6 +23,7 @@ type WarehouseResponse struct {
 	IsActive      bool      `json:"is_active"`
 	IsDefault     bool      `json:"is_default"`
 	IsFulfillment bool      `json:"is_fulfillment"`
+	StructureType string    `json:"structure_type"`
 	Company       string    `json:"company"`
 	FirstName     string    `json:"first_name"`
 	LastName      string    `json:"last_name"`
@@ -84,6 +85,7 @@ func FromEntity(w *entities.Warehouse) WarehouseResponse {
 		IsActive:      w.IsActive,
 		IsDefault:     w.IsDefault,
 		IsFulfillment: w.IsFulfillment,
+		StructureType: w.StructureType,
 		Company:       w.Company,
 		FirstName:     w.FirstName,
 		LastName:      w.LastName,

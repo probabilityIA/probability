@@ -53,4 +53,11 @@ type IRepository interface {
 	RackLevelExistsByCode(ctx context.Context, rackID uint, code string, excludeID *uint) (bool, error)
 
 	GetWarehouseTree(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
+
+	HierarchyDepth(ctx context.Context, warehouseID uint) (HierarchyDepth, error)
+}
+
+type HierarchyDepth struct {
+	HasZones bool
+	HasRacks bool
 }

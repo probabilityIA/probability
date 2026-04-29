@@ -72,15 +72,10 @@ function generateCode(name: string): string {
 
 
 export default function WarehouseForm({ warehouse, onSuccess, onCancel, businessId }: WarehouseFormProps) {
-    const [structureMode, setStructureMode] = useState<StructureMode>(() => {
-        if (warehouse?.id) {
-            try {
-                const saved = localStorage.getItem(`wh_struct_${warehouse.id}`);
-                if (saved === 'simple' || saved === 'zones' || saved === 'wms') return saved as StructureMode;
-            } catch {}
-        }
-        return 'simple';
-    });
+    const initialStructure: StructureMode = (warehouse?.structure_type === 'zones' || warehouse?.structure_type === 'wms')
+        ? warehouse.structure_type
+        : 'simple';
+    const [structureMode, setStructureMode] = useState<StructureMode>(initialStructure);
 
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(() => {
         if (warehouse?.latitude != null && warehouse?.longitude != null) {
@@ -211,11 +206,11 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     contact_email: formData.contact_email || undefined,
                     is_active: formData.is_active,
                     is_default: formData.is_default,
+                    structure_type: structureMode,
                     latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                     longitude: formData.longitude ? parseFloat(formData.longitude) : null,
                 };
                 await updateWarehouseAction(warehouse.id, updateData, businessId);
-                try { localStorage.setItem(`wh_struct_${warehouse.id}`, structureMode); } catch {}
             } else {
                 const createData: CreateWarehouseDTO = {
                     name: formData.name,
@@ -231,14 +226,11 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     contact_name: formData.contact_name || undefined,
                     contact_email: formData.contact_email || undefined,
                     is_default: formData.is_default,
+                    structure_type: structureMode,
                     latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                     longitude: formData.longitude ? parseFloat(formData.longitude) : null,
                 };
-                const result = await createWarehouseAction(createData, businessId);
-                try {
-                    const newId = (result as any)?.data?.id ?? (result as any)?.id;
-                    if (newId) localStorage.setItem(`wh_struct_${newId}`, structureMode);
-                } catch {}
+                await createWarehouseAction(createData, businessId);
             }
 
             setSuccess(warehouse ? 'Bodega actualizada exitosamente' : 'Bodega creada exitosamente');
@@ -284,13 +276,20 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         <div className="flex flex-col gap-2">
                             {STRUCTURE_OPTIONS.map((opt) => {
                                 const selected = structureMode === opt.id;
+                                const currentRank = initialStructure === 'wms' ? 2 : initialStructure === 'zones' ? 1 : 0;
+                                const optRank = opt.id === 'wms' ? 2 : opt.id === 'zones' ? 1 : 0;
+                                const blocked = !!warehouse && optRank < currentRank;
                                 return (
                                     <button
                                         key={opt.id}
                                         type="button"
-                                        onClick={() => setStructureMode(opt.id)}
+                                        disabled={blocked}
+                                        onClick={() => !blocked && setStructureMode(opt.id)}
+                                        title={blocked ? 'No puedes reducir la estructura: ya tienes jerarquia creada' : undefined}
                                         className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 flex items-start gap-3 ${
-                                            selected
+                                            blocked
+                                                ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 opacity-60 cursor-not-allowed'
+                                                : selected
                                                 ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
                                                 : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
                                         }`}
@@ -313,6 +312,9 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                                                 <span className="font-medium">Niveles:</span> {opt.levels}
                                             </p>
+                                            {blocked && (
+                                                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Tienes jerarquia ya creada en un nivel superior</p>
+                                            )}
                                         </div>
                                     </button>
                                 );

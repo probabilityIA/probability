@@ -32,6 +32,7 @@ type Warehouse struct {
 	IsActive      bool           `gorm:"default:true;index"`                                                // Indica si la bodega está activa y operativa
 	IsDefault     bool           `gorm:"default:false;index"`                                               // Indica si es la bodega principal/por defecto del negocio
 	IsFulfillment bool           `gorm:"default:false;index"`                                               // Indica si la bodega maneja fulfillment (envíos directos)
+	StructureType string         `gorm:"size:20;not null;default:'simple';index"`                           // Topologia: simple, zones, wms
 	Metadata      datatypes.JSON `gorm:"type:jsonb"`                                                        // Metadatos adicionales en formato JSON (configuración personalizada)
 
 	// Campos de contacto para carrier (requeridos por APIs de transportadoras)

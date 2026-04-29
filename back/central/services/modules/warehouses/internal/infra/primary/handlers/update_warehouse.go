@@ -52,6 +52,7 @@ func (h *Handlers) UpdateWarehouse(c *gin.Context) {
 		IsActive:      isActive,
 		IsDefault:     req.IsDefault,
 		IsFulfillment: req.IsFulfillment,
+		StructureType: req.StructureType,
 		Company:       req.Company,
 		FirstName:     req.FirstName,
 		LastName:      req.LastName,
@@ -71,6 +72,10 @@ func (h *Handlers) UpdateWarehouse(c *gin.Context) {
 			return
 		}
 		if errors.Is(err, domainerrors.ErrDuplicateCode) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, domainerrors.ErrStructureDowngradeBlocked) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}

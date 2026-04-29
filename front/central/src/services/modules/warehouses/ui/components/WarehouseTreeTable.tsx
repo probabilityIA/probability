@@ -53,8 +53,6 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
     const [modal, setModal] = useState<ModalState>(null);
     const [deletingWh, setDeletingWh] = useState<Warehouse | null>(null);
     const [deletingNode, setDeletingNode] = useState<{ warehouseId: number; type: NodeKind; id: number; label: string } | null>(null);
-    const [structureModes, setStructureModes] = useState<Record<number, StructureMode>>({});
-
     const fetchList = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -69,15 +67,6 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
     }, [businessId, search]);
 
     useEffect(() => { fetchList(); }, [fetchList, refreshKey]);
-
-    useEffect(() => {
-        const modes: Record<number, StructureMode> = {};
-        for (const w of warehouses) {
-            const stored = localStorage.getItem(`wh_struct_${w.id}`);
-            modes[w.id] = (stored === 'zones' || stored === 'wms') ? stored : 'simple';
-        }
-        setStructureModes(modes);
-    }, [warehouses]);
 
     const loadTree = useCallback(async (warehouseId: number) => {
         setLoadingTree((p) => ({ ...p, [warehouseId]: true }));
@@ -180,7 +169,7 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                     <tr><td colSpan={8} className="text-center py-10 text-gray-400">No hay bodegas registradas</td></tr>
                                 )}
                                 {warehouses.map((w) => {
-                                    const mode = structureModes[w.id] ?? 'simple';
+                                    const mode: StructureMode = (w.structure_type === 'zones' || w.structure_type === 'wms') ? w.structure_type : 'simple';
                                     const isSimple = mode === 'simple';
                                     const isOpen = !isSimple && !!expanded[w.id];
                                     const tree = trees[w.id];

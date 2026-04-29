@@ -15,6 +15,7 @@ type CreateWarehouseRequest struct {
 	IsActive      *bool  `json:"is_active"`
 	IsDefault     bool   `json:"is_default"`
 	IsFulfillment bool   `json:"is_fulfillment"`
+	StructureType string `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
 	Company       string `json:"company" binding:"omitempty,max=100"`
 	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
 	LastName      string `json:"last_name" binding:"omitempty,max=100"`
@@ -42,6 +43,7 @@ type UpdateWarehouseRequest struct {
 	IsActive      *bool  `json:"is_active"`
 	IsDefault     bool   `json:"is_default"`
 	IsFulfillment bool   `json:"is_fulfillment"`
+	StructureType string `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
 	Company       string `json:"company" binding:"omitempty,max=100"`
 	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
 	LastName      string `json:"last_name" binding:"omitempty,max=100"`

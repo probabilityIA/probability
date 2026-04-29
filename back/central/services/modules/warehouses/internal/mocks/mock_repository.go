@@ -7,6 +7,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/ports"
 )
 
 // RepositoryMock es un mock manual de ports.IRepository.
@@ -61,6 +62,14 @@ type RepositoryMock struct {
 	RackLevelExistsByCodeFn func(ctx context.Context, rackID uint, code string, excludeID *uint) (bool, error)
 
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
+	HierarchyDepthFn   func(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error)
+}
+
+func (m *RepositoryMock) HierarchyDepth(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error) {
+	if m.HierarchyDepthFn != nil {
+		return m.HierarchyDepthFn(ctx, warehouseID)
+	}
+	return ports.HierarchyDepth{}, nil
 }
 
 // --- Implementación de ports.IRepository ---

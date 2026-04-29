@@ -20,4 +20,6 @@ var (
 	ErrDuplicateLevelCode   = errors.New("a level with this code already exists in this rack")
 	ErrInvalidHierarchy     = errors.New("invalid hierarchy reference")
 	ErrLocationOverCapacity = errors.New("location volume or weight exceeds configured capacity")
+
+	ErrStructureDowngradeBlocked = errors.New("cannot downgrade warehouse structure: existing hierarchy must be removed first")
 )

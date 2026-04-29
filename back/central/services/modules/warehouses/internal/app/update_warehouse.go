@@ -9,13 +9,11 @@ import (
 )
 
 func (uc *UseCase) UpdateWarehouse(ctx context.Context, dto dtos.UpdateWarehouseDTO) (*entities.Warehouse, error) {
-	// Verificar que existe
-	_, err := uc.repo.GetByID(ctx, dto.BusinessID, dto.ID)
+	current, err := uc.repo.GetByID(ctx, dto.BusinessID, dto.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Verificar código duplicado (excluyendo la actual)
 	exists, err := uc.repo.ExistsByCode(ctx, dto.BusinessID, dto.Code, &dto.ID)
 	if err != nil {
 		return nil, err
@@ -24,7 +22,20 @@ func (uc *UseCase) UpdateWarehouse(ctx context.Context, dto dtos.UpdateWarehouse
 		return nil, domainerrors.ErrDuplicateCode
 	}
 
-	// Si se marca como default, quitar default de las demás
+	requestedStructure := normalizeStructureType(dto.StructureType)
+	if requestedStructure != current.StructureType {
+		depth, err := uc.repo.HierarchyDepth(ctx, dto.ID)
+		if err != nil {
+			return nil, err
+		}
+		if depth.HasRacks && requestedStructure != StructureWMS {
+			return nil, domainerrors.ErrStructureDowngradeBlocked
+		}
+		if depth.HasZones && requestedStructure == StructureSimple {
+			return nil, domainerrors.ErrStructureDowngradeBlocked
+		}
+	}
+
 	if dto.IsDefault {
 		if err := uc.repo.ClearDefault(ctx, dto.BusinessID, dto.ID); err != nil {
 			return nil, err
@@ -47,6 +58,7 @@ func (uc *UseCase) UpdateWarehouse(ctx context.Context, dto dtos.UpdateWarehouse
 		IsActive:      dto.IsActive,
 		IsDefault:     dto.IsDefault,
 		IsFulfillment: dto.IsFulfillment,
+		StructureType: requestedStructure,
 		Company:       dto.Company,
 		FirstName:     dto.FirstName,
 		LastName:      dto.LastName,

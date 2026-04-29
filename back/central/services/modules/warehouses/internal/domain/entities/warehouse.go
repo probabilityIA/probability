@@ -19,6 +19,7 @@ type Warehouse struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	StructureType string
 	Company       string
 	FirstName     string
 	LastName      string

@@ -25,6 +25,8 @@ func (uc *UseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouse
 		}
 	}
 
+	structureType := normalizeStructureType(dto.StructureType)
+
 	warehouse := &entities.Warehouse{
 		BusinessID:    dto.BusinessID,
 		Name:          dto.Name,
@@ -40,6 +42,7 @@ func (uc *UseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouse
 		IsActive:      dto.IsActive,
 		IsDefault:     dto.IsDefault,
 		IsFulfillment: dto.IsFulfillment,
+		StructureType: structureType,
 		Company:       dto.Company,
 		FirstName:     dto.FirstName,
 		LastName:      dto.LastName,

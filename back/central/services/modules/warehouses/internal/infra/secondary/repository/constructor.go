@@ -37,6 +37,7 @@ func warehouseModelToEntity(m *models.Warehouse) *entities.Warehouse {
 		IsActive:      m.IsActive,
 		IsDefault:     m.IsDefault,
 		IsFulfillment: m.IsFulfillment,
+		StructureType: m.StructureType,
 		Company:       m.Company,
 		FirstName:     m.FirstName,
 		LastName:      m.LastName,
