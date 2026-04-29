@@ -6,7 +6,6 @@ import {
     GetShippingMarginsParams,
     CreateShippingMarginDTO,
     UpdateShippingMarginDTO,
-    DeleteShippingMarginResponse,
 } from '../../domain/types';
 
 export class ShippingMarginApiRepository implements IShippingMarginRepository {
@@ -68,12 +67,6 @@ export class ShippingMarginApiRepository implements IShippingMarginRepository {
         return this.fetch<ShippingMargin>(this.withBusinessId(`/shipping-margins/${id}`, businessId), {
             method: 'PUT',
             body: JSON.stringify(data),
-        });
-    }
-
-    async delete(id: number, businessId?: number): Promise<DeleteShippingMarginResponse> {
-        return this.fetch<DeleteShippingMarginResponse>(this.withBusinessId(`/shipping-margins/${id}`, businessId), {
-            method: 'DELETE',
         });
     }
 }

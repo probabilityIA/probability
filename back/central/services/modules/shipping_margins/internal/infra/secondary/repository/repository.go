@@ -114,19 +114,6 @@ func (r *Repository) Update(ctx context.Context, m *entities.ShippingMargin) (*e
 	return r.GetByID(ctx, m.BusinessID, m.ID)
 }
 
-func (r *Repository) Delete(ctx context.Context, businessID, id uint) error {
-	res := r.db.Conn(ctx).
-		Where("id = ? AND business_id = ?", id, businessID).
-		Delete(&models.ShippingMargin{})
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return domainerrors.ErrShippingMarginNotFound
-	}
-	return nil
-}
-
 func (r *Repository) ExistsByCarrier(ctx context.Context, businessID uint, carrierCode string, excludeID *uint) (bool, error) {
 	var count int64
 	q := r.db.Conn(ctx).Model(&models.ShippingMargin{}).

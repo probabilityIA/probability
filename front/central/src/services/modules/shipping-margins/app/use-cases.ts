@@ -19,8 +19,4 @@ export class ShippingMarginUseCases {
     async update(id: number, data: UpdateShippingMarginDTO, businessId?: number) {
         return this.repository.update(id, data, businessId);
     }
-
-    async delete(id: number, businessId?: number) {
-        return this.repository.delete(id, businessId);
-    }
 }

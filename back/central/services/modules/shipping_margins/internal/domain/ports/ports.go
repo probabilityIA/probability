@@ -13,7 +13,6 @@ type IRepository interface {
 	GetByBusinessAndCarrier(ctx context.Context, businessID uint, carrierCode string) (*entities.ShippingMargin, error)
 	List(ctx context.Context, params dtos.ListShippingMarginsParams) ([]entities.ShippingMargin, int64, error)
 	Update(ctx context.Context, m *entities.ShippingMargin) (*entities.ShippingMargin, error)
-	Delete(ctx context.Context, businessID, id uint) error
 	ExistsByCarrier(ctx context.Context, businessID uint, carrierCode string, excludeID *uint) (bool, error)
 }
 

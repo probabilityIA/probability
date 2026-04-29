@@ -44,10 +44,3 @@ export const updateShippingMarginAction = async (id: number, data: UpdateShippin
     }
 };
 
-export const deleteShippingMarginAction = async (id: number, businessId?: number) => {
-    try {
-        return await (await getUseCases()).delete(id, businessId);
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
-};

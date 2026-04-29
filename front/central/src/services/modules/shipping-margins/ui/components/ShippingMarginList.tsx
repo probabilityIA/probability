@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { PencilIcon, TrashIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { listShippingMarginsAction, deleteShippingMarginAction, updateShippingMarginAction } from '../../infra/actions';
+import { PencilIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { listShippingMarginsAction, updateShippingMarginAction } from '../../infra/actions';
 import { ShippingMargin, GetShippingMarginsParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
@@ -118,16 +118,6 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
         setPage(1);
     }, [selectedBusinessId]);
 
-    const handleDelete = async (m: ShippingMargin) => {
-        if (!confirm(`Eliminar margen para "${m.carrier_name}"? Esta accion no se puede deshacer.`)) return;
-        try {
-            await deleteShippingMarginAction(m.id, selectedBusinessId);
-            fetchItems();
-        } catch (err: any) {
-            setError(getActionError(err, 'Error al eliminar el margen'));
-        }
-    };
-
     const columns = [
         { key: 'carrier', label: 'Transportadora' },
         { key: 'margin', label: 'Margen flete', align: 'center' as const },
@@ -179,13 +169,6 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
                         <PencilIcon className="w-4 h-4" />
                     </button>
                 )}
-                <button
-                    onClick={() => handleDelete(m)}
-                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
-                    title="Eliminar"
-                >
-                    <TrashIcon className="w-4 h-4" />
-                </button>
             </div>
         ),
     });

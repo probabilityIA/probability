@@ -4,7 +4,6 @@ import {
     GetShippingMarginsParams,
     CreateShippingMarginDTO,
     UpdateShippingMarginDTO,
-    DeleteShippingMarginResponse,
 } from './types';
 
 export interface IShippingMarginRepository {
@@ -12,5 +11,4 @@ export interface IShippingMarginRepository {
     getById(id: number, businessId?: number): Promise<ShippingMargin>;
     create(data: CreateShippingMarginDTO, businessId?: number): Promise<ShippingMargin>;
     update(id: number, data: UpdateShippingMarginDTO, businessId?: number): Promise<ShippingMargin>;
-    delete(id: number, businessId?: number): Promise<DeleteShippingMarginResponse>;
 }

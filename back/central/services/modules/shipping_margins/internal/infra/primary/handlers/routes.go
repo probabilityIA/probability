@@ -13,6 +13,5 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.GET("/:id", h.Get)
 		g.POST("", h.Create)
 		g.PUT("/:id", h.Update)
-		g.DELETE("/:id", h.Delete)
 	}
 }
