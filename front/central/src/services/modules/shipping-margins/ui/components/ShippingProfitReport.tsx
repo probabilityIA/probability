@@ -13,23 +13,54 @@ interface Props {
 
 const fmt = (n: number) => '$ ' + Math.round(n).toLocaleString('es-CO');
 
-function defaultFrom() {
-    const d = new Date();
-    d.setDate(1);
-    return d.toISOString().slice(0, 10);
-}
+const toISO = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
 
-function defaultTo() {
-    return new Date().toISOString().slice(0, 10);
+type PresetKey = 'today' | 'week' | 'month' | '3months' | 'custom';
+
+function rangeFor(preset: PresetKey): { from: string; to: string } {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const to = toISO(today);
+    if (preset === 'today') return { from: to, to };
+    if (preset === 'week') {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 6);
+        return { from: toISO(d), to };
+    }
+    if (preset === 'month') {
+        const d = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { from: toISO(d), to };
+    }
+    if (preset === '3months') {
+        const d = new Date(today);
+        d.setMonth(d.getMonth() - 3);
+        return { from: toISO(d), to };
+    }
+    return { from: to, to };
 }
 
 export default function ShippingProfitReport({ selectedBusinessId }: Props) {
-    const [from, setFrom] = useState<string>(defaultFrom());
-    const [to, setTo] = useState<string>(defaultTo());
+    const initial = rangeFor('today');
+    const [from, setFrom] = useState<string>(initial.from);
+    const [to, setTo] = useState<string>(initial.to);
+    const [preset, setPreset] = useState<PresetKey>('today');
     const [data, setData] = useState<ProfitReportResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [detailCarrier, setDetailCarrier] = useState<{ code: string; label: string } | null>(null);
+
+    const applyPreset = (p: PresetKey) => {
+        setPreset(p);
+        if (p === 'custom') return;
+        const r = rangeFor(p);
+        setFrom(r.from);
+        setTo(r.to);
+    };
 
     const fetchReport = useCallback(async () => {
         setLoading(true);
@@ -56,31 +87,54 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-end gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Desde</label>
-                    <input
-                        type="date"
-                        value={from}
-                        onChange={(e) => setFrom(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
-                    />
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="flex flex-wrap gap-2">
+                    {([
+                        ['today', 'Hoy'],
+                        ['week', 'Semana'],
+                        ['month', 'Mes'],
+                        ['3months', 'Ultimos 3 meses'],
+                        ['custom', 'Personalizado'],
+                    ] as [PresetKey, string][]).map(([k, label]) => (
+                        <button
+                            key={k}
+                            onClick={() => applyPreset(k)}
+                            className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                                preset === k
+                                    ? 'bg-purple-600 border-purple-600 text-white'
+                                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
-                <div>
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Hasta</label>
-                    <input
-                        type="date"
-                        value={to}
-                        onChange={(e) => setTo(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
-                    />
+                <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Desde</label>
+                        <input
+                            type="date"
+                            value={from}
+                            onChange={(e) => { setFrom(e.target.value); setPreset('custom'); }}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Hasta</label>
+                        <input
+                            type="date"
+                            value={to}
+                            onChange={(e) => { setTo(e.target.value); setPreset('custom'); }}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white"
+                        />
+                    </div>
+                    <button
+                        onClick={fetchReport}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md"
+                    >
+                        Aplicar
+                    </button>
                 </div>
-                <button
-                    onClick={fetchReport}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-md"
-                >
-                    Aplicar
-                </button>
             </div>
 
             {error && <Alert type="error">{error}</Alert>}
