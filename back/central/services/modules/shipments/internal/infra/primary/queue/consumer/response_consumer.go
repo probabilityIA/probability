@@ -220,6 +220,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 			appendGuideGeneratedEvent(shipment, response.Provider, trackingNumber, carrier)
 
+			c.recalcCarrierCost(ctx, shipment, businessID, carrier)
+
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
@@ -796,11 +798,43 @@ func inferCarrierFromTrackingNumber(trackingNumber string) string {
 		return "COORDINADORA"
 	}
 
-	// SERVIENTREGA: 072
 	if strings.HasPrefix(trackingNumber, "072") {
 		return "SERVIENTREGA"
 	}
 
-	// Si no coincide con ningún prefijo conocido, retornar vacío
 	return ""
+}
+
+func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *domain.Shipment, businessID uint, realCarrier string) {
+	if c.marginReader == nil || shipment == nil {
+		return
+	}
+	if shipment.TotalCost == nil || *shipment.TotalCost <= 0 {
+		return
+	}
+	if businessID == 0 {
+		return
+	}
+
+	carrierCode := strings.TrimSpace(strings.ToLower(realCarrier))
+	if carrierCode == "" && shipment.Carrier != nil {
+		carrierCode = strings.TrimSpace(strings.ToLower(*shipment.Carrier))
+	}
+	if carrierCode == "" {
+		return
+	}
+
+	margin, err := c.marginReader.Get(ctx, businessID, carrierCode)
+	if err != nil {
+		c.log.Warn(ctx).Err(err).Uint("business_id", businessID).Str("carrier", carrierCode).Msg("recalcCarrierCost: margin lookup failed")
+		return
+	}
+
+	totalMargin := margin.MarginAmount + margin.InsuranceMargin
+	carrierCost := *shipment.TotalCost - totalMargin
+	if carrierCost < 0 {
+		carrierCost = 0
+	}
+	shipment.CarrierCost = &carrierCost
+	shipment.AppliedMargin = &totalMargin
 }
