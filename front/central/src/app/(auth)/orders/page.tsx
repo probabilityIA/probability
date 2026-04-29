@@ -26,7 +26,6 @@ export default function OrdersPage() {
     const [showMassUploadModal, setShowMassUploadModal] = useState(false);
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
-    // Set action buttons in navbar
     useEffect(() => {
         const actionButtons = (
             <>

@@ -23,6 +23,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/publicsite"
 	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
+	"github.com/secamc93/probability/back/central/services/modules/shipping_margins"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
 	"github.com/secamc93/probability/back/central/services/modules/tickets"
@@ -56,6 +57,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
+	shipping_margins.New(router, database, logger, redisClient)
 	notification_config.New(router, database, redisClient, logger, rabbitMQ)
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)

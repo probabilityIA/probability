@@ -28,7 +28,8 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const isInOrdersModule = pathname.startsWith('/orders') ||
                             pathname.startsWith('/shipments') ||
                             pathname.startsWith('/order-status') ||
-                            pathname.startsWith('/shipments/origin-addresses');
+                            pathname.startsWith('/shipments/origin-addresses') ||
+                            pathname.startsWith('/shipping-margins');
 
     if (!isInOrdersModule) {
         return null;
@@ -59,6 +60,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         { section: 'CONFIGURACIÓN', items: [
             canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },
             canViewOriginAddresses && { href: '/shipments/origin-addresses', label: 'Direcciones de Origen', icon: '📍' },
+            isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '💰' },
         ].filter(Boolean) },
     ];
 

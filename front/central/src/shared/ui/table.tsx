@@ -175,7 +175,7 @@ export function Table<T = Record<string, unknown>>({
                   <th
                     key={column.key}
                     className={alignClass[column.align || 'left']}
-                    style={{ width: column.width }}
+                    style={{ width: column.width, textAlign: column.align || 'left' }}
                   >
                     {column.label}
                   </th>

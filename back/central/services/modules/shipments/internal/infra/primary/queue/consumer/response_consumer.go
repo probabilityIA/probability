@@ -33,22 +33,22 @@ type TransportResponseMessage struct {
 	Error         string                 `json:"error,omitempty"`
 }
 
-// ResponseConsumer consumes transport responses
 type ResponseConsumer struct {
 	queue        rabbitmq.IQueue
 	repo         domain.IRepository
 	log          log.ILogger
 	ssePublisher domain.IShipmentSSEPublisher
 	redisClient  redis.IRedis
+	marginReader domain.IShippingMarginReader
 }
 
-// NewResponseConsumer creates a new transport response consumer
 func NewResponseConsumer(
 	queue rabbitmq.IQueue,
 	repo domain.IRepository,
 	logger log.ILogger,
 	ssePublisher domain.IShipmentSSEPublisher,
 	redisClient redis.IRedis,
+	marginReader domain.IShippingMarginReader,
 ) *ResponseConsumer {
 	return &ResponseConsumer{
 		queue:        queue,
@@ -56,6 +56,7 @@ func NewResponseConsumer(
 		log:          logger.WithModule("shipments.transport_response_consumer"),
 		ssePublisher: ssePublisher,
 		redisClient:  redisClient,
+		marginReader: marginReader,
 	}
 }
 
@@ -316,8 +317,7 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Quote response received")
 
-	// Apply platform markup to the flete of the quotes
-	c.applyServiceFeeToQuoteData(ctx, response.Data, response.Provider)
+	c.applyServiceFeeToQuoteData(ctx, response.Data, response.Provider, businessID)
 
 	c.storeQuoteResult(ctx, response.CorrelationID, response.Data, "")
 	c.ssePublisher.PublishQuoteReceived(ctx, businessID, response.CorrelationID, response.Data)
@@ -654,15 +654,6 @@ func (c *ResponseConsumer) resolveBusinessID(ctx context.Context, response *Tran
 	return 0
 }
 
-// serviceFeeAmount es el cargo fijo de servicio (en pesos) que se suma a cada cotización.
-// Este valor se añade de forma transparente en la asincronía antes de enviar al frontend o a Redis.
-const serviceFeeAmount = 2290.0
-
-// priceFields son los campos de precio que se ajustan en cada cotización.
-// Solo modificamos "flete", dejando seguros intactos.
-var priceFields = []string{"flete"}
-
-// getKeys retorna una lista de claves disponibles en un mapa para debugging
 func getKeys(data map[string]interface{}) []string {
 	keys := make([]string, 0, len(data))
 	for k := range data {
@@ -671,10 +662,27 @@ func getKeys(data map[string]interface{}) []string {
 	return keys
 }
 
-// applyServiceFeeToQuoteData aplica el serviceFeeAmount a todas las tarifas de las cotizaciones
-// en el payload de respuesta de la transportadora.
-func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data map[string]interface{}, provider string) {
-	if data == nil {
+func normalizeCarrierCode(carrier string) string {
+	c := strings.ToLower(strings.TrimSpace(carrier))
+	c = strings.ReplaceAll(c, " ", "")
+	return c
+}
+
+func toFloat(v interface{}) (float64, bool) {
+	switch x := v.(type) {
+	case float64:
+		return x, true
+	case int:
+		return float64(x), true
+	case float32:
+		return float64(x), true
+	default:
+		return 0, false
+	}
+}
+
+func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data map[string]interface{}, provider string, businessID uint) {
+	if data == nil || c.marginReader == nil || businessID == 0 {
 		return
 	}
 
@@ -686,7 +694,6 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 	if !ok {
 		return
 	}
-
 	rates, ok := rawRates.([]interface{})
 	if !ok {
 		return
@@ -699,48 +706,48 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 		}
 
 		carrierName, _ := rate["carrier"].(string)
-		lowerCarrier := strings.ToLower(carrierName)
-
-		// [MOD] Especial para Interrapidisimo y Coordinadora:
-		// Se captura el valor del seguro obligatorio (minimumInsurance) y se suma a nuestra ganancia.
-		// Fórmula: flete + seguro_obligatorio + (cuota_nuestra + seguro_obligatorio)
-		// Como serviceFeeAmount es nuestra cuota base, añadimos el seguro obligatorio adicionalmente al flete.
-		extraInsuranceProfit := 0.0
-		if strings.Contains(lowerCarrier, "interrapidisimo") || strings.Contains(lowerCarrier, "coordinadora") {
-			if insVal, ok := rate["minimumInsurance"]; ok {
-				switch v := insVal.(type) {
-				case float64:
-					extraInsuranceProfit = v
-				case int:
-					extraInsuranceProfit = float64(v)
-				case float32:
-					extraInsuranceProfit = float64(v)
-				}
-			}
+		carrierCode := normalizeCarrierCode(carrierName)
+		if carrierCode == "" {
+			continue
 		}
 
-		for _, field := range priceFields {
-			if val, exists := rate[field]; exists {
-				var oldVal float64
-				switch v := val.(type) {
-				case float64:
-					oldVal = v
-				case int:
-					oldVal = float64(v)
-				default:
-					continue
-				}
+		margin, err := c.marginReader.Get(ctx, businessID, carrierCode)
+		if err != nil {
+			c.log.Warn(ctx).Err(err).Uint("business_id", businessID).Str("carrier", carrierCode).Msg("shipping margin lookup failed")
+			continue
+		}
+		if margin.MarginAmount == 0 && margin.InsuranceMargin == 0 {
+			continue
+		}
 
-				newVal := oldVal + serviceFeeAmount + extraInsuranceProfit
-				rate[field] = newVal
-
+		if val, exists := rate["flete"]; exists && margin.MarginAmount > 0 {
+			if oldVal, ok := toFloat(val); ok {
+				newVal := oldVal + margin.MarginAmount
+				rate["flete"] = newVal
 				c.log.Info(ctx).
 					Str("provider", provider).
 					Str("carrier", carrierName).
+					Uint("business_id", businessID).
 					Float64("original_flete", oldVal).
-					Float64("extra_insurance_profit", extraInsuranceProfit).
+					Float64("margin_amount", margin.MarginAmount).
 					Float64("final_flete", newVal).
-					Msg("💰 Service fee and insurance profit added to quote")
+					Msg("Margin applied to quote flete")
+			}
+		}
+
+		if margin.InsuranceMargin > 0 {
+			if val, exists := rate["minimumInsurance"]; exists {
+				if oldVal, ok := toFloat(val); ok {
+					newVal := oldVal + margin.InsuranceMargin
+					rate["minimumInsurance"] = newVal
+					c.log.Info(ctx).
+						Str("carrier", carrierName).
+						Uint("business_id", businessID).
+						Float64("original_insurance", oldVal).
+						Float64("insurance_margin", margin.InsuranceMargin).
+						Float64("final_insurance", newVal).
+						Msg("Insurance margin applied to quote")
+				}
 			}
 		}
 	}

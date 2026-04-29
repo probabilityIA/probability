@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/handlers"
 	queueconsumer "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/queue/consumer"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -36,9 +37,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		ssePublisher = queue.NewNoopSSEPublisher()
 	}
 
+	marginReader := cache.NewShippingMarginReader(redisClient, database, logger)
+
 	// 5. Transport Response Consumer
 	if rabbitMQ != nil {
-		responseConsumer := queueconsumer.NewResponseConsumer(rabbitMQ, repo, logger, ssePublisher, redisClient)
+		responseConsumer := queueconsumer.NewResponseConsumer(rabbitMQ, repo, logger, ssePublisher, redisClient, marginReader)
 		go func() {
 			ctx := context.Background()
 			logger.Info(ctx).Msg("🚀 Starting transport response consumer in background...")
