@@ -266,7 +266,8 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 		shipment.Metadata = req.Metadata
 	}
 
-	// Guardar cambios
+	uc.applyCarrierCost(ctx, shipment)
+
 	if err := uc.repo.UpdateShipment(ctx, shipment); err != nil {
 		return nil, fmt.Errorf("error updating shipment: %w", err)
 	}
