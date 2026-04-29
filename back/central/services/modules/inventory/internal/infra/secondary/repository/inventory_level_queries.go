@@ -143,16 +143,21 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 }
 
 func (r *Repository) GetOrCreateLevel(ctx context.Context, productID string, warehouseID uint, locationID *uint, businessID uint) (*entities.InventoryLevel, error) {
+	availableStateID, err := r.resolveAvailableStateID(r.db.Conn(ctx))
+	if err != nil {
+		return nil, err
+	}
+
 	var model models.InventoryLevel
 
-	query := r.db.Conn(ctx).Where("product_id = ? AND warehouse_id = ? AND business_id = ?", productID, warehouseID, businessID)
+	query := r.db.Conn(ctx).Where("product_id = ? AND warehouse_id = ? AND business_id = ? AND state_id = ?", productID, warehouseID, businessID, availableStateID)
 	if locationID != nil {
 		query = query.Where("location_id = ?", *locationID)
 	} else {
 		query = query.Where("location_id IS NULL")
 	}
 
-	err := query.First(&model).Error
+	err = query.First(&model).Error
 	if err == nil {
 		return mappers.LevelModelToEntity(&model), nil
 	}
@@ -160,11 +165,11 @@ func (r *Repository) GetOrCreateLevel(ctx context.Context, productID string, war
 		return nil, err
 	}
 
-	// Crear nuevo nivel
 	model = models.InventoryLevel{
 		ProductID:    productID,
 		WarehouseID:  warehouseID,
 		LocationID:   locationID,
+		StateID:      &availableStateID,
 		BusinessID:   businessID,
 		Quantity:     0,
 		ReservedQty:  0,
@@ -216,10 +221,18 @@ func (r *Repository) getOrCreateLevelTx(tx *gorm.DB, productID string, warehouse
 }
 
 func (r *Repository) getOrCreateLevelKeyTx(tx *gorm.DB, productID string, warehouseID uint, locationID *uint, lotID *uint, stateID *uint, businessID uint) (*models.InventoryLevel, error) {
+	if stateID == nil {
+		availableID, err := r.resolveAvailableStateID(tx)
+		if err != nil {
+			return nil, err
+		}
+		stateID = &availableID
+	}
+
 	var model models.InventoryLevel
 
 	applyKey := func(q *gorm.DB) *gorm.DB {
-		q = q.Where("product_id = ? AND warehouse_id = ? AND business_id = ?", productID, warehouseID, businessID)
+		q = q.Where("product_id = ? AND warehouse_id = ? AND business_id = ? AND state_id = ?", productID, warehouseID, businessID, *stateID)
 		if locationID != nil {
 			q = q.Where("location_id = ?", *locationID)
 		} else {
@@ -229,11 +242,6 @@ func (r *Repository) getOrCreateLevelKeyTx(tx *gorm.DB, productID string, wareho
 			q = q.Where("lot_id = ?", *lotID)
 		} else {
 			q = q.Where("lot_id IS NULL")
-		}
-		if stateID != nil {
-			q = q.Where("state_id = ?", *stateID)
-		} else {
-			q = q.Where("state_id IS NULL")
 		}
 		return q
 	}
