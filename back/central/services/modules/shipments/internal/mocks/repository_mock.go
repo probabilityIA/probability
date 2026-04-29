@@ -217,7 +217,7 @@ func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, busin
 	return 0, "", nil
 }
 
-func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string) error {
+func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string, shipmentID *uint) error {
 	return nil
 }
 

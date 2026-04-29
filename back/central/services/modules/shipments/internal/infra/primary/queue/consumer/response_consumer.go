@@ -225,7 +225,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 
 			if shipment.TotalCost != nil && *shipment.TotalCost > 0 && businessID != 0 {
-				if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber); err != nil {
+				shipmentIDRef := shipment.ID
+				if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber, &shipmentIDRef); err != nil {
 					c.log.Error(ctx).Err(err).
 						Uint("business_id", businessID).
 						Float64("amount", *shipment.TotalCost).
