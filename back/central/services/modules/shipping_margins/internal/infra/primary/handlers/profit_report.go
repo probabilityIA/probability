@@ -9,6 +9,9 @@ import (
 )
 
 func (h *Handlers) ProfitReport(c *gin.Context) {
+	if !h.requireSuperAdmin(c) {
+		return
+	}
 	businessID, ok := h.resolveBusinessID(c)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
