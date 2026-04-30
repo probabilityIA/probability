@@ -442,6 +442,10 @@ func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *T
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
 			shipment.Status = "cancelled"
+			cancelStatus := "Cancelado"
+			cancelDetail := "Cancelado por usuario"
+			shipment.CarrierStatus = &cancelStatus
+			shipment.CarrierStatusDetail = &cancelDetail
 			appendCancelEvent(shipment, response.Provider)
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to cancelled")
