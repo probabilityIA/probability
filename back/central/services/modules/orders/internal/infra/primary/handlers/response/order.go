@@ -133,6 +133,9 @@ type Order struct {
 	// Items de la orden
 	OrderItems []OrderItemResponse `json:"order_items,omitempty"`
 
+	// Información del envío (relación con shipments)
+	Shipment *ShipmentSummary `json:"shipment,omitempty"`
+
 	// Datos estructurados (JSONB) - usando datatypes.JSON
 	Metadata           datatypes.JSON `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON `json:"financial_details,omitempty"`
