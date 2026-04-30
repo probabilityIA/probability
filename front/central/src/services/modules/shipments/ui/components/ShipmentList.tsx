@@ -67,6 +67,21 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
+function SubStatusBadge({ status, carrier, detail }: { status: string; carrier?: string; detail?: string }) {
+    if (!detail && !carrier) return null;
+    const cfg = STATUS_CONFIG[status] || { color: 'bg-gray-50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600' };
+    const text = detail || '';
+    return (
+        <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border-dashed border ${cfg.color}`}
+            title={carrier ? `${carrier}: ${text}` : text}
+        >
+            {carrier && <span className="font-bold uppercase tracking-wider opacity-75">{carrier}</span>}
+            {text && <span className="truncate max-w-[180px]">{text}</span>}
+        </span>
+    );
+}
+
 function formatDate(dateStr?: string) {
     if (!dateStr) return null;
     return new Date(dateStr).toLocaleString('es-CO', {
@@ -271,16 +286,11 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                 </p>
                                 <div className="mt-1.5 flex items-center gap-1 flex-wrap">
                                     <StatusBadge status={shipment.status} />
+                                    <SubStatusBadge status={shipment.status} carrier={shipment.carrier} detail={shipment.carrier_status_detail || shipment.carrier_status} />
                                     {shipment.is_test && (
                                         <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase">TEST</span>
                                     )}
                                 </div>
-                                {(shipment.carrier_status_detail || shipment.carrier_status) && (
-                                    <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-400 leading-tight">
-                                        <span className="font-bold uppercase tracking-wider">{shipment.carrier || 'Carrier'}:</span>{' '}
-                                        {shipment.carrier_status_detail || shipment.carrier_status}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     )}
@@ -989,6 +999,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                         {/* Row 2: Status + TEST badge */}
                                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                                             <StatusBadge status={shipment.status} />
+                                            <SubStatusBadge status={shipment.status} carrier={shipment.carrier} detail={shipment.carrier_status_detail} />
                                             {shipment.is_test && (
                                                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
                                             )}
