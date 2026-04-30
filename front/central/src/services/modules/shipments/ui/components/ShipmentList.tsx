@@ -43,7 +43,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     on_hold: { label: 'Novedad', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-600', icon: <PauseCircle size={12} />, border: 'border-orange-400' },
     returned: { label: 'Devuelto', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-600', icon: <RotateCcw size={12} />, border: 'border-rose-400' },
     failed: { label: 'Fallido', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-600', icon: <XCircle size={12} />, border: 'border-red-400' },
-    cancelled: { label: 'Cancelado', color: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600', icon: <X size={12} />, border: 'border-gray-400' },
+    cancelled: { label: 'Cancelado', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-600', icon: <X size={12} />, border: 'border-red-400' },
 };
 
 const CHIP_STATUS_OPTIONS = [
@@ -345,11 +345,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                 Rastrear
                             </a>
                         )}
-                        {isCancelled ? (
-                            <div className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-400 text-[11px] font-semibold border border-gray-200 dark:border-gray-600 cursor-default">
-                                <X size={11} /> Cancelado
-                            </div>
-                        ) : (
+                        {isCancelled || (shipment.status === 'failed' && !shipment.guide_id) ? null : (
                             <button
                                 onClick={() => onCancel(canelId)}
                                 disabled={cancelingId === canelId}
