@@ -68,16 +68,15 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function SubStatusBadge({ status, carrier, detail }: { status: string; carrier?: string; detail?: string }) {
-    if (!detail && !carrier) return null;
+    if (!detail) return null;
     const cfg = STATUS_CONFIG[status] || { color: 'bg-gray-50 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600' };
-    const text = detail || '';
     return (
         <span
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border-dashed border ${cfg.color}`}
-            title={carrier ? `${carrier}: ${text}` : text}
+            title={carrier ? `${carrier}: ${detail}` : detail}
         >
             {carrier && <span className="font-bold uppercase tracking-wider opacity-75">{carrier}</span>}
-            {text && <span className="truncate max-w-[180px]">{text}</span>}
+            <span className="truncate max-w-[180px]">{detail}</span>
         </span>
     );
 }
