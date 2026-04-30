@@ -169,8 +169,8 @@ export default function OrdersPage() {
             <Modal
                 isOpen={showViewModal}
                 onClose={handleCancel}
-                title={viewMode === 'recommendation' ? undefined : 'Detalles de la Orden'} // Remove title for recommendation
-                transparent={viewMode === 'recommendation'} // Enable transparent mode
+                title={undefined}
+                transparent={viewMode === 'recommendation'}
                 size="full"
             >
                 {selectedOrder && (

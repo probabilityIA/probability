@@ -72,8 +72,9 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
       <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: modalZIndex }}>
         {size === 'full' ? (
           <div
-            className={`${transparent ? 'bg-transparent shadow-none border-none' : (glass ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/20' : 'bg-white dark:bg-gray-800 shadow-2xl rounded-3xl')} flex flex-col overflow-hidden`}
+            className="flex flex-col overflow-hidden bg-white dark:bg-gray-800"
             style={{
+              borderRadius: '32px',
               width: '90vw',
               height: '90vh',
               maxWidth: '90vw',
@@ -98,7 +99,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             )}
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6">
+            <div className="flex-1 overflow-y-auto">
               {children}
             </div>
           </div>
