@@ -67,6 +67,7 @@ func (uc *SyncShipmentsUseCase) SyncShipments(ctx context.Context, filter domain
 				m := map[string]any{
 					"shipment_id":     r.ShipmentID,
 					"tracking_number": r.TrackingNumber,
+					"carrier":         r.Carrier,
 				}
 				if r.EnvioclickIDOrder != nil {
 					m["envioclick_id_order"] = *r.EnvioclickIDOrder

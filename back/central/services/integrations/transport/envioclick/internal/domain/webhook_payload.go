@@ -33,10 +33,13 @@ func (p *WebhookPayload) LatestEvent() *WebhookEvent {
 type NormalizedWebhookUpdate struct {
 	TrackingNumber      string
 	MyShipmentReference string
+	Carrier             string
 	ProbabilityStatus   ProbabilityShipmentStatus
 	RawStatusStep       string
+	RawStatusDetail     string
 	HasIncidence        bool
 	IsUnknownStatus     bool
+	MappedFromTable     bool
 	EventDescription    string
 	EventTimestamp      string
 	ShippedAt           *string

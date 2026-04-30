@@ -23,8 +23,10 @@ func NewWebhookResponsePublisher(inner *ResponsePublisher) domain.IWebhookRespon
 func (p *WebhookResponsePublisher) PublishWebhookUpdate(ctx context.Context, msg *domain.WebhookUpdateMessage) error {
 	data := map[string]any{
 		"tracking_number":    msg.TrackingNumber,
+		"carrier":            msg.Carrier,
 		"probability_status": msg.Status.String(),
 		"raw_status":         msg.RawStatus,
+		"raw_status_detail":  msg.RawStatusDetail,
 		"has_incidence":      msg.HasIncidence,
 		"is_unknown_status":  msg.IsUnknown,
 		"event_description":  msg.Description,

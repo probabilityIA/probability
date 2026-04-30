@@ -110,17 +110,19 @@ func (uc *webhookUseCase) Process(ctx context.Context, req WebhookRequest) (*Web
 	}
 
 	publishMsg := &domain.WebhookUpdateMessage{
-		BusinessID:     0,
-		CorrelationID:  correlationID,
-		TrackingNumber: normalized.TrackingNumber,
-		Status:         normalized.ProbabilityStatus,
-		RawStatus:      normalized.RawStatusStep,
-		HasIncidence:   normalized.HasIncidence,
-		IsUnknown:      normalized.IsUnknownStatus,
-		Description:    normalized.EventDescription,
-		EventTimestamp: normalized.EventTimestamp,
-		ShippedAt:      normalized.ShippedAt,
-		DeliveredAt:    normalized.DeliveredAt,
+		BusinessID:      0,
+		CorrelationID:   correlationID,
+		TrackingNumber:  normalized.TrackingNumber,
+		Carrier:         normalized.Carrier,
+		Status:          normalized.ProbabilityStatus,
+		RawStatus:       normalized.RawStatusStep,
+		RawStatusDetail: normalized.RawStatusDetail,
+		HasIncidence:    normalized.HasIncidence,
+		IsUnknown:       normalized.IsUnknownStatus,
+		Description:     normalized.EventDescription,
+		EventTimestamp:  normalized.EventTimestamp,
+		ShippedAt:       normalized.ShippedAt,
+		DeliveredAt:     normalized.DeliveredAt,
 	}
 
 	if err := uc.publisher.PublishWebhookUpdate(ctx, publishMsg); err != nil {

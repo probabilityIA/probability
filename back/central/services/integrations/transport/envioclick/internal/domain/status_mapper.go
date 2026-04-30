@@ -85,15 +85,18 @@ func (p *WebhookPayload) ToNormalizedUpdate() *NormalizedWebhookUpdate {
 		return nil
 	}
 
-	status, unknown := MapStatusStepToProbability(event.StatusStep, event.Incidence)
+	status, mappedFromTable, unknown := MapEnvioClickEvent(p.Carrier, event.Status, event.StatusStep, event.StatusDetail, event.Incidence)
 
 	update := &NormalizedWebhookUpdate{
 		TrackingNumber:      p.TrackingCode,
 		MyShipmentReference: p.MyShipmentReference,
 		ProbabilityStatus:   status,
 		RawStatusStep:       event.StatusStep,
+		RawStatusDetail:     event.StatusDetail,
+		Carrier:             p.Carrier,
 		HasIncidence:        event.Incidence,
 		IsUnknownStatus:     unknown,
+		MappedFromTable:     mappedFromTable,
 		EventDescription:    event.Description,
 		EventTimestamp:      event.Timestamp,
 	}

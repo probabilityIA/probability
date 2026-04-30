@@ -3,6 +3,7 @@ package domain
 type SyncBatchItem struct {
 	ShipmentID        uint
 	TrackingNumber    string
+	Carrier           string
 	EnvioclickIDOrder *int64
 }
 

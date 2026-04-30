@@ -491,6 +491,15 @@ func (c *ResponseConsumer) handleWebhookUpdate(ctx context.Context, response *Tr
 	previousStatus := shipment.Status
 	shipment.Status = probabilityStatus
 
+	if rawStatus, ok := response.Data["raw_status"].(string); ok && rawStatus != "" {
+		s := rawStatus
+		shipment.CarrierStatus = &s
+	}
+	if rawStatusDetail, ok := response.Data["raw_status_detail"].(string); ok && rawStatusDetail != "" {
+		s := rawStatusDetail
+		shipment.CarrierStatusDetail = &s
+	}
+
 	if shippedAtStr, ok := response.Data["shipped_at"].(string); ok && shippedAtStr != "" {
 		if t := parseFlexibleTime(shippedAtStr); t != nil {
 			shipment.ShippedAt = t
@@ -614,21 +623,25 @@ func mergeTrackingEvent(shipment *domain.Shipment, newEvent map[string]any) {
 
 func appendTrackingEvent(shipment *domain.Shipment, response *TransportResponseMessage, probabilityStatus string) {
 	rawStatus, _ := response.Data["raw_status"].(string)
+	rawStatusDetail, _ := response.Data["raw_status_detail"].(string)
 	description, _ := response.Data["event_description"].(string)
 	eventTimestamp, _ := response.Data["event_timestamp"].(string)
 	hasIncidence, _ := response.Data["has_incidence"].(bool)
+	carrier, _ := response.Data["carrier"].(string)
 
 	if eventTimestamp == "" {
 		eventTimestamp = time.Now().Format(time.RFC3339)
 	}
 
 	newEvent := map[string]any{
-		"date":          eventTimestamp,
-		"status":        probabilityStatus,
-		"raw_status":    rawStatus,
-		"description":   description,
-		"has_incidence": hasIncidence,
-		"source":        response.Provider,
+		"date":              eventTimestamp,
+		"status":            probabilityStatus,
+		"raw_status":        rawStatus,
+		"raw_status_detail": rawStatusDetail,
+		"carrier":           carrier,
+		"description":       description,
+		"has_incidence":     hasIncidence,
+		"source":            response.Provider,
 	}
 	mergeTrackingEvent(shipment, newEvent)
 }

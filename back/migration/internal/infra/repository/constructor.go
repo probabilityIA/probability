@@ -23,5 +23,8 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 // Las migraciones pasadas ya estan aplicadas en produccion y no deben re-correr.
 // Para una nueva migracion: dejar UNA sola llamada activa aqui, ejecutar, y volver a vaciar.
 func (r *Repository) Migrate(ctx context.Context) error {
-	return r.migrateShipmentSyncLogs(ctx)
+	if err := r.migrateShipmentCarrierStatus(ctx); err != nil {
+		return err
+	}
+	return r.backfillShipmentCarrierStatus(ctx)
 }

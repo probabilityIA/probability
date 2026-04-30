@@ -17,7 +17,9 @@ export interface Shipment {
     carrier_code?: string;
     guide_id?: string;
     guide_url?: string;
-    status: 'pending' | 'in_transit' | 'delivered' | 'failed' | 'cancelled';
+    status: 'pending' | 'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'on_hold' | 'failed' | 'returned' | 'cancelled';
+    carrier_status?: string;
+    carrier_status_detail?: string;
     shipped_at?: string;
     delivered_at?: string;
     shipping_cost?: number;

@@ -30,16 +30,18 @@ type IWebhookResponsePublisher interface {
 }
 
 type WebhookUpdateMessage struct {
-	ShipmentID     *uint
-	BusinessID     uint
-	CorrelationID  string
-	TrackingNumber string
-	Status         ProbabilityShipmentStatus
-	RawStatus      string
-	HasIncidence   bool
-	IsUnknown      bool
-	Description    string
-	EventTimestamp string
-	ShippedAt      *string
-	DeliveredAt    *string
+	ShipmentID      *uint
+	BusinessID      uint
+	CorrelationID   string
+	TrackingNumber  string
+	Carrier         string
+	Status          ProbabilityShipmentStatus
+	RawStatus       string
+	RawStatusDetail string
+	HasIncidence    bool
+	IsUnknown       bool
+	Description     string
+	EventTimestamp  string
+	ShippedAt       *string
+	DeliveredAt     *string
 }

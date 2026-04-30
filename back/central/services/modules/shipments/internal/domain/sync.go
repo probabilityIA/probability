@@ -18,6 +18,7 @@ type SyncShipmentsFilter struct {
 type SyncShipmentRow struct {
 	ShipmentID        uint
 	TrackingNumber    string
+	Carrier           string
 	EnvioclickIDOrder *int64
 }
 

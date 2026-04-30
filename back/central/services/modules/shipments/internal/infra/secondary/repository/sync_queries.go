@@ -14,6 +14,7 @@ func (r *Repository) ListShipmentsForSync(ctx context.Context, filter domain.Syn
 		Table("shipments s").
 		Select(`s.id AS shipment_id,
 			s.tracking_number AS tracking_number,
+			COALESCE(s.carrier, '') AS carrier,
 			COALESCE((s.metadata->>'envioclick_id_order')::bigint, 0) AS envioclick_id_order`).
 		Joins("JOIN orders o ON o.id::text = s.order_id").
 		Where("s.deleted_at IS NULL").
@@ -42,6 +43,7 @@ func (r *Repository) ListShipmentsForSync(ctx context.Context, filter domain.Syn
 	type row struct {
 		ShipmentID        uint   `gorm:"column:shipment_id"`
 		TrackingNumber    string `gorm:"column:tracking_number"`
+		Carrier           string `gorm:"column:carrier"`
 		EnvioclickIDOrder int64  `gorm:"column:envioclick_id_order"`
 	}
 	var rows []row
@@ -54,6 +56,7 @@ func (r *Repository) ListShipmentsForSync(ctx context.Context, filter domain.Syn
 		item := domain.SyncShipmentRow{
 			ShipmentID:     r.ShipmentID,
 			TrackingNumber: r.TrackingNumber,
+			Carrier:        r.Carrier,
 		}
 		if r.EnvioclickIDOrder > 0 {
 			id := r.EnvioclickIDOrder

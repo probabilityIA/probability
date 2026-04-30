@@ -467,6 +467,7 @@ func (c *TransportRequestConsumer) processSyncBatch(ctx context.Context, request
 	var rawItems []struct {
 		ShipmentID        uint   `json:"shipment_id"`
 		TrackingNumber    string `json:"tracking_number"`
+		Carrier           string `json:"carrier"`
 		EnvioclickIDOrder *int64 `json:"envioclick_id_order"`
 	}
 	if err := json.Unmarshal(itemsBytes, &rawItems); err != nil {
@@ -478,6 +479,7 @@ func (c *TransportRequestConsumer) processSyncBatch(ctx context.Context, request
 		items = append(items, domain.SyncBatchItem{
 			ShipmentID:        r.ShipmentID,
 			TrackingNumber:    r.TrackingNumber,
+			Carrier:           r.Carrier,
 			EnvioclickIDOrder: r.EnvioclickIDOrder,
 		})
 	}

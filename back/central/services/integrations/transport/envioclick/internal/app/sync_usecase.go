@@ -95,12 +95,13 @@ func (uc *syncUseCase) processSingleResult(
 	rawBody []byte,
 	result *domain.SyncBatchResult,
 ) {
+	probStatus, _, unknown := domain.MapEnvioClickEvent(item.Carrier, apiStatus, "", apiStatusDetail, false)
 	step := domain.ApiStatusToStep(apiStatus, apiStatusDetail)
-	probStatus, unknown := domain.MapStatusStepToProbability(step, false)
 
 	if unknown {
 		uc.log.Warn(ctx).
 			Str("tracking_number", item.TrackingNumber).
+			Str("carrier", item.Carrier).
 			Str("api_status", apiStatus).
 			Str("api_status_detail", apiStatusDetail).
 			Msg("Unknown API status during sync — falling back to in_transit")
@@ -132,17 +133,19 @@ func (uc *syncUseCase) processSingleResult(
 
 	shipmentIDCopy := item.ShipmentID
 	msg := &domain.WebhookUpdateMessage{
-		ShipmentID:     &shipmentIDCopy,
-		BusinessID:     req.BusinessID,
-		CorrelationID:  itemCorrelationID,
-		TrackingNumber: item.TrackingNumber,
-		Status:         probStatus,
-		RawStatus:      step,
-		HasIncidence:   false,
-		IsUnknown:      unknown,
-		Description:    apiStatusDetail,
-		ShippedAt:      realPickupDate,
-		DeliveredAt:    realDeliveryDate,
+		ShipmentID:      &shipmentIDCopy,
+		BusinessID:      req.BusinessID,
+		CorrelationID:   itemCorrelationID,
+		TrackingNumber:  item.TrackingNumber,
+		Carrier:         item.Carrier,
+		Status:          probStatus,
+		RawStatus:       step,
+		RawStatusDetail: apiStatusDetail,
+		HasIncidence:    false,
+		IsUnknown:       unknown,
+		Description:     apiStatusDetail,
+		ShippedAt:       realPickupDate,
+		DeliveredAt:     realDeliveryDate,
 	}
 	if err := uc.publisher.PublishWebhookUpdate(ctx, msg); err != nil {
 		errMsg := "publish failed: " + err.Error()

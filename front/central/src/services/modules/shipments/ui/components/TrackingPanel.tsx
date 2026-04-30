@@ -16,12 +16,16 @@ interface TrackingPanelProps {
   cancelingId: string | null;
 }
 
-// Status badge styles
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
   pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', bgColor: '#fbbf24' },
+  picked_up: { label: 'Recogido', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', bgColor: '#06b6d4' },
   in_transit: { label: 'En Tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', bgColor: '#3b82f6' },
+  out_for_delivery: { label: 'En Reparto', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', bgColor: '#6366f1' },
   delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', bgColor: '#10b981' },
+  on_hold: { label: 'Novedad', color: 'bg-orange-100 text-orange-700 border-orange-200', bgColor: '#f97316' },
   failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', bgColor: '#ef4444' },
+  returned: { label: 'Devuelto', color: 'bg-rose-100 text-rose-700 border-rose-200', bgColor: '#f43f5e' },
+  cancelled: { label: 'Cancelado', color: 'bg-gray-100 text-gray-700 border-gray-200', bgColor: '#6b7280' },
 };
 
 // Map status to progress step (1-5)
@@ -135,6 +139,14 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
               </span>
             )}
           </div>
+          {(shipment.carrier_status_detail || shipment.carrier_status) && (
+            <div className="mt-1.5 flex items-start gap-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-blue-200 font-bold mt-0.5">{shipment.carrier || 'Carrier'}:</span>
+              <span className="text-xs text-blue-50 leading-snug">
+                {shipment.carrier_status_detail || shipment.carrier_status}
+              </span>
+            </div>
+          )}
           {shipment.tracking_number && (
             <p className="mt-2 text-[11px] font-mono text-blue-100 break-all">{shipment.tracking_number}</p>
           )}
@@ -267,30 +279,37 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
                 <div className="absolute left-2.5 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 via-blue-300 to-gray-200 rounded-full" />
 
                 {/* Events */}
-                {tracking.data.history.map((event: EnvioClickTrackHistory, idx: number) => {
+                {tracking.data.history.map((event: EnvioClickTrackHistory & { raw_status?: string; raw_status_detail?: string; carrier?: string; description?: string }, idx: number) => {
                   const isFirst = idx === 0;
+                  const primary = event.raw_status || event.status;
+                  const secondary = event.raw_status_detail;
                   return (
                     <div
                       key={idx}
                       className="relative pb-4 animate-fade-in"
                       style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}
                     >
-                      {/* Circle dot */}
                       <div
                         className={`absolute -left-5 top-1 w-4 h-4 rounded-full ring-2 ring-white transition-all duration-300 ${
                           isFirst ? 'bg-blue-500 scale-110 shadow-md shadow-blue-500/50' : 'bg-gray-300'
                         }`}
                       />
 
-                      {/* Content */}
                       <div className="pt-0.5">
                         <div className="flex items-baseline justify-between gap-2">
                           <p className={`text-sm font-bold ${isFirst ? 'text-blue-700' : 'text-gray-800 dark:text-gray-100'}`}>
-                            {event.status}
+                            {primary}
                           </p>
                           <p className="text-[10px] text-gray-400 flex-shrink-0">{event.date}</p>
                         </div>
-                        {event.description && <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{event.description}</p>}
+                        {secondary && (
+                          <p className="text-xs text-gray-700 dark:text-gray-200 mt-0.5 font-medium">
+                            {secondary}
+                          </p>
+                        )}
+                        {event.description && event.description !== secondary && (
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{event.description}</p>
+                        )}
                         {event.location && (
                           <div className="flex items-center gap-1 mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                             <MapPin size={11} className="flex-shrink-0" />

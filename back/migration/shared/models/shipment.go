@@ -36,9 +36,11 @@ type Shipment struct {
 	GuideURL *string `gorm:"size:512"`       // URL de la guía
 
 	// Estado del envío
-	Status      string     `gorm:"size:64;not null;index;default:'pending'"` // "pending", "in_transit", "delivered", "failed"
-	ShippedAt   *time.Time `gorm:"index"`                                    // Cuándo se envió
-	DeliveredAt *time.Time // Cuándo se entregó
+	Status              string     `gorm:"size:64;not null;index;default:'pending'"`
+	CarrierStatus       *string    `gorm:"size:128;index"`
+	CarrierStatusDetail *string    `gorm:"size:255"`
+	ShippedAt           *time.Time `gorm:"index"`
+	DeliveredAt         *time.Time
 
 	// Información de dirección
 	ShippingAddressID *uint    // FK a addresses (opcional, puede usar la de la orden)

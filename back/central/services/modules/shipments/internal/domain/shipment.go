@@ -32,9 +32,11 @@ type Shipment struct {
 	GuideID  *string `json:"guide_id"`
 	GuideURL *string `json:"guide_url"`
 
-	Status      string     `json:"status"`
-	ShippedAt   *time.Time `json:"shipped_at"`
-	DeliveredAt *time.Time `json:"delivered_at"`
+	Status              string     `json:"status"`
+	CarrierStatus       *string    `json:"carrier_status,omitempty"`
+	CarrierStatusDetail *string    `json:"carrier_status_detail,omitempty"`
+	ShippedAt           *time.Time `json:"shipped_at"`
+	DeliveredAt         *time.Time `json:"delivered_at"`
 
 	ShippingAddressID *uint `json:"shipping_address_id"`
 
