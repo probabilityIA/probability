@@ -275,6 +275,12 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                         <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase">TEST</span>
                                     )}
                                 </div>
+                                {(shipment.carrier_status_detail || shipment.carrier_status) && (
+                                    <p className="mt-1 text-[10px] text-gray-600 dark:text-gray-400 leading-tight">
+                                        <span className="font-bold uppercase tracking-wider">{shipment.carrier || 'Carrier'}:</span>{' '}
+                                        {shipment.carrier_status_detail || shipment.carrier_status}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -450,24 +456,33 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                         <div className="relative pl-5">
                             <div className="absolute left-1.5 top-1 bottom-2 w-px bg-gray-200" />
                             <div className="space-y-4">
-                                {tracking.data.history.map((event: EnvioClickTrackHistory, idx: number) => (
-                                    <div key={idx} className="relative">
-                                        <div className={`absolute -left-5 top-0.5 w-3 h-3 rounded-full ring-2 ring-white ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
-                                        <div>
-                                            <div className="flex items-baseline justify-between gap-2">
-                                                <p className={`text-sm font-semibold ${idx === 0 ? 'text-blue-700' : 'text-gray-800 dark:text-gray-100'}`}>{event.status}</p>
-                                                <p className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{event.date}</p>
-                                            </div>
-                                            {event.description && <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">{event.description}</p>}
-                                            {event.location && (
-                                                <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-400 dark:text-gray-500">
-                                                    <MapPin size={9} />
-                                                    <span>{event.location}</span>
+                                {tracking.data.history.map((event: EnvioClickTrackHistory & { raw_status?: string; raw_status_detail?: string; carrier?: string }, idx: number) => {
+                                    const primary = event.raw_status || STATUS_CONFIG[event.status]?.label || event.status;
+                                    const secondary = event.raw_status_detail;
+                                    const desc = event.description;
+                                    const showDesc = desc && desc !== secondary && desc !== primary;
+                                    return (
+                                        <div key={idx} className="relative">
+                                            <div className={`absolute -left-5 top-0.5 w-3 h-3 rounded-full ring-2 ring-white ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                                            <div>
+                                                <div className="flex items-baseline justify-between gap-2">
+                                                    <p className={`text-sm font-semibold ${idx === 0 ? 'text-blue-700' : 'text-gray-800 dark:text-gray-100'}`}>{primary}</p>
+                                                    <p className="text-[10px] text-gray-400 dark:text-gray-500 flex-shrink-0">{formatDate(event.date) || event.date}</p>
                                                 </div>
-                                            )}
+                                                {secondary && (
+                                                    <p className="text-xs text-gray-700 dark:text-gray-200 mt-0.5 font-medium">{secondary}</p>
+                                                )}
+                                                {showDesc && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{desc}</p>}
+                                                {event.location && (
+                                                    <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+                                                        <MapPin size={9} />
+                                                        <span>{event.location}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     ) : !shipment.tracking_number ? (
