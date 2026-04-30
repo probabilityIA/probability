@@ -452,7 +452,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Envío</span>
                                         <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                            {formatCurrency(order.shipping_cost, order.currency, order.shipping_cost_presentment, order.currency_presentment)}
+                                            {formatCurrency(
+                                                order.shipment?.total_cost ?? order.shipping_cost,
+                                                order.currency,
+                                                order.shipment?.total_cost ?? order.shipping_cost_presentment,
+                                                order.currency_presentment
+                                            )}
                                         </span>
                                     </div>
                                     {((order.shipping_discount && order.shipping_discount > 0) || (order.shipping_discount_presentment && order.shipping_discount_presentment > 0)) && (

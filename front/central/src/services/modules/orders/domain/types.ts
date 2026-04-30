@@ -104,6 +104,7 @@ export interface Order {
         tracking_number?: string;
         guide_url?: string;
         status: string;
+        total_cost?: number;
     };
 
     // Información de fulfillment

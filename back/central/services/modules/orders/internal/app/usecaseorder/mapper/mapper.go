@@ -175,6 +175,7 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 		TrackingNumber: s.TrackingNumber,
 		GuideURL:       s.GuideURL,
 		Status:         s.Status,
+		TotalCost:      s.TotalCost,
 	}
 }
 
@@ -195,6 +196,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 			TrackingNumber: s.TrackingNumber,
 			GuideURL:       s.GuideURL,
 			Status:         s.Status,
+			TotalCost:      s.TotalCost,
 		}
 	}
 
