@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +47,8 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 		})
 		return
 	}
+
+	c.Request.Header.Set("X-Debug-Items-Count", fmt.Sprintf("%d", len(req.Items)))
 
 	domainReq := mappers.MapUpdateOrderRequestToDomain(&req)
 
