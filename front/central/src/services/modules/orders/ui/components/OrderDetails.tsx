@@ -570,8 +570,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         const subtotalWithoutTax = priceWithoutTax * quantity;
                                                         const subtotalWithoutTaxPresentment = priceWithoutTaxPresentment * quantity;
 
-                                                        const itemTaxTotal = tax * quantity;
-                                                        const itemTaxTotalPresentment = taxPresentment * quantity;
+                                                        const itemTaxTotal = tax;
+                                                        const itemTaxTotalPresentment = taxPresentment;
 
                                                         const itemTotal = subtotalWithoutTax + itemTaxTotal - discount;
                                                         const itemTotalPresentment = subtotalWithoutTaxPresentment + itemTaxTotalPresentment - discountPresentment;
