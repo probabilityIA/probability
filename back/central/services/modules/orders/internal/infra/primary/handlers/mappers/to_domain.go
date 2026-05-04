@@ -70,6 +70,7 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 		InvoiceURL:          req.InvoiceURL,
 		InvoiceID:           req.InvoiceID,
 		InvoiceProvider:     req.InvoiceProvider,
+		Items:               req.Items,
 		Metadata:            []byte(req.Metadata),
 		FinancialDetails:    []byte(req.FinancialDetails),
 		ShippingDetails:     []byte(req.ShippingDetails),
