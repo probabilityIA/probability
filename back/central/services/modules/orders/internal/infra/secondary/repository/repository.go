@@ -1077,7 +1077,10 @@ func (r *Repository) SaveOrderItems(ctx context.Context, orderID string, items [
 		dbItems[i] = models.OrderItem{
 			OrderID:               orderID,
 			ProductID:             item.ProductID,
+			ProductSKU:            item.ProductSKU,
+			ProductName:           item.ProductName,
 			VariantID:             item.VariantID,
+			VariantLabel:          item.VariantLabel,
 			Quantity:              item.Quantity,
 			UnitPrice:             item.UnitPrice,
 			TotalPrice:            item.TotalPrice,
