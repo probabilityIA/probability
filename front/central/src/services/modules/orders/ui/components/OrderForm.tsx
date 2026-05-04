@@ -143,6 +143,27 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [shippingComplement, setShippingComplement] = useState('');
     const [showProductModal, setShowProductModal] = useState(false);
 
+    // Reinitialize selectedProducts when order changes
+    useEffect(() => {
+        if (order?.order_items && Array.isArray(order.order_items)) {
+            const mapped = (order.order_items as any[])
+                .map((item: any) => ({
+                    ...item,
+                    id: item.id?.toString() || item.product_id || '',
+                    sku: item.sku || item.product_sku || '',
+                    name: item.name || item.product_name || item.product_title || '',
+                    price: item.price ?? item.unit_price ?? 0,
+                    quantity: item.quantity ?? 1,
+                    stock: item.stock ?? item.stock_quantity ?? 0,
+                    manage_stock: item.manage_stock ?? item.track_inventory ?? false,
+                    thumbnail: item.thumbnail || item.image_url || undefined,
+                    currency: item.currency || order?.currency || 'COP',
+                } as Product))
+                .filter((p: any) => p.id);
+            setSelectedProducts(mapped);
+        }
+    }, [order?.order_items]);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
