@@ -16,8 +16,9 @@ func TestUpdateOrder_Success(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -82,8 +83,9 @@ func TestUpdateOrder_EmptyID(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	req := &dtos.UpdateOrderRequest{}
@@ -104,8 +106,9 @@ func TestUpdateOrder_OrderNotFound(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "non-existent"
@@ -130,8 +133,9 @@ func TestUpdateOrder_StatusChange_PublishesStatusEvent(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -184,8 +188,9 @@ func TestUpdateOrder_PartialUpdate(t *testing.T) {
 	// Arrange - Actualizar solo algunos campos
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -251,8 +256,9 @@ func TestUpdateOrder_RepositoryError(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -326,8 +332,9 @@ func TestUpdateOrder_ConfirmationStatus(t *testing.T) {
 			// Arrange
 			mockRepo := new(mocks.RepositoryMock)
 			mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+			mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 			mockLogger := new(mocks.LoggerMock)
-			useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+			useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 			ctx := context.Background()
 			orderID := "order-uuid-123"

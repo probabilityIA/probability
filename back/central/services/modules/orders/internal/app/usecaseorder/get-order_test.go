@@ -15,8 +15,9 @@ func TestGetOrderByID_Success(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -47,6 +48,8 @@ func TestGetOrderByID_Success(t *testing.T) {
 	// Configurar mock del repositorio
 	mockRepo.On("GetOrderByID", ctx, orderID).
 		Return(expectedOrder, nil)
+	mockInvoiceQuery.On("GetInvoiceByOrderID", ctx, orderID).
+		Return(nil, nil)
 
 	// Act
 	result, err := useCase.GetOrderByID(ctx, orderID)
@@ -69,8 +72,9 @@ func TestGetOrderByID_EmptyID(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 
@@ -90,8 +94,9 @@ func TestGetOrderByID_NotFound(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "non-existent-uuid"
@@ -116,8 +121,9 @@ func TestGetOrderByID_DatabaseError(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -142,8 +148,9 @@ func TestGetOrderByID_WithCompleteData(t *testing.T) {
 	// Arrange - Test con una orden completa con todos los campos
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
+	mockInvoiceQuery := new(mocks.InvoiceQueryMock)
 	mockLogger := new(mocks.LoggerMock)
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
+	useCase := New(mockRepo, mockRabbitPublisher, mockInvoiceQuery, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-complete"
@@ -196,6 +203,8 @@ func TestGetOrderByID_WithCompleteData(t *testing.T) {
 
 	mockRepo.On("GetOrderByID", ctx, orderID).
 		Return(expectedOrder, nil)
+	mockInvoiceQuery.On("GetInvoiceByOrderID", ctx, orderID).
+		Return(nil, nil)
 
 	// Act
 	result, err := useCase.GetOrderByID(ctx, orderID)
