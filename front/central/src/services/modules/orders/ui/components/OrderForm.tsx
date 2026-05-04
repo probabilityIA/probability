@@ -328,6 +328,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             if (barrio.trim()) parts.push(barrio.trim());
             const fullShippingStreet = parts.join(' | ');
 
+            console.log('DEBUG handleSubmit:', {
+                selectedProducts_length: selectedProducts.length,
+                formData_items_length: formData.items?.length || 0,
+                selectedProducts_first: selectedProducts[0],
+                formData_items_first: formData.items?.[0]
+            });
+
             const baseData = {
                 ...formData,
                 shipping_street: fullShippingStreet,
@@ -336,6 +343,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
+
+            console.log('DEBUG baseData items:', baseData.items?.length);
 
             let response;
             if (isEdit && order) {
