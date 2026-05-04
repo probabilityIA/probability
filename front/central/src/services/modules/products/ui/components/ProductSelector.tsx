@@ -87,7 +87,7 @@ export default function ProductSelector({
     const handleDecrement = (productId: string) => {
         onSelect(selectedProducts.map(p =>
             p.id === productId
-                ? { ...p, quantity: Math.max(1, (p.quantity || 1) - 1) }
+                ? { ...p, quantity: Math.max(0, (p.quantity || 1) - 1) }
                 : p
         ));
     };

@@ -8,6 +8,7 @@ type OrderItemResponse struct {
 	ProductName  string   `json:"product_name"`
 	ProductTitle string   `json:"product_title,omitempty"`
 	VariantID    *string  `json:"variant_id,omitempty"`
+	VariantLabel string   `json:"variant_label,omitempty"`
 	Quantity     int      `json:"quantity"`
 	UnitPrice    float64  `json:"unit_price"`
 	TotalPrice   float64  `json:"total_price"`

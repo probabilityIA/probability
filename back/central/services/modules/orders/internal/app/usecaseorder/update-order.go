@@ -253,6 +253,21 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 		order.FulfillmentDetails = req.FulfillmentDetails
 	}
 
+	// Actualizar items si fueron proporcionados
+	if len(req.Items) > 0 {
+		// Eliminar items existentes
+		if err := uc.repo.DeleteOrderItemsByOrderID(ctx, id); err != nil {
+			return nil, fmt.Errorf("error deleting old order items: %w", err)
+		}
+
+		// Crear nuevos items
+		domainItems := mapper.ToDomainOrderItems(req.Items)
+		if err := uc.repo.SaveOrderItems(ctx, id, domainItems); err != nil {
+			return nil, fmt.Errorf("error saving new order items: %w", err)
+		}
+		order.OrderItems = domainItems
+	}
+
 	// Guardar cambios
 	if err := uc.repo.UpdateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)

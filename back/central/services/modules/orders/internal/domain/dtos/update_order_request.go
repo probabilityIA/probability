@@ -87,6 +87,9 @@ type UpdateOrderRequest struct {
 	InvoiceID       *string
 	InvoiceProvider *string
 
+	// Items de la orden
+	Items []interface{} `json:"items,omitempty"`
+
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
 	FinancialDetails   []byte

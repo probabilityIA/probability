@@ -33,6 +33,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const isEdit = !!order;
     const { permissions } = usePermissions();
     const defaultBusinessId = selectedBusinessId || permissions?.business_id || 0;
+    const businessName = (permissions as any)?.business_name || order?.business_name || 'Negocio';
     const { showToast } = useToast();
     const [cachedGuideCarrier, setCachedGuideCarrier] = useState<string | null>(null);
 
@@ -365,8 +366,16 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     };
 
     const handleProductsChange = (products: Product[]) => {
-        setSelectedProducts(products);
-        const subtotal = products.reduce((acc, p) => acc + p.price, 0);
+        // Filter out products with quantity 0 and calculate subtotal
+        const filteredProducts = products.filter(p => (p.quantity || 0) > 0);
+        setSelectedProducts(filteredProducts);
+
+        // Calculate subtotal: sum of (price × quantity) for each product
+        const subtotal = filteredProducts.reduce((acc, p) => {
+            const qty = p.quantity || 1;
+            return acc + (p.price * qty);
+        }, 0);
+
         setFormData(prev => ({
             ...prev,
             subtotal,
@@ -383,36 +392,68 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full bg-[#faf8ff]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            {/* HEADER */}
             {isEdit && order && (
-                <div className="flex items-center gap-3 px-4 py-3 mb-4 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg shadow-sm">
-                    {order.integration_logo_url && (
-                        <img src={order.integration_logo_url} alt="" className="h-8 w-8 object-contain rounded" />
-                    )}
-                    <div>
-                        <p className="text-xs text-white font-medium uppercase tracking-wide">
-                            {order.integration_name || order.integration_type || 'Integración'}
-                        </p>
-                        <p className="text-sm font-bold text-white">
-                            {order.order_number || order.internal_number || order.id}
-                        </p>
+                <div className="flex items-center justify-between px-7 py-3.5 bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] h-14 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="8" cy="5" r="3"/>
+                            <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/>
+                        </svg>
+                        <span className="text-white font-black text-base" style={{ letterSpacing: '0' }}>
+                            Editar Orden
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-white font-bold text-xs" style={{ background: 'rgba(255, 255, 255, 0.2)' }}>
+                            #{order.order_number || order.internal_number || order.id}
+                        </span>
                     </div>
+                    {onCancel && (
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            className="w-7 h-7 rounded flex items-center justify-center text-white transition-colors"
+                            style={{ background: 'rgba(255, 255, 255, 0.15)' }}
+                        >
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             )}
-            {error && (
-                <Alert type="error" onClose={() => setError(null)}>
-                    {error}
-                </Alert>
+
+            {/* STATUS BAR */}
+            {isEdit && order && (
+                <div className="flex items-center gap-3 px-7 py-2 bg-gradient-to-r from-[#4c1d95] to-[#6d28d9] h-9 flex-shrink-0">
+                    <div className="px-3 py-1 rounded-full font-bold text-xs" style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', color: '#e9d5ff', textTransform: 'uppercase' }}>
+                        {businessName}
+                    </div>
+                    <span style={{ color: '#c4b5fd' }} className="text-xs font-bold">
+                        • #{order.order_number || order.internal_number || order.id}
+                    </span>
+                </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* BODY */}
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+                {error && (
+                    <Alert type="error" onClose={() => setError(null)}>
+                        {error}
+                    </Alert>
+                )}
+
+                <div className="grid grid-cols-3 gap-3.5" style={{ gridTemplateRows: 'auto auto auto' }}>
                 <div>
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="8" cy="5" r="3"/>
+                                    <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Cliente</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Cliente</h3>
                         </div>
 
                         {/* Warning banner */}
@@ -427,7 +468,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <div className="space-y-4">
                             {/* DNI — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     DNI / Cédula
                                 </label>
                                 <div className="relative">
@@ -443,7 +484,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         }}
                                         placeholder="Buscar cliente por cédula..."
                                         autoComplete="off"
-                                        className={clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}
+                                        className={`${clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}`}
+                                        style={{ borderColor: '#e8e0f5', height: '38px' }}
                                     />
                                     {clientLoading && activeSearchField === 'dni' && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -463,87 +505,88 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     />
                                 )}
                             </div>
-                            {/* Nombre — with autocomplete */}
-                            <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                                    Nombre *
-                                </label>
+                            {/* Nombre + Apellido — same row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
-                                    <Input
-                                        type="text"
-                                        required
-                                        value={formData.customer_first_name}
-                                        onChange={(e) => handleClientFieldChange('name', e.target.value)}
-                                        onFocus={() => {
-                                            if (formData.customer_first_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
-                                                setShowClientDropdown(true);
-                                                setActiveSearchField('name');
-                                            }
-                                        }}
-                                        placeholder="Buscar por nombre..."
-                                        autoComplete="off"
-                                        className={clientLoading && activeSearchField === 'name' ? 'pr-10' : ''}
-                                    />
-                                    {clientLoading && activeSearchField === 'name' && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                                        </div>
+                                    <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                        Nombre *
+                                    </label>
+                                    <div className="relative">
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={formData.customer_first_name}
+                                            onChange={(e) => handleClientFieldChange('name', e.target.value)}
+                                            onFocus={() => {
+                                                if (formData.customer_first_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                    setShowClientDropdown(true);
+                                                    setActiveSearchField('name');
+                                                }
+                                            }}
+                                            placeholder="Buscar por nombre..."
+                                            autoComplete="off"
+                                            className={clientLoading && activeSearchField === 'name' ? 'pr-10' : ''}
+                                        />
+                                        {clientLoading && activeSearchField === 'name' && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {activeSearchField === 'name' && (
+                                        <ClientAutocomplete
+                                            results={clientResults}
+                                            loading={clientLoading}
+                                            searched={clientSearched}
+                                            visible={showClientDropdown}
+                                            searchTerm={formData.customer_first_name}
+                                            onSelect={handleClientSelect}
+                                            onClose={() => setShowClientDropdown(false)}
+                                        />
                                     )}
                                 </div>
-                                {activeSearchField === 'name' && (
-                                    <ClientAutocomplete
-                                        results={clientResults}
-                                        loading={clientLoading}
-                                        searched={clientSearched}
-                                        visible={showClientDropdown}
-                                        searchTerm={formData.customer_first_name}
-                                        onSelect={handleClientSelect}
-                                        onClose={() => setShowClientDropdown(false)}
-                                    />
-                                )}
-                            </div>
-                            {/* Apellido — with autocomplete */}
-                            <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
-                                    Apellido *
-                                </label>
                                 <div className="relative">
-                                    <Input
-                                        type="text"
-                                        required
-                                        value={formData.customer_last_name}
-                                        onChange={(e) => handleClientFieldChange('lastname', e.target.value)}
-                                        onFocus={() => {
-                                            if (formData.customer_last_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
-                                                setShowClientDropdown(true);
-                                                setActiveSearchField('lastname');
-                                            }
-                                        }}
-                                        placeholder="Buscar por apellido..."
-                                        autoComplete="off"
-                                        className={clientLoading && activeSearchField === 'lastname' ? 'pr-10' : ''}
-                                    />
-                                    {clientLoading && activeSearchField === 'lastname' && (
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                                        </div>
+                                    <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                        Apellido *
+                                    </label>
+                                    <div className="relative">
+                                        <Input
+                                            type="text"
+                                            required
+                                            value={formData.customer_last_name}
+                                            onChange={(e) => handleClientFieldChange('lastname', e.target.value)}
+                                            onFocus={() => {
+                                                if (formData.customer_last_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                    setShowClientDropdown(true);
+                                                    setActiveSearchField('lastname');
+                                                }
+                                            }}
+                                            placeholder="Buscar por apellido..."
+                                            autoComplete="off"
+                                            className={clientLoading && activeSearchField === 'lastname' ? 'pr-10' : ''}
+                                        />
+                                        {clientLoading && activeSearchField === 'lastname' && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {activeSearchField === 'lastname' && (
+                                        <ClientAutocomplete
+                                            results={clientResults}
+                                            loading={clientLoading}
+                                            searched={clientSearched}
+                                            visible={showClientDropdown}
+                                            searchTerm={formData.customer_last_name}
+                                            onSelect={handleClientSelect}
+                                            onClose={() => setShowClientDropdown(false)}
+                                        />
                                     )}
                                 </div>
-                                {activeSearchField === 'lastname' && (
-                                    <ClientAutocomplete
-                                        results={clientResults}
-                                        loading={clientLoading}
-                                        searched={clientSearched}
-                                        visible={showClientDropdown}
-                                        searchTerm={formData.customer_last_name}
-                                        onSelect={handleClientSelect}
-                                        onClose={() => setShowClientDropdown(false)}
-                                    />
-                                )}
                             </div>
                             {/* Email — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Email
                                 </label>
                                 <div className="relative">
@@ -580,7 +623,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Teléfono *
                                 </label>
                                 <div className="flex items-center w-full">
@@ -602,12 +645,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     </div>
                 </div>
                 <div>
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M8 14s-5-4.5-5-8a5 5 0 0 1 10 0c0 3.5-5 8-5 8z"/>
+                                    <circle cx="8" cy="6" r="1.5"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Direccion de Envio</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Direccion de Envio</h3>
                         </div>
 
                         {addressAutofilled && (
@@ -627,7 +673,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Dirección
                                 </label>
                                 <AddressAutocomplete
@@ -656,7 +702,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             {/* City with autocomplete */}
                             <div ref={cityRef} className="relative md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Ciudad y Departamento
                                 </label>
                                 <input
@@ -686,7 +732,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Casa
                                 </label>
                                 <Input
@@ -698,7 +744,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Barrio
                                 </label>
                                 <Input
@@ -710,7 +756,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     País
                                 </label>
                                 <Input
@@ -721,7 +767,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Código Postal
                                 </label>
                                 <Input
@@ -750,16 +796,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
 
                 <div className="space-y-4">
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M8 2v12M5 4.5h4.5a2 2 0 0 1 0 4H6.5a2 2 0 0 0 0 4H12"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Financiera</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Financiera</h3>
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Total *
                                 </label>
                                 <div className="flex items-center w-full">
@@ -803,27 +851,37 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         </div>
                     </div>
 
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="4" width="12" height="9" rx="2"/>
+                                    <path d="M2 8h12M5 11h2M9 11h2"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Pago y Estado</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Pago y Estado</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.is_paid}
-                                        onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                                        className="mr-2"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Orden Pagada</span>
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_paid}
+                                            onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
+                                            className="appearance-none w-5 h-5 border-2 border-purple-400 rounded checked:bg-purple-600 checked:border-purple-600 cursor-pointer"
+                                        />
+                                        {formData.is_paid && (
+                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Orden Pagada</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Estado
                                 </label>
                                 <select
@@ -840,17 +898,24 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <div>
                                 <label className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.invoiceable}
-                                        onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
-                                        className="mr-2"
-                                    />
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Facturable</span>
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.invoiceable}
+                                            onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
+                                            className="appearance-none w-5 h-5 border-2 border-purple-400 rounded checked:bg-purple-600 checked:border-purple-600 cursor-pointer"
+                                        />
+                                        {formData.invoiceable && (
+                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Facturable</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Confirmación
                                 </label>
                                 <select
@@ -872,12 +937,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
 
                 <div className="lg:col-span-2">
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-11 h-11 rounded-[7px] flex items-center justify-center text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M2 6l6-4 6 4v8l-6 4-6-4V6z"/>
+                                    <path d="M8 2v4M2 6l6 4 6-4"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Productos</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Productos</h3>
                         </div>
                         <ProductSelector
                             businessId={formData.business_id || 0}
@@ -889,12 +957,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
 
                 <div>
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl h-full">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5 h-full" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="2" width="10" height="13" rx="1.5"/>
+                                    <path d="M5.5 6h5M5.5 9h5M5.5 12h3"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-gray-700 dark:text-gray-200">Notas</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Notas</h3>
                         </div>
                         <textarea
                             value={formData.notes}
@@ -907,25 +978,30 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
 
                 <div className="lg:col-span-3">
-                    <div className="bg-gray-50/80 dark:bg-gray-700/20 border border-gray-200 dark:border-gray-600/30 p-5 rounded-xl">
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200/50 dark:border-gray-600/30">
-                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="1" y="5" width="10" height="8" rx="1"/>
+                                    <path d="M11 9h2.5L15 12v1h-1"/>
+                                    <circle cx="4" cy="13" r="1.5"/>
+                                    <circle cx="12" cy="13" r="1.5"/>
+                                </svg>
                             </div>
-                            <h3 className="text-base font-semibold text-purple-700 dark:text-purple-400">Logistica</h3>
+                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Logistica</h3>
                         </div>
-                        
+
                         {/* 24-hour processing notice */}
                         <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
                             <p className="text-[11px] leading-tight text-blue-800">
-                                <span className="font-bold uppercase tracking-wider block mb-1">ℹ️ Aviso de Procesamiento</span>
+                                <span className="font-bold uppercase tracking-wider block mb-1">Aviso de Procesamiento</span>
                                 Recuerda que las transportadoras pueden demorar hasta <span className="font-bold">24 horas hábiles</span> en procesar y recolectar los pedidos después de generada la guía.
                             </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Número de Guía
                                 </label>
                                 <Input
@@ -936,7 +1012,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     ID Guía
                                 </label>
                                 <Input
@@ -946,7 +1022,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Bodega
                                 </label>
                                 {warehouses.length > 0 ? (
@@ -976,7 +1052,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Transportadora
                                 </label>
                                 <Input
@@ -991,13 +1067,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            </div>
+
+            {/* FOOTER */}
+            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-white border-t" style={{ borderColor: '#ede8f9', height: '66px', flexShrink: 0 }}>
                 {onCancel && (
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="px-6 py-3 text-base text-white font-semibold rounded-lg bg-purple-700 hover:bg-purple-800 shadow-sm hover:shadow-md transition-all"
+                        className="px-6 py-2.5 text-sm font-semibold rounded h-9.5 transition-all"
+                        style={{ background: '#fff', color: '#7c3aed', border: '1.5px solid #d4c9ef' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f0ff'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; }}
                     >
                         Cancelar
                     </button>
@@ -1005,12 +1086,25 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-3 text-base text-white font-semibold rounded-lg bg-purple-700 hover:bg-purple-800 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2.5 text-sm font-bold text-white rounded h-9.5 transition-all flex items-center gap-2"
+                    style={{
+                        background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
+                        boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(124, 58, 237, 0.45)';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(124, 58, 237, 0.35)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                    }}
                 >
                     {loading && <div className="spinner w-4 h-4" />}
                     {isEdit ? 'Actualizar Orden' : 'Crear Orden'}
                 </button>
             </div>
+
             <Modal
                 isOpen={showProductModal}
                 onClose={() => setShowProductModal(false)}
@@ -1019,7 +1113,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <ProductForm
                     onSuccess={() => {
                         setShowProductModal(false);
-                        // Optional: Refresh products list if needed, but ProductSelector handles it
                     }}
                     onCancel={() => setShowProductModal(false)}
                 />

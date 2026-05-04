@@ -578,7 +578,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                                                         return (
                                                             <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                                <td className="px-3 py-2 text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
+                                                                <td className="px-3 py-2">
+                                                                    <div className="text-gray-900 dark:text-white font-medium">{item.product_name || item.name || item.title || '-'}</div>
+                                                                    {item.variant_label ? (
+                                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{item.variant_label}</div>
+                                                                    ) : null}
+                                                                </td>
                                                                 <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
                                                                 <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{quantity}</td>
                                                                 <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(priceWithoutTax, order.currency, priceWithoutTaxPresentment, order.currency_presentment)}</td>

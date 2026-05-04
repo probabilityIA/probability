@@ -27,6 +27,8 @@ type IRepository interface {
 	GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
 
 	CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error
+	DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error
+	SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error
 	CreateAddresses(ctx context.Context, addresses []*entities.ProbabilityAddress) error
 	CreatePayments(ctx context.Context, payments []*entities.ProbabilityPayment) error
 	CreateShipments(ctx context.Context, shipments []*entities.ProbabilityShipment) error

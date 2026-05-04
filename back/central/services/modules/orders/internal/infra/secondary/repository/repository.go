@@ -1062,3 +1062,40 @@ func (r *Repository) GetOrderHistory(ctx context.Context, orderID string) ([]ent
 
 	return result, nil
 }
+
+func (r *Repository) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
+	return r.db.Conn(ctx).Where("order_id = ?", orderID).Delete(&models.OrderItem{}).Error
+}
+
+func (r *Repository) SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	dbItems := make([]models.OrderItem, len(items))
+	for i, item := range items {
+		dbItems[i] = models.OrderItem{
+			OrderID:               orderID,
+			ProductID:             item.ProductID,
+			VariantID:             item.VariantID,
+			Quantity:              item.Quantity,
+			UnitPrice:             item.UnitPrice,
+			TotalPrice:            item.TotalPrice,
+			Currency:              item.Currency,
+			Discount:              item.Discount,
+			DiscountPercent:       item.DiscountPercent,
+			Tax:                   item.Tax,
+			TaxRate:               item.TaxRate,
+			UnitPriceBase:         item.UnitPriceBase,
+			UnitPriceBasePresentment: item.UnitPriceBasePresentment,
+			UnitPricePresentment:  item.UnitPricePresentment,
+			TotalPricePresentment: item.TotalPricePresentment,
+			DiscountPresentment:   item.DiscountPresentment,
+			TaxPresentment:        item.TaxPresentment,
+			FulfillmentStatus:     item.FulfillmentStatus,
+			Metadata:              datatypes.JSON(item.Metadata),
+		}
+	}
+
+	return r.db.Conn(ctx).Create(dbItems).Error
+}

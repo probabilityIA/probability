@@ -365,7 +365,7 @@ func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderIte
 		if item.Product.ID != "" && item.Product.SKU != "" {
 			domainItem.ProductSKU = item.Product.SKU
 			domainItem.ProductName = item.Product.Name
-			// ProductTitle no existe en el modelo Product, se deja vacío
+			domainItem.VariantLabel = item.Product.VariantLabel
 		}
 
 		result[i] = domainItem

@@ -57,10 +57,23 @@ export default function OrdersPage() {
         return () => setActionButtons(null);
     }, [setActionButtons]);
 
-    const handleView = (order: Order) => {
-        setSelectedOrder(order);
-        setViewMode('details'); // Set mode to details
-        setShowViewModal(true);
+    const handleView = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+                setViewMode('details');
+                setShowViewModal(true);
+            } else {
+                setSelectedOrder(order);
+                setViewMode('details');
+                setShowViewModal(true);
+            }
+        } catch (error) {
+            setSelectedOrder(order);
+            setViewMode('details');
+            setShowViewModal(true);
+        }
     };
 
     const handleViewRecommendation = async (order: Order) => {
@@ -186,7 +199,6 @@ export default function OrdersPage() {
             <Modal
                 isOpen={showEditModal}
                 onClose={handleCancel}
-                title="Editar Orden"
                 size="full"
             >
                 {selectedOrder && (

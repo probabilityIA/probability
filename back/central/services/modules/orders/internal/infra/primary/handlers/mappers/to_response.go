@@ -294,6 +294,7 @@ func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.O
 			ProductName:           item.ProductName,
 			ProductTitle:          item.ProductTitle,
 			VariantID:             item.VariantID,
+			VariantLabel:          item.VariantLabel,
 			Quantity:              item.Quantity,
 			UnitPrice:             item.UnitPrice,
 			TotalPrice:            item.TotalPrice,

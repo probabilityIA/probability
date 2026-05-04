@@ -245,3 +245,61 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		Shipment:               shipment,
 	}
 }
+
+func ToDomainOrderItems(items []interface{}) []entities.ProbabilityOrderItem {
+	if len(items) == 0 {
+		return []entities.ProbabilityOrderItem{}
+	}
+
+	result := make([]entities.ProbabilityOrderItem, len(items))
+	for i, item := range items {
+		data, _ := json.Marshal(item)
+		var itemMap map[string]interface{}
+		_ = json.Unmarshal(data, &itemMap)
+
+		qty := 1.0
+		if q, ok := itemMap["quantity"].(float64); ok {
+			qty = q
+		}
+
+		price := 0.0
+		if p, ok := itemMap["price"].(float64); ok {
+			price = p
+		}
+
+		sku := ""
+		if s, ok := itemMap["sku"].(string); ok {
+			sku = s
+		}
+
+		name := ""
+		if n, ok := itemMap["name"].(string); ok {
+			name = n
+		}
+
+		variantLabel := ""
+		if vl, ok := itemMap["variant_label"].(string); ok {
+			variantLabel = vl
+		}
+
+		var id *string
+		if idVal, ok := itemMap["id"].(string); ok {
+			id = &idVal
+		}
+
+		result[i] = entities.ProbabilityOrderItem{
+			ProductID:     id,
+			ProductSKU:    sku,
+			ProductName:   name,
+			VariantLabel:  variantLabel,
+			VariantID:     nil,
+			Quantity:      int(qty),
+			UnitPrice:     price,
+			TotalPrice:    price * qty,
+			Currency:      "COP",
+			Discount:      0,
+			Tax:           0,
+		}
+	}
+	return result
+}
