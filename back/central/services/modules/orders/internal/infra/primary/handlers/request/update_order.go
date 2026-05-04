@@ -91,8 +91,8 @@ type UpdateOrder struct {
 	InvoiceID       *string `json:"invoice_id"`
 	InvoiceProvider *string `json:"invoice_provider"`
 
-	// Items de la orden
-	Items []interface{} `json:"items"`
+	// Items de la orden (como JSON raw para máxima flexibilidad)
+	Items []map[string]interface{} `json:"items"`
 
 	// Datos estructurados (JSONB)
 	Metadata           datatypes.JSON `json:"metadata"`

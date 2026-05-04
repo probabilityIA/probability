@@ -246,16 +246,13 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 	}
 }
 
-func ToDomainOrderItems(items []interface{}) []entities.ProbabilityOrderItem {
+func ToDomainOrderItems(items []map[string]interface{}) []entities.ProbabilityOrderItem {
 	if len(items) == 0 {
 		return []entities.ProbabilityOrderItem{}
 	}
 
 	result := make([]entities.ProbabilityOrderItem, len(items))
-	for i, item := range items {
-		data, _ := json.Marshal(item)
-		var itemMap map[string]interface{}
-		_ = json.Unmarshal(data, &itemMap)
+	for i, itemMap := range items {
 
 		qty := 1.0
 		if q, ok := itemMap["quantity"].(float64); ok {

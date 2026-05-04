@@ -88,7 +88,7 @@ type UpdateOrderRequest struct {
 	InvoiceProvider *string
 
 	// Items de la orden
-	Items []interface{} `json:"items,omitempty"`
+	Items []map[string]interface{} `json:"items,omitempty"`
 
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
