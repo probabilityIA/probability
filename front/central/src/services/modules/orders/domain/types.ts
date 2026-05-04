@@ -168,6 +168,15 @@ export interface Order {
     payment_details?: any;
     fulfillment_details?: any;
 
+    // Información de factura asociada (si existe y está emitida)
+    invoice?: {
+        id: number;
+        invoice_number: string;
+        status: string;
+        issued_at?: string;
+        retention_amount: number;
+    };
+
     // Timestamps
     occurred_at: string;
     imported_at: string;

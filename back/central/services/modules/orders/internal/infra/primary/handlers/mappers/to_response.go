@@ -65,6 +65,17 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		}
 	}
 
+	var invoice *response.InvoicePreview
+	if dto.Invoice != nil {
+		invoice = &response.InvoicePreview{
+			ID:              dto.Invoice.ID,
+			InvoiceNumber:   dto.Invoice.InvoiceNumber,
+			Status:          dto.Invoice.Status,
+			IssuedAt:        dto.Invoice.IssuedAt,
+			RetentionAmount: dto.Invoice.RetentionAmount,
+		}
+	}
+
 	return &response.Order{
 		ID:                      dto.ID,
 		CreatedAt:               dto.CreatedAt,
@@ -153,6 +164,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		OrderStatusURL:          dto.OrderStatusURL,
 		OrderItems:              mapOrderItemsToResponse(dto.OrderItems),
 		Shipment:                shipment,
+		Invoice:                 invoice,
 		Metadata:                metadataJSON,
 		FinancialDetails:        financialDetailsJSON,
 		ShippingDetails:         shippingDetailsJSON,

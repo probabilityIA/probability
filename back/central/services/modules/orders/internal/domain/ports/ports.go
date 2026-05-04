@@ -106,3 +106,7 @@ type IOrderRabbitPublisher interface {
 	PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
 }
+
+type IInvoiceQueryPort interface {
+	GetInvoiceByOrderID(ctx context.Context, orderID string) (*dtos.InvoiceData, error)
+}

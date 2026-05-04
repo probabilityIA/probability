@@ -145,9 +145,21 @@ type Order struct {
 	NegativeFactors    []string        `json:"negative_factors,omitempty"`
 	ScoreBreakdown     json.RawMessage `json:"score_breakdown,omitempty"`
 
+	// Información de factura asociada (si existe y está emitida)
+	Invoice *InvoicePreview `json:"invoice,omitempty"`
+
 	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`
 	ImportedAt time.Time `json:"imported_at"`
+}
+
+// InvoicePreview contiene datos resumidos de la factura asociada
+type InvoicePreview struct {
+	ID              uint       `json:"id"`
+	InvoiceNumber   string     `json:"invoice_number"`
+	Status          string     `json:"status"`
+	IssuedAt        *time.Time `json:"issued_at,omitempty"`
+	RetentionAmount float64    `json:"retention_amount"`
 }
 
 // OrderStatusInfo contiene información del estado de orden

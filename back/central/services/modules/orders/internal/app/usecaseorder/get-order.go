@@ -20,5 +20,16 @@ func (uc *UseCaseOrder) GetOrderByID(ctx context.Context, id string) (*dtos.Orde
 		return nil, fmt.Errorf("error getting order: %w", err)
 	}
 
-	return mapper.ToOrderResponse(order), nil
+	orderResp := mapper.ToOrderResponse(order)
+
+	if uc.invoiceQueryPort != nil {
+		invoice, err := uc.invoiceQueryPort.GetInvoiceByOrderID(ctx, id)
+		if err != nil {
+			uc.logger.Warn().Err(err).Str("order_id", id).Msg("Failed to fetch invoice for order")
+		} else if invoice != nil {
+			orderResp.Invoice = invoice
+		}
+	}
+
+	return orderResp, nil
 }

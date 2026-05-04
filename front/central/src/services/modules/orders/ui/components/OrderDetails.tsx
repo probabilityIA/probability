@@ -8,6 +8,7 @@ import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { ChangeStatusModal } from './ChangeStatusModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { useToast } from '@/shared/providers/toast-provider';
+import { IVAIncludedBadge } from './IVAIncludedBadge';
 
 interface Quotation {
     carrier: string;
@@ -399,16 +400,30 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                             {loadingDetails ? (
                                 <div className="py-4 text-center text-xs text-purple-200">Cargando...</div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div>
+                                <div className="flex flex-col">
+                                    <div className="pb-4 mb-4 border-b border-white/30">
+                                        <p className="text-xs font-bold uppercase tracking-widest text-white mb-2">Factura</p>
+                                        {order.invoice && order.invoice.status === 'issued' ? (
+                                            <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-green-500 text-white text-[10px] font-bold whitespace-nowrap gap-1">
+                                                <span className="w-2 h-2 rounded-full bg-white"></span>
+                                                Factura emitida
+                                            </div>
+                                        ) : (
+                                            <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold whitespace-nowrap gap-1">
+                                                <span className="w-2 h-2 rounded-full bg-white"></span>
+                                                Factura sin emitir
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="pb-4 mb-4 border-b border-white/30">
                                         <p className="text-xs font-bold uppercase tracking-widest text-white mb-1">Nº Orden</p>
                                         <p className="text-lg font-black text-white">{order.order_number || '-'}</p>
                                     </div>
-                                    <div>
+                                    <div className="pb-4 mb-4 border-b border-white/30">
                                         <p className="text-xs font-bold uppercase tracking-widest text-white mb-1">Número Interno</p>
                                         <p className="text-xs font-semibold text-white break-all">{order.internal_number || '-'}</p>
                                     </div>
-                                    <div>
+                                    <div className="pb-4 mb-4 border-b border-white/30">
                                         <p className="text-xs font-bold uppercase tracking-widest text-white mb-1">Plataforma</p>
                                         {order.integration_logo_url ? (
                                             <img
@@ -421,7 +436,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             <p className="text-xs font-semibold text-white capitalize">{order.platform || '-'}</p>
                                         )}
                                     </div>
-                                    <div>
+                                    <div className="pb-4 mb-4 border-b border-white/30">
                                         <p className="text-xs font-bold uppercase tracking-widest text-white mb-1">Estado</p>
                                         <div className="flex flex-col items-center gap-2">
                                             {order.order_status?.color ? (
@@ -463,13 +478,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         {/* Centro - Contenido Principal */}
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-3 space-y-3">
-                                {/* Resumen Financiero - 3 tarjetas */}
+                                {/* Resumen Financiero - 4 tarjetas */}
                                 <div className="flex gap-3">
                                     <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Subtotal</p>
                                         <p className="text-base font-black text-gray-900 dark:text-white">
                                             {formatCurrency(order.subtotal, order.currency, order.subtotal_presentment, order.currency_presentment)}
                                         </p>
+                                        {order.tax > 0 && ['shopify', 'amazon', 'mercadolibre'].includes(order.platform?.toLowerCase() || '') && (
+                                            <IVAIncludedBadge
+                                                ivaAmount={order.tax}
+                                                currency={order.currency}
+                                                currencyPresentment={order.currency_presentment}
+                                                amountPresentment={order.tax_presentment}
+                                            />
+                                        )}
                                     </div>
                                     <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Envío</p>
@@ -481,14 +504,28 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 order.currency_presentment
                                             )}
                                         </p>
+                                        {(order.shipment?.total_cost ?? order.shipping_cost) > 0 && ['shopify', 'amazon', 'mercadolibre'].includes(order.platform?.toLowerCase() || '') && (
+                                            <IVAIncludedBadge
+                                                ivaAmount={(order.shipment?.total_cost ?? order.shipping_cost) / 1.19 * 0.19}
+                                                currency={order.currency}
+                                                currencyPresentment={order.currency_presentment}
+                                                amountPresentment={(order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) / 1.19 * 0.19}
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Rete Fuente</p>
+                                        <p className="text-base font-black text-gray-900 dark:text-white">
+                                            {order.invoice?.retention_amount ? formatCurrency(order.invoice.retention_amount, order.currency) : '-'}
+                                        </p>
                                     </div>
                                     <div className="flex-1 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-3">
                                         <p className="text-[9px] font-bold text-purple-600 dark:text-purple-300 uppercase tracking-wider mb-1">Total</p>
                                         <p className="text-xl font-black text-purple-700 dark:text-purple-400">
                                             {formatCurrency(
-                                                (order.subtotal || 0) + (order.shipment?.total_cost ?? order.shipping_cost ?? 0),
+                                                (order.subtotal || 0) + (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.invoice?.retention_amount || 0),
                                                 order.currency,
-                                                (order.subtotal_presentment || 0) + (order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0),
+                                                (order.subtotal_presentment || 0) + (order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) - (order.invoice?.retention_amount || 0),
                                                 order.currency_presentment
                                             )}
                                         </p>
@@ -510,28 +547,53 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         <th className="px-3 py-2 text-left font-bold text-purple-700 dark:text-purple-300 uppercase">Producto</th>
                                                         <th className="px-3 py-2 text-left font-bold text-purple-700 dark:text-purple-300 uppercase">SKU</th>
                                                         <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Cant</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Precio</th>
+                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Precio s/IVA</th>
+                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">IVA</th>
                                                         <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Desc.</th>
                                                         <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {(order.order_items || items).map((item: any, idx: number) => (
-                                                        <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                                            <td className="px-3 py-2 text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
-                                                            <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
-                                                            <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{item.quantity || 0}</td>
-                                                            <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
-                                                            <td className="px-3 py-2 text-right">
-                                                                {(item.discount > 0 || (item.discount_presentment && item.discount_presentment > 0)) ? (
-                                                                    <span className="text-green-600 font-bold">-{formatCurrency(item.discount, order.currency, item.discount_presentment, order.currency_presentment)}</span>
-                                                                ) : (
-                                                                    <span className="text-gray-400">-</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-right text-purple-700 dark:text-purple-300 font-bold">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
-                                                        </tr>
-                                                    ))}
+                                                    {(order.order_items || items).map((item: any, idx: number) => {
+                                                        const unitPrice = item.unit_price || item.price || 0;
+                                                        const unitPricePresentment = item.unit_price_presentment || 0;
+                                                        const taxRate = item.tax_rate || 0;
+                                                        const quantity = item.quantity || 0;
+                                                        const discount = item.discount || 0;
+                                                        const discountPresentment = item.discount_presentment || 0;
+                                                        const tax = item.tax || 0;
+                                                        const taxPresentment = item.tax_presentment || 0;
+
+                                                        const priceWithoutTax = taxRate > 0 ? unitPrice / (1 + taxRate) : unitPrice;
+                                                        const priceWithoutTaxPresentment = taxRate > 0 && unitPricePresentment > 0 ? unitPricePresentment / (1 + taxRate) : unitPricePresentment;
+
+                                                        const subtotalWithoutTax = priceWithoutTax * quantity;
+                                                        const subtotalWithoutTaxPresentment = priceWithoutTaxPresentment * quantity;
+
+                                                        const itemTaxTotal = tax * quantity;
+                                                        const itemTaxTotalPresentment = taxPresentment * quantity;
+
+                                                        const itemTotal = subtotalWithoutTax + itemTaxTotal - discount;
+                                                        const itemTotalPresentment = subtotalWithoutTaxPresentment + itemTaxTotalPresentment - discountPresentment;
+
+                                                        return (
+                                                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                <td className="px-3 py-2 text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
+                                                                <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
+                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{quantity}</td>
+                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(priceWithoutTax, order.currency, priceWithoutTaxPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(itemTaxTotal, order.currency, itemTaxTotalPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-2 text-right">
+                                                                    {(discount > 0 || discountPresentment > 0) ? (
+                                                                        <span className="text-green-600 font-bold">-{formatCurrency(discount, order.currency, discountPresentment, order.currency_presentment)}</span>
+                                                                    ) : (
+                                                                        <span className="text-gray-400">-</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-3 py-2 text-right text-purple-700 dark:text-purple-300 font-bold">{formatCurrency(itemTotal, order.currency, itemTotalPresentment, order.currency_presentment)}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>
