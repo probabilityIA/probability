@@ -134,12 +134,13 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                                                 ? {
                                                     borderColor: 'var(--color-primary-500)',
                                                     boxShadow: '0 0 0 2px var(--color-primary-100)',
+                                                    backgroundColor: color,
                                                   }
                                                 : {
                                                     borderColor: '#e5e7eb',
+                                                    backgroundColor: color,
                                                   }
                                         }
-                                        style={{ backgroundColor: color }}
                                         title={color}
                                     />
                                 ))}
