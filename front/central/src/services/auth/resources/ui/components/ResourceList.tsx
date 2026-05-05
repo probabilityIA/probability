@@ -145,9 +145,9 @@ export const ResourceList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead style={{ backgroundColor: 'var(--color-primary-200)' }}>
+                            <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         ID
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">

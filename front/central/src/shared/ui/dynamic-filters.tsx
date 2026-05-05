@@ -226,7 +226,6 @@ export function DynamicFilters({
 
                             {onDownload && (
                                 <button
-                                    style={{ background: '#10b981' }}
                                     onClick={() => {
                                         onDownload();
                                         // close dropdown state
@@ -234,7 +233,7 @@ export function DynamicFilters({
                                         setSelectedFilterKey(null);
                                         setTempValue('');
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                    className="btn btn-tertiary flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg"
                                     title="Descargar órdenes en Excel"
                                 >
                                     {downloadButtonText}

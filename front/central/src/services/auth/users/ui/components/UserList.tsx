@@ -423,33 +423,33 @@ export const UserList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead style={{ backgroundColor: 'var(--color-primary-200)' }}>
+                            <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Avatar
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Email
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Teléfono
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Scope
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Rol
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         Activo
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
+                                    <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>

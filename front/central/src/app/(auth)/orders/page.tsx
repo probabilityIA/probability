@@ -31,22 +31,19 @@ export default function OrdersPage() {
             <>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     + Nueva Orden
                 </button>
                 <button
                     onClick={() => setShowMassUploadModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     Carga Masiva
                 </button>
                 <button
                     onClick={() => setShowMassGuideModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     Guías Masivas
                 </button>
