@@ -165,7 +165,7 @@ export const PermissionList: React.FC = () => {
         {
             key: 'resource',
             label: 'Recurso',
-            render: (_, row) => <span className="text-blue-600">{row.resource}</span>,
+            render: (_, row) => <span style={{ color: 'var(--color-primary-600)' }}>{row.resource}</span>,
         },
         { key: 'action', label: 'Acción' },
         { key: 'scope_name', label: 'Scope' },
@@ -182,7 +182,7 @@ export const PermissionList: React.FC = () => {
                 <div className="flex justify-end gap-2">
                     <button
                         onClick={() => { setEditingPermission(row); setShowCreateModal(true); }}
-                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors"
+                        className="p-2 btn btn-quaternary rounded-md transition-colors"
                         title="Editar permiso"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ export const PermissionList: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setDeleteId(row.id)}
-                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors"
+                        className="p-2 btn btn-danger rounded-md transition-colors"
                         title="Eliminar permiso"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

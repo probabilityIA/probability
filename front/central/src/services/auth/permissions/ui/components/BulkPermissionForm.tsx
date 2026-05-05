@@ -128,13 +128,19 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                     {results.map((r, i) => (
                         <div key={i} className="flex items-center gap-3 px-4 py-3">
                             {r.success ? (
-                                <span className="w-5 h-5 flex items-center justify-center rounded-full bg-green-100 text-green-600">
+                                <span
+                                  className="w-5 h-5 flex items-center justify-center rounded-full"
+                                  style={{ backgroundColor: 'var(--success-light)', color: 'var(--success)' }}
+                                >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                     </svg>
                                 </span>
                             ) : (
-                                <span className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                                <span
+                                  className="w-5 h-5 flex items-center justify-center rounded-full"
+                                  style={{ backgroundColor: 'var(--error-light)', color: 'var(--error)' }}
+                                >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -142,7 +148,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                             )}
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.name}</p>
-                                {!r.success && <p className="text-xs text-red-600 truncate">{r.error}</p>}
+                                {!r.success && <p className="text-xs truncate" style={{ color: 'var(--error)' }}>{r.error}</p>}
                             </div>
                         </div>
                     ))}
@@ -206,14 +212,19 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                         <button
                             type="button"
                             onClick={handleToggleAll}
-                            className="text-xs text-blue-600 hover:underline"
+                            className="text-xs hover:underline"
+                            style={{ color: 'var(--color-primary-600)' }}
                         >
                             {actionRows.every(r => r.checked) ? 'Deseleccionar todo' : 'Seleccionar todo'}
                         </button>
                     </div>
                     <div className="border rounded-lg divide-y divide-gray-200 max-h-72 overflow-y-auto">
                         {actionRows.map((row, i) => (
-                            <div key={row.action.id} className={`flex items-center gap-3 px-4 py-3 ${row.checked ? 'bg-blue-50' : 'bg-white'}`}>
+                            <div
+                              key={row.action.id}
+                              className="flex items-center gap-3 px-4 py-3"
+                              style={{ backgroundColor: row.checked ? 'var(--color-primary-50)' : 'white' }}
+                            >
                                 <input
                                     type="checkbox"
                                     checked={row.checked}
