@@ -55,6 +55,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/tinycolor2": "^1.4.6",
     "@vitejs/plugin-react": "^5.1.4",
     "dotenv": "^17.4.2",
     "eslint": "^9",
