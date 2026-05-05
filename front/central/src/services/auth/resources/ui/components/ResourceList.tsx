@@ -145,7 +145,7 @@ export const ResourceList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead style={{ backgroundColor: 'var(--color-secondary-600)' }}>
+                            <thead style={{ backgroundColor: 'var(--color-secondary-500)', color: 'white' }}>
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
@@ -246,32 +246,20 @@ export const ResourceList: React.FC = () => {
                                         <button
                                             onClick={() => setPage(page - 1)}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border text-xs sm:text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                            style={{
-                                              borderColor: 'var(--color-secondary-600)',
-                                              backgroundColor: 'var(--color-secondary-600)',
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-700)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-600)'}
+                                            className="btn btn-secondary rounded-l-md rounded-r-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Anterior
                                         </button>
                                         <span
                                           className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
-                                          style={{ borderColor: 'var(--color-secondary-600)', backgroundColor: 'white' }}
+                                          style={{ borderColor: 'var(--color-secondary-500)' }}
                                         >
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setPage(page + 1)}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border text-xs sm:text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                            style={{
-                                              borderColor: 'var(--color-secondary-600)',
-                                              backgroundColor: 'var(--color-secondary-600)',
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-700)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-600)'}
+                                            className="btn btn-secondary rounded-r-md rounded-l-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                         </button>
