@@ -57,7 +57,7 @@ export default function WalletPage() {
                                 setSelectedBusinessId(val ? Number(val) : null);
                             }}
                             className="px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 min-w-[200px]"
-                            style={{ border: `1px solid var(--color-primary-300)`, focusRingColor: 'var(--color-primary-500)' }}
+                            style={{ border: `1px solid var(--color-primary-300)` }}
                         >
                             <option value="">Vista Administrativa</option>
                             {businesses.map((b) => (
