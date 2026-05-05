@@ -429,7 +429,7 @@ export const BusinessList: React.FC = () => {
                                                 {isSuperAdmin && (
                                                     <button
                                                         onClick={() => handleOpenResources(business)}
-                                                        className="p-2 btn btn-secondary rounded-md transition-colors duration-200"
+                                                        className="p-2 btn btn-tertiary rounded-md transition-colors duration-200"
                                                         title="Configurar recursos"
                                                         aria-label="Configurar recursos"
                                                     >
