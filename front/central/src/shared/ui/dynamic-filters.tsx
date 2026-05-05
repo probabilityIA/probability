@@ -168,7 +168,13 @@ export function DynamicFilters({
     };
 
     return (
-        <div className={`bg-purple-50 dark:bg-gray-800 p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-purple-200 dark:border-gray-700 border-b-0 ${className}`}>
+        <div
+          className={`p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 ${className}`}
+          style={{
+            backgroundColor: 'var(--color-primary-50)',
+            borderColor: 'var(--color-primary-200)',
+          }}
+        >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Botón Añadir Filtro y Chips */}
                 <div className="flex-1 flex flex-wrap items-center gap-2">
@@ -177,8 +183,7 @@ export function DynamicFilters({
                             <button
                                 ref={buttonRef}
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                style={{ background: '#7c3aed' }}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                className="btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                             >
                                 <FunnelIcon className="w-4 h-4" />
                                 Añadir Filtro
@@ -186,12 +191,11 @@ export function DynamicFilters({
 
                             {onTestGuide && (
                                 <button
-                                    style={{ background: '#7c3aed' }}
                                     onClick={() => {
                                         onTestGuide();
                                         setIsDropdownOpen(false);
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                    className="btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                                 >
                                     Guía Envío
                                 </button>

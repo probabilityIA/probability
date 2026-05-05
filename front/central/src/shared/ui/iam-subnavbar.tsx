@@ -38,7 +38,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
                                 href={item.href}
                                 className={`px-4 py-3 text-base font-medium whitespace-nowrap transition-all rounded-lg flex items-center gap-2 ${
                                     isActive(item.href)
-                                        ? 'bg-purple-600 dark:bg-purple-600 text-white shadow-md'
+                                        ? 'btn btn-secondary text-white shadow-md'
                                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white hover:shadow-md'
                                 }`}
                             >
