@@ -328,21 +328,21 @@ export const BusinessList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead style={{ backgroundColor: 'var(--color-secondary-500)' }}>
+                        <thead style={{ backgroundColor: 'var(--color-primary-200)' }}>
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                     ID
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                     Logo
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                     Nombre
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                     Activo
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                     Acciones
                                 </th>
                             </tr>

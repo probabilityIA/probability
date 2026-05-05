@@ -109,7 +109,7 @@ export const ResourceList: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Usuarios</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:">Usuarios</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -145,21 +145,21 @@ export const ResourceList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead style={{ backgroundColor: '#be185d' }}>
+                            <thead style={{ backgroundColor: 'var(--color-primary-200)' }}>
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--color-primary-900)' }}>
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Descripción
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Tipo de Negocio
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium  uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
@@ -180,10 +180,10 @@ export const ResourceList: React.FC = () => {
                                 ) : (
                                     resources.map((resource) => (
                                         <tr key={resource.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:">
                                                 {resource.id}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:">
                                                 {resource.name}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
@@ -279,7 +279,7 @@ export const ResourceList: React.FC = () => {
                                                 setPageSize(newPageSize);
                                                 setPage(1);
                                             }}
-                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark: bg-white dark:bg-gray-700"
                                         >
                                             <option value="10">10</option>
                                             <option value="20">20</option>

@@ -2,23 +2,33 @@
 
 ## Sistema de Colores Dinámicos (CSS Variables)
 
+### ⚠️ JERARQUÍA ESTÁNDAR DE TONALIDADES
+
+```
+Nivel 0 (Más claro):   var(--color-*-50)    [Fondos alternados, hover states]
+Nivel 1 (Claro):       var(--color-*-200)   [CABECERAS DE TABLA] ← ESTÁNDAR GLOBAL
+Nivel 2 (Medio):       var(--color-*-500)   [Botones primarios, elementos principales]
+Nivel 3 (Oscuro):      var(--color-*-600)   [Texto activo, iconos]
+Nivel 4 (Muy oscuro):  var(--color-*-900)   [Texto en fondos claros]
+```
+
 Todos los módulos deben usar estas variables CSS inyectadas por el ThemeProvider:
 
 ### Colores Primarios (Primary - Azul)
-- `var(--color-primary-50)` → Fondo muy claro
-- `var(--color-primary-100)` → Fondo claro
-- `var(--color-primary-200)` → Bordes, divisores
-- `var(--color-primary-500)` → Color activo, focus rings
-- `var(--color-primary-600)` → Texto activo, iconos
-- `var(--color-primary-900)` → Texto oscuro
+- `var(--color-primary-50)` → Fondos alternados, hover states
+- `var(--color-primary-200)` → **CABECERAS DE TABLA** (estándar global)
+- `var(--color-primary-500)` → Botones primarios, tabs activos, elements activos
+- `var(--color-primary-600)` → Checkboxes accentColor, texto activo
+- `var(--color-primary-900)` → Texto en headers, etiquetas
 
 **Casos de uso:**
-- Inputs, selects (focus ring)
-- Botones primarios
-- Tabs activos
-- Checkboxes (accentColor)
-- Banners informativos
-- Campos activos
+- Inputs, selects (focus ring con primary-500)
+- Botones primarios (background primary-500)
+- Tabs activos (border-primary-500, text-primary-500)
+- Checkboxes (accentColor primary-600)
+- TODAS las cabeceras de tabla (background primary-200, text primary-900)
+- Banners informativos (background primary-50, border primary-200)
+- Campos activos (focus con primary-500)
 
 ---
 
@@ -129,31 +139,62 @@ Estos colores NO cambian con la selección de tema:
 
 ## Ejemplo de Implementación
 
+### Cabeceras de Tabla (ESTÁNDAR GLOBAL)
 ```tsx
-// ✅ CORRECTO
+// ✅ CORRECTO - TODAS las cabeceras usan primary-200
+<thead style={{ backgroundColor: 'var(--color-primary-200)' }}>
+  <tr>
+    <th style={{ color: 'var(--color-primary-900)' }}>Columna</th>
+  </tr>
+</thead>
+```
+
+### Botones Primarios
+```tsx
+// ✅ CORRECTO - Usar primary-500
 <button
   className="px-4 py-2 rounded-lg text-white"
+  style={{ backgroundColor: 'var(--color-primary-500)' }}
+>
+  Acción Principal
+</button>
+```
+
+### Botones de Acción (Editar, Asignar)
+```tsx
+// ✅ CORRECTO - Usar tertiary-500
+<button
+  className="btn btn-tertiary"
   style={{ backgroundColor: 'var(--color-tertiary-500)' }}
 >
-  Guardar
+  Editar
 </button>
+```
 
-// ✅ CORRECTO - Checkboxes
+### Checkboxes
+```tsx
+// ✅ CORRECTO
 <input
   type="checkbox"
   className="h-4 w-4 rounded border-gray-300"
   style={{ accentColor: 'var(--color-primary-600)' }}
 />
+```
 
-// ✅ CORRECTO - Focus states
+### Focus States en Inputs
+```tsx
+// ✅ CORRECTO
 <input
   type="text"
   className="border border-gray-300 rounded"
   onFocus={(e) => (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-primary-500)'}
   onBlur={(e) => (e.target as HTMLInputElement).style.boxShadow = 'none'}
 />
+```
 
-// ✅ CORRECTO - Estados semánticos
+### Estados Semánticos
+```tsx
+// ✅ CORRECTO - Success
 <span style={{
   backgroundColor: '#dcfce7',
   color: '#166534'
@@ -161,11 +202,30 @@ Estos colores NO cambian con la selección de tema:
   Activo
 </span>
 
-// ❌ INCORRECTO
-<button className="bg-purple-500 hover:bg-purple-600">Save</button>
+// ✅ CORRECTO - Error
+<span style={{
+  backgroundColor: '#fee2e2',
+  color: '#991b1b'
+}}>
+  Rechazado
+</span>
+```
 
-// ❌ INCORRECTO
-<div className="text-blue-600">Active</div>
+### ❌ INCORRECTO
+```tsx
+// ❌ Hardcoded Tailwind classes
+<button className="bg-purple-500">Save</button>
+<thead className="bg-indigo-600">...</thead>
+
+// ❌ Mezclar tonalidades
+<table style={{ backgroundColor: 'var(--color-primary-500)' }}>
+  {/* debería ser primary-200 */}
+</table>
+
+// ❌ Múltiples colores en headers
+<thead style={{ backgroundColor: 'var(--color-tertiary-500)' }}>
+  {/* debería ser primary-200 */}
+</thead>
 ```
 
 ---
