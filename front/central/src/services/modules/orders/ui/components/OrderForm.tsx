@@ -162,7 +162,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 .filter((p: any) => p.id);
             setSelectedProducts(mapped);
         }
-    }, [order?.order_items]);
+    }, [order?.id, order?.updated_at, order?.order_items]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -349,11 +349,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             if (barrio.trim()) parts.push(barrio.trim());
             const fullShippingStreet = parts.join(' | ');
 
-            console.log('DEBUG handleSubmit:', {
-                selectedProducts_length: selectedProducts.length,
-                formData_items_length: formData.items?.length || 0,
-                selectedProducts_first: selectedProducts[0],
-                formData_items_first: formData.items?.[0]
+            const itemsToSend = selectedProducts.length > 0 ? selectedProducts : formData.items;
+
+            console.log('🔍 DEBUG - Items a enviar:', {
+                selectedProducts_count: selectedProducts.length,
+                itemsToSend_count: itemsToSend.length,
+                first_item: itemsToSend[0]
             });
 
             const baseData = {
@@ -361,11 +362,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 shipping_street: fullShippingStreet,
                 shipping_lat: addressCoords?.lat,
                 shipping_lng: addressCoords?.lon,
-                items: selectedProducts.length > 0 ? selectedProducts : formData.items,
+                items: itemsToSend,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
 
-            console.log('DEBUG baseData items:', baseData.items?.length);
+            console.log('📤 DEBUG - Enviando baseData.items:', baseData.items?.length);
 
             let response;
             if (isEdit && order) {
@@ -382,7 +383,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
             if (response.success) {
                 showToast(isEdit ? 'Orden actualizada exitosamente' : 'Orden creada exitosamente', 'success');
-                if (onSuccess) onSuccess();
+                if (onSuccess) {
+                    if (isEdit && response.data) {
+                        onSuccess(response.data);
+                    } else {
+                        onSuccess();
+                    }
+                }
             } else {
                 setError(response.message || 'Error al guardar la orden');
                 showToast(response.message || 'Error al guardar la orden', 'error');
@@ -399,6 +406,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         // Filter out products with quantity 0 and calculate subtotal
         const filteredProducts = products.filter(p => (p.quantity || 0) > 0);
         setSelectedProducts(filteredProducts);
+        setFormData(prev => ({ ...prev, items: filteredProducts }));
 
         // Calculate subtotal: sum of (price × quantity) for each product
         const subtotal = filteredProducts.reduce((acc, p) => {

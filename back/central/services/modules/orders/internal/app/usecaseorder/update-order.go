@@ -253,28 +253,25 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 		order.FulfillmentDetails = req.FulfillmentDetails
 	}
 
-	uc.logger.Info(ctx).
-		Int("items_count", len(req.Items)).
-		Msg("UpdateOrder: checking items")
-
 	if len(req.Items) > 0 {
-		uc.logger.Info(ctx).
-			Int("items_to_save", len(req.Items)).
-			Msg("UpdateOrder: deleting and saving items")
-
+		fmt.Printf("🔵 [DEBUG] DeleteOrderItemsByOrderID: borrando items de orden %s\n", id)
 		if err := uc.repo.DeleteOrderItemsByOrderID(ctx, id); err != nil {
+			fmt.Printf("❌ [ERROR] DeleteOrderItemsByOrderID falló: %v\n", err)
 			return nil, fmt.Errorf("error deleting old order items: %w", err)
 		}
+		fmt.Printf("✅ [DEBUG] DeleteOrderItemsByOrderID: items borrados\n")
 
 		domainItems := mapper.ToDomainOrderItems(req.Items)
+		fmt.Printf("🔵 [DEBUG] SaveOrderItems: guardando %d items\n", len(domainItems))
+
 		if err := uc.repo.SaveOrderItems(ctx, id, domainItems); err != nil {
+			fmt.Printf("❌ [ERROR] SaveOrderItems falló: %v\n", err)
 			return nil, fmt.Errorf("error saving new order items: %w", err)
 		}
-		order.OrderItems = domainItems
+		fmt.Printf("✅ [DEBUG] SaveOrderItems: %d items guardados en DB\n", len(domainItems))
 
-		uc.logger.Info(ctx).
-			Int("saved_items", len(domainItems)).
-			Msg("UpdateOrder: items saved successfully")
+		order.OrderItems = domainItems
+		fmt.Printf("✅ [DEBUG] order.OrderItems actualizado en memoria con %d items\n", len(order.OrderItems))
 	}
 
 	// Guardar cambios

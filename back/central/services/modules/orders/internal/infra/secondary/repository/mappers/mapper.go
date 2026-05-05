@@ -360,11 +360,19 @@ func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderIte
 			Metadata:              item.Metadata,
 		}
 
-		// Si el Product está preloaded, obtener información del producto
-		// Verificar si Product fue preloaded (ID no es cero)
-		if item.Product.ID != "" && item.Product.SKU != "" {
+		// Rellenar campos de producto: primero desde OrderItem, luego desde Product si están vacíos
+		domainItem.ProductSKU = item.ProductSKU
+		domainItem.ProductName = item.ProductName
+		domainItem.VariantLabel = item.VariantLabel
+
+		// Si los campos de OrderItem están vacíos, intentar desde Product
+		if domainItem.ProductSKU == "" && item.Product.ID != "" {
 			domainItem.ProductSKU = item.Product.SKU
+		}
+		if domainItem.ProductName == "" && item.Product.ID != "" {
 			domainItem.ProductName = item.Product.Name
+		}
+		if domainItem.VariantLabel == "" && item.Product.ID != "" {
 			domainItem.VariantLabel = item.Product.VariantLabel
 		}
 

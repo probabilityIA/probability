@@ -69,7 +69,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
     useEffect(() => {
         fetchDetails();
-    }, [initialOrder.id]);
+    }, [initialOrder.id, initialOrder.updated_at]);
 
     // Derived order object (prefer full, fallback to initial)
     const order = fullOrder || initialOrder;

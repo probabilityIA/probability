@@ -105,11 +105,15 @@ export default function OrdersPage() {
         setShowEditModal(true);
     };
 
-    const handleSuccess = () => {
+    const handleSuccess = (updatedOrder?: Order) => {
         setShowCreateModal(false);
         setShowEditModal(false);
         setShowViewModal(false);
-        setSelectedOrder(null);
+        if (updatedOrder) {
+            setSelectedOrder(updatedOrder);
+        } else {
+            setSelectedOrder(null);
+        }
         setRefreshKey(prev => prev + 1);
     };
 

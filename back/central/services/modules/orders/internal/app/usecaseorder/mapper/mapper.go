@@ -279,13 +279,13 @@ func ToDomainOrderItems(items []map[string]interface{}) []entities.ProbabilityOr
 			variantLabel = vl
 		}
 
-		var id *string
-		if idVal, ok := itemMap["id"].(string); ok {
-			id = &idVal
+		var productID *string
+		if productIDVal, ok := itemMap["product_id"].(string); ok {
+			productID = &productIDVal
 		}
 
 		result[i] = entities.ProbabilityOrderItem{
-			ProductID:     id,
+			ProductID:     productID,
 			ProductSKU:    sku,
 			ProductName:   name,
 			VariantLabel:  variantLabel,
