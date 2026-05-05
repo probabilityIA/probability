@@ -257,6 +257,12 @@ func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entiti
 func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
 	return nil, nil
 }
+func (m *mockRepository) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
+	return nil
+}
+func (m *mockRepository) SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error {
+	return nil
+}
 
 // Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {

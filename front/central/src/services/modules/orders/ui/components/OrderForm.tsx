@@ -33,7 +33,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const isEdit = !!order;
     const { permissions } = usePermissions();
     const defaultBusinessId = selectedBusinessId || permissions?.business_id || 0;
-    const businessName = (permissions as any)?.business_name || order?.business_name || 'Negocio';
+    const businessName = (permissions as any)?.business_name || 'Negocio';
     const { showToast } = useToast();
     const [cachedGuideCarrier, setCachedGuideCarrier] = useState<string | null>(null);
 
@@ -384,11 +384,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             if (response.success) {
                 showToast(isEdit ? 'Orden actualizada exitosamente' : 'Orden creada exitosamente', 'success');
                 if (onSuccess) {
-                    if (isEdit && response.data) {
-                        onSuccess(response.data);
-                    } else {
-                        onSuccess();
-                    }
+                    onSuccess();
                 }
             } else {
                 setError(response.message || 'Error al guardar la orden');

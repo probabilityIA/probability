@@ -1084,8 +1084,12 @@ func (r *Repository) SaveOrderItems(ctx context.Context, orderID string, items [
 
 	dbItems := make([]models.OrderItem, len(items))
 	for i, item := range items {
+		productID := ""
+		if item.ProductID != nil {
+			productID = *item.ProductID
+		}
 		fmt.Printf("  [Item %d] sku=%s, qty=%d, price=%.2f, productID=%s, productName=%s\n",
-			i+1, item.ProductSKU, item.Quantity, item.UnitPrice, item.ProductID, item.ProductName)
+			i+1, item.ProductSKU, item.Quantity, item.UnitPrice, productID, item.ProductName)
 		dbItems[i] = models.OrderItem{
 			OrderID:               orderID,
 			ProductID:             item.ProductID,
