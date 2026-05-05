@@ -145,7 +145,7 @@ export const ResourceList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-purple-600 dark:bg-purple-600">
+                            <thead style={{ backgroundColor: 'var(--color-secondary-600)' }}>
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
@@ -196,7 +196,7 @@ export const ResourceList: React.FC = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => { setEditingResource(resource); setShowCreateModal(true); }}
-                                                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-quaternary rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2"
                                                         title="Editar recurso"
                                                         aria-label="Editar recurso"
                                                     >
@@ -206,7 +206,7 @@ export const ResourceList: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteId(resource.id)}
-                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-danger rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2"
                                                         title="Eliminar recurso"
                                                         aria-label="Eliminar recurso"
                                                     >
@@ -246,17 +246,32 @@ export const ResourceList: React.FC = () => {
                                         <button
                                             onClick={() => setPage(page - 1)}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border text-xs sm:text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            style={{
+                                              borderColor: 'var(--color-secondary-600)',
+                                              backgroundColor: 'var(--color-secondary-600)',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-700)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-600)'}
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        <span
+                                          className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
+                                          style={{ borderColor: 'var(--color-secondary-600)', backgroundColor: 'white' }}
+                                        >
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setPage(page + 1)}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border text-xs sm:text-sm font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            style={{
+                                              borderColor: 'var(--color-secondary-600)',
+                                              backgroundColor: 'var(--color-secondary-600)',
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-700)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-secondary-600)'}
                                         >
                                             Siguiente
                                         </button>
