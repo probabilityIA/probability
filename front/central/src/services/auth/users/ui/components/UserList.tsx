@@ -423,7 +423,7 @@ export const UserList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-purple-600 dark:bg-purple-600">
+                            <thead style={{ backgroundColor: 'var(--color-secondary-500)' }}>
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
@@ -500,10 +500,18 @@ export const UserList: React.FC = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 {user.scope_code ? (
                                                     <span
-                                                        className={`px-2 py-1 text-xs font-medium rounded-full ${user.scope_code === 'platform'
-                                                                ? 'bg-purple-100 text-purple-800'
-                                                                : 'bg-blue-100 text-blue-800'
-                                                            }`}
+                                                        className="px-2 py-1 text-xs font-medium rounded-full"
+                                                        style={
+                                                            user.scope_code === 'platform'
+                                                                ? {
+                                                                    backgroundColor: 'var(--color-secondary-100)',
+                                                                    color: 'var(--color-secondary-900)',
+                                                                  }
+                                                                : {
+                                                                    backgroundColor: 'var(--color-primary-100)',
+                                                                    color: 'var(--color-primary-900)',
+                                                                  }
+                                                        }
                                                     >
                                                         {user.scope_code === 'platform' ? 'Platform' : 'Business'}
                                                     </span>
@@ -532,10 +540,18 @@ export const UserList: React.FC = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span
-                                                    className={`px-2 py-1 text-xs font-medium rounded-full ${user.is_active
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-red-100 text-red-800'
-                                                        }`}
+                                                    className="px-2 py-1 text-xs font-medium rounded-full"
+                                                    style={
+                                                        user.is_active
+                                                            ? {
+                                                                backgroundColor: '#dcfce7',
+                                                                color: '#166534',
+                                                              }
+                                                            : {
+                                                                backgroundColor: '#fee2e2',
+                                                                color: '#991b1b',
+                                                              }
+                                                    }
                                                 >
                                                     {user.is_active ? 'Sí' : 'No'}
                                                 </span>
@@ -544,7 +560,7 @@ export const UserList: React.FC = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleOpenAssignRole(user)}
-                                                        className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-tertiary rounded-md transition-colors duration-200"
                                                         title="Asignar rol"
                                                         aria-label="Asignar rol"
                                                     >
@@ -555,7 +571,7 @@ export const UserList: React.FC = () => {
                                                     {isSuperAdmin && (
                                                         <button
                                                             onClick={() => setResetPasswordUser(user)}
-                                                            className="p-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+                                                            className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
                                                             title="Restablecer contrasena"
                                                             aria-label="Restablecer contrasena"
                                                         >
@@ -566,7 +582,7 @@ export const UserList: React.FC = () => {
                                                     )}
                                                     <button
                                                         onClick={() => handleEdit(user)}
-                                                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
                                                         title="Editar usuario"
                                                         aria-label="Editar usuario"
                                                         disabled={loadingUser}
@@ -577,7 +593,7 @@ export const UserList: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteId(user.id)}
-                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-danger rounded-md transition-colors duration-200"
                                                         title="Eliminar usuario"
                                                         aria-label="Eliminar usuario"
                                                     >
@@ -615,17 +631,20 @@ export const UserList: React.FC = () => {
                                         <button
                                             onClick={() => setFilters({ ...filters, page: page - 1 })}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-secondary rounded-l-md rounded-r-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        <span
+                                            className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
+                                            style={{ borderColor: 'var(--color-secondary-500)' }}
+                                        >
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setFilters({ ...filters, page: page + 1 })}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-secondary rounded-r-md rounded-l-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                         </button>
@@ -695,8 +714,19 @@ export const UserList: React.FC = () => {
                 ) : (
                     <div className="space-y-4">
                         {assigningRoleUser?.scope_code === 'platform' && (
-                            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg">
-                                <p className="text-sm text-purple-700 dark:text-purple-200">
+                            <div
+                                className="p-3 border rounded-lg"
+                                style={{
+                                    backgroundColor: 'var(--color-secondary-50)',
+                                    borderColor: 'var(--color-secondary-200)',
+                                }}
+                            >
+                                <p
+                                    className="text-sm"
+                                    style={{
+                                        color: 'var(--color-secondary-700)',
+                                    }}
+                                >
                                     <span className="font-medium">Usuario Platform:</span> Los roles se asignan a nivel de plataforma (sin negocio específico).
                                 </p>
                             </div>
@@ -709,7 +739,11 @@ export const UserList: React.FC = () => {
                                     {assigningRoleUser.business_role_assignments.map((assignment, idx) => (
                                         <span
                                             key={idx}
-                                            className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
+                                            className="px-2 py-1 text-xs rounded-full"
+                                            style={{
+                                                backgroundColor: 'var(--color-primary-100)',
+                                                color: 'var(--color-primary-900)',
+                                            }}
                                         >
                                             {assignment.role_name}{assignment.business_name ? ` - ${assignment.business_name}` : ''}
                                         </span>
@@ -823,11 +857,10 @@ export const UserList: React.FC = () => {
                             </p>
                             <button
                                 onClick={handleCopyPassword}
-                                className={`p-2 rounded-md transition-colors duration-200 ${
-                                    copied
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500'
-                                }`}
+                                className="p-2 rounded-md transition-colors duration-200 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200"
+                                style={copied ? { backgroundColor: '#16a34a', color: 'white' } : {}}
+                                onMouseEnter={(e) => !copied && (e.target as HTMLButtonElement).style.backgroundColor === '' && ((e.target as HTMLButtonElement).style.backgroundColor = '#d1d5db')}
+                                onMouseLeave={(e) => !copied && ((e.target as HTMLButtonElement).style.backgroundColor = '#e5e7eb')}
                                 title={copied ? 'Copiado' : 'Copiar contrasena'}
                             >
                                 {copied ? (

@@ -328,7 +328,7 @@ export const BusinessList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-purple-600 dark:bg-purple-600">
+                        <thead style={{ backgroundColor: 'var(--color-secondary-500)' }}>
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                     ID
@@ -390,20 +390,36 @@ export const BusinessList: React.FC = () => {
                                                 <button
                                                     onClick={() => handleToggleBusinessActive(business)}
                                                     disabled={togglingBusiness === business.id}
-                                                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait ${
+                                                    className="px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait"
+                                                    style={
                                                         business.is_active
-                                                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                    }`}
+                                                            ? {
+                                                                backgroundColor: '#dcfce7',
+                                                                color: '#166534',
+                                                              }
+                                                            : {
+                                                                backgroundColor: '#fee2e2',
+                                                                color: '#991b1b',
+                                                              }
+                                                    }
                                                 >
                                                     {togglingBusiness === business.id ? '...' : business.is_active ? 'Activo' : 'Inactivo'}
                                                 </button>
                                             ) : (
-                                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                                    business.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                <span
+                                                    className="px-3 py-1 text-xs font-medium rounded-full"
+                                                    style={
+                                                        business.is_active
+                                                            ? {
+                                                                backgroundColor: '#dcfce7',
+                                                                color: '#166534',
+                                                              }
+                                                            : {
+                                                                backgroundColor: '#fee2e2',
+                                                                color: '#991b1b',
+                                                              }
+                                                    }
+                                                >
                                                     {business.is_active ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             )}
@@ -413,7 +429,7 @@ export const BusinessList: React.FC = () => {
                                                 {isSuperAdmin && (
                                                     <button
                                                         onClick={() => handleOpenResources(business)}
-                                                        className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-secondary rounded-md transition-colors duration-200"
                                                         title="Configurar recursos"
                                                         aria-label="Configurar recursos"
                                                     >
@@ -425,7 +441,7 @@ export const BusinessList: React.FC = () => {
                                                 )}
                                                 <button
                                                     onClick={() => { setEditingBusiness(business); setShowCreateModal(true); }}
-                                                    className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                    className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
                                                     title="Editar negocio"
                                                     aria-label="Editar negocio"
                                                 >
@@ -436,7 +452,7 @@ export const BusinessList: React.FC = () => {
                                                 {isSuperAdmin && (
                                                     <button
                                                         onClick={() => setDeleteId(business.id)}
-                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-danger rounded-md transition-colors duration-200"
                                                         title="Eliminar negocio"
                                                         aria-label="Eliminar negocio"
                                                     >
@@ -477,17 +493,20 @@ export const BusinessList: React.FC = () => {
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="btn btn-secondary rounded-l-md rounded-r-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    <span
+                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
+                                        style={{ borderColor: 'var(--color-secondary-500)' }}
+                                    >
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="btn btn-secondary rounded-r-md rounded-l-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Siguiente
                                     </button>
@@ -593,17 +612,25 @@ export const BusinessList: React.FC = () => {
                                         className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-2 h-2 rounded-full ${resource.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                            <div
+                                                className="w-2 h-2 rounded-full"
+                                                style={{
+                                                    backgroundColor: resource.is_active ? '#22c55e' : '#d1d5db',
+                                                }}
+                                            />
                                             <span className="font-medium text-gray-900 dark:text-white">{resource.resource_name}</span>
                                         </div>
                                         <button
                                             onClick={() => handleToggleResource(resource)}
                                             disabled={savingResource === resource.resource_id}
+                                            style={{
+                                                backgroundColor: resource.is_active ? 'var(--color-primary-600)' : '#e5e7eb',
+                                                opacity: savingResource === resource.resource_id ? 0.5 : 1,
+                                                cursor: savingResource === resource.resource_id ? 'wait' : 'pointer',
+                                            }}
                                             className={`
-                                                relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
-                                                transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                                                ${resource.is_active ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'}
-                                                ${savingResource === resource.resource_id ? 'opacity-50 cursor-wait' : ''}
+                                                relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent
+                                                transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2
                                             `}
                                         >
                                             {savingResource === resource.resource_id ? (

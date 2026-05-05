@@ -46,8 +46,8 @@ export default function WalletPage() {
 
                 {/* Business selector - solo para super admin */}
                 {isSuperAdmin && businesses.length > 0 && (
-                    <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2">
-                        <label className="text-sm font-medium text-blue-800 dark:text-blue-200 whitespace-nowrap">
+                    <div className="flex items-center gap-3 rounded-lg px-4 py-2" style={{ backgroundColor: 'var(--color-primary-50)', border: `1px solid var(--color-primary-200)` }}>
+                        <label className="text-sm font-medium whitespace-nowrap" style={{ color: 'var(--color-primary-900)' }}>
                             Negocio:
                         </label>
                         <select
@@ -56,7 +56,8 @@ export default function WalletPage() {
                                 const val = e.target.value;
                                 setSelectedBusinessId(val ? Number(val) : null);
                             }}
-                            className="px-3 py-1.5 border border-blue-300 dark:border-blue-700 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                            className="px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 min-w-[200px]"
+                            style={{ border: `1px solid var(--color-primary-300)`, focusRingColor: 'var(--color-primary-500)' }}
                         >
                             <option value="">Vista Administrativa</option>
                             {businesses.map((b) => (
@@ -139,7 +140,7 @@ function AdminWalletView() {
                 const balance = typeof val === 'string' ? parseFloat(val) : (val as number);
                 const isNegative = balance < 0;
                 return (
-                    <span className={`font-bold ${isNegative ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className="font-bold" style={{ color: isNegative ? '#dc2626' : '#16a34a' }}>
                         {isNegative && '-'}${formatCurrency(Math.abs(balance)).replace('$', '')}
                     </span>
                 );
@@ -157,9 +158,10 @@ function AdminWalletView() {
                     onClick={() => setActiveTab('saldos')}
                     className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'saldos'
-                            ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                            ? 'border-b-2'
                             : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
+                    style={activeTab === 'saldos' ? { color: 'var(--color-primary-600)', borderColor: 'var(--color-primary-600)' } : {}}
                 >
                     Saldos
                 </button>
@@ -167,9 +169,10 @@ function AdminWalletView() {
                     onClick={() => setActiveTab('finanzas')}
                     className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                         activeTab === 'finanzas'
-                            ? 'text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400'
+                            ? 'border-b-2'
                             : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
+                    style={activeTab === 'finanzas' ? { color: 'var(--color-primary-600)', borderColor: 'var(--color-primary-600)' } : {}}
                 >
                     📊 Finanzas
                 </button>
@@ -348,7 +351,7 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
 
     return (
         <>
-            <Button size="sm" variant="outline" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950" onClick={() => setIsOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setIsOpen(true)} style={{ color: '#dc2626', borderColor: '#fecaca' }}>
                 Borrar Historial
             </Button>
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmar Eliminación">
@@ -775,11 +778,11 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
         <>
             {/* Banner de contexto para super admin */}
             {isSuperAdminView && (
-                <div className="mb-6 flex items-center gap-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
-                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="mb-6 flex items-center gap-3 rounded-lg px-4 py-3" style={{ backgroundColor: 'var(--color-primary-50)', border: `1px solid var(--color-primary-200)` }}>
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-primary-600)' }}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <p className="text-sm" style={{ color: 'var(--color-primary-900)' }}>
                         Vista de billetera de <strong>{displayName}</strong> (ID: {businessId}) — modo super admin
                     </p>
                 </div>
@@ -821,9 +824,27 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                                     key={amt}
                                     onClick={() => setRechargeAmount(String(amt))}
                                     className={`px-2 py-2 text-xs font-medium rounded-lg border transition-all ${Number(rechargeAmount) === amt
-                                        ? 'bg-[#7c3aed] text-white border-[#7c3aed] shadow-md transform scale-105'
-                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-gray-600'
+                                        ? 'text-white shadow-md transform scale-105'
+                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 dark:hover:bg-gray-600'
                                         }`}
+                                    style={Number(rechargeAmount) === amt ? {
+                                        backgroundColor: 'var(--color-tertiary-500)',
+                                        borderColor: 'var(--color-tertiary-500)'
+                                    } : {
+                                        borderColor: Number(rechargeAmount) === amt ? 'var(--color-tertiary-300)' : 'inherit'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (Number(rechargeAmount) !== amt) {
+                                            (e.target as HTMLButtonElement).style.borderColor = 'var(--color-tertiary-300)';
+                                            (e.target as HTMLButtonElement).style.backgroundColor = 'var(--color-tertiary-50)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (Number(rechargeAmount) !== amt) {
+                                            (e.target as HTMLButtonElement).style.borderColor = '#e5e7eb';
+                                            (e.target as HTMLButtonElement).style.backgroundColor = 'white';
+                                        }
+                                    }}
                                 >
                                     $ {amt / 1000}k
                                 </button>
@@ -843,9 +864,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                             disabled={processing}
                             className="w-full py-3 text-lg font-semibold rounded-lg transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-white"
                             style={{
-                                backgroundColor: rechargeAmount ? '#7c3aed' : '#505050ff',
-                                borderColor: rechargeAmount ? '#7c3aed' : '#505050ff',
-                                boxShadow: rechargeAmount ? '0 10px 15px -3px rgba(124, 58, 237, 0.2)' : '0 10px 15px -3px rgba(59, 130, 246, 0.2)'
+                                backgroundColor: rechargeAmount ? 'var(--color-tertiary-500)' : '#505050ff',
+                                borderColor: rechargeAmount ? 'var(--color-tertiary-500)' : '#505050ff',
+                                boxShadow: rechargeAmount ? '0 10px 15px -3px var(--color-tertiary-200)' : '0 10px 15px -3px rgba(59, 130, 246, 0.2)'
                             }}
                         >
                             {processing ? (
@@ -892,9 +913,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         Total a pagar vía Nequi/Bancolombia
                     </p>
 
-                    <div className="w-full bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-800 rounded-lg p-3 mb-4 text-left">
-                        <h4 className="font-semibold text-blue-900 dark:text-blue-200 text-xs mb-1">Siguientes pasos:</h4>
-                        <ul className="list-disc list-inside text-[11px] text-blue-800 dark:text-blue-200 space-y-0.5">
+                    <div className="w-full border rounded-lg p-3 mb-4 text-left" style={{ backgroundColor: 'var(--color-primary-50)', borderColor: 'var(--color-primary-200)' }}>
+                        <h4 className="font-semibold text-xs mb-1" style={{ color: 'var(--color-primary-900)' }}>Siguientes pasos:</h4>
+                        <ul className="list-disc list-inside text-[11px] space-y-0.5" style={{ color: 'var(--color-primary-900)' }}>
                             <li>Escanea el código QR desde tu App bancaria.</li>
                             <li>Verifica que el monto y la llave sean correctos.</li>
                             <li>Realiza el pago.</li>
@@ -970,7 +991,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 size="sm"
             >
                 <div className="flex flex-col items-center text-center p-4 space-y-4">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-tertiary-100)' }}>
                         <span className="text-3xl">🚀</span>
                     </div>
                     <div>
@@ -1004,8 +1025,8 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 size="md"
             >
                 <div className="flex flex-col items-center justify-center p-6 text-center">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                        <svg className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: '#dcfce7' }}>
+                        <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: '#16a34a' }}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
@@ -1024,7 +1045,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                             setShowConfirmationModal(false);
                             setRechargeAmount('');
                         }}
-                        className="w-full bg-[#7c3aed] hover:bg-[#6d28d9] border-[#7c3aed]"
+                        className="w-full"
                     >
                         Cerrar
                     </Button>
@@ -1077,13 +1098,14 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
                 const name = (val as string) || r.integration_name || '---';
                 const imgUrl = r.integration_image_url as string | undefined;
                 if (name === '---') return <span className="text-gray-400 text-sm">---</span>;
-                const colorMap: Record<string, string> = {
-                    'Bold': 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
-                    'Nequi': 'bg-pink-50 text-pink-800 border-pink-200 dark:bg-pink-950 dark:text-pink-300 dark:border-pink-800',
-                    'Debito manual': 'bg-gray-50 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600',
+                const colorMap: Record<string, { bg: string; text: string; border: string }> = {
+                    'Bold': { bg: 'var(--color-tertiary-50)', text: 'var(--color-tertiary-900)', border: 'var(--color-tertiary-200)' },
+                    'Nequi': { bg: 'var(--color-quaternary-50)', text: 'var(--color-quaternary-900)', border: 'var(--color-quaternary-200)' },
+                    'Debito manual': { bg: '#f3f4f6', text: '#1f2937', border: '#e5e7eb' },
                 };
+                const colors = colorMap[name] || { bg: '#f3f4f6', text: '#1f2937', border: '#e5e7eb' };
                 return (
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium border ${colorMap[name] || 'bg-gray-50 text-gray-800 border-gray-200'}`}>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium border" style={{ backgroundColor: colors.bg, color: colors.text, borderColor: colors.border }}>
                         {imgUrl && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={imgUrl} alt={name} className="h-4 w-4 object-contain" />
@@ -1101,7 +1123,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
                 const type = (row as any).Type as string;
                 const isDebit = type === 'USAGE';
                 return (
-                    <span className={`font-bold ${isDebit ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className="font-bold" style={{ color: isDebit ? '#dc2626' : '#16a34a' }}>
                         {isDebit ? '-' : '+'}{formatCurrency(amount)}
                     </span>
                 );
@@ -1111,13 +1133,14 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
             key: 'Status',
             label: 'Estado',
             render: (val) => {
-                const colors = {
-                    'PENDING': 'bg-yellow-100 text-yellow-800',
-                    'COMPLETED': 'bg-green-100 text-green-800',
-                    'FAILED': 'bg-red-100 text-red-800'
+                const colors: Record<string, { bg: string; text: string }> = {
+                    'PENDING': { bg: '#fef3c7', text: '#92400e' },
+                    'COMPLETED': { bg: '#dcfce7', text: '#166534' },
+                    'FAILED': { bg: '#fee2e2', text: '#991b1b' }
                 };
+                const color = (colors as any)[val as string] || { bg: '#f3f4f6', text: '#1f2937' };
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${(colors as any)[val as string] || 'bg-gray-100'}`}>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: color.bg, color: color.text }}>
                         {val === 'PENDING' ? 'Pendiente' : val === 'COMPLETED' ? 'Completado' : 'Rechazado'}
                     </span>
                 );

@@ -203,7 +203,7 @@ export function DynamicFilters({
 
                             {onCreate && (
                                 <button
-                                    style={{ background: '#7c3aed' }}
+                                    style={{ background: 'var(--color-tertiary-500)' }}
                                     onClick={() => {
                                         onCreate();
                                         // close dropdown state

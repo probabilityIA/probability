@@ -229,7 +229,8 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                                     type="checkbox"
                                     checked={row.checked}
                                     onChange={() => handleToggleAction(i)}
-                                    className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                                    className="h-4 w-4 rounded border-gray-300"
+                                    style={{ accentColor: 'var(--color-primary-600)' }}
                                 />
                                 <span className="w-20 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">{row.action.name}</span>
                                 <input
@@ -237,7 +238,9 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                                     value={row.name}
                                     onChange={e => handleNameChange(i, e.target.value)}
                                     disabled={!row.checked}
-                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400"
+                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 disabled:bg-gray-50 disabled:text-gray-400"
+                                    onFocus={(e) => (e.target as HTMLInputElement).style.boxShadow = '0 0 0 2px var(--color-primary-500)'}
+                                    onBlur={(e) => (e.target as HTMLInputElement).style.boxShadow = 'none'}
                                 />
                             </div>
                         ))}

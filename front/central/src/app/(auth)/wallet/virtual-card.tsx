@@ -362,8 +362,8 @@ export function VirtualCard({
             width: '7px',
             height: '7px',
             borderRadius: '50%',
-            background: isActive ? '#34D399' : '#9CA3AF',
-            boxShadow: isActive ? '0 0 8px rgba(52, 211, 153, 0.6)' : 'none'
+            background: isActive ? '#10b981' : '#9CA3AF',
+            boxShadow: isActive ? `0 0 8px ${isActive ? 'rgba(16, 185, 129, 0.6)' : 'none'}` : 'none'
           }}
         />
         <span
@@ -371,7 +371,7 @@ export function VirtualCard({
             fontFamily: "'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: '10px',
             fontWeight: 500,
-            color: isActive ? '#34D399A0' : '#9CA3AF',
+            color: isActive ? 'rgba(16, 185, 129, 0.627)' : '#9CA3AF',
             letterSpacing: '1px'
           }}
         >
