@@ -116,9 +116,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                                 onChange={onChange}
                                 prefixed
                                 className="flex-1 px-2 py-1 text-sm font-mono border rounded-md focus:outline-none focus:ring-2 uppercase"
-                                style={{
-                                    focusRingColor: 'var(--color-primary-500)',
-                                }}
                             />
                         </div>
 
