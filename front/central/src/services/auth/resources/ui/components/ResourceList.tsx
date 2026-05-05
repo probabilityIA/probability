@@ -144,8 +144,8 @@ export const ResourceList: React.FC = () => {
                 {/* Tabla */}
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead style={{ backgroundColor: 'var(--color-secondary-500)', color: 'white' }}>
+                        <table className="table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead style={{ backgroundColor: '#be185d' }}>
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
