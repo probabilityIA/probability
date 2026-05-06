@@ -65,6 +65,31 @@ type IRepository interface {
 	MarkOrderPaidCOD(ctx context.Context, orderID string, amount float64, paymentMethodID uint, notes string) error
 
 	GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string, businessID uint) (*OrderPublicTracking, error)
+
+	ResolveShipmentGeozone(ctx context.Context, shipmentID uint, businessID uint) error
+	GetShipmentStatsByGeozone(ctx context.Context, filter ShipmentStatsFilter) ([]ShipmentStatsByGeozone, error)
+}
+
+type ShipmentStatsFilter struct {
+	BusinessID uint
+	Carrier    string
+	Type       string
+	From       *time.Time
+	To         *time.Time
+	Limit      int
+}
+
+type ShipmentStatsByGeozone struct {
+	GeozoneID    uint
+	Type         string
+	Code         *string
+	Name         string
+	ParentID     *uint
+	Total        int64
+	Delivered    int64
+	Cancelled    int64
+	InTransit    int64
+	SuccessRate  float64
 }
 
 type OrderPublicTracking struct {

@@ -63,6 +63,10 @@ func (uc *UseCases) GetShipmentsByOrderID(ctx context.Context, orderID string) (
 	return uc.ShipmentCRUD.GetShipmentsByOrderID(ctx, orderID)
 }
 
+func (uc *UseCases) GetStatsByGeozone(ctx context.Context, filter domain.ShipmentStatsFilter) ([]domain.ShipmentStatsByGeozone, error) {
+	return uc.repo.GetShipmentStatsByGeozone(ctx, filter)
+}
+
 // GetShipmentByTrackingNumber delega al caso de uso CRUD
 func (uc *UseCases) GetShipmentByTrackingNumber(ctx context.Context, trackingNumber string) (*domain.ShipmentResponse, error) {
 	shipment, err := uc.ShipmentCRUD.GetShipmentByTrackingNumber(ctx, trackingNumber)
