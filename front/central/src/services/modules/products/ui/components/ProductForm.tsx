@@ -104,9 +104,6 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                 const res = await getNextSKUAction(prefix, defaultBusinessId);
                 if (res.success && res.data && res.data !== formData.sku) {
                     setSuggestedNextSKU(res.data);
-                    setFormData(f => ({ ...f, sku: res.data }));
-                } else if (res.success && res.data === formData.sku) {
-                    setSuggestedNextSKU(null);
                 } else {
                     setSuggestedNextSKU(null);
                 }
