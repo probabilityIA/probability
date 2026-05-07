@@ -57,3 +57,13 @@ export const getDeliveryProbabilityAction = async (req: ProbabilityRequest) => {
     try { return await (await getUseCases()).probability(req); }
     catch (error: any) { throw new Error(error.message); }
 };
+
+export const getOrderZoneAction = async (orderId: string, businessId: number) => {
+    try { return await (await getUseCases()).getOrderZone(orderId, businessId); }
+    catch (error: any) { throw new Error(error.message); }
+};
+
+export const getProbabilityByCarrierAction = async (orderId: string, businessId: number) => {
+    try { return await (await getUseCases()).probabilityByCarrier(orderId, businessId); }
+    catch (error: any) { throw new Error(error.message); }
+};

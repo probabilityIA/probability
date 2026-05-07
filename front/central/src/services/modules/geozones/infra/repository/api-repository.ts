@@ -100,6 +100,18 @@ export class GeozoneApiRepository implements IGeozoneRepository {
         });
     }
 
+    async probabilityByCarrier(orderId: string, businessId: number): Promise<import('../../domain/types').ProbabilityResult[]> {
+        const sp = new URLSearchParams({ order_id: orderId, business_id: String(businessId) });
+        const res = await this.fetch<{ success: boolean; data: import('../../domain/types').ProbabilityResult[] }>(`/geozones/probability/by-carrier?${sp.toString()}`);
+        return res.data || [];
+    }
+
+    async getOrderZone(orderId: string, businessId: number): Promise<Geozone | null> {
+        const sp = new URLSearchParams({ order_id: orderId, business_id: String(businessId) });
+        const res = await this.fetch<{ success: boolean; data: Geozone | null }>(`/geozones/order-zone?${sp.toString()}`);
+        return res.data;
+    }
+
     async probability(req: import('../../domain/types').ProbabilityRequest): Promise<import('../../domain/types').ProbabilityResult> {
         const sp = new URLSearchParams();
         sp.append('business_id', String(req.business_id));

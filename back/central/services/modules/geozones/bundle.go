@@ -22,7 +22,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, rdb
 	displayCache := cache.New(rdb, logger)
 	uc := app.New(repoStruct, displayCache)
 	resolver := app.NewResolver(repoStruct)
-	probabilityUC := app.NewProbability(repoStruct, resolver)
+	probabilityUC := app.NewProbability(repoStruct, repoStruct, resolver)
 	h := handlers.New(uc, probabilityUC)
 	h.RegisterRoutes(router)
 	return &Bundle{UseCase: uc, Resolver: resolver}

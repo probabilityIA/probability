@@ -18,6 +18,8 @@ type IHandlers interface {
 	Display(c *gin.Context)
 	FlushDisplayCache(c *gin.Context)
 	Probability(c *gin.Context)
+	OrderZone(c *gin.Context)
+	ProbabilityByCarrier(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

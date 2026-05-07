@@ -19,4 +19,6 @@ export class GeozoneUseCases {
     remove(id: number, businessId?: number) { return this.repo.remove(id, businessId); }
     getForDisplay(type: GeozoneType | '', zoom: number, bbox?: string) { return this.repo.getForDisplay(type, zoom, bbox); }
     probability(req: ProbabilityRequest) { return this.repo.probability(req); }
+    getOrderZone(orderId: string, businessId: number) { return this.repo.getOrderZone(orderId, businessId); }
+    probabilityByCarrier(orderId: string, businessId: number) { return this.repo.probabilityByCarrier(orderId, businessId); }
 }

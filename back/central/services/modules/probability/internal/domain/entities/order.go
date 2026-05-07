@@ -29,6 +29,10 @@ type ScoreOrder struct {
 	OrderItemCount     int
 	CustomerHistory    *CustomerHistory
 	DeliveryHistory    *DeliveryHistory
+
+	GeozoneDeliveryRate *float64
+	GeozoneLevel        string
+	GeozoneID           *uint
 }
 
 // ScorePayment contiene los datos de pago relevantes para scoring

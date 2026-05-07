@@ -111,11 +111,11 @@ func (uc *UseCaseScore) CalculateOrderScore(order *entities.ScoreOrder) (float64
 }
 
 // scoreLogistics calculates Category 3: Logistics score (0-100)
+// Sub-signals: customer delivery history (40%) + geozone delivery rate (35%) +
+// distinct shipping addresses (15%) + weight anomaly (10%).
 func (uc *UseCaseScore) scoreLogistics(order *entities.ScoreOrder) (float64, []string) {
 	var factors []string
-	score := 100.0
 
-	// Sub-signal 1: Delivery history failure rate (60%)
 	deliveryScore := 100.0
 	if order.DeliveryHistory != nil && order.DeliveryHistory.TotalShipments > 0 {
 		failRate := float64(order.DeliveryHistory.FailedShipments) / float64(order.DeliveryHistory.TotalShipments) * 100
@@ -127,21 +127,28 @@ func (uc *UseCaseScore) scoreLogistics(order *entities.ScoreOrder) (float64, []s
 		}
 	}
 
-	// Sub-signal 2: Distinct addresses (20%)
 	addressScore := 100.0
 	if order.CustomerHistory != nil && order.CustomerHistory.DistinctAddresses > 5 {
 		addressScore = 50.0
 		factors = append(factors, "Multiples direcciones de envio distintas")
 	}
 
-	// Sub-signal 3: Weight anomaly (20%)
 	weightScore := 100.0
 	if order.Weight != nil && *order.Weight > 50.0 {
 		weightScore = 60.0
 		factors = append(factors, "Peso del pedido inusualmente alto")
 	}
 
-	score = deliveryScore*0.60 + addressScore*0.20 + weightScore*0.20
+	var score float64
+	if order.GeozoneDeliveryRate != nil {
+		geozoneScore := *order.GeozoneDeliveryRate
+		if geozoneScore < 70 {
+			factors = append(factors, "Zona de entrega de bajo desempeño")
+		}
+		score = deliveryScore*0.40 + geozoneScore*0.35 + addressScore*0.15 + weightScore*0.10
+	} else {
+		score = deliveryScore*0.60 + addressScore*0.20 + weightScore*0.20
+	}
 
 	return math.Round(score*100) / 100, factors
 }

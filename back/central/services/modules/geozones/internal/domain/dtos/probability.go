@@ -20,9 +20,11 @@ type ProbabilityLevelStats struct {
 }
 
 type ProbabilityResult struct {
-	Found        bool                  `json:"found"`
-	DeliveryRate *float64              `json:"delivery_rate,omitempty"`
-	Level        string                `json:"level,omitempty"`
-	Carrier      string                `json:"carrier,omitempty"`
+	Found        bool                   `json:"found"`
+	DeliveryRate *float64               `json:"delivery_rate,omitempty"`
+	Level        string                 `json:"level,omitempty"`
+	Carrier      string                 `json:"carrier,omitempty"`
 	Stats        *ProbabilityLevelStats `json:"stats,omitempty"`
+	GlobalRate   *float64               `json:"global_rate,omitempty"`
+	GlobalTotal  int64                  `json:"global_total,omitempty"`
 }

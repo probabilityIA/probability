@@ -1,6 +1,8 @@
 -- Geozone analytics: denormalize ancestor ids onto orders/shipments
 -- and create monthly aggregated stats table for delivery probability.
 
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- ORDERS: destination point + deepest geozone id + denormalized ancestors
 ALTER TABLE orders
     ADD COLUMN IF NOT EXISTS destination_point geography(Point, 4326),

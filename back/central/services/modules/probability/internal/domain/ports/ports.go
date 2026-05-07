@@ -15,6 +15,7 @@ type IRepository interface {
 	GetCustomerDeliveryHistory(ctx context.Context, customerID uint) (*entities.DeliveryHistory, error)
 	GetOrderItemCount(ctx context.Context, orderID string) (int, error)
 	GetPaymentMethodCategory(ctx context.Context, paymentMethodID uint) (string, error)
+	GetGeozoneDeliveryRateForOrder(ctx context.Context, orderID string) (rate *float64, level string, geozoneID *uint, err error)
 }
 
 // IScoreUseCase define los casos de uso del modulo de probability

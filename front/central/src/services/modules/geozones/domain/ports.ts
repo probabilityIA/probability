@@ -22,4 +22,6 @@ export interface IGeozoneRepository {
     remove(id: number, businessId?: number): Promise<void>;
     getForDisplay(geozoneType: GeozoneType | '', zoom: number, bbox?: string): Promise<DisplayFeatureCollection>;
     probability(req: ProbabilityRequest): Promise<ProbabilityResult>;
+    getOrderZone(orderId: string, businessId: number): Promise<Geozone | null>;
+    probabilityByCarrier(orderId: string, businessId: number): Promise<ProbabilityResult[]>;
 }

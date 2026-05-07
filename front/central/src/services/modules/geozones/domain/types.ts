@@ -132,6 +132,8 @@ export interface ProbabilityResult {
     level?: string;
     carrier?: string;
     stats?: ProbabilityStats;
+    global_rate?: number;
+    global_total?: number;
 }
 
 export interface DrillState {

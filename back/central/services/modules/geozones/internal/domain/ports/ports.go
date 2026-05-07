@@ -34,10 +34,14 @@ type IProbabilityRepository interface {
 	AncestorsByOrderID(ctx context.Context, orderID string, businessID uint) (*entities.GeozoneAncestors, error)
 	AggregateAtLevel(ctx context.Context, businessID uint, levelColumn string, geozoneID uint, carrier string) (LevelAggregate, error)
 	GeozoneNameAndType(ctx context.Context, geozoneID uint) (string, string, error)
+	CarriersForBusiness(ctx context.Context, businessID uint) ([]string, error)
+	GlobalCarrierStats(ctx context.Context, carrier string) (delivered int64, total int64, err error)
 }
 
 type IProbabilityUseCase interface {
 	GetProbability(ctx context.Context, req dtos.ProbabilityRequest) (*dtos.ProbabilityResult, error)
+	GetOrderZone(ctx context.Context, orderID string, businessID uint) (*entities.Geozone, error)
+	GetProbabilityByCarrier(ctx context.Context, orderID string, businessID uint) ([]dtos.ProbabilityResult, error)
 }
 
 type IDisplayCache interface {
