@@ -612,3 +612,104 @@ func (r *Repository) LookupProductByExternalRef(ctx context.Context, businessID 
 
 	return nil, nil
 }
+
+func (r *Repository) ListSKUs(ctx context.Context, businessID uint, prefix string) ([]string, error) {
+	var skus []string
+	query := r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Where("business_id = ? AND deleted_at IS NULL", businessID).
+		Distinct("sku").
+		Order("sku ASC")
+
+	if prefix != "" {
+		query = query.Where("LOWER(sku) LIKE LOWER(?)", prefix+"%")
+	}
+
+	err := query.Pluck("sku", &skus).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return skus, nil
+}
+
+func (r *Repository) GetNextSKU(ctx context.Context, businessID uint, prefix string) (string, error) {
+	var skus []string
+	query := r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Where("business_id = ? AND deleted_at IS NULL", businessID).
+		Distinct("sku").
+		Order("sku ASC")
+
+	if prefix != "" {
+		query = query.Where("LOWER(sku) LIKE LOWER(?)", prefix+"%")
+	}
+
+	err := query.Pluck("sku", &skus).Error
+	if err != nil {
+		return "", err
+	}
+
+	if len(skus) == 0 {
+		return fmt.Sprintf("%s-%03d", prefix, 1), nil
+	}
+
+	nextNum := 1
+	for _, sku := range skus {
+		var num int
+		if _, err := fmt.Sscanf(sku, prefix+"-%d", &num); err == nil {
+			if num == nextNum {
+				nextNum++
+			} else if num > nextNum {
+				break
+			}
+		}
+	}
+
+	return fmt.Sprintf("%s-%03d", prefix, nextNum), nil
+}
+
+func (r *Repository) GetNextSKUBatch(ctx context.Context, businessID uint, prefix string, count int) ([]string, error) {
+	var skus []string
+	query := r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Where("business_id = ? AND deleted_at IS NULL", businessID).
+		Distinct("sku").
+		Order("sku ASC")
+
+	if prefix != "" {
+		query = query.Where("LOWER(sku) LIKE LOWER(?)", prefix+"%")
+	}
+
+	err := query.Pluck("sku", &skus).Error
+	if err != nil {
+		return nil, err
+	}
+
+	if count <= 0 {
+		count = 1
+	}
+
+	result := make([]string, 0, count)
+	nextNum := 1
+
+	for len(result) < count {
+		found := false
+		for _, sku := range skus {
+			var num int
+			if _, err := fmt.Sscanf(sku, prefix+"-%d", &num); err == nil {
+				if num == nextNum {
+					found = true
+					break
+				}
+			}
+		}
+
+		if !found {
+			result = append(result, fmt.Sprintf("%s-%03d", prefix, nextNum))
+		}
+		nextNum++
+	}
+
+	return result, nil
+}

@@ -49,7 +49,7 @@ export const createProductAction = async (data: CreateProductDTO, businessId?: n
     try {
         return await (await getUseCases()).createProduct(data, businessId);
     } catch (error: any) {
-        throw new Error(error.message);
+        return { success: false, message: error.message || 'Error al crear producto', data: null };
     }
 };
 
@@ -175,5 +175,29 @@ export const getProductIntegrationsAction = async (productId: string, businessId
         return await (await getUseCases()).getProductIntegrations(productId, businessId);
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al obtener integraciones', data: [], total: 0 };
+    }
+};
+
+export const getSKUsAction = async (prefix?: string, businessId?: number) => {
+    try {
+        return await (await getUseCases()).getSKUs(prefix, businessId);
+    } catch (error: any) {
+        return { success: false, data: [] };
+    }
+};
+
+export const getNextSKUAction = async (prefix: string, businessId?: number) => {
+    try {
+        return await (await getUseCases()).getNextSKU(prefix, businessId);
+    } catch (error: any) {
+        return { success: false, data: '' };
+    }
+};
+
+export const getNextSKUBatchAction = async (prefix: string, count: number, businessId?: number) => {
+    try {
+        return await (await getUseCases()).getNextSKUBatch(prefix, count, businessId);
+    } catch (error: any) {
+        return { success: false, data: [] };
     }
 };

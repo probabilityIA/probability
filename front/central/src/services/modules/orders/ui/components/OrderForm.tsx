@@ -12,6 +12,7 @@ import { createOrderAction, updateOrderAction } from '../../infra/actions';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
+import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import ClientAutocomplete from './ClientAutocomplete';
 import AddressAutocomplete, { AddressSuggestion } from './AddressAutocomplete';
 import dynamic from 'next/dynamic';
@@ -36,6 +37,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const businessName = (permissions as any)?.business_name || 'Negocio';
     const { showToast } = useToast();
     const [cachedGuideCarrier, setCachedGuideCarrier] = useState<string | null>(null);
+    const { colors: businessColors } = useDynamicBusinessColors(defaultBusinessId);
+
+    const primaryColor = businessColors?.primary_color || '#5b21b6';
+    const secondaryColor = businessColors?.secondary_color || '#7c3aed';
+    const tertiaryColor = businessColors?.tertiary_color || '#c4b5fd';
+    const quaternaryColor = businessColors?.quaternary_color || '#ede9fe';
 
     // Load cached guide data from sessionStorage on mount
     useEffect(() => {
@@ -426,10 +433,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     };
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col h-full bg-[#faf8ff]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col h-full" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", backgroundColor: quaternaryColor + '40' }}>
             {/* HEADER */}
             {isEdit && order && (
-                <div className="flex items-center justify-between px-7 py-3.5 bg-gradient-to-r from-[#5b21b6] to-[#7c3aed] h-14 flex-shrink-0">
+                <div className="flex items-center justify-between px-7 py-3.5 h-14 flex-shrink-0" style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}>
                     <div className="flex items-center gap-2">
                         <svg className="w-5 h-5 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="8" cy="5" r="3"/>
@@ -459,11 +466,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
             {/* STATUS BAR */}
             {isEdit && order && (
-                <div className="flex items-center gap-3 px-7 py-2 bg-gradient-to-r from-[#4c1d95] to-[#6d28d9] h-9 flex-shrink-0">
-                    <div className="px-3 py-1 rounded-full font-bold text-xs" style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', color: '#e9d5ff', textTransform: 'uppercase' }}>
+                <div className="flex items-center gap-3 px-7 py-2 h-9 flex-shrink-0" style={{ background: `linear-gradient(to right, ${primaryColor}dd, ${secondaryColor}dd)` }}>
+                    <div className="px-3 py-1 rounded-full font-bold text-xs text-white" style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', textTransform: 'uppercase' }}>
                         {businessName}
                     </div>
-                    <span style={{ color: '#c4b5fd' }} className="text-xs font-bold">
+                    <span className="text-xs font-bold text-white">
                         • #{order.order_number || order.internal_number || order.id}
                     </span>
                 </div>
@@ -480,14 +487,14 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="grid grid-cols-3 gap-3.5" style={{ gridTemplateRows: 'auto auto auto' }}>
                 <div>
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
-                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: quaternaryColor }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <circle cx="8" cy="5" r="3"/>
                                     <path d="M2 14c0-3 2.5-5 6-5s6 2 6 5"/>
                                 </svg>
                             </div>
-                            <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Cliente</h3>
+                            <h3 className="text-sm font-bold" style={{ color: primaryColor }}>Cliente</h3>
                         </div>
 
                         {/* Warning banner */}
@@ -661,7 +668,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     Teléfono *
                                 </label>
                                 <div className="flex items-center w-full">
-                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-l-lg border border-r-0 border-purple-700">
+                                    <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
                                         +57
                                     </span>
                                     <div className="flex-1">
@@ -681,7 +688,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div>
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M8 14s-5-4.5-5-8a5 5 0 0 1 10 0c0 3.5-5 8-5 8z"/>
                                     <circle cx="8" cy="6" r="1.5"/>
@@ -832,7 +839,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="space-y-4">
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M8 2v12M5 4.5h4.5a2 2 0 0 1 0 4H6.5a2 2 0 0 0 0 4H12"/>
                                 </svg>
@@ -845,7 +852,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     Total *
                                 </label>
                                 <div className="flex items-center w-full">
-                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-l-lg border border-r-0 border-purple-700">
+                                    <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
                                         $
                                     </span>
                                     <div className="flex-1 relative">
@@ -859,7 +866,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             placeholder="0"
                                         />
                                     </div>
-                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-r-lg border border-l-0 border-purple-700">
+                                    <span className="px-3 py-2.5 text-white font-semibold rounded-r-lg border border-l-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
                                         COP
                                     </span>
                                 </div>
@@ -876,7 +883,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             setIsCOD(!isCOD);
                                             setFormData(prev => ({ ...prev, cod_total: !isCOD ? prev.total_amount : 0 }));
                                         }}
-                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isCOD ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+                                        style={{ backgroundColor: isCOD ? primaryColor : '#d1d5db' }}
                                     >
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCOD ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
@@ -887,7 +895,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="2" y="4" width="12" height="9" rx="2"/>
                                     <path d="M2 8h12M5 11h2M9 11h2"/>
@@ -903,7 +911,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             type="checkbox"
                                             checked={formData.is_paid}
                                             onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                                            className="appearance-none w-5 h-5 border-2 border-purple-400 rounded checked:bg-purple-600 checked:border-purple-600 cursor-pointer"
+                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
                                         />
                                         {formData.is_paid && (
                                             <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -937,7 +945,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             type="checkbox"
                                             checked={formData.invoiceable}
                                             onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
-                                            className="appearance-none w-5 h-5 border-2 border-purple-400 rounded checked:bg-purple-600 checked:border-purple-600 cursor-pointer"
+                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
                                         />
                                         {formData.invoiceable && (
                                             <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
@@ -973,7 +981,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-11 h-11 rounded-[7px] flex items-center justify-center text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-11 h-11 rounded-[7px] flex items-center justify-center text-white flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M2 6l6-4 6 4v8l-6 4-6-4V6z"/>
                                     <path d="M8 2v4M2 6l6 4 6-4"/>
@@ -993,7 +1001,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div>
                     <div className="bg-white rounded-[14px] border p-5 h-full" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="3" y="2" width="10" height="13" rx="1.5"/>
                                     <path d="M5.5 6h5M5.5 9h5M5.5 12h3"/>
@@ -1014,7 +1022,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="lg:col-span-3">
                     <div className="bg-white rounded-[14px] border p-5" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
-                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: 'linear-gradient(135deg, #7c3aed, #9f5cf7)' }}>
+                            <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="1" y="5" width="10" height="8" rx="1"/>
                                     <path d="M11 9h2.5L15 12v1h-1"/>
@@ -1104,15 +1112,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             </div>
 
             {/* FOOTER */}
-            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 bg-white border-t" style={{ borderColor: '#ede8f9', height: '66px', flexShrink: 0 }}>
+            <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t" style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`, borderColor: secondaryColor, height: '66px', flexShrink: 0 }}>
                 {onCancel && (
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="px-6 py-2.5 text-sm font-semibold rounded h-9.5 transition-all"
-                        style={{ background: '#fff', color: '#7c3aed', border: '1.5px solid #d4c9ef' }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = '#f5f0ff'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; }}
+                        className="px-6 py-2.5 text-sm font-semibold rounded h-9.5 transition-all text-white"
+                        style={{ background: 'rgba(255, 255, 255, 0.15)', border: '1.5px solid rgba(255, 255, 255, 0.3)' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)'; }}
                     >
                         Cancelar
                     </button>
@@ -1122,8 +1130,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                     disabled={loading}
                     className="px-6 py-2.5 text-sm font-bold text-white rounded h-9.5 transition-all flex items-center gap-2"
                     style={{
-                        background: 'linear-gradient(135deg, #7c3aed, #9333ea)',
-                        boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)'
+                        background: 'rgba(255, 255, 255, 0.25)',
+                        boxShadow: '0 4px 14px rgba(255, 255, 255, 0.25)'
                     }}
                     onMouseEnter={(e) => {
                         e.currentTarget.style.boxShadow = '0 6px 20px rgba(124, 58, 237, 0.45)';

@@ -9,6 +9,9 @@ type IRepository interface {
 	GetProductByID(ctx context.Context, businessID uint, id string) (*Product, error)
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*Product, error)
 	ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]Product, int64, error)
+	ListSKUs(ctx context.Context, businessID uint, prefix string) ([]string, error)
+	GetNextSKU(ctx context.Context, businessID uint, prefix string) (string, error)
+	GetNextSKUBatch(ctx context.Context, businessID uint, prefix string, count int) ([]string, error)
 	UpdateProduct(ctx context.Context, product *Product) error
 	DeleteProduct(ctx context.Context, businessID uint, id string) error
 	ListProductsByFamilyID(ctx context.Context, businessID uint, familyID uint) ([]Product, error)

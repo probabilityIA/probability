@@ -84,7 +84,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             {/* Header for full screen */}
             {title && (
               <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">{title}</h2>
+                <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>{title}</h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
@@ -124,7 +124,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             {/* Header */}
             {title && (
               <div className="relative mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold text-purple-700 dark:text-purple-400 text-center">{title}</h3>
+                <h3 className="text-xl font-bold text-center" style={{ color: 'var(--color-primary)' }}>{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}

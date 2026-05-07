@@ -84,4 +84,16 @@ export class ProductUseCases {
     ) {
         return this.repository.lookupProductByExternalRef(integrationId, params, businessId);
     }
+
+    async getSKUs(prefix?: string, businessId?: number) {
+        return this.repository.getSKUs(prefix, businessId);
+    }
+
+    async getNextSKU(prefix: string, businessId?: number) {
+        return this.repository.getNextSKU(prefix, businessId);
+    }
+
+    async getNextSKUBatch(prefix: string, count: number, businessId?: number) {
+        return this.repository.getNextSKUBatch(prefix, count, businessId);
+    }
 }
