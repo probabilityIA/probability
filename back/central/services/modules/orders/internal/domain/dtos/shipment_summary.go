@@ -8,4 +8,5 @@ type ShipmentSummary struct {
 	TrackingNumber *string
 	GuideURL       *string
 	Status         string
+	TotalCost      *float64
 }

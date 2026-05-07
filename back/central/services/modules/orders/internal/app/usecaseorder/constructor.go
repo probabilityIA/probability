@@ -9,6 +9,7 @@ import (
 type UseCaseOrder struct {
 	repo                 ports.IRepository
 	rabbitEventPublisher ports.IOrderRabbitPublisher
+	invoiceQueryPort     ports.IInvoiceQueryPort
 	logger               log.ILogger
 }
 
@@ -16,11 +17,13 @@ type UseCaseOrder struct {
 func New(
 	repo ports.IRepository,
 	rabbitPublisher ports.IOrderRabbitPublisher,
+	invoiceQueryPort ports.IInvoiceQueryPort,
 	logger log.ILogger,
 ) ports.IOrderUseCase {
 	return &UseCaseOrder{
 		repo:                 repo,
 		rabbitEventPublisher: rabbitPublisher,
+		invoiceQueryPort:     invoiceQueryPort,
 		logger:               logger,
 	}
 }

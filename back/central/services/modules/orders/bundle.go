@@ -32,7 +32,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	rabbitPublisher := initRabbitPublisher(rabbitMQ, logger)
 	integrationEventPub := eventpublisher.New(rabbitMQ)
 
-	orderCRUD := usecaseorder.New(repo, rabbitPublisher, logger)
+	invoiceQuery := repository.NewInvoiceQuery(database)
+	orderCRUD := usecaseorder.New(repo, rabbitPublisher, invoiceQuery, logger)
 
 	updateUC := usecaseupdateorder.New(repo, logger, rabbitPublisher, integrationEventPub)
 	createUC := usecasecreateorder.New(repo, logger, rabbitPublisher, integrationEventPub, updateUC)

@@ -175,6 +175,7 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 		TrackingNumber: s.TrackingNumber,
 		GuideURL:       s.GuideURL,
 		Status:         s.Status,
+		TotalCost:      s.TotalCost,
 	}
 }
 
@@ -195,6 +196,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 			TrackingNumber: s.TrackingNumber,
 			GuideURL:       s.GuideURL,
 			Status:         s.Status,
+			TotalCost:      s.TotalCost,
 		}
 	}
 
@@ -242,4 +244,59 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		InvoiceStatus:          order.InvoiceStatus,
 		Shipment:               shipment,
 	}
+}
+
+func ToDomainOrderItems(items []map[string]interface{}) []entities.ProbabilityOrderItem {
+	if len(items) == 0 {
+		return []entities.ProbabilityOrderItem{}
+	}
+
+	result := make([]entities.ProbabilityOrderItem, len(items))
+	for i, itemMap := range items {
+
+		qty := 1.0
+		if q, ok := itemMap["quantity"].(float64); ok {
+			qty = q
+		}
+
+		price := 0.0
+		if p, ok := itemMap["price"].(float64); ok {
+			price = p
+		}
+
+		sku := ""
+		if s, ok := itemMap["sku"].(string); ok {
+			sku = s
+		}
+
+		name := ""
+		if n, ok := itemMap["name"].(string); ok {
+			name = n
+		}
+
+		variantLabel := ""
+		if vl, ok := itemMap["variant_label"].(string); ok {
+			variantLabel = vl
+		}
+
+		var productID *string
+		if productIDVal, ok := itemMap["product_id"].(string); ok {
+			productID = &productIDVal
+		}
+
+		result[i] = entities.ProbabilityOrderItem{
+			ProductID:     productID,
+			ProductSKU:    sku,
+			ProductName:   name,
+			VariantLabel:  variantLabel,
+			VariantID:     nil,
+			Quantity:      int(qty),
+			UnitPrice:     price,
+			TotalPrice:    price * qty,
+			Currency:      "COP",
+			Discount:      0,
+			Tax:           0,
+		}
+	}
+	return result
 }

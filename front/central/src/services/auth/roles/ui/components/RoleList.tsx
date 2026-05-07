@@ -282,24 +282,24 @@ export const RoleList: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-purple-600 dark:bg-purple-600">
+                        <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     ID
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Nombre
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Nivel
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Sistema
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                     Scope
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -331,11 +331,18 @@ export const RoleList: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                                className="px-2 py-1 text-xs font-medium rounded-full"
+                                                style={
                                                     role.is_system
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-gray-100 text-gray-800 dark:text-gray-100'
-                                                }`}
+                                                        ? {
+                                                            backgroundColor: 'var(--color-primary-100)',
+                                                            color: 'var(--color-primary-900)',
+                                                          }
+                                                        : {
+                                                            backgroundColor: '#f3f4f6',
+                                                            color: '#1f2937',
+                                                          }
+                                                }
                                             >
                                                 {role.is_system ? 'Sí' : 'No'}
                                             </span>
@@ -348,7 +355,7 @@ export const RoleList: React.FC = () => {
                                                 {/* Botón Asignar Permisos */}
                                                 <button
                                                     onClick={() => handleOpenPermissions(role)}
-                                                    className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                                    className="p-2 btn btn-tertiary rounded-md transition-colors duration-200"
                                                     title="Asignar permisos"
                                                     aria-label="Asignar permisos"
                                                 >
@@ -359,7 +366,7 @@ export const RoleList: React.FC = () => {
                                                 {/* Botón Editar */}
                                                 <button
                                                     onClick={() => { setEditingRole(role); setShowCreateModal(true); }}
-                                                    className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                    className="p-2 btn btn-quaternary rounded-md transition-colors duration-200"
                                                     title="Editar rol"
                                                     aria-label="Editar rol"
                                                 >
@@ -370,7 +377,7 @@ export const RoleList: React.FC = () => {
                                                 {/* Botón Eliminar */}
                                                 <button
                                                     onClick={() => setDeleteId(role.id)}
-                                                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                    className="p-2 btn btn-danger rounded-md transition-colors duration-200"
                                                     title="Eliminar rol"
                                                     aria-label="Eliminar rol"
                                                 >
@@ -410,17 +417,20 @@ export const RoleList: React.FC = () => {
                                     <button
                                         onClick={() => setPage(page - 1)}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="btn btn-secondary rounded-l-md rounded-r-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                    <span
+                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
+                                        style={{ borderColor: 'var(--color-secondary-500)' }}
+                                    >
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setPage(page + 1)}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="btn btn-secondary rounded-r-md rounded-l-none disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Siguiente
                                     </button>
@@ -524,9 +534,14 @@ export const RoleList: React.FC = () => {
                                         {allPermissions.map((permission) => (
                                             <tr
                                                 key={permission.id}
-                                                className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors ${
-                                                    rolePermissionIds.includes(permission.id) ? 'bg-purple-50 dark:bg-purple-900/30' : ''
-                                                }`}
+                                                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                                                style={
+                                                    rolePermissionIds.includes(permission.id)
+                                                        ? {
+                                                            backgroundColor: 'var(--color-primary-50)',
+                                                          }
+                                                        : {}
+                                                }
                                                 onClick={() => handleTogglePermission(permission.id)}
                                             >
                                                 <td className="px-4 py-2">
@@ -534,7 +549,10 @@ export const RoleList: React.FC = () => {
                                                         type="checkbox"
                                                         checked={rolePermissionIds.includes(permission.id)}
                                                         onChange={() => handleTogglePermission(permission.id)}
-                                                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 border-gray-300 rounded"
+                                                        style={{
+                                                            accentColor: 'var(--color-primary-600)',
+                                                        }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     />
                                                 </td>

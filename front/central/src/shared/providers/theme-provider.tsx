@@ -1,13 +1,8 @@
-/**
- * Theme Provider
- * Inyecta los colores del negocio activo en las CSS variables
- * Los colores se cargan desde localStorage o se obtienen del backend
- */
-
 'use client';
 
 import { useEffect } from 'react';
 import { TokenStorage } from '@/shared/config';
+import { updateAllColorScales } from '@/shared/utils/color-scales';
 
 interface BusinessColors {
   primary: string;
@@ -52,11 +47,12 @@ const DEFAULT_COLORS = {
 
 function applyBusinessColors() {
   const colors = TokenStorage.getBusinessColors();
+  const primaryColor = colors?.primary || DEFAULT_COLORS.primary;
+  const secondaryColor = colors?.secondary || DEFAULT_COLORS.secondary;
+  const tertiaryColor = colors?.tertiary || DEFAULT_COLORS.tertiary;
+  const quaternaryColor = colors?.quaternary || DEFAULT_COLORS.quaternary;
 
-  document.documentElement.style.setProperty('--color-primary', colors?.primary || DEFAULT_COLORS.primary);
-  document.documentElement.style.setProperty('--color-secondary', colors?.secondary || DEFAULT_COLORS.secondary);
-  document.documentElement.style.setProperty('--color-tertiary', colors?.tertiary || DEFAULT_COLORS.tertiary);
-  document.documentElement.style.setProperty('--color-quaternary', colors?.quaternary || DEFAULT_COLORS.quaternary);
+  updateAllColorScales(primaryColor, secondaryColor, tertiaryColor, quaternaryColor);
 }
 
 /**
@@ -64,16 +60,8 @@ function applyBusinessColors() {
  */
 export function useTheme() {
   const setColors = (colors: BusinessColors) => {
-    // Guardar en localStorage
     TokenStorage.setBusinessColors(colors);
-
-    // Aplicar inmediatamente
-    document.documentElement.style.setProperty('--color-primary', colors.primary);
-    document.documentElement.style.setProperty('--color-secondary', colors.secondary);
-    document.documentElement.style.setProperty('--color-tertiary', colors.tertiary);
-    document.documentElement.style.setProperty('--color-quaternary', colors.quaternary);
-
-    // Disparar evento para otros componentes
+    updateAllColorScales(colors.primary, colors.secondary, colors.tertiary, colors.quaternary);
     window.dispatchEvent(new Event('businessChanged'));
   };
 

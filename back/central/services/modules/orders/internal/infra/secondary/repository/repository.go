@@ -1062,3 +1062,67 @@ func (r *Repository) GetOrderHistory(ctx context.Context, orderID string) ([]ent
 
 	return result, nil
 }
+
+func (r *Repository) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
+	fmt.Printf("🔵 [DeleteOrderItemsByOrderID] Borrando items de orden: %s\n", orderID)
+	result := r.db.Conn(ctx).Where("order_id = ?", orderID).Delete(&models.OrderItem{})
+	if result.Error != nil {
+		fmt.Printf("❌ [DeleteOrderItemsByOrderID] Error: %v\n", result.Error)
+		return result.Error
+	}
+	fmt.Printf("✅ [DeleteOrderItemsByOrderID] %d items borrados\n", result.RowsAffected)
+	return nil
+}
+
+func (r *Repository) SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error {
+	if len(items) == 0 {
+		fmt.Printf("⚠️ [SaveOrderItems] Sin items para guardar\n")
+		return nil
+	}
+
+	fmt.Printf("🔵 [SaveOrderItems] Iniciando - orderID=%s, items=%d\n", orderID, len(items))
+
+	dbItems := make([]models.OrderItem, len(items))
+	for i, item := range items {
+		productID := ""
+		if item.ProductID != nil {
+			productID = *item.ProductID
+		}
+		fmt.Printf("  [Item %d] sku=%s, qty=%d, price=%.2f, productID=%s, productName=%s\n",
+			i+1, item.ProductSKU, item.Quantity, item.UnitPrice, productID, item.ProductName)
+		dbItems[i] = models.OrderItem{
+			OrderID:               orderID,
+			ProductID:             item.ProductID,
+			ProductSKU:            item.ProductSKU,
+			ProductName:           item.ProductName,
+			VariantID:             item.VariantID,
+			VariantLabel:          item.VariantLabel,
+			Quantity:              item.Quantity,
+			UnitPrice:             item.UnitPrice,
+			TotalPrice:            item.TotalPrice,
+			Currency:              item.Currency,
+			Discount:              item.Discount,
+			DiscountPercent:       item.DiscountPercent,
+			Tax:                   item.Tax,
+			TaxRate:               item.TaxRate,
+			UnitPriceBase:         item.UnitPriceBase,
+			UnitPriceBasePresentment: item.UnitPriceBasePresentment,
+			UnitPricePresentment:  item.UnitPricePresentment,
+			TotalPricePresentment: item.TotalPricePresentment,
+			DiscountPresentment:   item.DiscountPresentment,
+			TaxPresentment:        item.TaxPresentment,
+			FulfillmentStatus:     item.FulfillmentStatus,
+			Metadata:              datatypes.JSON(item.Metadata),
+		}
+	}
+
+	fmt.Printf("🔵 [SaveOrderItems] Intentando insertar %d items en BD...\n", len(dbItems))
+	result := r.db.Conn(ctx).Create(dbItems)
+	if result.Error != nil {
+		fmt.Printf("❌ [SaveOrderItems] ERROR: %v\n", result.Error)
+		return result.Error
+	}
+
+	fmt.Printf("✅ [SaveOrderItems] %d items guardados exitosamente. Rows affected: %d\n", len(items), result.RowsAffected)
+	return nil
+}

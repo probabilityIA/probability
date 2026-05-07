@@ -265,3 +265,13 @@ func (m *RepositoryMock) ResolveOrderGeozone(ctx context.Context, orderID string
 	args := m.Called(ctx, orderID, businessID)
 	return args.Error(0)
 }
+
+func (m *RepositoryMock) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
+	args := m.Called(ctx, orderID)
+	return args.Error(0)
+}
+
+func (m *RepositoryMock) SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error {
+	args := m.Called(ctx, orderID, items)
+	return args.Error(0)
+}

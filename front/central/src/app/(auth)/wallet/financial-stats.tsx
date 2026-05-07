@@ -98,7 +98,9 @@ export function FinancialStatsView() {
                     <select
                         value={selectedBusinessId?.toString() ?? ''}
                         onChange={(e) => setSelectedBusinessId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none"
+                        onFocus={(e) => (e.target as HTMLSelectElement).style.boxShadow = '0 0 0 3px var(--color-primary-500)'}
+                        onBlur={(e) => (e.target as HTMLSelectElement).style.boxShadow = 'none'}
                     >
                         <option value="">Todos los negocios</option>
                         {businesses.map((b) => (
@@ -141,7 +143,9 @@ export function FinancialStatsView() {
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none"
+                            onFocus={(e) => (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-primary-500)'}
+                            onBlur={(e) => (e.target as HTMLInputElement).style.boxShadow = 'none'}
                         />
                     </div>
                 ) : (
@@ -154,7 +158,9 @@ export function FinancialStatsView() {
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none"
+                                onFocus={(e) => (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-primary-500)'}
+                                onBlur={(e) => (e.target as HTMLInputElement).style.boxShadow = 'none'}
                             />
                         </div>
                         <div>
@@ -165,7 +171,9 @@ export function FinancialStatsView() {
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none"
+                                onFocus={(e) => (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px var(--color-primary-500)'}
+                                onBlur={(e) => (e.target as HTMLInputElement).style.boxShadow = 'none'}
                             />
                         </div>
                     </div>
@@ -195,7 +203,7 @@ export function FinancialStatsView() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Ingresos totales</p>
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(stats.total_income)}</p>
+                                <p className="text-2xl font-bold" style={{ color: '#16a34a' }}>{formatCurrency(stats.total_income)}</p>
                             </div>
                         </div>
                     </div>
@@ -292,7 +300,7 @@ export function FinancialStatsView() {
                                             <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
                                                 {business.guide_count.toLocaleString('es-CO')}
                                             </td>
-                                            <td className="px-6 py-4 text-sm font-semibold text-right text-green-600 dark:text-green-400">
+                                            <td className="px-6 py-4 text-sm font-semibold text-right" style={{ color: '#16a34a' }}>
                                                 {formatCurrency(business.total_income)}
                                             </td>
                                         </tr>
@@ -310,7 +318,7 @@ export function FinancialStatsView() {
                                         <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
                                             {stats.businesses.reduce((sum, b) => sum + b.guide_count, 0).toLocaleString('es-CO')}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-right text-green-600 dark:text-green-400">
+                                        <td className="px-6 py-4 text-sm text-right" style={{ color: '#16a34a' }}>
                                             {formatCurrency(stats.total_income)}
                                         </td>
                                     </tr>

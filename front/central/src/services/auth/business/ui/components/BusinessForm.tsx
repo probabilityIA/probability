@@ -115,7 +115,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                                 color={value}
                                 onChange={onChange}
                                 prefixed
-                                className="flex-1 px-2 py-1 text-sm font-mono border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                className="flex-1 px-2 py-1 text-sm font-mono border rounded-md focus:outline-none focus:ring-2 uppercase"
                             />
                         </div>
 
@@ -128,12 +128,19 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                                         key={color}
                                         type="button"
                                         onClick={() => onChange(color)}
-                                        className={`w-6 h-6 rounded-md border-2 transition-all hover:scale-110 ${
+                                        className="w-6 h-6 rounded-md border-2 transition-all hover:scale-110"
+                                        style={
                                             value.toLowerCase() === color.toLowerCase()
-                                                ? 'border-blue-500 ring-2 ring-blue-200'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                        }`}
-                                        style={{ backgroundColor: color }}
+                                                ? {
+                                                    borderColor: 'var(--color-primary-500)',
+                                                    boxShadow: '0 0 0 2px var(--color-primary-100)',
+                                                    backgroundColor: color,
+                                                  }
+                                                : {
+                                                    borderColor: '#e5e7eb',
+                                                    backgroundColor: color,
+                                                  }
+                                        }
                                         title={color}
                                     />
                                 ))}
@@ -329,7 +336,18 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                                         handleChange('tertiary_color', palette.colors.tertiary);
                                         handleChange('quaternary_color', palette.colors.quaternary);
                                     }}
-                                    className="group flex flex-col items-center p-2 border rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
+                                    className="group flex flex-col items-center p-2 border rounded-lg transition-all"
+                                    style={{
+                                        borderColor: 'currentColor',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--color-primary-400)';
+                                        e.currentTarget.style.backgroundColor = 'var(--color-primary-50)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = 'currentColor';
+                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
                                     title={palette.name}
                                 >
                                     <div className="flex w-full h-6 rounded overflow-hidden shadow-sm">
@@ -338,7 +356,18 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                                         <div className="flex-1" style={{ backgroundColor: palette.colors.tertiary }} />
                                         <div className="flex-1" style={{ backgroundColor: palette.colors.quaternary }} />
                                     </div>
-                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 group-hover:text-blue-600 truncate w-full text-center">
+                                    <span
+                                        className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 truncate w-full text-center"
+                                        style={{
+                                            transition: 'color 0.2s',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = 'var(--color-primary-600)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = '#a1a1aa';
+                                        }}
+                                    >
                                         {palette.name}
                                     </span>
                                 </button>

@@ -53,6 +53,29 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		fulfillmentStatus = mapFulfillmentStatusToResponse(dto.FulfillmentStatus)
 	}
 
+	var shipment *response.ShipmentSummary
+	if dto.Shipment != nil {
+		shipment = &response.ShipmentSummary{
+			ID:             dto.Shipment.ID,
+			Carrier:        dto.Shipment.Carrier,
+			TrackingNumber: dto.Shipment.TrackingNumber,
+			GuideURL:       dto.Shipment.GuideURL,
+			Status:         dto.Shipment.Status,
+			TotalCost:      dto.Shipment.TotalCost,
+		}
+	}
+
+	var invoice *response.InvoicePreview
+	if dto.Invoice != nil {
+		invoice = &response.InvoicePreview{
+			ID:              dto.Invoice.ID,
+			InvoiceNumber:   dto.Invoice.InvoiceNumber,
+			Status:          dto.Invoice.Status,
+			IssuedAt:        dto.Invoice.IssuedAt,
+			RetentionAmount: dto.Invoice.RetentionAmount,
+		}
+	}
+
 	return &response.Order{
 		ID:                      dto.ID,
 		CreatedAt:               dto.CreatedAt,
@@ -140,6 +163,8 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		InvoiceProvider:         dto.InvoiceProvider,
 		OrderStatusURL:          dto.OrderStatusURL,
 		OrderItems:              mapOrderItemsToResponse(dto.OrderItems),
+		Shipment:                shipment,
+		Invoice:                 invoice,
 		Metadata:                metadataJSON,
 		FinancialDetails:        financialDetailsJSON,
 		ShippingDetails:         shippingDetailsJSON,
@@ -177,6 +202,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 			TrackingNumber: dto.Shipment.TrackingNumber,
 			GuideURL:       dto.Shipment.GuideURL,
 			Status:         dto.Shipment.Status,
+			TotalCost:      dto.Shipment.TotalCost,
 		}
 	}
 
@@ -268,6 +294,7 @@ func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.O
 			ProductName:           item.ProductName,
 			ProductTitle:          item.ProductTitle,
 			VariantID:             item.VariantID,
+			VariantLabel:          item.VariantLabel,
 			Quantity:              item.Quantity,
 			UnitPrice:             item.UnitPrice,
 			TotalPrice:            item.TotalPrice,

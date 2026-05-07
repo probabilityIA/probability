@@ -349,7 +349,10 @@ type OrderItem struct {
 	// (Específica de esta orden, no del producto)
 	// ============================================
 
+	ProductSKU        string         `gorm:"size:255"`   // SKU del producto (desnormalizado)
+	ProductName       string         `gorm:"size:255"`   // Nombre del producto (desnormalizado)
 	VariantID         *string        `gorm:"size:255"`   // ID de la variante en el sistema externo (si aplica)
+	VariantLabel      string         `gorm:"size:255"`   // Nombre/etiqueta de la variante (desnormalizado)
 	FulfillmentStatus *string        `gorm:"size:64"`    // Estado de fulfillment de este item en esta orden
 	Metadata          datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal para este item específico
 }

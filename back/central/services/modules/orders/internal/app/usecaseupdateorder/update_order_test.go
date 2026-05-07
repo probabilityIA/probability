@@ -260,6 +260,12 @@ func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([
 func (m *mockRepository) ResolveOrderGeozone(ctx context.Context, orderID string, businessID uint) error {
 	return nil
 }
+func (m *mockRepository) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
+	return nil
+}
+func (m *mockRepository) SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error {
+	return nil
+}
 
 // Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {

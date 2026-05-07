@@ -31,22 +31,19 @@ export default function OrdersPage() {
             <>
                 <button
                     onClick={() => setShowCreateModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     + Nueva Orden
                 </button>
                 <button
                     onClick={() => setShowMassUploadModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     Carga Masiva
                 </button>
                 <button
                     onClick={() => setShowMassGuideModal(true)}
-                    style={{ background: '#7c3aed' }}
-                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
                 >
                     Guías Masivas
                 </button>
@@ -57,10 +54,23 @@ export default function OrdersPage() {
         return () => setActionButtons(null);
     }, [setActionButtons]);
 
-    const handleView = (order: Order) => {
-        setSelectedOrder(order);
-        setViewMode('details'); // Set mode to details
-        setShowViewModal(true);
+    const handleView = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+                setViewMode('details');
+                setShowViewModal(true);
+            } else {
+                setSelectedOrder(order);
+                setViewMode('details');
+                setShowViewModal(true);
+            }
+        } catch (error) {
+            setSelectedOrder(order);
+            setViewMode('details');
+            setShowViewModal(true);
+        }
     };
 
     const handleViewRecommendation = async (order: Order) => {
@@ -92,11 +102,15 @@ export default function OrdersPage() {
         setShowEditModal(true);
     };
 
-    const handleSuccess = () => {
+    const handleSuccess = (updatedOrder?: Order) => {
         setShowCreateModal(false);
         setShowEditModal(false);
         setShowViewModal(false);
-        setSelectedOrder(null);
+        if (updatedOrder) {
+            setSelectedOrder(updatedOrder);
+        } else {
+            setSelectedOrder(null);
+        }
         setRefreshKey(prev => prev + 1);
     };
 
@@ -169,8 +183,8 @@ export default function OrdersPage() {
             <Modal
                 isOpen={showViewModal}
                 onClose={handleCancel}
-                title={viewMode === 'recommendation' ? undefined : 'Detalles de la Orden'} // Remove title for recommendation
-                transparent={viewMode === 'recommendation'} // Enable transparent mode
+                title={undefined}
+                transparent={viewMode === 'recommendation'}
                 size="full"
             >
                 {selectedOrder && (
@@ -186,7 +200,6 @@ export default function OrdersPage() {
             <Modal
                 isOpen={showEditModal}
                 onClose={handleCancel}
-                title="Editar Orden"
                 size="full"
             >
                 {selectedOrder && (

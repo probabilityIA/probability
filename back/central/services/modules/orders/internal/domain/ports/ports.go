@@ -27,6 +27,8 @@ type IRepository interface {
 	GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
 
 	CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error
+	DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error
+	SaveOrderItems(ctx context.Context, orderID string, items []entities.ProbabilityOrderItem) error
 	CreateAddresses(ctx context.Context, addresses []*entities.ProbabilityAddress) error
 	CreatePayments(ctx context.Context, payments []*entities.ProbabilityPayment) error
 	CreateShipments(ctx context.Context, shipments []*entities.ProbabilityShipment) error
@@ -107,4 +109,8 @@ type IOrderRabbitPublisher interface {
 	PublishConfirmationRequested(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+}
+
+type IInvoiceQueryPort interface {
+	GetInvoiceByOrderID(ctx context.Context, orderID string) (*dtos.InvoiceData, error)
 }

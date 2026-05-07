@@ -104,6 +104,7 @@ export interface Order {
         tracking_number?: string;
         guide_url?: string;
         status: string;
+        total_cost?: number;
     };
 
     // Información de fulfillment
@@ -166,6 +167,15 @@ export interface Order {
     shipping_details?: any;
     payment_details?: any;
     fulfillment_details?: any;
+
+    // Información de factura asociada (si existe y está emitida)
+    invoice?: {
+        id: number;
+        invoice_number: string;
+        status: string;
+        issued_at?: string;
+        retention_amount: number;
+    };
 
     // Timestamps
     occurred_at: string;

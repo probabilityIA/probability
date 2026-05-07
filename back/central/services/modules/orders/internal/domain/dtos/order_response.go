@@ -134,7 +134,10 @@ type OrderResponse struct {
 	OrderItems []entities.ProbabilityOrderItem
 
 	// Información del envío (relación con shipments)
-	Shipment *ShipmentData `json:"shipment"`
+	Shipment *ShipmentData
+
+	// Información de factura asociada (si existe y está emitida)
+	Invoice *InvoiceData
 
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
@@ -157,4 +160,14 @@ type ShipmentData struct {
 	TrackingNumber *string
 	GuideURL       *string
 	Status         string
+	TotalCost      *float64
+}
+
+// InvoiceData contiene información de la factura asociada a la orden
+type InvoiceData struct {
+	ID              uint
+	InvoiceNumber   string
+	Status          string
+	IssuedAt        *time.Time
+	RetentionAmount float64
 }

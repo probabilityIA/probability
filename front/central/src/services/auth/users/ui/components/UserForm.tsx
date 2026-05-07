@@ -107,7 +107,10 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ options, selectedValues, onCh
                                     type="checkbox"
                                     checked={selectedValues.includes(option.value)}
                                     onChange={() => handleToggle(option.value)}
-                                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="mr-2 h-4 w-4 border-gray-300 rounded"
+                                    style={{
+                                        accentColor: 'var(--color-primary-600)',
+                                    }}
                                 />
                                 <span className="text-sm text-gray-900 dark:text-white">{option.label}</span>
                             </label>
@@ -358,8 +361,19 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
 
             {/* Mensaje para usuarios platform (no necesitan negocios) */}
             {showScopeSelector && selectedScope === '1' && (
-                <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-md">
-                    <p className="text-xs text-purple-700">
+                <div
+                    className="mt-4 p-3 border rounded-md"
+                    style={{
+                        backgroundColor: 'var(--color-secondary-50)',
+                        borderColor: 'var(--color-secondary-200)',
+                    }}
+                >
+                    <p
+                        className="text-xs"
+                        style={{
+                            color: 'var(--color-secondary-700)',
+                        }}
+                    >
                         Los usuarios Platform (Super Admin) no requieren asignación de negocios.
                     </p>
                 </div>
@@ -367,8 +381,19 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
 
             {/* Mensaje para usuarios de negocio (el campo no se muestra, se asigna automáticamente) */}
             {isBusinessUser && currentUser?.business_id && isCreating && (
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-xs text-blue-700">
+                <div
+                    className="mt-4 p-3 border rounded-md"
+                    style={{
+                        backgroundColor: 'var(--color-primary-50)',
+                        borderColor: 'var(--color-primary-200)',
+                    }}
+                >
+                    <p
+                        className="text-xs"
+                        style={{
+                            color: 'var(--color-primary-700)',
+                        }}
+                    >
                         El usuario será asignado automáticamente a su negocio.
                     </p>
                 </div>

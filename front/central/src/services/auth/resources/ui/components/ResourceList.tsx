@@ -109,7 +109,7 @@ export const ResourceList: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Usuarios</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:">Usuarios</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -144,22 +144,22 @@ export const ResourceList: React.FC = () => {
                 {/* Tabla */}
                 <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-purple-600 dark:bg-purple-600">
+                        <table className="table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Descripción
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">
                                         Tipo de Negocio
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium  uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
@@ -180,10 +180,10 @@ export const ResourceList: React.FC = () => {
                                 ) : (
                                     resources.map((resource) => (
                                         <tr key={resource.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:">
                                                 {resource.id}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:">
                                                 {resource.name}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
@@ -196,7 +196,7 @@ export const ResourceList: React.FC = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => { setEditingResource(resource); setShowCreateModal(true); }}
-                                                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-quaternary rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2"
                                                         title="Editar recurso"
                                                         aria-label="Editar recurso"
                                                     >
@@ -206,7 +206,7 @@ export const ResourceList: React.FC = () => {
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteId(resource.id)}
-                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        className="p-2 btn btn-danger rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2"
                                                         title="Eliminar recurso"
                                                         aria-label="Eliminar recurso"
                                                     >
@@ -246,17 +246,20 @@ export const ResourceList: React.FC = () => {
                                         <button
                                             onClick={() => setPage(page - 1)}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-secondary rounded-l-md rounded-r-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        <span
+                                          className="relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200"
+                                          style={{ borderColor: 'var(--color-secondary-500)' }}
+                                        >
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setPage(page + 1)}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-secondary rounded-r-md rounded-l-none disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                         </button>
@@ -276,7 +279,7 @@ export const ResourceList: React.FC = () => {
                                                 setPageSize(newPageSize);
                                                 setPage(1);
                                             }}
-                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark: bg-white dark:bg-gray-700"
                                         >
                                             <option value="10">10</option>
                                             <option value="20">20</option>

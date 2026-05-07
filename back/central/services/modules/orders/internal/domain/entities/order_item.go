@@ -17,6 +17,7 @@ type ProbabilityOrderItem struct {
 	ProductName  string
 	ProductTitle string
 	VariantID    *string
+	VariantLabel string
 
 	Quantity   int
 	UnitPrice  float64

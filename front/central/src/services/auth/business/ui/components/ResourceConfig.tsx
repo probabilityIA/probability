@@ -29,7 +29,10 @@ export const ResourceConfig: React.FC<ResourceConfigProps> = ({ businessId }) =>
             label: 'Status',
             key: 'is_active',
             render: (_: unknown, row: ConfiguredResource) => (
-                <span className={`px-2 py-1 rounded text-xs ${row.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                <span className="px-2 py-1 rounded text-xs" style={{
+                    backgroundColor: row.is_active ? '#dcfce7' : '#fee2e2',
+                    color: row.is_active ? '#166534' : '#991b1b'
+                }}>
                     {row.is_active ? 'Active' : 'Inactive'}
                 </span>
             )
