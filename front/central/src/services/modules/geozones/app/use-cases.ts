@@ -5,6 +5,7 @@ import {
     LookupParams,
     BulkImportRequest,
     GeozoneType,
+    ProbabilityRequest,
 } from '../domain/types';
 
 export class GeozoneUseCases {
@@ -17,4 +18,5 @@ export class GeozoneUseCases {
     lookup(params: LookupParams) { return this.repo.lookup(params); }
     remove(id: number, businessId?: number) { return this.repo.remove(id, businessId); }
     getForDisplay(type: GeozoneType | '', zoom: number, bbox?: string) { return this.repo.getForDisplay(type, zoom, bbox); }
+    probability(req: ProbabilityRequest) { return this.repo.probability(req); }
 }

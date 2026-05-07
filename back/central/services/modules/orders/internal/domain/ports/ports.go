@@ -55,6 +55,8 @@ type IRepository interface {
 
 	CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error
 	GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error)
+
+	ResolveOrderGeozone(ctx context.Context, orderID string, businessID uint) error
 }
 
 type IOrderConsumer interface {

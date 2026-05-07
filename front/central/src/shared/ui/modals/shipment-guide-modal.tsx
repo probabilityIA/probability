@@ -13,6 +13,7 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { DeliveryProbabilityBadge } from "@/services/modules/geozones/ui/components/DeliveryProbabilityBadge";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
@@ -1216,6 +1217,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 <div className="font-semibold text-sm">{rate.carrier}</div>
                                                                 <div className="text-xs text-gray-600 dark:text-gray-300">{rate.product}</div>
                                                             </div>
+                                                            {order?.business_id && order.business_id > 0 && order.id && (
+                                                                <div className="mt-1 flex justify-center">
+                                                                    <DeliveryProbabilityBadge
+                                                                        businessId={order.business_id}
+                                                                        orderId={order.id}
+                                                                        carrier={rate.carrier}
+                                                                        compact
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="border-t pt-2 mt-2 flex-1">

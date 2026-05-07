@@ -80,8 +80,18 @@ type Order struct {
 	ShippingState      string   `gorm:"size:128"` // Estado/Provincia
 	ShippingCountry    string   `gorm:"size:128"` // País
 	ShippingPostalCode string   `gorm:"size:32"`  // Código postal
-	ShippingLat        *float64 // Latitud
-	ShippingLng        *float64 // Longitud
+	ShippingLat        *float64
+	ShippingLng        *float64
+
+	DestinationGeozoneID   *uint          `gorm:"index"`
+	DestinationGeozonePath datatypes.JSON `gorm:"type:jsonb"`
+	GeozoneCountryID       *uint          `gorm:"index"`
+	GeozoneStateID         *uint          `gorm:"index"`
+	GeozoneCityID          *uint          `gorm:"index"`
+	GeozoneAdminDistrictID *uint          `gorm:"index"`
+	GeozoneLocalityID      *uint          `gorm:"index"`
+	GeozoneNeighborhoodID  *uint          `gorm:"index"`
+	GeozoneBarrioID        *uint          `gorm:"index"`
 
 	// ============================================
 	// INFORMACIÓN DE PAGO

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/geozones/internal/app"
+	"github.com/secamc93/probability/back/central/services/modules/geozones/internal/domain/ports"
 )
 
 type IHandlers interface {
@@ -16,15 +17,17 @@ type IHandlers interface {
 	Delete(c *gin.Context)
 	Display(c *gin.Context)
 	FlushDisplayCache(c *gin.Context)
+	Probability(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
 type Handlers struct {
-	uc app.IUseCase
+	uc            app.IUseCase
+	probabilityUC ports.IProbabilityUseCase
 }
 
-func New(uc app.IUseCase) IHandlers {
-	return &Handlers{uc: uc}
+func New(uc app.IUseCase, probabilityUC ports.IProbabilityUseCase) IHandlers {
+	return &Handlers{uc: uc, probabilityUC: probabilityUC}
 }
 
 func (h *Handlers) resolveBusinessID(c *gin.Context) (uint, bool) {

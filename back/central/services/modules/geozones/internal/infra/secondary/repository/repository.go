@@ -23,6 +23,10 @@ func New(database db.IDatabase) ports.IRepository {
 	return &Repository{db: database}
 }
 
+func NewStruct(database db.IDatabase) *Repository {
+	return &Repository{db: database}
+}
+
 type geozoneRow struct {
 	ID         uint
 	BusinessID uint

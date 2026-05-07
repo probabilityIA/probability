@@ -21,12 +21,16 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 		return uc.mapOrderToResponse(existingOrder), nil
 	}
 
-	// 3. Persistir los cambios
 	if err := uc.repo.UpdateOrder(ctx, existingOrder); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)
 	}
 
-	// 4. Publicar todos los eventos (integration sync, SSE, RabbitMQ, score)
+	if existingOrder.ShippingLat != nil && existingOrder.ShippingLng != nil && existingOrder.BusinessID != nil {
+		if err := uc.repo.ResolveOrderGeozone(ctx, existingOrder.ID, *existingOrder.BusinessID); err != nil {
+			uc.logger.Warn(ctx).Err(err).Str("order_id", existingOrder.ID).Msg("Failed to resolve order geozone")
+		}
+	}
+
 	uc.publishUpdateEvents(ctx, existingOrder, previousStatus, dto.IsManualOrder)
 
 	// 5. Retornar la respuesta actualizada

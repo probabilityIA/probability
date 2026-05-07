@@ -257,6 +257,9 @@ func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entiti
 func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
 	return nil, nil
 }
+func (m *mockRepository) ResolveOrderGeozone(ctx context.Context, orderID string, businessID uint) error {
+	return nil
+}
 
 // Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {

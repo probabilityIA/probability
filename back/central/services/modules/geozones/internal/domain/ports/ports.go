@@ -15,6 +15,29 @@ type IRepository interface {
 	LookupContaining(ctx context.Context, params dtos.LookupParams) ([]entities.Geozone, error)
 	Delete(ctx context.Context, id uint) error
 	GetForDisplay(ctx context.Context, params dtos.DisplayParams) ([]dtos.DisplayFeature, error)
+	ResolveAncestors(ctx context.Context, lat, lng float64, businessID uint) (*entities.GeozoneAncestors, error)
+}
+
+type IResolver interface {
+	Resolve(ctx context.Context, lat, lng float64, businessID uint) (*entities.GeozoneAncestors, error)
+}
+
+type LevelAggregate struct {
+	Total      int64
+	Delivered  int64
+	Cancelled  int64
+	Returned   int64
+	InTransit  int64
+}
+
+type IProbabilityRepository interface {
+	AncestorsByOrderID(ctx context.Context, orderID string, businessID uint) (*entities.GeozoneAncestors, error)
+	AggregateAtLevel(ctx context.Context, businessID uint, levelColumn string, geozoneID uint, carrier string) (LevelAggregate, error)
+	GeozoneNameAndType(ctx context.Context, geozoneID uint) (string, string, error)
+}
+
+type IProbabilityUseCase interface {
+	GetProbability(ctx context.Context, req dtos.ProbabilityRequest) (*dtos.ProbabilityResult, error)
 }
 
 type IDisplayCache interface {

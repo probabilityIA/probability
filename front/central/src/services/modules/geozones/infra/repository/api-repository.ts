@@ -99,4 +99,15 @@ export class GeozoneApiRepository implements IGeozoneRepository {
             method: 'DELETE',
         });
     }
+
+    async probability(req: import('../../domain/types').ProbabilityRequest): Promise<import('../../domain/types').ProbabilityResult> {
+        const sp = new URLSearchParams();
+        sp.append('business_id', String(req.business_id));
+        if (req.order_id) sp.append('order_id', req.order_id);
+        if (req.lat !== undefined) sp.append('lat', String(req.lat));
+        if (req.lng !== undefined) sp.append('lng', String(req.lng));
+        if (req.carrier) sp.append('carrier', req.carrier);
+        const res = await this.fetch<{ success: boolean; data: import('../../domain/types').ProbabilityResult }>(`/geozones/probability?${sp.toString()}`);
+        return res.data;
+    }
 }

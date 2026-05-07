@@ -107,6 +107,33 @@ export interface DisplayFeatureCollection {
     features: DisplayFeature[];
 }
 
+export interface ProbabilityRequest {
+    business_id: number;
+    order_id?: string;
+    lat?: number;
+    lng?: number;
+    carrier?: string;
+}
+
+export interface ProbabilityStats {
+    geozone_id: number;
+    geozone_type: string;
+    geozone_name?: string;
+    total: number;
+    delivered: number;
+    cancelled: number;
+    returned: number;
+    in_transit: number;
+}
+
+export interface ProbabilityResult {
+    found: boolean;
+    delivery_rate?: number;
+    level?: string;
+    carrier?: string;
+    stats?: ProbabilityStats;
+}
+
 export interface DrillState {
     level: 'country' | 'state' | 'city' | 'admin_district' | 'neighborhood';
     state?: { id: number; name: string };

@@ -12,6 +12,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.GET("", h.List)
 		g.GET("/display", h.Display)
 		g.GET("/lookup", h.Lookup)
+		g.GET("/probability", h.Probability)
 		g.GET("/:id", h.Get)
 		g.POST("", h.Create)
 		g.POST("/bulk", h.Bulk)

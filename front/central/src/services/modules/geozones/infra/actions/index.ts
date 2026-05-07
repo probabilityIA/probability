@@ -9,6 +9,7 @@ import {
     LookupParams,
     BulkImportRequest,
     GeozoneType,
+    ProbabilityRequest,
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -49,5 +50,10 @@ export const deleteGeozoneAction = async (id: number, businessId?: number) => {
 
 export const getGeozonesForDisplayAction = async (type: GeozoneType | '', zoom: number, bbox?: string) => {
     try { return await (await getUseCases()).getForDisplay(type, zoom, bbox); }
+    catch (error: any) { throw new Error(error.message); }
+};
+
+export const getDeliveryProbabilityAction = async (req: ProbabilityRequest) => {
+    try { return await (await getUseCases()).probability(req); }
     catch (error: any) { throw new Error(error.message); }
 };

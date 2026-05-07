@@ -9,6 +9,8 @@ import {
     BulkImportResponse,
     DisplayFeatureCollection,
     GeozoneType,
+    ProbabilityRequest,
+    ProbabilityResult,
 } from './types';
 
 export interface IGeozoneRepository {
@@ -19,4 +21,5 @@ export interface IGeozoneRepository {
     lookup(params: LookupParams): Promise<LookupResponse>;
     remove(id: number, businessId?: number): Promise<void>;
     getForDisplay(geozoneType: GeozoneType | '', zoom: number, bbox?: string): Promise<DisplayFeatureCollection>;
+    probability(req: ProbabilityRequest): Promise<ProbabilityResult>;
 }
