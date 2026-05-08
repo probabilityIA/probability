@@ -1201,8 +1201,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     onClick={() => handleRateSelection(rate)}
                                                     className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white dark:bg-gray-800"
                                                 >
-                                                    <div className="flex flex-col h-full">
-                                                        <div className="flex flex-col items-center mb-2">
+                                                    <div className="flex flex-row items-stretch gap-3 h-full">
+                                                        <div className="flex flex-col items-start flex-1 min-w-0">
                                                             <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
                                                                 <img
                                                                     src={getCarrierLogo(rate.carrier)}
@@ -1214,35 +1214,27 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <div className="text-center">
-                                                                <div className="font-semibold text-sm">{rate.carrier}</div>
-                                                                <div className="text-xs text-gray-600 dark:text-gray-300">{rate.product}</div>
+                                                            <div className="font-semibold text-sm">{rate.carrier}</div>
+                                                            <div className="text-xs text-gray-600 dark:text-gray-300 mb-2">{rate.product}</div>
+                                                            <div className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                                                                Guía: ${rate.flete.toLocaleString()}<br />
+                                                                Seg. obligatorio: ${minIns.toLocaleString()}<br />
+                                                                Seg. adicional: ${extraIns.toLocaleString()}<br />
+                                                                <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
                                                             </div>
                                                         </div>
-
-                                                        <div className="border-t pt-2 mt-2 flex-1">
-                                                            <div className="text-center mb-1">
-                                                                <div className="text-xl font-bold text-purple-600">
-                                                                    ${totalCost.toLocaleString()}
-                                                                </div>
-                                                                <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
-                                                                <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight text-left">
-                                                                    Guía: ${rate.flete.toLocaleString()}<br />
-                                                                    Seg. obligatorio: ${minIns.toLocaleString()}<br />
-                                                                    Seg. adicional: ${extraIns.toLocaleString()} <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
-                                                                </div>
+                                                        <div className="border-l pl-3 flex flex-col items-end justify-center text-right min-w-[90px]">
+                                                            <div className="text-xl font-bold text-purple-600 leading-tight">
+                                                                ${totalCost.toLocaleString()}
                                                             </div>
-                                                            <div className="text-center">
-                                                                <div className="text-xs text-gray-700 dark:text-gray-200 dark:text-gray-200 font-medium">
-                                                                    {rate.deliveryDays} días
-                                                                </div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
+                                                            <div className="text-xs text-gray-700 dark:text-gray-200 font-medium mt-2">
+                                                                {rate.deliveryDays} días
                                                             </div>
                                                             {isCOD && (
-                                                                <div className="mt-1 text-center">
-                                                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                                                        Contra Entrega
-                                                                    </span>
-                                                                </div>
+                                                                <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                                    Contra Entrega
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>
