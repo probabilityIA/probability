@@ -314,7 +314,7 @@ export const ShippingForm = () => {
         setSuccess(null);
 
         try {
-            const insuranceCost = data.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+            const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
             const totalCost = selectedRate.flete + insuranceCost;
             const payload = buildPayload(data, selectedRate.idRate, totalCost);
             const res = await generateGuideAction(payload);

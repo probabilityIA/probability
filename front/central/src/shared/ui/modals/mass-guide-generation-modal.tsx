@@ -257,7 +257,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
 
                 const genCodValue = (order.cod_total && order.cod_total > 0) ? order.cod_total : undefined;
-                const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0);
+                const guideTotalCost = (order.quote!.flete) + (order.quote!.minimumInsurance ?? 0) + (order.quote!.extraInsurance ?? 0);
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
                     totalCost: guideTotalCost,
@@ -539,7 +539,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             <td className="p-3 text-right">
                                                 {order.quote ? (
                                                     <div className="font-bold text-orange-600">
-                                                        ${(order.quote.flete + (order.quote.minimumInsurance ?? 0)).toLocaleString()}
+                                                        ${(order.quote.flete + (order.quote.minimumInsurance ?? 0) + (order.quote.extraInsurance ?? 0)).toLocaleString()}
                                                     </div>
                                                 ) : (
                                                     <span className="text-red-600">-</span>
@@ -683,8 +683,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 <p className="font-bold text-orange-800 text-sm mb-2">Transportadora: {selectedOrderForDetails.quote.carrier}</p>
                                 <div className="grid grid-cols-2 gap-2 text-xs text-orange-700">
                                     <p>Flete: ${selectedOrderForDetails.quote.flete.toLocaleString()}</p>
-                                    <p>Seguro: ${(selectedOrderForDetails.quote.minimumInsurance ?? 0).toLocaleString()}</p>
-                                    <p className="font-bold">Total: ${(selectedOrderForDetails.quote.flete + (selectedOrderForDetails.quote.minimumInsurance ?? 0)).toLocaleString()}</p>
+                                    <p>Seguro: ${((selectedOrderForDetails.quote.minimumInsurance ?? 0) + (selectedOrderForDetails.quote.extraInsurance ?? 0)).toLocaleString()}</p>
+                                    <p className="font-bold">Total: ${(selectedOrderForDetails.quote.flete + (selectedOrderForDetails.quote.minimumInsurance ?? 0) + (selectedOrderForDetails.quote.extraInsurance ?? 0)).toLocaleString()}</p>
                                     <p>Entrega: {selectedOrderForDetails.quote.deliveryDays} días</p>
                                 </div>
                             </div>

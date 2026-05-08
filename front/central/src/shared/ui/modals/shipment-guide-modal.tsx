@@ -417,7 +417,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 if (data.carrier) setSelectedCarrier(data.carrier);
 
                 if (selectedRate) {
-                    const insuranceCost = step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+                    const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
                     const totalCost = selectedRate.flete + insuranceCost;
                     const balanceResponse = await getWalletBalanceAction();
                     if (balanceResponse.success && balanceResponse.data) {
@@ -695,7 +695,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
         // Check wallet balance
         if (!selectedRate || !step3Data || !step1Data) return;
-        const insuranceCost = step1Data.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+        const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
         const totalCost = selectedRate.flete + insuranceCost;
         if (walletBalance !== null && walletBalance < totalCost) {
             setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
@@ -1189,7 +1189,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     return (
                                     <div className="grid grid-cols-4 gap-3 auto-rows-max">
                                         {filteredRates.map((rate) => {
-                                            const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
+                                            const insuranceCost = (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
 
@@ -1224,17 +1224,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     ${totalCost.toLocaleString()}
                                                                 </div>
                                                                 <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
-                                                                {step1Data?.insurance ? (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                                                                        Guía: ${rate.flete.toLocaleString()}<br />
-                                                                        Seguro: ${insuranceCost.toLocaleString()}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                                                                        Guía: ${rate.flete.toLocaleString()}<br />
-                                                                        Seguro: No asegurado
-                                                                    </div>
-                                                                )}
+                                                                <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
+                                                                    Guía: ${rate.flete.toLocaleString()}<br />
+                                                                    Seguro: ${insuranceCost.toLocaleString()}
+                                                                </div>
                                                             </div>
                                                             <div className="text-center">
                                                                 <div className="text-xs text-gray-700 dark:text-gray-200 dark:text-gray-200 font-medium">
@@ -1351,17 +1344,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="text-right">
                                             <div className="text-sm text-gray-600 dark:text-gray-300">TOTAL:</div>
                                             <div className="text-2xl font-bold text-purple-600">
-                                                ${(selectedRate.flete + (step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0)).toLocaleString()}
+                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
                                             </div>
-                                            {step1Data?.insurance ? (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: ${((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
-                                                </div>
-                                            ) : (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: No asegurado
-                                                </div>
-                                            )}
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Guía: ${selectedRate.flete.toLocaleString()} | Seguro: ${((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
+                                            </div>
                                         </div>
                                     </div>
 
