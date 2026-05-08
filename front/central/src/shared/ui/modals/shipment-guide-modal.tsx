@@ -1201,9 +1201,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     onClick={() => handleRateSelection(rate)}
                                                     className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white dark:bg-gray-800"
                                                 >
-                                                    <div className="flex flex-row items-stretch gap-3 h-full">
-                                                        <div className="flex flex-col items-start flex-1 min-w-0">
-                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
+                                                    <div className="grid grid-cols-3 gap-3 h-full">
+                                                        <div className="col-span-1 flex flex-col items-center justify-center">
+                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center overflow-hidden`}>
                                                                 <img
                                                                     src={getCarrierLogo(rate.carrier)}
                                                                     alt={rate.carrier}
@@ -1214,28 +1214,41 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <div className="font-semibold text-sm">{rate.carrier}</div>
-                                                            <div className="text-xs text-gray-600 dark:text-gray-300 mb-2">{rate.product}</div>
-                                                            <div className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                                                                Guía: ${rate.flete.toLocaleString()}<br />
-                                                                Seg. obligatorio: ${minIns.toLocaleString()}<br />
-                                                                Seg. adicional: ${extraIns.toLocaleString()}<br />
-                                                                <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
-                                                            </div>
+                                                            <div className="font-semibold text-xs text-center mt-2">{rate.carrier}</div>
+                                                            <div className="text-[10px] text-gray-600 dark:text-gray-300 text-center">{rate.product}</div>
                                                         </div>
-                                                        <div className="border-l pl-3 flex flex-col items-end justify-center text-right min-w-[90px]">
-                                                            <div className="text-xl font-bold text-purple-600 leading-tight">
-                                                                ${totalCost.toLocaleString()}
+                                                        <div className="col-span-2 flex flex-col text-[11px] text-gray-700 dark:text-gray-200">
+                                                            <div className="flex justify-between">
+                                                                <span>Guía</span>
+                                                                <span>${rate.flete.toLocaleString()}</span>
                                                             </div>
-                                                            <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
-                                                            <div className="text-xs text-gray-700 dark:text-gray-200 font-medium mt-2">
-                                                                {rate.deliveryDays} días
+                                                            <div className="flex justify-between">
+                                                                <span>Seg. obligatorio</span>
+                                                                <span>+ ${minIns.toLocaleString()}</span>
                                                             </div>
-                                                            {isCOD && (
-                                                                <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                                                    Contra Entrega
+                                                            <div className="flex justify-between">
+                                                                <span>
+                                                                    Seg. adicional
+                                                                    <span className={`ml-1 text-[9px] ${step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                                                        {step1Data?.insurance ? '(incluido)' : '(no incluido)'}
+                                                                    </span>
                                                                 </span>
-                                                            )}
+                                                                <span className={step1Data?.insurance ? '' : 'text-gray-400 line-through'}>+ ${extraIns.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="border-t border-gray-300 dark:border-gray-600 mt-1 pt-1 flex justify-between items-baseline">
+                                                                <span className="font-semibold">Total</span>
+                                                                <span className="text-base font-bold text-purple-600">
+                                                                    ${totalCost.toLocaleString()} <span className="text-[9px] font-normal text-gray-500">COP</span>
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                <span>{rate.deliveryDays} días</span>
+                                                                {isCOD && (
+                                                                    <span className="px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                                        Contra Entrega
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
