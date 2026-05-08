@@ -683,7 +683,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 <p className="font-bold text-orange-800 text-sm mb-2">Transportadora: {selectedOrderForDetails.quote.carrier}</p>
                                 <div className="grid grid-cols-2 gap-2 text-xs text-orange-700">
                                     <p>Flete: ${selectedOrderForDetails.quote.flete.toLocaleString()}</p>
-                                    <p>Seguro: ${((selectedOrderForDetails.quote.minimumInsurance ?? 0) + (selectedOrderForDetails.quote.extraInsurance ?? 0)).toLocaleString()}</p>
+                                    <p>Seg. obligatorio: ${(selectedOrderForDetails.quote.minimumInsurance ?? 0).toLocaleString()}</p>
+                                    <p>Seg. adicional: ${(selectedOrderForDetails.quote.extraInsurance ?? 0).toLocaleString()} <span className="text-emerald-700">(incluido)</span></p>
                                     <p className="font-bold">Total: ${(selectedOrderForDetails.quote.flete + (selectedOrderForDetails.quote.minimumInsurance ?? 0) + (selectedOrderForDetails.quote.extraInsurance ?? 0)).toLocaleString()}</p>
                                     <p>Entrega: {selectedOrderForDetails.quote.deliveryDays} días</p>
                                 </div>
