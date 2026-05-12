@@ -993,12 +993,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             businessId={formData.business_id || 0}
                             selectedProducts={selectedProducts}
                             onSelect={handleProductsChange}
-                            onCreateNew={() => setShowProductModal(true)}
                         />
                     </div>
                 </div>
 
-                <div>
+                <div className="lg:col-span-1">
                     <div className="bg-white rounded-[14px] border p-5 h-full" style={{ borderColor: '#ede8f9', boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: '#f0ebfb' }}>
                             <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>

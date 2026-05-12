@@ -80,9 +80,36 @@ export default function AddressAutocomplete({
 
     const handleSelect = (suggestion: AddressSuggestion) => {
         // Set the full address from Google (e.g. "Avenida Calle 145 #128-40, Bogotá, Colombia")
-        // Remove the country suffix for cleaner display
-        const parts = suggestion.display_name.split(', ');
-        const cleanAddress = parts.length > 2 ? parts.slice(0, -1).join(', ') : suggestion.display_name;
+        // Remove the country suffix and duplicates for cleaner display
+        const parts = suggestion.display_name.split(', ').map(p => p.trim());
+
+        // Remove country (Colombia, co, etc)
+        const filtered = parts.filter(p =>
+            !['Colombia', 'colombia', 'co', 'CO'].includes(p)
+        );
+
+        // Remove duplicates while preserving order
+        const seen = new Set<string>();
+        const unique = filtered.filter(p => {
+            const lower = p.toLowerCase();
+            if (seen.has(lower)) return false;
+            seen.add(lower);
+            return true;
+        });
+
+        // Remove D.C. if we already have the city name (Bogotá)
+        const cleanParts = unique.filter((p, idx, arr) => {
+            if (p === 'D.C.' || p === 'D.C') {
+                // Check if the city name is already in the address
+                const cityInAddress = arr.some(part =>
+                    part.toLowerCase().includes('bogotá') || part.toLowerCase().includes('bogota')
+                );
+                return !cityInAddress;
+            }
+            return true;
+        });
+
+        const cleanAddress = cleanParts.join(', ');
         onChange(cleanAddress);
         setShowDropdown(false);
         setSuggestions([]);

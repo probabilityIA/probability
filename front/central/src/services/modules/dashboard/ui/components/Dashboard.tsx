@@ -364,8 +364,34 @@ export default function Dashboard() {
             setStatsWithoutFilter(response.data);
         } catch (err: any) {
             console.error('Error fetching dashboard stats (without filter):', err);
+            // Mostrar datos vacíos en lugar de error
+            setStatsWithoutFilter(createEmptyStats());
         }
     }, [selectedBusinessId, weekStartDate]);
+
+    // Crear stats vacío cuando no hay datos (para negocios recién creados)
+    const createEmptyStats = (): DashboardStats => ({
+        total_orders: 0,
+        orders_today: 0,
+        orders_by_integration_type: [],
+        top_customers: [],
+        orders_by_location: [],
+        top_drivers: [],
+        drivers_by_location: [],
+        top_products: [],
+        products_by_category: [],
+        products_by_brand: [],
+        shipments_by_status: [],
+        shipments_by_carrier: [],
+        shipments_by_carrier_today: [],
+        shipments_by_warehouse: [],
+        shipments_by_day_of_week: [],
+        orders_by_department: [],
+        orders_by_month: [],
+        orders_by_week: [],
+        orders_by_date: [],
+        orders_by_business: [],
+    });
 
     // Cargar estadísticas CON filtro de fechas (para gráficas)
     const fetchStats = useCallback(async () => {
@@ -397,6 +423,8 @@ export default function Dashboard() {
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
             setError(getActionError(err, 'Error al cargar las estadísticas'));
+            // Mostrar datos vacíos en lugar de error cuando no hay datos
+            setStats(createEmptyStats());
         } finally {
             setLoading(false);
         }
@@ -720,22 +748,6 @@ export default function Dashboard() {
         return (
             <div className="flex items-center justify-center py-12">
                 <Spinner size="xl" color="primary" text="Cargando estadísticas..." />
-            </div>
-        );
-    }
-
-    if (error && !stats) {
-        return (
-            <div className="p-4">
-                <Alert type="error">{error}</Alert>
-            </div>
-        );
-    }
-
-    if (!stats) {
-        return (
-            <div className="p-4">
-                <Alert type="warning">No hay estadísticas disponibles</Alert>
             </div>
         );
     }

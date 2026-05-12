@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui';
+import '@/shared/ui/styles/shipment-modals.css';
 import { Order } from '@/services/modules/orders/domain/types';
 import { getOrdersAction, updateOrderAction } from '@/services/modules/orders/infra/actions';
 import { quoteShipmentAction, generateGuideAction } from '@/services/modules/shipments/infra/actions';
@@ -416,7 +417,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             <div className="flex items-center gap-2">
                                                 <span className="font-semibold">{order.order_number}</span>
                                                 {order.cod_total && order.cod_total > 0 && (
-                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                    <span className="shipment-badge-warning text-[10px] px-1.5 py-0.5">
                                                         Contra Entrega ${order.cod_total.toLocaleString()}
                                                     </span>
                                                 )}
@@ -463,9 +464,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {step === 'quote' && (
                     <div className="space-y-4">
                         <p className="text-center text-gray-600 dark:text-gray-300">Cotizando envíos...</p>
-                        <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div className="shipment-progress-bar rounded-full h-4">
                             <div
-                                className="bg-orange-500 h-4 rounded-full transition-all duration-300"
+                                className="shipment-progress-fill"
                                 style={{ width: `${quotingProgress}%` }}
                             />
                         </div>
@@ -479,9 +480,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {step === 'confirm' && (
                     <div className="space-y-4">
                         {/* Summary Header */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <h3 className="font-semibold text-blue-800 mb-2">Resumen de Cotización</h3>
-                            <div className="flex justify-between items-center text-sm text-blue-700">
+                        <div className="shipment-alert shipment-alert-primary rounded-lg">
+                            <h3 className="font-semibold mb-2" style={{ color: 'var(--color-primary)' }}>Resumen de Cotización</h3>
+                            <div className="flex justify-between items-center text-sm" style={{ color: 'var(--color-primary)' }}>
                                 <div>
                                     <p>Órdenes cotizadas: {orders.filter(o => o.quote).length}</p>
                                     <p>Órdenes con error: {orders.filter(o => o.quoteError).length}</p>
@@ -500,14 +501,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         {/* Detailed Order List */}
                         <div className="border rounded-lg max-h-96 overflow-y-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-gray-50 sticky top-0">
+                                <thead className="sticky top-0 shipment-table-header">
                                     <tr className="border-b">
-                                        <th className="text-left p-3 font-semibold">Orden</th>
-                                        <th className="text-left p-3 font-semibold">Cliente</th>
-                                        <th className="text-left p-3 font-semibold">Transportadora</th>
-                                        <th className="text-right p-3 font-semibold">Precio</th>
-                                        <th className="text-center p-3 font-semibold">Estado</th>
-                                        <th className="text-center p-3 font-semibold">Acciones</th>
+                                        <th className="text-left p-3">Orden</th>
+                                        <th className="text-left p-3">Cliente</th>
+                                        <th className="text-left p-3">Transportadora</th>
+                                        <th className="text-right p-3">Precio</th>
+                                        <th className="text-center p-3">Estado</th>
+                                        <th className="text-center p-3">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -517,7 +518,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="font-medium">{order.order_number}</span>
                                                     {order.cod_total && order.cod_total > 0 && (
-                                                        <span className="inline-block px-1 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700 border border-amber-300">Contra Entrega</span>
+                                                        <span className="shipment-badge-warning text-[9px] px-1 py-0.5">Contra Entrega</span>
                                                     )}
                                                 </div>
                                             </td>
@@ -547,11 +548,11 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             </td>
                                             <td className="p-3 text-center">
                                                 {order.quote ? (
-                                                    <span className="inline-block px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                                                    <span className="shipment-badge-success px-2 py-1">
                                                         ✓ Cotizada
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-block px-2 py-1 bg-red-100 text-red-700 rounded text-xs">
+                                                    <span className="shipment-badge-error px-2 py-1">
                                                         ✗ Error
                                                     </span>
                                                 )}
@@ -571,7 +572,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         </div>
 
                         {walletBalance !== null && walletBalance < totalCost && (
-                            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                            <div className="shipment-alert shipment-alert-error">
                                 ⚠️ Saldo insuficiente. Necesitas ${(totalCost - walletBalance).toLocaleString()} COP adicionales.
                             </div>
                         )}
@@ -594,9 +595,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {step === 'generate' && (
                     <div className="space-y-4">
                         <p className="text-center text-gray-600 dark:text-gray-300">Generando guías...</p>
-                        <div className="w-full bg-gray-200 rounded-full h-4">
+                        <div className="shipment-progress-bar rounded-full h-4">
                             <div
-                                className="bg-green-500 h-4 rounded-full transition-all duration-300"
+                                className="shipment-progress-fill"
                                 style={{ width: `${generatingProgress}%` }}
                             />
                         </div>
@@ -613,18 +614,18 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {/* Step 5: Complete */}
                 {step === 'complete' && (
                     <div className="space-y-4">
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <h3 className="font-semibold text-green-800 mb-2">✅ Proceso Completado</h3>
-                            <div className="space-y-1 text-sm text-green-700">
+                        <div className="shipment-alert shipment-alert-success">
+                            <h3 className="font-semibold mb-2">✅ Proceso Completado</h3>
+                            <div className="space-y-1 text-sm">
                                 <p>Guías generadas exitosamente: {generatedCount}</p>
                                 <p>Guías fallidas: {failedCount}</p>
                             </div>
                         </div>
 
                         {generationErrors.length > 0 && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                                <h4 className="font-semibold text-red-800 mb-2">Errores:</h4>
-                                <ul className="text-sm text-red-700 space-y-1">
+                            <div className="shipment-alert shipment-alert-error max-h-48 overflow-y-auto">
+                                <h4 className="font-semibold mb-2">Errores:</h4>
+                                <ul className="text-sm space-y-1">
                                     {generationErrors.map((err, idx) => (
                                         <li key={idx}>• {err}</li>
                                     ))}
@@ -641,7 +642,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 )}
 
                 {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                    <div className="mt-4 shipment-alert shipment-alert-error">
                         {error}
                     </div>
                 )}
@@ -679,9 +680,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         </div>
 
                         {selectedOrderForDetails.quote ? (
-                            <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-                                <p className="font-bold text-orange-800 text-sm mb-2">Transportadora: {selectedOrderForDetails.quote.carrier}</p>
-                                <div className="grid grid-cols-2 gap-2 text-xs text-orange-700">
+                            <div className="shipment-alert shipment-alert-warning p-3">
+                                <p className="font-bold text-sm mb-2">Transportadora: {selectedOrderForDetails.quote.carrier}</p>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
                                     <p>Flete: ${selectedOrderForDetails.quote.flete.toLocaleString()}</p>
                                     <p>Seg. obligatorio: ${(selectedOrderForDetails.quote.minimumInsurance ?? 0).toLocaleString()}</p>
                                     <p>Seg. adicional: ${(selectedOrderForDetails.quote.extraInsurance ?? 0).toLocaleString()} <span className="text-emerald-700">(incluido)</span></p>
@@ -690,7 +691,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-red-50 p-3 rounded-lg border border-red-100 text-red-700 text-sm">
+                            <div className="shipment-alert shipment-alert-error text-sm">
                                 Error: {selectedOrderForDetails.quoteError || 'No se pudo cotizar'}
                             </div>
                         )}
