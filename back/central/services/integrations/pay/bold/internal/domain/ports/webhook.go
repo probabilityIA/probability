@@ -28,3 +28,29 @@ type IWebhookPublisher interface {
 type IWebhookUseCase interface {
 	HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte, isTest bool) error
 }
+
+type RawWebhookLog struct {
+	ID                string
+	Endpoint          string
+	SignatureHeader   string
+	BodySize          int
+	Body              []byte
+	BoldEventID       string
+	EventType         string
+	MerchantReference string
+	PaymentID         string
+}
+
+type RawWebhookResult struct {
+	ID           string
+	Status       string
+	HTTPStatus   int
+	ErrorDetail  string
+	ExpectedHash string
+}
+
+type IRawWebhookLogger interface {
+	LogIncoming(ctx context.Context, raw *RawWebhookLog) error
+	UpdateResult(ctx context.Context, result *RawWebhookResult) error
+	DeleteOlderThan(ctx context.Context, days int) (int64, error)
+}

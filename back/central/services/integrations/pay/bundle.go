@@ -26,7 +26,7 @@ func New(
 	coreSvc core.IIntegrationCore,
 ) {
 	nequi.New(config, logger, database, rabbitMQ)
-	bold.New(apiRouter, coreSvc, logger, rabbitMQ)
+	bold.New(apiRouter, coreSvc, logger, database, rabbitMQ)
 	wompi.New(config, logger, database, rabbitMQ)
 	stripe.New(config, logger, database, rabbitMQ)
 	payu.New(config, logger, database, rabbitMQ)

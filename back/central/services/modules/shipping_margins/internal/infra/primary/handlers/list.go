@@ -29,6 +29,11 @@ func (h *Handlers) List(c *gin.Context) {
 		PageSize:    pageSize,
 	}
 
+	if err := h.uc.EnsureDefaultsForBusiness(c.Request.Context(), businessID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	items, total, err := h.uc.List(c.Request.Context(), params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
