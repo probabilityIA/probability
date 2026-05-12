@@ -14,32 +14,43 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-type rawLogRow struct {
-	ID                uuid.UUID      `gorm:"column:id;primaryKey"`
-	CreatedAt         time.Time      `gorm:"column:created_at"`
-	UpdatedAt         time.Time      `gorm:"column:updated_at"`
-	Endpoint          string         `gorm:"column:endpoint"`
-	HTTPStatus        int            `gorm:"column:http_status"`
-	Status            string         `gorm:"column:status"`
-	SignatureHeader   string         `gorm:"column:signature_header"`
-	BoldEventID       string         `gorm:"column:bold_event_id"`
-	EventType         string         `gorm:"column:event_type"`
-	MerchantReference string         `gorm:"column:merchant_reference"`
-	PaymentID         string         `gorm:"column:payment_id"`
-	BodySize          int            `gorm:"column:body_size"`
-	BodyJSON          datatypes.JSON `gorm:"column:body_json;type:jsonb"`
-	BodyText          *string        `gorm:"column:body_text"`
-	ErrorDetail       *string        `gorm:"column:error_detail"`
-	ExpectedHash      string         `gorm:"column:expected_hash"`
+const (
+	boldWebhookSource           = "bold"
+	boldIntegrationTypeCodeRaw  = "bold_pay"
+	boldWebhookRetentionDays    = 15
+)
+
+type webhookLogRow struct {
+	ID                  uuid.UUID      `gorm:"column:id;primaryKey"`
+	CreatedAt           time.Time      `gorm:"column:created_at"`
+	UpdatedAt           time.Time      `gorm:"column:updated_at"`
+	Source              string         `gorm:"column:source"`
+	EventType           string         `gorm:"column:event_type"`
+	URL                 string         `gorm:"column:url"`
+	Method              string         `gorm:"column:method"`
+	Headers             datatypes.JSON `gorm:"column:headers"`
+	RequestBody         datatypes.JSON `gorm:"column:request_body"`
+	RemoteIP            string         `gorm:"column:remote_ip"`
+	Status              string         `gorm:"column:status"`
+	ResponseCode        int            `gorm:"column:response_code"`
+	ProcessedAt         *time.Time     `gorm:"column:processed_at"`
+	ErrorMessage        *string        `gorm:"column:error_message"`
+	SignatureValid      *bool          `gorm:"column:signature_valid"`
+	IntegrationTypeID   *uint          `gorm:"column:integration_type_id"`
+	IntegrationTypeCode *string        `gorm:"column:integration_type_code"`
+	IntegrationID       *uint          `gorm:"column:integration_id"`
+	CorrelationID       *string        `gorm:"column:correlation_id"`
+	RetentionUntil      *time.Time     `gorm:"column:retention_until"`
 }
 
-func (rawLogRow) TableName() string {
-	return "bold_webhook_raw_logs"
+func (webhookLogRow) TableName() string {
+	return "webhook_logs"
 }
 
 type RawWebhookLogRepository struct {
-	db  db.IDatabase
-	log log.ILogger
+	db                db.IDatabase
+	log               log.ILogger
+	integrationTypeID *uint
 }
 
 func NewRawWebhookLogRepository(database db.IDatabase, logger log.ILogger) ports.IRawWebhookLogger {
@@ -49,34 +60,68 @@ func NewRawWebhookLogRepository(database db.IDatabase, logger log.ILogger) ports
 	}
 }
 
+func (r *RawWebhookLogRepository) SetIntegrationTypeID(id uint) {
+	if id > 0 {
+		copy := id
+		r.integrationTypeID = &copy
+	}
+}
+
 func (r *RawWebhookLogRepository) LogIncoming(ctx context.Context, raw *ports.RawWebhookLog) error {
 	if raw == nil {
 		return fmt.Errorf("raw webhook log is nil")
 	}
-	row := rawLogRow{
-		Endpoint:          raw.Endpoint,
-		Status:            "received",
-		SignatureHeader:   raw.SignatureHeader,
-		BoldEventID:       raw.BoldEventID,
-		EventType:         raw.EventType,
-		MerchantReference: raw.MerchantReference,
-		PaymentID:         raw.PaymentID,
-		BodySize:          raw.BodySize,
+	id := uuid.New()
+	if parsed, err := uuid.Parse(raw.ID); err == nil {
+		id = parsed
 	}
-	if id, err := uuid.Parse(raw.ID); err == nil {
-		row.ID = id
+	raw.ID = id.String()
+
+	path := "/api/v1/webhooks/bold"
+	if raw.Endpoint == "test" {
+		path = "/api/v1/webhooks/bold/test"
+	}
+
+	headers := map[string]string{}
+	if raw.SignatureHeader != "" {
+		headers["x-bold-signature"] = raw.SignatureHeader
+	}
+	headersJSON, _ := json.Marshal(headers)
+
+	var bodyJSON datatypes.JSON
+	if len(raw.Body) > 0 && json.Valid(raw.Body) {
+		bodyJSON = datatypes.JSON(raw.Body)
+	} else if len(raw.Body) > 0 {
+		wrap, _ := json.Marshal(map[string]string{"raw": string(raw.Body)})
+		bodyJSON = datatypes.JSON(wrap)
 	} else {
-		row.ID = uuid.New()
-		raw.ID = row.ID.String()
+		bodyJSON = datatypes.JSON([]byte("{}"))
 	}
-	if json.Valid(raw.Body) {
-		row.BodyJSON = datatypes.JSON(raw.Body)
-	} else {
-		text := string(raw.Body)
-		row.BodyText = &text
+
+	code := boldIntegrationTypeCodeRaw
+	retentionUntil := time.Now().Add(boldWebhookRetentionDays * 24 * time.Hour)
+
+	row := webhookLogRow{
+		ID:                  id,
+		Source:              boldWebhookSource,
+		EventType:           coalesce(raw.EventType, "unknown"),
+		URL:                 path,
+		Method:              "POST",
+		Headers:             datatypes.JSON(headersJSON),
+		RequestBody:         bodyJSON,
+		Status:              "received",
+		ResponseCode:        0,
+		IntegrationTypeID:   r.integrationTypeID,
+		IntegrationTypeCode: &code,
+		RetentionUntil:      &retentionUntil,
 	}
+	if raw.MerchantReference != "" {
+		ref := raw.MerchantReference
+		row.CorrelationID = &ref
+	}
+
 	if err := r.db.Conn(ctx).Create(&row).Error; err != nil {
-		return fmt.Errorf("create raw webhook log: %w", err)
+		return fmt.Errorf("create webhook_logs row: %w", err)
 	}
 	return nil
 }
@@ -87,21 +132,28 @@ func (r *RawWebhookLogRepository) UpdateResult(ctx context.Context, result *port
 	}
 	id, err := uuid.Parse(result.ID)
 	if err != nil {
-		return fmt.Errorf("invalid raw webhook log id: %w", err)
+		return fmt.Errorf("invalid webhook log id: %w", err)
 	}
+	now := time.Now()
 	updates := map[string]interface{}{
-		"status":      result.Status,
-		"http_status": result.HTTPStatus,
-		"updated_at":  time.Now(),
+		"status":        result.Status,
+		"response_code": result.HTTPStatus,
+		"processed_at":  now,
+		"updated_at":    now,
+	}
+	switch result.Status {
+	case "ok":
+		t := true
+		updates["signature_valid"] = &t
+	case "invalid_signature":
+		f := false
+		updates["signature_valid"] = &f
 	}
 	if result.ErrorDetail != "" {
-		updates["error_detail"] = result.ErrorDetail
+		updates["error_message"] = result.ErrorDetail
 	}
-	if result.ExpectedHash != "" {
-		updates["expected_hash"] = result.ExpectedHash
-	}
-	if err := r.db.Conn(ctx).Table("bold_webhook_raw_logs").Where("id = ?", id).Updates(updates).Error; err != nil {
-		return fmt.Errorf("update raw webhook log: %w", err)
+	if err := r.db.Conn(ctx).Table("webhook_logs").Where("id = ?", id).Updates(updates).Error; err != nil {
+		return fmt.Errorf("update webhook_logs row: %w", err)
 	}
 	return nil
 }
@@ -110,10 +162,21 @@ func (r *RawWebhookLogRepository) DeleteOlderThan(ctx context.Context, days int)
 	if days <= 0 {
 		return 0, fmt.Errorf("invalid retention days: %d", days)
 	}
-	cutoff := time.Now().Add(-time.Duration(days) * 24 * time.Hour)
-	result := r.db.Conn(ctx).Where("created_at < ?", cutoff).Delete(&rawLogRow{})
+	result := r.db.Conn(ctx).
+		Where("source = ?", boldWebhookSource).
+		Where("retention_until IS NOT NULL AND retention_until < ?", time.Now()).
+		Delete(&webhookLogRow{})
 	if result.Error != nil {
 		return 0, result.Error
 	}
 	return result.RowsAffected, nil
+}
+
+func coalesce(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

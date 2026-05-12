@@ -27,6 +27,12 @@ type WebhookLog struct {
 	ProcessedAt  *time.Time
 	ErrorMessage *string `gorm:"type:text"`
 
+	SignatureValid *bool `gorm:"index"`
+
+	IntegrationTypeID   *uint   `gorm:"index"`
+	IntegrationTypeCode *string `gorm:"size:64;index"`
+	IntegrationID       *uint   `gorm:"index"`
+
 	ShipmentID    *uint   `gorm:"index"`
 	BusinessID    *uint   `gorm:"index"`
 	CorrelationID *string `gorm:"size:128;index"`
@@ -34,6 +40,8 @@ type WebhookLog struct {
 	TrackingNumber *string `gorm:"size:128;index"`
 	MappedStatus   *string `gorm:"size:64"`
 	RawStatus      *string `gorm:"size:128"`
+
+	RetentionUntil *time.Time `gorm:"index"`
 }
 
 func (WebhookLog) TableName() string {

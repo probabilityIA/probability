@@ -32,6 +32,11 @@ func New(
 	boldClient := client.New(logger)
 	integrationRepo := repository.New(coreSvc, logger)
 	rawWebhookLog := repository.NewRawWebhookLogRepository(database, logger)
+	if intType, err := coreSvc.GetIntegrationTypeByCode(ctx, "bold_pay"); err == nil && intType != nil {
+		if setter, ok := rawWebhookLog.(interface{ SetIntegrationTypeID(uint) }); ok {
+			setter.SetIntegrationTypeID(intType.ID)
+		}
+	}
 	responsePublisher := boldqueue.New(rabbit, logger)
 	webhookPublisher := boldqueue.NewWebhookPublisher(rabbit, logger)
 
