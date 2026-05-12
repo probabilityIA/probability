@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import {
     EyeIcon,
     EyeSlashIcon,
@@ -11,7 +11,6 @@ import {
     ClipboardDocumentCheckIcon,
     LinkIcon,
 } from '@heroicons/react/24/outline';
-import { Input } from '@/shared/ui';
 
 export interface BoldPlatformCredentials {
     api_key: string;
@@ -42,17 +41,38 @@ interface SecretInputProps {
 
 function SecretInput({ value, onChange, placeholder, label, helper }: SecretInputProps) {
     const [show, setShow] = useState(false);
+    const reactId = useId();
+    const fieldId = `bold-cred-${reactId.replace(/:/g, '')}`;
+    const [readOnly, setReadOnly] = useState(true);
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">{label}</label>
+            <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">{label}</label>
             <div className="relative">
-                <Input
+                <input
+                    type="text"
+                    name="prevent_autofill"
+                    autoComplete="off"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    style={{ position: 'absolute', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
+                />
+                <input
+                    id={fieldId}
+                    name={fieldId}
                     type={show ? 'text' : 'password'}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
-                    autoComplete="off"
-                    className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
+                    autoComplete="new-password"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    readOnly={readOnly}
+                    onFocus={() => setReadOnly(false)}
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono text-sm px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                     type="button"
