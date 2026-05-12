@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { FalabellaCredentials } from '../../domain/types';
 import { updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,9 +13,7 @@ import {
     CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
-    ShoppingBagIcon
+    ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
 
 interface FalabellaEditFormProps {
@@ -35,8 +33,6 @@ export function FalabellaEditForm({ integrationId, initialData, onSuccess, onCan
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showApiKey, setShowApiKey] = useState(false);
-
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
@@ -249,29 +245,12 @@ export function FalabellaEditForm({ integrationId, initialData, onSuccess, onCan
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         API Key
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showApiKey ? "text" : "password"}
-                            value={formData.api_key}
-                            onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                            placeholder="API Key del Seller Center"
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowApiKey(!showApiKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showApiKey ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.api_key}
+                        onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
+                        placeholder="API Key del Seller Center"
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 {/* Test Connection Button */}

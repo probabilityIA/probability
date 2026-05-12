@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select } from '@/shared/ui';
+import { Button, Input, Alert, Select, SecretInput } from '@/shared/ui';
 import { SoftpymesConfig, SoftpymesCredentials } from '../../domain/types';
 import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -16,8 +16,6 @@ import {
     CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
     BeakerIcon,
 } from '@heroicons/react/24/outline';
 
@@ -32,7 +30,6 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showApiSecret, setShowApiSecret] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
 
     // Business selection for super admins
@@ -491,30 +488,13 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             API Secret <span className="text-red-500">*</span>
                         </label>
-                        <div className="relative">
-                            <Input
-                                type={showApiSecret ? "text" : "password"}
-                                value={formData.api_secret}
-                                onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
-                                placeholder="Ingresa tu API Secret de Softpymes"
-                                required
-                                autoComplete="new-password"
-                                data-1p-ignore
-                                className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowApiSecret(!showApiSecret)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                                tabIndex={-1}
-                            >
-                                {showApiSecret ? (
-                                    <EyeSlashIcon className="w-5 h-5" />
-                                ) : (
-                                    <EyeIcon className="w-5 h-5" />
-                                )}
-                            </button>
-                        </div>
+                        <SecretInput
+                            value={formData.api_secret}
+                            onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
+                            placeholder="Ingresa tu API Secret de Softpymes"
+                            required
+                            className="bg-white dark:bg-gray-800 font-mono text-sm"
+                        />
                     </div>
 
                     {/* Test Connection Button */}

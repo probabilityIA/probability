@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select } from '@/shared/ui';
+import { Button, Input, Alert, Select, SecretInput } from '@/shared/ui';
 import { WompiCredentials } from '../../domain/types';
 import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -14,8 +14,6 @@ import {
     CreditCardIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
     BeakerIcon,
 } from '@heroicons/react/24/outline';
 
@@ -30,8 +28,6 @@ export function WompiConfigForm({ integrationTypeId, onSuccess, onCancel, integr
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showPrivateKey, setShowPrivateKey] = useState(false);
-
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
@@ -215,26 +211,13 @@ export function WompiConfigForm({ integrationTypeId, onSuccess, onCancel, integr
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Private Key <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showPrivateKey ? 'text' : 'password'}
-                            value={formData.private_key}
-                            onChange={(e) => setFormData({ ...formData, private_key: e.target.value })}
-                            placeholder="prv_prod_... o prv_test_..."
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPrivateKey(!showPrivateKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showPrivateKey ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.private_key}
+                        onChange={(e) => setFormData({ ...formData, private_key: e.target.value })}
+                        placeholder="prv_prod_... o prv_test_..."
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                         Sandbox: <code>prv_test_...</code> | Producción: <code>prv_prod_...</code>
                     </p>

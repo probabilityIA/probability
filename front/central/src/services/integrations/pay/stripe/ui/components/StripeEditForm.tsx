@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select } from '@/shared/ui';
+import { Button, Input, Alert, Select, SecretInput } from '@/shared/ui';
 import { StripeCredentials } from '../../domain/types';
 import { updateIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -14,8 +14,6 @@ import {
     CreditCardIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
 } from '@heroicons/react/24/outline';
 
 interface StripeEditFormProps {
@@ -36,8 +34,6 @@ export function StripeEditForm({ integrationId, initialData, onSuccess, onCancel
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showSecretKey, setShowSecretKey] = useState(false);
-
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(initialData.business_id || null);
@@ -169,12 +165,12 @@ export function StripeEditForm({ integrationId, initialData, onSuccess, onCancel
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Secret Key</label>
-                    <div className="relative">
-                        <Input type={showSecretKey ? 'text' : 'password'} value={formData.secret_key} onChange={(e) => setFormData({ ...formData, secret_key: e.target.value })} placeholder="Dejar vacío para mantener la actual" autoComplete="new-password" data-1p-ignore className="bg-white dark:bg-gray-800 font-mono text-sm pr-10" />
-                        <button type="button" onClick={() => setShowSecretKey(!showSecretKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none" tabIndex={-1}>
-                            {showSecretKey ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.secret_key}
+                        onChange={(e) => setFormData({ ...formData, secret_key: e.target.value })}
+                        placeholder="Dejar vacío para mantener la actual"
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
             </div>
 

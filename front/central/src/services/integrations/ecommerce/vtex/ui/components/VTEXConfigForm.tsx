@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { VTEXCredentials, VTEXConfig } from '../../domain/types';
 import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,8 +13,6 @@ import {
     ShoppingBagIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 
 interface VTEXConfigFormProps {
@@ -27,9 +25,6 @@ export function VTEXConfigForm({ onSuccess, onCancel }: VTEXConfigFormProps) {
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showAppKey, setShowAppKey] = useState(false);
-    const [showAppToken, setShowAppToken] = useState(false);
-
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
@@ -269,60 +264,26 @@ export function VTEXConfigForm({ onSuccess, onCancel }: VTEXConfigFormProps) {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         App Key <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showAppKey ? "text" : "password"}
-                            value={formData.app_key}
-                            onChange={(e) => setFormData({ ...formData, app_key: e.target.value })}
-                            placeholder="X-VTEX-API-AppKey"
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowAppKey(!showAppKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showAppKey ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.app_key}
+                        onChange={(e) => setFormData({ ...formData, app_key: e.target.value })}
+                        placeholder="X-VTEX-API-AppKey"
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         App Token <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showAppToken ? "text" : "password"}
-                            value={formData.app_token}
-                            onChange={(e) => setFormData({ ...formData, app_token: e.target.value })}
-                            placeholder="X-VTEX-API-AppToken"
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowAppToken(!showAppToken)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showAppToken ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.app_token}
+                        onChange={(e) => setFormData({ ...formData, app_token: e.target.value })}
+                        placeholder="X-VTEX-API-AppToken"
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 {/* Test Connection Button */}
