@@ -58,8 +58,24 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 	}
 
 	if !verifySignature(body, signatureHeader, cfg) {
+		secret, _ := cfg.SecretKey()
+		secretPreview := ""
+		if len(secret) >= 6 {
+			secretPreview = secret[:4] + "..." + secret[len(secret)-2:]
+		}
+		bodyB64 := base64.StdEncoding.EncodeToString(body)
+		mac := hmac.New(sha256.New, []byte(secret))
+		mac.Write([]byte(bodyB64))
+		expected := hex.EncodeToString(mac.Sum(nil))
 		uc.log.Warn(ctx).
-			Str("signature_header", signatureHeader).
+			Str("signature_header_received", signatureHeader).
+			Str("signature_expected_local", expected).
+			Str("secret_preview", secretPreview).
+			Int("secret_len", len(secret)).
+			Int("body_len", len(body)).
+			Str("body_preview", string(body[:min(120, len(body))])).
+			Str("environment", cfg.Environment).
+			Bool("is_test", isTest).
 			Msg("bold webhook: invalid signature")
 		return boldErrors.ErrInvalidSignature
 	}
