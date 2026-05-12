@@ -109,6 +109,29 @@ const getCarrierInitials = (name: string): string => {
         .join('');
 };
 
+const createEmptyStats = (): DashboardStats => ({
+    total_orders: 0,
+    orders_today: 0,
+    orders_by_integration_type: [],
+    top_customers: [],
+    orders_by_location: [],
+    top_drivers: [],
+    drivers_by_location: [],
+    top_products: [],
+    products_by_category: [],
+    products_by_brand: [],
+    shipments_by_status: [],
+    shipments_by_carrier: [],
+    shipments_by_carrier_today: [],
+    shipments_by_warehouse: [],
+    shipments_by_day_of_week: [],
+    orders_by_department: [],
+    orders_by_month: [],
+    orders_by_week: [],
+    orders_by_date: [],
+    orders_by_business: [],
+});
+
 interface Business {
     id: number;
     name: string;
@@ -286,8 +309,8 @@ function SummaryCard({
 
 export default function Dashboard() {
     const { isSuperAdmin } = usePermissions();
-    const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [statsWithoutFilter, setStatsWithoutFilter] = useState<DashboardStats | null>(null);
+    const [stats, setStats] = useState<DashboardStats>(createEmptyStats());
+    const [statsWithoutFilter, setStatsWithoutFilter] = useState<DashboardStats>(createEmptyStats());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | undefined>(undefined);
@@ -368,30 +391,6 @@ export default function Dashboard() {
             setStatsWithoutFilter(createEmptyStats());
         }
     }, [selectedBusinessId, weekStartDate]);
-
-    // Crear stats vacío cuando no hay datos (para negocios recién creados)
-    const createEmptyStats = (): DashboardStats => ({
-        total_orders: 0,
-        orders_today: 0,
-        orders_by_integration_type: [],
-        top_customers: [],
-        orders_by_location: [],
-        top_drivers: [],
-        drivers_by_location: [],
-        top_products: [],
-        products_by_category: [],
-        products_by_brand: [],
-        shipments_by_status: [],
-        shipments_by_carrier: [],
-        shipments_by_carrier_today: [],
-        shipments_by_warehouse: [],
-        shipments_by_day_of_week: [],
-        orders_by_department: [],
-        orders_by_month: [],
-        orders_by_week: [],
-        orders_by_date: [],
-        orders_by_business: [],
-    });
 
     // Cargar estadísticas CON filtro de fechas (para gráficas)
     const fetchStats = useCallback(async () => {
@@ -744,7 +743,7 @@ export default function Dashboard() {
         );
     };
 
-    if (loading && !stats) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
                 <Spinner size="xl" color="primary" text="Cargando estadísticas..." />
