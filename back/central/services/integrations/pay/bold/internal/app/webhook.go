@@ -30,6 +30,51 @@ func NewWebhookUseCase(repo ports.IIntegrationRepository, publisher ports.IWebho
 	}
 }
 
+type boldAmount struct {
+	Value    float64 `json:"-"`
+	Currency string  `json:"-"`
+}
+
+func (a *boldAmount) UnmarshalJSON(data []byte) error {
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "" || trimmed == "null" {
+		return nil
+	}
+	if trimmed[0] == '{' {
+		var obj struct {
+			Value    json.Number `json:"value"`
+			Total    json.Number `json:"total"`
+			Amount   json.Number `json:"amount"`
+			Currency string      `json:"currency"`
+		}
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return err
+		}
+		raw := obj.Value
+		if raw == "" {
+			raw = obj.Total
+		}
+		if raw == "" {
+			raw = obj.Amount
+		}
+		if raw != "" {
+			f, err := raw.Float64()
+			if err != nil {
+				return err
+			}
+			a.Value = f
+		}
+		a.Currency = obj.Currency
+		return nil
+	}
+	var f float64
+	if err := json.Unmarshal(data, &f); err != nil {
+		return err
+	}
+	a.Value = f
+	return nil
+}
+
 type cloudEventsEnvelope struct {
 	ID      string `json:"id"`
 	Type    string `json:"type"`
@@ -37,13 +82,22 @@ type cloudEventsEnvelope struct {
 	Source  string `json:"source"`
 	Time    int64  `json:"time"`
 	Data    struct {
-		PaymentID         string  `json:"payment_id"`
-		Amount            float64 `json:"amount"`
-		Currency          string  `json:"currency"`
-		PaymentMethod     string  `json:"payment_method"`
-		MerchantReference string  `json:"merchant_reference"`
-		PayerEmail        string  `json:"payer_email"`
+		PaymentID         string     `json:"payment_id"`
+		Amount            boldAmount `json:"amount"`
+		Currency          string     `json:"currency"`
+		PaymentMethod     string     `json:"payment_method"`
+		MerchantReference string     `json:"merchant_reference"`
+		PayerEmail        string     `json:"payer_email"`
 	} `json:"data"`
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte, isTest bool) error {
@@ -102,8 +156,8 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 		OccurredAt:        occurredAt,
 		PaymentID:         envelope.Data.PaymentID,
 		MerchantReference: envelope.Data.MerchantReference,
-		Amount:            envelope.Data.Amount,
-		Currency:          envelope.Data.Currency,
+		Amount:            envelope.Data.Amount.Value,
+		Currency:          firstNonEmpty(envelope.Data.Currency, envelope.Data.Amount.Currency),
 		PaymentMethod:     envelope.Data.PaymentMethod,
 		PayerEmail:        envelope.Data.PayerEmail,
 		IsTest:            isTest,
