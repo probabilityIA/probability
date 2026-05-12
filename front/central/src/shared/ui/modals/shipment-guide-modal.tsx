@@ -858,7 +858,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 {originWarehouses.length > 0 && (
                                                     <select
                                                         className="text-[11px] px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1"
-                                                        style={{ focusRingColor: 'var(--color-primary)' }}
                                                         onChange={(e) => {
                                                             const addr = originWarehouses.find(a => a.id === parseInt(e.target.value));
                                                             if (addr) handleWarehouseSelect(addr);
