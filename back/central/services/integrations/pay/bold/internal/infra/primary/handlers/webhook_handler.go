@@ -102,16 +102,29 @@ func (h *WebhookHandlers) buildRawLog(endpoint, signature string, body []byte) *
 			Data    struct {
 				PaymentID         string `json:"payment_id"`
 				MerchantReference string `json:"merchant_reference"`
+				Metadata          struct {
+					Reference         string `json:"reference"`
+					MerchantReference string `json:"merchant_reference"`
+				} `json:"metadata"`
 			} `json:"data"`
 		}
 		if err := json.Unmarshal(body, &probe); err == nil {
 			raw.BoldEventID = probe.ID
 			raw.EventType = probe.Type
-			raw.MerchantReference = probe.Data.MerchantReference
+			raw.MerchantReference = firstNonEmpty(probe.Data.MerchantReference, probe.Data.Metadata.Reference, probe.Data.Metadata.MerchantReference)
 			raw.PaymentID = probe.Data.PaymentID
 		}
 	}
 	return raw
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func classifyResult(err error) (status, code string, httpStatus int, detail string) {

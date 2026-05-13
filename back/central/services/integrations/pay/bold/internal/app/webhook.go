@@ -88,6 +88,10 @@ type cloudEventsEnvelope struct {
 		PaymentMethod     string     `json:"payment_method"`
 		MerchantReference string     `json:"merchant_reference"`
 		PayerEmail        string     `json:"payer_email"`
+		Metadata          struct {
+			Reference         string `json:"reference"`
+			MerchantReference string `json:"merchant_reference"`
+		} `json:"metadata"`
 	} `json:"data"`
 }
 
@@ -155,7 +159,7 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 		Source:            envelope.Source,
 		OccurredAt:        occurredAt,
 		PaymentID:         envelope.Data.PaymentID,
-		MerchantReference: envelope.Data.MerchantReference,
+		MerchantReference: firstNonEmpty(envelope.Data.MerchantReference, envelope.Data.Metadata.Reference, envelope.Data.Metadata.MerchantReference),
 		Amount:            envelope.Data.Amount.Value,
 		Currency:          firstNonEmpty(envelope.Data.Currency, envelope.Data.Amount.Currency),
 		PaymentMethod:     envelope.Data.PaymentMethod,
