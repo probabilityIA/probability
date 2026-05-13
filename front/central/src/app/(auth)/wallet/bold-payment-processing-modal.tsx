@@ -140,6 +140,12 @@ export function BoldPaymentProcessingModal({
                         <p className="text-sm text-gray-600 dark:text-gray-300">
                             Esperando confirmación de Bold.
                         </p>
+                        <div className="w-full flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 text-left">
+                            <span className="text-amber-600 dark:text-amber-400 mt-0.5">⏱</span>
+                            <p className="text-xs text-amber-900 dark:text-amber-200">
+                                La confirmación del pago puede tardar hasta <strong>5 minutos</strong>. Puedes cerrar esta ventana y seguir trabajando; la billetera se actualizará automáticamente cuando Bold notifique el pago.
+                            </p>
+                        </div>
                         <div className="w-full p-3 rounded-lg bg-gray-50 dark:bg-gray-700 text-xs space-y-1">
                             <div className="flex justify-between">
                                 <span className="text-gray-500 dark:text-gray-400">Monto</span>

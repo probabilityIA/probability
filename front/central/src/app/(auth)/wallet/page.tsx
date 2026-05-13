@@ -708,7 +708,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const handleSelectBold = async () => {
         setShowPaymentSelector(false);
         setProcessing(true);
-        setMessage(null);
+        setMessage({
+            type: 'warning',
+            text: 'Te llevaremos al checkout de Bold. La confirmación del pago puede tardar hasta 5 minutos en aparecer en tu billetera.',
+        });
 
         try {
             const targetBusinessId = businessId || permissions?.business_id;
