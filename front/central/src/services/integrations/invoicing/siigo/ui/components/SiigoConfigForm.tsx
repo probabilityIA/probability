@@ -239,8 +239,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                 <p className="text-sm text-blue-900 -mt-2 mb-4 flex items-start gap-2">
                     <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <span>
-                        Obten tus credenciales desde el portal de desarrolladores de Siigo en
-                        <strong> siigonube.siigo.com</strong>
+                        Activa la API desde tu cuenta de Siigo Nube en <strong>siigo.com</strong> (menu Configuracion {'>'} Integraciones). La documentacion oficial esta en <strong>developers.siigo.com</strong>.
                     </span>
                 </p>
 
@@ -349,10 +348,10 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                         Como obtener tus credenciales
                     </h4>
                     <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside ml-1">
-                        <li>Ingresa a tu cuenta en <strong>siigonube.siigo.com</strong></li>
+                        <li>Ingresa a tu cuenta Siigo Nube en <strong>siigo.com</strong></li>
                         <li>Ve a <strong>Configuracion &rarr; Integraciones &rarr; API</strong></li>
                         <li>Genera o copia tu <strong>Access Key</strong></li>
-                        <li>Obtén el <strong>Account ID</strong> y <strong>Partner ID</strong> desde la documentacion de tu plan</li>
+                        <li>Obten el <strong>Account ID</strong> (opcional) y <strong>Partner ID</strong> que te asigno Siigo</li>
                     </ol>
                 </div>
             </div>
