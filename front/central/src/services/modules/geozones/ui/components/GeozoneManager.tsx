@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { PlusIcon, MagnifyingGlassIcon, ArrowPathIcon, GlobeAltIcon, SparklesIcon, ChevronRightIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { Geozone, DrillState, DisplayFeature } from '../../domain/types';
-import { listGeozonesAction, deleteGeozoneAction } from '../../infra/actions';
+import { listGeozonesAction, deleteGeozoneAction, getGeozonesForDisplayAction } from '../../infra/actions';
 import { Alert, Button, Spinner } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import GeozoneList from './GeozoneList';
@@ -56,11 +56,7 @@ export default function GeozoneManager({ selectedBusinessId = null }: GeozoneMan
         setError(null);
         const t0 = performance.now();
         try {
-            const sp = new URLSearchParams({ zoom: String(drillConfig.fetchZoom), type: drillConfig.type });
-            if (drillConfig.parentId) sp.append('parent_id', String(drillConfig.parentId));
-            const r = await fetch(`/api/geozones-display?${sp.toString()}`, { cache: 'no-cache' });
-            if (!r.ok) throw new Error(`HTTP ${r.status}`);
-            const fc = await r.json();
+            const fc = await getGeozonesForDisplayAction(drillConfig.type as any, drillConfig.fetchZoom, undefined, drillConfig.parentId ?? null);
             const features = fc.features || [];
             const mapped: Geozone[] = features.map((f: DisplayFeature) => ({
                 id: f.properties.id,

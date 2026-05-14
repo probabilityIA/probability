@@ -17,7 +17,7 @@ export class GeozoneUseCases {
     bulkImport(data: BulkImportRequest, businessId?: number) { return this.repo.bulkImport(data, businessId); }
     lookup(params: LookupParams) { return this.repo.lookup(params); }
     remove(id: number, businessId?: number) { return this.repo.remove(id, businessId); }
-    getForDisplay(type: GeozoneType | '', zoom: number, bbox?: string) { return this.repo.getForDisplay(type, zoom, bbox); }
+    getForDisplay(type: GeozoneType | '', zoom: number, bbox?: string, parentId?: number | null) { return this.repo.getForDisplay(type, zoom, bbox, parentId); }
     probability(req: ProbabilityRequest) { return this.repo.probability(req); }
     getOrderZone(orderId: string, businessId: number) { return this.repo.getOrderZone(orderId, businessId); }
     probabilityByCarrier(orderId: string, businessId: number) { return this.repo.probabilityByCarrier(orderId, businessId); }

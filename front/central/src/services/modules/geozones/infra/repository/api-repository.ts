@@ -87,10 +87,11 @@ export class GeozoneApiRepository implements IGeozoneRepository {
         return this.fetch<LookupResponse>(`/geozones/lookup?${sp.toString()}`);
     }
 
-    async getForDisplay(geozoneType: GeozoneType | '', zoom: number, bbox?: string): Promise<DisplayFeatureCollection> {
+    async getForDisplay(geozoneType: GeozoneType | '', zoom: number, bbox?: string, parentId?: number | null): Promise<DisplayFeatureCollection> {
         const sp = new URLSearchParams({ zoom: String(zoom) });
         if (geozoneType) sp.append('type', geozoneType);
         if (bbox) sp.append('bbox', bbox);
+        if (parentId != null) sp.append('parent_id', String(parentId));
         return this.fetch<DisplayFeatureCollection>(`/geozones/display?${sp.toString()}`);
     }
 

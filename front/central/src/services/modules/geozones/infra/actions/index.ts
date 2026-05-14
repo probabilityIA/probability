@@ -48,8 +48,8 @@ export const deleteGeozoneAction = async (id: number, businessId?: number) => {
     catch (error: any) { throw new Error(error.message); }
 };
 
-export const getGeozonesForDisplayAction = async (type: GeozoneType | '', zoom: number, bbox?: string) => {
-    try { return await (await getUseCases()).getForDisplay(type, zoom, bbox); }
+export const getGeozonesForDisplayAction = async (type: GeozoneType | '', zoom: number, bbox?: string, parentId?: number | null) => {
+    try { return await (await getUseCases()).getForDisplay(type, zoom, bbox, parentId); }
     catch (error: any) { throw new Error(error.message); }
 };
 
