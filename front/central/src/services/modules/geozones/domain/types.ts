@@ -134,6 +134,8 @@ export interface ProbabilityResult {
     stats?: ProbabilityStats;
     global_rate?: number;
     global_total?: number;
+    is_estimated?: boolean;
+    estimate_source?: 'global_carrier' | 'carrier_baseline' | string;
 }
 
 export interface DrillState {
