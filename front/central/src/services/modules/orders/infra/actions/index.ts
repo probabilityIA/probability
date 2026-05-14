@@ -106,6 +106,55 @@ export const requestWhatsAppConfirmationAction = async (orderId: string) => {
     }
 };
 
+export const uploadBulkOrdersAction = async (file: File, businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+        const { env } = await import('@/shared/config/env');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = businessId
+            ? `${env.API_BASE_URL}/orders/upload-bulk?business_id=${businessId}`
+            : `${env.API_BASE_URL}/orders/upload-bulk`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: formData,
+            cache: 'no-store',
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            return {
+                success: true,
+                data: result.data || {
+                    total_rows: 0,
+                    success_count: 0,
+                    failed_count: 0,
+                    errors: []
+                }
+            };
+        } else {
+            return {
+                success: false,
+                message: result.message || 'Error al procesar el archivo',
+                data: result.data
+            };
+        }
+    } catch (error: any) {
+        console.error('Upload Bulk Orders Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al cargar el archivo',
+        };
+    }
+};
+
 export const checkWhatsAppIntegrationAction = async (businessId: number): Promise<boolean> => {
     try {
         const token = await getAuthToken();

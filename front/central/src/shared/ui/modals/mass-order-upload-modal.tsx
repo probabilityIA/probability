@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button, Input } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getActionError } from '@/shared/utils/action-result';
+import { uploadBulkOrdersAction } from '@/services/modules/orders/infra/actions';
 
 interface MassOrderUploadModalProps {
     isOpen: boolean;
@@ -51,21 +52,9 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
         setUploadStats(null);
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const result = await uploadBulkOrdersAction(file, isSuperAdmin ? selectedBusinessId ?? undefined : undefined);
 
-            const url = isSuperAdmin && selectedBusinessId
-                ? `/api/v1/orders/upload-bulk?business_id=${selectedBusinessId}`
-                : '/api/v1/orders/upload-bulk';
-
-            const response = await fetch(url, {
-                method: 'POST',
-                body: formData,
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
+            if (result.success) {
                 if (result.data.success_count > 0) {
                     setSuccess(`¡Proceso completado! ${result.data.success_count} órdenes creadas.`);
                 } else {
