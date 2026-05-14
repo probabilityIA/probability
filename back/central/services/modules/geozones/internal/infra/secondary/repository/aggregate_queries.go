@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -111,9 +112,24 @@ func (r *Repository) ProbabilityByOrder(ctx context.Context, ancestors *entities
 		levels = append(levels, ref.level)
 		ids = append(ids, uint64(*ref.id))
 	}
+	values := make([]string, 0, len(levels))
+	if len(levels) == 0 {
+		values = append(values, "('__none__'::text, 0::bigint)")
+	} else {
+		allowed := map[string]bool{"barrio": true, "neighborhood": true, "admin_district": true, "locality": true, "city": true, "state": true, "country": true}
+		for i, lvl := range levels {
+			if !allowed[lvl] {
+				continue
+			}
+			values = append(values, fmt.Sprintf("('%s'::text, %d::bigint)", lvl, ids[i]))
+		}
+		if len(values) == 0 {
+			values = append(values, "('__none__'::text, 0::bigint)")
+		}
+	}
 	q := `
 WITH order_zones(geozone_level, geozone_id) AS (
-    SELECT UNNEST(?::text[]), UNNEST(?::bigint[])
+    VALUES ` + strings.Join(values, ",") + `
 ),
 zone_stats AS (
     SELECT gcs.*
@@ -147,13 +163,9 @@ WHERE g.geozone_level = '__global__' AND g.total > 0
 ORDER BY g.carrier_display
 `
 	var rows []aggregateRow
-	if len(levels) == 0 {
-		levels = []string{""}
-		ids = []uint64{0}
-	}
 	start := time.Now()
 	defer func() { metrics.ProbabilityQueryDuration.Observe(time.Since(start).Seconds()) }()
-	if err := r.db.Conn(ctx).Raw(q, levels, ids).Scan(&rows).Error; err != nil {
+	if err := r.db.Conn(ctx).Raw(q).Scan(&rows).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
