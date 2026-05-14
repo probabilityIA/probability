@@ -384,9 +384,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                       <label className="block text-xs font-medium text-gray-600 mb-1">Cliente</label>
                       <input type="text" value={customerName} onChange={(e) => { setCustomerName(e.target.value); setPage(1); }} placeholder="Juan Perez" className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded" />
                     </div>
-                    <div className="md:col-span-4 flex justify-end">
+                    <div className="md:col-span-4 flex justify-end gap-2">
                       <button type="button" onClick={resetFilters} className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 underline">
                         Limpiar filtros
+                      </button>
+                      <button type="button" onClick={loadOrders} disabled={loading} className="px-4 py-1.5 text-xs bg-violet-600 hover:bg-violet-700 disabled:bg-gray-400 text-white rounded font-medium">
+                        Buscar
                       </button>
                     </div>
                   </div>
