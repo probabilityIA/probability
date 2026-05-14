@@ -118,8 +118,13 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
                             <li>El archivo debe ser CSV o Excel (.xlsx, .xls)</li>
                             <li>La primera fila debe contener los encabezados de columna tal cual la plantilla</li>
-                            <li>Columnas requeridas: order_number, customer_name, customer_email, customer_phone, shipping_street, shipping_city, shipping_state, total_amount</li>
-                            <li>Columnas opcionales: weight, height, width, length, platform</li>
+                            <li><strong>Requeridas:</strong> order_number, customer_name, customer_email, customer_phone, shipping_street, shipping_city, shipping_state, total_amount</li>
+                            <li><strong>Cliente (opcionales):</strong> customer_first_name, customer_last_name, customer_dni</li>
+                            <li><strong>Dirección (opcionales):</strong> shipping_country, shipping_postal_code, shipping_lat, shipping_lng</li>
+                            <li><strong>Financiero (opcionales):</strong> subtotal, tax, discount, shipping_cost, shipping_discount, currency</li>
+                            <li><strong>Logística (opcionales):</strong> tracking_number, guide_id, warehouse_name, driver_name, platform</li>
+                            <li><strong>Estado (opcionales):</strong> status, payment_method_id, is_paid, order_type_name, invoiceable</li>
+                            <li><strong>Otros (opcionales):</strong> weight, height, width, length, notes</li>
                         </ul>
                     </div>
 

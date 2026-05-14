@@ -248,7 +248,7 @@ func (h *Handlers) parseCSV(file io.Reader) ([]dtos.CreateOrderRequest, error) {
 			Platform:       "manual",
 		}
 
-		// Opcionales
+		// Opcionales - Dimensiones
 		if v, err := parseRobustFloat(getValue("weight")); err == nil && getValue("weight") != "" {
 			order.Weight = &v
 		}
@@ -261,6 +261,90 @@ func (h *Handlers) parseCSV(file io.Reader) ([]dtos.CreateOrderRequest, error) {
 		if v, err := parseRobustFloat(getValue("length")); err == nil && getValue("length") != "" {
 			order.Length = &v
 		}
+
+		// Opcionales - Financiera
+		if v, err := parseRobustFloat(getValue("subtotal")); err == nil && getValue("subtotal") != "" {
+			order.Subtotal = v
+		}
+		if v, err := parseRobustFloat(getValue("tax")); err == nil && getValue("tax") != "" {
+			order.Tax = v
+		}
+		if v, err := parseRobustFloat(getValue("discount")); err == nil && getValue("discount") != "" {
+			order.Discount = v
+		}
+		if v, err := parseRobustFloat(getValue("shipping_cost")); err == nil && getValue("shipping_cost") != "" {
+			order.ShippingCost = v
+		}
+		if v, err := parseRobustFloat(getValue("shipping_discount")); err == nil && getValue("shipping_discount") != "" {
+			order.ShippingDiscount = v
+		}
+		if c := getValue("currency"); c != "" {
+			order.Currency = c
+		}
+
+		// Opcionales - Cliente
+		if fn := getValue("customer_first_name"); fn != "" {
+			order.CustomerFirstName = fn
+		}
+		if ln := getValue("customer_last_name"); ln != "" {
+			order.CustomerLastName = ln
+		}
+		if dni := getValue("customer_dni"); dni != "" {
+			order.CustomerDNI = dni
+		}
+
+		// Opcionales - Dirección
+		if c := getValue("shipping_country"); c != "" {
+			order.ShippingCountry = c
+		}
+		if pc := getValue("shipping_postal_code"); pc != "" {
+			order.ShippingPostalCode = pc
+		}
+		if lat, err := parseRobustFloat(getValue("shipping_lat")); err == nil && getValue("shipping_lat") != "" {
+			order.ShippingLat = &lat
+		}
+		if lng, err := parseRobustFloat(getValue("shipping_lng")); err == nil && getValue("shipping_lng") != "" {
+			order.ShippingLng = &lng
+		}
+
+		// Opcionales - Estado y Pago
+		if s := getValue("status"); s != "" {
+			order.Status = s
+		}
+		if pm := getValue("payment_method_id"); pm != "" {
+			if id, err := strconv.ParseUint(pm, 10, 32); err == nil {
+				order.PaymentMethodID = uint(id)
+			}
+		}
+		if isPaid := getValue("is_paid"); isPaid != "" {
+			order.IsPaid = strings.ToLower(isPaid) == "true" || isPaid == "1" || strings.ToLower(isPaid) == "yes" || strings.ToLower(isPaid) == "si"
+		}
+
+		// Opcionales - Logística
+		if tn := getValue("tracking_number"); tn != "" {
+			order.TrackingNumber = &tn
+		}
+		if gid := getValue("guide_id"); gid != "" {
+			order.GuideID = &gid
+		}
+		if wh := getValue("warehouse_name"); wh != "" {
+			order.WarehouseName = wh
+		}
+		if dr := getValue("driver_name"); dr != "" {
+			order.DriverName = dr
+		}
+
+		// Opcionales - Adicional
+		if notes := getValue("notes"); notes != "" {
+			order.Notes = &notes
+		}
+		if ot := getValue("order_type_name"); ot != "" {
+			order.OrderTypeName = ot
+		}
+		if inv := getValue("invoiceable"); inv != "" {
+			order.Invoiceable = strings.ToLower(inv) == "true" || inv == "1" || strings.ToLower(inv) == "yes" || strings.ToLower(inv) == "si"
+		}
+
 		if p := getValue("platform"); p != "" {
 			order.Platform = p
 		}
@@ -337,6 +421,7 @@ func (h *Handlers) parseExcel(file io.Reader) ([]dtos.CreateOrderRequest, error)
 			Platform:       "manual",
 		}
 
+		// Opcionales - Dimensiones
 		if v, err := parseRobustFloat(getValue("weight")); err == nil && getValue("weight") != "" {
 			order.Weight = &v
 		}
@@ -349,6 +434,90 @@ func (h *Handlers) parseExcel(file io.Reader) ([]dtos.CreateOrderRequest, error)
 		if v, err := parseRobustFloat(getValue("length")); err == nil && getValue("length") != "" {
 			order.Length = &v
 		}
+
+		// Opcionales - Financiera
+		if v, err := parseRobustFloat(getValue("subtotal")); err == nil && getValue("subtotal") != "" {
+			order.Subtotal = v
+		}
+		if v, err := parseRobustFloat(getValue("tax")); err == nil && getValue("tax") != "" {
+			order.Tax = v
+		}
+		if v, err := parseRobustFloat(getValue("discount")); err == nil && getValue("discount") != "" {
+			order.Discount = v
+		}
+		if v, err := parseRobustFloat(getValue("shipping_cost")); err == nil && getValue("shipping_cost") != "" {
+			order.ShippingCost = v
+		}
+		if v, err := parseRobustFloat(getValue("shipping_discount")); err == nil && getValue("shipping_discount") != "" {
+			order.ShippingDiscount = v
+		}
+		if c := getValue("currency"); c != "" {
+			order.Currency = c
+		}
+
+		// Opcionales - Cliente
+		if fn := getValue("customer_first_name"); fn != "" {
+			order.CustomerFirstName = fn
+		}
+		if ln := getValue("customer_last_name"); ln != "" {
+			order.CustomerLastName = ln
+		}
+		if dni := getValue("customer_dni"); dni != "" {
+			order.CustomerDNI = dni
+		}
+
+		// Opcionales - Dirección
+		if c := getValue("shipping_country"); c != "" {
+			order.ShippingCountry = c
+		}
+		if pc := getValue("shipping_postal_code"); pc != "" {
+			order.ShippingPostalCode = pc
+		}
+		if lat, err := parseRobustFloat(getValue("shipping_lat")); err == nil && getValue("shipping_lat") != "" {
+			order.ShippingLat = &lat
+		}
+		if lng, err := parseRobustFloat(getValue("shipping_lng")); err == nil && getValue("shipping_lng") != "" {
+			order.ShippingLng = &lng
+		}
+
+		// Opcionales - Estado y Pago
+		if s := getValue("status"); s != "" {
+			order.Status = s
+		}
+		if pm := getValue("payment_method_id"); pm != "" {
+			if id, err := strconv.ParseUint(pm, 10, 32); err == nil {
+				order.PaymentMethodID = uint(id)
+			}
+		}
+		if isPaid := getValue("is_paid"); isPaid != "" {
+			order.IsPaid = strings.ToLower(isPaid) == "true" || isPaid == "1" || strings.ToLower(isPaid) == "yes" || strings.ToLower(isPaid) == "si"
+		}
+
+		// Opcionales - Logística
+		if tn := getValue("tracking_number"); tn != "" {
+			order.TrackingNumber = &tn
+		}
+		if gid := getValue("guide_id"); gid != "" {
+			order.GuideID = &gid
+		}
+		if wh := getValue("warehouse_name"); wh != "" {
+			order.WarehouseName = wh
+		}
+		if dr := getValue("driver_name"); dr != "" {
+			order.DriverName = dr
+		}
+
+		// Opcionales - Adicional
+		if notes := getValue("notes"); notes != "" {
+			order.Notes = &notes
+		}
+		if ot := getValue("order_type_name"); ot != "" {
+			order.OrderTypeName = ot
+		}
+		if inv := getValue("invoiceable"); inv != "" {
+			order.Invoiceable = strings.ToLower(inv) == "true" || inv == "1" || strings.ToLower(inv) == "yes" || strings.ToLower(inv) == "si"
+		}
+
 		if p := getValue("platform"); p != "" {
 			order.Platform = p
 		}
