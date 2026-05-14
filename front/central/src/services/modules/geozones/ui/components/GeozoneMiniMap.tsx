@@ -22,6 +22,17 @@ interface Props {
     height?: string;
     showHeader?: boolean;
     origin?: OriginInfo | null;
+    carrierRate?: number | null;
+    carrierName?: string | null;
+    carrierEstimated?: boolean;
+}
+
+function rateColor(rate: number): string {
+    if (rate >= 0.9) return '#16a34a';
+    if (rate >= 0.8) return '#65a30d';
+    if (rate >= 0.7) return '#ca8a04';
+    if (rate >= 0.6) return '#ea580c';
+    return '#dc2626';
 }
 
 const typeLabel: Record<string, string> = {
@@ -99,7 +110,10 @@ function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng }: { geo
     return null;
 }
 
-export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin }: Props) {
+export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin, carrierRate, carrierName, carrierEstimated }: Props) {
+    const hasCarrierRate = carrierRate != null && Number.isFinite(carrierRate);
+    const carrierPct = hasCarrierRate ? Math.round((carrierRate as number) * 100) : null;
+    const carrierColor = hasCarrierRate ? rateColor(carrierRate as number) : null;
     const originLat = origin?.lat;
     const originLng = origin?.lng;
     const hasOriginPoint = originLat != null && originLng != null && Number.isFinite(originLat) && Number.isFinite(originLng);
@@ -177,7 +191,9 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
             </div>
         );
     }
-    const color = typeColor[level] || '#6366f1';
+    const defaultColor = typeColor[level] || '#6366f1';
+    const polygonColor = carrierColor ?? defaultColor;
+    const polygonOpacity = carrierColor ? (carrierEstimated ? 0.35 : 0.55) : 0.35;
     return (
         <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ isolation: 'isolate' }}>
             {showHeader && (
@@ -185,19 +201,19 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     <span className="font-semibold text-gray-700 dark:text-gray-200">
                         {typeLabel[level] || level}: {zone.name}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: color }}>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: defaultColor }}>
                         {typeLabel[level] || level}
                     </span>
                 </div>
             )}
             {originBanner}
-            <div style={{ height }}>
+            <div className="relative" style={{ height }}>
                 <MapContainer center={[4.6, -74.08]} zoom={5} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     <GeoJSONLayer
-                        key={`${zone.id}-${level}`}
+                        key={`${zone.id}-${level}-${carrierPct ?? 'none'}-${carrierEstimated ? 'est' : 'real'}`}
                         data={zone.geometry as any}
-                        style={() => ({ color, weight: 2, fillColor: color, fillOpacity: 0.35 })}
+                        style={() => ({ color: polygonColor, weight: 2, fillColor: polygonColor, fillOpacity: polygonOpacity })}
                     />
                     {hasPoint && (
                         <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
@@ -207,6 +223,17 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     )}
                     <FitBoundsToGeometry geometry={zone.geometry} lat={lat} lng={lng} originLat={originLat} originLng={originLng} />
                 </MapContainer>
+                {hasCarrierRate && carrierColor && (
+                    <div
+                        className="absolute top-3 right-3 z-[400] flex items-center gap-2 rounded-full px-3 py-1.5 shadow-lg pointer-events-none"
+                        style={{ backgroundColor: carrierColor, color: '#fff' }}
+                    >
+                        <span className="text-xs font-semibold tracking-wide opacity-90">
+                            {carrierName || 'Efectividad'}{carrierEstimated ? ' (est.)' : ''}
+                        </span>
+                        <span className="text-lg font-extrabold tabular-nums">{carrierPct}%</span>
+                    </div>
+                )}
             </div>
         </div>
     );

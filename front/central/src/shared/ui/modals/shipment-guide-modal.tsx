@@ -15,6 +15,8 @@ import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { DeliveryProbabilityBadge } from "@/services/modules/geozones/ui/components/DeliveryProbabilityBadge";
 import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
+import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
+import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
@@ -197,6 +199,24 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
+    const [carrierProbabilities, setCarrierProbabilities] = useState<ProbabilityResult[]>([]);
+
+    const normalizeCarrierKey = (s: string) =>
+        (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    useEffect(() => {
+        if (currentStep !== 2 || !order?.id || !order?.business_id) return;
+        let cancelled = false;
+        getProbabilityByCarrierAction(order.id, order.business_id)
+            .then((res) => { if (!cancelled) setCarrierProbabilities(Array.isArray(res) ? res : []); })
+            .catch(() => { if (!cancelled) setCarrierProbabilities([]); });
+        return () => { cancelled = true; };
+    }, [currentStep, order?.id, order?.business_id]);
+
+    const selectedCarrierKey = selectedRate ? normalizeCarrierKey(selectedRate.carrier || '') : '';
+    const selectedCarrierProb = selectedCarrierKey
+        ? carrierProbabilities.find(p => normalizeCarrierKey(p.carrier || '') === selectedCarrierKey)
+        : undefined;
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
@@ -605,10 +625,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }
     };
 
-    // Step 2: Select Rate
+    // Step 2: Select Rate (NO avanza automaticamente; el usuario debe presionar Continuar)
     const handleRateSelection = (rate: EnvioClickRate) => {
         setSelectedRate(rate);
-        setCurrentStep(3);
+    };
+
+    const handleStep2Continue = () => {
+        if (selectedRate) setCurrentStep(3);
     };
 
     // Step 3: Details
@@ -1147,12 +1170,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         orderId={order.id}
                                         lat={order.shipping_lat ?? null}
                                         lng={order.shipping_lng ?? null}
-                                        height="180px"
+                                        height="200px"
                                         origin={selectedOriginWarehouse ? {
                                             address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
                                             lat: selectedOriginWarehouse.latitude ?? null,
                                             lng: selectedOriginWarehouse.longitude ?? null,
                                         } : null}
+                                        carrierRate={selectedCarrierProb?.delivery_rate ?? null}
+                                        carrierName={selectedRate?.carrier || null}
+                                        carrierEstimated={selectedCarrierProb?.is_estimated || !selectedCarrierProb?.found}
                                     />
                                 </div>
                             )}
@@ -1535,10 +1561,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </Button>
                     )}
 
-                    {/* Step 2: NO "Siguiente" Button - User selects a rate to advance */}
                     {currentStep === 2 && (
-                        <div className="text-sm text-gray-600 dark:text-gray-300 italic">
-                            📌 Selecciona una transportadora para continuar
+                        <div className="flex items-center gap-3">
+                            {!selectedRate && (
+                                <span className="text-sm text-gray-600 dark:text-gray-300 italic">
+                                    Selecciona una transportadora
+                                </span>
+                            )}
+                            {selectedRate && (
+                                <span className="text-sm text-gray-700 dark:text-gray-200">
+                                    Transportadora: <strong>{selectedRate.carrier}</strong>
+                                </span>
+                            )}
+                            <Button
+                                className="shipment-btn-primary"
+                                onClick={handleStep2Continue}
+                                disabled={!selectedRate}
+                            >
+                                Continuar
+                            </Button>
                         </div>
                     )}
 
