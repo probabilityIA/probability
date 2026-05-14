@@ -546,18 +546,18 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Envío</p>
                                         <p className="text-base font-black text-gray-900 dark:text-white">
                                             {formatCurrency(
-                                                order.shipment?.total_cost ?? order.shipping_cost,
+                                                (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0),
                                                 order.currency,
-                                                order.shipment?.total_cost ?? order.shipping_cost_presentment,
+                                                (order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) - (order.shipping_discount_presentment ?? 0),
                                                 order.currency_presentment
                                             )}
                                         </p>
-                                        {(order.shipment?.total_cost ?? order.shipping_cost) > 0 && ['shopify', 'amazon', 'mercadolibre'].includes(order.platform?.toLowerCase() || '') && (
+                                        {((order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0)) > 0 && ['shopify', 'amazon', 'mercadolibre'].includes(order.platform?.toLowerCase() || '') && (
                                             <IVAIncludedBadge
-                                                ivaAmount={(order.shipment?.total_cost ?? order.shipping_cost) / 1.19 * 0.19}
+                                                ivaAmount={((order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0)) / 1.19 * 0.19}
                                                 currency={order.currency}
                                                 currencyPresentment={order.currency_presentment}
-                                                amountPresentment={(order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) / 1.19 * 0.19}
+                                                amountPresentment={((order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) - (order.shipping_discount_presentment ?? 0)) / 1.19 * 0.19}
                                             />
                                         )}
                                     </div>
@@ -582,9 +582,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </p>
                                         <p className="text-xl font-black" style={{ color: primaryColor }}>
                                             {formatCurrency(
-                                                (order.subtotal || 0) + (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.invoice?.retention_amount || 0),
+                                                (order.subtotal || 0) + ((order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.shipping_discount ?? 0)) - (order.invoice?.retention_amount || 0),
                                                 order.currency,
-                                                (order.subtotal_presentment || 0) + (order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) - (order.invoice?.retention_amount || 0),
+                                                (order.subtotal_presentment || 0) + ((order.shipment?.total_cost ?? order.shipping_cost_presentment ?? 0) - (order.shipping_discount_presentment ?? 0)) - (order.invoice?.retention_amount || 0),
                                                 order.currency_presentment
                                             )}
                                         </p>
@@ -609,36 +609,31 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         <th className="px-3 py-2 text-left font-bold uppercase" style={{ color: secondaryColor }}>Producto</th>
                                                         <th className="px-3 py-2 text-left font-bold uppercase" style={{ color: secondaryColor }}>SKU</th>
                                                         <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Cant</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Precio</th>
                                                         <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Precio s/IVA</th>
-                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>IVA</th>
                                                         <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Desc.</th>
                                                         <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                                    {(order.order_items || items).map((item: any, idx: number) => {
-                                                        const unitPrice = item.unit_price || item.price || 0;
-                                                        const unitPricePresentment = item.unit_price_presentment || 0;
-                                                        const taxRate = item.tax_rate || 0;
-                                                        const quantity = item.quantity || 0;
-                                                        const discount = item.discount || 0;
-                                                        const discountPresentment = item.discount_presentment || 0;
-                                                        const tax = item.tax || 0;
-                                                        const taxPresentment = item.tax_presentment || 0;
+                                                    {(() => {
+                                                        const orderItems = order.order_items || items;
+                                                        const taxRate = 0.19;
 
-                                                        const priceWithoutTax = taxRate > 0 ? unitPrice / (1 + taxRate) : unitPrice;
-                                                        const priceWithoutTaxPresentment = taxRate > 0 && unitPricePresentment > 0 ? unitPricePresentment / (1 + taxRate) : unitPricePresentment;
+                                                        return orderItems.map((item: any, idx: number) => {
+                                                            const unitPrice = item.unit_price || item.price || 0;
+                                                            const unitPricePresentment = item.unit_price_presentment || 0;
+                                                            const quantity = item.quantity || 0;
+                                                            const discount = item.discount || 0;
+                                                            const discountPresentment = item.discount_presentment || 0;
 
-                                                        const subtotalWithoutTax = priceWithoutTax * quantity;
-                                                        const subtotalWithoutTaxPresentment = priceWithoutTaxPresentment * quantity;
+                                                            const priceWithoutTax = unitPrice / (1 + taxRate);
+                                                            const priceWithoutTaxPresentment = unitPricePresentment / (1 + taxRate);
 
-                                                        const itemTaxTotal = tax;
-                                                        const itemTaxTotalPresentment = taxPresentment;
+                                                            const itemTotal = (unitPrice * quantity) - discount;
+                                                            const itemTotalPresentment = (unitPricePresentment * quantity) - discountPresentment;
 
-                                                        const itemTotal = subtotalWithoutTax + itemTaxTotal - discount;
-                                                        const itemTotalPresentment = subtotalWithoutTaxPresentment + itemTaxTotalPresentment - discountPresentment;
-
-                                                        return (
+                                                            return (
                                                             <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                                                 <td className="px-3 py-2">
                                                                     <div className="text-gray-900 dark:text-white font-medium">{item.product_name || item.name || item.title || '-'}</div>
@@ -648,8 +643,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 </td>
                                                                 <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
                                                                 <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{quantity}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(priceWithoutTax, order.currency, priceWithoutTaxPresentment, order.currency_presentment)}</td>
-                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(itemTaxTotal, order.currency, itemTaxTotalPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-2 text-right text-gray-900 dark:text-white">{formatCurrency(unitPrice, order.currency, unitPricePresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-2 text-right text-gray-600 dark:text-gray-400">{formatCurrency(priceWithoutTax, order.currency, priceWithoutTaxPresentment, order.currency_presentment)}</td>
                                                                 <td className="px-3 py-2 text-right">
                                                                     {(discount > 0 || discountPresentment > 0) ? (
                                                                         <span className="text-green-600 font-bold">-{formatCurrency(discount, order.currency, discountPresentment, order.currency_presentment)}</span>
@@ -659,8 +654,55 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 </td>
                                                                 <td className="px-3 py-2 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(itemTotal, order.currency, itemTotalPresentment, order.currency_presentment)}</td>
                                                             </tr>
+                                                            );
+                                                        });
+                                                    })()}
+                                                    {(() => {
+                                                        const orderItems = order.order_items || items;
+                                                        const taxRate = 0.19;
+                                                        let totalQty = 0;
+                                                        let totalPrice = 0;
+                                                        let totalPricePresentment = 0;
+                                                        let totalPriceWithoutTax = 0;
+                                                        let totalPriceWithoutTaxPresentment = 0;
+                                                        let totalDiscounts = 0;
+                                                        let totalDiscountsPresentment = 0;
+                                                        let totalItemTotal = 0;
+                                                        let totalItemTotalPresentment = 0;
+
+                                                        orderItems.forEach((item: any) => {
+                                                            const unitPrice = item.unit_price || item.price || 0;
+                                                            const unitPricePresentment = item.unit_price_presentment || 0;
+                                                            const quantity = item.quantity || 0;
+                                                            const discount = item.discount || 0;
+                                                            const discountPresentment = item.discount_presentment || 0;
+
+                                                            const priceWithoutTax = unitPrice / (1 + taxRate);
+                                                            const priceWithoutTaxPresentment = unitPricePresentment / (1 + taxRate);
+
+                                                            totalQty += quantity;
+                                                            totalPrice += unitPrice * quantity;
+                                                            totalPricePresentment += unitPricePresentment * quantity;
+                                                            totalPriceWithoutTax += priceWithoutTax * quantity;
+                                                            totalPriceWithoutTaxPresentment += priceWithoutTaxPresentment * quantity;
+                                                            totalDiscounts += discount;
+                                                            totalDiscountsPresentment += discountPresentment;
+                                                            totalItemTotal += (unitPrice * quantity) - discount;
+                                                            totalItemTotalPresentment += (unitPricePresentment * quantity) - discountPresentment;
+                                                        });
+
+                                                        return (
+                                                            <tr style={{ borderTop: `3px solid ${primaryColor}` }} className="bg-gray-100 dark:bg-gray-900">
+                                                                <td className="px-3 py-3"></td>
+                                                                <td className="px-3 py-3 text-right font-bold uppercase text-xs" style={{ color: primaryColor }}>TOTAL</td>
+                                                                <td className="px-3 py-3 text-right font-bold" style={{ color: primaryColor }}>{totalQty}</td>
+                                                                <td className="px-3 py-3 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(totalPrice, order.currency, totalPricePresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-3 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(totalPriceWithoutTax, order.currency, totalPriceWithoutTaxPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-3 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(totalDiscounts, order.currency, totalDiscountsPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-3 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(totalItemTotal, order.currency, totalItemTotalPresentment, order.currency_presentment)}</td>
+                                                            </tr>
                                                         );
-                                                    })}
+                                                    })()}
                                                 </tbody>
                                             </table>
                                         </div>
