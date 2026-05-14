@@ -21,8 +21,9 @@ import { SyncProgressModal } from './SyncProgressModal';
 import { MiniAddressMap } from './MiniAddressMap';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getProbabilityByCarrierAction } from '@/services/modules/geozones/infra/actions';
+import type { ProbabilityResult } from '@/services/modules/geozones/domain/types';
 
-// Carga dinámica del mapa para evitar SSR issues
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
     ssr: false,
     loading: () => (
@@ -31,6 +32,18 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
         </div>
     ),
 });
+
+const GeozoneMiniMap = dynamic(
+    () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-32 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <RefreshCw size={18} className="animate-spin text-gray-400 dark:text-gray-500" />
+            </div>
+        ),
+    },
+);
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -123,18 +136,49 @@ function extractCity(destination?: string): string | null {
 
 interface TrackingDetailProps {
     shipment: Shipment;
+    businessId: number | null;
     onClose: () => void;
     onCancel: (id: string) => void;
     cancelingId: string | null;
     isCancelled: boolean;
 }
 
-function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled }: TrackingDetailProps) {
+function normalizeCarrierName(value?: string | null): string {
+    return (value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, isCancelled }: TrackingDetailProps) {
     const [tracking, setTracking] = useState<{ loading: boolean; data?: any; error?: string }>({ loading: false });
+    const [carrierProbabilities, setCarrierProbabilities] = useState<ProbabilityResult[]>([]);
 
     // Parse destination address for map
     const destination = shipment.destination_address || '';
     const city = extractCity(destination) || '';
+
+    useEffect(() => {
+        setCarrierProbabilities([]);
+        if (!shipment.order_id || !businessId) return;
+        let cancelled = false;
+        getProbabilityByCarrierAction(shipment.order_id, businessId)
+            .then(res => {
+                if (cancelled) return;
+                if (Array.isArray(res)) {
+                    setCarrierProbabilities(res as ProbabilityResult[]);
+                }
+            })
+            .catch(() => { });
+        return () => { cancelled = true; };
+    }, [shipment.order_id, businessId]);
+
+    const assignedCarrierProbability = (() => {
+        if (!shipment.carrier || carrierProbabilities.length === 0) return null;
+        const target = normalizeCarrierName(shipment.carrier);
+        if (!target) return null;
+        return carrierProbabilities.find(p => normalizeCarrierName(p.carrier) === target) || null;
+    })();
+
+    const carrierRateForMap = assignedCarrierProbability?.delivery_rate ?? null;
+    const carrierEstimatedForMap = !!assignedCarrierProbability?.is_estimated;
 
     useEffect(() => {
         if (shipment.tracking_number) {
@@ -245,7 +289,19 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId, isCancelled 
                                     </p>
                                 )}
                             </div>
-                            {shipment.destination_address ? (
+                            {shipment.destination_address && shipment.order_id && businessId ? (
+                                <GeozoneMiniMap
+                                    key={`dest-zone-${shipment.id}`}
+                                    businessId={businessId}
+                                    orderId={shipment.order_id}
+                                    height="200px"
+                                    showHeader={false}
+                                    destination={{ address: shipment.destination_address }}
+                                    carrierName={shipment.carrier || null}
+                                    carrierRate={carrierRateForMap}
+                                    carrierEstimated={carrierEstimatedForMap}
+                                />
+                            ) : shipment.destination_address ? (
                                 <MiniAddressMap key={`dest-${shipment.id}`} address={`${shipment.destination_address}, ${shipment.destination_city || ''}`} city={shipment.destination_city || undefined} color="emerald" />
                             ) : (
                                 <MiniAddressMap key={`dest-empty-${shipment.id}`} color="emerald" />
@@ -1067,6 +1123,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     {selectedShipment ? (
                         <TrackingDetail
                             shipment={selectedShipment}
+                            businessId={isSuperAdmin ? selectedBusinessId : (permissions?.business_id ?? null)}
                             onClose={() => setSelectedShipment(null)}
                             onCancel={handleCancel}
                             cancelingId={cancelingId}
