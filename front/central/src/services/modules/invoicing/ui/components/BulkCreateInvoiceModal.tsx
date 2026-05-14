@@ -119,19 +119,20 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     setError(null);
     try {
       const [sortBy, sortOrder] = sort.split(':') as [SortKey, SortDir];
-      const cleanOrderNumber = orderNumber ? orderNumber.trim() : '';
-      const cleanCustomerName = customerName ? customerName.trim() : (search ? search.trim() : '');
+      const trimmedOrderNumber = String(orderNumber || '').trim();
+      const trimmedCustomerName = String(customerName || search || '').trim();
       const filters: InvoiceableOrdersFilters = {
         page,
         pageSize,
         businessId: propBusinessId ?? selectedBusinessId ?? undefined,
-        startDate: startDate ? startDate : undefined,
-        endDate: endDate ? endDate : undefined,
-        orderNumber: cleanOrderNumber || undefined,
-        customerName: cleanCustomerName || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        orderNumber: trimmedOrderNumber ? trimmedOrderNumber : undefined,
+        customerName: trimmedCustomerName ? trimmedCustomerName : undefined,
         sortBy,
         sortOrder,
       };
+      console.log('[DEBUG] Sending filters:', { orderNumber: filters.orderNumber, customerName: filters.customerName, page: filters.page });
       const result = await getInvoiceableOrdersAction(filters);
       setOrders(result.data || []);
       setTotal(result.total || 0);
