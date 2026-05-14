@@ -177,7 +177,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     // DANE search states
     const [citySearch, setCitySearch] = useState('');
     const [showCityResults, setShowCityResults] = useState(false);
+    const [citySelected, setCitySelected] = useState(false);
+    const [cityError, setCityError] = useState(false);
     const cityRef = useRef<HTMLDivElement>(null);
+
+    const normalizeCity = (s: string) =>
+        s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .toLowerCase()
+            .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
+            .trim();
 
     const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
 
@@ -313,6 +321,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     useEffect(() => {
         if (order?.shipping_city && order?.shipping_state) {
             setCitySearch(`${order.shipping_city} (${order.shipping_state})`);
+            setCitySelected(true);
         }
     }, [order]);
 
@@ -336,6 +345,22 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         });
         setCitySearch(option.label);
         setShowCityResults(false);
+        setCitySelected(true);
+        setCityError(false);
+    };
+
+    const handleCityBlur = () => {
+        setTimeout(() => {
+            setShowCityResults(false);
+            if (!citySelected && citySearch.trim() !== '') {
+                const exact = daneOptions.find(o => o.label.toLowerCase() === citySearch.trim().toLowerCase());
+                if (exact) {
+                    handleCitySelect(exact);
+                } else {
+                    setCityError(true);
+                }
+            }
+        }, 150);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -348,7 +373,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 throw new Error('Por favor completa los campos requeridos');
             }
             if (!formData.shipping_street?.trim() || !formData.shipping_city?.trim() || !formData.shipping_state?.trim()) {
+                setCityError(!formData.shipping_city?.trim());
                 throw new Error('La direccion de envio (calle, ciudad y departamento) es obligatoria');
+            }
+            if (!citySelected) {
+                setCityError(true);
+                throw new Error('Selecciona una ciudad y departamento del listado');
             }
 
             const parts = [formData.shipping_street || ''];
@@ -727,14 +757,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         if (s.neighbourhood) setBarrio(s.neighbourhood);
                                         if (s.postcode) setFormData(prev => ({ ...prev, shipping_postal_code: s.postcode }));
                                         if (s.city) {
-                                            const match = daneOptions.find(
-                                                (opt) => opt.ciudad.toLowerCase() === s.city.toLowerCase()
-                                            ) || daneOptions.find(
-                                                (opt) => opt.label.toLowerCase().includes(s.city.toLowerCase())
-                                            );
+                                            const cityKey = normalizeCity(s.city);
+                                            const stateKey = s.state ? normalizeCity(s.state) : '';
+                                            const match =
+                                                daneOptions.find(opt =>
+                                                    normalizeCity(opt.ciudad) === cityKey &&
+                                                    (!stateKey || normalizeCity(opt.departamento) === stateKey)
+                                                ) ||
+                                                daneOptions.find(opt => normalizeCity(opt.ciudad) === cityKey) ||
+                                                daneOptions.find(opt => normalizeCity(opt.label).includes(cityKey));
                                             if (match) {
                                                 handleCitySelect(match);
-                                                setCitySearch(match.label);
                                             }
                                         }
                                     }}
@@ -752,11 +785,20 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     onChange={(e) => {
                                         setCitySearch(e.target.value);
                                         setShowCityResults(true);
+                                        setCitySelected(false);
+                                        setCityError(false);
+                                        setFormData(prev => ({ ...prev, shipping_city: '', shipping_state: '' }));
                                     }}
                                     onFocus={() => setShowCityResults(true)}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
-                                    placeholder="Buscar ciudad..."
+                                    onBlur={handleCityBlur}
+                                    className={`w-full px-3 py-2 bg-white dark:bg-gray-800 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white ${
+                                        cityError ? 'border-red-500' : citySelected ? 'border-green-400' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Buscar ciudad... (selecciona una opcion)"
                                 />
+                                {cityError && (
+                                    <p className="mt-1 text-xs text-red-600">Selecciona una opcion del listado</p>
+                                )}
                                 {showCityResults && filteredCityOptions.length > 0 && (
                                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                         {filteredCityOptions.slice(0, 50).map((opt) => (

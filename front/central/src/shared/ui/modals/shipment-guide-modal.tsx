@@ -196,6 +196,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Step 4 data
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
+    const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
@@ -282,6 +283,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
+        setSelectedOriginWarehouse(wh);
         const daneCode = wh.city_dane_code || findDaneCode(wh.city || "", wh.state || "") || "";
         step1Form.setValue("originDaneCode", daneCode, { shouldValidate: true });
         step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
@@ -1146,6 +1148,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         lat={order.shipping_lat ?? null}
                                         lng={order.shipping_lng ?? null}
                                         height="180px"
+                                        origin={selectedOriginWarehouse ? {
+                                            address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
+                                            lat: selectedOriginWarehouse.latitude ?? null,
+                                            lng: selectedOriginWarehouse.longitude ?? null,
+                                        } : null}
                                     />
                                 </div>
                             )}

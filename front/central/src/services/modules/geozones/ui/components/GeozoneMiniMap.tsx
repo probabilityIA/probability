@@ -7,6 +7,12 @@ import 'leaflet/dist/leaflet.css';
 import { getOrderZoneAction } from '../../infra/actions';
 import type { Geozone } from '../../domain/types';
 
+interface OriginInfo {
+    address?: string;
+    lat?: number | null;
+    lng?: number | null;
+}
+
 interface Props {
     businessId: number;
     orderId?: string;
@@ -15,6 +21,7 @@ interface Props {
     lng?: number | null;
     height?: string;
     showHeader?: boolean;
+    origin?: OriginInfo | null;
 }
 
 const typeLabel: Record<string, string> = {
@@ -57,23 +64,53 @@ const deliveryIcon = L.divIcon({
     iconAnchor: [14, 14],
 });
 
-function FitBoundsToGeometry({ geometry, lat, lng }: { geometry: any; lat?: number | null; lng?: number | null }) {
+const originIcon = L.divIcon({
+    className: 'probability-origin-marker',
+    html: `<div style="
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #059669, #047857);
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+    ">O</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+});
+
+function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng }: { geometry: any; lat?: number | null; lng?: number | null; originLat?: number | null; originLng?: number | null }) {
     const map = useMap();
     useEffect(() => {
         if (!geometry) return;
         try {
             const layer = L.geoJSON(geometry);
             const bounds = layer.getBounds();
-            if (lat != null && lng != null) {
-                bounds.extend([lat, lng]);
-            }
-            if (bounds.isValid()) map.fitBounds(bounds, { padding: [12, 12], maxZoom: 14 });
+            if (lat != null && lng != null) bounds.extend([lat, lng]);
+            if (originLat != null && originLng != null) bounds.extend([originLat, originLng]);
+            if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16], maxZoom: 14 });
         } catch { }
-    }, [geometry, lat, lng, map]);
+    }, [geometry, lat, lng, originLat, originLng, map]);
     return null;
 }
 
-export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true }: Props) {
+export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin }: Props) {
+    const originLat = origin?.lat;
+    const originLng = origin?.lng;
+    const hasOriginPoint = originLat != null && originLng != null && Number.isFinite(originLat) && Number.isFinite(originLng);
+    const originBanner = origin?.address ? (
+        <div className="px-3 py-2 bg-emerald-50 border-b border-emerald-200 text-xs flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shrink-0">O</span>
+            <span className="font-semibold text-emerald-900 shrink-0">Origen:</span>
+            <span className="text-emerald-900 truncate">{origin.address}</span>
+        </div>
+    ) : null;
+
     const [zone, setZone] = useState<Geozone | null>(geozoneProp ?? null);
     const [level, setLevel] = useState<string>(geozoneProp?.type || '');
     const [loading, setLoading] = useState(!geozoneProp && !!orderId);
@@ -122,11 +159,15 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
     if (empty || !zone || !zone.geometry) {
         if (hasPoint) {
             return (
-                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ height, isolation: 'isolate' }}>
-                    <MapContainer center={[lat as number, lng as number]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
-                    </MapContainer>
+                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ isolation: 'isolate' }}>
+                    {originBanner}
+                    <div style={{ height }}>
+                        <MapContainer center={[lat as number, lng as number]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
+                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
+                            {hasOriginPoint && <Marker position={[originLat as number, originLng as number]} icon={originIcon} />}
+                        </MapContainer>
+                    </div>
                 </div>
             );
         }
@@ -149,6 +190,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     </span>
                 </div>
             )}
+            {originBanner}
             <div style={{ height }}>
                 <MapContainer center={[4.6, -74.08]} zoom={5} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -160,7 +202,10 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     {hasPoint && (
                         <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
                     )}
-                    <FitBoundsToGeometry geometry={zone.geometry} lat={lat} lng={lng} />
+                    {hasOriginPoint && (
+                        <Marker position={[originLat as number, originLng as number]} icon={originIcon} />
+                    )}
+                    <FitBoundsToGeometry geometry={zone.geometry} lat={lat} lng={lng} originLat={originLat} originLng={originLng} />
                 </MapContainer>
             </div>
         </div>
