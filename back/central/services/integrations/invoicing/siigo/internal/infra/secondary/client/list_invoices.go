@@ -8,24 +8,28 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 )
 
-// listInvoicesResponse respuesta de Siigo para listar facturas
 type listInvoicesResponse struct {
 	Pagination struct {
-		Page       int `json:"page"`
-		PageSize   int `json:"page_size"`
-		TotalPages int `json:"total_pages"`
-		TotalItems int `json:"total_items"`
-	} `json:"_pagination"`
+		Page         int `json:"page"`
+		PageSize     int `json:"page_size"`
+		TotalResults int `json:"total_results"`
+	} `json:"pagination"`
 	Results []struct {
 		ID       string  `json:"id"`
+		Document struct {
+			ID int `json:"id"`
+		} `json:"document"`
+		Prefix   string  `json:"prefix"`
+		Number   int     `json:"number"`
 		Name     string  `json:"name"`
 		Date     string  `json:"date"`
 		Customer struct {
+			ID             string `json:"id"`
 			Identification string `json:"identification"`
-			Name           string `json:"name"`
+			BranchOffice   int    `json:"branch_office"`
 		} `json:"customer"`
-		Total  float64 `json:"total"`
-		Status string  `json:"status"`
+		Total   float64 `json:"total"`
+		Balance float64 `json:"balance"`
 	} `json:"results"`
 }
 
@@ -98,18 +102,23 @@ func (c *Client) ListInvoices(ctx context.Context, credentials dtos.Credentials,
 			ID:           r.ID,
 			Number:       r.Name,
 			Date:         r.Date,
-			CustomerName: r.Customer.Name,
+			CustomerName: "",
 			CustomerID:   r.Customer.Identification,
 			Total:        r.Total,
-			Status:       r.Status,
+			Status:       "",
 		})
+	}
+
+	totalPages := 0
+	if listResp.Pagination.PageSize > 0 {
+		totalPages = (listResp.Pagination.TotalResults + listResp.Pagination.PageSize - 1) / listResp.Pagination.PageSize
 	}
 
 	return &dtos.ListInvoicesResult{
 		Items:      items,
-		Total:      listResp.Pagination.TotalItems,
+		Total:      listResp.Pagination.TotalResults,
 		Page:       listResp.Pagination.Page,
 		PageSize:   listResp.Pagination.PageSize,
-		TotalPages: listResp.Pagination.TotalPages,
+		TotalPages: totalPages,
 	}, nil
 }

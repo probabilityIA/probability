@@ -44,18 +44,22 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 	}
 
 	customerBody := struct {
-		PersonType     string              `json:"person_type"`
-		IDType         request.SiigoIDType `json:"id_type"`
-		Identification string              `json:"identification"`
-		Name           []string            `json:"name"`
-		Address        *request.SiigoAddress  `json:"address,omitempty"`
-		Phones         []request.SiigoPhone   `json:"phones,omitempty"`
-		Contacts       []request.SiigoContact `json:"contacts,omitempty"`
+		Type                   string                          `json:"type"`
+		PersonType             string                          `json:"person_type"`
+		IDType                 string                          `json:"id_type"`
+		Identification         string                          `json:"identification"`
+		Name                   []string                        `json:"name"`
+		FiscalResponsibilities []request.SiigoFiscalResponsibility `json:"fiscal_responsibilities"`
+		Address                *request.SiigoAddress           `json:"address,omitempty"`
+		Phones                 []request.SiigoPhone            `json:"phones,omitempty"`
+		Contacts               []request.SiigoContact          `json:"contacts,omitempty"`
 	}{
-		PersonType:     personType,
-		IDType:         request.SiigoIDType{Code: idType},
-		Identification: req.Identification,
-		Name:           nameParts,
+		Type:                   "Customer",
+		PersonType:             personType,
+		IDType:                 idType,
+		Identification:         req.Identification,
+		Name:                   nameParts,
+		FiscalResponsibilities: []request.SiigoFiscalResponsibility{{Code: "R-99-PN"}},
 	}
 
 	if req.Address != "" {
@@ -63,14 +67,19 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 	}
 
 	if req.Phone != "" {
-		customerBody.Phones = []request.SiigoPhone{{Number: req.Phone}}
+		customerBody.Phones = []request.SiigoPhone{{Indicative: "57", Number: req.Phone}}
 	}
 
 	if req.Email != "" {
 		firstName := nameParts[0]
+		lastName := ""
+		if len(nameParts) > 1 {
+			lastName = strings.Join(nameParts[1:], " ")
+		}
 		customerBody.Contacts = []request.SiigoContact{
 			{
 				FirstName:             firstName,
+				LastName:              lastName,
 				Email:                 req.Email,
 				SendElectronicInvoice: true,
 			},

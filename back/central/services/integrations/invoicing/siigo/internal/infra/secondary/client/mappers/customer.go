@@ -23,9 +23,8 @@ func CustomerToDTO(customer *response.Customer) *dtos.CustomerResult {
 		result.Name = strings.Join(customer.Name, " ")
 	}
 
-	// Extraer email del primer contacto
-	if len(customer.Emails) > 0 {
-		result.Email = customer.Emails[0].Email
+	if len(customer.Contacts) > 0 {
+		result.Email = customer.Contacts[0].Email
 	}
 
 	// Extraer teléfono del primer teléfono
