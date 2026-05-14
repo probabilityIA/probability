@@ -5,52 +5,59 @@ import (
 	"time"
 )
 
-// TokenCache maneja el cache del token de autenticación de Siigo
-// Siigo tiene TTL de access_token = 24h (86400 segundos), sin refresh token
-type TokenCache struct {
-	accessToken        string
-	accessTokenExpires time.Time
-	mu                 sync.RWMutex
+type tokenEntry struct {
+	accessToken string
+	expiresAt   time.Time
 }
 
-// NewTokenCache crea un nuevo cache de token para Siigo
-func NewTokenCache() *TokenCache {
-	return &TokenCache{}
+type TokenStore struct {
+	entries map[string]tokenEntry
+	mu      sync.RWMutex
 }
 
-// GetAccessToken obtiene el access token del cache si es válido
-func (tc *TokenCache) GetAccessToken() (string, bool) {
-	tc.mu.RLock()
-	defer tc.mu.RUnlock()
+func NewTokenStore() *TokenStore {
+	return &TokenStore{
+		entries: make(map[string]tokenEntry),
+	}
+}
 
-	if tc.accessToken == "" || time.Now().After(tc.accessTokenExpires) {
+func tokenKey(username, accountID, partnerID, baseURL string) string {
+	return username + "|" + accountID + "|" + partnerID + "|" + baseURL
+}
+
+func (ts *TokenStore) Get(username, accountID, partnerID, baseURL string) (string, bool) {
+	ts.mu.RLock()
+	defer ts.mu.RUnlock()
+
+	key := tokenKey(username, accountID, partnerID, baseURL)
+	entry, ok := ts.entries[key]
+	if !ok || entry.accessToken == "" || time.Now().After(entry.expiresAt) {
 		return "", false
 	}
-	return tc.accessToken, true
+	return entry.accessToken, true
 }
 
-// SetToken guarda el access_token en el cache
-// expiresIn: TTL del token en segundos (86400 = 24h)
-func (tc *TokenCache) SetToken(accessToken string, expiresIn int) {
-	tc.mu.Lock()
-	defer tc.mu.Unlock()
+func (ts *TokenStore) Set(username, accountID, partnerID, baseURL, accessToken string, expiresIn int) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 
-	// Buffer de 30 min para el token (efectivo 23.5h de 24h)
 	buffer := 1800
 	ttl := expiresIn - buffer
 	if ttl <= 0 {
 		ttl = expiresIn / 2
 	}
 
-	tc.accessToken = accessToken
-	tc.accessTokenExpires = time.Now().Add(time.Duration(ttl) * time.Second)
+	key := tokenKey(username, accountID, partnerID, baseURL)
+	ts.entries[key] = tokenEntry{
+		accessToken: accessToken,
+		expiresAt:   time.Now().Add(time.Duration(ttl) * time.Second),
+	}
 }
 
-// Clear limpia el token del cache
-func (tc *TokenCache) Clear() {
-	tc.mu.Lock()
-	defer tc.mu.Unlock()
+func (ts *TokenStore) Clear(username, accountID, partnerID, baseURL string) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 
-	tc.accessToken = ""
-	tc.accessTokenExpires = time.Time{}
+	key := tokenKey(username, accountID, partnerID, baseURL)
+	delete(ts.entries, key)
 }
