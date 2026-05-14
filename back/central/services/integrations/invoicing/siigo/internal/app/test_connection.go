@@ -5,44 +5,68 @@ import (
 	"fmt"
 )
 
-// TestConnection valida que las credenciales y configuración provistos sean correctos
-// contra la API de Siigo. Implementa ports.IInvoiceUseCase.TestConnection.
-func (uc *invoicingUseCase) TestConnection(ctx context.Context, _ map[string]interface{}, credentials map[string]interface{}) error {
-	uc.log.Info(ctx).Msg("🧪 Testing connection with Siigo API")
+func (uc *invoicingUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
+	uc.log.Info(ctx).Msg("Testing connection with Siigo API")
 
-	username, okUsername := credentials["username"].(string)
-	accessKey, okAccessKey := credentials["access_key"].(string)
-	accountID, okAccountID := credentials["account_id"].(string)
-	partnerID, okPartnerID := credentials["partner_id"].(string)
-	apiURL, _ := credentials["api_url"].(string) // opcional
+	username, _ := credentials["username"].(string)
+	accessKey, _ := credentials["access_key"].(string)
+	accountID, _ := credentials["account_id"].(string)
+	partnerID, _ := credentials["partner_id"].(string)
 
-	uc.log.Info(ctx).
-		Bool("has_username", okUsername && username != "").
-		Bool("has_access_key", okAccessKey && accessKey != "").
-		Bool("has_account_id", okAccountID && accountID != "").
-		Bool("has_partner_id", okPartnerID && partnerID != "").
-		Bool("has_api_url", apiURL != "").
-		Msg("📋 Siigo credentials validation")
-
-	if !okUsername || username == "" {
+	if username == "" {
 		return fmt.Errorf("el campo username (email) es requerido en las credenciales")
 	}
-	if !okAccessKey || accessKey == "" {
+	if accessKey == "" {
 		return fmt.Errorf("el campo access_key es requerido en las credenciales")
 	}
-	if !okAccountID || accountID == "" {
-		return fmt.Errorf("el campo account_id (subscription key) es requerido en las credenciales")
-	}
-	if !okPartnerID || partnerID == "" {
+	if partnerID == "" {
 		return fmt.Errorf("el campo partner_id es requerido en las credenciales")
 	}
 
-	uc.log.Info(ctx).Msg("🔌 Calling Siigo client.TestAuthentication...")
+	apiURL := resolveBaseURL(config, credentials)
+
+	uc.log.Info(ctx).
+		Bool("has_username", username != "").
+		Bool("has_access_key", accessKey != "").
+		Bool("has_account_id", accountID != "").
+		Bool("has_partner_id", partnerID != "").
+		Str("resolved_url", apiURL).
+		Msg("Siigo credentials validation")
+
+	if apiURL == "" {
+		return fmt.Errorf("URL de Siigo no configurada en el tipo de integracion (base_url o base_url_test)")
+	}
+
 	if err := uc.siigoClient.TestAuthentication(ctx, username, accessKey, accountID, partnerID, apiURL); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("❌ Siigo connection test failed")
+		uc.log.Error(ctx).Err(err).Msg("Siigo connection test failed")
 		return err
 	}
 
-	uc.log.Info(ctx).Msg("✅ Siigo connection test successful")
+	uc.log.Info(ctx).Msg("Siigo connection test successful")
 	return nil
+}
+
+func resolveBaseURL(config map[string]interface{}, credentials map[string]interface{}) string {
+	if config != nil {
+		isTesting, _ := config["is_testing"].(bool)
+		if isTesting {
+			if testURL, _ := config["base_url_test"].(string); testURL != "" {
+				return testURL
+			}
+		}
+	}
+
+	if credentials != nil {
+		if override, _ := credentials["api_url"].(string); override != "" {
+			return override
+		}
+	}
+
+	if config != nil {
+		if prodURL, _ := config["base_url"].(string); prodURL != "" {
+			return prodURL
+		}
+	}
+
+	return ""
 }
