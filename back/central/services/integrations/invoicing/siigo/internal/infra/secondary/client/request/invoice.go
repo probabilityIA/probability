@@ -39,9 +39,16 @@ type SiigoFiscalResponsibility struct {
 	Code string `json:"code"`
 }
 
-// SiigoAddress dirección del cliente
 type SiigoAddress struct {
-	Address string `json:"address"`
+	Address    string     `json:"address"`
+	City       *SiigoCity `json:"city,omitempty"`
+	PostalCode string     `json:"postal_code,omitempty"`
+}
+
+type SiigoCity struct {
+	CountryCode string `json:"country_code"`
+	StateCode   string `json:"state_code"`
+	CityCode    string `json:"city_code"`
 }
 
 // SiigoPhone teléfono del cliente

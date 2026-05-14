@@ -37,10 +37,9 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 		idType = "13" // CC por defecto
 	}
 
-	// Tipo de persona
-	personType := req.PersonType
-	if personType == "" {
-		personType = "Person"
+	personType := strings.ToLower(req.PersonType)
+	if personType != "person" && personType != "company" {
+		personType = "person"
 	}
 
 	customerBody := struct {
@@ -62,8 +61,19 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 		FiscalResponsibilities: []request.SiigoFiscalResponsibility{{Code: "R-99-PN"}},
 	}
 
-	if req.Address != "" {
-		customerBody.Address = &request.SiigoAddress{Address: req.Address}
+	if req.Address != "" && req.CountryCode != "" && req.StateCode != "" && req.CityCode != "" {
+		customerBody.Address = &request.SiigoAddress{
+			Address: req.Address,
+			City: &request.SiigoCity{
+				CountryCode: req.CountryCode,
+				StateCode:   req.StateCode,
+				CityCode:    req.CityCode,
+			},
+		}
+	} else if req.Address != "" {
+		c.log.Warn(ctx).
+			Str("identification", req.Identification).
+			Msg("⚠️ Address sin codigos DIAN (country/state/city), se omite. Siigo lo requeriria.")
 	}
 
 	if req.Phone != "" {

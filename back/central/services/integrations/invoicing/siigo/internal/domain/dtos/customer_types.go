@@ -10,16 +10,18 @@ type CustomerResult struct {
 	Address        string
 }
 
-// CreateCustomerRequest datos para crear un cliente en Siigo
 type CreateCustomerRequest struct {
-	PersonType     string // "Person" o "Company"
-	IDType         string // Tipo de documento ("13"=CC, "22"=CE, etc.)
+	PersonType     string
+	IDType         string
 	Identification string
 	Name           string
 	Email          string
 	Phone          string
 	Address        string
 	City           string
+	CountryCode    string
+	StateCode      string
+	CityCode       string
 	Credentials    Credentials
 }
 
