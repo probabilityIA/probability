@@ -54,7 +54,7 @@ func applyBaselineCascade(results []dtos.ProbabilityResult) {
 		if r.DeliveryRate != nil {
 			continue
 		}
-		if r.GlobalRate != nil && r.GlobalTotal >= 20 {
+		if r.GlobalRate != nil && r.GlobalTotal > 0 {
 			rate := *r.GlobalRate
 			r.DeliveryRate = &rate
 			r.IsEstimated = true

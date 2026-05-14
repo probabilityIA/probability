@@ -90,23 +90,50 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
     }
 
     const zoneRate = result?.delivery_rate;
-    const zoneEstimated = !result?.found || result?.is_estimated;
+    const zoneEstimated = !result?.found || !!result?.is_estimated;
+    const sample = result?.stats?.total;
 
-    const estimateTooltip = result?.estimate_source === 'global_carrier'
-        ? 'Estimado: tasa global de este transportador (aun no hay datos de tu zona).'
-        : result?.estimate_source === 'carrier_baseline'
-            ? 'Estimado preliminar de la transportadora. Se ajusta con tus envios reales.'
-            : undefined;
+    const levelLabel: Record<string, string> = {
+        barrio: 'barrio',
+        neighborhood: 'UPZ',
+        admin_district: 'localidad',
+        locality: 'corregimiento',
+        city: 'municipio',
+        state: 'departamento',
+        country: 'pais',
+    };
+    const lvl = result?.level ? (levelLabel[result.level] || result.level) : '';
+    const zoneName = result?.stats?.geozone_name || '';
+
+    let source = '';
+    if (result?.found && sample) {
+        source = zoneName ? `${lvl} ${zoneName} - ${sample} envios` : `${lvl} - ${sample} envios`;
+    } else if (result?.estimate_source === 'global_carrier' && result?.global_total) {
+        source = `tasa nacional - ${result.global_total} envios`;
+    } else if (result?.estimate_source === 'carrier_baseline') {
+        source = 'transportadora nueva, sin historial';
+    }
+
+    const tooltip = result?.estimate_source === 'global_carrier'
+        ? 'Aun no tenemos envios en tu zona con este carrier; mostramos la tasa nacional del carrier.'
+        : result?.estimate_source === 'zone_low_sample'
+            ? 'Muestra pequena en esta zona; se ajusta a medida que llegan mas envios.'
+            : result?.estimate_source === 'carrier_baseline'
+                ? 'Transportadora sin historial en el sistema. Valor preliminar.'
+                : undefined;
 
     return (
-        <div className="space-y-2 w-full">
+        <div className="space-y-1 w-full">
             <Bar
                 label="Efectividad de entrega en zona"
                 rate={zoneRate}
-                sample={result?.stats?.total}
+                sample={sample}
                 estimated={zoneEstimated}
-                title={estimateTooltip}
+                title={tooltip}
             />
+            {source && (
+                <p className="text-[9px] text-gray-400 truncate" title={source}>{source}</p>
+            )}
         </div>
     );
 }

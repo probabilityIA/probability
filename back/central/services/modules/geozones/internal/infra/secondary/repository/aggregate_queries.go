@@ -119,7 +119,7 @@ zone_stats AS (
     SELECT gcs.*
     FROM geozone_carrier_stats gcs
     JOIN order_zones oz USING (geozone_level, geozone_id)
-    WHERE gcs.sample_sufficient = TRUE
+    WHERE gcs.total > 0
 ),
 deepest AS (
     SELECT DISTINCT ON (carrier_key) zs.*
@@ -174,6 +174,10 @@ ORDER BY g.carrier_display
 			res.Found = true
 			res.DeliveryRate = &rate
 			res.Level = *row.GeozoneLevel
+			if row.Total < 5 {
+				res.IsEstimated = true
+				res.EstimateSource = "zone_low_sample"
+			}
 			name := ""
 			if row.GeozoneName != nil {
 				name = *row.GeozoneName
