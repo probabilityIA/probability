@@ -711,7 +711,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 <DeliveryProbabilityBadge businessId={order.business_id} orderId={order.id} />
                                                             </div>
                                                             <div className="pt-2">
-                                                                <GeozoneMiniMap businessId={order.business_id} orderId={order.id} height="200px" />
+                                                                <GeozoneMiniMap businessId={order.business_id} orderId={order.id} lat={order.shipping_lat ?? null} lng={order.shipping_lng ?? null} height="200px" />
                                                             </div>
                                                             <div className="pt-2">
                                                                 <DeliveryProbabilityByCarrier businessId={order.business_id} orderId={order.id} />

@@ -41,10 +41,31 @@ func (uc *ProbabilityUseCase) GetProbabilityByCarrier(ctx context.Context, order
 	if results == nil {
 		results = []dtos.ProbabilityResult{}
 	}
+	applyBaselineCascade(results)
 	if uc.cache != nil {
 		_ = uc.cache.SetByOrder(ctx, businessID, orderID, results)
 	}
 	return results, nil
+}
+
+func applyBaselineCascade(results []dtos.ProbabilityResult) {
+	for i := range results {
+		r := &results[i]
+		if r.DeliveryRate != nil {
+			continue
+		}
+		if r.GlobalRate != nil && r.GlobalTotal >= 20 {
+			rate := *r.GlobalRate
+			r.DeliveryRate = &rate
+			r.IsEstimated = true
+			r.EstimateSource = "global_carrier"
+			continue
+		}
+		rate := baselineForCarrier(r.Carrier)
+		r.DeliveryRate = &rate
+		r.IsEstimated = true
+		r.EstimateSource = "carrier_baseline"
+	}
 }
 
 func (uc *ProbabilityUseCase) GetOrderZone(ctx context.Context, orderID string, businessID uint) (*entities.Geozone, error) {

@@ -9,22 +9,24 @@ type ProbabilityRequest struct {
 }
 
 type ProbabilityLevelStats struct {
-	GeozoneID    uint   `json:"geozone_id"`
-	GeozoneType  string `json:"geozone_type"`
-	GeozoneName  string `json:"geozone_name,omitempty"`
-	Total        int64  `json:"total"`
-	Delivered    int64  `json:"delivered"`
-	Cancelled    int64  `json:"cancelled"`
-	Returned     int64  `json:"returned"`
-	InTransit    int64  `json:"in_transit"`
+	GeozoneID   uint   `json:"geozone_id"`
+	GeozoneType string `json:"geozone_type"`
+	GeozoneName string `json:"geozone_name,omitempty"`
+	Total       int64  `json:"total"`
+	Delivered   int64  `json:"delivered"`
+	Cancelled   int64  `json:"cancelled"`
+	Returned    int64  `json:"returned"`
+	InTransit   int64  `json:"in_transit"`
 }
 
 type ProbabilityResult struct {
-	Found        bool                   `json:"found"`
-	DeliveryRate *float64               `json:"delivery_rate,omitempty"`
-	Level        string                 `json:"level,omitempty"`
-	Carrier      string                 `json:"carrier,omitempty"`
-	Stats        *ProbabilityLevelStats `json:"stats,omitempty"`
-	GlobalRate   *float64               `json:"global_rate,omitempty"`
-	GlobalTotal  int64                  `json:"global_total,omitempty"`
+	Found         bool                   `json:"found"`
+	DeliveryRate  *float64               `json:"delivery_rate,omitempty"`
+	Level         string                 `json:"level,omitempty"`
+	Carrier       string                 `json:"carrier,omitempty"`
+	Stats         *ProbabilityLevelStats `json:"stats,omitempty"`
+	GlobalRate    *float64               `json:"global_rate,omitempty"`
+	GlobalTotal   int64                  `json:"global_total,omitempty"`
+	IsEstimated   bool                   `json:"is_estimated,omitempty"`
+	EstimateSource string                `json:"estimate_source,omitempty"`
 }

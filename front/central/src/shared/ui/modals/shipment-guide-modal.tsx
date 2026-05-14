@@ -20,6 +20,12 @@ import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 import '@/shared/ui/styles/shipment-modals.css';
+import dynamic from 'next/dynamic';
+
+const GeozoneMiniMap = dynamic(
+    () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
+    { ssr: false }
+);
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -1132,6 +1138,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {/* Step 2: Quote Selection */}
                     {currentStep === 2 && (
                         <div className="flex flex-col h-full overflow-y-auto">
+                            {order?.business_id && order.business_id > 0 && order.id && (
+                                <div className="pb-3">
+                                    <GeozoneMiniMap
+                                        businessId={order.business_id}
+                                        orderId={order.id}
+                                        lat={order.shipping_lat ?? null}
+                                        lng={order.shipping_lng ?? null}
+                                        height="180px"
+                                    />
+                                </div>
+                            )}
                             <div className="pb-2">
                                 <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
                                     Filtra por servicio / Transportadora
