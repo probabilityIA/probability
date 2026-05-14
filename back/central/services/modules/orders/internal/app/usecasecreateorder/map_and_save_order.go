@@ -67,7 +67,7 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
-	if order.ShippingLat != nil && order.ShippingLng != nil && dto.BusinessID != nil {
+	if dto.BusinessID != nil {
 		if err := uc.repo.ResolveOrderGeozone(ctx, order.ID, *dto.BusinessID); err != nil {
 			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("Failed to resolve order geozone")
 		}

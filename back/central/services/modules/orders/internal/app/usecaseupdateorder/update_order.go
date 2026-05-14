@@ -25,7 +25,7 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 		return nil, fmt.Errorf("error updating order: %w", err)
 	}
 
-	if existingOrder.ShippingLat != nil && existingOrder.ShippingLng != nil && existingOrder.BusinessID != nil {
+	if existingOrder.BusinessID != nil {
 		if err := uc.repo.ResolveOrderGeozone(ctx, existingOrder.ID, *existingOrder.BusinessID); err != nil {
 			uc.logger.Warn(ctx).Err(err).Str("order_id", existingOrder.ID).Msg("Failed to resolve order geozone")
 		}

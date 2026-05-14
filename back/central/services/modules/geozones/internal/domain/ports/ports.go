@@ -22,20 +22,11 @@ type IResolver interface {
 	Resolve(ctx context.Context, lat, lng float64, businessID uint) (*entities.GeozoneAncestors, error)
 }
 
-type LevelAggregate struct {
-	Total      int64
-	Delivered  int64
-	Cancelled  int64
-	Returned   int64
-	InTransit  int64
-}
-
 type IProbabilityRepository interface {
 	AncestorsByOrderID(ctx context.Context, orderID string, businessID uint) (*entities.GeozoneAncestors, error)
-	AggregateAtLevel(ctx context.Context, businessID uint, levelColumn string, geozoneID uint, carrier string) (LevelAggregate, error)
-	GeozoneNameAndType(ctx context.Context, geozoneID uint) (string, string, error)
-	CarriersForBusiness(ctx context.Context, businessID uint) ([]string, error)
-	GlobalCarrierStats(ctx context.Context, carrier string) (delivered int64, total int64, err error)
+	ProbabilityByOrder(ctx context.Context, ancestors *entities.GeozoneAncestors) ([]dtos.ProbabilityResult, error)
+	ProbabilityForCarrier(ctx context.Context, ancestors *entities.GeozoneAncestors, carrierKey string) (*dtos.ProbabilityResult, error)
+	RefreshAggregates(ctx context.Context) error
 }
 
 type IProbabilityUseCase interface {
@@ -48,4 +39,10 @@ type IDisplayCache interface {
 	Get(ctx context.Context, key string) ([]byte, bool)
 	Set(ctx context.Context, key string, value []byte) error
 	FlushAll(ctx context.Context) error
+}
+
+type IProbabilityCache interface {
+	GetByOrder(ctx context.Context, businessID uint, orderID string) ([]dtos.ProbabilityResult, bool)
+	SetByOrder(ctx context.Context, businessID uint, orderID string, results []dtos.ProbabilityResult) error
+	InvalidateOrder(ctx context.Context, businessID uint, orderID string) error
 }

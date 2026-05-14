@@ -25,6 +25,8 @@ const (
 
 	QueueOrdersToCustomers = "orders.events.customers"
 
+	QueueOrdersToGeozonesProbability = "orders.events.geozones_probability"
+
 	QueueOrdersConfirmationRequested = "orders.confirmation.requested"
 
 	QueueWhatsAppOrderConfirmed = "orders.whatsapp.confirmed"

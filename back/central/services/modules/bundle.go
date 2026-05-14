@@ -84,7 +84,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	drivers.New(router, database)
 	vehicles.New(router, database)
 	routes.New(router, database)
-	geozones.New(router, database, logger, redisClient)
+	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment)
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
