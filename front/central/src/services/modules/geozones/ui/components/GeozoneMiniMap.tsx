@@ -13,6 +13,10 @@ interface OriginInfo {
     lng?: number | null;
 }
 
+interface DestinationInfo {
+    address?: string;
+}
+
 interface Props {
     businessId: number;
     orderId?: string;
@@ -22,6 +26,7 @@ interface Props {
     height?: string;
     showHeader?: boolean;
     origin?: OriginInfo | null;
+    destination?: DestinationInfo | null;
     carrierRate?: number | null;
     carrierName?: string | null;
     carrierEstimated?: boolean;
@@ -110,18 +115,26 @@ function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng }: { geo
     return null;
 }
 
-export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin, carrierRate, carrierName, carrierEstimated }: Props) {
+export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin, destination, carrierRate, carrierName, carrierEstimated }: Props) {
     const hasCarrierRate = carrierRate != null && Number.isFinite(carrierRate);
     const carrierPct = hasCarrierRate ? Math.round((carrierRate as number) * 100) : null;
     const carrierColor = hasCarrierRate ? rateColor(carrierRate as number) : null;
     const originLat = origin?.lat;
     const originLng = origin?.lng;
     const hasOriginPoint = originLat != null && originLng != null && Number.isFinite(originLat) && Number.isFinite(originLng);
+    const destinationBanner = destination?.address ? (
+        <div className="px-3 py-2 bg-violet-50 border-b border-violet-200 text-xs flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-600 text-white font-bold text-[10px] shrink-0">D</span>
+            <span className="font-semibold text-violet-900 shrink-0">Destino:</span>
+            <span className="text-violet-900 truncate">{destination.address}</span>
+        </div>
+    ) : null;
+
     const originBanner = origin?.address ? (
-        <div className="px-3 py-2 bg-emerald-50 border-b border-emerald-200 text-xs flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[10px] shrink-0">O</span>
-            <span className="font-semibold text-emerald-900 shrink-0">Origen:</span>
-            <span className="text-emerald-900 truncate">{origin.address}</span>
+        <div className="px-3 py-1.5 bg-emerald-50/60 border-b border-emerald-100 text-[11px] flex items-center gap-2">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[9px] shrink-0">O</span>
+            <span className="text-emerald-700 shrink-0">Origen:</span>
+            <span className="text-emerald-800 truncate">{origin.address}</span>
         </div>
     ) : null;
 
@@ -174,6 +187,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
         if (hasPoint) {
             return (
                 <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ isolation: 'isolate' }}>
+                    {destinationBanner}
                     {originBanner}
                     <div style={{ height }}>
                         <MapContainer center={[lat as number, lng as number]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
@@ -206,6 +220,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     </span>
                 </div>
             )}
+            {destinationBanner}
             {originBanner}
             <div className="relative" style={{ height }}>
                 <MapContainer center={[4.6, -74.08]} zoom={5} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>

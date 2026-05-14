@@ -91,8 +91,6 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
 
     const zoneRate = result?.delivery_rate;
     const zoneEstimated = !result?.found || result?.is_estimated;
-    const globalRate = result?.global_rate;
-    const globalEstimated = (result?.global_total ?? 0) < 20;
 
     const estimateTooltip = result?.estimate_source === 'global_carrier'
         ? 'Estimado: tasa global de este transportador (aun no hay datos de tu zona).'
@@ -102,13 +100,6 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
 
     return (
         <div className="space-y-2 w-full">
-            <Bar
-                label="Efectividad de recoleccion"
-                rate={globalRate}
-                sample={result?.global_total}
-                estimated={globalRate !== undefined && globalEstimated}
-                title={globalEstimated ? 'Muestra pequena, valor preliminar.' : undefined}
-            />
             <Bar
                 label="Efectividad de entrega en zona"
                 rate={zoneRate}

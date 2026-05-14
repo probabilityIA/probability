@@ -122,7 +122,12 @@ func (uc *ProbabilityUseCase) GetProbability(ctx context.Context, req dtos.Proba
 		return nil, err
 	}
 	if res == nil {
-		return &dtos.ProbabilityResult{Found: false, Carrier: req.Carrier}, nil
+		res = &dtos.ProbabilityResult{Found: false, Carrier: req.Carrier}
 	}
-	return res, nil
+	if res.Carrier == "" {
+		res.Carrier = req.Carrier
+	}
+	tmp := []dtos.ProbabilityResult{*res}
+	applyBaselineCascade(tmp)
+	return &tmp[0], nil
 }

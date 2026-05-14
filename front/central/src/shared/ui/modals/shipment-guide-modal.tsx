@@ -1176,6 +1176,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             lat: selectedOriginWarehouse.latitude ?? null,
                                             lng: selectedOriginWarehouse.longitude ?? null,
                                         } : null}
+                                        destination={{
+                                            address: [order.shipping_street, order.shipping_city, order.shipping_state].filter(Boolean).join(', '),
+                                        }}
                                         carrierRate={selectedCarrierProb?.delivery_rate ?? null}
                                         carrierName={selectedRate?.carrier || null}
                                         carrierEstimated={selectedCarrierProb?.is_estimated || !selectedCarrierProb?.found}
