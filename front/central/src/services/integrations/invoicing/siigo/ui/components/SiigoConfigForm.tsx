@@ -41,7 +41,6 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
         access_key: '',
         account_id: '',
         partner_id: '',
-        base_url: '',
     });
 
     // Check if user is super admin and load businesses
@@ -86,12 +85,11 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
             const credentials = {
                 username: formData.username,
                 access_key: formData.access_key,
-                account_id: formData.account_id,
+                account_id: formData.account_id || undefined,
                 partner_id: formData.partner_id,
-                base_url: formData.base_url || undefined,
             };
 
-            const result = await testConnectionRawAction('siigo', {}, credentials);
+            const result = await testConnectionRawAction('siigo', { is_testing: isTesting }, credentials);
 
             if (result.success) {
                 showToast('Conexion exitosa con Siigo', 'success');
@@ -119,9 +117,8 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
             const credentials: SiigoCredentials = {
                 username: formData.username,
                 access_key: formData.access_key,
-                account_id: formData.account_id,
+                account_id: formData.account_id || undefined,
                 partner_id: formData.partner_id,
-                base_url: formData.base_url || undefined,
             };
 
             const response = await createIntegrationAction({
@@ -284,20 +281,19 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Account ID <span className="text-red-500">*</span>
+                            Account ID
                         </label>
                         <Input
                             type="text"
                             value={formData.account_id}
                             onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
                             placeholder="ID de cuenta/suscripcion"
-                            required
                             autoComplete="off"
                             data-1p-ignore
                             className="bg-white dark:bg-gray-800 font-mono text-sm"
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
-                            ID de suscripcion de tu cuenta Siigo
+                            Opcional. ID de suscripcion de tu cuenta Siigo si tu plan lo requiere.
                         </p>
                     </div>
 
@@ -319,25 +315,6 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                             Partner ID proporcionado por Siigo
                         </p>
                     </div>
-                </div>
-
-                {/* URL de la API */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        URL de la API
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.base_url}
-                        onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
-                        placeholder="https://api.siigo.com"
-                        autoComplete="off"
-                        className="bg-white dark:bg-gray-800 font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
-                        <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de Siigo.</span>
-                    </p>
                 </div>
 
                 {/* Test Connection Button */}
