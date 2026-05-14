@@ -164,92 +164,63 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 //   - Si businessID != 0 (usuario normal): retorna solo órdenes de ese business
 // - invoiceable = true
 // - invoice_id IS NULL (no facturadas previamente)
-func (r *Repository) GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error) {
+func (r *Repository) GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error) {
+	filter.Sanitize()
 	var orders []models.Order
 	var total int64
 
-	// Validar parámetros de paginación
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 20
-	}
-
-	// Construir query base
-	// Excluir órdenes que ya tienen factura en la tabla invoices (pending, issued, etc.)
-	// invoice_id IS NULL no es suficiente porque solo se actualiza cuando la factura es emitida exitosamente
 	noInvoiceSubquery := "NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = orders.id AND i.deleted_at IS NULL)"
-	countQuery := r.db.Conn(ctx).Model(&models.Order{}).
+	base := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("invoiceable = ?", true).
 		Where("invoice_id IS NULL").
 		Where(noInvoiceSubquery)
 
-	// Super admin (businessID = 0): ver todas las órdenes de todos los businesses
-	// Usuario normal: solo su business
-	if businessID != 0 {
-		countQuery = countQuery.Where("business_id = ?", businessID)
-		r.log.Debug(ctx).
-			Uint("business_id", businessID).
-			Msg("Filtering by specific business (normal user)")
-	} else {
-		r.log.Debug(ctx).
-			Msg("Super admin mode: listing orders from ALL businesses")
+	if filter.BusinessID != 0 {
+		base = base.Where("business_id = ?", filter.BusinessID)
+	}
+	if filter.StartDate != nil {
+		base = base.Where("created_at >= ?", *filter.StartDate)
+	}
+	if filter.EndDate != nil {
+		base = base.Where("created_at <= ?", *filter.EndDate)
+	}
+	if filter.OrderNumber != "" {
+		base = base.Where("order_number ILIKE ?", "%"+filter.OrderNumber+"%")
+	}
+	if filter.CustomerName != "" {
+		base = base.Where("customer_name ILIKE ?", "%"+filter.CustomerName+"%")
+	}
+	if filter.CustomerEmail != "" {
+		base = base.Where("customer_email ILIKE ?", "%"+filter.CustomerEmail+"%")
+	}
+	if filter.PaymentStatusID > 0 {
+		base = base.Where("payment_status_id = ?", filter.PaymentStatusID)
+	}
+	if filter.FulfillmentStatusID > 0 {
+		base = base.Where("fulfillment_status_id = ?", filter.FulfillmentStatusID)
 	}
 
-	if err := countQuery.Count(&total).Error; err != nil {
-		r.log.Error(ctx).
-			Err(err).
-			Uint("business_id", businessID).
-			Msg("Failed to count invoiceable orders")
+	if err := base.Count(&total).Error; err != nil {
+		r.log.Error(ctx).Err(err).Msg("Failed to count invoiceable orders")
 		return nil, 0, fmt.Errorf("failed to count invoiceable orders: %w", err)
 	}
-
-	// Si no hay órdenes, retornar inmediatamente
 	if total == 0 {
 		return []*dtos.OrderData{}, 0, nil
 	}
 
-	// Construir query de resultados
-	offset := (page - 1) * pageSize
-	resultsQuery := r.db.Conn(ctx).
-		Model(&models.Order{}).
-		Where("invoiceable = ?", true).
-		Where("invoice_id IS NULL").
-		Where(noInvoiceSubquery).
-		Order("created_at DESC").
+	offset := (filter.Page - 1) * filter.PageSize
+	if err := base.
+		Order(fmt.Sprintf("%s %s", filter.SortColumn(), filter.SortOrder)).
 		Offset(offset).
-		Limit(pageSize)
-
-	// Aplicar filtro de business si no es super admin
-	if businessID != 0 {
-		resultsQuery = resultsQuery.Where("business_id = ?", businessID)
-	}
-
-	err := resultsQuery.Find(&orders).Error
-
-	if err != nil {
-		r.log.Error(ctx).
-			Err(err).
-			Uint("business_id", businessID).
-			Msg("Failed to get invoiceable orders")
+		Limit(filter.PageSize).
+		Find(&orders).Error; err != nil {
+		r.log.Error(ctx).Err(err).Msg("Failed to get invoiceable orders")
 		return nil, 0, fmt.Errorf("failed to get invoiceable orders: %w", err)
 	}
 
-	// Mapear a OrderData
 	orderDataList := make([]*dtos.OrderData, len(orders))
 	for i, order := range orders {
 		orderDataList[i] = r.mapToOrderData(&order)
 	}
-
-	r.log.Info(ctx).
-		Uint("business_id", businessID).
-		Bool("is_super_admin", businessID == 0).
-		Int64("total", total).
-		Int("page", page).
-		Int("page_size", pageSize).
-		Int("returned", len(orderDataList)).
-		Msg("Retrieved invoiceable orders")
-
 	return orderDataList, total, nil
 }

@@ -421,6 +421,21 @@ export interface PaginatedInvoiceableOrders {
   page_size: number;
 }
 
+export interface InvoiceableOrdersFilters {
+  page?: number;
+  pageSize?: number;
+  businessId?: number | null;
+  startDate?: string;
+  endDate?: string;
+  orderNumber?: string;
+  customerName?: string;
+  customerEmail?: string;
+  paymentStatusId?: number;
+  fulfillmentStatusId?: number;
+  sortBy?: 'created_at' | 'occurred_at' | 'order_number' | 'total_amount' | 'customer_name';
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface BulkCreateInvoicesDTO {
   order_ids: string[];
   business_id?: number;

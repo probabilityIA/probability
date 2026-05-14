@@ -91,7 +91,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
     setLoading(true);
     setError(null);
     try {
-      const result = await getInvoiceableOrdersAction(1, 200, businessId ?? undefined);
+      const result = await getInvoiceableOrdersAction({ page: 1, pageSize: 200, businessId: businessId ?? undefined });
       setOrders(result.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar ordenes');
