@@ -63,6 +63,29 @@ func (m *mockRepository) GetPaymentMethodCategory(ctx context.Context, paymentMe
 	return args.Get(0).(string), args.Error(1)
 }
 
+func (m *mockRepository) GetGeozoneDeliveryRateForOrder(ctx context.Context, orderID string) (*float64, string, *uint, error) {
+	if len(m.ExpectedCalls) == 0 {
+		return nil, "", nil, nil
+	}
+	for _, c := range m.ExpectedCalls {
+		if c.Method == "GetGeozoneDeliveryRateForOrder" {
+			args := m.Called(ctx, orderID)
+			var rate *float64
+			if v := args.Get(0); v != nil {
+				r := v.(float64)
+				rate = &r
+			}
+			var gid *uint
+			if v := args.Get(2); v != nil {
+				g := v.(uint)
+				gid = &g
+			}
+			return rate, args.String(1), gid, args.Error(3)
+		}
+	}
+	return nil, "", nil, nil
+}
+
 type mockPublisher struct {
 	mock.Mock
 }

@@ -236,3 +236,11 @@ func (m *RepositoryMock) MarkOrderPaidCOD(ctx context.Context, orderID string, a
 func (m *RepositoryMock) GetOrderPublicTrackingByNumber(ctx context.Context, orderNumber string, businessID uint) (*domain.OrderPublicTracking, error) {
 	return nil, nil
 }
+
+func (m *RepositoryMock) ResolveShipmentGeozone(ctx context.Context, shipmentID uint, businessID uint) error {
+	return nil
+}
+
+func (m *RepositoryMock) GetShipmentStatsByGeozone(ctx context.Context, filter domain.ShipmentStatsFilter) ([]domain.ShipmentStatsByGeozone, error) {
+	return nil, nil
+}

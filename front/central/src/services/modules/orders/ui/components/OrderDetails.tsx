@@ -9,7 +9,11 @@ import { ChangeStatusModal } from './ChangeStatusModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
+import { DeliveryProbabilityBadge } from '@/services/modules/geozones/ui/components/DeliveryProbabilityBadge';
+import { DeliveryProbabilityByCarrier } from '@/services/modules/geozones/ui/components/DeliveryProbabilityByCarrier';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
+import dynamic from 'next/dynamic';
+const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
 
 interface Quotation {
     carrier: string;
@@ -701,6 +705,19 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     <p className="text-xs text-gray-700 dark:text-gray-200">
                                                         {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
                                                     </p>
+                                                    {order.business_id && order.business_id > 0 && order.id && (
+                                                        <>
+                                                            <div className="pt-1">
+                                                                <DeliveryProbabilityBadge businessId={order.business_id} orderId={order.id} />
+                                                            </div>
+                                                            <div className="pt-2">
+                                                                <GeozoneMiniMap businessId={order.business_id} orderId={order.id} height="200px" />
+                                                            </div>
+                                                            <div className="pt-2">
+                                                                <DeliveryProbabilityByCarrier businessId={order.business_id} orderId={order.id} />
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

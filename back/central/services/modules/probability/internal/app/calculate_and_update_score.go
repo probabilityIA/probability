@@ -89,7 +89,14 @@ func (uc *UseCaseScore) CalculateAndUpdateOrderScore(ctx context.Context, orderI
 		// The category can be used in future scoring refinements
 	}
 
-	// 8. Calculate score (returns score, factors list, and full breakdown)
+	if rate, level, gid, err := uc.repo.GetGeozoneDeliveryRateForOrder(ctx, orderID); err == nil {
+		order.GeozoneDeliveryRate = rate
+		order.GeozoneLevel = level
+		order.GeozoneID = gid
+	} else {
+		uc.log.Warn(ctx).Err(err).Str("order_id", orderID).Msg("Could not fetch geozone delivery rate")
+	}
+
 	score, factors, breakdown := uc.CalculateOrderScore(order)
 
 	// 9. Serialize factors

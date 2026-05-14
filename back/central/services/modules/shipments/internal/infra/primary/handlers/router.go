@@ -37,6 +37,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.POST("/cancel-batch", h.CancelBatchShipments)
 		shipments.POST("/sync-status", h.SyncShipmentStatus)
 
+		shipments.GET("/stats/by-geozone", h.StatsByGeozone)
+
 		shipments.GET("/cod", h.ListCODShipments)
 		shipments.POST("/:id/collect-cod", h.CollectCOD)
 	}

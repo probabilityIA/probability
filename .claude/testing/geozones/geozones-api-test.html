@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Geozones - API Test</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 20px; }
+  h1 { color: #58a6ff; margin-bottom: 20px; font-size: 18px; }
+
+  .config { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
+  .config label { color: #8b949e; font-size: 12px; display: block; margin-bottom: 4px; }
+  .config input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; padding: 6px 10px; border-radius: 4px; font-family: monospace; font-size: 13px; }
+
+  .env-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+  .env-btn { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 5px 14px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 12px; transition: all 0.15s; }
+  .env-btn:hover { background: #2d333b; color: #c9d1d9; }
+  .env-btn.active.local   { border-color: #8b949e; color: #c9d1d9; background: #21262d; }
+  .env-btn.active.prod    { border-color: #f85149; color: #f85149; background: #f8514920; }
+  .env-info { margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+  .env-url { color: #484f58; font-size: 12px; font-family: monospace; }
+  .env-project { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: #21262d; border: 1px solid #30363d; color: #8b949e; }
+
+  .endpoint { background: #161b22; border: 1px solid #30363d; border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+  .endpoint-header { padding: 12px 16px; background: #21262d; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .endpoint-header:hover { background: #2d333b; }
+  .chevron { color: #8b949e; font-size: 12px; transition: transform 0.2s; margin-left: auto; flex-shrink: 0; }
+  .endpoint.open .chevron { transform: rotate(90deg); }
+  .endpoint-body { display: none; padding: 16px; border-top: 1px solid #30363d; }
+  .endpoint.open .endpoint-body { display: block; }
+
+  .method     { color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; flex-shrink: 0; }
+  .method-GET    { background: #238636; }
+  .method-POST   { background: #1f6feb; }
+  .method-DELETE { background: #b91c1c; }
+
+  .path { color: #58a6ff; font-size: 14px; }
+  .desc { color: #8b949e; font-size: 12px; }
+
+  .field { margin-bottom: 10px; }
+  .field label { color: #8b949e; font-size: 11px; display: block; margin-bottom: 3px; }
+  .field input, .field textarea, .field select {
+    width: 100%; background: #0d1117; border: 1px solid #30363d; color: #c9d1d9;
+    padding: 5px 8px; border-radius: 4px; font-family: monospace; font-size: 13px;
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field .hint { color: #484f58; font-size: 10px; margin-top: 2px; }
+  .section-title { color: #f0883e; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  hr { border: none; border-top: 1px solid #21262d; margin: 14px 0; }
+
+  .btn       { color: white; border: none; padding: 7px 16px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 13px; margin-right: 8px; }
+  .btn-run   { background: #238636; } .btn-run:hover   { background: #2ea043; }
+  .btn-curl  { background: #21262d; border: 1px solid #30363d; color: #8b949e; }
+  .btn-curl:hover { background: #2d333b; color: #c9d1d9; }
+  .btn-fill  { background: #6e40c9; }  .btn-fill:hover  { background: #8957e5; }
+
+  .response-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; margin-top: 14px; }
+  .response-meta { font-size: 11px; color: #8b949e; }
+  .status-ok  { color: #3fb950; }
+  .status-err { color: #f85149; }
+  .btn-copy { background: #21262d; border: 1px solid #30363d; color: #8b949e; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 11px; }
+  .btn-copy:hover { background: #2d333b; color: #c9d1d9; }
+  .btn-copy.copied { color: #3fb950; border-color: #3fb95055; }
+  pre { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 12px; overflow-x: auto; font-size: 12px; line-height: 1.5; max-height: 420px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+
+  .j-key   { color: #79c0ff; }
+  .j-str   { color: #a5d6a7; }
+  .j-num   { color: #f0883e; }
+  .j-bool  { color: #ff7b72; }
+  .j-null  { color: #8b949e; font-style: italic; }
+  .j-brace { color: #c9d1d9; }
+
+  .curl-box { display: none; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 10px; margin-top: 10px; font-size: 12px; color: #a5d6ff; word-break: break-all; }
+
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; border: 1px solid; }
+  .tag-blue  { background: #1f6feb22; color: #58a6ff; border-color: #1f6feb55; }
+  .tag-green { background: #3fb95022; color: #3fb950; border-color: #3fb95055; }
+  .tag-orange{ background: #f0883e22; color: #f0883e; border-color: #f0883e55; }
+
+  .login-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; margin-bottom: 24px; }
+  .login-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end; }
+  .login-row .field { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<h1>Geozones <span class="tag tag-blue">PostGIS</span> <span class="tag tag-green">Stats</span></h1>
+
+<div class="config">
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start;">
+    <div>
+      <label>Ambiente</label>
+      <div class="env-selector">
+        <button class="env-btn local active" onclick="setEnv('local')">Local</button>
+        <button class="env-btn prod"         onclick="setEnv('prod')">Prod</button>
+      </div>
+      <div class="env-info">
+        <span class="env-project" id="envProject">Geozones - Local</span>
+        <span class="env-url"     id="envUrl">http://localhost:3050/api/v1</span>
+      </div>
+    </div>
+    <div>
+      <label>Authorization token (Bearer) - super admin recomendado para business_id=0</label>
+      <input id="authToken" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJidXNpbmVzc19pZCI6MCwiYnVzaW5lc3NfdHlwZV9pZCI6MCwicm9sZV9pZCI6MSwic3Vic2NyaXB0aW9uX3N0YXR1cyI6ImFjdGl2ZSIsImlzcyI6ImNlbnRyYWwtcmVzZXJ2ZS1hcGkiLCJzdWIiOiIxIiwiZXhwIjoxNzc4NjIwMzU0LCJuYmYiOjE3NzgwMTU1NTQsImlhdCI6MTc3ODAxNTU1NH0.ciOos9WvgPUnHmKArf-bem4DY3P358RIh6ks2YInlGE" />
+      <div style="margin-top:6px;">
+        <label style="display:inline-block;margin-right:6px;">business_id</label>
+        <input id="businessId" value="1" style="width:80px;display:inline-block;" />
+        <span class="hint" style="color:#484f58;font-size:10px;">requerido (super admin lo manda por query)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 1. POST /geozones -->
+<div class="endpoint open" id="ep1">
+  <div class="endpoint-header" onclick="toggle('ep1')">
+    <span class="method method-POST">POST</span>
+    <span class="path">/geozones</span>
+    <span class="desc">&mdash; Crear geozona desde GeoJSON</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div class="section-title">Body (JSON)</div>
+    <button class="btn btn-fill" onclick="fillCreate()">Cargar ejemplo (poligono custom Bogota)</button>
+    <hr>
+    <div class="field">
+      <textarea id="e1_body" rows="14" placeholder='{"type":"custom",...}'></textarea>
+    </div>
+    <button class="btn btn-run" onclick="callEndpoint('e1', buildUrl1, 'POST', 'e1_body')">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl1')">Ver curl</button>
+    <div id="curl1" class="curl-box"></div>
+    <div id="res_e1"></div>
+  </div>
+</div>
+
+<!-- 2. POST /geozones/bulk -->
+<div class="endpoint" id="ep2">
+  <div class="endpoint-header" onclick="toggle('ep2')">
+    <span class="method method-POST">POST</span>
+    <span class="path">/geozones/bulk</span>
+    <span class="desc">&mdash; Importar FeatureCollection (resuelve parent_code)</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div class="section-title">Body (FeatureCollection con properties.type/code/name/parent_code)</div>
+    <button class="btn btn-fill" onclick="fillBulk()">Cargar ejemplo (2 barrios custom hijos de Bogota DC)</button>
+    <hr>
+    <div class="field">
+      <textarea id="e2_body" rows="16"></textarea>
+    </div>
+    <button class="btn btn-run" onclick="callEndpoint('e2', buildUrl2, 'POST', 'e2_body')">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl2')">Ver curl</button>
+    <div id="curl2" class="curl-box"></div>
+    <div id="res_e2"></div>
+  </div>
+</div>
+
+<!-- 3. GET /geozones -->
+<div class="endpoint" id="ep3">
+  <div class="endpoint-header" onclick="toggle('ep3')">
+    <span class="method method-GET">GET</span>
+    <span class="path">/geozones</span>
+    <span class="desc">&mdash; Listar paginado (filtros: type, parent_id, code, search)</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div class="field"><label>type</label><input id="e3_type" placeholder="state|city|country|custom" /></div>
+      <div class="field"><label>parent_id</label><input id="e3_parent" placeholder="ej: 4 (Bogota DC depto)" /></div>
+      <div class="field"><label>code</label><input id="e3_code" placeholder="ej: 11001" /></div>
+      <div class="field"><label>search</label><input id="e3_search" placeholder="ej: medel" /></div>
+      <div class="field"><label>page</label><input id="e3_page" value="1" /></div>
+      <div class="field"><label>page_size</label><input id="e3_size" value="20" /></div>
+      <div class="field"><label>include_geometry</label><select id="e3_geom"><option value="false">false</option><option value="true">true</option></select></div>
+    </div>
+    <hr>
+    <button class="btn btn-run" onclick="callEndpoint('e3', buildUrl3)">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl3')">Ver curl</button>
+    <div id="curl3" class="curl-box"></div>
+    <div id="res_e3"></div>
+  </div>
+</div>
+
+<!-- 4. GET /geozones/:id -->
+<div class="endpoint" id="ep4">
+  <div class="endpoint-header" onclick="toggle('ep4')">
+    <span class="method method-GET">GET</span>
+    <span class="path">/geozones/<b>:id</b></span>
+    <span class="desc">&mdash; Obtener una geozona (con o sin geometria)</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field"><label>id</label><input id="e4_id" value="1" placeholder="1=Colombia, 4=Bogota DC depto, 183=Bogota DC ciudad" /></div>
+      <div class="field"><label>include_geometry</label><select id="e4_geom"><option value="true">true</option><option value="false">false</option></select></div>
+    </div>
+    <hr>
+    <button class="btn btn-run" onclick="callEndpoint('e4', buildUrl4)">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl4')">Ver curl</button>
+    <div id="curl4" class="curl-box"></div>
+    <div id="res_e4"></div>
+  </div>
+</div>
+
+<!-- 5. GET /geozones/lookup -->
+<div class="endpoint open" id="ep5">
+  <div class="endpoint-header" onclick="toggle('ep5')">
+    <span class="method method-GET">GET</span>
+    <span class="path">/geozones/lookup</span>
+    <span class="desc">&mdash; Point-in-polygon: zonas que contienen el punto</span>
+    <span class="tag tag-orange" style="margin-left:8px;">CORE</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+      <div class="field"><label>lat</label><input id="e5_lat" value="4.7110" /></div>
+      <div class="field"><label>lng</label><input id="e5_lng" value="-74.0721" /></div>
+      <div class="field"><label>type (opcional)</label><input id="e5_type" placeholder="city|state|country" /></div>
+      <div class="field"><label>&nbsp;</label>
+        <select onchange="presetLookup(this.value)">
+          <option value="">-- presets --</option>
+          <option value="bogota">Bogota centro</option>
+          <option value="medellin">Medellin centro</option>
+          <option value="cali">Cali centro</option>
+          <option value="bquilla">Barranquilla</option>
+          <option value="cartagena">Cartagena</option>
+          <option value="amazonas">Selva Amazonas</option>
+        </select>
+      </div>
+    </div>
+    <hr>
+    <button class="btn btn-run" onclick="callEndpoint('e5', buildUrl5)">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl5')">Ver curl</button>
+    <div id="curl5" class="curl-box"></div>
+    <div id="res_e5"></div>
+  </div>
+</div>
+
+<!-- 6. DELETE /geozones/:id -->
+<div class="endpoint" id="ep6">
+  <div class="endpoint-header" onclick="toggle('ep6')">
+    <span class="method method-DELETE">DELETE</span>
+    <span class="path">/geozones/<b>:id</b></span>
+    <span class="desc">&mdash; Soft delete</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div class="field"><label>id</label><input id="e6_id" placeholder="ej: id de geozona custom creada antes" /></div>
+    <hr>
+    <button class="btn btn-run" onclick="callEndpoint('e6', buildUrl6, 'DELETE')">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl6')">Ver curl</button>
+    <div id="curl6" class="curl-box"></div>
+    <div id="res_e6"></div>
+  </div>
+</div>
+
+<!-- 7. GET /shipments/stats/by-geozone -->
+<div class="endpoint open" id="ep7">
+  <div class="endpoint-header" onclick="toggle('ep7')">
+    <span class="method method-GET">GET</span>
+    <span class="path">/shipments/stats/by-geozone</span>
+    <span class="desc">&mdash; Tasa de exito de entregas agrupada por zona</span>
+    <span class="tag tag-orange" style="margin-left:8px;">STATS</span>
+    <span class="chevron">&#9654;</span>
+  </div>
+  <div class="endpoint-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <div class="field"><label>type</label>
+        <select id="e7_type">
+          <option value="">(todos)</option>
+          <option value="city" selected>city</option>
+          <option value="state">state</option>
+          <option value="country">country</option>
+          <option value="locality">locality</option>
+          <option value="neighborhood">neighborhood</option>
+        </select>
+      </div>
+      <div class="field"><label>carrier</label><input id="e7_carrier" placeholder="ej: Servientrega, Interrapidisimo, EnvioClick" /></div>
+      <div class="field"><label>limit</label><input id="e7_limit" value="20" /></div>
+      <div class="field"><label>from (RFC3339)</label><input id="e7_from" placeholder="2026-01-01T00:00:00Z" /></div>
+      <div class="field"><label>to (RFC3339)</label><input id="e7_to" placeholder="2026-12-31T23:59:59Z" /></div>
+    </div>
+    <hr>
+    <button class="btn btn-run" onclick="callEndpoint('e7', buildUrl7)">Ejecutar</button>
+    <button class="btn btn-curl" onclick="toggleCurl('curl7')">Ver curl</button>
+    <div id="curl7" class="curl-box"></div>
+    <div id="res_e7"></div>
+  </div>
+</div>
+
+<script>
+const ENVS = {
+  local: { url: 'http://localhost:3050/api/v1', project: 'Geozones - Local' },
+  prod:  { url: 'https://probability.com.co/api/v1', project: 'Geozones - Prod' },
+};
+let currentEnv = 'local';
+
+function setEnv(env) {
+  currentEnv = env;
+  document.querySelectorAll('.env-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.env-btn.' + env).classList.add('active');
+  document.getElementById('envUrl').textContent     = ENVS[env].url;
+  document.getElementById('envProject').textContent = ENVS[env].project;
+}
+
+function base()  { return ENVS[currentEnv].url; }
+function token() { return document.getElementById('authToken').value.trim(); }
+function bizId() { return document.getElementById('businessId').value.trim(); }
+function bizQuery(prefix) {
+  const id = bizId();
+  if (!id) return '';
+  return prefix + 'business_id=' + encodeURIComponent(id);
+}
+
+function headers(hasBody) {
+  const h = {};
+  if (hasBody) h['Content-Type'] = 'application/json';
+  const t = token();
+  if (t) h['Authorization'] = 'Bearer ' + t;
+  return h;
+}
+
+function toggle(id) { document.getElementById(id).classList.toggle('open'); }
+function toggleCurl(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+function buildCurl(method, url, body) {
+  const t = token();
+  const auth = t ? ' \\\n  -H "Authorization: Bearer ' + t + '"' : '';
+  const ct   = body ? ' \\\n  -H "Content-Type: application/json"' : '';
+  const data = body ? " \\\n  -d '" + body + "'" : '';
+  return 'curl -X ' + method + ' "' + url + '"' + auth + ct + data;
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function colorJson(obj) {
+  return JSON.stringify(obj, null, 2).replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?|[{}\[\],])/g,
+    function(m) {
+      if (/^"/.test(m)) return /:$/.test(m) ? '<span class="j-key">'  + esc(m) + '</span>'
+                                             : '<span class="j-str">'  + esc(m) + '</span>';
+      if (/true|false/.test(m)) return '<span class="j-bool">'  + m + '</span>';
+      if (/null/.test(m))       return '<span class="j-null">'  + m + '</span>';
+      if (/[{}\[\]]/.test(m))   return '<span class="j-brace">' + m + '</span>';
+      return '<span class="j-num">' + m + '</span>';
+    }
+  );
+}
+function showResponse(id, status, ms, data) {
+  const ok  = status >= 200 && status < 300;
+  const cls = ok ? 'status-ok' : 'status-err';
+  const raw = JSON.stringify(data, null, 2);
+  const toolbar = '<div class="response-toolbar">'
+    + '<div class="response-meta"><span class="' + cls + '">' + status + '</span> &mdash; ' + ms + 'ms</div>'
+    + '<button class="btn-copy" onclick="copyJson(\'' + id + '_raw\')">Copiar JSON</button></div>';
+  document.getElementById('res_' + id).innerHTML = toolbar
+    + '<pre id="' + id + '_raw" style="display:none">' + esc(raw) + '</pre><pre>' + colorJson(data) + '</pre>';
+}
+function showError(id, err) {
+  let msg = String(err);
+  let hint = '';
+  if (msg.includes('Failed to fetch')) {
+    hint = '<div style="color:#f0883e;margin-top:6px;font-size:11px;">'
+         + 'Posibles causas: backend no levantado en :3050, CORS bloqueando, o estas abriendo el HTML como file:// en vez de http://localhost.</div>';
+  }
+  document.getElementById('res_' + id).innerHTML =
+    '<div class="response-meta status-err" style="margin-top:14px;">Error de red</div><pre>' + msg + '</pre>' + hint;
+}
+function copyJson(rawId) {
+  navigator.clipboard.writeText(document.getElementById(rawId).textContent).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar JSON'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+async function callEndpoint(id, urlBuilder, method, bodyInputId) {
+  method = method || 'GET';
+  let body = null;
+  if (bodyInputId) body = document.getElementById(bodyInputId).value.trim();
+  const url = urlBuilder();
+  if (!url) return;
+  const curlId = 'curl' + id.replace('e','');
+  document.getElementById(curlId).textContent = buildCurl(method, url, body);
+  const t0 = Date.now();
+  try {
+    const r = await fetch(url, { method, headers: headers(!!body), body: body || undefined });
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      showResponse(id, r.status, Date.now() - t0, await r.json());
+    } else {
+      const txt = await r.text();
+      showResponse(id, r.status, Date.now() - t0, { raw: txt || '(empty)' });
+    }
+  } catch(e) { showError(id, e); }
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const out   = document.getElementById('loginResult');
+  out.textContent = 'Login en curso...';
+  try {
+    const r = await fetch(base() + '/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Client-Type': 'api'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await r.json();
+    const tk = data.token || data.data?.token || data.access_token || data.data?.access_token;
+    if (tk) {
+      document.getElementById('authToken').value = tk;
+      out.innerHTML = '<span class="status-ok">Token guardado</span> (status ' + r.status + ')';
+    } else {
+      out.innerHTML = '<span class="status-err">No se encontro token en la respuesta</span><pre>' + esc(JSON.stringify(data, null, 2)) + '</pre>';
+    }
+  } catch(e) { out.innerHTML = '<span class="status-err">Error: ' + e + '</span>'; }
+}
+
+function fillCreate() {
+  const sample = {
+    type: "custom",
+    code: "TEST-BOG-NORTE",
+    name: "Zona Norte Bogota (test)",
+    parent_id: 183,
+    properties: { source: "manual-test", description: "rectangulo simple norte de Bogota" },
+    geometry: {
+      type: "Polygon",
+      coordinates: [[
+        [-74.10, 4.70],
+        [-74.00, 4.70],
+        [-74.00, 4.80],
+        [-74.10, 4.80],
+        [-74.10, 4.70]
+      ]]
+    }
+  };
+  document.getElementById('e1_body').value = JSON.stringify(sample, null, 2);
+}
+
+function fillBulk() {
+  const sample = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { type: "neighborhood", code: "TEST-CHAPI", name: "Chapinero (test)", parent_code: "11001" },
+        geometry: { type: "Polygon", coordinates: [[[-74.07, 4.63], [-74.04, 4.63], [-74.04, 4.66], [-74.07, 4.66], [-74.07, 4.63]]] }
+      },
+      {
+        type: "Feature",
+        properties: { type: "neighborhood", code: "TEST-USAQ", name: "Usaquen (test)", parent_code: "11001" },
+        geometry: { type: "Polygon", coordinates: [[[-74.05, 4.69], [-74.02, 4.69], [-74.02, 4.74], [-74.05, 4.74], [-74.05, 4.69]]] }
+      }
+    ]
+  };
+  document.getElementById('e2_body').value = JSON.stringify(sample, null, 2);
+}
+
+const PRESETS = {
+  bogota:    [4.7110, -74.0721],
+  medellin:  [6.2442, -75.5812],
+  cali:      [3.4516, -76.5320],
+  bquilla:   [10.9685, -74.7813],
+  cartagena: [10.3910, -75.4794],
+  amazonas:  [-1.5,    -71.5],
+};
+function presetLookup(k) {
+  if (!k || !PRESETS[k]) return;
+  document.getElementById('e5_lat').value = PRESETS[k][0];
+  document.getElementById('e5_lng').value = PRESETS[k][1];
+}
+
+function buildUrl1() { return base() + '/geozones?' + bizQuery(''); }
+function buildUrl2() { return base() + '/geozones/bulk?' + bizQuery(''); }
+function buildUrl3() {
+  const q = ['page=' + (document.getElementById('e3_page').value || 1),
+             'page_size=' + (document.getElementById('e3_size').value || 20),
+             'include_geometry=' + document.getElementById('e3_geom').value];
+  const t = document.getElementById('e3_type').value.trim();   if (t) q.push('type=' + encodeURIComponent(t));
+  const p = document.getElementById('e3_parent').value.trim(); if (p) q.push('parent_id=' + encodeURIComponent(p));
+  const c = document.getElementById('e3_code').value.trim();   if (c) q.push('code=' + encodeURIComponent(c));
+  const s = document.getElementById('e3_search').value.trim(); if (s) q.push('search=' + encodeURIComponent(s));
+  const bq = bizQuery(''); if (bq) q.push(bq);
+  return base() + '/geozones?' + q.join('&');
+}
+function buildUrl4() {
+  const id = document.getElementById('e4_id').value.trim();
+  if (!id) { alert('id requerido'); return null; }
+  const g  = document.getElementById('e4_geom').value;
+  let url = base() + '/geozones/' + encodeURIComponent(id) + '?include_geometry=' + g;
+  const bq = bizQuery('&'); if (bq) url += bq;
+  return url;
+}
+function buildUrl5() {
+  const lat = document.getElementById('e5_lat').value.trim();
+  const lng = document.getElementById('e5_lng').value.trim();
+  if (!lat || !lng) { alert('lat y lng requeridos'); return null; }
+  const q = ['lat=' + encodeURIComponent(lat), 'lng=' + encodeURIComponent(lng)];
+  const t = document.getElementById('e5_type').value.trim(); if (t) q.push('type=' + encodeURIComponent(t));
+  const bq = bizQuery(''); if (bq) q.push(bq);
+  return base() + '/geozones/lookup?' + q.join('&');
+}
+function buildUrl6() {
+  const id = document.getElementById('e6_id').value.trim();
+  if (!id) { alert('id requerido'); return null; }
+  let url = base() + '/geozones/' + encodeURIComponent(id);
+  const bq = bizQuery('?'); if (bq) url += bq;
+  return url;
+}
+function buildUrl7() {
+  const q = [];
+  const t = document.getElementById('e7_type').value;     if (t) q.push('type=' + encodeURIComponent(t));
+  const c = document.getElementById('e7_carrier').value.trim(); if (c) q.push('carrier=' + encodeURIComponent(c));
+  const l = document.getElementById('e7_limit').value.trim();   if (l) q.push('limit=' + encodeURIComponent(l));
+  const f = document.getElementById('e7_from').value.trim();    if (f) q.push('from=' + encodeURIComponent(f));
+  const to = document.getElementById('e7_to').value.trim();     if (to) q.push('to=' + encodeURIComponent(to));
+  const bq = bizQuery(''); if (bq) q.push(bq);
+  return base() + '/shipments/stats/by-geozone' + (q.length ? '?' + q.join('&') : '');
+}
+
+fillCreate();
+fillBulk();
+</script>
+</body>
+</html>

@@ -13,6 +13,8 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { DeliveryProbabilityBadge } from "@/services/modules/geozones/ui/components/DeliveryProbabilityBadge";
+import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
@@ -1211,6 +1213,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             </div>
                                                             <div className="font-semibold text-xs text-center mt-2">{rate.carrier}</div>
                                                             <div className="text-[10px] text-gray-600 dark:text-gray-300 text-center">{rate.product}</div>
+                                                            {order?.business_id && order.business_id > 0 && order.id && (
+                                                                <div className="mt-2 w-full px-1">
+                                                                    <CarrierEffectivenessRates
+                                                                        businessId={order.business_id}
+                                                                        orderId={order.id}
+                                                                        carrier={rate.carrier}
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div className="col-span-2 flex flex-col text-[11px] text-gray-700 dark:text-gray-200">
                                                             <div className="flex justify-between">

@@ -46,6 +46,16 @@ type Shipment struct {
 	ShippingAddressID *uint    // FK a addresses (opcional, puede usar la de la orden)
 	ShippingAddress   *Address `gorm:"foreignKey:ShippingAddressID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
+	DestinationGeozoneID   *uint          `gorm:"index"`
+	DestinationGeozonePath datatypes.JSON `gorm:"type:jsonb"`
+	GeozoneCountryID       *uint          `gorm:"index"`
+	GeozoneStateID         *uint          `gorm:"index"`
+	GeozoneCityID          *uint          `gorm:"index"`
+	GeozoneAdminDistrictID *uint          `gorm:"index"`
+	GeozoneLocalityID      *uint          `gorm:"index"`
+	GeozoneNeighborhoodID  *uint          `gorm:"index"`
+	GeozoneBarrioID        *uint          `gorm:"index"`
+
 	// Costos
 	ShippingCost   *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
 	InsuranceCost  *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
