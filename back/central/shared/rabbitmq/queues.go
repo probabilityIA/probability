@@ -119,9 +119,10 @@ const (
 const (
 	QueueWhatsAppCustomerHandoff = "customer.whatsapp.handoff"
 
-	QueueWhatsAppConversationEvents = "whatsapp.conversation.events"
+	QueueWhatsAppPersistenceEvents = "whatsapp.persistence.events"
 
-	QueueWhatsAppMessageLogEvents = "whatsapp.messagelog.events"
+	QueueWhatsAppConversationEventsLegacy = "whatsapp.conversation.events"
+	QueueWhatsAppMessageLogEventsLegacy   = "whatsapp.messagelog.events"
 )
 
 const (

@@ -51,7 +51,7 @@ func (p *persistencePublisher) PublishConversationUpsert(ctx context.Context, se
 		return fmt.Errorf("error serializing conversation upsert: %w", err)
 	}
 
-	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppConversationEvents, data); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, data); err != nil {
 		p.log.Error(ctx).Err(err).
 			Str("session_id", session.ID).
 			Str("phone", session.PhoneNumber).
@@ -89,7 +89,7 @@ func (p *persistencePublisher) PublishMessageLog(ctx context.Context, conversati
 		return fmt.Errorf("error serializing message log: %w", err)
 	}
 
-	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppMessageLogEvents, data); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, data); err != nil {
 		p.log.Error(ctx).Err(err).
 			Str("conversation_id", conversationID).
 			Str("direction", direction).
