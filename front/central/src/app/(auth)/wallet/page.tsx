@@ -22,7 +22,7 @@ import { VirtualCard } from './virtual-card';
 import { FinancialStatsView } from './financial-stats';
 import { BoldPaymentProcessingModal } from './bold-payment-processing-modal';
 import { getActionError } from '@/shared/utils/action-result';
-import { getBoldSignatureAction, simulateBoldPaymentAction } from '@/services/modules/pay/infra/actions';
+import { getBoldSignatureAction } from '@/services/modules/pay/infra/actions';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -708,7 +708,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const handleSelectBold = async () => {
         setShowPaymentSelector(false);
         setProcessing(true);
-        setMessage(null);
+        setMessage({
+            type: 'warning',
+            text: 'Te llevaremos al checkout de Bold. La confirmación del pago puede tardar hasta 5 minutos en aparecer en tu billetera.',
+        });
 
         try {
             const targetBusinessId = businessId || permissions?.business_id;
@@ -718,21 +721,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 throw new Error(res?.message || 'Error al obtener firma de Bold');
             }
 
-            const { order_id, currency, amount, hash, public_key, redirection_url, is_sandbox, polling_enabled } = res.data;
-
-            if (is_sandbox) {
-                const sim = await simulateBoldPaymentAction(order_id, amount, targetBusinessId);
-                if (!sim?.success) {
-                    throw new Error(sim?.message || 'Error simulando pago Bold');
-                }
-                setMessage({
-                    type: 'success',
-                    text: `Pago simulado (sandbox) por ${formatCurrency(sim.data.amount)}. Nuevo saldo: ${formatCurrency(sim.data.new_balance)}`,
-                });
-                await fetchBalance();
-                await fetchHistory();
-                return;
-            }
+            const { order_id, currency, amount, hash, public_key, redirection_url, polling_enabled } = res.data;
 
             if (!window.hasOwnProperty('BoldCheckout')) {
                 await new Promise<void>((resolve, reject) => {

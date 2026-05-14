@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { MagentoCredentials, MagentoConfig } from '../../domain/types';
 import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,9 +13,7 @@ import {
     CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
-    ShoppingBagIcon
+    ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
 
 interface MagentoConfigFormProps {
@@ -28,8 +26,6 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showToken, setShowToken] = useState(false);
-
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
@@ -268,30 +264,13 @@ export function MagentoConfigForm({ onSuccess, onCancel }: MagentoConfigFormProp
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Access Token <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showToken ? "text" : "password"}
-                            value={formData.access_token}
-                            onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
-                            placeholder="Bearer Token de la API REST"
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowToken(!showToken)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showToken ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.access_token}
+                        onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
+                        placeholder="Bearer Token de la API REST"
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 {/* Test Connection Button */}

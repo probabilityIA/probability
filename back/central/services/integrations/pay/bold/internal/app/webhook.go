@@ -30,6 +30,51 @@ func NewWebhookUseCase(repo ports.IIntegrationRepository, publisher ports.IWebho
 	}
 }
 
+type boldAmount struct {
+	Value    float64 `json:"-"`
+	Currency string  `json:"-"`
+}
+
+func (a *boldAmount) UnmarshalJSON(data []byte) error {
+	trimmed := strings.TrimSpace(string(data))
+	if trimmed == "" || trimmed == "null" {
+		return nil
+	}
+	if trimmed[0] == '{' {
+		var obj struct {
+			Value    json.Number `json:"value"`
+			Total    json.Number `json:"total"`
+			Amount   json.Number `json:"amount"`
+			Currency string      `json:"currency"`
+		}
+		if err := json.Unmarshal(data, &obj); err != nil {
+			return err
+		}
+		raw := obj.Value
+		if raw == "" {
+			raw = obj.Total
+		}
+		if raw == "" {
+			raw = obj.Amount
+		}
+		if raw != "" {
+			f, err := raw.Float64()
+			if err != nil {
+				return err
+			}
+			a.Value = f
+		}
+		a.Currency = obj.Currency
+		return nil
+	}
+	var f float64
+	if err := json.Unmarshal(data, &f); err != nil {
+		return err
+	}
+	a.Value = f
+	return nil
+}
+
 type cloudEventsEnvelope struct {
 	ID      string `json:"id"`
 	Type    string `json:"type"`
@@ -37,13 +82,26 @@ type cloudEventsEnvelope struct {
 	Source  string `json:"source"`
 	Time    int64  `json:"time"`
 	Data    struct {
-		PaymentID         string  `json:"payment_id"`
-		Amount            float64 `json:"amount"`
-		Currency          string  `json:"currency"`
-		PaymentMethod     string  `json:"payment_method"`
-		MerchantReference string  `json:"merchant_reference"`
-		PayerEmail        string  `json:"payer_email"`
+		PaymentID         string     `json:"payment_id"`
+		Amount            boldAmount `json:"amount"`
+		Currency          string     `json:"currency"`
+		PaymentMethod     string     `json:"payment_method"`
+		MerchantReference string     `json:"merchant_reference"`
+		PayerEmail        string     `json:"payer_email"`
+		Metadata          struct {
+			Reference         string `json:"reference"`
+			MerchantReference string `json:"merchant_reference"`
+		} `json:"metadata"`
 	} `json:"data"`
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHeader string, body []byte, isTest bool) error {
@@ -58,8 +116,24 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 	}
 
 	if !verifySignature(body, signatureHeader, cfg) {
+		secret, _ := cfg.SecretKey()
+		secretPreview := ""
+		if len(secret) >= 6 {
+			secretPreview = secret[:4] + "..." + secret[len(secret)-2:]
+		}
+		bodyB64 := base64.StdEncoding.EncodeToString(body)
+		mac := hmac.New(sha256.New, []byte(secret))
+		mac.Write([]byte(bodyB64))
+		expected := hex.EncodeToString(mac.Sum(nil))
 		uc.log.Warn(ctx).
-			Str("signature_header", signatureHeader).
+			Str("signature_header_received", signatureHeader).
+			Str("signature_expected_local", expected).
+			Str("secret_preview", secretPreview).
+			Int("secret_len", len(secret)).
+			Int("body_len", len(body)).
+			Str("body_preview", string(body[:min(120, len(body))])).
+			Str("environment", cfg.Environment).
+			Bool("is_test", isTest).
 			Msg("bold webhook: invalid signature")
 		return boldErrors.ErrInvalidSignature
 	}
@@ -85,9 +159,9 @@ func (uc *webhookUseCase) HandleIncomingWebhook(ctx context.Context, signatureHe
 		Source:            envelope.Source,
 		OccurredAt:        occurredAt,
 		PaymentID:         envelope.Data.PaymentID,
-		MerchantReference: envelope.Data.MerchantReference,
-		Amount:            envelope.Data.Amount,
-		Currency:          envelope.Data.Currency,
+		MerchantReference: firstNonEmpty(envelope.Data.MerchantReference, envelope.Data.Metadata.Reference, envelope.Data.Metadata.MerchantReference),
+		Amount:            envelope.Data.Amount.Value,
+		Currency:          firstNonEmpty(envelope.Data.Currency, envelope.Data.Amount.Currency),
 		PaymentMethod:     envelope.Data.PaymentMethod,
 		PayerEmail:        envelope.Data.PayerEmail,
 		IsTest:            isTest,

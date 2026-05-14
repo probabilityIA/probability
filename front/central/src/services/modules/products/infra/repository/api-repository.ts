@@ -167,4 +167,24 @@ export class ProductApiRepository implements IProductRepository {
         if (businessId) searchParams.append('business_id', String(businessId));
         return this.fetch<SingleResponse<Product>>(`/products/lookup-by-external?${searchParams.toString()}`);
     }
+
+    async getSKUs(prefix?: string, businessId?: number): Promise<{ success: boolean; data: string[] }> {
+        const params = new URLSearchParams();
+        if (prefix) params.append('prefix', prefix);
+        if (businessId) params.append('business_id', String(businessId));
+        const query = params.toString();
+        return this.fetch<{ success: boolean; data: string[] }>(`/products/skus${query ? '?' + query : ''}`);
+    }
+
+    async getNextSKU(prefix: string, businessId?: number): Promise<{ success: boolean; data: string }> {
+        const params = new URLSearchParams({ prefix });
+        if (businessId) params.append('business_id', String(businessId));
+        return this.fetch<{ success: boolean; data: string }>(`/products/skus/next?${params.toString()}`);
+    }
+
+    async getNextSKUBatch(prefix: string, count: number, businessId?: number): Promise<{ success: boolean; data: string[] }> {
+        const params = new URLSearchParams({ prefix, count: String(count) });
+        if (businessId) params.append('business_id', String(businessId));
+        return this.fetch<{ success: boolean; data: string[] }>(`/products/skus/next-batch?${params.toString()}`);
+    }
 }

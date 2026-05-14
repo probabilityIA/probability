@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { WooCommerceCredentials, WooCommerceConfig } from '../../domain/types';
 import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,8 +13,6 @@ import {
     ShoppingBagIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 
 interface WooCommerceConfigFormProps {
@@ -27,9 +25,6 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showConsumerKey, setShowConsumerKey] = useState(false);
-    const [showConsumerSecret, setShowConsumerSecret] = useState(false);
-
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
@@ -270,60 +265,26 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Consumer Key <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showConsumerKey ? "text" : "password"}
-                            value={formData.consumer_key}
-                            onChange={(e) => setFormData({ ...formData, consumer_key: e.target.value })}
-                            placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowConsumerKey(!showConsumerKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showConsumerKey ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.consumer_key}
+                        onChange={(e) => setFormData({ ...formData, consumer_key: e.target.value })}
+                        placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Consumer Secret <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showConsumerSecret ? "text" : "password"}
-                            value={formData.consumer_secret}
-                            onChange={(e) => setFormData({ ...formData, consumer_secret: e.target.value })}
-                            placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowConsumerSecret(!showConsumerSecret)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showConsumerSecret ? (
-                                <EyeSlashIcon className="w-5 h-5" />
-                            ) : (
-                                <EyeIcon className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.consumer_secret}
+                        onChange={(e) => setFormData({ ...formData, consumer_secret: e.target.value })}
+                        placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                 </div>
 
                 {/* Test Connection Button */}

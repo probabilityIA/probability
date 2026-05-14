@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { HelisaCredentials } from '../../domain/types';
 import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,8 +13,6 @@ import {
     CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 
 interface HelisaConfigFormProps {
@@ -27,8 +25,6 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false);
-
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
@@ -263,30 +259,13 @@ export function HelisaConfigForm({ onSuccess, onCancel }: HelisaConfigFormProps)
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Contrasena <span className="text-red-500">*</span>
                         </label>
-                        <div className="relative">
-                            <Input
-                                type={showPassword ? "text" : "password"}
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                placeholder="Contrasena de Helisa"
-                                required
-                                autoComplete="new-password"
-                                data-1p-ignore
-                                className="bg-white dark:bg-gray-800 text-sm pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                                tabIndex={-1}
-                            >
-                                {showPassword ? (
-                                    <EyeSlashIcon className="w-5 h-5" />
-                                ) : (
-                                    <EyeIcon className="w-5 h-5" />
-                                )}
-                            </button>
-                        </div>
+                        <SecretInput
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            placeholder="Contrasena de Helisa"
+                            required
+                            className="bg-white dark:bg-gray-800 text-sm"
+                        />
                     </div>
                 </div>
 

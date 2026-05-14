@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Product, CreateProductDTO, UpdateProductDTO, ProductFamily } from '../../domain/types';
-import { createProductAction, updateProductAction, getProductFamiliesAction } from '../../infra/actions';
+import { createProductAction, updateProductAction, getProductFamiliesAction, getNextSKUAction, getNextSKUBatchAction } from '../../infra/actions';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getActionError } from '@/shared/utils/action-result';
+import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
+import { extractSKUPrefix } from '../helpers/sku-helper';
 
 interface ProductFormProps {
     product?: Product;
@@ -24,13 +26,18 @@ interface VariantRow {
     error?: string;
 }
 
-const ic = 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent';
+const ic = 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:border-transparent';
 const lc = 'block text-xs font-semibold text-gray-700 dark:text-gray-200 mb-1';
 
 export default function ProductForm({ product, onSuccess, onCancel, businessId }: ProductFormProps) {
     const { permissions } = usePermissions();
     const defaultBusinessId = businessId || permissions?.business_id || 0;
     const isEdit = !!product;
+    const { colors: businessColors } = useDynamicBusinessColors(defaultBusinessId);
+    const primaryColor = businessColors?.primary_color || '#a855f7';
+    const secondaryColor = businessColors?.secondary_color || '#9f5cf7';
+    const tertiaryColor = businessColors?.tertiary_color || '#c4b5fd';
+    const quaternaryColor = businessColors?.quaternary_color || '#f3e8ff';
 
     const [mode, setMode] = useState<FormMode>('single');
     const [families, setFamilies] = useState<ProductFamily[]>([]);
@@ -61,6 +68,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
     });
 
     const [skuPrefix, setSkuPrefix] = useState('PROD');
+    const [skuCounter, setSkuCounter] = useState(1);
     const [selectedFamilyId, setSelectedFamilyId] = useState<number | null>(null);
     const [sharedPrice, setSharedPrice] = useState(0);
     const [sharedCurrency, setSharedCurrency] = useState('COP');
@@ -68,6 +76,10 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
     const [sharedTrackInventory, setSharedTrackInventory] = useState(true);
     const [variants, setVariants] = useState<VariantRow[]>([]);
     const [batchResults, setBatchResults] = useState<{ done: number; failed: number } | null>(null);
+    const [skuSuggestions, setSkuSuggestions] = useState<string[]>([]);
+    const [suggestedNextSKU, setSuggestedNextSKU] = useState<string | null>(null);
+    const [showSKUSuggestions, setShowSKUSuggestions] = useState(false);
+    const [skuSearchLoading, setSkuSearchLoading] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -77,20 +89,70 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         load();
     }, [businessId]);
 
+    useEffect(() => {
+        if (mode === 'single' && !isEdit) {
+            const autoSku = `${skuPrefix}-${String(skuCounter).padStart(3, '0')}`;
+            setFormData(f => ({ ...f, sku: autoSku }));
+        }
+    }, [mode, skuPrefix, skuCounter, isEdit]);
+
+    useEffect(() => {
+        if (!isEdit && formData.sku && formData.sku.length > 0) {
+            setSkuSearchLoading(true);
+            const timer = setTimeout(async () => {
+                const prefix = extractSKUPrefix(formData.sku);
+                const res = await getNextSKUAction(prefix, defaultBusinessId);
+                if (res.success && res.data && res.data !== formData.sku) {
+                    setSuggestedNextSKU(res.data);
+                } else {
+                    setSuggestedNextSKU(null);
+                }
+                setSkuSearchLoading(false);
+            }, 300);
+            return () => clearTimeout(timer);
+        } else {
+            setSkuSuggestions([]);
+            setSuggestedNextSKU(null);
+        }
+    }, [formData.sku, defaultBusinessId, isEdit]);
+
     const singleFamily = families.find(f => f.id === formData.family_id);
     const batchFamily = families.find(f => f.id === selectedFamilyId);
     const activeFamily = mode === 'single' ? singleFamily : batchFamily;
     const familyAxes: { key: string; label: string }[] = activeFamily?.variant_axes ?? [];
 
-    const addVariant = () => {
-        const idx = variants.length + 1;
-        setVariants(prev => [...prev, {
-            localId: Math.random().toString(36).slice(2),
-            sku: `${skuPrefix}-${String(idx).padStart(3, '0')}`,
-            name: '',
-            attributes: {},
-            status: 'pending',
-        }]);
+    const addVariant = async () => {
+        setSkuSearchLoading(true);
+        try {
+            const newCount = variants.length + 1;
+            const res = await getNextSKUBatchAction(skuPrefix, newCount, defaultBusinessId);
+
+            if (res.success && res.data && res.data.length === newCount) {
+                const newLocalId = Math.random().toString(36).slice(2);
+                setVariants(prev => {
+                    const updated = prev.map((v, i) => ({ ...v, sku: res.data[i] }));
+                    updated.push({
+                        localId: newLocalId,
+                        sku: res.data[newCount - 1],
+                        name: '',
+                        attributes: {},
+                        status: 'pending',
+                    });
+                    return updated;
+                });
+            } else {
+                const newLocalId = Math.random().toString(36).slice(2);
+                setVariants(prev => [...prev, {
+                    localId: newLocalId,
+                    sku: `${skuPrefix}-${String(prev.length + 1).padStart(3, '0')}`,
+                    name: '',
+                    attributes: {},
+                    status: 'pending',
+                }]);
+            }
+        } finally {
+            setSkuSearchLoading(false);
+        }
     };
 
     const removeVariant = (id: string) => setVariants(prev => prev.filter(v => v.localId !== id));
@@ -103,10 +165,23 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         }));
     };
 
-    const applyPrefix = (prefix: string) => {
-        const p = prefix.toUpperCase();
+    const applyPrefix = async (prefix: string) => {
+        const p = prefix.toUpperCase().trim();
         setSkuPrefix(p);
-        setVariants(prev => prev.map((v, i) => ({ ...v, sku: `${p}-${String(i + 1).padStart(3, '0')}` })));
+
+        if (variants.length > 0) {
+            setSkuSearchLoading(true);
+            try {
+                const res = await getNextSKUBatchAction(p, variants.length, defaultBusinessId);
+                if (res.success && res.data && res.data.length === variants.length) {
+                    setVariants(prev => prev.map((v, i) => ({ ...v, sku: res.data[i] })));
+                } else {
+                    setVariants(prev => prev.map((v, i) => ({ ...v, sku: `${p}-${String(i + 1).padStart(3, '0')}` })));
+                }
+            } finally {
+                setSkuSearchLoading(false);
+            }
+        }
     };
 
     const handleSingleSubmit = async (e: React.FormEvent) => {
@@ -139,11 +214,25 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                 res = await updateProductAction(product!.id, u, businessId);
             } else {
                 res = await createProductAction(formData, businessId);
+                if (res.success) {
+                    setSkuCounter(prev => prev + 1);
+                }
             }
             if (res.success) onSuccess();
-            else setError(res.message || 'Error al guardar');
+            else {
+                if (res.message && res.message.toLowerCase().includes('sku')) {
+                    setError(`El SKU "${formData.sku}" ya está en uso. Por favor, usa otro SKU.`);
+                } else {
+                    setError(res.message || 'Error al guardar');
+                }
+            }
         } catch (err: any) {
-            setError(getActionError(err, 'Error al guardar'));
+            const errorMsg = getActionError(err, 'Error al guardar');
+            if (errorMsg.toLowerCase().includes('sku')) {
+                setError(`El SKU "${formData.sku}" ya está en uso. Por favor, usa otro SKU.`);
+            } else {
+                setError(errorMsg);
+            }
         } finally {
             setLoading(false);
         }
@@ -204,7 +293,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
     );
 
     const submitBtn = (label: string, disabled = false) => (
-        <button type="submit" disabled={loading || disabled} className="px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg shadow transition-all disabled:opacity-60 flex items-center gap-2">
+        <button type="submit" disabled={loading || disabled} style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }} className="px-6 py-2.5 text-sm font-bold text-white rounded-lg shadow transition-all disabled:opacity-60 flex items-center gap-2">
             {loading && <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
             {label}
         </button>
@@ -219,7 +308,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                             key={m}
                             type="button"
                             onClick={() => { setMode(m); setError(null); }}
-                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${mode === m ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-700 dark:text-purple-300' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+                            style={mode === m ? { color: primaryColor } : {}}
+                            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${mode === m ? 'bg-white dark:bg-gray-700 shadow-sm dark:opacity-90' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
                         >
                             {m === 'single' ? 'SKU individual' : 'Variantes en lote'}
                         </button>
@@ -239,7 +329,22 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className={lc}>SKU <span className="text-red-500">*</span></label>
-                            <input className={ic} type="text" value={formData.sku} onChange={e => setFormData(f => ({ ...f, sku: e.target.value }))} required />
+                            <div className="relative">
+                                <input
+                                    className={ic}
+                                    type="text"
+                                    value={formData.sku}
+                                    onChange={e => setFormData(f => ({ ...f, sku: e.target.value }))}
+                                    disabled={isEdit}
+                                    required
+                                />
+                                {skuSearchLoading && (
+                                    <div className="absolute right-3 top-3 w-4 h-4 border-2 border-gray-300 border-t-current rounded-full animate-spin" style={{ color: primaryColor }} />
+                                )}
+                            </div>
+                            {suggestedNextSKU && suggestedNextSKU !== formData.sku && !isEdit && (
+                                <p style={{ color: primaryColor }} className="text-xs mt-1">Sugerencia: {suggestedNextSKU}</p>
+                            )}
                         </div>
                         <div>
                             <label className={lc}>Nombre <span className="text-red-500">*</span></label>
@@ -268,14 +373,14 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                         </div>
                         <div className="flex items-end pb-1">
                             <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" checked={formData.track_inventory ?? true} onChange={e => setFormData(f => ({ ...f, track_inventory: e.target.checked, manage_stock: e.target.checked }))} className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                                <input type="checkbox" checked={formData.track_inventory ?? true} onChange={e => setFormData(f => ({ ...f, track_inventory: e.target.checked, manage_stock: e.target.checked }))} style={{ accentColor: primaryColor }} className="w-4 h-4 rounded border-gray-300" />
                                 <span className="text-sm text-gray-700 dark:text-gray-200">Gestionar inventario</span>
                             </label>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/40 dark:bg-purple-900/10 p-4">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 mb-3">Familia de variantes (opcional)</h4>
+                    <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">
+                        <h4 style={{ color: primaryColor }} className="text-xs font-bold uppercase tracking-wider mb-3">Familia de variantes (opcional)</h4>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={lc}>Familia</label>
@@ -360,7 +465,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                 {families.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                             </select>
                             {batchFamily && (
-                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">Las variantes se asociaran a esta familia</p>
+                                <p style={{ color: primaryColor }} className="text-xs mt-1">Las variantes se asociaran a esta familia</p>
                             )}
                         </div>
                         <div>
@@ -397,12 +502,13 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     <div>
                         <div className="flex items-center justify-between mb-2">
                             <label className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">
-                                Variantes a crear {variants.length > 0 && <span className="text-purple-600 dark:text-purple-400">({variants.length})</span>}
+                                Variantes a crear {variants.length > 0 && <span style={{ color: primaryColor }}>({variants.length})</span>}
                             </label>
                             <button
                                 type="button"
                                 onClick={addVariant}
-                                className="text-xs font-semibold text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 flex items-center gap-1"
+                                style={{ color: primaryColor }}
+                                className="text-xs font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                 Agregar variante
@@ -412,9 +518,10 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                         {variants.length === 0 ? (
                             <div
                                 onClick={addVariant}
-                                className="border-2 border-dashed border-purple-200 dark:border-purple-800 rounded-xl p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition-all"
+                                style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }}
+                                className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all hover:opacity-80"
                             >
-                                <svg className="w-8 h-8 text-purple-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                                <svg style={{ color: tertiaryColor + '80' }} className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
                                 <p className="text-sm text-gray-400">Haz click para agregar la primera variante</p>
                             </div>
                         ) : (
@@ -497,7 +604,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                             <button onClick={onSuccess} className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Ver listado</button>
                             <button
                                 onClick={() => { setBatchResults(null); setVariants(prev => prev.filter(v => v.status === 'error').map(v => ({ ...v, status: 'pending' as const }))); }}
-                                className="px-5 py-2.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg"
+                                style={{ backgroundColor: primaryColor }}
+                                className="px-5 py-2.5 text-sm font-bold text-white rounded-lg hover:opacity-90 transition-opacity"
                             >
                                 Reintentar fallidas
                             </button>

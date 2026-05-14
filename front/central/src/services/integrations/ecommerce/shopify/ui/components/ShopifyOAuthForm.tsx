@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Input, Button, Alert } from '@/shared/ui';
+import { Input, Button, Alert, SecretInput } from '@/shared/ui';
 import { TokenStorage } from '@/shared/utils';
-import { BeakerIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import {
+    BeakerIcon,
+} from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
 import { getActionError } from '@/shared/utils/action-result';
 
@@ -45,8 +47,6 @@ export default function ShopifyOAuthForm({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isTesting, setIsTesting] = useState(initialData?.is_testing || false);
-    const [showSecrets, setShowSecrets] = useState(false);
-
     const accessToken = initialData?.credentials?.access_token || '';
 
     const handleConnectShopify = async (e: React.FormEvent) => {
@@ -177,23 +177,11 @@ export default function ShopifyOAuthForm({
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                                 Access Token (OAuth)
                             </label>
-                            <div className="relative">
-                                <Input
-                                    type={showSecrets ? 'text' : 'password'}
-                                    value={accessToken}
-                                    readOnly
-                                    className="w-full bg-gray-50 dark:bg-gray-700 pr-10"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowSecrets(!showSecrets)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300"
-                                >
-                                    {showSecrets
-                                        ? <EyeSlashIcon className="w-5 h-5" />
-                                        : <EyeIcon className="w-5 h-5" />}
-                                </button>
-                            </div>
+                            <SecretInput
+                                value={accessToken}
+                                readOnly
+                                className="w-full bg-gray-50 dark:bg-gray-700"
+                            />
                             <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1">
                                 Obtenido automáticamente durante el flujo OAuth (solo lectura)
                             </p>
@@ -221,26 +209,13 @@ export default function ShopifyOAuthForm({
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Client Secret {!isEdit && '*'}
                         </label>
-                        <div className="relative">
-                            <Input
-                                type={showSecrets ? 'text' : 'password'}
-                                required={!isEdit}
-                                placeholder={isEdit ? '' : 'Pegar Client Secret aquí'}
-                                value={formData.client_secret}
-                                onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
-                                autoComplete="new-password"
-                                className="w-full pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowSecrets(!showSecrets)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300"
-                            >
-                                {showSecrets
-                                    ? <EyeSlashIcon className="w-5 h-5" />
-                                    : <EyeIcon className="w-5 h-5" />}
-                            </button>
-                        </div>
+                        <SecretInput
+                            value={formData.client_secret}
+                            onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
+                            placeholder={isEdit ? '' : 'Pegar Client Secret aquí'}
+                            required={!isEdit}
+                            className="w-full"
+                        />
                     </div>
                 </div>
             </div>

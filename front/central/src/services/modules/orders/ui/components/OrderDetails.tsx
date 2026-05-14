@@ -11,6 +11,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { DeliveryProbabilityBadge } from '@/services/modules/geozones/ui/components/DeliveryProbabilityBadge';
 import { DeliveryProbabilityByCarrier } from '@/services/modules/geozones/ui/components/DeliveryProbabilityByCarrier';
+import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import dynamic from 'next/dynamic';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
 
@@ -43,6 +44,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [statusHistory, setStatusHistory] = useState<OrderHistory[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const { showToast } = useToast();
+    const { colors: businessColors } = useDynamicBusinessColors(initialOrder.business_id);
+
+    const primaryColor = businessColors?.primary_color || '#5b21b6';
+    const secondaryColor = businessColors?.secondary_color || '#7c3aed';
+    const tertiaryColor = businessColors?.tertiary_color || '#c4b5fd';
+    const quaternaryColor = businessColors?.quaternary_color || '#ede9fe';
 
     // Fetch full order details and history on mount
     const fetchDetails = async () => {
@@ -234,8 +241,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     return (
         <div className="flex flex-col h-full bg-white">
             {/* AI Recommendation Section - Only shown in recommendation mode */}
-            {mode === 'recommendation' && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-xl border border-blue-100 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
+            {mode === 'recommendation' && businessColors && (
+                <div
+                    className="p-3 rounded-xl border shadow-sm relative overflow-hidden transition-all hover:shadow-md"
+                    style={{
+                        background: `linear-gradient(to right, ${quaternaryColor}, ${tertiaryColor})`,
+                        borderColor: tertiaryColor
+                    }}
+                >
                     <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
                         <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z" /></svg>
                     </div>
@@ -243,7 +256,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="absolute top-2 right-2 z-20 p-1 bg-white dark:bg-gray-800/20 hover:bg-white dark:bg-gray-800/40 text-blue-900 rounded-full transition-colors backdrop-blur-sm"
+                            className="absolute top-2 right-2 z-20 p-1 bg-white dark:bg-gray-800/20 hover:bg-white dark:bg-gray-800/40 rounded-full transition-colors backdrop-blur-sm"
+                            style={{ color: primaryColor }}
                             title="Cerrar"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,15 +267,15 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     )}
 
                     <div className="relative z-10">
-                        <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-bold flex items-center gap-2 mb-2" style={{ color: primaryColor }}>
                             <span className="text-2xl">🤖</span> Recomendación Inteligente
                         </h3>
 
                         {isReady ? (
                             <>
                                 {loadingAI ? (
-                                    <div className="flex items-center gap-3 text-purple-600 bg-white dark:bg-gray-800/50 p-3 rounded-lg animate-pulse">
-                                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="flex items-center gap-3 bg-white dark:bg-gray-800/50 p-3 rounded-lg animate-pulse" style={{ color: secondaryColor }}>
+                                        <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: secondaryColor, borderTopColor: 'transparent' }}></div>
                                         <span>Analizando mejores rutas y tarifas...</span>
                                     </div>
                                 ) : aiRecommendation ? (
@@ -269,43 +283,59 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <div className="flex-1 space-y-4">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div>
-                                                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
+                                                    <span
+                                                        className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded"
+                                                        style={{
+                                                            color: secondaryColor,
+                                                            backgroundColor: quaternaryColor + '80'
+                                                        }}
+                                                    >
                                                         Mejor Opción
                                                     </span>
-                                                    <p className="text-4xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">
+                                                    <p className="text-4xl font-extrabold mt-2" style={{ color: secondaryColor }}>
                                                         {aiRecommendation.recommended_carrier}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setShowGuideModal(true)}
-                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-purple-200 transition-all flex items-center gap-2"
+                                                    className="text-white font-bold py-2 px-6 rounded-lg shadow-lg transition-all flex items-center gap-2"
+                                                    style={{
+                                                        backgroundColor: secondaryColor,
+                                                        boxShadow: `0 0 0 20px ${secondaryColor}20`
+                                                    }}
                                                 >
                                                     <span>📦</span> Cotizar y Generar Guía
                                                 </button>
                                             </div>
 
-                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border border-blue-100 text-gray-700 dark:text-gray-200 text-sm leading-relaxed shadow-sm">
-                                                <p className="font-semibold text-blue-900 mb-1">Análisis:</p>
+                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border text-gray-700 dark:text-gray-200 text-sm leading-relaxed shadow-sm" style={{ borderColor: tertiaryColor }}>
+                                                <p className="font-semibold mb-1" style={{ color: primaryColor }}>Análisis:</p>
                                                 {aiRecommendation.reasoning}
                                             </div>
                                         </div>
 
                                         {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
-                                            <div className="border-t border-blue-200 dark:border-blue-900 pt-6 mt-2">
-                                                <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                            <div className="pt-6 mt-2" style={{ borderTop: `1px solid ${tertiaryColor}` }}>
+                                                <h4 className="text-sm font-bold uppercase tracking-wide mb-4 flex items-center gap-2" style={{ color: secondaryColor }}>
                                                     <span>📊</span> Cotizaciones Estimadas
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                     {aiRecommendation.quotations.map((quote, idx) => {
                                                         const isRecommended = quote.carrier === aiRecommendation.recommended_carrier;
                                                         return (
-                                                            <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between transition-all hover:shadow-md ${isRecommended
-                                                                ? 'bg-white dark:bg-gray-800 border-blue-300 dark:border-blue-600 shadow-sm ring-1 ring-blue-100 dark:ring-blue-900 relative overflow-hidden'
-                                                                : 'bg-slate-50 dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700'
-                                                                }`}>
-                                                                {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
+                                                            <div
+                                                                key={idx}
+                                                                className={`p-4 rounded-xl border flex flex-col justify-between transition-all hover:shadow-md ${isRecommended ? 'bg-white dark:bg-gray-800 shadow-sm relative overflow-hidden' : 'bg-slate-50 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-700'}`}
+                                                                style={{
+                                                                    borderColor: isRecommended ? secondaryColor : tertiaryColor,
+                                                                    ...(isRecommended && {
+                                                                        boxShadow: `0 0 0 1px ${secondaryColor}20`
+                                                                    })
+                                                                }}
+                                                            >
+                                                                {isRecommended && <div className="absolute top-0 right-0 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold" style={{ backgroundColor: secondaryColor }}>RECOMENDADO</div>}
                                                                 <div>
-                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                    <p className="font-bold text-lg" style={{ color: isRecommended ? secondaryColor : '#374151' }}>
                                                                         {quote.carrier}
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
@@ -315,7 +345,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                                                                     <p className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-0.5">Costo Estimado</p>
                                                                     <div className="flex justify-between items-end">
-                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600 dark:text-gray-300'}`}>
+                                                                        <p className="font-bold text-xl" style={{ color: isRecommended ? secondaryColor : '#4b5563' }}>
                                                                             {formatCurrency(quote.estimated_cost, 'COP')}
                                                                         </p>
                                                                         <button
@@ -340,7 +370,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 )}
                             </>
                         ) : (
-                            <div className="text-sm text-blue-400 mt-1 animate-pulse">Cargando datos de orden...</div>
+                            <div className="text-sm mt-1 animate-pulse" style={{ color: tertiaryColor }}>Cargando datos de orden...</div>
                         )}
 
                         {showGuideModal && order && (
@@ -363,7 +393,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
             {/* Header */}
             {mode === 'details' && (
                 <>
-                    <div className="bg-purple-700 dark:bg-purple-900 text-white px-6 py-4 flex items-center justify-between border-b border-purple-800">
+                    <div
+                        className="text-white px-6 py-4 flex items-center justify-between border-b"
+                        style={{
+                            backgroundColor: primaryColor,
+                            borderColor: secondaryColor
+                        }}
+                    >
                         <h2 className="text-xl font-black tracking-wide">Detalles de la Orden</h2>
                         <p className="text-lg opacity-70 font-semibold">{order.order_number || '-'}</p>
                         <div className="flex items-center gap-3">
@@ -378,7 +414,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     {order.order_status.name || order.status}
                                 </span>
                             ) : (
-                                <span className="px-3 py-1 text-xs font-bold rounded-full bg-purple-600 text-white">
+                                <span
+                                    className="px-3 py-1 text-xs font-bold rounded-full text-white"
+                                    style={{ backgroundColor: secondaryColor }}
+                                >
                                     {order.order_status?.name || order.status || '-'}
                                 </span>
                             )}
@@ -399,10 +438,16 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     {/* Main Content - 3 Column Layout */}
                     <div className="flex flex-1 overflow-hidden">
                         {/* Sidebar Izquierdo - Información General */}
-                        <div className="w-48 bg-purple-700 dark:bg-purple-900 text-white p-3 overflow-y-auto border-r border-purple-800">
-                            <h3 className="text-xs font-black uppercase tracking-wider text-gray-300 mb-4">Información General</h3>
+                        <div
+                            className="w-48 text-white p-3 overflow-y-auto"
+                            style={{
+                                backgroundColor: primaryColor,
+                                borderRight: `1px solid ${tertiaryColor}`
+                            }}
+                        >
+                            <h3 className="text-xs font-black uppercase tracking-wider text-white mb-4">Información General</h3>
                             {loadingDetails ? (
-                                <div className="py-4 text-center text-xs text-purple-200">Cargando...</div>
+                                <div className="py-4 text-center text-xs" style={{ color: tertiaryColor }}>Cargando...</div>
                             ) : (
                                 <div className="flex flex-col">
                                     <div className="pb-4 mb-4 border-b border-white/30">
@@ -454,7 +499,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     {order.order_status.name || order.status}
                                                 </span>
                                             ) : (
-                                                <span className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-600 text-white w-fit">
+                                                <span
+                                                    className="inline-block px-2 py-0.5 text-[10px] font-bold rounded-full text-white w-fit"
+                                                    style={{ backgroundColor: secondaryColor }}
+                                                >
                                                     {order.status || '-'}
                                                 </span>
                                             )}
@@ -523,9 +571,20 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             {order.invoice?.retention_amount ? formatCurrency(order.invoice.retention_amount, order.currency) : '-'}
                                         </p>
                                     </div>
-                                    <div className="flex-1 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-3">
-                                        <p className="text-[9px] font-bold text-purple-600 dark:text-purple-300 uppercase tracking-wider mb-1">Total</p>
-                                        <p className="text-xl font-black text-purple-700 dark:text-purple-400">
+                                    <div
+                                        className="flex-1 border rounded-lg p-3"
+                                        style={{
+                                            backgroundColor: quaternaryColor + '40',
+                                            borderColor: tertiaryColor
+                                        }}
+                                    >
+                                        <p
+                                            className="text-[9px] font-bold uppercase tracking-wider mb-1"
+                                            style={{ color: secondaryColor }}
+                                        >
+                                            Total
+                                        </p>
+                                        <p className="text-xl font-black" style={{ color: primaryColor }}>
                                             {formatCurrency(
                                                 (order.subtotal || 0) + (order.shipment?.total_cost ?? order.shipping_cost ?? 0) - (order.invoice?.retention_amount || 0),
                                                 order.currency,
@@ -538,23 +597,26 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                                 {/* Productos del Pedido */}
                                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                                    <div className="px-4 py-3 bg-purple-100 dark:bg-purple-900/30 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase">Productos del Pedido</h3>
+                                    <div
+                                        className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 rounded-t-lg"
+                                        style={{ backgroundColor: primaryColor }}
+                                    >
+                                        <h3 className="text-xs font-black text-white uppercase">Productos del Pedido</h3>
                                     </div>
                                     {loadingDetails ? (
                                         <div className="py-4 text-center text-xs text-gray-500 dark:text-gray-400">Cargando productos...</div>
                                     ) : (order.order_items || items).length > 0 ? (
                                         <div className="overflow-x-auto">
                                             <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                                                <thead className="bg-purple-100 dark:bg-purple-900/20">
+                                                <thead style={{ backgroundColor: quaternaryColor + '40' }}>
                                                     <tr>
-                                                        <th className="px-3 py-2 text-left font-bold text-purple-700 dark:text-purple-300 uppercase">Producto</th>
-                                                        <th className="px-3 py-2 text-left font-bold text-purple-700 dark:text-purple-300 uppercase">SKU</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Cant</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Precio s/IVA</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">IVA</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Desc.</th>
-                                                        <th className="px-3 py-2 text-right font-bold text-purple-700 dark:text-purple-300 uppercase">Total</th>
+                                                        <th className="px-3 py-2 text-left font-bold uppercase" style={{ color: secondaryColor }}>Producto</th>
+                                                        <th className="px-3 py-2 text-left font-bold uppercase" style={{ color: secondaryColor }}>SKU</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Cant</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Precio s/IVA</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>IVA</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Desc.</th>
+                                                        <th className="px-3 py-2 text-right font-bold uppercase" style={{ color: secondaryColor }}>Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -599,7 +661,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                         <span className="text-gray-400">-</span>
                                                                     )}
                                                                 </td>
-                                                                <td className="px-3 py-2 text-right text-purple-700 dark:text-purple-300 font-bold">{formatCurrency(itemTotal, order.currency, itemTotalPresentment, order.currency_presentment)}</td>
+                                                                <td className="px-3 py-2 text-right font-bold" style={{ color: primaryColor }}>{formatCurrency(itemTotal, order.currency, itemTotalPresentment, order.currency_presentment)}</td>
                                                             </tr>
                                                         );
                                                     })}
@@ -669,7 +731,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <div className="flex flex-col">
                                             <label className="text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 uppercase">Confirmación de Pedido</label>
                                             <select
-                                                className={`block w-full px-2 py-2 text-xs border-1.5 rounded focus:outline-none focus:ring-purple-500 ${isConfirmed === true
+                                                className={`block w-full px-2 py-2 text-xs border-1.5 rounded focus:outline-none ${isConfirmed === true
                                                     ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-500 dark:border-green-600 font-bold'
                                                     : isConfirmed === false
                                                         ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-500 dark:border-red-600 font-bold'
@@ -690,7 +752,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             <label className="text-xs font-bold text-gray-700 dark:text-gray-200 mb-1 uppercase">Novedades / Notas</label>
                                             <textarea
                                                 rows={2}
-                                                className="w-full text-xs border-1.5 border-gray-200 dark:border-gray-600 rounded focus:ring-purple-500 focus:border-purple-500 p-2 text-gray-900 dark:text-white resize-vertical"
+                                                className="w-full text-xs border-1.5 border-gray-200 dark:border-gray-600 rounded p-2 text-gray-900 dark:text-white resize-vertical"
+                                                style={{
+                                                    outlineColor: primaryColor,
+                                                    borderColor: businessColors ? tertiaryColor : undefined
+                                                }}
                                                 placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
                                                 value={novelty}
                                                 onChange={(e) => setNovelty(e.target.value)}
@@ -701,7 +767,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <button
                                             onClick={handleSaveManagement}
                                             disabled={isSaving}
-                                            className="flex-1 px-4 py-2 border border-transparent text-xs font-bold rounded text-white bg-purple-700 hover:bg-purple-800 disabled:opacity-50 transition-colors"
+                                            className="flex-1 px-4 py-2 border border-transparent text-xs font-bold rounded text-white disabled:opacity-50 transition-colors"
+                                            style={{ backgroundColor: primaryColor }}
                                         >
                                             {isSaving ? 'Guardando...' : 'Guardar'}
                                         </button>
@@ -752,9 +819,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                                                                 </svg>
                                                             </div>
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm ${
-                                                                isLast ? 'bg-purple-500' : 'bg-blue-400'
-                                                            }`}>
+                                                            <div
+                                                                className="w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm"
+                                                                style={{
+                                                                    backgroundColor: isLast ? secondaryColor : tertiaryColor
+                                                                }}
+                                                            >
                                                                 {isLast ? (
                                                                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -765,11 +835,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                     </svg>
                                                                 )}
                                                             </div>
-                                                            <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.5 mt-1 ${
-                                                                isLast
-                                                                    ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
-                                                                    : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
-                                                            }`}>
+                                                            <span
+                                                                className="text-[9px] font-bold rounded-full px-1.5 py-0.5 mt-1"
+                                                                style={{
+                                                                    backgroundColor: isLast ? quaternaryColor : tertiaryColor + '40',
+                                                                    color: isLast ? secondaryColor : primaryColor
+                                                                }}
+                                                            >
                                                                 {entry.new_status}
                                                             </span>
                                                             <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1 text-center leading-tight">
@@ -789,29 +861,29 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                         {/* Sidebar Derecho - Cronología y Pago */}
                         <div className="w-64 bg-gray-50 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
-                            <h3 className="text-sm font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Cronología y Pago</h3>
+                            <h3 className="text-sm font-black uppercase tracking-wider mb-4 pb-2 border-b border-gray-200 dark:border-gray-700" style={{ color: primaryColor }}>Cronología y Pago</h3>
 
                             {/* Timeline */}
                             <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                                 <div className="flex gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-purple-600 flex-shrink-0 mt-1"></div>
+                                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: secondaryColor }}></div>
                                     <div>
-                                        <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Creado (DB)</p>
+                                        <p className="text-xs font-bold uppercase" style={{ color: secondaryColor }}>Creado (DB)</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(order.created_at)}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-purple-600 flex-shrink-0 mt-1"></div>
+                                    <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: secondaryColor }}></div>
                                     <div>
-                                        <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Importado</p>
+                                        <p className="text-xs font-bold uppercase" style={{ color: secondaryColor }}>Importado</p>
                                         <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(order.imported_at)}</p>
                                     </div>
                                 </div>
                                 {order.updated_at && (
                                     <div className="flex gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-purple-600 flex-shrink-0 mt-1"></div>
+                                        <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: secondaryColor }}></div>
                                         <div>
-                                            <p className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Actualizado</p>
+                                            <p className="text-xs font-bold uppercase" style={{ color: secondaryColor }}>Actualizado</p>
                                             <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(order.updated_at)}</p>
                                         </div>
                                     </div>

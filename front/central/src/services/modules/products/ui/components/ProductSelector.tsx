@@ -111,18 +111,6 @@ export default function ProductSelector({
                             onFocus={() => setShowResults(true)}
                         />
                     </div>
-                    {onCreateNew && (
-                        <Button
-                            type="button"
-                            onClick={onCreateNew}
-                            variant="secondary"
-                            className="flex items-center gap-1"
-                            style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid #e9d5ff' }}
-                        >
-                            <Plus className="h-4 w-4" />
-                            Nuevo
-                        </Button>
-                    )}
                 </div>
 
                 {/* Results dropdown */}
@@ -165,13 +153,6 @@ export default function ProductSelector({
                         ) : (
                             <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                                 No se encontraron productos.
-                                <button
-                                    type="button"
-                                    onClick={onCreateNew}
-                                    className="ml-1 text-blue-600 font-medium hover:underline"
-                                >
-                                    Crear uno nuevo
-                                </button>
                             </div>
                         )}
                     </div>

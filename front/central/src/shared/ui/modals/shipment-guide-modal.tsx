@@ -19,6 +19,7 @@ import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmen
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
+import '@/shared/ui/styles/shipment-modals.css';
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -419,7 +420,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 if (data.carrier) setSelectedCarrier(data.carrier);
 
                 if (selectedRate) {
-                    const insuranceCost = step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+                    const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
                     const totalCost = selectedRate.flete + insuranceCost;
                     const balanceResponse = await getWalletBalanceAction();
                     if (balanceResponse.success && balanceResponse.data) {
@@ -508,26 +509,26 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         const errors = step1Form.formState.errors;
         if (Object.keys(errors).length > 0) {
             const fieldLabels: { [key: string]: string } = {
-                originDaneCode: "Ciudad de Origen",
-                originAddress: "Dirección de Origen",
-                destDaneCode: "Ciudad de Destino",
-                destAddress: "Dirección de Destino",
-                weight: "Peso del paquete",
-                height: "Alto del paquete",
-                width: "Ancho del paquete",
-                length: "Largo del paquete",
-                description: "Descripción del contenido",
-                contentValue: "Valor de la mercancía",
-                codPaymentMethod: "Método de pago COD",
+                originDaneCode: "Origen",
+                originAddress: "dirección de origen",
+                destDaneCode: "Destino",
+                destAddress: "dirección de destino",
+                weight: "peso",
+                height: "altura",
+                width: "ancho",
+                length: "largo",
+                description: "descripción",
+                contentValue: "valor declarado",
+                codPaymentMethod: "método de pago",
             };
 
             const errorFields: string[] = [];
             Object.entries(errors).forEach(([field, error]) => {
                 const label = fieldLabels[field] || field;
-                errorFields.push(`  • ${label}`);
+                errorFields.push(label);
             });
 
-            setError(`⚠️ Por favor completa los siguientes campos:\n${errorFields.join('\n')}`);
+            setError(`Completa: ${errorFields.join(', ')}`);
             setLoading(false);
             return;
         }
@@ -561,7 +562,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             const response = await quoteShipmentAction(quotePayload);
             if (!response.success) {
-                setError(response.message || "Error al enviar solicitud de cotización");
+                const msg = response.message || "Error al cotizar";
+                if (msg.toLowerCase().includes('no hay') || msg.toLowerCase().includes('sin transportador') || msg.toLowerCase().includes('integraci')) {
+                    setError("No hay transportadoras disponibles para esta ruta. Verifica la integración con tus proveedores logísticos.");
+                } else {
+                    setError(msg);
+                }
                 setLoading(false);
                 return;
             }
@@ -575,6 +581,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setLoading(false);
                 return;
             }
+
+            // No rates available
+            setError("No hay transportadoras disponibles para esta ruta. Verifica la integración con tus proveedores logísticos.");
+            setLoading(false);
+            return;
 
             // Asynchronous path: wait for SSE response
             pendingStep1DataRef.current = data;
@@ -626,40 +637,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             // Group errors by section
             const originErrors: string[] = [];
             const destErrors: string[] = [];
-            const otherErrors: string[] = [];
 
-            Object.entries(errors).forEach(([field, error]) => {
+            Object.entries(errors).forEach(([field]) => {
                 const label = fieldLabels[field] || field;
-                const value = (data as any)[field];
-                const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
-                const errorMsg = error?.message
-                    ? `${label}: ${error.message} (Valor actual: ${valueStr})`
-                    : `${label}: Campo inválido (Valor actual: ${valueStr})`;
-
-                // Log individual error
-                console.log(`Field: ${field}, Value: ${valueStr}, Error: ${error?.message}`);
-
                 if (field.startsWith('origin')) {
-                    originErrors.push(errorMsg);
+                    originErrors.push(label);
                 } else if (field.startsWith('dest')) {
-                    destErrors.push(errorMsg);
-                } else {
-                    otherErrors.push(errorMsg);
+                    destErrors.push(label);
                 }
             });
 
             const sections: string[] = [];
             if (originErrors.length > 0) {
-                sections.push(`📍 REMITENTE (Origen):\n${originErrors.map(e => `  ❌ ${e}`).join('\n')}`);
+                sections.push(`Remitente: ${originErrors.join(', ')}`);
             }
             if (destErrors.length > 0) {
-                sections.push(`📦 DESTINATARIO:\n${destErrors.map(e => `  ❌ ${e}`).join('\n')}`);
-            }
-            if (otherErrors.length > 0) {
-                sections.push(`📋 INFORMACIÓN:\n${otherErrors.map(e => `  ❌ ${e}`).join('\n')}`);
+                sections.push(`Destinatario: ${destErrors.join(', ')}`);
             }
 
-            setError(`⚠️ Errores encontrados - Por favor corrige lo siguiente:\n\n${sections.join('\n\n')}`);
+            setError(`Completa: ${sections.join(' | ')}`);
 
             // Scroll al campo con error
             setTimeout(() => {
@@ -697,7 +693,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
         // Check wallet balance
         if (!selectedRate || !step3Data || !step1Data) return;
-        const insuranceCost = step1Data.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+        const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (step1Data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
         const totalCost = selectedRate.flete + insuranceCost;
         if (walletBalance !== null && walletBalance < totalCost) {
             setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
@@ -812,7 +808,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
                 <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">Generar Guía de Envío</h2>
+                        <h2 className="text-2xl font-bold" style={{ color: 'var(--color-primary)' }}>Generar Guía de Envío</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl"
@@ -855,15 +851,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-800/30 rounded-xl p-4 space-y-2">
+                                        <div className="shipment-section-origin">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center text-purple-600 dark:text-purple-400 text-sm font-bold">A</div>
-                                                    <h3 className="font-semibold text-base text-purple-700 dark:text-purple-400">Origen</h3>
+                                                    <div className="shipment-section-origin-icon w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold">A</div>
+                                                    <h3 className="shipment-section-origin-label">Origen</h3>
                                                 </div>
                                                 {originWarehouses.length > 0 && (
                                                     <select
-                                                        className="text-xs border border-gray-200 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                                        className="text-[11px] px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1"
                                                         onChange={(e) => {
                                                             const addr = originWarehouses.find(a => a.id === parseInt(e.target.value));
                                                             if (addr) handleWarehouseSelect(addr);
@@ -891,7 +887,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         if (!e.target.value) step1Form.setValue("originDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowOriginResults(true)}
-                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${step1Form.formState.errors.originDaneCode ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}
+                                                    className={`shipment-input ${step1Form.formState.errors.originDaneCode ? "shipment-input-error" : ""}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
                                                 {step1Form.formState.errors.originDaneCode && (
@@ -947,10 +943,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             )}
                                         </div>
 
-                                        <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 rounded-xl p-4 space-y-2">
+                                        <div className="shipment-section-destination">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 text-sm font-bold">B</div>
-                                                <h3 className="font-semibold text-base text-blue-700 dark:text-blue-400">Destino</h3>
+                                                <div className="shipment-section-destination-icon w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold">B</div>
+                                                <h3 className="shipment-section-destination-label">Destino</h3>
                                             </div>
 
                                             <div ref={destRef} className="relative">
@@ -966,7 +962,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         if (!e.target.value) step1Form.setValue("destDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowDestResults(true)}
-                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${step1Form.formState.errors.destDaneCode ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}
+                                                    className={`shipment-input ${step1Form.formState.errors.destDaneCode ? "shipment-input-error" : ""}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
                                                 {step1Form.formState.errors.destDaneCode && (
@@ -1100,7 +1096,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 <input
                                                     type="checkbox"
                                                     {...step1Form.register("insurance")}
-                                                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                                    className="shipment-checkbox"
                                                 />
                                                 <span className="text-sm text-gray-700 dark:text-gray-300">Asegurar envio</span>
                                             </label>
@@ -1110,7 +1106,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         <input
                                                             type="checkbox"
                                                             {...step1Form.register("includeGuideCost")}
-                                                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                                            className="shipment-checkbox"
                                                         />
                                                         <span className="text-sm text-gray-700 dark:text-gray-300">Incluir costo guia en contra entrega</span>
                                                     </label>
@@ -1118,7 +1114,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         <span className="text-sm text-gray-700 dark:text-gray-300">Metodo pago:</span>
                                                         <select
                                                             {...step1Form.register("codPaymentMethod")}
-                                                            className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                            className="shipment-input px-2 py-1 text-sm"
                                                         >
                                                             <option value="cash">Efectivo</option>
                                                             <option value="data_phone">Datafono</option>
@@ -1148,12 +1144,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </span>
                                     )}
                                     {officeCarrier && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-600">
+                                        <span className="shipment-badge-primary">
                                             Filtrado: {officeCarrier}
                                             <button
                                                 type="button"
                                                 onClick={() => setOfficeCarrier(null)}
-                                                className="ml-1 text-purple-500 hover:text-purple-800 dark:hover:text-purple-100 font-bold leading-none"
+                                                className="ml-1 hover:opacity-75 font-bold leading-none"
                                                 title="Quitar filtro"
                                             >
                                                 x
@@ -1163,12 +1159,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </div>
                             </div>
 
-                            <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
+                            <div className="overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800" style={{ maxHeight: 'calc(85vh - 350px)' }}>
                                 {rates.length === 0 ? (
-                                    <div className="flex items-center justify-center gap-3 py-10 text-purple-400">
-                                        <div style={{ width: 28, height: 28, border: '3px solid #a855f7', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                                        <span className="text-sm font-medium">Cargando cotizaciones...</span>
-                                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                                    <div className="flex items-center justify-center gap-3 py-10">
+                                        <div className="shipment-spinner" style={{ width: 28, height: 28 }} />
+                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Cargando cotizaciones...</span>
                                     </div>
                                 ) : (() => {
                                     const filteredRates = rates.filter(rate => {
@@ -1191,7 +1186,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     return (
                                     <div className="grid grid-cols-4 gap-3 auto-rows-max">
                                         {filteredRates.map((rate) => {
-                                            const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
+                                            const minIns = rate.minimumInsurance ?? 0;
+                                            const extraIns = rate.extraInsurance ?? 0;
+                                            const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
 
@@ -1199,25 +1196,23 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 <div
                                                     key={rate.idRate}
                                                     onClick={() => handleRateSelection(rate)}
-                                                    className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white dark:bg-gray-800"
+                                                    className={`shipment-carrier-card ${selectedRate?.idRate === rate.idRate ? 'shipment-carrier-card-selected' : ''}`}
                                                 >
-                                                    <div className="flex flex-col h-full">
-                                                        <div className="flex flex-col items-center mb-2">
-                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
+                                                    <div className="grid grid-cols-3 gap-3 h-full">
+                                                        <div className="col-span-1 flex flex-col items-center justify-center">
+                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} shipment-carrier-logo-container rounded-lg flex items-center justify-center overflow-hidden`}>
                                                                 <img
                                                                     src={getCarrierLogo(rate.carrier)}
                                                                     alt={rate.carrier}
                                                                     className={`${getCarrierLogoSize(rate.carrier).image} object-contain`}
                                                                     onError={(e) => {
                                                                         e.currentTarget.style.display = 'none';
-                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center text-purple-600">${rate.carrier.substring(0, 3)}</span>`;
+                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center" style="color: var(--color-primary);">${rate.carrier.substring(0, 3)}</span>`;
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <div className="text-center">
-                                                                <div className="font-semibold text-sm">{rate.carrier}</div>
-                                                                <div className="text-xs text-gray-600 dark:text-gray-300">{rate.product}</div>
-                                                            </div>
+                                                            <div className="font-semibold text-xs text-center mt-2">{rate.carrier}</div>
+                                                            <div className="text-[10px] text-gray-600 dark:text-gray-300 text-center">{rate.product}</div>
                                                             {order?.business_id && order.business_id > 0 && order.id && (
                                                                 <div className="mt-2 w-full px-1">
                                                                     <CarrierEffectivenessRates
@@ -1228,37 +1223,38 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 </div>
                                                             )}
                                                         </div>
-
-                                                        <div className="border-t pt-2 mt-2 flex-1">
-                                                            <div className="text-center mb-1">
-                                                                <div className="text-xl font-bold text-purple-600">
-                                                                    ${totalCost.toLocaleString()}
-                                                                </div>
-                                                                <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
-                                                                {step1Data?.insurance ? (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                                                                        Guía: ${rate.flete.toLocaleString()}<br />
-                                                                        Seguro: ${insuranceCost.toLocaleString()}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
-                                                                        Guía: ${rate.flete.toLocaleString()}<br />
-                                                                        Seguro: No asegurado
-                                                                    </div>
-                                                                )}
+                                                        <div className="col-span-2 flex flex-col text-[11px] text-gray-700 dark:text-gray-200">
+                                                            <div className="flex justify-between">
+                                                                <span>Guía</span>
+                                                                <span>${rate.flete.toLocaleString()}</span>
                                                             </div>
-                                                            <div className="text-center">
-                                                                <div className="text-xs text-gray-700 dark:text-gray-200 dark:text-gray-200 font-medium">
-                                                                    {rate.deliveryDays} días
-                                                                </div>
+                                                            <div className="flex justify-between">
+                                                                <span>Seg. obligatorio</span>
+                                                                <span>+ ${minIns.toLocaleString()}</span>
                                                             </div>
-                                                            {isCOD && (
-                                                                <div className="mt-1 text-center">
-                                                                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-300">
+                                                            <div className="flex justify-between">
+                                                                <span>
+                                                                    Seg. adicional
+                                                                    <span className={`ml-1 text-[9px] ${step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                                                        {step1Data?.insurance ? '(incluido)' : '(no incluido)'}
+                                                                    </span>
+                                                                </span>
+                                                                <span className={step1Data?.insurance ? '' : 'text-gray-400 line-through'}>+ ${extraIns.toLocaleString()}</span>
+                                                            </div>
+                                                            <div className="border-t border-gray-300 dark:border-gray-600 mt-1 pt-1 flex justify-between items-baseline">
+                                                                <span className="font-semibold">Total</span>
+                                                                <span className="shipment-cost-amount text-base">
+                                                                    ${totalCost.toLocaleString()} <span className="text-[9px] font-normal text-gray-500">COP</span>
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center mt-1 text-[10px] text-gray-600 dark:text-gray-300">
+                                                                <span>{rate.deliveryDays} días</span>
+                                                                {isCOD && (
+                                                                    <span className="px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-300">
                                                                         Contra Entrega
                                                                     </span>
-                                                                </div>
-                                                            )}
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1276,12 +1272,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
                             <div className="overflow-y-auto flex-1 space-y-3 pr-1">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                                    <div className="border border-purple-200 dark:border-purple-700 rounded-xl bg-purple-50/40 dark:bg-purple-900/10 p-4">
-                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-purple-200/60 dark:border-purple-700/40">
-                                            <div className="w-7 h-7 rounded-lg bg-purple-100 dark:bg-purple-800/40 flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-600 dark:text-purple-400"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <div className="shipment-section-origin rounded-xl p-4">
+                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'color-mix(in oklab, var(--color-primary) 30%, transparent)' }}>
+                                            <div className="shipment-section-origin-icon w-7 h-7 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                                             </div>
-                                            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-400">Remitente (Origen)</h3>
+                                            <h3 className="shipment-section-origin-label text-sm">Remitente (Origen)</h3>
                                         </div>
 
                                         <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
@@ -1302,12 +1298,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                     </div>
 
-                                    <div className="border border-blue-200 dark:border-blue-700 rounded-xl bg-blue-50/40 dark:bg-blue-900/10 p-4">
-                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-blue-200/60 dark:border-blue-700/40">
-                                            <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-800/40 flex items-center justify-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-blue-400"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                    <div className="shipment-section-destination rounded-xl p-4">
+                                        <div className="flex items-center gap-2 mb-3 pb-2 border-b" style={{ borderColor: 'color-mix(in oklab, var(--color-secondary) 30%, transparent)' }}>
+                                            <div className="shipment-section-destination-icon w-7 h-7 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                                             </div>
-                                            <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400">Destinatario (Destino)</h3>
+                                            <h3 className="shipment-section-destination-label text-sm">Destinatario (Destino)</h3>
                                         </div>
 
                                         <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold mb-1">Direccion</p>
@@ -1361,18 +1357,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                         <div className="text-right">
                                             <div className="text-sm text-gray-600 dark:text-gray-300">TOTAL:</div>
-                                            <div className="text-2xl font-bold text-purple-600">
-                                                ${(selectedRate.flete + (step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0)).toLocaleString()}
+                                            <div className="shipment-cost-amount text-2xl">
+                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0)).toLocaleString()}
                                             </div>
-                                            {step1Data?.insurance ? (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: ${((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
-                                                </div>
-                                            ) : (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: No asegurado
-                                                </div>
-                                            )}
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right leading-tight">
+                                                Guía: ${selectedRate.flete.toLocaleString()}<br />
+                                                Seg. obligatorio: ${(selectedRate.minimumInsurance ?? 0).toLocaleString()}<br />
+                                                Seg. adicional: ${(selectedRate.extraInsurance ?? 0).toLocaleString()} <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1399,9 +1391,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <div>
                                     <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-3">Selecciona tu método de pago</h4>
                                     <div className={`grid gap-2 ${generatedPdfUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                                        <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
+                                        <div className="border-2 rounded-lg p-2" style={{ borderColor: 'var(--color-primary)', background: 'color-mix(in oklab, var(--color-primary) 10%, transparent)' }}>
                                             <div className="flex items-center justify-center mb-2">
-                                                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'var(--color-primary)' }}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                                 </svg>
                                             </div>
@@ -1412,15 +1404,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
 
                                         {generatedPdfUrl && (
-                                            /* ── Success state ── */
-                                            <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4 flex flex-col items-center gap-3">
-                                                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="shipment-success-container">
+                                                <div className="shipment-success-icon">
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                                     </svg>
                                                 </div>
                                                 <div className="text-center min-w-0">
-                                                    <p className="font-bold text-emerald-800 text-sm">¡Guía generada exitosamente!</p>
+                                                    <p className="shipment-success-text">¡Guía generada exitosamente!</p>
                                                     {selectedCarrier && (
                                                         <div className="flex items-center justify-center gap-2 mt-1.5">
                                                             <img
@@ -1508,13 +1499,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 };
                                 step1Form.handleSubmit(handleStep1Submit, (errors) => {
                                     const errorFields = Object.entries(errors).map(
-                                        ([field, err]) => `  • ${fieldLabels[field] || field}: ${(err as any)?.message || "inválido"}`
+                                        ([field]) => fieldLabels[field] || field
                                     );
-                                    setError(`⚠️ Por favor completa los siguientes campos:\n${errorFields.join('\n')}`);
+                                    setError(`Completa: ${errorFields.join(', ')}`);
                                 })();
                             }}
                             disabled={loading}
-                            style={{ background: '#7c3aed' }}
+                            className="shipment-btn-primary"
                         >
                             {loading ? "Cotizando..." : "Siguiente"}
                         </Button>
@@ -1530,9 +1521,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {/* Step 3: Next Button - DISABLED if form has errors */}
                     {currentStep === 3 && (
                         <Button
-                            variant="primary"
+                            className="shipment-btn-primary"
                             onClick={async () => {
-                                // Trigger validation
                                 const isValid = await step3Form.trigger();
                                 if (isValid) {
                                     const data = step3Form.getValues();
@@ -1542,10 +1532,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             }}
                             disabled={loading || Object.keys(step3Form.formState.errors).length > 0}
                             title={Object.keys(step3Form.formState.errors).length > 0 ? "Completa todos los campos requeridos" : ""}
-                            style={{
-                                background: Object.keys(step3Form.formState.errors).length > 0 ? '#ccc' : '#7c3aed',
-                                cursor: Object.keys(step3Form.formState.errors).length > 0 ? 'not-allowed' : 'pointer'
-                            }}
                         >
                             {Object.keys(step3Form.formState.errors).length > 0
                                 ? `⚠️ ${Object.keys(step3Form.formState.errors).length} campo(s) incompleto(s)`
@@ -1559,7 +1545,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <Button
                             onClick={handleFinalGenerate}
                             disabled={loading}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="shipment-btn-secondary"
                         >
                             {loading ? "Generando..." : "Pagar guías"}
                         </Button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { SiigoCredentials } from '../../domain/types';
 import { updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -13,9 +13,7 @@ import {
     CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
-    BeakerIcon
+    BeakerIcon,
 } from '@heroicons/react/24/outline';
 
 interface SiigoEditFormProps {
@@ -37,7 +35,6 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    const [showAccessKey, setShowAccessKey] = useState(false);
     const [isTesting, setIsTesting] = useState(initialData.is_testing || false);
 
     // Business selection for super admins
@@ -263,29 +260,12 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Clave de Acceso (Access Key)
                         </label>
-                        <div className="relative">
-                            <Input
-                                type={showAccessKey ? "text" : "password"}
-                                value={formData.access_key}
-                                onChange={(e) => setFormData({ ...formData, access_key: e.target.value })}
-                                placeholder="Clave de acceso API"
-                                autoComplete="new-password"
-                                data-1p-ignore
-                                className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowAccessKey(!showAccessKey)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                                tabIndex={-1}
-                            >
-                                {showAccessKey ? (
-                                    <EyeSlashIcon className="w-5 h-5" />
-                                ) : (
-                                    <EyeIcon className="w-5 h-5" />
-                                )}
-                            </button>
-                        </div>
+                        <SecretInput
+                            value={formData.access_key}
+                            onChange={(e) => setFormData({ ...formData, access_key: e.target.value })}
+                            placeholder="Clave de acceso API"
+                            className="bg-white dark:bg-gray-800 font-mono text-sm"
+                        />
                     </div>
                 </div>
 

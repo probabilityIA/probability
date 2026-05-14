@@ -5,12 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment/request"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
+
+var whitespaceRun = regexp.MustCompile(`\s+`)
+
+func sanitizeParam(s string) string {
+	return strings.TrimSpace(whitespaceRun.ReplaceAllString(s, " "))
+}
 
 func (c *consumer) Start(ctx context.Context) error {
 	queueName := rabbitmq.QueueShipmentsWhatsAppGuideNotification
@@ -67,23 +74,23 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	if isCOD {
 		templateName = "guia_envio_generada_cod"
 		variables = map[string]string{
-			"1": orDefault(event.CustomerName, "Cliente"),
-			"2": orDefault(event.BusinessName, "Probability"),
-			"3": orDefault(event.OrderNumber, "N/A"),
-			"4": orDefault(event.TrackingNumber, "N/A"),
-			"5": orDefault(event.Carrier, "Transportadora"),
+			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
+			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
+			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
+			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
+			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
 			"6": formatTotalAmount(event.CodTotal),
-			"7": trackingURL,
+			"7": sanitizeParam(trackingURL),
 		}
 	} else {
 		templateName = "guia_envio_generada"
 		variables = map[string]string{
-			"1": orDefault(event.CustomerName, "Cliente"),
-			"2": orDefault(event.BusinessName, "Probability"),
-			"3": orDefault(event.OrderNumber, "N/A"),
-			"4": orDefault(event.TrackingNumber, "N/A"),
-			"5": orDefault(event.Carrier, "Transportadora"),
-			"6": trackingURL,
+			"1": sanitizeParam(orDefault(event.CustomerName, "Cliente")),
+			"2": sanitizeParam(orDefault(event.BusinessName, "Probability")),
+			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
+			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
+			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
+			"6": sanitizeParam(trackingURL),
 		}
 	}
 

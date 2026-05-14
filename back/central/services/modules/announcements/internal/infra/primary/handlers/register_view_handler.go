@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/announcements/internal/domain/dtos"
@@ -21,10 +22,23 @@ func (h *handler) RegisterView(c *gin.Context) {
 		return
 	}
 
+	businessID := c.GetUint("business_id")
+	if businessID == 0 {
+		if param := c.Query("business_id"); param != "" {
+			if parsed, err := strconv.ParseUint(param, 10, 64); err == nil && parsed > 0 {
+				businessID = uint(parsed)
+			}
+		}
+	}
+	if businessID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "business_id requerido (super admin debe pasarlo como query param ?business_id=X)"})
+		return
+	}
+
 	dto := dtos.RegisterViewDTO{
 		AnnouncementID: id,
 		UserID:         c.GetUint("user_id"),
-		BusinessID:     c.GetUint("business_id"),
+		BusinessID:     businessID,
 		Action:         entities.ViewAction(req.Action),
 		LinkID:         req.LinkID,
 	}

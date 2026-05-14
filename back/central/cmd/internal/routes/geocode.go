@@ -220,7 +220,17 @@ func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
 		}
 
 		var pResp placesSearchResponse
-		if err := json.Unmarshal(body, &pResp); err != nil || pResp.Status != "OK" {
+		if err := json.Unmarshal(body, &pResp); err != nil {
+			fmt.Printf("❌ Places API JSON unmarshal error: %v\n", err)
+			fmt.Printf("Response body: %s\n", string(body))
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		fmt.Printf("📍 Places API Response - Status: %s, Results: %d\n", pResp.Status, len(pResp.Results))
+		if pResp.Status != "OK" {
+			fmt.Printf("⚠️ Google Places API returned: %s\n", pResp.Status)
+			fmt.Printf("Full response: %s\n", string(body))
 			c.JSON(http.StatusOK, []AddressSearchResult{})
 			return
 		}

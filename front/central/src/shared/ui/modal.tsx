@@ -83,12 +83,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           >
             {/* Header for full screen */}
             {title && (
-              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">{title}</h2>
+              <div className="flex items-center justify-between px-8 py-6 border-b" style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>
+                <h2 className="text-2xl font-bold text-white">{title}</h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-300 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                    className="text-white hover:opacity-80 transition-opacity p-2 rounded-lg"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -123,12 +123,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           >
             {/* Header */}
             {title && (
-              <div className="relative mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold text-purple-700 dark:text-purple-400 text-center">{title}</h3>
+              <div className="relative mb-4 flex-shrink-0 px-6 py-4 -mx-6 -mt-6 rounded-t-2xl" style={{ backgroundColor: 'var(--color-primary)' }}>
+                <h3 className="text-xl font-bold text-center text-white">{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="absolute right-0 top-0 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-300 transition-colors"
+                    className="absolute right-2 top-2 text-white hover:opacity-80 transition-opacity"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

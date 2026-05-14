@@ -511,3 +511,15 @@ func (uc *UseCaseProduct) resolveProductFamily(ctx context.Context, businessID u
 
 	return family, nil
 }
+
+func (uc *UseCaseProduct) ListSKUs(ctx context.Context, businessID uint, prefix string) ([]string, error) {
+	return uc.repo.ListSKUs(ctx, businessID, prefix)
+}
+
+func (uc *UseCaseProduct) GetNextSKU(ctx context.Context, businessID uint, prefix string) (string, error) {
+	return uc.repo.GetNextSKU(ctx, businessID, prefix)
+}
+
+func (uc *UseCaseProduct) GetNextSKUBatch(ctx context.Context, businessID uint, prefix string, count int) ([]string, error) {
+	return uc.repo.GetNextSKUBatch(ctx, businessID, prefix, count)
+}

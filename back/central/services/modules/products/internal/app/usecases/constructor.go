@@ -108,3 +108,18 @@ func (uc *UseCases) DeleteProductFamily(ctx context.Context, businessID uint, fa
 func (uc *UseCases) ListProductsByFamilyID(ctx context.Context, businessID uint, familyID uint) ([]domain.Product, error) {
 	return uc.repo.ListProductsByFamilyID(ctx, businessID, familyID)
 }
+
+// ListSKUs delega al caso de uso CRUD
+func (uc *UseCases) ListSKUs(ctx context.Context, businessID uint, prefix string) ([]string, error) {
+	return uc.ProductCRUD.ListSKUs(ctx, businessID, prefix)
+}
+
+// GetNextSKU delega al caso de uso CRUD
+func (uc *UseCases) GetNextSKU(ctx context.Context, businessID uint, prefix string) (string, error) {
+	return uc.ProductCRUD.GetNextSKU(ctx, businessID, prefix)
+}
+
+// GetNextSKUBatch delega al caso de uso CRUD
+func (uc *UseCases) GetNextSKUBatch(ctx context.Context, businessID uint, prefix string, count int) ([]string, error) {
+	return uc.ProductCRUD.GetNextSKUBatch(ctx, businessID, prefix, count)
+}

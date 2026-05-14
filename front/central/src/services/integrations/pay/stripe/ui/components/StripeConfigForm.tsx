@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select } from '@/shared/ui';
+import { Button, Input, Alert, Select, SecretInput } from '@/shared/ui';
 import { StripeCredentials } from '../../domain/types';
 import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -14,8 +14,6 @@ import {
     CreditCardIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
-    EyeIcon,
-    EyeSlashIcon,
     BeakerIcon,
 } from '@heroicons/react/24/outline';
 
@@ -30,8 +28,6 @@ export function StripeConfigForm({ integrationTypeId, onSuccess, onCancel, integ
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showSecretKey, setShowSecretKey] = useState(false);
-
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
@@ -215,26 +211,13 @@ export function StripeConfigForm({ integrationTypeId, onSuccess, onCancel, integ
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Secret Key <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showSecretKey ? 'text' : 'password'}
-                            value={formData.secret_key}
-                            onChange={(e) => setFormData({ ...formData, secret_key: e.target.value })}
-                            placeholder="sk_test_... o sk_live_..."
-                            required
-                            autoComplete="new-password"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowSecretKey(!showSecretKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
-                            tabIndex={-1}
-                        >
-                            {showSecretKey ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={formData.secret_key}
+                        onChange={(e) => setFormData({ ...formData, secret_key: e.target.value })}
+                        placeholder="sk_test_... o sk_live_..."
+                        required
+                        className="bg-white dark:bg-gray-800 font-mono text-sm"
+                    />
                     <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                         Test: <code>sk_test_...</code> | Live: <code>sk_live_...</code>
                     </p>

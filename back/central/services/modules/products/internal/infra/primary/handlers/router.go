@@ -19,6 +19,9 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		}
 
 		products.GET("/lookup-by-external", middleware.JWT(), h.LookupProductByExternalRef)
+		products.GET("/skus/next-batch", middleware.JWT(), h.GetNextSKUBatch)
+		products.GET("/skus/next", middleware.JWT(), h.GetNextSKU)
+		products.GET("/skus", middleware.JWT(), h.ListSKUs)
 
 		products.GET("", middleware.JWT(), h.ListProducts)
 		products.GET("/:id", middleware.JWT(), h.GetProductByID)

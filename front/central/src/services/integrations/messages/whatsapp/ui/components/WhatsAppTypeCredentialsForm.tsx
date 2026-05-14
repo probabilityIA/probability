@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { EyeIcon, EyeSlashIcon, ClipboardDocumentIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
-import { Input, Button, Modal } from '@/shared/ui';
+import { Input, Button, Modal, SecretInput } from '@/shared/ui';
 import { testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 
 export interface WhatsAppPlatformCredentials {
@@ -33,9 +33,6 @@ export default function WhatsAppTypeCredentialsForm({
     onChange,
     isEditing = false,
 }: WhatsAppTypeCredentialsFormProps) {
-    const [showAccessToken, setShowAccessToken] = useState(false);
-    const [showVerifyToken, setShowVerifyToken] = useState(false);
-    const [showWebhookSecret, setShowWebhookSecret] = useState(false);
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [copied, setCopied] = useState(false);
@@ -165,24 +162,12 @@ export default function WhatsAppTypeCredentialsForm({
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Access Token *
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showAccessToken ? 'text' : 'password'}
-                            name="wa_access_token"
-                            autoComplete="new-password"
-                            value={credentials.access_token}
-                            onChange={(e) => handleChange('access_token', e.target.value)}
-                            placeholder="EAAxxxxxxxxx..."
-                            className="font-mono pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowAccessToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
-                        >
-                            {showAccessToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={credentials.access_token}
+                        onChange={(e) => handleChange('access_token', e.target.value)}
+                        placeholder="EAAxxxxxxxxx..."
+                        className="font-mono"
+                    />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Token de acceso permanente de la app en Meta
                     </p>
@@ -191,24 +176,12 @@ export default function WhatsAppTypeCredentialsForm({
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Verify Token (Webhook)
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showVerifyToken ? 'text' : 'password'}
-                            name="wa_verify_token"
-                            autoComplete="new-password"
-                            value={credentials.verify_token}
-                            onChange={(e) => handleChange('verify_token', e.target.value)}
-                            placeholder="mi_token_secreto"
-                            className="font-mono pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowVerifyToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
-                        >
-                            {showVerifyToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={credentials.verify_token}
+                        onChange={(e) => handleChange('verify_token', e.target.value)}
+                        placeholder="mi_token_secreto"
+                        className="font-mono"
+                    />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Token de verificacion para el webhook (Meta &rarr; Configuration)
                     </p>
@@ -217,24 +190,12 @@ export default function WhatsAppTypeCredentialsForm({
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Webhook Secret (App Secret)
                     </label>
-                    <div className="relative">
-                        <Input
-                            type={showWebhookSecret ? 'text' : 'password'}
-                            name="wa_webhook_secret"
-                            autoComplete="new-password"
-                            value={credentials.webhook_secret}
-                            onChange={(e) => handleChange('webhook_secret', e.target.value)}
-                            placeholder="App Secret de Meta"
-                            className="font-mono pr-10"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowWebhookSecret((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
-                        >
-                            {showWebhookSecret ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                        </button>
-                    </div>
+                    <SecretInput
+                        value={credentials.webhook_secret}
+                        onChange={(e) => handleChange('webhook_secret', e.target.value)}
+                        placeholder="App Secret de Meta"
+                        className="font-mono"
+                    />
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         App Secret de Meta (Developers &rarr; App &rarr; Settings &rarr; Basic)
                     </p>

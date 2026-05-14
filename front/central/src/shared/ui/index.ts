@@ -15,6 +15,7 @@ export * from './file-input';
 export * from './form-modal';
 export * from './full-width-modal';
 export * from './input';
+export * from './secret-input';
 export * from './modal';
 export * from './select';
 export * from './sidebar';

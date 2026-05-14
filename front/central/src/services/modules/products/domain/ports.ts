@@ -23,6 +23,9 @@ export interface IProductRepository {
     updateProduct(id: string, data: UpdateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
     deleteProduct(id: string, businessId?: number): Promise<ActionResponse>;
     uploadProductImage(productId: string, formData: FormData, businessId?: number): Promise<UploadImageResponse>;
+    getSKUs(prefix?: string, businessId?: number): Promise<{ success: boolean; data: string[] }>;
+    getNextSKU(prefix: string, businessId?: number): Promise<{ success: boolean; data: string }>;
+    getNextSKUBatch(prefix: string, count: number, businessId?: number): Promise<{ success: boolean; data: string[] }>;
 
     getProductFamilies(params?: GetFamiliesParams): Promise<PaginatedResponse<ProductFamily>>;
     getProductFamilyById(familyId: number, businessId?: number): Promise<SingleResponse<ProductFamily>>;

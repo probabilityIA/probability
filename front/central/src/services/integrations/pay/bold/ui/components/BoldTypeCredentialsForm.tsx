@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import {
-    EyeIcon,
-    EyeSlashIcon,
     KeyIcon,
     BeakerIcon,
     GlobeAltIcon,
@@ -11,7 +9,7 @@ import {
     ClipboardDocumentCheckIcon,
     LinkIcon,
 } from '@heroicons/react/24/outline';
-import { Input } from '@/shared/ui';
+import { SecretInput } from '@/shared/ui';
 
 export interface BoldPlatformCredentials {
     api_key: string;
@@ -30,42 +28,6 @@ interface BoldTypeCredentialsFormProps {
     isEditing?: boolean;
     webhookUrlProd?: string;
     webhookUrlTest?: string;
-}
-
-interface SecretInputProps {
-    value: string;
-    onChange: (v: string) => void;
-    placeholder: string;
-    label: string;
-    helper: string;
-}
-
-function SecretInput({ value, onChange, placeholder, label, helper }: SecretInputProps) {
-    const [show, setShow] = useState(false);
-    return (
-        <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">{label}</label>
-            <div className="relative">
-                <Input
-                    type={show ? 'text' : 'password'}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    autoComplete="off"
-                    className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
-                />
-                <button
-                    type="button"
-                    onClick={() => setShow(!show)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    tabIndex={-1}
-                >
-                    {show ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
-                </button>
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{helper}</p>
-        </div>
-    );
 }
 
 export default function BoldTypeCredentialsForm({
@@ -218,16 +180,16 @@ export default function BoldTypeCredentialsForm({
                         <SecretInput
                             label="Identity Key (api_key)"
                             value={credentials.api_key}
-                            onChange={(v) => onChange({ ...credentials, api_key: v })}
+                            onChange={(e) => onChange({ ...credentials, api_key: e.target.value })}
                             placeholder={placeholderProd}
-                            helper="Llave pública de identidad del Botón de Pago."
+                            helperText="Llave pública de identidad del Botón de Pago."
                         />
                         <SecretInput
                             label="Secret Key"
                             value={credentials.secret_key}
-                            onChange={(v) => onChange({ ...credentials, secret_key: v })}
+                            onChange={(e) => onChange({ ...credentials, secret_key: e.target.value })}
                             placeholder={placeholderProd}
-                            helper="Firma requests y valida webhooks (HMAC-SHA256)."
+                            helperText="Firma requests y valida webhooks (HMAC-SHA256)."
                         />
                     </div>
 
@@ -239,16 +201,16 @@ export default function BoldTypeCredentialsForm({
                         <SecretInput
                             label="Identity Key (api_key)"
                             value={credentials.test_api_key}
-                            onChange={(v) => onChange({ ...credentials, test_api_key: v })}
+                            onChange={(e) => onChange({ ...credentials, test_api_key: e.target.value })}
                             placeholder={placeholderTest}
-                            helper="Llave de identidad para sandbox del Botón de Pago."
+                            helperText="Llave de identidad para sandbox del Botón de Pago."
                         />
                         <SecretInput
                             label="Secret Key"
                             value={credentials.test_secret_key}
-                            onChange={(v) => onChange({ ...credentials, test_secret_key: v })}
+                            onChange={(e) => onChange({ ...credentials, test_secret_key: e.target.value })}
                             placeholder={placeholderTest}
-                            helper="Secret usado para firmar/validar en sandbox."
+                            helperText="Secret usado para firmar/validar en sandbox."
                         />
                     </div>
                 </div>
@@ -273,16 +235,16 @@ export default function BoldTypeCredentialsForm({
                         <SecretInput
                             label="Identity Key API (link_api_key)"
                             value={credentials.link_api_key}
-                            onChange={(v) => onChange({ ...credentials, link_api_key: v })}
+                            onChange={(e) => onChange({ ...credentials, link_api_key: e.target.value })}
                             placeholder={placeholderProd}
-                            helper="Llave pública del API de Payment Links de Bold."
+                            helperText="Llave pública del API de Payment Links de Bold."
                         />
                         <SecretInput
                             label="Secret Key API"
                             value={credentials.link_secret_key}
-                            onChange={(v) => onChange({ ...credentials, link_secret_key: v })}
+                            onChange={(e) => onChange({ ...credentials, link_secret_key: e.target.value })}
                             placeholder={placeholderProd}
-                            helper="Secret del API (firma de requests salientes)."
+                            helperText="Secret del API (firma de requests salientes)."
                         />
                     </div>
 
@@ -294,16 +256,16 @@ export default function BoldTypeCredentialsForm({
                         <SecretInput
                             label="Identity Key API (test_link_api_key)"
                             value={credentials.test_link_api_key}
-                            onChange={(v) => onChange({ ...credentials, test_link_api_key: v })}
+                            onChange={(e) => onChange({ ...credentials, test_link_api_key: e.target.value })}
                             placeholder={placeholderTest}
-                            helper="Llave de identidad del API de Payment Links en sandbox."
+                            helperText="Llave de identidad del API de Payment Links en sandbox."
                         />
                         <SecretInput
                             label="Secret Key API"
                             value={credentials.test_link_secret_key}
-                            onChange={(v) => onChange({ ...credentials, test_link_secret_key: v })}
+                            onChange={(e) => onChange({ ...credentials, test_link_secret_key: e.target.value })}
                             placeholder={placeholderTest}
-                            helper="Secret del API en sandbox."
+                            helperText="Secret del API en sandbox."
                         />
                     </div>
                 </div>
