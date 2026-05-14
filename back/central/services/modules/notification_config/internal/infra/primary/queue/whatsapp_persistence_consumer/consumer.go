@@ -15,28 +15,11 @@ func (c *PersistenceConsumer) Start(ctx context.Context) error {
 		Str("queue", rabbitmq.QueueWhatsAppPersistenceEvents).
 		Msg("Iniciando consumer unificado de WhatsApp persistence events")
 
-	queues := []string{
-		rabbitmq.QueueWhatsAppPersistenceEvents,
-		rabbitmq.QueueWhatsAppConversationEventsLegacy,
-		rabbitmq.QueueWhatsAppMessageLogEventsLegacy,
+	if err := c.rabbitMQ.DeclareQueue(rabbitmq.QueueWhatsAppPersistenceEvents, true); err != nil {
+		return fmt.Errorf("failed to declare queue %s: %w", rabbitmq.QueueWhatsAppPersistenceEvents, err)
 	}
 
-	for _, q := range queues {
-		if err := c.rabbitMQ.DeclareQueue(q, true); err != nil {
-			return fmt.Errorf("failed to declare queue %s: %w", q, err)
-		}
-	}
-
-	for _, q := range queues[:len(queues)-1] {
-		queue := q
-		go func() {
-			if err := c.rabbitMQ.Consume(ctx, queue, c.handleMessage); err != nil {
-				c.logger.Error(ctx).Err(err).Str("queue", queue).Msg("consumer detenido")
-			}
-		}()
-	}
-
-	return c.rabbitMQ.Consume(ctx, queues[len(queues)-1], c.handleMessage)
+	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, c.handleMessage)
 }
 
 func (c *PersistenceConsumer) handleMessage(body []byte) error {
