@@ -32,6 +32,14 @@ func (uc *UseCaseCreateOrder) CreateManualOrder(ctx context.Context, req *dtos.C
 		return nil, fmt.Errorf("business_id is required")
 	}
 
+	hasWarehouse, err := uc.repo.BusinessHasWarehouse(ctx, *req.BusinessID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking warehouse for business %d: %w", *req.BusinessID, err)
+	}
+	if !hasWarehouse {
+		return nil, fmt.Errorf("el negocio %d no tiene bodega configurada: cree al menos una bodega antes de crear ordenes", *req.BusinessID)
+	}
+
 	if strings.TrimSpace(req.ShippingStreet) == "" {
 		return nil, fmt.Errorf("shipping_street is required")
 	}

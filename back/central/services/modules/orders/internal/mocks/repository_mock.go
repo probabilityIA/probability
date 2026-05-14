@@ -108,6 +108,11 @@ func (m *RepositoryMock) GetPlatformIntegrationIDByBusinessID(ctx context.Contex
 	return args.Get(0).(uint), args.Error(1)
 }
 
+func (m *RepositoryMock) BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error) {
+	args := m.Called(ctx, businessID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *RepositoryMock) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {
 	args := m.Called(ctx, externalID, integrationID)
 	return args.Bool(0), args.Error(1)

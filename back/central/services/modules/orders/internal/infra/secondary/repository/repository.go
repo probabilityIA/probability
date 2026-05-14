@@ -935,7 +935,18 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 	return count, err
 }
 
-// GetPlatformIntegrationIDByBusinessID obtiene la integración de plataforma para un negocio
+func (r *Repository) BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error) {
+	var count int64
+	err := r.db.Conn(ctx).
+		Table("warehouses").
+		Where("business_id = ? AND is_active = true AND deleted_at IS NULL", businessID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	var integration models.Integration
 	err := r.db.Conn(ctx).
