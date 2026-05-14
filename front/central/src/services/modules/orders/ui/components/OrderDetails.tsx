@@ -10,7 +10,6 @@ import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { DeliveryProbabilityBadge } from '@/services/modules/geozones/ui/components/DeliveryProbabilityBadge';
-import { DeliveryProbabilityByCarrier } from '@/services/modules/geozones/ui/components/DeliveryProbabilityByCarrier';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import dynamic from 'next/dynamic';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
@@ -712,9 +711,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                             </div>
                                                             <div className="pt-2">
                                                                 <GeozoneMiniMap businessId={order.business_id} orderId={order.id} lat={order.shipping_lat ?? null} lng={order.shipping_lng ?? null} height="200px" />
-                                                            </div>
-                                                            <div className="pt-2">
-                                                                <DeliveryProbabilityByCarrier businessId={order.business_id} orderId={order.id} />
                                                             </div>
                                                         </>
                                                     )}
