@@ -125,8 +125,8 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         businessId: propBusinessId ?? selectedBusinessId ?? undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        orderNumber: orderNumber || undefined,
-        customerName: customerName || search || undefined,
+        orderNumber: orderNumber.trim() || undefined,
+        customerName: (customerName || search).trim() || undefined,
         sortBy,
         sortOrder,
       };
@@ -167,7 +167,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     if (isSuperAdmin && !selectedBusinessId && !propBusinessId) return;
     const t = setTimeout(loadOrders, 300);
     return () => clearTimeout(t);
-  }, [isOpen, loadOrders, isSuperAdmin, selectedBusinessId, propBusinessId]);
+  }, [isOpen, loadOrders, isSuperAdmin, selectedBusinessId, propBusinessId, orderNumber, customerName, startDate, endDate, search]);
 
   const formatCurrency = (amount: number, currency: string) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: currency || 'COP' }).format(amount);
