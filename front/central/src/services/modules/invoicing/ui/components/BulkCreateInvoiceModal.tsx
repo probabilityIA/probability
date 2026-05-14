@@ -119,20 +119,22 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     setError(null);
     try {
       const [sortBy, sortOrder] = sort.split(':') as [SortKey, SortDir];
+      const cleanOrderNumber = orderNumber ? orderNumber.trim() : '';
+      const cleanCustomerName = customerName ? customerName.trim() : (search ? search.trim() : '');
       const filters: InvoiceableOrdersFilters = {
         page,
         pageSize,
         businessId: propBusinessId ?? selectedBusinessId ?? undefined,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        orderNumber: orderNumber.trim() || undefined,
-        customerName: (customerName || search).trim() || undefined,
+        startDate: startDate ? startDate : undefined,
+        endDate: endDate ? endDate : undefined,
+        orderNumber: cleanOrderNumber || undefined,
+        customerName: cleanCustomerName || undefined,
         sortBy,
         sortOrder,
       };
       const result = await getInvoiceableOrdersAction(filters);
-      setOrders(result.data);
-      setTotal(result.total);
+      setOrders(result.data || []);
+      setTotal(result.total || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar las ordenes facturables');
     } finally {
