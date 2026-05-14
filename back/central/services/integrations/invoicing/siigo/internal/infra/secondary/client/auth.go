@@ -43,7 +43,7 @@ func (c *Client) loginWithCredentials(ctx context.Context, username, accessKey, 
 		SetHeader("Partner-Id", partnerID).
 		SetBody(authBody).
 		SetResult(&authResp).
-		Post(c.endpointURL(baseURL, "/v1/auth"))
+		Post(c.endpointURL(baseURL, "/auth"))
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Siigo auth request failed - network error")
