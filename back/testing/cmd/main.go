@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/bold"
 	"github.com/secamc93/probability/back/testing/integrations/envioclick"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
+	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
 	"github.com/secamc93/probability/back/testing/modules/orders"
@@ -72,6 +73,16 @@ func main() {
 		}
 	}()
 
+	siigoPort := getEnv("SIIGO_MOCK_PORT", "9095")
+	siigoServer := siigo.New(logger, siigoPort)
+
+	go func() {
+		if err := siigoServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting Siigo mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
@@ -104,6 +115,7 @@ func main() {
 	fmt.Printf("Softpymes HTTP:    http://localhost:%s\n", softpymesPort)
 	fmt.Printf("EnvioClick HTTP:   http://localhost:%s\n", envioclickPort)
 	fmt.Printf("Bold HTTP:         http://localhost:%s\n", boldPort)
+	fmt.Printf("Siigo HTTP:        http://localhost:%s\n", siigoPort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")

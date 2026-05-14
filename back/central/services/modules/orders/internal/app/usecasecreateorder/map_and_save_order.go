@@ -67,7 +67,12 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
-	// 4-8. Guardar entidades relacionadas
+	if dto.BusinessID != nil {
+		if err := uc.repo.ResolveOrderGeozone(ctx, order.ID, *dto.BusinessID); err != nil {
+			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("Failed to resolve order geozone")
+		}
+	}
+
 	if err := uc.saveRelatedEntities(ctx, order, dto); err != nil {
 		return nil, err
 	}

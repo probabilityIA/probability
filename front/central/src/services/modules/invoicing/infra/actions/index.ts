@@ -307,19 +307,22 @@ export async function disableAutoInvoiceAction(id: number): Promise<InvoicingCon
  *   - Ignora businessId, siempre filtra por su business_id del JWT
  */
 export async function getInvoiceableOrdersAction(
-  page: number = 1,
-  pageSize: number = 100,
-  businessId?: number | null
+  filters: import('../../domain/types').InvoiceableOrdersFilters = {}
 ): Promise<PaginatedInvoiceableOrders> {
   const params = new URLSearchParams({
-    page: page.toString(),
-    page_size: pageSize.toString(),
+    page: (filters.page ?? 1).toString(),
+    page_size: (filters.pageSize ?? 100).toString(),
   });
-
-  // Si se especifica un businessId, agregarlo al query string
-  if (businessId !== null && businessId !== undefined) {
-    params.append('business_id', businessId.toString());
-  }
+  if (filters.businessId != null) params.append('business_id', String(filters.businessId));
+  if (filters.startDate) params.append('start_date', filters.startDate);
+  if (filters.endDate) params.append('end_date', filters.endDate);
+  if (filters.orderNumber) params.append('order_number', filters.orderNumber);
+  if (filters.customerName) params.append('customer_name', filters.customerName);
+  if (filters.customerEmail) params.append('customer_email', filters.customerEmail);
+  if (filters.paymentStatusId) params.append('payment_status_id', String(filters.paymentStatusId));
+  if (filters.fulfillmentStatusId) params.append('fulfillment_status_id', String(filters.fulfillmentStatusId));
+  if (filters.sortBy) params.append('sort_by', filters.sortBy);
+  if (filters.sortOrder) params.append('sort_order', filters.sortOrder);
 
   return fetchWithAuth(
     `${API_BASE_URL}/invoicing/invoices/invoiceable-orders?${params.toString()}`,

@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/drivers"
+	"github.com/secamc93/probability/back/central/services/modules/geozones"
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
@@ -83,6 +84,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	drivers.New(router, database)
 	vehicles.New(router, database)
 	routes.New(router, database)
+	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment)
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)

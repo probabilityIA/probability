@@ -266,6 +266,11 @@ func (m *RepositoryMock) GetOrderHistory(ctx context.Context, orderID string) ([
 	return args.Get(0).([]entities.OrderHistory), args.Error(1)
 }
 
+func (m *RepositoryMock) ResolveOrderGeozone(ctx context.Context, orderID string, businessID uint) error {
+	args := m.Called(ctx, orderID, businessID)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) DeleteOrderItemsByOrderID(ctx context.Context, orderID string) error {
 	args := m.Called(ctx, orderID)
 	return args.Error(0)

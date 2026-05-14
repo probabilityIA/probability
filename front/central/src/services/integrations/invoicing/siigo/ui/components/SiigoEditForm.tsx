@@ -49,7 +49,6 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
         access_key: initialData.credentials?.access_key || '',
         account_id: initialData.credentials?.account_id || '',
         partner_id: initialData.credentials?.partner_id || '',
-        base_url: initialData.credentials?.base_url || '',
     });
 
     // Check if user is super admin and load businesses
@@ -90,12 +89,11 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
             const credentials = {
                 username: formData.username,
                 access_key: formData.access_key,
-                account_id: formData.account_id,
+                account_id: formData.account_id || undefined,
                 partner_id: formData.partner_id,
-                base_url: formData.base_url || undefined,
             };
 
-            const result = await testConnectionRawAction('siigo', {}, credentials);
+            const result = await testConnectionRawAction('siigo', { is_testing: isTesting }, credentials);
 
             if (result.success) {
                 showToast('Conexion exitosa con Siigo', 'success');
@@ -125,9 +123,8 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 const credentials: SiigoCredentials = {
                     username: formData.username,
                     access_key: formData.access_key,
-                    account_id: formData.account_id,
+                    account_id: formData.account_id || undefined,
                     partner_id: formData.partner_id,
-                    base_url: formData.base_url || undefined,
                 };
                 updateData.credentials = credentials;
             }
@@ -299,25 +296,6 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                             className="bg-white dark:bg-gray-800 font-mono text-sm"
                         />
                     </div>
-                </div>
-
-                {/* URL de la API */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        URL de la API
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.base_url}
-                        onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
-                        placeholder="https://api.siigo.com"
-                        autoComplete="off"
-                        className="bg-white dark:bg-gray-800 font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
-                        <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Dejar vacio para usar la URL de produccion de Siigo.</span>
-                    </p>
                 </div>
 
                 {/* Test Connection Button */}

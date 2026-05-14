@@ -90,7 +90,7 @@ type IRepository interface {
 	// ORDERS
 	GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
 	UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
-	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
+	GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error)
 
 	// ============================================
 	// MÉTODOS DE CONSULTA A TABLAS DE INTEGRACIONES
@@ -224,7 +224,7 @@ type IConfigCache interface {
 type IOrderRepository interface {
 	GetByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
 	UpdateInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
-	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
+	GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error)
 }
 
 // CASOS DE USO (Primary Port - Driver)

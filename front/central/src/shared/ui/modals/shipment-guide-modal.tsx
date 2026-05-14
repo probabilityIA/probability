@@ -13,11 +13,21 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { DeliveryProbabilityBadge } from "@/services/modules/geozones/ui/components/DeliveryProbabilityBadge";
+import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
+import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
+import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 import '@/shared/ui/styles/shipment-modals.css';
+import dynamic from 'next/dynamic';
+
+const GeozoneMiniMap = dynamic(
+    () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
+    { ssr: false }
+);
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -188,6 +198,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Step 4 data
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
+    const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
+    const [carrierProbabilities, setCarrierProbabilities] = useState<ProbabilityResult[]>([]);
+
+    const normalizeCarrierKey = (s: string) =>
+        (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    useEffect(() => {
+        if (currentStep !== 2 || !order?.id || !order?.business_id) return;
+        let cancelled = false;
+        getProbabilityByCarrierAction(order.id, order.business_id)
+            .then((res) => { if (!cancelled) setCarrierProbabilities(Array.isArray(res) ? res : []); })
+            .catch(() => { if (!cancelled) setCarrierProbabilities([]); });
+        return () => { cancelled = true; };
+    }, [currentStep, order?.id, order?.business_id]);
+
+    const selectedCarrierKey = selectedRate ? normalizeCarrierKey(selectedRate.carrier || '') : '';
+    const selectedCarrierProb = selectedCarrierKey
+        ? carrierProbabilities.find(p => normalizeCarrierKey(p.carrier || '') === selectedCarrierKey)
+        : undefined;
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
@@ -274,6 +303,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
+        setSelectedOriginWarehouse(wh);
         const daneCode = wh.city_dane_code || findDaneCode(wh.city || "", wh.state || "") || "";
         step1Form.setValue("originDaneCode", daneCode, { shouldValidate: true });
         step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
@@ -595,10 +625,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }
     };
 
-    // Step 2: Select Rate
+    // Step 2: Select Rate (NO avanza automaticamente; el usuario debe presionar Continuar)
     const handleRateSelection = (rate: EnvioClickRate) => {
         setSelectedRate(rate);
-        setCurrentStep(3);
+    };
+
+    const handleStep2Continue = () => {
+        if (selectedRate) setCurrentStep(3);
     };
 
     // Step 3: Details
@@ -1130,6 +1163,28 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {/* Step 2: Quote Selection */}
                     {currentStep === 2 && (
                         <div className="flex flex-col h-full overflow-y-auto">
+                            {order?.business_id && order.business_id > 0 && order.id && (
+                                <div className="pb-3">
+                                    <GeozoneMiniMap
+                                        businessId={order.business_id}
+                                        orderId={order.id}
+                                        lat={order.shipping_lat ?? null}
+                                        lng={order.shipping_lng ?? null}
+                                        height="200px"
+                                        origin={selectedOriginWarehouse ? {
+                                            address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
+                                            lat: selectedOriginWarehouse.latitude ?? null,
+                                            lng: selectedOriginWarehouse.longitude ?? null,
+                                        } : null}
+                                        destination={{
+                                            address: [order.shipping_street, order.shipping_city, order.shipping_state].filter(Boolean).join(', '),
+                                        }}
+                                        carrierRate={selectedCarrierProb?.delivery_rate ?? null}
+                                        carrierName={selectedRate?.carrier || null}
+                                        carrierEstimated={selectedCarrierProb?.is_estimated || !selectedCarrierProb?.found}
+                                    />
+                                </div>
+                            )}
                             <div className="pb-2">
                                 <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
                                     Filtra por servicio / Transportadora
@@ -1211,6 +1266,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             </div>
                                                             <div className="font-semibold text-xs text-center mt-2">{rate.carrier}</div>
                                                             <div className="text-[10px] text-gray-600 dark:text-gray-300 text-center">{rate.product}</div>
+                                                            {order?.business_id && order.business_id > 0 && order.id && (
+                                                                <div className="mt-2 w-full px-1">
+                                                                    <CarrierEffectivenessRates
+                                                                        businessId={order.business_id}
+                                                                        orderId={order.id}
+                                                                        carrier={rate.carrier}
+                                                                    />
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <div className="col-span-2 flex flex-col text-[11px] text-gray-700 dark:text-gray-200">
                                                             <div className="flex justify-between">
@@ -1500,10 +1564,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         </Button>
                     )}
 
-                    {/* Step 2: NO "Siguiente" Button - User selects a rate to advance */}
                     {currentStep === 2 && (
-                        <div className="text-sm text-gray-600 dark:text-gray-300 italic">
-                            📌 Selecciona una transportadora para continuar
+                        <div className="flex items-center gap-3">
+                            {!selectedRate && (
+                                <span className="text-sm text-gray-600 dark:text-gray-300 italic">
+                                    Selecciona una transportadora
+                                </span>
+                            )}
+                            {selectedRate && (
+                                <span className="text-sm text-gray-700 dark:text-gray-200">
+                                    Transportadora: <strong>{selectedRate.carrier}</strong>
+                                </span>
+                            )}
+                            <Button
+                                className="shipment-btn-primary"
+                                onClick={handleStep2Continue}
+                                disabled={!selectedRate}
+                            >
+                                Continuar
+                            </Button>
                         </div>
                     )}
 

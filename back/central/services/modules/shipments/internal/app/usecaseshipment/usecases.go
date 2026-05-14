@@ -86,8 +86,20 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 		return nil, fmt.Errorf("error creating shipment: %w", err)
 	}
 
-	// Retornar la respuesta
+	uc.resolveGeozoneBestEffort(ctx, shipment)
+
 	return mapShipmentToResponse(shipment), nil
+}
+
+func (uc *UseCaseShipment) resolveGeozoneBestEffort(ctx context.Context, shipment *domain.Shipment) {
+	if shipment == nil || shipment.ID == 0 || shipment.OrderID == nil || *shipment.OrderID == "" {
+		return
+	}
+	businessID, err := uc.repo.GetOrderBusinessID(ctx, *shipment.OrderID)
+	if err != nil || businessID == 0 {
+		return
+	}
+	_ = uc.repo.ResolveShipmentGeozone(ctx, shipment.ID, businessID)
 }
 
 //
