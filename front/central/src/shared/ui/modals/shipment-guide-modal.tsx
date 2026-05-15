@@ -1238,7 +1238,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         );
                                     }
                                     return (
-                                    <div className="grid grid-cols-4 gap-3 auto-rows-max">
+                                    <div className="grid grid-cols-3 gap-3 auto-rows-max">
                                         {filteredRates.map((rate) => {
                                             const minIns = rate.minimumInsurance ?? 0;
                                             const extraIns = rate.extraInsurance ?? 0;
