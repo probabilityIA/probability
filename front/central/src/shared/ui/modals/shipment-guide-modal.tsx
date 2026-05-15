@@ -1162,15 +1162,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 2: Quote Selection */}
                     {currentStep === 2 && (
-                        <div className="flex flex-col h-full overflow-y-auto">
+                        <div className="flex flex-row h-full gap-3 overflow-hidden">
                             {order?.business_id && order.business_id > 0 && order.id && (
-                                <div className="pb-3">
+                                <div className="w-1/3 h-full flex-shrink-0 border border-gray-200 dark:border-gray-600 rounded-lg p-2 overflow-hidden">
                                     <GeozoneMiniMap
                                         businessId={order.business_id}
                                         orderId={order.id}
                                         lat={order.shipping_lat ?? null}
                                         lng={order.shipping_lng ?? null}
-                                        height="200px"
+                                        height="100%"
                                         origin={selectedOriginWarehouse ? {
                                             address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
                                             lat: selectedOriginWarehouse.latitude ?? null,
@@ -1185,34 +1185,35 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     />
                                 </div>
                             )}
-                            <div className="pb-2">
-                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
-                                    Filtra por servicio / Transportadora
-                                </h3>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
-                                    {(step1Data?.codValue ?? 0) > 0 && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600">
-                                            Contra Entrega - Solo opciones contra entrega
-                                        </span>
-                                    )}
-                                    {officeCarrier && (
-                                        <span className="shipment-badge-primary">
-                                            Filtrado: {officeCarrier}
-                                            <button
-                                                type="button"
-                                                onClick={() => setOfficeCarrier(null)}
-                                                className="ml-1 hover:opacity-75 font-bold leading-none"
-                                                title="Quitar filtro"
-                                            >
-                                                x
-                                            </button>
-                                        </span>
-                                    )}
+                            <div className="w-2/3 flex flex-col overflow-y-auto">
+                                <div className="pb-2">
+                                    <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
+                                        Filtra por servicio / Transportadora
+                                    </h3>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
+                                        {(step1Data?.codValue ?? 0) > 0 && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600">
+                                                Contra Entrega - Solo opciones contra entrega
+                                            </span>
+                                        )}
+                                        {officeCarrier && (
+                                            <span className="shipment-badge-primary">
+                                                Filtrado: {officeCarrier}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOfficeCarrier(null)}
+                                                    className="ml-1 hover:opacity-75 font-bold leading-none"
+                                                    title="Quitar filtro"
+                                                >
+                                                    x
+                                                </button>
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800" style={{ maxHeight: 'calc(85vh - 350px)' }}>
+                                <div className="overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800 flex-1">
                                 {rates.length === 0 ? (
                                     <div className="flex items-center justify-center gap-3 py-10">
                                         <div className="shipment-spinner" style={{ width: 28, height: 28 }} />
@@ -1316,6 +1317,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
                                     );
                                 })()}
+                                </div>
                             </div>
                         </div>
                     )}
