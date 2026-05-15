@@ -43,7 +43,7 @@
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "tinycolor2": "^1.6.0",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -67,11 +67,15 @@
     "vitest": "^4.0.18"
   },
   "overrides": {
-    "styled-jsx": "^5.1.7"
+    "styled-jsx": "^5.1.7",
+    "postcss": ">=8.5.10",
+    "protocol-buffers-schema": ">=3.6.1"
   },
   "pnpm": {
     "overrides": {
-      "styled-jsx": "^5.1.7"
+      "styled-jsx": "^5.1.7",
+      "postcss": ">=8.5.10",
+      "protocol-buffers-schema": ">=3.6.1"
     }
   }
 }
