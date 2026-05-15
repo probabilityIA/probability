@@ -1239,7 +1239,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     }
                                     return (
                                     <div className="grid grid-cols-3 gap-3 auto-rows-max">
-                                        {filteredRates.map((rate, rateIdx) => {
+                                        {filteredRates.map((rate) => {
                                             const minIns = rate.minimumInsurance ?? 0;
                                             const extraIns = rate.extraInsurance ?? 0;
                                             const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
@@ -1248,90 +1248,193 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                             const allCosts = filteredRates.map(r => r.flete + (r.minimumInsurance ?? 0) + (step1Data?.insurance ? (r.extraInsurance ?? 0) : 0));
                                             const minCost = Math.min(...allCosts);
-                                            const maxDays = Math.max(...filteredRates.map(r => r.deliveryDays || 0));
+                                            const minDays = Math.min(...filteredRates.map(r => r.deliveryDays || 999));
+
+                                            const getCarrierProb = (carrierName: string) =>
+                                                carrierProbabilities.find(p => normalizeCarrierKey(p.carrier || '') === normalizeCarrierKey(carrierName));
+
+                                            const allEffs = filteredRates.map(r => getCarrierProb(r.carrier)?.delivery_rate ?? 0);
+                                            const maxEff = Math.max(...allEffs);
+
+                                            const isFastest = rate.deliveryDays === minDays;
                                             const isCheapest = totalCost === minCost;
-                                            const isFastest = rate.deliveryDays === Math.min(...filteredRates.map(r => r.deliveryDays || 999));
+                                            const eff = getCarrierProb(rate.carrier)?.delivery_rate ?? 0;
+                                            const isMostEffective = eff === maxEff && maxEff > 0 && eff > 0;
+
+                                            const badges = [];
+                                            if (isFastest) badges.push('fastest');
+                                            if (isCheapest) badges.push('cheapest');
+                                            if (isMostEffective) badges.push('mostEffective');
 
                                             return (
                                                 <div
                                                     key={rate.idRate}
                                                     onClick={() => handleRateSelection(rate)}
-                                                    className={`shipment-carrier-card ${selectedRate?.idRate === rate.idRate ? 'shipment-carrier-card-selected' : ''} flex flex-col p-4 rounded-lg border-2 transition cursor-pointer`}
+                                                    className={`relative bg-white border rounded-[14px] transition-all cursor-pointer ${
+                                                        selectedRate?.idRate === rate.idRate
+                                                            ? 'border-cyan-400 shadow-lg'
+                                                            : 'border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5'
+                                                    }`}
+                                                    style={{
+                                                        padding: '22px 24px 20px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '16px',
+                                                    }}
                                                 >
-                                                    <div className="flex items-start justify-between mb-3">
-                                                        <div className="flex items-center gap-2 flex-1">
-                                                            <div className="w-12 h-12 flex-shrink-0 shipment-carrier-logo-container rounded-lg flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700">
-                                                                <img
-                                                                    src={getCarrierLogo(rate.carrier)}
-                                                                    alt={rate.carrier}
-                                                                    className="w-10 h-10 object-contain"
-                                                                    onError={(e) => {
-                                                                        e.currentTarget.style.display = 'none';
-                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-sm" style="color: var(--color-primary);">${rate.carrier.substring(0, 3)}</span>`;
-                                                                    }}
-                                                                />
+                                                    {badges.length > 0 && (
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '-11px',
+                                                                right: '14px',
+                                                                display: 'flex',
+                                                                gap: '6px',
+                                                            }}
+                                                        >
+                                                            {badges.map((badge) => {
+                                                                const badgeConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                                                                    fastest: { label: 'Más rápida', color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc' },
+                                                                    cheapest: { label: 'Más económica', color: '#166534', bg: '#f0fdf4', border: '#bbf7d0' },
+                                                                    mostEffective: { label: 'Mejor efectividad', color: '#5b21b6', bg: '#f5f3ff', border: '#ddd6fe' },
+                                                                };
+                                                                const cfg = badgeConfig[badge] || badgeConfig.fastest;
+                                                                return (
+                                                                    <div
+                                                                        key={badge}
+                                                                        style={{
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                            padding: '4px 9px',
+                                                                            borderRadius: '999px',
+                                                                            fontSize: '11px',
+                                                                            fontWeight: 600,
+                                                                            color: cfg.color,
+                                                                            backgroundColor: cfg.bg,
+                                                                            border: `1px solid ${cfg.border}`,
+                                                                            whiteSpace: 'nowrap',
+                                                                        }}
+                                                                    >
+                                                                        {badge === 'fastest' && '⚡'}
+                                                                        {badge === 'cheapest' && '💚'}
+                                                                        {badge === 'mostEffective' && '🛡️'}
+                                                                        {cfg.label}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+
+                                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                                                        <div
+                                                            className="flex-shrink-0 rounded-[12px] overflow-hidden flex items-center justify-center bg-gray-100"
+                                                            style={{
+                                                                width: '52px',
+                                                                height: '52px',
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src={getCarrierLogo(rate.carrier)}
+                                                                alt={rate.carrier}
+                                                                className="w-full h-full object-contain"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    e.currentTarget.parentElement!.textContent = rate.carrier.substring(0, 3);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f1417', letterSpacing: '.01em' }}>
+                                                                {rate.carrier}
                                                             </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{rate.carrier}</div>
-                                                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{rate.product}</div>
+                                                            <div style={{ fontSize: '13px', color: '#6b757c', marginTop: '2px' }}>
+                                                                {rate.product}
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-col gap-1.5 ml-2">
-                                                            {isFastest && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
-                                                                    <span>⚡</span> Más rápida
-                                                                </span>
-                                                            )}
-                                                            {isCheapest && (
-                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap">
-                                                                    <span>💚</span> Más económica
-                                                                </span>
-                                                            )}
-                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                                                <span>🕐</span> {rate.deliveryDays} día{rate.deliveryDays !== 1 ? 's' : ''}
+                                                        <div
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                padding: '5px 10px',
+                                                                borderRadius: '999px',
+                                                                fontSize: '12px',
+                                                                fontWeight: 600,
+                                                                backgroundColor: rate.deliveryDays === 0 ? '#0e7490' : rate.deliveryDays <= 1 ? '#0891b2' : '#f3f1ec',
+                                                                color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#ecfeff' : '#3b4248',
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                        >
+                                                            {rate.deliveryDays === 0 ? '⚡' : '🕐'}
+                                                            {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
+                                                        </div>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#3b4248' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                            <span>Guía</span>
+                                                            <span style={{ fontWeight: 500, color: '#0f1417', fontVariantNumeric: 'tabular-nums' }}>
+                                                                ${rate.flete.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                            <span>Seg. obligatorio</span>
+                                                            <span style={{ fontWeight: 500, color: '#0f1417', fontVariantNumeric: 'tabular-nums' }}>
+                                                                + ${minIns.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                            <span>
+                                                                Seg. adicional
+                                                                {!step1Data?.insurance && <span style={{ color: '#9aa0a6' }}> (no incluido)</span>}
+                                                            </span>
+                                                            <span
+                                                                style={{
+                                                                    fontWeight: 500,
+                                                                    color: step1Data?.insurance ? '#0f1417' : '#9aa0a6',
+                                                                    textDecoration: step1Data?.insurance ? 'none' : 'line-through',
+                                                                    fontVariantNumeric: 'tabular-nums',
+                                                                }}
+                                                            >
+                                                                + ${extraIns.toLocaleString()}
                                                             </span>
                                                         </div>
                                                     </div>
 
-                                                    <div className="space-y-1.5 text-xs mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                                            <span>Guía</span>
-                                                            <span className="font-medium text-gray-900 dark:text-white">${rate.flete.toLocaleString()}</span>
-                                                        </div>
-                                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                                            <span>Seg. obligatorio</span>
-                                                            <span className="font-medium text-gray-900 dark:text-white">+ ${minIns.toLocaleString()}</span>
-                                                        </div>
-                                                        {(extraIns > 0 || step1Data?.insurance) && (
-                                                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                                                <span>Seg. adicional</span>
-                                                                <span className={`font-medium ${step1Data?.insurance ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 line-through'}`}>
-                                                                    + ${extraIns.toLocaleString()}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="mb-3">
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">TOTAL</div>
-                                                        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                                            ${totalCost.toLocaleString()} <span className="text-xs font-normal text-gray-500">COP</span>
+                                                    <div
+                                                        style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'baseline',
+                                                            borderTop: '1px solid #eeece7',
+                                                            paddingTop: '14px',
+                                                        }}
+                                                    >
+                                                        <span style={{ fontSize: '12px', color: '#6b757c', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>
+                                                            Total
+                                                        </span>
+                                                        <div style={{ fontSize: '28px', fontWeight: 700, color: '#06b6d4', letterSpacing: '-.02em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
+                                                            ${totalCost.toLocaleString()} <span style={{ fontSize: '12px', color: '#6b757c', fontWeight: 500, marginLeft: '2px' }}>COP</span>
                                                         </div>
                                                     </div>
 
                                                     {order?.business_id && order.business_id > 0 && order.id && (
-                                                        <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                                        <div
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '14px',
+                                                                backgroundColor: '#faf9f6',
+                                                                borderRadius: '10px',
+                                                                padding: '12px 14px',
+                                                            }}
+                                                        >
                                                             <CarrierEffectivenessRates
                                                                 businessId={order.business_id}
                                                                 orderId={order.id}
                                                                 carrier={rate.carrier}
                                                             />
-                                                        </div>
-                                                    )}
-
-                                                    {isCOD && (
-                                                        <div className="mt-2 px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 text-center">
-                                                            Contra Entrega
                                                         </div>
                                                     )}
                                                 </div>
