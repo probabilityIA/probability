@@ -9,6 +9,8 @@ import {
   createBulkInvoicesAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
+import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import type { InvoiceableOrder, InvoiceSSEEventData, InvoiceableOrdersFilters } from '../../domain/types';
 
 interface Props {
@@ -46,6 +48,12 @@ const SORT_OPTIONS: { value: `${SortKey}:${SortDir}`; label: string }[] = [
 ];
 
 export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId: propBusinessId }: Props) {
+  const { permissions } = usePermissions();
+  const defaultBusinessId = propBusinessId || permissions?.business_id || 0;
+  const { colors } = useDynamicBusinessColors(defaultBusinessId);
+  const primaryColor = colors?.primary_color || '#5b21b6';
+  const secondaryColor = colors?.secondary_color || '#7c3aed';
+
   const [orders, setOrders] = useState<InvoiceableOrder[]>([]);
   const [total, setTotal] = useState(0);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
@@ -283,13 +291,19 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         <div className="fixed inset-0 backdrop-blur-sm bg-white dark:bg-gray-800/10 transition-opacity" onClick={onClose} />
 
         <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9]">
+          <div
+            className="flex items-center justify-between p-6"
+            style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+          >
             <div>
               <h2 className="text-2xl font-bold text-white">Crear Facturas</h2>
-              <p className="text-purple-100 text-sm mt-1">Selecciona las ordenes para generar facturas electronicas</p>
+              <p className="text-white/80 text-sm mt-1">Selecciona las ordenes para generar facturas electronicas</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-white dark:bg-gray-800/20 backdrop-blur-sm rounded-full px-4 py-2">
+              <div
+                className="backdrop-blur-sm rounded-full px-4 py-2"
+                style={{ backgroundColor: secondaryColor }}
+              >
                 <span className="text-white font-semibold">
                   {selectedOrderIds.size} seleccionada{selectedOrderIds.size !== 1 ? 's' : ''}
                 </span>
@@ -339,7 +353,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                       placeholder="Buscar por cliente..."
                       value={search}
                       onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
+                      className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2"
+                      style={{
+                        '--tw-ring-color': primaryColor,
+                      } as React.CSSProperties}
                     />
                   </div>
                   <button
@@ -555,7 +572,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
             ) : (
               <>
                 <button onClick={onClose} disabled={submitting} className="px-5 py-2 border border-gray-300 text-gray-700 dark:text-gray-200 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50">Cancelar</button>
-                <button onClick={handleSubmit} disabled={submitting || selectedOrderIds.size === 0 || loading || superAdminNeedsBusiness} className="px-5 py-2 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-semibold rounded-full hover:shadow-lg disabled:opacity-50">
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || selectedOrderIds.size === 0 || loading || superAdminNeedsBusiness}
+                  style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
+                  className="px-5 py-2 text-white font-semibold rounded-full hover:shadow-lg disabled:opacity-50"
+                >
                   {submitting ? 'Creando...' : `Crear ${selectedOrderIds.size} Factura(s)`}
                 </button>
               </>
