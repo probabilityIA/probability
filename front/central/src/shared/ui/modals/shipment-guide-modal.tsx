@@ -1376,7 +1376,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             />
                                                         </div>
                                                         <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0f1417', letterSpacing: '.01em' }}>
+                                                            <div style={{
+                                                                fontSize: rate.carrier.length > 25 ? '12px' : rate.carrier.length > 20 ? '13px' : '15px',
+                                                                fontWeight: 700,
+                                                                color: '#0f1417',
+                                                                letterSpacing: '.01em'
+                                                            }}>
                                                                 {rate.carrier}
                                                             </div>
                                                             <div style={{ fontSize: '13px', color: '#6b757c', marginTop: '2px' }}>
