@@ -402,18 +402,6 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
               transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
             }
 
-            /* Dark mode para las filas */
-            @media (prefers-color-scheme: dark) {
-              .configsTable :global(.table tbody tr) {
-                background: rgba(31, 41, 55, 0.95);
-                box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
-              }
-
-              /* Zebra suave en morado oscuro */
-              .configsTable :global(.table tbody tr:nth-child(even)) {
-                background: rgba(124, 58, 237, 0.15);
-              }
-            }
 
             /* Zebra suave en morado (light mode) */
             .configsTable :global(.table tbody tr:nth-child(even)) {
