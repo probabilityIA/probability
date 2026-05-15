@@ -70,6 +70,7 @@ const getCarrierLogo = (carrierName: string): string => {
         'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
         'MENSAJERIAUBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
         'MENSAJERIA URBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
+        'MENSAJEROSURBANOSEXPRESS': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
     };
 
     const normalizedCarrier = normalizeLocationName(carrierName);
