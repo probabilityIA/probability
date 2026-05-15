@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button, Input } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getActionError } from '@/shared/utils/action-result';
-import { uploadBulkOrdersAction } from '@/services/modules/orders/infra/actions';
+import { uploadBulkOrdersAction, downloadOrderTemplateAction } from '@/services/modules/orders/infra/actions';
 
 interface MassOrderUploadModalProps {
     isOpen: boolean;
@@ -79,6 +79,25 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
         }
     };
 
+    const handleDownloadTemplate = async () => {
+        try {
+            const result = await downloadOrderTemplateAction();
+            if (result.success && result.data) {
+                const blob = new Blob([result.data], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'plantilla_ordenes.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } catch (err) {
+            console.error('Error downloading template:', err);
+        }
+    };
+
     const handleClose = () => {
         setFile(null);
         setError(null);
@@ -107,13 +126,12 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                             <h3 className="font-semibold text-blue-800">Instrucciones</h3>
-                            <a
-                                href="/template_orders.csv"
-                                download="plantilla_ordenes.csv"
+                            <button
+                                onClick={handleDownloadTemplate}
                                 className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
                             >
                                 Descargar Plantilla CSV
-                            </a>
+                            </button>
                         </div>
                         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
                             <li>El archivo debe ser CSV o Excel (.xlsx, .xls)</li>
