@@ -1239,78 +1239,101 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     }
                                     return (
                                     <div className="grid grid-cols-3 gap-3 auto-rows-max">
-                                        {filteredRates.map((rate) => {
+                                        {filteredRates.map((rate, rateIdx) => {
                                             const minIns = rate.minimumInsurance ?? 0;
                                             const extraIns = rate.extraInsurance ?? 0;
                                             const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
 
+                                            const allCosts = filteredRates.map(r => r.flete + (r.minimumInsurance ?? 0) + (step1Data?.insurance ? (r.extraInsurance ?? 0) : 0));
+                                            const minCost = Math.min(...allCosts);
+                                            const maxDays = Math.max(...filteredRates.map(r => r.deliveryDays || 0));
+                                            const isCheapest = totalCost === minCost;
+                                            const isFastest = rate.deliveryDays === Math.min(...filteredRates.map(r => r.deliveryDays || 999));
+
                                             return (
                                                 <div
                                                     key={rate.idRate}
                                                     onClick={() => handleRateSelection(rate)}
-                                                    className={`shipment-carrier-card ${selectedRate?.idRate === rate.idRate ? 'shipment-carrier-card-selected' : ''}`}
+                                                    className={`shipment-carrier-card ${selectedRate?.idRate === rate.idRate ? 'shipment-carrier-card-selected' : ''} flex flex-col p-4 rounded-lg border-2 transition cursor-pointer`}
                                                 >
-                                                    <div className="grid grid-cols-3 gap-3 h-full">
-                                                        <div className="col-span-1 flex flex-col items-center justify-center">
-                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} shipment-carrier-logo-container rounded-lg flex items-center justify-center overflow-hidden`}>
+                                                    <div className="flex items-start justify-between mb-3">
+                                                        <div className="flex items-center gap-2 flex-1">
+                                                            <div className="w-12 h-12 flex-shrink-0 shipment-carrier-logo-container rounded-lg flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-700">
                                                                 <img
                                                                     src={getCarrierLogo(rate.carrier)}
                                                                     alt={rate.carrier}
-                                                                    className={`${getCarrierLogoSize(rate.carrier).image} object-contain`}
+                                                                    className="w-10 h-10 object-contain"
                                                                     onError={(e) => {
                                                                         e.currentTarget.style.display = 'none';
-                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center" style="color: var(--color-primary);">${rate.carrier.substring(0, 3)}</span>`;
+                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-sm" style="color: var(--color-primary);">${rate.carrier.substring(0, 3)}</span>`;
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <div className="font-semibold text-xs text-center mt-2">{rate.carrier}</div>
-                                                            <div className="text-[10px] text-gray-600 dark:text-gray-300 text-center">{rate.product}</div>
-                                                            {order?.business_id && order.business_id > 0 && order.id && (
-                                                                <div className="mt-2 w-full px-1">
-                                                                    <CarrierEffectivenessRates
-                                                                        businessId={order.business_id}
-                                                                        orderId={order.id}
-                                                                        carrier={rate.carrier}
-                                                                    />
-                                                                </div>
-                                                            )}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{rate.carrier}</div>
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{rate.product}</div>
+                                                            </div>
                                                         </div>
-                                                        <div className="col-span-2 flex flex-col text-[11px] text-gray-700 dark:text-gray-200">
-                                                            <div className="flex justify-between">
-                                                                <span>Guía</span>
-                                                                <span>${rate.flete.toLocaleString()}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span>Seg. obligatorio</span>
-                                                                <span>+ ${minIns.toLocaleString()}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span>
-                                                                    Seg. adicional
-                                                                    <span className={`ml-1 text-[9px] ${step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                                        {step1Data?.insurance ? '(incluido)' : '(no incluido)'}
-                                                                    </span>
+                                                        <div className="flex flex-col gap-1.5 ml-2">
+                                                            {isFastest && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
+                                                                    <span>⚡</span> Más rápida
                                                                 </span>
-                                                                <span className={step1Data?.insurance ? '' : 'text-gray-400 line-through'}>+ ${extraIns.toLocaleString()}</span>
-                                                            </div>
-                                                            <div className="border-t border-gray-300 dark:border-gray-600 mt-1 pt-1 flex justify-between items-baseline">
-                                                                <span className="font-semibold">Total</span>
-                                                                <span className="shipment-cost-amount text-base">
-                                                                    ${totalCost.toLocaleString()} <span className="text-[9px] font-normal text-gray-500">COP</span>
+                                                            )}
+                                                            {isCheapest && (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 whitespace-nowrap">
+                                                                    <span>💚</span> Más económica
                                                                 </span>
-                                                            </div>
-                                                            <div className="flex justify-between items-center mt-1 text-[10px] text-gray-600 dark:text-gray-300">
-                                                                <span>{rate.deliveryDays} días</span>
-                                                                {isCOD && (
-                                                                    <span className="px-1.5 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 border border-amber-300">
-                                                                        Contra Entrega
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                                            )}
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                                                <span>🕐</span> {rate.deliveryDays} día{rate.deliveryDays !== 1 ? 's' : ''}
+                                                            </span>
                                                         </div>
                                                     </div>
+
+                                                    <div className="space-y-1.5 text-xs mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                                            <span>Guía</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">${rate.flete.toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                                            <span>Seg. obligatorio</span>
+                                                            <span className="font-medium text-gray-900 dark:text-white">+ ${minIns.toLocaleString()}</span>
+                                                        </div>
+                                                        {(extraIns > 0 || step1Data?.insurance) && (
+                                                            <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                                                                <span>Seg. adicional</span>
+                                                                <span className={`font-medium ${step1Data?.insurance ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 line-through'}`}>
+                                                                    + ${extraIns.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mb-3">
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">TOTAL</div>
+                                                        <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                                            ${totalCost.toLocaleString()} <span className="text-xs font-normal text-gray-500">COP</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {order?.business_id && order.business_id > 0 && order.id && (
+                                                        <div className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+                                                            <CarrierEffectivenessRates
+                                                                businessId={order.business_id}
+                                                                orderId={order.id}
+                                                                carrier={rate.carrier}
+                                                            />
+                                                        </div>
+                                                    )}
+
+                                                    {isCOD && (
+                                                        <div className="mt-2 px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 text-center">
+                                                            Contra Entrega
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
