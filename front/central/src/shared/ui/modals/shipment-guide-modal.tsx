@@ -70,11 +70,21 @@ const getCarrierLogo = (carrierName: string): string => {
         'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
         'MENSAJERIAUBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
         'MENSAJERIA URBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
+        'MENSAJEROS_URBANOS_EXPRESS': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
         'MENSAJEROSURBANOSEXPRESS': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
     };
 
-    const normalizedCarrier = normalizeLocationName(carrierName);
-    return carrierLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
+    const trimmedName = carrierName.trim();
+    if (carrierLogos[trimmedName]) {
+        return carrierLogos[trimmedName];
+    }
+
+    const normalizedCarrier = normalizeLocationName(trimmedName).replace(/[_\s]/g, '');
+    const normalizedLogos = Object.keys(carrierLogos).reduce((acc, key) => {
+        acc[normalizeLocationName(key).replace(/[_\s]/g, '')] = carrierLogos[key];
+        return acc;
+    }, {} as Record<string, string>);
+    return normalizedLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
 };
 
 const findDaneCode = (city: string, state: string) => {
@@ -1285,49 +1295,67 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         gap: '16px',
                                                     }}
                                                 >
-                                                    {badges.length > 0 && (
+                                                    <div
+                                                        style={{
+                                                            position: 'absolute',
+                                                            top: '-11px',
+                                                            right: '14px',
+                                                            display: 'flex',
+                                                            gap: '6px',
+                                                            flexWrap: 'wrap',
+                                                            justifyContent: 'flex-end',
+                                                        }}
+                                                    >
+                                                        {badges.map((badge) => {
+                                                            const badgeConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                                                                fastest: { label: 'Más rápida', color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc' },
+                                                                cheapest: { label: 'Más económica', color: '#166534', bg: '#f0fdf4', border: '#bbf7d0' },
+                                                                mostEffective: { label: 'Mejor efectividad', color: '#5b21b6', bg: '#f5f3ff', border: '#ddd6fe' },
+                                                            };
+                                                            const cfg = badgeConfig[badge] || badgeConfig.fastest;
+                                                            return (
+                                                                <div
+                                                                    key={badge}
+                                                                    style={{
+                                                                        display: 'inline-flex',
+                                                                        alignItems: 'center',
+                                                                        gap: '6px',
+                                                                        padding: '4px 9px',
+                                                                        borderRadius: '999px',
+                                                                        fontSize: '11px',
+                                                                        fontWeight: 600,
+                                                                        color: cfg.color,
+                                                                        backgroundColor: cfg.bg,
+                                                                        border: `1px solid ${cfg.border}`,
+                                                                        whiteSpace: 'nowrap',
+                                                                    }}
+                                                                >
+                                                                    {badge === 'fastest' && '⚡'}
+                                                                    {badge === 'cheapest' && '💚'}
+                                                                    {badge === 'mostEffective' && '🛡️'}
+                                                                    {cfg.label}
+                                                                </div>
+                                                            );
+                                                        })}
                                                         <div
                                                             style={{
-                                                                position: 'absolute',
-                                                                top: '-11px',
-                                                                right: '14px',
-                                                                display: 'flex',
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
                                                                 gap: '6px',
+                                                                padding: '4px 9px',
+                                                                borderRadius: '999px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                backgroundColor: rate.deliveryDays === 0 ? '#0e7490' : rate.deliveryDays <= 1 ? '#0891b2' : '#f3f1ec',
+                                                                color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#ecfeff' : '#3b4248',
+                                                                whiteSpace: 'nowrap',
+                                                                border: rate.deliveryDays === 0 ? '1px solid #a5f3fc' : rate.deliveryDays <= 1 ? '1px solid #06b6d4' : '1px solid #e7e5e0',
                                                             }}
                                                         >
-                                                            {badges.map((badge) => {
-                                                                const badgeConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
-                                                                    fastest: { label: 'Más rápida', color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc' },
-                                                                    cheapest: { label: 'Más económica', color: '#166534', bg: '#f0fdf4', border: '#bbf7d0' },
-                                                                    mostEffective: { label: 'Mejor efectividad', color: '#5b21b6', bg: '#f5f3ff', border: '#ddd6fe' },
-                                                                };
-                                                                const cfg = badgeConfig[badge] || badgeConfig.fastest;
-                                                                return (
-                                                                    <div
-                                                                        key={badge}
-                                                                        style={{
-                                                                            display: 'inline-flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '6px',
-                                                                            padding: '4px 9px',
-                                                                            borderRadius: '999px',
-                                                                            fontSize: '11px',
-                                                                            fontWeight: 600,
-                                                                            color: cfg.color,
-                                                                            backgroundColor: cfg.bg,
-                                                                            border: `1px solid ${cfg.border}`,
-                                                                            whiteSpace: 'nowrap',
-                                                                        }}
-                                                                    >
-                                                                        {badge === 'fastest' && '⚡'}
-                                                                        {badge === 'cheapest' && '💚'}
-                                                                        {badge === 'mostEffective' && '🛡️'}
-                                                                        {cfg.label}
-                                                                    </div>
-                                                                );
-                                                            })}
+                                                            {rate.deliveryDays === 0 ? '⚡' : '🕐'}
+                                                            {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
                                                         </div>
-                                                    )}
+                                                    </div>
 
                                                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
                                                         <div
@@ -1354,23 +1382,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             <div style={{ fontSize: '13px', color: '#6b757c', marginTop: '2px' }}>
                                                                 {rate.product}
                                                             </div>
-                                                        </div>
-                                                        <div
-                                                            style={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                gap: '6px',
-                                                                padding: '5px 10px',
-                                                                borderRadius: '999px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 600,
-                                                                backgroundColor: rate.deliveryDays === 0 ? '#0e7490' : rate.deliveryDays <= 1 ? '#0891b2' : '#f3f1ec',
-                                                                color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#ecfeff' : '#3b4248',
-                                                                whiteSpace: 'nowrap',
-                                                            }}
-                                                        >
-                                                            {rate.deliveryDays === 0 ? '⚡' : '🕐'}
-                                                            {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
                                                         </div>
                                                     </div>
 
