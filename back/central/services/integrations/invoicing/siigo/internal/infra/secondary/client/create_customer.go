@@ -37,40 +37,59 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 		idType = "13" // CC por defecto
 	}
 
-	// Tipo de persona
-	personType := req.PersonType
-	if personType == "" {
-		personType = "Person"
+	personType := strings.ToLower(req.PersonType)
+	if personType != "person" && personType != "company" {
+		personType = "person"
 	}
 
 	customerBody := struct {
-		PersonType     string              `json:"person_type"`
-		IDType         request.SiigoIDType `json:"id_type"`
-		Identification string              `json:"identification"`
-		Name           []string            `json:"name"`
-		Address        *request.SiigoAddress  `json:"address,omitempty"`
-		Phones         []request.SiigoPhone   `json:"phones,omitempty"`
-		Contacts       []request.SiigoContact `json:"contacts,omitempty"`
+		Type                   string                          `json:"type"`
+		PersonType             string                          `json:"person_type"`
+		IDType                 string                          `json:"id_type"`
+		Identification         string                          `json:"identification"`
+		Name                   []string                        `json:"name"`
+		FiscalResponsibilities []request.SiigoFiscalResponsibility `json:"fiscal_responsibilities"`
+		Address                *request.SiigoAddress           `json:"address,omitempty"`
+		Phones                 []request.SiigoPhone            `json:"phones,omitempty"`
+		Contacts               []request.SiigoContact          `json:"contacts,omitempty"`
 	}{
-		PersonType:     personType,
-		IDType:         request.SiigoIDType{Code: idType},
-		Identification: req.Identification,
-		Name:           nameParts,
+		Type:                   "Customer",
+		PersonType:             personType,
+		IDType:                 idType,
+		Identification:         req.Identification,
+		Name:                   nameParts,
+		FiscalResponsibilities: []request.SiigoFiscalResponsibility{{Code: "R-99-PN"}},
 	}
 
-	if req.Address != "" {
-		customerBody.Address = &request.SiigoAddress{Address: req.Address}
+	if req.Address != "" && req.CountryCode != "" && req.StateCode != "" && req.CityCode != "" {
+		customerBody.Address = &request.SiigoAddress{
+			Address: req.Address,
+			City: &request.SiigoCity{
+				CountryCode: req.CountryCode,
+				StateCode:   req.StateCode,
+				CityCode:    req.CityCode,
+			},
+		}
+	} else if req.Address != "" {
+		c.log.Warn(ctx).
+			Str("identification", req.Identification).
+			Msg("⚠️ Address sin codigos DIAN (country/state/city), se omite. Siigo lo requeriria.")
 	}
 
 	if req.Phone != "" {
-		customerBody.Phones = []request.SiigoPhone{{Number: req.Phone}}
+		customerBody.Phones = []request.SiigoPhone{{Indicative: "57", Number: req.Phone}}
 	}
 
 	if req.Email != "" {
 		firstName := nameParts[0]
+		lastName := ""
+		if len(nameParts) > 1 {
+			lastName = strings.Join(nameParts[1:], " ")
+		}
 		customerBody.Contacts = []request.SiigoContact{
 			{
 				FirstName:             firstName,
+				LastName:              lastName,
 				Email:                 req.Email,
 				SendElectronicInvoice: true,
 			},

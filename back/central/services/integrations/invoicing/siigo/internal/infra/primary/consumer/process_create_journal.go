@@ -84,7 +84,7 @@ func (c *InvoiceRequestConsumer) processCreateJournal(
 		journalItems = append(journalItems, siigoDtos.JournalItemData{
 			SKU:        item.SKU,
 			Name:       item.Name,
-			Quantity:   item.Quantity,
+			Quantity:   float64(item.Quantity),
 			TotalPrice: item.TotalPrice,
 			CustomerDNI: request.InvoiceData.Customer.DNI,
 		})

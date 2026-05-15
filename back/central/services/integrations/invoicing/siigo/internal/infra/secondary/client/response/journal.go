@@ -9,7 +9,7 @@ type CreateJournalResponse struct {
 	Name     string              `json:"name"` // Ej: "CC-10-20"
 	Items    []JournalItemRef    `json:"items,omitempty"`
 	Total    float64             `json:"total"`
-	Errors   []SiigoError        `json:"Errors,omitempty"`
+	Errors   []SiigoError        `json:"errors,omitempty"`
 	Metadata JournalMetadata     `json:"metadata,omitempty"`
 }
 

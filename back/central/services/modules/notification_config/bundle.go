@@ -10,8 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_event_type"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_type"
 	deliveryConsumer "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/consumer"
-	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_conversation_consumer"
-	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_messagelog_consumer"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_persistence_consumer"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -72,24 +71,14 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 			}
 		}()
 
-		// 6. Consumers de WhatsApp persistence (conversaciones + message logs)
 		whatsappPersister := repository.NewWhatsAppPersister(database, logger)
 
-		convConsumer := whatsapp_conversation_consumer.New(rabbitMQ, whatsappPersister, logger)
+		persistenceConsumer := whatsapp_persistence_consumer.New(rabbitMQ, whatsappPersister, logger)
 		go func() {
-			if err := convConsumer.Start(context.Background()); err != nil {
+			if err := persistenceConsumer.Start(context.Background()); err != nil {
 				logger.Error(ctx).
 					Err(err).
-					Msg("Error al iniciar consumer de WhatsApp conversations")
-			}
-		}()
-
-		msgLogConsumer := whatsapp_messagelog_consumer.New(rabbitMQ, whatsappPersister, logger)
-		go func() {
-			if err := msgLogConsumer.Start(context.Background()); err != nil {
-				logger.Error(ctx).
-					Err(err).
-					Msg("Error al iniciar consumer de WhatsApp message logs")
+					Msg("Error al iniciar consumer de WhatsApp persistence")
 			}
 		}()
 	}

@@ -105,7 +105,7 @@ func (p *persistencePublisher) publishConversation(ctx context.Context, event co
 		return fmt.Errorf("error serializando conversation event: %w", err)
 	}
 
-	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppConversationEvents, data); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, data); err != nil {
 		p.log.Error(ctx).Err(err).
 			Str("event_type", event.EventType).
 			Str("conversation_id", event.Conversation.ID).
@@ -204,7 +204,7 @@ func (p *persistencePublisher) PublishMessageStatusUpdated(ctx context.Context, 
 		return fmt.Errorf("error serializando status update event: %w", err)
 	}
 
-	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppMessageLogEvents, data); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, data); err != nil {
 		p.log.Error(ctx).Err(err).
 			Str("message_id", messageID).
 			Str("status", string(status)).
@@ -226,7 +226,7 @@ func (p *persistencePublisher) publishMessageLog(ctx context.Context, event mess
 		return fmt.Errorf("error serializando messagelog event: %w", err)
 	}
 
-	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppMessageLogEvents, data); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueWhatsAppPersistenceEvents, data); err != nil {
 		p.log.Error(ctx).Err(err).
 			Str("event_type", event.EventType).
 			Str("message_id", event.MessageLog.MessageID).

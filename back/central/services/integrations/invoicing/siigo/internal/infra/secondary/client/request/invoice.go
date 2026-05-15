@@ -1,41 +1,54 @@
 package request
 
-// SiigoInvoice representa el body de una solicitud de creación de factura en Siigo
-// Endpoint: POST /v1/invoices
 type SiigoInvoice struct {
-	Document SiigoDocument    `json:"document"`
-	Customer SiigoCustomerRef `json:"customer"`
-	Date     string           `json:"date"` // "YYYY-MM-DD"
-	Currency SiigoCurrency    `json:"currency,omitempty"`
-	Items    []SiigoItem      `json:"items"`
-	Payments []SiigoPayment   `json:"payments,omitempty"`
-	Observations string       `json:"observations,omitempty"`
+	Document     SiigoDocument    `json:"document"`
+	Date         string           `json:"date"`
+	Customer     SiigoCustomerRef `json:"customer"`
+	Seller       int              `json:"seller"`
+	CostCenter   int              `json:"cost_center,omitempty"`
+	Currency     *SiigoCurrency   `json:"currency,omitempty"`
+	Items        []SiigoItem      `json:"items"`
+	Payments     []SiigoPayment   `json:"payments,omitempty"`
+	Stamp        *SiigoStamp      `json:"stamp,omitempty"`
+	Mail         *SiigoMail       `json:"mail,omitempty"`
+	Observations string           `json:"observations,omitempty"`
 }
 
-// SiigoDocument referencia al tipo de documento (FV = Factura de Venta)
 type SiigoDocument struct {
 	ID int `json:"id"`
 }
 
-// SiigoCustomerRef referencia al cliente en Siigo
 type SiigoCustomerRef struct {
-	PersonType     string          `json:"person_type"`              // "Person" o "Company"
-	IDType         SiigoIDType     `json:"id_type"`
-	Identification string          `json:"identification"`
-	Name           []string        `json:"name"`                     // [first_name, last_name] o [company_name]
-	Address        *SiigoAddress   `json:"address,omitempty"`
-	Phones         []SiigoPhone    `json:"phones,omitempty"`
-	Contacts       []SiigoContact  `json:"contacts,omitempty"`
+	Identification string `json:"identification"`
+	BranchOffice   int    `json:"branch_office"`
 }
 
-// SiigoIDType tipo de documento de identidad
+type SiigoStamp struct {
+	Send bool `json:"send"`
+}
+
+type SiigoMail struct {
+	Send bool `json:"send"`
+}
+
 type SiigoIDType struct {
-	Code string `json:"code"` // "13"=CC, "31"=NIT, "22"=CE, etc.
+	Code string `json:"code"`
 }
 
-// SiigoAddress dirección del cliente
+type SiigoFiscalResponsibility struct {
+	Code string `json:"code"`
+}
+
 type SiigoAddress struct {
-	Address string `json:"address"`
+	Address    string     `json:"address"`
+	City       *SiigoCity `json:"city,omitempty"`
+	PostalCode string     `json:"postal_code,omitempty"`
+}
+
+type SiigoCity struct {
+	CountryCode string `json:"country_code"`
+	StateCode   string `json:"state_code"`
+	CityCode    string `json:"city_code"`
 }
 
 // SiigoPhone teléfono del cliente
@@ -59,19 +72,13 @@ type SiigoCurrency struct {
 	ExchangeRate float64 `json:"exchange_rate,omitempty"`
 }
 
-// SiigoItem item de la factura
 type SiigoItem struct {
-	Code     SiigoProductCode `json:"code"`
-	Description string        `json:"description"`
-	Quantity float64          `json:"quantity"`
-	Price    float64          `json:"price"`
-	Discount float64          `json:"discount,omitempty"` // Porcentaje 0-100
-	Taxes    []SiigoTax       `json:"taxes,omitempty"`
-}
-
-// SiigoProductCode código del producto en Siigo
-type SiigoProductCode struct {
-	Code string `json:"code"`
+	Code        string     `json:"code"`
+	Description string     `json:"description"`
+	Quantity    float64    `json:"quantity"`
+	Price       float64    `json:"price"`
+	Discount    float64    `json:"discount,omitempty"`
+	Taxes       []SiigoTax `json:"taxes,omitempty"`
 }
 
 // SiigoTax impuesto del item
