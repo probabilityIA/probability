@@ -1170,7 +1170,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         orderId={order.id}
                                         lat={order.shipping_lat ?? null}
                                         lng={order.shipping_lng ?? null}
-                                        height="100%"
+                                        height="400px"
                                         origin={selectedOriginWarehouse ? {
                                             address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
                                             lat: selectedOriginWarehouse.latitude ?? null,
