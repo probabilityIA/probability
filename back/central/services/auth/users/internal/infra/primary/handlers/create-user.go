@@ -73,13 +73,10 @@ func (h *handlers) Createhandlers(c *gin.Context) {
 		req.BusinessIDs = ids
 	}
 
-	// Parsear scope_id manualmente si viene como string desde form-data
-	if req.ScopeID == nil {
-		if scopeStr := c.PostForm("scope_id"); scopeStr != "" {
-			if scopeIDVal, err := strconv.ParseUint(scopeStr, 10, 32); err == nil {
-				scopeID := uint(scopeIDVal)
-				req.ScopeID = &scopeID
-			}
+	if scopeStr := c.PostForm("scope_id"); scopeStr != "" {
+		if scopeIDVal, err := strconv.ParseUint(scopeStr, 10, 32); err == nil {
+			scopeID := uint(scopeIDVal)
+			req.ScopeID = &scopeID
 		}
 	}
 

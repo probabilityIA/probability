@@ -116,7 +116,7 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, userDTO domain.CreateUser
 		return "", "", "", fmt.Errorf("error al crear usuario: %w", err)
 	}
 
-	uc.log.Info().Uint("user_id", userID).Msg("Usuario creado exitosamente, asignando businesses")
+	uc.log.Info().Uint("user_id", userID).Any("scope_id", userDTO.ScopeID).Msg("Usuario creado exitosamente, asignando businesses")
 
 	if len(userDTO.BusinessIDs) > 0 {
 		uc.log.Info().Uint("user_id", userID).Any("business_ids", userDTO.BusinessIDs).Msg("Asignando businesses al usuario")
