@@ -144,7 +144,7 @@ describe('UserUseCases', () => {
 
             expect(result).toEqual(singleUser);
             expect(repo.createUser).toHaveBeenCalledOnce();
-            expect(repo.createUser).toHaveBeenCalledWith(dto);
+            expect(repo.createUser).toHaveBeenCalledWith(dto, undefined);
         });
 
         it('debería propagar el error cuando la creación falla', async () => {
