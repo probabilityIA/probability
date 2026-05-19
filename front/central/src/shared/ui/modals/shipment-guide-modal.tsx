@@ -1342,7 +1342,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     }`}
                                                     style={{
                                                         backgroundColor: `${businessColors.tertiary}08`,
-                                                        borderColor: hasSpecialBadge ? borderColor : selectedRate?.idRate === rate.idRate ? '#06b6d4' : '#d1d5db',
+                                                        borderColor: hasSpecialBadge ? borderColor : selectedRate?.idRate === rate.idRate ? businessColors.tertiary : '#d1d5db',
                                                         padding: '18px',
                                                         display: 'flex',
                                                         flexDirection: 'column',
