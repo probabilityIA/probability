@@ -19,8 +19,10 @@ type IUserRepository interface {
 	DeleteUser(ctx context.Context, id uint) (string, error)
 	AssignBusinessStaffRelationships(ctx context.Context, userID uint, assignments []BusinessRoleAssignment) error
 	GetBusinessStaffRelationships(ctx context.Context, userID uint) ([]BusinessRoleAssignmentDetailed, error)
-	AssignRoleToUserBusiness(ctx context.Context, userID uint, assignments []BusinessRoleAssignment) error // Asigna/actualiza roles a usuario en múltiples businesses
-	AssignBusinessesToUser(ctx context.Context, userID uint, businessIDs []uint) error                     // Deprecated: usar AssignBusinessStaffRelationships
+	AssignRoleToUserBusiness(ctx context.Context, userID uint, assignments []BusinessRoleAssignment) error
+	AssignBusinessesToUser(ctx context.Context, userID uint, businessIDs []uint) error
+	AssignRolesToUser(ctx context.Context, userID uint, roleIDs []uint) error
+	GetRoleIDByNameAndScope(ctx context.Context, roleName string, scopeID uint) (uint, error)
 }
 
 type IS3Service interface {

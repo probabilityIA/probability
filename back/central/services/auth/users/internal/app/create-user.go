@@ -130,6 +130,24 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, userDTO domain.CreateUser
 		uc.log.Info().Uint("user_id", userID).Int("businesses_count", len(userDTO.BusinessIDs)).Msg("Businesses asignados exitosamente")
 	}
 
+	if userDTO.ScopeID != nil && *userDTO.ScopeID == 3 {
+		uc.log.Info().Uint("user_id", userID).Msg("Asignando rol 'Operator Admin' automaticamente al usuario operator")
+		operatorRoleID, err := uc.repository.GetRoleIDByNameAndScope(ctx, "Operator Admin", 3)
+		if err != nil {
+			uc.log.Error().Err(err).Uint("user_id", userID).Msg("Error al obtener rol Operator Admin")
+			return "", "", "", fmt.Errorf("error al obtener rol operator: %w", err)
+		}
+		if operatorRoleID == 0 {
+			uc.log.Error().Uint("user_id", userID).Msg("Rol Operator Admin no encontrado")
+			return "", "", "", fmt.Errorf("rol operator admin no encontrado")
+		}
+		if err := uc.repository.AssignRolesToUser(ctx, userID, []uint{operatorRoleID}); err != nil {
+			uc.log.Error().Err(err).Uint("user_id", userID).Uint("role_id", operatorRoleID).Msg("Error al asignar rol operator al usuario")
+			return "", "", "", fmt.Errorf("error al asignar rol operator: %w", err)
+		}
+		uc.log.Info().Uint("user_id", userID).Uint("role_id", operatorRoleID).Msg("Rol Operator Admin asignado exitosamente")
+	}
+
 	message := fmt.Sprintf("Usuario creado con ID: %d", userID)
 	uc.log.Info().
 		Uint("user_id", userID).
