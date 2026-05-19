@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getDeliveryProbabilityAction } from '../../infra/actions';
+import { CookieStorage } from '@/shared/config';
 import type { ProbabilityResult } from '../../domain/types';
 
 interface Props {
@@ -12,54 +13,37 @@ interface Props {
     carrier: string;
 }
 
-function barColor(rate: number, estimated?: boolean): string {
-    if (estimated) return 'bg-gray-400';
-    if (rate >= 0.9) return 'bg-emerald-500';
-    if (rate >= 0.75) return 'bg-amber-500';
-    return 'bg-red-500';
-}
-
 interface BarProps {
     label: string;
     rate?: number;
     sample?: number;
-    estimated?: boolean;
+    primaryColor: string;
     title?: string;
 }
 
-function Bar({ label, rate, sample, estimated, title }: BarProps) {
+function Bar({ label, rate, sample, primaryColor, title }: BarProps) {
     if (rate === undefined) {
         return (
-            <div>
-                <p className="text-[10px] text-gray-600 dark:text-gray-300 mb-0.5">{label}</p>
-                <p className="text-[10px] text-gray-400">sin datos</p>
+            <div className="space-y-2">
+                <p className="text-[10px] text-gray-600 dark:text-gray-300">{label}</p>
+                <p className="text-[14px] font-bold text-gray-400">-</p>
+                <div className="w-full h-2 rounded-full bg-gray-200"></div>
             </div>
         );
     }
     const pct = Math.round(rate * 100);
     return (
-        <div title={title}>
-            <div className="flex items-baseline justify-between mb-0.5">
-                <p className="text-[10px] text-gray-600 dark:text-gray-300">
-                    {label}
-                    {estimated && (
-                        <span className="ml-1 px-1 py-px rounded text-[9px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">
-                            estimado
-                        </span>
-                    )}
-                </p>
-                <p className={`text-xs font-bold tabular-nums ${estimated ? 'text-gray-500 italic' : 'text-gray-900 dark:text-white'}`}>
-                    {pct}%
-                </p>
-            </div>
-            <div className={`w-full h-1 rounded-full overflow-hidden ${estimated ? 'bg-gray-100' : 'bg-gray-200 dark:bg-gray-700'}`}>
+        <div title={title} className="space-y-2">
+            <p className="text-[10px] text-gray-600 dark:text-gray-300">{label}</p>
+            <p className="text-[16px] font-bold text-gray-900 dark:text-white">{pct}%</p>
+            <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                 <div
-                    className={`h-full ${barColor(rate, estimated)} ${estimated ? 'opacity-60' : ''}`}
-                    style={{ width: `${pct}%` }}
+                    className="h-full rounded-full"
+                    style={{ width: `${pct}%`, backgroundColor: primaryColor }}
                 />
             </div>
-            {!estimated && sample !== undefined && sample > 0 && (
-                <p className="text-[9px] text-gray-500 mt-0.5 tabular-nums">
+            {sample !== undefined && sample > 0 && (
+                <p className="text-[9px] text-gray-500">
                     {(rate * 10).toFixed(1)} de cada 10 envios
                 </p>
             )}
@@ -70,6 +54,12 @@ function Bar({ label, rate, sample, estimated, title }: BarProps) {
 export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carrier }: Props) {
     const [result, setResult] = useState<ProbabilityResult | null>(null);
     const [loading, setLoading] = useState(true);
+    const [primaryColor, setPrimaryColor] = useState('#0f172a');
+
+    useEffect(() => {
+        const colors = CookieStorage.getBusinessColors();
+        setPrimaryColor(colors?.primary || '#0f172a');
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -90,29 +80,7 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
     }
 
     const zoneRate = result?.delivery_rate;
-    const zoneEstimated = !result?.found || !!result?.is_estimated;
     const sample = result?.stats?.total;
-
-    const levelLabel: Record<string, string> = {
-        barrio: 'barrio',
-        neighborhood: 'UPZ',
-        admin_district: 'localidad',
-        locality: 'corregimiento',
-        city: 'municipio',
-        state: 'departamento',
-        country: 'pais',
-    };
-    const lvl = result?.level ? (levelLabel[result.level] || result.level) : '';
-    const zoneName = result?.stats?.geozone_name || '';
-
-    let source = '';
-    if (result?.found && sample) {
-        source = zoneName ? `${lvl} ${zoneName} - ${sample} envios` : `${lvl} - ${sample} envios`;
-    } else if (result?.estimate_source === 'global_carrier' && result?.global_total) {
-        source = `tasa nacional - ${result.global_total} envios`;
-    } else if (result?.estimate_source === 'carrier_baseline') {
-        source = 'transportadora nueva, sin historial';
-    }
 
     const tooltip = result?.estimate_source === 'global_carrier'
         ? 'Aun no tenemos envios en tu zona con este carrier; mostramos la tasa nacional del carrier.'
@@ -123,17 +91,21 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
                 : undefined;
 
     return (
-        <div className="space-y-1 w-full">
+        <div className="space-y-4 w-full">
+            <Bar
+                label="Efectividad de recolección"
+                rate={undefined}
+                sample={sample}
+                primaryColor={primaryColor}
+                title={tooltip}
+            />
             <Bar
                 label="Efectividad de entrega en zona"
                 rate={zoneRate}
                 sample={sample}
-                estimated={zoneEstimated}
+                primaryColor={primaryColor}
                 title={tooltip}
             />
-            {source && (
-                <p className="text-[9px] text-gray-400 truncate" title={source}>{source}</p>
-            )}
         </div>
     );
 }

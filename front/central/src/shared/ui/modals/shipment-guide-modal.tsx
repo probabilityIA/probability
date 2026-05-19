@@ -21,6 +21,7 @@ import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmen
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
+import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 import dynamic from 'next/dynamic';
 
@@ -51,27 +52,34 @@ const getCarrierLogoSize = (carrierName: string): { container: string; image: st
     return { container: 'w-20 h-20', image: 'w-18 h-18' };
 };
 
+const formatCarrierName = (name: string): string => {
+    return name
+        .replace(/_/g, ' ')
+        .replace(/EXPRESS/g, '')
+        .trim();
+};
+
 const getCarrierLogo = (carrierName: string): string => {
     const carrierLogos: { [key: string]: string } = {
-        'SERVIENTREGA': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
-        'COORDINADORA': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+        'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
+        'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
         'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
         'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-        'FEDEX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
-        'INTERRAPIDISIMO': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+        'FEDEX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_fedex.png',
+        'INTERRAPIDISIMO': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_inerapidisimo.png',
         '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
         'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
         'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-        'ENVIA': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-        'PIBOX': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
-        'TCC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-        'TRANSPORTADORADECARACOLOMBIA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-        '99MINUTOS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
-        'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
-        'MENSAJERIAUBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
-        'MENSAJERIA URBANA': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
-        'MENSAJEROS_URBANOS_EXPRESS': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
-        'MENSAJEROSURBANOSEXPRESS': 'https://cdn-bkt-prd.s3.us-west-2.amazonaws.com/mu-website/uploads/2021/07/02094741/WhatsApp-Image-2021-07-02-at-9.47.17-AM.jpeg',
+        'ENVIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_envia.png',
+        'PIBOX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_pibox.png',
+        'TCC': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
+        'TRANSPORTADORADECARACOLOMBIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
+        '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
+        'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
+        'MENSAJERIAUBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJEROSURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
     };
 
     const trimmedName = carrierName.trim();
@@ -213,6 +221,31 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
     const [carrierProbabilities, setCarrierProbabilities] = useState<ProbabilityResult[]>([]);
+
+    const [businessColors, setBusinessColors] = useState({
+        primary: '#0f172a',
+        secondary: '#be185d',
+        tertiary: '#06b6d4',
+        quaternary: '#f59e0b',
+    });
+
+    useEffect(() => {
+        const loadColors = () => {
+            const colors = CookieStorage.getBusinessColors();
+            if (colors) {
+                setBusinessColors({
+                    primary: colors.primary || '#0f172a',
+                    secondary: colors.secondary || '#be185d',
+                    tertiary: colors.tertiary || '#06b6d4',
+                    quaternary: colors.quaternary || '#f59e0b',
+                });
+            }
+        };
+
+        loadColors();
+        window.addEventListener('businessChanged', loadColors);
+        return () => window.removeEventListener('businessChanged', loadColors);
+    }, []);
 
     const normalizeCarrierKey = (s: string) =>
         (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1204,7 +1237,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         Filtra por servicio / Transportadora
                                     </h3>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <p className="text-sm text-gray-600 dark:text-gray-300">Todos los precios incluyen IVA</p>
                                         {(step1Data?.codValue ?? 0) > 0 && (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-600">
                                                 Contra Entrega - Solo opciones contra entrega
@@ -1251,12 +1283,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         );
                                     }
                                     return (
-                                    <div className="grid grid-cols-3 gap-3 auto-rows-max">
+                                    <div className="grid grid-cols-2 gap-4 auto-rows-max">
                                         {filteredRates.map((rate) => {
                                             const minIns = rate.minimumInsurance ?? 0;
                                             const extraIns = rate.extraInsurance ?? 0;
                                             const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
                                             const totalCost = rate.flete + insuranceCost;
+                                            const isInsured = step1Data?.insurance === true && insuranceCost > 0;
                                             const isCOD = rate.cod;
 
                                             const allCosts = filteredRates.map(r => r.flete + (r.minimumInsurance ?? 0) + (step1Data?.insurance ? (r.extraInsurance ?? 0) : 0));
@@ -1279,183 +1312,196 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             if (isCheapest) badges.push('cheapest');
                                             if (isMostEffective) badges.push('mostEffective');
 
+                                            const isSameDay = rate.deliveryDays === 0;
+                                            const hasSpecialBadge = isMostEffective || isCheapest || isFastest || isSameDay;
+
+                                            let badgeColor = businessColors.quaternary;
+                                            let badgeLabel = '';
+                                            let borderColor = businessColors.tertiary;
+
+                                            if (isMostEffective) {
+                                                badgeColor = businessColors.primary;
+                                                badgeLabel = 'RECOMENDADO';
+                                            } else if (isCheapest) {
+                                                badgeColor = businessColors.secondary;
+                                                badgeLabel = 'MÁS ECONÓMICA';
+                                            } else if (isSameDay) {
+                                                badgeColor = businessColors.quaternary;
+                                                badgeLabel = 'MISMO DÍA';
+                                            } else if (isFastest) {
+                                                badgeColor = businessColors.tertiary;
+                                                badgeLabel = 'MÁS RÁPIDA';
+                                            }
+
                                             return (
                                                 <div
                                                     key={rate.idRate}
                                                     onClick={() => handleRateSelection(rate)}
-                                                    className={`relative bg-white border rounded-[14px] transition-all cursor-pointer ${
-                                                        selectedRate?.idRate === rate.idRate
-                                                            ? 'border-cyan-400 shadow-lg'
-                                                            : 'border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5'
+                                                    className={`relative border-2 rounded-3xl transition-all cursor-pointer ${
+                                                        hasSpecialBadge ? 'shadow-sm hover:shadow-lg hover:-translate-y-0.5' : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5'
                                                     }`}
                                                     style={{
-                                                        padding: '22px 24px 20px',
+                                                        backgroundColor: `${businessColors.tertiary}08`,
+                                                        borderColor: hasSpecialBadge ? borderColor : selectedRate?.idRate === rate.idRate ? '#06b6d4' : '#d1d5db',
+                                                        padding: '18px',
                                                         display: 'flex',
                                                         flexDirection: 'column',
-                                                        gap: '16px',
+                                                        gap: '0',
                                                     }}
                                                 >
-                                                    <div
-                                                        style={{
-                                                            position: 'absolute',
-                                                            top: '-11px',
-                                                            right: '14px',
-                                                            display: 'flex',
-                                                            gap: '6px',
-                                                            flexWrap: 'wrap',
-                                                            justifyContent: 'flex-end',
-                                                        }}
-                                                    >
-                                                        {badges.map((badge) => {
-                                                            const badgeConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
-                                                                fastest: { label: 'Más rápida', color: '#0e7490', bg: '#ecfeff', border: '#a5f3fc' },
-                                                                cheapest: { label: 'Más económica', color: '#166534', bg: '#f0fdf4', border: '#bbf7d0' },
-                                                                mostEffective: { label: 'Mejor efectividad', color: '#5b21b6', bg: '#f5f3ff', border: '#ddd6fe' },
-                                                            };
-                                                            const cfg = badgeConfig[badge] || badgeConfig.fastest;
-                                                            return (
-                                                                <div
-                                                                    key={badge}
-                                                                    style={{
-                                                                        display: 'inline-flex',
-                                                                        alignItems: 'center',
-                                                                        gap: '6px',
-                                                                        padding: '4px 9px',
-                                                                        borderRadius: '999px',
-                                                                        fontSize: '11px',
-                                                                        fontWeight: 600,
-                                                                        color: cfg.color,
-                                                                        backgroundColor: cfg.bg,
-                                                                        border: `1px solid ${cfg.border}`,
-                                                                        whiteSpace: 'nowrap',
-                                                                    }}
-                                                                >
-                                                                    {badge === 'fastest' && '⚡'}
-                                                                    {badge === 'cheapest' && '💚'}
-                                                                    {badge === 'mostEffective' && '🛡️'}
-                                                                    {cfg.label}
-                                                                </div>
-                                                            );
-                                                        })}
+                                                    {hasSpecialBadge && (
                                                         <div
                                                             style={{
+                                                                position: 'absolute',
+                                                                top: '-14px',
+                                                                left: '50%',
+                                                                transform: 'translateX(-50%)',
                                                                 display: 'inline-flex',
                                                                 alignItems: 'center',
-                                                                gap: '6px',
-                                                                padding: '4px 9px',
+                                                                justifyContent: 'center',
+                                                                padding: '6px 20px',
                                                                 borderRadius: '999px',
-                                                                fontSize: '11px',
-                                                                fontWeight: 600,
-                                                                backgroundColor: rate.deliveryDays === 0 ? '#0e7490' : rate.deliveryDays <= 1 ? '#0891b2' : '#f3f1ec',
-                                                                color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#ecfeff' : '#3b4248',
-                                                                whiteSpace: 'nowrap',
-                                                                border: rate.deliveryDays === 0 ? '1px solid #a5f3fc' : rate.deliveryDays <= 1 ? '1px solid #06b6d4' : '1px solid #e7e5e0',
-                                                            }}
-                                                        >
-                                                            {rate.deliveryDays === 0 ? '⚡' : '🕐'}
-                                                            {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-                                                        <div
-                                                            className="flex-shrink-0 rounded-[12px] overflow-hidden flex items-center justify-center bg-gray-100"
-                                                            style={{
-                                                                width: '52px',
-                                                                height: '52px',
-                                                            }}
-                                                        >
-                                                            <img
-                                                                src={getCarrierLogo(rate.carrier)}
-                                                                alt={rate.carrier}
-                                                                className="w-full h-full object-contain"
-                                                                onError={(e) => {
-                                                                    e.currentTarget.style.display = 'none';
-                                                                    e.currentTarget.parentElement!.textContent = rate.carrier.substring(0, 3);
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div style={{
-                                                                fontSize: rate.carrier.length > 25 ? '12px' : rate.carrier.length > 20 ? '13px' : '15px',
+                                                                fontSize: '13px',
                                                                 fontWeight: 700,
-                                                                color: '#0f1417',
-                                                                letterSpacing: '.01em'
-                                                            }}>
-                                                                {rate.carrier}
-                                                            </div>
-                                                            <div style={{ fontSize: '13px', color: '#6b757c', marginTop: '2px' }}>
-                                                                {rate.product}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: '#3b4248' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <span>Guía</span>
-                                                            <span style={{ fontWeight: 500, color: '#0f1417', fontVariantNumeric: 'tabular-nums' }}>
-                                                                ${rate.flete.toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <span>Seg. obligatorio</span>
-                                                            <span style={{ fontWeight: 500, color: '#0f1417', fontVariantNumeric: 'tabular-nums' }}>
-                                                                + ${minIns.toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                            <span>
-                                                                Seg. adicional
-                                                                {!step1Data?.insurance && <span style={{ color: '#9aa0a6' }}> (no incluido)</span>}
-                                                            </span>
-                                                            <span
-                                                                style={{
-                                                                    fontWeight: 500,
-                                                                    color: step1Data?.insurance ? '#0f1417' : '#9aa0a6',
-                                                                    textDecoration: step1Data?.insurance ? 'none' : 'line-through',
-                                                                    fontVariantNumeric: 'tabular-nums',
-                                                                }}
-                                                            >
-                                                                + ${extraIns.toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div
-                                                        style={{
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'baseline',
-                                                            borderTop: '1px solid #eeece7',
-                                                            paddingTop: '14px',
-                                                        }}
-                                                    >
-                                                        <span style={{ fontSize: '12px', color: '#6b757c', textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 600 }}>
-                                                            Total
-                                                        </span>
-                                                        <div style={{ fontSize: '28px', fontWeight: 700, color: '#06b6d4', letterSpacing: '-.02em', lineHeight: 1.1, fontVariantNumeric: 'tabular-nums' }}>
-                                                            ${totalCost.toLocaleString()} <span style={{ fontSize: '12px', color: '#6b757c', fontWeight: 500, marginLeft: '2px' }}>COP</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {order?.business_id && order.business_id > 0 && order.id && (
-                                                        <div
-                                                            style={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '14px',
-                                                                backgroundColor: '#faf9f6',
-                                                                borderRadius: '10px',
-                                                                padding: '12px 14px',
+                                                                color: '#fff',
+                                                                backgroundColor: badgeColor,
+                                                                border: '3px solid #fff',
+                                                                boxShadow: `0 4px 12px ${badgeColor}66`,
+                                                                whiteSpace: 'nowrap',
                                                             }}
                                                         >
-                                                            <CarrierEffectivenessRates
-                                                                businessId={order.business_id}
-                                                                orderId={order.id}
-                                                                carrier={rate.carrier}
-                                                            />
+                                                            {badgeLabel}
                                                         </div>
                                                     )}
+
+                                                    <div style={{ display: 'flex', gap: '0', flex: 1 }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '0 0 50%', textAlign: 'center' }}>
+                                                            <div
+                                                                className="flex-shrink-0 rounded-[14px] overflow-hidden flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100"
+                                                                style={{
+                                                                    width: '65px',
+                                                                    height: '65px',
+                                                                    margin: '0 auto',
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src={getCarrierLogo(rate.carrier)}
+                                                                    alt={rate.carrier}
+                                                                    className="w-full h-full object-contain"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        e.currentTarget.parentElement!.textContent = rate.carrier.substring(0, 2);
+                                                                        e.currentTarget.parentElement!.style.fontSize = '20px';
+                                                                        e.currentTarget.parentElement!.style.fontWeight = '700';
+                                                                    }}
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <div style={{
+                                                                    fontSize: '12px',
+                                                                    fontWeight: 800,
+                                                                    color: '#0f1417',
+                                                                    letterSpacing: '.01em',
+                                                                    lineHeight: 1.3,
+                                                                    wordBreak: 'break-word',
+                                                                    maxWidth: '100%',
+                                                                }}>
+                                                                    {formatCarrierName(rate.carrier)}
+                                                                </div>
+                                                                <div style={{ fontSize: '11px', color: '#6b757c', marginTop: '2px' }}>
+                                                                    {rate.product}
+                                                                </div>
+                                                            </div>
+
+                                                            <div
+                                                                style={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'baseline',
+                                                                    justifyContent: 'center',
+                                                                    gap: '4px',
+                                                                    fontSize: '28px',
+                                                                    fontWeight: 700,
+                                                                    color: '#0f1417',
+                                                                    letterSpacing: '-.02em',
+                                                                    lineHeight: 1,
+                                                                    fontVariantNumeric: 'tabular-nums',
+                                                                    margin: '4px 0 0',
+                                                                }}
+                                                            >
+                                                                <span>${totalCost.toLocaleString()}</span>
+                                                                <span style={{ fontSize: '10px', color: '#6b757c', fontWeight: 500 }}>COP</span>
+                                                            </div>
+
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '10px', color: '#3b4248', marginTop: '4px', textAlign: 'center', fontWeight: 700 }}>
+                                                                <div>Costo: ${totalCost.toLocaleString()}</div>
+                                                                <div>Guía: ${rate.flete.toLocaleString()}</div>
+                                                                {isInsured ? (
+                                                                    <div style={{ color: '#059669', fontSize: '9px' }}>
+                                                                        (Seguro: ${insuranceCost.toLocaleString()})
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ color: '#6b757c', fontSize: '9px' }}>(Sin asegurar)</div>
+                                                                )}
+                                                            </div>
+
+                                                            <div style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                gap: '0',
+                                                                padding: '0',
+                                                                borderRadius: '0',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                backgroundColor: 'transparent',
+                                                                color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#0891b2' : '#3b4248',
+                                                                whiteSpace: 'nowrap',
+                                                                border: 'none',
+                                                                margin: '2px auto',
+                                                            }}>
+                                                                {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
+                                                            </div>
+
+                                                            {isCOD && (
+                                                                <div style={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    padding: '4px 10px',
+                                                                    borderRadius: '8px',
+                                                                    fontSize: '10px',
+                                                                    fontWeight: 600,
+                                                                    color: '#6b21a8',
+                                                                    backgroundColor: '#f3e8ff',
+                                                                    border: '1px solid #e9d5ff',
+                                                                    margin: '2px auto 0',
+                                                                }}>
+                                                                    Contra Entrega
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div style={{
+                                                            width: '1px',
+                                                            backgroundColor: '#e5e7eb',
+                                                            margin: '12px 0',
+                                                            flexShrink: 0,
+                                                        }}></div>
+
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: '0 0 50%', padding: '0 12px', borderLeft: 'none', justifyContent: 'center', alignItems: 'stretch' }}>
+                                                            {order?.business_id && order.business_id > 0 && order.id && (
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                    <CarrierEffectivenessRates
+                                                                        businessId={order.business_id}
+                                                                        orderId={order.id}
+                                                                        carrier={rate.carrier}
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             );
                                         })}
