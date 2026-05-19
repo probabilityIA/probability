@@ -501,17 +501,15 @@ func (r *Repository) AssignBusinessesToUser(ctx context.Context, userID uint, bu
 }
 
 func (r *Repository) GetRoleIDByNameAndScope(ctx context.Context, roleName string, scopeID uint) (uint, error) {
-	var roleID uint
+	var role models.Role
 	if err := r.database.Conn(ctx).
-		Table("roles").
-		Select("id").
 		Where("name = ? AND scope_id = ? AND deleted_at IS NULL", roleName, scopeID).
-		First(&roleID).Error; err != nil {
+		First(&role).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return 0, nil
 		}
 		r.logger.Error().Str("role_name", roleName).Uint("scope_id", scopeID).Err(err).Msg("Error al obtener rol por nombre y scope")
 		return 0, err
 	}
-	return roleID, nil
+	return role.ID, nil
 }
