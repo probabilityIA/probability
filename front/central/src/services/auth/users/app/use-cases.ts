@@ -17,8 +17,8 @@ export class UserUseCases {
         return this.repository.getUserById(id);
     }
 
-    async createUser(data: CreateUserDTO) {
-        return this.repository.createUser(data);
+    async createUser(data: CreateUserDTO, businessId?: number) {
+        return this.repository.createUser(data, businessId);
     }
 
     async updateUser(id: number, data: UpdateUserDTO) {

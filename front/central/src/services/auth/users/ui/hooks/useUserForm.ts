@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createUserAction, updateUserAction } from '../../infra/actions';
 import { User, CreateUserDTO, UpdateUserDTO } from '../../domain/types';
 
-export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
+export const useUserForm = (initialData?: User, onSuccess?: () => void, businessId?: number) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
             if (initialData) {
                 response = await updateUserAction(initialData.id, dataToSubmit as UpdateUserDTO);
             } else {
-                response = await createUserAction(dataToSubmit as CreateUserDTO);
+                response = await createUserAction(dataToSubmit as CreateUserDTO, businessId);
             }
 
             if (response.success) {

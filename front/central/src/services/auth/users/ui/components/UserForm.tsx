@@ -16,6 +16,7 @@ import { TokenStorage } from '@/shared/utils/token-storage';
 const SCOPE_OPTIONS = [
     { value: '2', label: 'Business - Usuario de negocio' },
     { value: '1', label: 'Platform - Super administrador' },
+    { value: '3', label: 'Operator - Operador de plataforma' },
 ];
 
 interface Business {
@@ -129,6 +130,11 @@ interface UserFormProps {
 }
 
 export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCancel }) => {
+    const [currentUser, setCurrentUser] = useState<{ is_super_admin?: boolean; scope?: string; business_id?: number } | null>(null);
+    const [businesses, setBusinesses] = useState<Business[]>([]);
+    const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+    const [selectedScope, setSelectedScope] = useState<string>('2');
+
     const {
         formData,
         loading,
@@ -138,12 +144,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
         handleFileChange,
         submit,
         setError
-    } = useUserForm(initialData, onSuccess);
-
-    const [businesses, setBusinesses] = useState<Business[]>([]);
-    const [loadingBusinesses, setLoadingBusinesses] = useState(false);
-    const [currentUser, setCurrentUser] = useState<{ is_super_admin?: boolean; scope?: string; business_id?: number } | null>(null);
-    const [selectedScope, setSelectedScope] = useState<string>('2'); // Default: business
+    } = useUserForm(initialData, onSuccess, currentUser?.business_id || 1);
 
     // Obtener información del usuario actual
     useEffect(() => {
@@ -177,9 +178,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
         const scopeId = parseInt(e.target.value);
         setSelectedScope(e.target.value);
         handleChange('scope_id', scopeId);
-        
-        // Si es platform (1), limpiar business_ids
-        if (scopeId === 1) {
+
+        // Si es platform (1) u operator (3), limpiar business_ids (no aplican a esos scopes)
+        if (scopeId === 1 || scopeId === 3) {
             handleChange('business_ids', []);
         }
     };
@@ -252,15 +253,16 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
     const isSuperAdmin = currentUser?.is_super_admin === true;
     const isBusinessUser = currentUser?.scope === 'business' && !currentUser?.is_super_admin;
     const isCreating = !initialData;
-    
+
     // Mostrar selector de negocios si:
     // - Es super admin Y
     // - Es crear usuario (no editar) Y
     // - El scope seleccionado es "business" (2)
     const showBusinessSelector = isSuperAdmin && isCreating && selectedScope === '2';
-    
-    // Mostrar selector de scope solo para super admin al crear
-    const showScopeSelector = isSuperAdmin && isCreating;
+
+    // Mostrar selector de scope al crear usuario (sin depender de currentUser cargado)
+    // Si estamos en crear modo, mostrar selector. Se oculta si el usuario no es admin.
+    const showScopeSelector = isCreating;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">

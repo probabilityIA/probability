@@ -36,9 +36,9 @@ export const getUserByIdAction = async (id: number) => {
     }
 };
 
-export const createUserAction = async (data: CreateUserDTO) => {
+export const createUserAction = async (data: CreateUserDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).createUser(data);
+        return await (await getUseCases()).createUser(data, businessId);
     } catch (error: any) {
         console.error('Create User Action Error:', error.message);
         return { success: false, data: null, message: error.message };

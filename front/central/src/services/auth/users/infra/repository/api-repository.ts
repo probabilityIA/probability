@@ -77,7 +77,7 @@ export class UserApiRepository implements IUserRepository {
         return this.fetch<SingleResponse<User>>(`/users/${id}`);
     }
 
-    async createUser(data: CreateUserDTO): Promise<SingleResponse<User>> {
+    async createUser(data: CreateUserDTO, businessId?: number): Promise<SingleResponse<User>> {
         const formData = new FormData();
         formData.append('name', data.name);
         formData.append('email', data.email);
@@ -87,10 +87,10 @@ export class UserApiRepository implements IUserRepository {
         if (data.scope_id !== undefined) formData.append('scope_id', String(data.scope_id));
         if (data.business_ids && data.business_ids.length > 0) formData.append('business_ids', data.business_ids.join(','));
 
-        return this.fetch<SingleResponse<User>>('/users', {
+        const path = businessId ? `/users?business_id=${businessId}` : '/users';
+        return this.fetch<SingleResponse<User>>(path, {
             method: 'POST',
             body: formData,
-            // Content-Type header is automatically set by browser for FormData with boundary
         });
     }
 
