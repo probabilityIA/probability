@@ -8,6 +8,19 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client/response"
 )
 
+func calculateBasePriceFromTax(priceWithTax float64, taxRate *float64) float64 {
+	if priceWithTax <= 0 {
+		return 0
+	}
+
+	rate := 0.19
+	if taxRate != nil && *taxRate > 0 {
+		rate = *taxRate
+	}
+
+	return priceWithTax / (1 + rate)
+}
+
 // extractShipmentStatusFromFulfillments extrae el shipment_status de fulfillments
 // Prioridad: "delivered" > más reciente por UpdatedAt
 // Si no hay fulfillments con shipment_status, retorna fallback: fulfillment_status > financial_status
@@ -253,8 +266,8 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			Tax:          totalTax,
 			TaxRate:      taxRate,
 			Weight:       weight,
-			UnitPriceBase:            unitPrice,
-			UnitPriceBasePresentment: unitPricePresentment,
+			UnitPriceBase:            calculateBasePriceFromTax(unitPrice, taxRate),
+			UnitPriceBasePresentment: calculateBasePriceFromTax(unitPricePresentment, taxRate),
 			UnitPricePresentment: unitPricePresentment,
 			DiscountPresentment:  discountPresentment,
 			TaxPresentment:       taxPresentment,
