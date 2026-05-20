@@ -13,7 +13,6 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
-import { DeliveryProbabilityBadge } from "@/services/modules/geozones/ui/components/DeliveryProbabilityBadge";
 import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
 import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
 import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";

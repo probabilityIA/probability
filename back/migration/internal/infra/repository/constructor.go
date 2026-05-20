@@ -20,5 +20,5 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
-	return r.migrateShippingNeighborhood(ctx)
+	return r.backfillOrdersGeozone(ctx)
 }
