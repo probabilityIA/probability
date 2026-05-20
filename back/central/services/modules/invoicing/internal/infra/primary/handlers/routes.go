@@ -16,8 +16,9 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)       // Registrar factura externa (sin proveedor)
 			invoices.GET("", middleware.JWT(), h.ListInvoices)                       // Listar facturas
 			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)                     // Obtener factura
-			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)          // Cancelar factura
-			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)            // Reintentar factura
+			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)                      // Cancelar factura
+			invoices.POST("/:id/mark-as-cancelled", middleware.JWT(), h.MarkInvoiceAsCancelled) // Marcar como cancelada (sin enviar al proveedor)
+			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)                      // Reintentar factura
 			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)           // Cancelar reintentos pendientes
 			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)              // Habilitar reintentos automáticos
 			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt) // Generar recibo de caja para factura emitida
