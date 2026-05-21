@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/eventpublisher"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/geocoder"
 	rabbitqueue "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -35,8 +36,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	invoiceQuery := repository.NewInvoiceQuery(database)
 	orderCRUD := usecaseorder.New(repo, rabbitPublisher, invoiceQuery, logger)
 
+	geocoderAdapter := geocoder.New(environment.Get("GOOGLE_MAPS_API_KEY"), logger)
+
 	updateUC := usecaseupdateorder.New(repo, logger, rabbitPublisher, integrationEventPub)
-	createUC := usecasecreateorder.New(repo, logger, rabbitPublisher, integrationEventPub, updateUC)
+	createUC := usecasecreateorder.New(repo, logger, rabbitPublisher, integrationEventPub, updateUC, geocoderAdapter)
 
 	statusUC := usecaseupdatestatus.New(repo, logger, rabbitPublisher)
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)

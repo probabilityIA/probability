@@ -11,6 +11,7 @@ type UseCaseCreateOrder struct {
 	rabbitEventPublisher      ports.IOrderRabbitPublisher
 	integrationEventPublisher ports.IIntegrationEventPublisher
 	updateUseCase             ports.IOrderUpdateUseCase
+	geocoder                  ports.IGeocoder
 }
 
 func New(
@@ -19,6 +20,7 @@ func New(
 	rabbitPublisher ports.IOrderRabbitPublisher,
 	integrationEventPub ports.IIntegrationEventPublisher,
 	updateUseCase ports.IOrderUpdateUseCase,
+	geocoder ports.IGeocoder,
 ) ports.IOrderCreateUseCase {
 	return &UseCaseCreateOrder{
 		repo:                      repo,
@@ -26,5 +28,6 @@ func New(
 		rabbitEventPublisher:      rabbitPublisher,
 		integrationEventPublisher: integrationEventPub,
 		updateUseCase:             updateUseCase,
+		geocoder:                  geocoder,
 	}
 }

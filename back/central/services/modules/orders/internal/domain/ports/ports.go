@@ -115,3 +115,7 @@ type IOrderRabbitPublisher interface {
 type IInvoiceQueryPort interface {
 	GetInvoiceByOrderID(ctx context.Context, orderID string) (*dtos.InvoiceData, error)
 }
+
+type IGeocoder interface {
+	Geocode(ctx context.Context, query string) (lat float64, lng float64, found bool)
+}
