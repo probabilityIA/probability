@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
 	"github.com/secamc93/probability/back/central/services/modules/announcements"
+	"github.com/secamc93/probability/back/central/services/modules/codreport"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/drivers"
@@ -62,6 +63,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
+	codreport.New(router, database, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
 
 	transportTypes := []int{12, 13, 14, 15}

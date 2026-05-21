@@ -53,7 +53,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         { section: 'OPERACIONES', items: [
             canViewOrders && { href: '/orders', label: 'Órdenes', icon: '📦' },
             canViewShipments && { href: '/shipments', label: 'Envíos', icon: '🚚' },
-            canViewShipments && { href: '/shipments/cod', label: 'Contra entrega', icon: '💵' },
+            canViewShipments && { href: '/shipments/cod', label: 'Recaudo contra entrega', icon: '💵' },
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
             canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },
