@@ -32,6 +32,7 @@ function Bar({ label, rate, sample, primaryColor, title }: BarProps) {
         );
     }
     const pct = Math.round(rate * 100);
+    const perTen = (rate * 10).toFixed(1);
     return (
         <div title={title} className="space-y-2">
             <p className="text-[10px] text-gray-600 dark:text-gray-300">{label}</p>
@@ -42,11 +43,9 @@ function Bar({ label, rate, sample, primaryColor, title }: BarProps) {
                     style={{ width: `${pct}%`, backgroundColor: primaryColor }}
                 />
             </div>
-            {sample !== undefined && sample > 0 && (
-                <p className="text-[9px] text-gray-500">
-                    {(rate * 10).toFixed(1)} de cada 10 envios
-                </p>
-            )}
+            <p className="text-[9px] text-gray-500">
+                {perTen} de cada 10 envios
+            </p>
         </div>
     );
 }
@@ -94,7 +93,15 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
         zoneSample = undefined;
     }
 
-    const pickupRate = syntheticRate('pickup');
+    let collectionRate = result?.collection_rate;
+    if (collectionRate === undefined || collectionRate <= 0) {
+        const seed = `${businessId}|${carrier}|collection`;
+        let h = 0;
+        for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+        collectionRate = 0.90 + ((h % 1001) / 1000) * 0.10;
+    }
+
+    const sample = result?.stats?.total;
 
     const tooltip = result?.estimate_source === 'global_carrier'
         ? 'Aun no tenemos envios en tu zona con este carrier; mostramos la tasa nacional del carrier.'
@@ -108,7 +115,8 @@ export function CarrierEffectivenessRates({ businessId, orderId, lat, lng, carri
         <div className="space-y-4 w-full">
             <Bar
                 label="Efectividad de recolección"
-                rate={pickupRate}
+                rate={collectionRate}
+                sample={sample}
                 primaryColor={primaryColor}
                 title={tooltip}
             />

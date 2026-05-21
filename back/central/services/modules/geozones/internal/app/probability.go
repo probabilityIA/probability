@@ -51,10 +51,10 @@ func (uc *ProbabilityUseCase) GetProbabilityByCarrier(ctx context.Context, order
 func applyBaselineCascade(results []dtos.ProbabilityResult) {
 	for i := range results {
 		r := &results[i]
-		if r.DeliveryRate != nil {
+		if r.DeliveryRate != nil && *r.DeliveryRate > 0.01 {
 			continue
 		}
-		if r.GlobalRate != nil && r.GlobalTotal > 0 {
+		if r.GlobalRate != nil && r.GlobalTotal > 0 && *r.GlobalRate > 0.01 {
 			rate := *r.GlobalRate
 			r.DeliveryRate = &rate
 			r.IsEstimated = true

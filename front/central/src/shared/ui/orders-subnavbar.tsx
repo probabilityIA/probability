@@ -22,13 +22,11 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
     const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
     const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
-    const canViewOriginAddresses = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
 
     // Solo mostrar si estamos en alguna de estas secciones
     const isInOrdersModule = pathname.startsWith('/orders') ||
                             pathname.startsWith('/shipments') ||
                             pathname.startsWith('/order-status') ||
-                            pathname.startsWith('/shipments/origin-addresses') ||
                             pathname.startsWith('/shipping-margins');
 
     if (!isInOrdersModule) {
@@ -59,7 +57,6 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
             canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },
-            canViewOriginAddresses && { href: '/shipments/origin-addresses', label: 'Direcciones de Origen', icon: '📍' },
             isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '💰' },
         ].filter(Boolean) },
     ];
