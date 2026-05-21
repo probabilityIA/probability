@@ -208,8 +208,25 @@ export default function ProductSelector({
                                             </button>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                                        {product.currency} {product.price.toLocaleString()}
+                                    <td className="px-4 py-2 whitespace-nowrap text-right text-sm">
+                                        <div className="font-semibold text-gray-900 dark:text-white">
+                                            {product.currency} {product.price.toLocaleString()}
+                                        </div>
+                                        {(() => {
+                                            const basePrice = (product as any)._basePrice;
+                                            if (typeof basePrice !== 'number' || basePrice === product.price) return null;
+                                            const diff = product.price - basePrice;
+                                            return (
+                                                <div className="text-xs leading-tight mt-0.5">
+                                                    <span className="text-gray-400 line-through">
+                                                        {product.currency} {basePrice.toLocaleString()}
+                                                    </span>
+                                                    <span className={`ml-1 font-bold ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {diff > 0 ? '+' : '-'}{product.currency} {Math.abs(diff).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })()}
                                     </td>
                                     <td className="px-4 py-2 whitespace-nowrap text-center">
                                         <button

@@ -7,23 +7,21 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pricing/internal/domain/entities"
 )
 
-// IRepository define los métodos del repositorio del módulo pricing
 type IRepository interface {
-	// Client Pricing Rules CRUD
-	CreateClientPricingRule(ctx context.Context, rule *entities.ClientPricingRule) (*entities.ClientPricingRule, error)
-	GetClientPricingRule(ctx context.Context, businessID, ruleID uint) (*entities.ClientPricingRule, error)
-	ListClientPricingRules(ctx context.Context, params dtos.ListClientPricingRulesParams) ([]entities.ClientPricingRule, int64, error)
-	UpdateClientPricingRule(ctx context.Context, rule *entities.ClientPricingRule) (*entities.ClientPricingRule, error)
-	DeleteClientPricingRule(ctx context.Context, businessID, ruleID uint) error
+	CreateClientGroup(ctx context.Context, group *entities.ClientGroup) (*entities.ClientGroup, error)
+	UpdateClientGroup(ctx context.Context, group *entities.ClientGroup) (*entities.ClientGroup, error)
+	GetClientGroup(ctx context.Context, businessID, groupID uint) (*entities.ClientGroup, error)
+	ListClientGroups(ctx context.Context, params dtos.ListClientGroupsParams) ([]entities.ClientGroup, int64, error)
+	DeleteClientGroup(ctx context.Context, businessID, groupID uint) error
+	GroupNameExists(ctx context.Context, businessID, groupID uint, name string) (bool, error)
 
-	// Quantity Discounts CRUD
-	CreateQuantityDiscount(ctx context.Context, discount *entities.QuantityDiscount) (*entities.QuantityDiscount, error)
-	GetQuantityDiscount(ctx context.Context, businessID, discountID uint) (*entities.QuantityDiscount, error)
-	ListQuantityDiscounts(ctx context.Context, params dtos.ListQuantityDiscountsParams) ([]entities.QuantityDiscount, int64, error)
-	UpdateQuantityDiscount(ctx context.Context, discount *entities.QuantityDiscount) (*entities.QuantityDiscount, error)
-	DeleteQuantityDiscount(ctx context.Context, businessID, discountID uint) error
+	ListGroupMembers(ctx context.Context, params dtos.ListGroupMembersParams) ([]entities.ClientSummary, int64, error)
+	ListAvailableClients(ctx context.Context, params dtos.ListAvailableClientsParams) ([]entities.ClientSummary, int64, error)
+	AddGroupMembers(ctx context.Context, dto dtos.AddGroupMembersDTO) error
+	RemoveGroupMember(ctx context.Context, businessID, groupID, clientID uint) error
+	GetClientGroupID(ctx context.Context, businessID, clientID uint) (*uint, error)
 
-	// Price Calculation queries
-	GetApplicableClientRule(ctx context.Context, businessID, clientID uint, productID string) (*entities.ClientPricingRule, error)
-	GetApplicableQuantityDiscount(ctx context.Context, businessID uint, productID string, quantity int) (*entities.QuantityDiscount, error)
+	ListCatalogPrices(ctx context.Context, params dtos.ListCatalogPricesParams) ([]entities.CatalogPriceRow, int64, error)
+	SaveCatalogPrices(ctx context.Context, dto dtos.SaveCatalogPricesDTO) error
+	GetEffectivePrice(ctx context.Context, params dtos.EffectivePriceParams) (*entities.EffectivePrice, error)
 }

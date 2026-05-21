@@ -3,11 +3,13 @@ package errors
 import "errors"
 
 var (
-	ErrRuleNotFound          = errors.New("pricing rule not found")
-	ErrDiscountNotFound      = errors.New("quantity discount not found")
-	ErrDuplicateRule         = errors.New("a pricing rule already exists for this client/product combination")
-	ErrDuplicateDiscount     = errors.New("a quantity discount already exists for this product/quantity tier")
-	ErrInvalidAdjustmentType = errors.New("adjustment_type must be 'percentage' or 'fixed'")
-	ErrInvalidMinQuantity    = errors.New("min_quantity must be greater than 0")
-	ErrInvalidDiscountPercent = errors.New("discount_percent must be between 0 and 100")
+	ErrGroupNotFound      = errors.New("client group not found")
+	ErrGroupNameRequired  = errors.New("group name is required")
+	ErrGroupNameDuplicate = errors.New("a client group with that name already exists")
+	ErrClientNotFound     = errors.New("client not found")
+	ErrInvalidPrice       = errors.New("price must be greater than or equal to zero")
+	ErrTargetRequired     = errors.New("either client_group_id or client_id is required")
+	ErrTargetAmbiguous    = errors.New("only one of client_group_id or client_id may be set")
+	ErrProductNotFound    = errors.New("product not found")
+	ErrNoClients          = errors.New("at least one client id is required")
 )

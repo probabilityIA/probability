@@ -1,95 +1,95 @@
 package dtos
 
-// ---- Client Pricing Rules ----
-
-// CreateClientPricingRuleDTO datos para crear una regla de precio
-type CreateClientPricingRuleDTO struct {
-	BusinessID      uint
-	ClientID        uint
-	ProductID       *string
-	AdjustmentType  string
-	AdjustmentValue float64
-	IsActive        bool
-	Priority        int
-	Description     string
-}
-
-// UpdateClientPricingRuleDTO datos para actualizar una regla de precio
-type UpdateClientPricingRuleDTO struct {
-	ID              uint
-	BusinessID      uint
-	ClientID        uint
-	ProductID       *string
-	AdjustmentType  string
-	AdjustmentValue float64
-	IsActive        bool
-	Priority        int
-	Description     string
-}
-
-// ListClientPricingRulesParams parámetros de búsqueda y paginación
-type ListClientPricingRulesParams struct {
+type ListClientGroupsParams struct {
 	BusinessID uint
-	ClientID   *uint   // filtro opcional por cliente
-	ProductID  *string // filtro opcional por producto
+	Search     string
 	Page       int
 	PageSize   int
 }
 
-// Offset calcula el offset para paginación
-func (p ListClientPricingRulesParams) Offset() int {
+func (p ListClientGroupsParams) Offset() int {
 	if p.Page < 1 {
-		p.Page = 1
+		return 0
 	}
 	return (p.Page - 1) * p.PageSize
 }
 
-// ---- Quantity Discounts ----
-
-// CreateQuantityDiscountDTO datos para crear un descuento por cantidad
-type CreateQuantityDiscountDTO struct {
-	BusinessID      uint
-	ProductID       *string
-	MinQuantity     int
-	DiscountPercent float64
-	IsActive        bool
-	Description     string
+type SaveClientGroupDTO struct {
+	ID          uint
+	BusinessID  uint
+	Name        string
+	Description string
+	IsActive    bool
 }
 
-// UpdateQuantityDiscountDTO datos para actualizar un descuento por cantidad
-type UpdateQuantityDiscountDTO struct {
-	ID              uint
-	BusinessID      uint
-	ProductID       *string
-	MinQuantity     int
-	DiscountPercent float64
-	IsActive        bool
-	Description     string
+type ListGroupMembersParams struct {
+	BusinessID    uint
+	ClientGroupID uint
+	Search        string
+	Page          int
+	PageSize      int
 }
 
-// ListQuantityDiscountsParams parámetros de búsqueda y paginación
-type ListQuantityDiscountsParams struct {
-	BusinessID uint
-	ProductID  *string // filtro opcional por producto
-	Page       int
-	PageSize   int
-}
-
-// Offset calcula el offset para paginación
-func (p ListQuantityDiscountsParams) Offset() int {
+func (p ListGroupMembersParams) Offset() int {
 	if p.Page < 1 {
-		p.Page = 1
+		return 0
 	}
 	return (p.Page - 1) * p.PageSize
 }
 
-// ---- Price Calculator ----
+type ListAvailableClientsParams struct {
+	BusinessID  uint
+	Search      string
+	OnlyUngrouped bool
+	Page        int
+	PageSize    int
+}
 
-// CalculatePriceRequest datos para calcular un precio
-type CalculatePriceRequest struct {
+func (p ListAvailableClientsParams) Offset() int {
+	if p.Page < 1 {
+		return 0
+	}
+	return (p.Page - 1) * p.PageSize
+}
+
+type AddGroupMembersDTO struct {
+	BusinessID    uint
+	ClientGroupID uint
+	ClientIDs     []uint
+}
+
+type CatalogPriceTarget struct {
+	BusinessID    uint
+	ClientGroupID *uint
+	ClientID      *uint
+}
+
+type ListCatalogPricesParams struct {
+	Target   CatalogPriceTarget
+	Search   string
+	Page     int
+	PageSize int
+}
+
+func (p ListCatalogPricesParams) Offset() int {
+	if p.Page < 1 {
+		return 0
+	}
+	return (p.Page - 1) * p.PageSize
+}
+
+type SaveCatalogPriceItem struct {
+	ProductID string
+	Price     *float64
+}
+
+type SaveCatalogPricesDTO struct {
+	Target CatalogPriceTarget
+	Items  []SaveCatalogPriceItem
+}
+
+type EffectivePriceParams struct {
 	BusinessID uint
-	ClientID   uint
 	ProductID  string
-	BasePrice  float64
-	Quantity   int
+	ClientID   uint
 }

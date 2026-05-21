@@ -7,6 +7,7 @@ import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import ProductFamilyList, { ProductFamilyListHandle } from '@/services/modules/products/ui/components/ProductFamilyList';
 import ProductFamilyForm from '@/services/modules/products/ui/components/ProductFamilyForm';
 import ProductTour from '@/services/modules/products/ui/components/ProductTour';
+import { CatalogPricingModal } from '@/services/modules/pricing/ui/components/CatalogPricingModal';
 import { Product, ProductFamily } from '@/services/modules/products/domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
@@ -32,6 +33,7 @@ export default function ProductsPage() {
 
     const [isTourOpen, setIsTourOpen] = useState(false);
     const [pulseTour, setPulseTour] = useState(false);
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
     useEffect(() => {
         try {
@@ -159,6 +161,15 @@ export default function ProductsPage() {
                                 </div>
                             )}
                             <div className="flex gap-3 flex-shrink-0">
+                                <button
+                                    onClick={() => setIsPricingModalOpen(true)}
+                                    title="Grupos de clientes y precios por catalogo"
+                                    className="p-3 rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-3.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-3-3" />
+                                    </svg>
+                                </button>
                                 <button
                                     onClick={() => { setIsTourOpen(true); setPulseTour(false); }}
                                     title={pulseTour ? 'Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
@@ -312,6 +323,12 @@ export default function ProductsPage() {
             </Modal>
 
             <ProductTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+
+            <CatalogPricingModal
+                isOpen={isPricingModalOpen}
+                onClose={() => setIsPricingModalOpen(false)}
+                businessId={effectiveBusinessId}
+            />
         </div>
     );
 }

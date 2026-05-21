@@ -21,6 +21,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
+	"github.com/secamc93/probability/back/central/services/modules/pricing"
 	"github.com/secamc93/probability/back/central/services/modules/probability"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite"
@@ -59,6 +60,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	probability.New(database, logger, rabbitMQ)
 	products.New(router, database, logger, environment, s3)
 	customers.New(router, database, logger, rabbitMQ)
+	pricing.New(router, database, logger)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
 
