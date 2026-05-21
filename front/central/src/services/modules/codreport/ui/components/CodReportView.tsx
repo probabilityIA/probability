@@ -64,9 +64,10 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                             onClick={() => setTab(t.key)}
                             className={`px-3 py-1.5 rounded-md text-sm font-semibold inline-flex items-center gap-1.5 transition-colors ${
                                 tab === t.key
-                                    ? 'bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 shadow-sm'
+                                    ? 'bg-white dark:bg-gray-800 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
                             }`}
+                            style={tab === t.key ? { color: 'var(--color-primary)' } : undefined}
                         >
                             {t.icon} {t.label}
                         </button>
@@ -75,7 +76,19 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                 {isAdmin && (
                     <button
                         onClick={() => setShowConfig(true)}
-                        className="px-3 py-1.5 rounded-md text-sm font-semibold border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 inline-flex items-center gap-1.5"
+                        className="px-3 py-1.5 rounded-md text-sm font-semibold inline-flex items-center gap-1.5"
+                        style={{
+                            color: 'var(--color-primary)',
+                            borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
+                            borderWidth: '1px',
+                            backgroundColor: 'transparent',
+                        }}
+                        onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 8%, transparent)';
+                        }}
+                        onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                        }}
                     >
                         <Percent size={14} /> Descuentos transportadora
                     </button>
@@ -91,9 +104,10 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                                 onClick={() => setRange(opt.key)}
                                 className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
                                     range === opt.key
-                                        ? 'bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 shadow-sm'
+                                        ? 'bg-white dark:bg-gray-800 shadow-sm'
                                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
                                 }`}
+                                style={range === opt.key ? { color: 'var(--color-primary)' } : undefined}
                             >
                                 {opt.label}
                             </button>
@@ -102,9 +116,10 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                             onClick={() => setRange('custom')}
                             className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
                                 range === 'custom'
-                                    ? 'bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 shadow-sm'
+                                    ? 'bg-white dark:bg-gray-800 shadow-sm'
                                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700'
                             }`}
+                            style={range === 'custom' ? { color: 'var(--color-primary)' } : undefined}
                         >
                             Personalizado
                         </button>
