@@ -64,8 +64,9 @@ type FilterConfig struct {
 	MaxAmount *float64 `json:"max_amount,omitempty"`
 
 	// Pago
-	PaymentStatus  *string `json:"payment_status,omitempty"`  // "paid", "unpaid", "partial"
-	PaymentMethods []uint  `json:"payment_methods,omitempty"` // IDs de métodos permitidos
+	PaymentStatus  *string `json:"payment_status,omitempty"`
+	PaymentMethods []uint  `json:"payment_methods,omitempty"`
+	InvoiceCOD     *bool   `json:"invoice_cod,omitempty"`
 
 	// Orden
 	OrderTypes      []string `json:"order_types,omitempty"`      // ["delivery", "pickup"]

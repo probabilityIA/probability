@@ -37,12 +37,13 @@ export function InvoicingConfigForm({
     enabled: initialData?.enabled ?? true,
     auto_invoice: initialData?.auto_invoice ?? false,
     payment_status: (initialData?.filters?.payment_status as string) ?? '',
-    // Customer settings
+    invoice_cod: (initialData?.filters?.invoice_cod as boolean) ?? false,
     force_default_customer: initialData?.config?.force_default_customer ?? false,
-    // Cash receipt fields (from invoice_config)
     send_cash_receipt: initialData?.config?.send_cash_receipt ?? false,
     payment_type: (initialData?.config?.payment_type as string) ?? 'EF',
     payment_bank_account_id: initialData?.config?.payment_bank_account_id ?? '' as string | number,
+    cod_use_alternate_bank: initialData?.config?.cod_use_alternate_bank ?? false,
+    cod_payment_bank_account_id: initialData?.config?.cod_payment_bank_account_id ?? '' as string | number,
     payment_financial_entity_id: initialData?.config?.payment_financial_entity_id ?? '' as string | number,
     payment_bonus_code: (initialData?.config?.payment_bonus_code as string) ?? '',
     payment_bank_name: (initialData?.config?.payment_bank_name as string) ?? '',
@@ -135,9 +136,13 @@ export function InvoicingConfigForm({
       return;
     }
 
-    const filters = formData.payment_status
-      ? { payment_status: formData.payment_status as 'paid' | 'unpaid' | 'partial' }
-      : {};
+    const filters: Record<string, any> = {};
+    if (formData.payment_status) {
+      filters.payment_status = formData.payment_status as 'paid' | 'unpaid' | 'partial';
+    }
+    if (formData.invoice_cod) {
+      filters.invoice_cod = true;
+    }
 
     // Build invoice_config with cash receipt settings
     const invoiceConfig: Record<string, any> = {};
@@ -157,6 +162,11 @@ export function InvoicingConfigForm({
         invoiceConfig.payment_financial_entity_id = Number(formData.payment_financial_entity_id);
       if (formData.payment_type === 'BN' && formData.payment_bonus_code)
         invoiceConfig.payment_bonus_code = formData.payment_bonus_code;
+      if (formData.cod_use_alternate_bank) {
+        invoiceConfig.cod_use_alternate_bank = true;
+        if (formData.cod_payment_bank_account_id)
+          invoiceConfig.cod_payment_bank_account_id = String(formData.cod_payment_bank_account_id);
+      }
     }
 
     // Build item_mappings
@@ -250,6 +260,22 @@ export function InvoicingConfigForm({
           </div>
         </div>
       )}
+
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.invoice_cod}
+            onChange={(e) => setFormData({ ...formData, invoice_cod: e.target.checked })}
+            disabled={loading}
+            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+          />
+          <div>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar contra entrega</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Permite facturar ordenes de pago contra entrega aunque no esten pagadas. Si esta desactivado, las contra entrega se bloquean.</p>
+          </div>
+        </label>
+      </div>
 
       {/* Facturar como Consumidor Final */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -392,6 +418,39 @@ export function InvoicingConfigForm({
                   />
                 </div>
               )}
+
+              <div className="border-t pt-3 mt-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.cod_use_alternate_bank}
+                    onChange={(e) => setFormData({ ...formData, cod_use_alternate_bank: e.target.checked })}
+                    disabled={loading}
+                    className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Usar cuenta alterna para contra entrega</span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Si esta activo, el recibo de caja de las ordenes contra entrega se registra en otra cuenta bancaria.</p>
+                  </div>
+                </label>
+
+                {formData.cod_use_alternate_bank && (
+                  <div className="mt-3">
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria contra entrega</label>
+                    <input
+                      type="text"
+                      value={formData.cod_payment_bank_account_id}
+                      onChange={(e) => setFormData({ ...formData, cod_payment_bank_account_id: e.target.value })}
+                      placeholder="Ej: 2"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Numero de cuenta registrada en Softpymes que se usara solo para ordenes contra entrega.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* BN: code */}
               {formData.payment_type === 'BN' && (

@@ -21,7 +21,11 @@ func CreateValidators(config *entities.FilterConfig) []FilterValidator {
 
 	// Pago
 	if config.PaymentStatus != nil {
-		validators = append(validators, &PaymentStatusValidator{RequiredStatus: *config.PaymentStatus})
+		allowCOD := false
+		if config.InvoiceCOD != nil {
+			allowCOD = *config.InvoiceCOD
+		}
+		validators = append(validators, &PaymentStatusValidator{RequiredStatus: *config.PaymentStatus, AllowCOD: allowCOD})
 	}
 	if len(config.PaymentMethods) > 0 {
 		validators = append(validators, &PaymentMethodsValidator{AllowedMethods: config.PaymentMethods})

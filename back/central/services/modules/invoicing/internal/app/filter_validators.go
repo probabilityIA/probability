@@ -54,10 +54,14 @@ func (v *MaxAmountValidator) Validate(order *dtos.OrderData) error {
 
 type PaymentStatusValidator struct {
 	RequiredStatus string
+	AllowCOD       bool
 }
 
 func (v *PaymentStatusValidator) Validate(order *dtos.OrderData) error {
 	if v.RequiredStatus == "paid" && !order.IsPaid {
+		if v.AllowCOD && order.IsCOD {
+			return nil
+		}
 		return errors.ErrOrderNotPaid
 	}
 	return nil

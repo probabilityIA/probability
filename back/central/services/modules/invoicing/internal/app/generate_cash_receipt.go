@@ -102,6 +102,7 @@ func (uc *useCase) GenerateCashReceipt(ctx context.Context, invoiceID uint) erro
 		}
 	}
 	invoiceConfigData["invoice_number"] = invoice.InvoiceNumber
+	invoiceConfigData["is_cod"] = order.IsCOD
 
 	// 11. Construir mensaje
 	correlationID := uuid.New().String()

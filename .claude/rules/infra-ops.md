@@ -36,7 +36,20 @@ NUNCA `go run cmd/main.go &` ni `nohup`. Siempre el script.
 
 ## GitHub
 
-SIEMPRE `gh` CLI. NUNCA MCP de GitHub (problemas de autenticacion). Verificar cuenta con `gh auth status`.
+SIEMPRE `gh` CLI. NUNCA MCP de GitHub (problemas de autenticacion).
+
+**OBLIGATORIO en cada terminal nueva antes de usar `gh`:**
+
+```bash
+eval "$(./scripts/gh-env.sh)"
+```
+
+Esto exporta `GH_TOKEN` con el PAT de `secamc93` y fija `GH_REPO=probabilityIA/probability`,
+sin tocar el keyring global (donde `velocity` queda como default). Verificar con `gh auth status`
+— debe decir `Active account: true` y `(GH_TOKEN)`, no `(keyring)`.
+
+El token vive en `.mcp.json` o `.gh-token` (ambos en `.gitignore`). Si `gh auth status` muestra
+`Bad credentials`, regenerar el PAT en https://github.com/settings/tokens y reemplazar en el archivo.
 
 ```bash
 gh pr create --title "T" --body "B" --base main

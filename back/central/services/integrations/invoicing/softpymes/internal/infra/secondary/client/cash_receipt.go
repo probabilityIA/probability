@@ -77,10 +77,23 @@ func (c *Client) SendCashReceiptFromDocument(
 		return nil, fmt.Errorf("cash receipt: total is 0 or negative in full document")
 	}
 
-	// 3. Read payment config
 	paymentType, _ := config["payment_type"].(string)
 	if paymentType == "" {
 		paymentType = "EF"
+	}
+
+	if isCOD, _ := config["is_cod"].(bool); isCOD {
+		if useAlt, _ := config["cod_use_alternate_bank"].(bool); useAlt {
+			if altAcc, ok := config["cod_payment_bank_account_id"]; ok && altAcc != nil {
+				if s, ok := altAcc.(string); ok && s != "" {
+					config["payment_bank_account_id"] = s
+				} else if f, ok := altAcc.(float64); ok {
+					config["payment_bank_account_id"] = fmt.Sprintf("%.0f", f)
+				} else if n, ok := altAcc.(int); ok {
+					config["payment_bank_account_id"] = fmt.Sprintf("%d", n)
+				}
+			}
+		}
 	}
 
 	// 4. Build payment body per type

@@ -2,11 +2,45 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
+
+func detectIsCOD(order *models.Order) bool {
+	if order.CodTotal != nil && *order.CodTotal > 0 {
+		return true
+	}
+	if len(order.PaymentDetails) == 0 {
+		return false
+	}
+	var details struct {
+		Gateway             string   `json:"gateway"`
+		PaymentGatewayNames []string `json:"payment_gateway_names"`
+	}
+	if err := json.Unmarshal(order.PaymentDetails, &details); err != nil {
+		return false
+	}
+	keywords := []string{"cod", "cash", "contra"}
+	gw := strings.ToLower(details.Gateway)
+	for _, kw := range keywords {
+		if gw != "" && strings.Contains(gw, kw) {
+			return true
+		}
+	}
+	for _, name := range details.PaymentGatewayNames {
+		n := strings.ToLower(name)
+		for _, kw := range keywords {
+			if strings.Contains(n, kw) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 // GetByID obtiene una orden por su ID y la mapea a OrderData
 func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error) {
@@ -78,6 +112,7 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		CustomerPhone:   order.CustomerPhone,
 		CustomerDNI:     order.CustomerDNI,
 		IsPaid:          order.IsPaid,
+		IsCOD:           detectIsCOD(order),
 		PaymentMethodID: order.PaymentMethodID,
 		Invoiceable:     order.Invoiceable,
 		IsTest:          order.IsTest,

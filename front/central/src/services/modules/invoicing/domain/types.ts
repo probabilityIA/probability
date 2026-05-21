@@ -114,6 +114,7 @@ export interface InvoicingFilters {
   // Filtros de pago
   payment_status?: 'paid' | 'unpaid' | 'partial';
   payment_methods?: number[];
+  invoice_cod?: boolean;
 
   // Filtros de orden
   order_types?: string[];
@@ -174,6 +175,9 @@ export interface InvoicingSettings {
   payment_bonus_code?: string;              // BN: code del bono
   payment_bank_name?: string;               // CH: nombre del banco
   payment_account_number?: string;          // CH: numero de cuenta
+
+  cod_use_alternate_bank?: boolean;
+  cod_payment_bank_account_id?: string | number;
 }
 
 // ===================================

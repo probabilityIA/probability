@@ -278,11 +278,13 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		invoiceItemDTOs = append(invoiceItemDTOs, itemDTO)
 	}
 
-	// Config específico de facturación (invoice_config desde DB)
 	invoiceConfigData := make(map[string]interface{})
 	if config.InvoiceConfig != nil {
-		invoiceConfigData = config.InvoiceConfig
+		for k, v := range config.InvoiceConfig {
+			invoiceConfigData[k] = v
+		}
 	}
+	invoiceConfigData["is_cod"] = order.IsCOD
 
 	// Calcular shipping base: usar tasa del primer item como referencia, default 19%
 	shippingTaxRate := 0.19

@@ -94,3 +94,4 @@ probability.pem
 .claude/settings.json
 .claude/settings.local.json
 .claude.json
+.gh-token
