@@ -438,7 +438,10 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                     <input
                                         type="number"
                                         value={quantity}
-                                        onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                                        onChange={(e) => {
+                                            const input = e.target.value.replace(/^0+(?=\d)/, '');
+                                            setQuantity(Math.max(0, parseInt(input) || 0));
+                                        }}
                                         className="w-full px-4 py-3 text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-2xl font-bold focus:outline-none"
                                         style={{
                                             fontFamily: "'JetBrains Mono', monospace",
@@ -448,6 +451,9 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                         min="0"
                                         onFocus={(e) => {
                                             e.currentTarget.style.boxShadow = `0 0 0 4px color-mix(in oklab, var(--color-primary) 10%, transparent)`;
+                                            if (quantity === 0) {
+                                                e.currentTarget.select();
+                                            }
                                         }}
                                         onBlur={(e) => {
                                             e.currentTarget.style.boxShadow = '';
