@@ -47,22 +47,9 @@ export default function InventoryStockPage() {
     const canShowActions = !requiresBusinessSelection;
 
     useEffect(() => {
-        if (!canShowActions) {
-            setActionButtons(null);
-            return;
-        }
-        const actionButtons = (
-            <button
-                onClick={() => { setSelectedProductId(undefined); setAdjustWarehouseId(null); setModalType('adjust'); }}
-                title="Ajustar stock"
-                className="p-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-                <AdjustmentsHorizontalIcon className="w-5 h-5" />
-            </button>
-        );
-        setActionButtons(actionButtons);
+        setActionButtons(null);
         return () => setActionButtons(null);
-    }, [setActionButtons, canShowActions]);
+    }, [setActionButtons]);
 
     const viewBtnCls = (active: boolean) =>
         `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${active
@@ -106,6 +93,8 @@ export default function InventoryStockPage() {
                             <ProductInventoryView
                                 businessId={effectiveBusinessId}
                                 onRefreshRef={handleProductViewRefreshRef}
+                                onOpenAdjustModal={() => { setSelectedProductId(undefined); setAdjustWarehouseId(null); setModalType('adjust'); }}
+                                onAdjust={handleAdjustFromProduct}
                             />
                         )}
 

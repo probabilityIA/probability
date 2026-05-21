@@ -25,13 +25,14 @@ type ClientSummary struct {
 }
 
 type CatalogPriceRow struct {
-	ProductID   string
-	ProductName string
-	ProductSKU  string
-	ImageURL    string
-	Currency    string
-	BasePrice   float64
-	CustomPrice *float64
+	ProductID     string
+	ProductName   string
+	ProductSKU    string
+	ImageURL      string
+	FamilyImageURL string
+	Currency      string
+	BasePrice     float64
+	CustomPrice   *float64
 }
 
 type EffectivePrice struct {

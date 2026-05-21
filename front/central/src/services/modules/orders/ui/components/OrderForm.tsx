@@ -466,7 +466,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         setTimeout(() => {
             setShowCityResults(false);
             if (!citySelected && citySearch.trim() !== '') {
-                const exact = daneOptions.find(o => o.label.toLowerCase() === citySearch.trim().toLowerCase());
+                const searchNorm = normalizeCity(citySearch.trim());
+                const exact = daneOptions.find(o =>
+                    o.label.toLowerCase() === citySearch.trim().toLowerCase() ||
+                    normalizeCity(`${o.ciudad} (${o.departamento})`) === searchNorm
+                );
                 if (exact) {
                     handleCitySelect(exact);
                 } else {
@@ -488,10 +492,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             if (!formData.shipping_street?.trim() || !formData.shipping_city?.trim() || !formData.shipping_state?.trim()) {
                 setCityError(!formData.shipping_city?.trim());
                 throw new Error('La direccion de envio (calle, ciudad y departamento) es obligatoria');
-            }
-            if (!citySelected) {
-                setCityError(true);
-                throw new Error('Selecciona una ciudad y departamento del listado');
             }
 
             const parts = [formData.shipping_street || ''];

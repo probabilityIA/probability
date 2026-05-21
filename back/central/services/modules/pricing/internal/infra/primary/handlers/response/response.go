@@ -71,25 +71,27 @@ type ClientsListResponse struct {
 }
 
 type CatalogPriceRowResponse struct {
-	ProductID   string   `json:"product_id"`
-	ProductName string   `json:"product_name"`
-	ProductSKU  string   `json:"product_sku"`
-	ImageURL    string   `json:"image_url"`
-	Currency    string   `json:"currency"`
-	BasePrice   float64  `json:"base_price"`
-	CustomPrice *float64 `json:"custom_price"`
-	Difference  float64  `json:"difference"`
+	ProductID    string   `json:"product_id"`
+	ProductName  string   `json:"product_name"`
+	ProductSKU   string   `json:"product_sku"`
+	ImageURL     string   `json:"image_url"`
+	FamilyImageURL string  `json:"family_image_url"`
+	Currency     string   `json:"currency"`
+	BasePrice    float64  `json:"base_price"`
+	CustomPrice  *float64 `json:"custom_price"`
+	Difference   float64  `json:"difference"`
 }
 
 func FromCatalogPriceRow(row *entities.CatalogPriceRow) CatalogPriceRowResponse {
 	resp := CatalogPriceRowResponse{
-		ProductID:   row.ProductID,
-		ProductName: row.ProductName,
-		ProductSKU:  row.ProductSKU,
-		ImageURL:    row.ImageURL,
-		Currency:    row.Currency,
-		BasePrice:   row.BasePrice,
-		CustomPrice: row.CustomPrice,
+		ProductID:     row.ProductID,
+		ProductName:   row.ProductName,
+		ProductSKU:    row.ProductSKU,
+		ImageURL:      row.ImageURL,
+		FamilyImageURL: row.FamilyImageURL,
+		Currency:      row.Currency,
+		BasePrice:     row.BasePrice,
+		CustomPrice:   row.CustomPrice,
 	}
 	if row.CustomPrice != nil {
 		resp.Difference = *row.CustomPrice - row.BasePrice

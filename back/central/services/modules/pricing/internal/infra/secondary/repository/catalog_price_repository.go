@@ -12,13 +12,14 @@ import (
 )
 
 type catalogRow struct {
-	ProductID   string   `gorm:"column:id"`
-	ProductName string   `gorm:"column:name"`
-	ProductSKU  string   `gorm:"column:sku"`
-	ImageURL    string   `gorm:"column:image_url"`
-	Currency    string   `gorm:"column:currency"`
-	BasePrice   float64  `gorm:"column:base_price"`
-	CustomPrice *float64 `gorm:"column:custom_price"`
+	ProductID      string   `gorm:"column:id"`
+	ProductName    string   `gorm:"column:name"`
+	ProductSKU     string   `gorm:"column:sku"`
+	ImageURL       string   `gorm:"column:image_url"`
+	FamilyImageURL string   `gorm:"column:family_image_url"`
+	Currency       string   `gorm:"column:currency"`
+	BasePrice      float64  `gorm:"column:base_price"`
+	CustomPrice    *float64 `gorm:"column:custom_price"`
 }
 
 func (r *Repository) ListCatalogPrices(ctx context.Context, params dtos.ListCatalogPricesParams) ([]entities.CatalogPriceRow, int64, error) {
@@ -48,7 +49,8 @@ func (r *Repository) ListCatalogPrices(ctx context.Context, params dtos.ListCata
 	var rows []catalogRow
 	if err := base.
 		Joins("LEFT JOIN custom_product_price cpp ON "+joinCond, joinArg).
-		Select("p.id, p.name, p.sku, p.image_url, p.currency, p.price AS base_price, cpp.price AS custom_price").
+		Joins("LEFT JOIN product_families pf ON p.family_id = pf.id").
+		Select("p.id, p.name, p.sku, p.image_url, COALESCE(pf.image_url, '') AS family_image_url, p.currency, p.price AS base_price, cpp.price AS custom_price").
 		Order("p.name ASC").
 		Offset(params.Offset()).Limit(params.PageSize).
 		Scan(&rows).Error; err != nil {
@@ -58,13 +60,14 @@ func (r *Repository) ListCatalogPrices(ctx context.Context, params dtos.ListCata
 	result := make([]entities.CatalogPriceRow, len(rows))
 	for i, row := range rows {
 		result[i] = entities.CatalogPriceRow{
-			ProductID:   row.ProductID,
-			ProductName: row.ProductName,
-			ProductSKU:  row.ProductSKU,
-			ImageURL:    row.ImageURL,
-			Currency:    row.Currency,
-			BasePrice:   row.BasePrice,
-			CustomPrice: row.CustomPrice,
+			ProductID:      row.ProductID,
+			ProductName:    row.ProductName,
+			ProductSKU:     row.ProductSKU,
+			ImageURL:       row.ImageURL,
+			FamilyImageURL: row.FamilyImageURL,
+			Currency:       row.Currency,
+			BasePrice:      row.BasePrice,
+			CustomPrice:    row.CustomPrice,
 		}
 	}
 	return result, total, nil

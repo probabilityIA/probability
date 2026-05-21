@@ -65,6 +65,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         height: product?.height || undefined,
         width: product?.width || undefined,
         length: product?.length || undefined,
+        image_url: (product as any)?.image_url || product?.family?.image_url || '',
     });
 
     const [skuPrefix, setSkuPrefix] = useState('PROD');
@@ -210,6 +211,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     height: formData.height,
                     width: formData.width,
                     length: formData.length,
+                    image_url: formData.image_url || undefined,
                 };
                 res = await updateProductAction(product!.id, u, businessId);
             } else {
@@ -325,124 +327,161 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
             )}
 
             {mode === 'single' && (
-                <form onSubmit={handleSingleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className={lc}>SKU <span className="text-red-500">*</span></label>
-                            <div className="relative">
+                <form onSubmit={handleSingleSubmit} className={`${formData.image_url ? 'grid grid-cols-2 gap-6' : 'space-y-5'}`}>
+                    {formData.image_url && (
+                        <div className="flex flex-col gap-3">
+                            <div className="sticky top-0">
+                                <label className={lc}>URL de imagen</label>
                                 <input
-                                    className={ic}
                                     type="text"
-                                    value={formData.sku}
-                                    onChange={e => setFormData(f => ({ ...f, sku: e.target.value }))}
-                                    disabled={isEdit}
-                                    required
+                                    className={ic}
+                                    placeholder="https://..."
+                                    value={formData.image_url || ''}
+                                    onChange={e => setFormData(f => ({ ...f, image_url: e.target.value }))}
                                 />
-                                {skuSearchLoading && (
-                                    <div className="absolute right-3 top-3 w-4 h-4 border-2 border-gray-300 border-t-current rounded-full animate-spin" style={{ color: primaryColor }} />
+                                {formData.image_url && (
+                                    <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-4 mt-3" style={{ minHeight: 300 }}>
+                                        <img src={formData.image_url} alt="Preview" className="max-h-80 max-w-full object-contain" onError={() => {}} />
+                                    </div>
                                 )}
                             </div>
-                            {suggestedNextSKU && suggestedNextSKU !== formData.sku && !isEdit && (
-                                <p style={{ color: primaryColor }} className="text-xs mt-1">Sugerencia: {suggestedNextSKU}</p>
-                            )}
                         </div>
-                        <div>
-                            <label className={lc}>Nombre <span className="text-red-500">*</span></label>
-                            <input className={ic} type="text" value={formData.name} onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} required />
-                        </div>
-                        <div>
-                            <label className={lc}>Precio <span className="text-red-500">*</span></label>
-                            <input className={ic} type="number" min="0" step="0.01" value={formData.price} onChange={e => setFormData(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} required />
-                        </div>
-                        <div>
-                            <label className={lc}>Moneda</label>
-                            <select className={ic} value={formData.currency} onChange={e => setFormData(f => ({ ...f, currency: e.target.value }))}>
-                                <option value="COP">COP</option>
-                                <option value="USD">USD</option>
-                                <option value="MXN">MXN</option>
-                                <option value="EUR">EUR</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className={lc}>Estado</label>
-                            <select className={ic} value={formData.status} onChange={e => setFormData(f => ({ ...f, status: e.target.value }))}>
-                                <option value="active">Activo</option>
-                                <option value="draft">Borrador</option>
-                                <option value="archived">Archivado</option>
-                            </select>
-                        </div>
-                        <div className="flex items-end pb-1">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" checked={formData.track_inventory ?? true} onChange={e => setFormData(f => ({ ...f, track_inventory: e.target.checked, manage_stock: e.target.checked }))} style={{ accentColor: primaryColor }} className="w-4 h-4 rounded border-gray-300" />
-                                <span className="text-sm text-gray-700 dark:text-gray-200">Gestionar inventario</span>
-                            </label>
-                        </div>
-                    </div>
+                    )}
 
-                    <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">
-                        <h4 style={{ color: primaryColor }} className="text-xs font-bold uppercase tracking-wider mb-3">Familia de variantes (opcional)</h4>
+                    <div className={formData.image_url ? 'space-y-5' : ''}>
                         <div className="grid grid-cols-2 gap-3">
                             <div>
-                                <label className={lc}>Familia</label>
-                                <select
-                                    className={ic}
-                                    value={formData.family_id ?? ''}
-                                    onChange={e => {
-                                        const id = e.target.value ? parseInt(e.target.value) : undefined;
-                                        setFormData(f => ({ ...f, family_id: id, variant_attributes: undefined, variant_label: '' }));
-                                    }}
-                                >
-                                    <option value="">Sin familia</option>
-                                    {families.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                <label className={lc}>SKU <span className="text-red-500">*</span></label>
+                                <div className="relative">
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        value={formData.sku}
+                                        onChange={e => setFormData(f => ({ ...f, sku: e.target.value }))}
+                                        disabled={isEdit}
+                                        required
+                                    />
+                                    {skuSearchLoading && (
+                                        <div className="absolute right-3 top-3 w-4 h-4 border-2 border-gray-300 border-t-current rounded-full animate-spin" style={{ color: primaryColor }} />
+                                    )}
+                                </div>
+                                {suggestedNextSKU && suggestedNextSKU !== formData.sku && !isEdit && (
+                                    <p style={{ color: primaryColor }} className="text-xs mt-1">Sugerencia: {suggestedNextSKU}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className={lc}>Nombre <span className="text-red-500">*</span></label>
+                                <input className={ic} type="text" value={formData.name} onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} required />
+                            </div>
+                            <div>
+                                <label className={lc}>Precio <span className="text-red-500">*</span></label>
+                                <input className={ic} type="number" min="0" step="0.01" value={formData.price} onChange={e => setFormData(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} required />
+                            </div>
+                            <div>
+                                <label className={lc}>Moneda</label>
+                                <select className={ic} value={formData.currency} onChange={e => setFormData(f => ({ ...f, currency: e.target.value }))}>
+                                    <option value="COP">COP</option>
+                                    <option value="USD">USD</option>
+                                    <option value="MXN">MXN</option>
+                                    <option value="EUR">EUR</option>
                                 </select>
                             </div>
                             <div>
-                                <label className={lc}>Etiqueta variante</label>
-                                <input className={ic} type="text" placeholder="Ej: Vainilla - 1kg" value={formData.variant_label || ''} onChange={e => setFormData(f => ({ ...f, variant_label: e.target.value }))} />
+                                <label className={lc}>Estado</label>
+                                <select className={ic} value={formData.status} onChange={e => setFormData(f => ({ ...f, status: e.target.value }))}>
+                                    <option value="active">Activo</option>
+                                    <option value="draft">Borrador</option>
+                                    <option value="archived">Archivado</option>
+                                </select>
+                            </div>
+                            <div className="flex items-end pb-1">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formData.track_inventory ?? true} onChange={e => setFormData(f => ({ ...f, track_inventory: e.target.checked, manage_stock: e.target.checked }))} style={{ accentColor: primaryColor }} className="w-4 h-4 rounded border-gray-300" />
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">Gestionar inventario</span>
+                                </label>
                             </div>
                         </div>
-                        {familyAxes.length > 0 && (
-                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                {familyAxes.map(ax => (
-                                    <div key={ax.key}>
-                                        <label className={lc}>{ax.label}</label>
-                                        <input
-                                            className={ic}
-                                            type="text"
-                                            placeholder={ax.label}
-                                            value={formData.variant_attributes?.[ax.key] || ''}
-                                            onChange={e => setFormData(f => ({
-                                                ...f,
-                                                variant_attributes: { ...f.variant_attributes, [ax.key]: e.target.value },
-                                            }))}
-                                        />
-                                    </div>
-                                ))}
+
+                        <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">
+                            <h4 style={{ color: primaryColor }} className="text-xs font-bold uppercase tracking-wider mb-3">Familia de variantes (opcional)</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={lc}>Familia</label>
+                                    <select
+                                        className={ic}
+                                        value={formData.family_id ?? ''}
+                                        onChange={e => {
+                                            const id = e.target.value ? parseInt(e.target.value) : undefined;
+                                            setFormData(f => ({ ...f, family_id: id, variant_attributes: undefined, variant_label: '' }));
+                                        }}
+                                    >
+                                        <option value="">Sin familia</option>
+                                        {families.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className={lc}>Etiqueta variante</label>
+                                    <input className={ic} type="text" placeholder="Ej: Vainilla - 1kg" value={formData.variant_label || ''} onChange={e => setFormData(f => ({ ...f, variant_label: e.target.value }))} />
+                                </div>
+                            </div>
+                            {familyAxes.length > 0 && (
+                                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {familyAxes.map(ax => (
+                                        <div key={ax.key}>
+                                            <label className={lc}>{ax.label}</label>
+                                            <input
+                                                className={ic}
+                                                type="text"
+                                                placeholder={ax.label}
+                                                value={formData.variant_attributes?.[ax.key] || ''}
+                                                onChange={e => setFormData(f => ({
+                                                    ...f,
+                                                    variant_attributes: { ...f.variant_attributes, [ax.key]: e.target.value },
+                                                }))}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <details className="group">
+                            <summary className="text-xs font-semibold text-gray-500 dark:text-gray-400 cursor-pointer select-none flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
+                                <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                                Peso y dimensiones
+                            </summary>
+                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div><label className={lc}>Peso (kg)</label><input className={ic} type="number" min="0" step="0.01" value={formData.weight ?? ''} onChange={e => setFormData(f => ({ ...f, weight: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Largo (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.length ?? ''} onChange={e => setFormData(f => ({ ...f, length: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Ancho (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.width ?? ''} onChange={e => setFormData(f => ({ ...f, width: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Alto (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.height ?? ''} onChange={e => setFormData(f => ({ ...f, height: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                            </div>
+                        </details>
+
+                        <div>
+                            <label className={lc}>Descripcion</label>
+                            <textarea rows={3} className={ic} placeholder="Descripcion del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
+                        </div>
+
+                        {!formData.image_url && (
+                            <div>
+                                <label className={lc}>URL de imagen</label>
+                                <div className="flex flex-col gap-2">
+                                    <input
+                                        type="text"
+                                        className={ic}
+                                        placeholder="https://..."
+                                        value={formData.image_url || ''}
+                                        onChange={e => setFormData(f => ({ ...f, image_url: e.target.value }))}
+                                    />
+                                </div>
                             </div>
                         )}
-                    </div>
 
-                    <details className="group">
-                        <summary className="text-xs font-semibold text-gray-500 dark:text-gray-400 cursor-pointer select-none flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
-                            <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-                            Peso y dimensiones
-                        </summary>
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div><label className={lc}>Peso (kg)</label><input className={ic} type="number" min="0" step="0.01" value={formData.weight ?? ''} onChange={e => setFormData(f => ({ ...f, weight: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                            <div><label className={lc}>Largo (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.length ?? ''} onChange={e => setFormData(f => ({ ...f, length: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                            <div><label className={lc}>Ancho (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.width ?? ''} onChange={e => setFormData(f => ({ ...f, width: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                            <div><label className={lc}>Alto (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.height ?? ''} onChange={e => setFormData(f => ({ ...f, height: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                        <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            {cancelBtn}
+                            {submitBtn(isEdit ? 'Guardar cambios' : 'Crear producto')}
                         </div>
-                    </details>
-
-                    <div>
-                        <label className={lc}>Descripcion</label>
-                        <textarea rows={3} className={ic} placeholder="Descripcion del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                        {cancelBtn}
-                        {submitBtn(isEdit ? 'Guardar cambios' : 'Crear producto')}
                     </div>
                 </form>
             )}

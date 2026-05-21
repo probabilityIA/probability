@@ -5,7 +5,7 @@ import { getProductInventoryAction } from '../../infra/actions';
 import { getProductsAction } from '@/services/modules/products/infra/actions';
 import { InventoryLevel } from '../../domain/types';
 import { Spinner } from '@/shared/ui';
-import { AdjustmentsHorizontalIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { AdjustmentsHorizontalIcon, XMarkIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface ProductRow {
     id: string;
@@ -15,6 +15,8 @@ interface ProductRow {
     familyId?: number;
     variantLabel?: string;
     variantAttributes?: any;
+    imageUrl?: string;
+    familyImageUrl?: string;
 }
 
 interface WarehouseSummary {
@@ -63,11 +65,12 @@ interface ProductInventoryViewProps {
     businessId?: number;
     onAdjust?: (productId: string, warehouseId: number) => void;
     onRefreshRef?: (ref: () => void) => void;
+    onOpenAdjustModal?: () => void;
 }
 
 const MODAL_PAGE_SIZE = 10;
 
-export default function ProductInventoryView({ businessId, onAdjust, onRefreshRef }: ProductInventoryViewProps) {
+export default function ProductInventoryView({ businessId, onAdjust, onRefreshRef, onOpenAdjustModal }: ProductInventoryViewProps) {
     const [products, setProducts] = useState<ProductRow[]>([]);
     const [loadingProducts, setLoadingProducts] = useState(false);
     const [page, setPage] = useState(1);
@@ -103,7 +106,9 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                     family: (p as any).family?.name,
                     familyId: p.family_id,
                     variantLabel: p.variant_label,
-                    variantAttributes: p.variant_attributes
+                    variantAttributes: p.variant_attributes,
+                    imageUrl: p.image_url,
+                    familyImageUrl: (p as any).family?.image_url
                 }));
                 setProducts(rows);
                 setTotal((response as any).total ?? rows.length);
@@ -233,9 +238,20 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                     </div>
-                    <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors">
+                    <button type="submit" className="px-4 py-2 btn-business-primary text-white rounded-lg text-sm hover:shadow-md transition-all">
                         Buscar
                     </button>
+                    {onOpenAdjustModal && (
+                        <button
+                            type="button"
+                            onClick={onOpenAdjustModal}
+                            className="px-4 py-2 btn-business-primary text-white rounded-lg text-sm hover:shadow-md transition-all flex items-center gap-2"
+                            title="Añadir stock"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Añadir stock
+                        </button>
+                    )}
                     {(nameFilter || skuFilter) && (
                         <button type="button" onClick={handleClear} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                             Limpiar
@@ -274,9 +290,21 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                             ) : (
                                 products.map((p) => {
                                     const hasStock = (stockCounts[p.id] ?? 0) > 0;
+                                    const displayImage = p.imageUrl || p.familyImageUrl;
                                     return (
                                         <tr key={p.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                            <td className="text-left font-medium text-gray-900 dark:text-white">{p.name}</td>
+                                            <td className="text-left font-medium text-gray-900 dark:text-white">
+                                                <div className="flex items-center gap-3">
+                                                    {displayImage && (
+                                                        <img
+                                                            src={displayImage}
+                                                            alt={p.name}
+                                                            className="w-8 h-8 rounded object-cover flex-shrink-0"
+                                                        />
+                                                    )}
+                                                    <span>{p.name}</span>
+                                                </div>
+                                            </td>
                                             <td className="text-left text-sm text-gray-500 dark:text-gray-400">{getVariantDisplay(p)}</td>
                                             <td className="text-left text-sm text-gray-500 dark:text-gray-400">{p.family ?? <span className="text-gray-300 dark:text-gray-600">&mdash;</span>}</td>
                                             <td className="text-left text-sm text-gray-500 dark:text-gray-400 font-mono">{p.sku}</td>
@@ -322,9 +350,18 @@ export default function ProductInventoryView({ businessId, onAdjust, onRefreshRe
                     <div className="absolute inset-0 bg-black/50" onClick={closeModal} />
                     <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedProduct.name}</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-0.5">{selectedProduct.sku}</p>
+                            <div className="flex items-center gap-4">
+                                {(selectedProduct.imageUrl || selectedProduct.familyImageUrl) && (
+                                    <img
+                                        src={selectedProduct.imageUrl || selectedProduct.familyImageUrl}
+                                        alt={selectedProduct.name}
+                                        className="w-12 h-12 rounded object-cover"
+                                    />
+                                )}
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedProduct.name}</h2>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 font-mono mt-0.5">{selectedProduct.sku}</p>
+                                </div>
                             </div>
                             <button
                                 onClick={closeModal}

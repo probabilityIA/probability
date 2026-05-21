@@ -339,9 +339,9 @@ export function CatalogPriceTable({ businessId, groups }: CatalogPriceTableProps
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
-                                                {row.image_url ? (
+                                                {row.image_url || (row as any).family_image_url ? (
                                                     <img
-                                                        src={row.image_url}
+                                                        src={row.image_url || (row as any).family_image_url}
                                                         alt={row.product_name}
                                                         className="w-10 h-10 rounded-md object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0"
                                                     />

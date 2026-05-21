@@ -189,8 +189,8 @@ const ProductList = forwardRef(function ProductList(
                                     <tr key={product.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="px-3 sm:px-6 py-4">
                                             <div className="flex items-center">
-                                                {product.image_url ? (
-                                                    <img src={product.image_url} alt={product.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
+                                                {product.image_url || product.family?.image_url ? (
+                                                    <img src={product.image_url || product.family?.image_url || ''} alt={product.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
                                                 ) : (
                                                     <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">N/A</div>
                                                 )}
@@ -208,8 +208,15 @@ const ProductList = forwardRef(function ProductList(
                                             <div className="text-sm text-gray-900 dark:text-white">{product.sku}</div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                                                {formatCurrency(product.price, product.currency)}
+                                            <div className="flex flex-col gap-0.5">
+                                                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {formatCurrency(product.compare_at_price ?? product.price, product.currency)}
+                                                </div>
+                                                {product.compare_at_price && product.compare_at_price !== product.price && (
+                                                    <div className="text-xs text-red-600 dark:text-red-400 line-through">
+                                                        {formatCurrency(product.price, product.currency)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">

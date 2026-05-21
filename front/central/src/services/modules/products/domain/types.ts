@@ -180,6 +180,7 @@ export interface CreateProductDTO {
     width?: number;
     length?: number;
     dimension_unit?: string;
+    image_url?: string;
     images?: string[];
     thumbnail?: string;
     category?: string;

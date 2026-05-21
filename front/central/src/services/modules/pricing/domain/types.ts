@@ -25,6 +25,7 @@ export interface CatalogPriceRow {
     product_name: string;
     product_sku: string;
     image_url: string;
+    family_image_url?: string;
     currency: string;
     base_price: number;
     custom_price: number | null;
