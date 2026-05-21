@@ -3,6 +3,7 @@ export interface ClientGroup {
     business_id: number;
     name: string;
     description: string;
+    color: string;
     is_active: boolean;
     member_count: number;
     created_at: string;
@@ -42,6 +43,7 @@ export interface SaveClientGroupInput {
     id?: number;
     name: string;
     description: string;
+    color: string;
     is_active: boolean;
 }
 

@@ -925,6 +925,36 @@ func (r *Repository) CreateClient(ctx context.Context, client *entities.Client) 
 	return nil
 }
 
+// AssignClientToGroup vincula un cliente a un grupo de precios (client_group_member).
+// Escritura replicada — la tabla pertenece al modulo pricing pero se escribe aqui
+// para evitar compartir repositorios entre modulos.
+func (r *Repository) AssignClientToGroup(ctx context.Context, businessID, clientGroupID, clientID uint) error {
+	if businessID == 0 || clientGroupID == 0 || clientID == 0 {
+		return nil
+	}
+	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
+		var groupCount int64
+		if err := tx.Model(&models.ClientGroup{}).
+			Where("id = ? AND business_id = ? AND deleted_at IS NULL", clientGroupID, businessID).
+			Count(&groupCount).Error; err != nil {
+			return err
+		}
+		if groupCount == 0 {
+			return nil
+		}
+		if err := tx.Unscoped().
+			Where("business_id = ? AND client_id = ?", businessID, clientID).
+			Delete(&models.ClientGroupMember{}).Error; err != nil {
+			return err
+		}
+		return tx.Create(&models.ClientGroupMember{
+			BusinessID:    businessID,
+			ClientGroupID: clientGroupID,
+			ClientID:      clientID,
+		}).Error
+	})
+}
+
 // CountOrdersByClientID cuenta las órdenes de un cliente
 func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error) {
 	var count int64

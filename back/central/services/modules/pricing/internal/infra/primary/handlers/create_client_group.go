@@ -31,6 +31,7 @@ func (h *Handlers) CreateClientGroup(c *gin.Context) {
 		BusinessID:  businessID,
 		Name:        req.Name,
 		Description: req.Description,
+		Color:       req.Color,
 		IsActive:    isActive,
 	})
 	if err != nil {

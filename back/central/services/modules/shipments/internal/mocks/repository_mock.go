@@ -20,7 +20,7 @@ type RepositoryMock struct {
 	GetOrderBusinessIDFn              func(ctx context.Context, orderUUID string) (uint, error)
 	GetShipmentBusinessIDByTrackingFn func(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByIDFn       func(ctx context.Context, shipmentID uint) (uint, error)
-	UpdateOrderGuideLinkFn            func(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
+	UpdateOrderGuideLinkFn            func(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error
 	UpdateOrderStatusByOrderIDFn      func(ctx context.Context, orderID string, status string) error
 	ClearOrderGuideDataFn             func(ctx context.Context, orderID string) error
 	EnsureAllBusinessesActiveFn       func(ctx context.Context) error
@@ -125,9 +125,9 @@ func (m *RepositoryMock) GetShipmentBusinessIDByID(ctx context.Context, shipment
 	return 0, nil
 }
 
-func (m *RepositoryMock) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error {
+func (m *RepositoryMock) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {
 	if m.UpdateOrderGuideLinkFn != nil {
-		return m.UpdateOrderGuideLinkFn(ctx, orderID, guideLink, trackingNumber, carrier)
+		return m.UpdateOrderGuideLinkFn(ctx, orderID, guideLink, trackingNumber, carrier, shippingCost)
 	}
 	return nil
 }

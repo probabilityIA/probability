@@ -285,6 +285,7 @@ export interface CreateOrderDTO {
     customer_email?: string;
     customer_phone?: string;
     customer_dni?: string;
+    client_group_id?: number;
 
     // Dirección de envío
     shipping_street?: string;

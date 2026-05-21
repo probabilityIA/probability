@@ -175,16 +175,24 @@ export function CatalogPriceTable({ businessId, groups }: CatalogPriceTableProps
                 {mode === 'group' ? (
                     <div>
                         <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-1">Grupo</label>
-                        <select
-                            value={groupId ?? ''}
-                            onChange={(e) => setGroupId(e.target.value ? Number(e.target.value) : null)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        >
-                            <option value="">Selecciona un grupo</option>
-                            {groups.map((group) => (
-                                <option key={group.id} value={group.id}>{group.name}</option>
-                            ))}
-                        </select>
+                        <div className="flex items-center gap-2">
+                            {groupId && (
+                                <span
+                                    className="w-4 h-4 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: groups.find((g) => g.id === groupId)?.color || '#6b7280' }}
+                                />
+                            )}
+                            <select
+                                value={groupId ?? ''}
+                                onChange={(e) => setGroupId(e.target.value ? Number(e.target.value) : null)}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            >
+                                <option value="">Selecciona un grupo</option>
+                                {groups.map((group) => (
+                                    <option key={group.id} value={group.id}>{group.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 ) : (
                     <div>

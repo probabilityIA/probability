@@ -7,6 +7,7 @@ type ClientGroup struct {
 	BusinessID  uint
 	Name        string
 	Description string
+	Color       string
 	IsActive    bool
 	MemberCount int64
 	CreatedAt   time.Time

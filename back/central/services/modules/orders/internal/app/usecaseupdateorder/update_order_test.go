@@ -216,6 +216,10 @@ func (m *mockRepository) CreateClient(ctx context.Context, client *entities.Clie
 	}
 	return nil
 }
+
+func (m *mockRepository) AssignClientToGroup(ctx context.Context, businessID, clientGroupID, clientID uint) error {
+	return nil
+}
 func (m *mockRepository) CreateOrderError(ctx context.Context, orderError *entities.OrderError) error {
 	if m.CreateOrderErrorFn != nil {
 		return m.CreateOrderErrorFn(ctx, orderError)

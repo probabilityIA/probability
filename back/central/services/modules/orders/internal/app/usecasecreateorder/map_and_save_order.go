@@ -37,6 +37,15 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		clientID = &client.ID
 	}
 
+	if client != nil && dto.ClientGroupID != nil && *dto.ClientGroupID > 0 {
+		if err := uc.repo.AssignClientToGroup(ctx, *dto.BusinessID, *dto.ClientGroupID, client.ID); err != nil {
+			uc.logger.Warn(ctx).Err(err).
+				Uint("client_id", client.ID).
+				Uint("client_group_id", *dto.ClientGroupID).
+				Msg("No se pudo asignar el cliente al grupo de precios")
+		}
+	}
+
 	if dto.CustomerName == "" && (dto.CustomerFirstName != "" || dto.CustomerLastName != "") {
 		dto.CustomerName = fmt.Sprintf("%s %s", dto.CustomerFirstName, dto.CustomerLastName)
 	}

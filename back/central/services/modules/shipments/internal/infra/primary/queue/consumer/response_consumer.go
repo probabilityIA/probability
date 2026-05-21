@@ -243,9 +243,13 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				}
 			}
 
-			// Sync guide_link, tracking_number, and carrier to the order immediately
+			// Sync guide_link, tracking_number, carrier and shipping cost to the order immediately
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
-				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber, carrier); err != nil {
+				orderShippingCost := 0.0
+				if shipment.TotalCost != nil {
+					orderShippingCost = *shipment.TotalCost
+				}
+				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber, carrier, orderShippingCost); err != nil {
 					c.log.Error(ctx).Err(err).
 						Str("order_id", *shipment.OrderID).
 						Msg("Failed to sync guide_link to order")

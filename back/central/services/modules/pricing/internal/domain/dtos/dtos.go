@@ -19,6 +19,7 @@ type SaveClientGroupDTO struct {
 	BusinessID  uint
 	Name        string
 	Description string
+	Color       string
 	IsActive    bool
 }
 

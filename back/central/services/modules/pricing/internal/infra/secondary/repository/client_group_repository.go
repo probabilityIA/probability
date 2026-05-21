@@ -15,6 +15,7 @@ func (r *Repository) CreateClientGroup(ctx context.Context, group *entities.Clie
 		BusinessID:  group.BusinessID,
 		Name:        group.Name,
 		Description: group.Description,
+		Color:       group.Color,
 		IsActive:    group.IsActive,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -32,6 +33,7 @@ func (r *Repository) UpdateClientGroup(ctx context.Context, group *entities.Clie
 		Updates(map[string]any{
 			"name":        group.Name,
 			"description": group.Description,
+			"color":       group.Color,
 			"is_active":   group.IsActive,
 		})
 	if result.Error != nil {
@@ -67,6 +69,7 @@ func (r *Repository) GetClientGroup(ctx context.Context, businessID, groupID uin
 		BusinessID:  model.BusinessID,
 		Name:        model.Name,
 		Description: model.Description,
+		Color:       model.Color,
 		IsActive:    model.IsActive,
 		MemberCount: memberCount,
 		CreatedAt:   model.CreatedAt,
@@ -111,6 +114,7 @@ func (r *Repository) ListClientGroups(ctx context.Context, params dtos.ListClien
 			BusinessID:  row.BusinessID,
 			Name:        row.Name,
 			Description: row.Description,
+			Color:       row.Color,
 			IsActive:    row.IsActive,
 			MemberCount: row.MemberCount,
 			CreatedAt:   row.CreatedAt,

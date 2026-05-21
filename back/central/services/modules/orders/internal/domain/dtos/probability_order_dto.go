@@ -47,6 +47,7 @@ type ProbabilityOrderDTO struct {
 	CustomerEmail      string  `json:"customer_email"`
 	CustomerPhone      string  `json:"customer_phone"`
 	CustomerDNI        string  `json:"customer_dni"`
+	ClientGroupID      *uint   `json:"client_group_id,omitempty"`
 	CustomerOrderCount *int    `json:"customer_order_count,omitempty"`
 	CustomerTotalSpent *string `json:"customer_total_spent,omitempty"`
 

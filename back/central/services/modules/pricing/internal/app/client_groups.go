@@ -27,6 +27,7 @@ func (uc *UseCase) CreateClientGroup(ctx context.Context, dto dtos.SaveClientGro
 		BusinessID:  dto.BusinessID,
 		Name:        name,
 		Description: strings.TrimSpace(dto.Description),
+		Color:       strings.TrimSpace(dto.Color),
 		IsActive:    dto.IsActive,
 	})
 }
@@ -50,6 +51,7 @@ func (uc *UseCase) UpdateClientGroup(ctx context.Context, dto dtos.SaveClientGro
 		BusinessID:  dto.BusinessID,
 		Name:        name,
 		Description: strings.TrimSpace(dto.Description),
+		Color:       strings.TrimSpace(dto.Color),
 		IsActive:    dto.IsActive,
 	})
 }

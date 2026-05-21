@@ -203,6 +203,11 @@ func (m *RepositoryMock) CreateClient(ctx context.Context, client *entities.Clie
 	return args.Error(0)
 }
 
+func (m *RepositoryMock) AssignClientToGroup(ctx context.Context, businessID, clientGroupID, clientID uint) error {
+	args := m.Called(ctx, businessID, clientGroupID, clientID)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) CreateOrderError(ctx context.Context, orderError *entities.OrderError) error {
 	args := m.Called(ctx, orderError)
 	return args.Error(0)

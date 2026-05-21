@@ -20,7 +20,8 @@ import dynamic from 'next/dynamic';
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
 import { CustomerInfo } from '../../../customers/domain/types';
 import { getCustomerAddressesAction } from '../../../customers/infra/actions';
-import { getEffectivePriceAction } from '../../../pricing/infra/actions';
+import { getEffectivePriceAction, listClientGroupsAction, getCatalogPricesAction, listAvailableClientsAction } from '../../../pricing/infra/actions';
+import { ClientGroup } from '../../../pricing/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderFormProps {
@@ -152,6 +153,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [showProductModal, setShowProductModal] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
     const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
+    const [groups, setGroups] = useState<ClientGroup[]>([]);
+    const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+    const [clientGroupName, setClientGroupName] = useState('');
 
     const applyProducts = (products: Product[]) => {
         setSelectedProducts(products);
@@ -184,6 +188,33 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             }
             return { ...p, _personalized: true } as Product;
         }));
+    };
+
+    const repriceByGroup = async (products: Product[], groupId: number | null): Promise<Product[]> => {
+        if (!groupId) {
+            return products.map(p => {
+                const base = (p as any)._basePrice ?? p.price;
+                return { ...p, price: base, _basePrice: base, _priceSource: 'base', _groupName: '' } as Product;
+            });
+        }
+        const result = await getCatalogPricesAction(formData.business_id, { client_group_id: groupId }, '', 1);
+        const byId = new Map(result.data.map(r => [r.product_id, r]));
+        const groupName = groups.find(g => g.id === groupId)?.name || '';
+        return products.map(p => {
+            const row = byId.get(p.id);
+            if (row) {
+                const final = row.custom_price ?? row.base_price;
+                return {
+                    ...p,
+                    price: final,
+                    _basePrice: row.base_price,
+                    _priceSource: row.custom_price != null ? 'group' : 'base',
+                    _groupName: groupName,
+                } as Product;
+            }
+            const base = (p as any)._basePrice ?? p.price;
+            return { ...p, price: base, _basePrice: base, _priceSource: 'base', _groupName: groupName } as Product;
+        });
     };
 
     const pricingInfo = (() => {
@@ -302,6 +333,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         clearClients();
 
         setSelectedClientId(client.id);
+        setSelectedGroupId(null);
         if (selectedProducts.length > 0) {
             const cleared = selectedProducts.map(p => ({ ...p, _personalized: false } as Product));
             const repriced = await repriceProducts(cleared, client.id);
@@ -371,6 +403,32 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             setFormData(prev => ({ ...prev, warehouse_id: defaultW.id, warehouse_name: defaultW.name }));
         }
     }, [warehouses]);
+
+    // Load client groups of the business
+    useEffect(() => {
+        if (!formData.business_id) return;
+        (async () => {
+            const res = await listClientGroupsAction(formData.business_id, '', 1);
+            setGroups(res.data.filter(g => g.is_active));
+        })();
+    }, [formData.business_id]);
+
+    // Edit mode: resolve the order client's group to show the informational banner
+    useEffect(() => {
+        if (!isEdit || !formData.business_id) return;
+        const term = order?.customer_dni || order?.customer_email || '';
+        if (!term) return;
+        (async () => {
+            const res = await listAvailableClientsAction(formData.business_id, term, false, 1);
+            const match = res.data.find(c =>
+                (order?.customer_dni && c.dni === order.customer_dni) ||
+                (order?.customer_email && c.email === order.customer_email)
+            ) || res.data[0];
+            if (match && match.group_name) {
+                setClientGroupName(match.group_name);
+            }
+        })();
+    }, [isEdit, formData.business_id]);
 
     // Initialize citySearch when order is loaded
     useEffect(() => {
@@ -455,7 +513,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 shipping_lat: addressCoords?.lat,
                 shipping_lng: addressCoords?.lon,
                 items: itemsToSend,
-                customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
+                customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim(),
+                client_group_id: !isEdit && selectedGroupId ? selectedGroupId : undefined,
             };
 
             console.log('📤 DEBUG - Enviando baseData.items:', baseData.items?.length);
@@ -494,8 +553,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         const filteredProducts = products.filter(p => (p.quantity || 0) > 0);
         if (selectedClientId) {
             repriceProducts(filteredProducts, selectedClientId).then(applyProducts);
+        } else if (selectedGroupId) {
+            repriceByGroup(filteredProducts, selectedGroupId).then(applyProducts);
         } else {
             applyProducts(filteredProducts);
+        }
+    };
+
+    const handleSelectGroup = async (groupId: number | null) => {
+        setSelectedGroupId(groupId);
+        if (selectedProducts.length > 0) {
+            const repriced = await repriceByGroup(selectedProducts, groupId);
+            applyProducts(repriced);
         }
     };
 
@@ -1129,6 +1198,52 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <>Este cliente tiene precios especiales asignados. La diferencia frente al precio base se indica en cada producto.</>
                                     )}
                                 </p>
+                            </div>
+                        )}
+                        {isEdit && clientGroupName && (
+                            <div className="mb-4 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                <p className="text-xs text-indigo-800">
+                                    Este cliente pertenece al grupo <strong>{clientGroupName}</strong> y tiene precios personalizados por su grupo.
+                                </p>
+                            </div>
+                        )}
+                        {!isEdit && !selectedClientId && groups.length > 0 && (
+                            <div className="mb-4 px-3 py-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                <p className="text-xs text-indigo-800 mb-2">
+                                    Cliente nuevo sin grupo. Asignale un grupo de precios y los precios se ajustaran; al crear la orden el cliente quedara en ese grupo.
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {groups.map((g) => {
+                                        const active = selectedGroupId === g.id;
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={g.id}
+                                                onClick={() => handleSelectGroup(g.id)}
+                                                className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                                                style={active
+                                                    ? { backgroundColor: g.color || '#6b7280', borderColor: g.color || '#6b7280', color: '#fff' }
+                                                    : { backgroundColor: '#fff', borderColor: g.color || '#6b7280', color: g.color || '#6b7280' }}
+                                            >
+                                                {g.name}
+                                            </button>
+                                        );
+                                    })}
+                                    {selectedGroupId && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSelectGroup(null)}
+                                            className="px-3 py-1.5 rounded-full text-xs font-bold border-2 border-gray-300 text-gray-500 bg-white"
+                                        >
+                                            Sin grupo
+                                        </button>
+                                    )}
+                                </div>
+                                {selectedGroupId && (
+                                    <p className="text-xs text-indigo-700 mt-2">
+                                        Grupo <strong>{groups.find(g => g.id === selectedGroupId)?.name}</strong> aplicado: los precios se ajustaron y el cliente quedara en este grupo al crear la orden.
+                                    </p>
+                                )}
                             </div>
                         )}
                         <ProductSelector

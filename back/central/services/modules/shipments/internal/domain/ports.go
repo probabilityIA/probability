@@ -35,7 +35,7 @@ type IRepository interface {
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
 
 	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
-	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
+	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error
 
 	UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error
 	ClearOrderGuideData(ctx context.Context, orderID string) error

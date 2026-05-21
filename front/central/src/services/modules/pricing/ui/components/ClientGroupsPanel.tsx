@@ -18,7 +18,9 @@ interface ClientGroupsPanelProps {
     onGroupsChanged: () => void | Promise<void>;
 }
 
-const emptyForm: SaveClientGroupInput = { name: '', description: '', is_active: true };
+export const GROUP_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#6b7280'];
+
+const emptyForm: SaveClientGroupInput = { name: '', description: '', color: GROUP_COLORS[3], is_active: true };
 
 export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged }: ClientGroupsPanelProps) {
     const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -72,7 +74,13 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
     };
 
     const startEdit = (group: ClientGroup) => {
-        setForm({ id: group.id, name: group.name, description: group.description, is_active: group.is_active });
+        setForm({
+            id: group.id,
+            name: group.name,
+            description: group.description,
+            color: group.color || GROUP_COLORS[3],
+            is_active: group.is_active,
+        });
         setError('');
     };
 
@@ -169,6 +177,21 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
                             onChange={(e) => setForm({ ...form, description: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
+                        <div>
+                            <p className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-1.5">Color del grupo</p>
+                            <div className="flex gap-1.5">
+                                {GROUP_COLORS.map((c) => (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => setForm({ ...form, color: c })}
+                                        className={`w-6 h-6 rounded-full transition-transform ${form.color === c ? 'ring-2 ring-offset-1 ring-gray-700 dark:ring-white scale-110' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                        aria-label={`Color ${c}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                         <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                             <input
                                 type="checkbox"
@@ -211,12 +234,18 @@ export function ClientGroupsPanel({ businessId, groups, loading, onGroupsChanged
                                         : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 }`}
                             >
-                                <div>
+                                <div className="flex items-center gap-2.5">
+                                    <span
+                                        className="w-3.5 h-3.5 rounded-full flex-shrink-0"
+                                        style={{ backgroundColor: group.color || '#6b7280' }}
+                                    />
+                                    <div>
                                     <p className="font-semibold text-gray-900 dark:text-white text-sm">
                                         {group.name}
                                         {!group.is_active && <span className="ml-2 text-xs text-gray-400">(inactivo)</span>}
                                     </p>
                                     <p className="text-xs text-gray-500">{group.member_count} clientes</p>
+                                    </div>
                                 </div>
                                 <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                                     <button

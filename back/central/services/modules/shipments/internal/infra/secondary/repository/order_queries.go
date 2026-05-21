@@ -132,7 +132,7 @@ func (r *Repository) GetOrderIntegrationID(ctx context.Context, orderUUID string
 // UpdateOrderGuideLink updates guide_link, tracking_number, and carrier on the orders table
 // after a guide is generated. Replicated write — orders table is owned by the orders
 // module but we update it directly to avoid inter-module repository sharing.
-func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error {
+func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {
 	updates := map[string]interface{}{}
 	if guideLink != "" {
 		updates["guide_link"] = guideLink
@@ -142,6 +142,9 @@ func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, g
 	}
 	if carrier != "" {
 		updates["carrier"] = carrier
+	}
+	if shippingCost > 0 {
+		updates["shipping_cost"] = shippingCost
 	}
 	if len(updates) == 0 {
 		return nil

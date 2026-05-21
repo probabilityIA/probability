@@ -11,6 +11,7 @@ type ClientGroupResponse struct {
 	BusinessID  uint      `json:"business_id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	Color       string    `json:"color"`
 	IsActive    bool      `json:"is_active"`
 	MemberCount int64     `json:"member_count"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -23,6 +24,7 @@ func FromGroupEntity(g *entities.ClientGroup) ClientGroupResponse {
 		BusinessID:  g.BusinessID,
 		Name:        g.Name,
 		Description: g.Description,
+		Color:       g.Color,
 		IsActive:    g.IsActive,
 		MemberCount: g.MemberCount,
 		CreatedAt:   g.CreatedAt,

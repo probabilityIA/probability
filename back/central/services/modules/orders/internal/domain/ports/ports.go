@@ -44,6 +44,7 @@ type IRepository interface {
 	GetClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error)
 	GetClientByDNI(ctx context.Context, businessID uint, dni string) (*entities.Client, error)
 	CreateClient(ctx context.Context, client *entities.Client) error
+	AssignClientToGroup(ctx context.Context, businessID, clientGroupID, clientID uint) error
 
 	CreateOrderError(ctx context.Context, orderError *entities.OrderError) error
 

@@ -37,6 +37,7 @@ type CreateOrderRequest struct {
 	CustomerEmail     string `json:"customer_email"`
 	CustomerPhone     string `json:"customer_phone"`
 	CustomerDNI       string `json:"customer_dni"`
+	ClientGroupID     *uint  `json:"client_group_id,omitempty"`
 
 	// Dirección de envío
 	ShippingStreet     string   `json:"shipping_street"`
