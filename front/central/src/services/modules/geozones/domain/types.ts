@@ -129,6 +129,7 @@ export interface ProbabilityStats {
 export interface ProbabilityResult {
     found: boolean;
     delivery_rate?: number;
+    collection_rate?: number;
     level?: string;
     carrier?: string;
     stats?: ProbabilityStats;
