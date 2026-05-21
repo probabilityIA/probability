@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic';
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
 import { CustomerInfo } from '../../../customers/domain/types';
 import { getCustomerAddressesAction } from '../../../customers/infra/actions';
+import { getEffectivePriceAction } from '../../../pricing/infra/actions';
 import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderFormProps {
@@ -149,6 +150,51 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
     const [shippingComplement, setShippingComplement] = useState('');
     const [showProductModal, setShowProductModal] = useState(false);
+    const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+    const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
+
+    const applyProducts = (products: Product[]) => {
+        setSelectedProducts(products);
+        const subtotal = products.reduce((acc, p) => acc + (p.price * (p.quantity || 1)), 0);
+        setFormData(prev => {
+            const orderValue = subtotal + prev.tax - prev.discount;
+            return {
+                ...prev,
+                items: products,
+                subtotal,
+                total_amount: orderValue + prev.shipping_cost,
+                cod_total: isCOD ? orderValue : prev.cod_total,
+            };
+        });
+    };
+
+    const repriceProducts = async (products: Product[], clientId: number): Promise<Product[]> => {
+        return Promise.all(products.map(async (p) => {
+            if ((p as any)._personalized) return p;
+            const res = await getEffectivePriceAction(formData.business_id, p.id, clientId);
+            if (res && typeof res.final_price === 'number') {
+                return {
+                    ...p,
+                    price: res.final_price,
+                    _personalized: true,
+                    _basePrice: res.base_price,
+                    _priceSource: res.source,
+                    _groupName: res.group_name,
+                } as Product;
+            }
+            return { ...p, _personalized: true } as Product;
+        }));
+    };
+
+    const pricingInfo = (() => {
+        const withGroup = selectedProducts.find(p => (p as any)._groupName);
+        const groupName = withGroup ? String((withGroup as any)._groupName) : '';
+        const anyCustom = selectedProducts.some(p => {
+            const src = (p as any)._priceSource;
+            return src && src !== 'base';
+        });
+        return { groupName, anyCustom };
+    })();
 
     // Reinitialize selectedProducts when order changes
     useEffect(() => {
@@ -186,8 +232,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
             .toLowerCase()
             .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
             .trim();
-
-    const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
 
     const [house, setHouse] = useState(() => {
         if (!order?.shipping_street) return '';
@@ -257,6 +301,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         setActiveSearchField(null);
         clearClients();
 
+        setSelectedClientId(client.id);
+        if (selectedProducts.length > 0) {
+            const cleared = selectedProducts.map(p => ({ ...p, _personalized: false } as Product));
+            const repriced = await repriceProducts(cleared, client.id);
+            applyProducts(repriced);
+            const changed = repriced.some((p, i) => p.price !== selectedProducts[i]?.price);
+            if (changed) {
+                showToast('Se aplicaron los precios personalizados de este cliente', 'success');
+            }
+        }
+
         try {
             const addressRes = await getCustomerAddressesAction(client.id, {
                 page: 1,
@@ -294,7 +349,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         } catch {
             // silently ignore - address autocomplete is best-effort
         }
-    }, [clearClients, formData.business_id]);
+    }, [clearClients, formData.business_id, selectedProducts, showToast]);
 
     // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
@@ -436,22 +491,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     };
 
     const handleProductsChange = (products: Product[]) => {
-        // Filter out products with quantity 0 and calculate subtotal
         const filteredProducts = products.filter(p => (p.quantity || 0) > 0);
-        setSelectedProducts(filteredProducts);
-        setFormData(prev => ({ ...prev, items: filteredProducts }));
-
-        // Calculate subtotal: sum of (price × quantity) for each product
-        const subtotal = filteredProducts.reduce((acc, p) => {
-            const qty = p.quantity || 1;
-            return acc + (p.price * qty);
-        }, 0);
-
-        setFormData(prev => ({
-            ...prev,
-            subtotal,
-            total_amount: subtotal + prev.tax - prev.discount + prev.shipping_cost,
-        }));
+        if (selectedClientId) {
+            repriceProducts(filteredProducts, selectedClientId).then(applyProducts);
+        } else {
+            applyProducts(filteredProducts);
+        }
     };
 
     // Auto-calculate total
@@ -914,6 +959,40 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </div>
                             </div>
 
+                            <div>
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                    Costo de Envío
+                                </label>
+                                <div className="flex items-center w-full">
+                                    <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
+                                        $
+                                    </span>
+                                    <div className="flex-1">
+                                        <Input
+                                            type="number"
+                                            step="1"
+                                            value={formData.shipping_cost}
+                                            onChange={(e) => {
+                                                const sc = parseFloat(e.target.value) || 0;
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    shipping_cost: sc,
+                                                    total_amount: prev.subtotal + prev.tax - prev.discount + sc,
+                                                }));
+                                            }}
+                                            className="rounded-l-none rounded-r-none w-full"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <span className="px-3 py-2.5 text-white font-semibold rounded-r-lg border border-l-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
+                                        COP
+                                    </span>
+                                </div>
+                                <p className="mt-1 text-[11px] text-gray-400">
+                                    Se actualiza con el costo de la guia al generarla, o ingresalo manualmente.
+                                </p>
+                            </div>
+
                             <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-600/30">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contra Entrega</span>
@@ -922,8 +1001,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         role="switch"
                                         aria-checked={isCOD}
                                         onClick={() => {
-                                            setIsCOD(!isCOD);
-                                            setFormData(prev => ({ ...prev, cod_total: !isCOD ? prev.total_amount : 0 }));
+                                            const next = !isCOD;
+                                            setIsCOD(next);
+                                            setFormData(prev => ({ ...prev, cod_total: next ? prev.total_amount - prev.shipping_cost : 0 }));
                                         }}
                                         className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                                         style={{ backgroundColor: isCOD ? primaryColor : '#d1d5db' }}
@@ -931,6 +1011,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCOD ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
+                                {isCOD && (
+                                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                                        Se cobrara contra entrega: <strong>{formData.currency} {(formData.total_amount - formData.shipping_cost).toLocaleString()}</strong>
+                                        <span className="text-gray-400"> (valor de la orden sin el envio)</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1031,6 +1117,20 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <h3 className="text-sm font-bold" style={{ color: '#1a0a3d' }}>Productos</h3>
                         </div>
+                        {selectedClientId && (pricingInfo.groupName || pricingInfo.anyCustom) && (
+                            <div className="mb-4 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                <p className="text-xs text-indigo-800">
+                                    {pricingInfo.groupName ? (
+                                        <>
+                                            Este cliente pertenece al grupo <strong>{pricingInfo.groupName}</strong>.
+                                            Los precios mostrados son los personalizados de su grupo; la diferencia frente al precio base se indica en cada producto.
+                                        </>
+                                    ) : (
+                                        <>Este cliente tiene precios especiales asignados. La diferencia frente al precio base se indica en cada producto.</>
+                                    )}
+                                </p>
+                            </div>
+                        )}
                         <ProductSelector
                             businessId={formData.business_id || 0}
                             selectedProducts={selectedProducts}
