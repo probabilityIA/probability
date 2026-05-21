@@ -10,6 +10,7 @@ import { WarehouseLocation, Warehouse } from '@/services/modules/warehouses/doma
 import { listLotsAction, listProductUoMsAction, listInventoryStatesAction } from '../../infra/actions/traceability';
 import { InventoryLot, ProductUoM, InventoryState } from '../../domain/traceability-types';
 import { Button, Alert, Input } from '@/shared/ui';
+import { Package, Search, X, Plus, Minus, ChevronDown, Info } from 'lucide-react';
 
 interface ProductOption {
     id: string;
@@ -206,26 +207,50 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
 
     const tracksLots = lots.length > 0;
     const hasMultipleUoms = uoms.length > 1;
+    const reasonPresets = ['Conteo físico', 'Corrección', 'Merma', 'Devolución', 'Daño', 'Otro'];
+    const isQuantityValid = quantity > 0;
+    const isFormValid = selectedProduct && isQuantityValid && reason.trim().length > 0;
 
-    const selectCls = "w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500";
-    const labelCls = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1";
+    const handleReasonChip = (preset: string) => {
+        setReason(preset);
+    };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Ajustar stock</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-900 rounded-[18px] shadow-[0_24px_80px_-20px_rgba(15,23,42,0.45)] w-full max-w-[720px] max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between px-7 py-[22px] border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-start gap-4">
+                        <div className="w-[34px] h-[34px] rounded-[10px] bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
+                            <Package className="w-5 h-5 text-teal-700 dark:text-teal-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Ajustar stock</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Registra un movimiento de inventario con su justificación.</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+                <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 px-7 py-6 space-y-0">
                     {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
                     {success && <Alert type="success" onClose={() => setSuccess(null)}>{success}</Alert>}
 
-                    {/* Fila 1: Bodega (full width, solo si hay más de una) */}
                     {warehouses.length > 1 && (
-                        <div>
-                            <label className={labelCls}>Bodega <span className="text-red-500">*</span></label>
-                            <select value={selectedWarehouseId} onChange={(e) => setSelectedWarehouseId(Number(e.target.value))} className={selectCls}>
+                        <div className="mb-6 pb-4">
+                            <label htmlFor="warehouse" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                                Bodega <span className="text-rose-500">*</span>
+                            </label>
+                            <select
+                                id="warehouse"
+                                value={selectedWarehouseId}
+                                onChange={(e) => setSelectedWarehouseId(Number(e.target.value))}
+                                className="w-full px-3 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                            >
                                 {warehouses.map((w) => (
                                     <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
                                 ))}
@@ -233,196 +258,357 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                         </div>
                     )}
 
-                    {/* Fila 2: Producto - busqueda por nombre y SKU */}
-                    <div ref={dropdownRef} className="relative">
-                        <label className={labelCls}>Producto <span className="text-red-500">*</span></label>
-                        {selectedProduct && !productId ? (
-                            <div className="flex items-center justify-between px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                <div className="flex-1">
-                                    <span className="text-sm font-medium text-gray-900 dark:text-white">{selectedProduct.name}</span>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        {selectedProduct.sku && <span className="text-xs text-gray-500 dark:text-gray-400">SKU: {selectedProduct.sku}</span>}
-                                        {selectedProduct.variant_label && <span className="text-xs text-purple-600 dark:text-purple-400">• {selectedProduct.variant_label}</span>}
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                Producto <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="flex-1 border-t border-slate-100 dark:border-slate-800"></div>
+                        </div>
+
+                        <div ref={dropdownRef} className="relative">
+                            {selectedProduct && !productId ? (
+                                <div className="flex items-center justify-between px-4 py-3 bg-teal-50 dark:bg-teal-900/20 border-[1.5px] border-teal-600 dark:border-teal-500 rounded-[10px]">
+                                    <div className="flex-1">
+                                        <span className="text-sm font-medium text-slate-900 dark:text-white">{selectedProduct.name}</span>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {selectedProduct.sku && <span className="text-xs text-slate-500 dark:text-slate-400">SKU: {selectedProduct.sku}</span>}
+                                            {selectedProduct.variant_label && <span className="text-xs text-slate-500 dark:text-slate-400">• {selectedProduct.variant_label}</span>}
+                                        </div>
                                     </div>
+                                    <button type="button" onClick={() => setSelectedProduct(null)} className="text-slate-400 hover:text-slate-600 ml-2">
+                                        <X className="w-4 h-4" />
+                                    </button>
                                 </div>
-                                <button type="button" onClick={() => setSelectedProduct(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2">&times;</button>
-                            </div>
-                        ) : productId ? (
-                            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 font-mono">{productId}</div>
-                        ) : (
-                            <>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Nombre</label>
-                                        <Input type="text" value={searchName} onChange={(e) => { setSearchName(e.target.value); setSearchSku(''); setActiveField('name'); }} onFocus={() => { if (searchName.length >= 2) setActiveField('name'); }} placeholder="Buscar por nombre..." />
+                            ) : productId ? (
+                                <div className="px-4 py-3 bg-slate-100 dark:bg-slate-800 border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm text-slate-700 dark:text-slate-300 font-mono">{productId}</div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label htmlFor="search-name" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Nombre</label>
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                <input
+                                                    id="search-name"
+                                                    type="text"
+                                                    value={searchName}
+                                                    onChange={(e) => { setSearchName(e.target.value); setSearchSku(''); setActiveField('name'); }}
+                                                    onFocus={() => { if (searchName.length >= 2) setActiveField('name'); }}
+                                                    placeholder="Buscar por nombre…"
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="search-sku" className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">SKU</label>
+                                            <div className="relative">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                                <input
+                                                    id="search-sku"
+                                                    type="text"
+                                                    value={searchSku}
+                                                    onChange={(e) => { setSearchSku(e.target.value); setSearchName(''); setActiveField('sku'); }}
+                                                    onFocus={() => { if (searchSku.length >= 2) setActiveField('sku'); }}
+                                                    placeholder="Buscar por SKU…"
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">SKU</label>
-                                        <Input type="text" value={searchSku} onChange={(e) => { setSearchSku(e.target.value); setSearchName(''); setActiveField('sku'); }} onFocus={() => { if (searchSku.length >= 2) setActiveField('sku'); }} placeholder="Buscar por SKU..." />
-                                    </div>
-                                </div>
-                                {activeField && (searchName.length >= 2 || searchSku.length >= 2) && (
-                                    <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-48 overflow-auto">
-                                        {searchLoading ? (
-                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">Buscando...</div>
-                                        ) : searchResults.length > 0 ? (
-                                            <ul>
-                                                {searchResults.map((p) => (
-                                                    <li key={p.id}>
-                                                        <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-between gap-3">
-                                                            <div className="flex-1 min-w-0">
-                                                                <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">{p.name}</span>
-                                                                {p.variant_label && <span className="text-xs text-purple-600 dark:text-purple-400 truncate block">{p.variant_label}</span>}
-                                                            </div>
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">{p.sku}</span>
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">No se encontraron productos</div>
-                                        )}
-                                    </div>
-                                )}
-                            </>
-                        )}
+                                    {activeField && (searchName.length >= 2 || searchSku.length >= 2) && (
+                                        <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[10px] shadow-lg max-h-48 overflow-auto">
+                                            {searchLoading ? (
+                                                <div className="px-4 py-3 text-sm text-slate-500 text-center">Buscando...</div>
+                                            ) : searchResults.length > 0 ? (
+                                                <ul>
+                                                    {searchResults.map((p) => (
+                                                        <li key={p.id}>
+                                                            <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-3 text-left hover:bg-teal-50 dark:hover:bg-teal-900/10 flex items-center justify-between gap-3">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <span className="text-sm font-medium text-slate-900 dark:text-white truncate block">{p.name}</span>
+                                                                    {p.variant_label && <span className="text-xs text-slate-500 dark:text-slate-400 truncate block">{p.variant_label}</span>}
+                                                                </div>
+                                                                <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">{p.sku}</span>
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <div className="px-4 py-3 text-sm text-slate-500 text-center">No se encontraron productos</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Aviso: producto nuevo en bodega */}
                     {selectedProduct && productInWarehouse === false && (
-                        <div className="flex gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg col-span-2">
-                            <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                        <div className="mb-6 flex gap-3 p-4 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-[10px]">
+                            <Info className="w-5 h-5 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Producto nuevo en esta bodega</p>
-                                <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                    Este producto aun no tiene stock registrado en la bodega seleccionada. Al confirmar el ajuste se creara el registro de inventario y el producto quedara asignado a esta bodega.
+                                <p className="text-sm font-medium text-teal-800 dark:text-teal-200">Producto nuevo en esta bodega</p>
+                                <p className="text-xs text-teal-700 dark:text-teal-300 mt-1">
+                                    Este producto aún no tiene stock registrado aquí. El ajuste creará el registro e asignará el producto a esta bodega.
                                 </p>
                             </div>
                         </div>
                     )}
 
-                    {loadingContext && <p className="text-xs text-gray-400 animate-pulse">Cargando contexto del producto...</p>}
+                    {loadingContext && <p className="text-xs text-slate-400 animate-pulse mb-4">Cargando contexto del producto...</p>}
 
-                    {/* Fila 3: Cantidad + Estado */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                    {isAdding ? 'Agregar' : 'Quitar'} <span className="text-red-500">*</span>
-                                </label>
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                Movimiento <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="flex-1 border-t border-slate-100 dark:border-slate-800"></div>
+                        </div>
+
+                        <div className="grid gap-3" style={{ gridTemplateColumns: '1.1fr 1fr' }}>
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-3">Tipo</label>
+                                <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[12px]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAdding(true)}
+                                        aria-pressed={isAdding}
+                                        role="radio"
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] text-sm font-semibold transition-all ${
+                                            isAdding
+                                                ? 'bg-white dark:bg-slate-700 shadow-sm text-green-600 dark:text-green-400'
+                                                : 'bg-transparent text-slate-500 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Agregar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAdding(false)}
+                                        aria-pressed={!isAdding}
+                                        role="radio"
+                                        className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] text-sm font-semibold transition-all ${
+                                            !isAdding
+                                                ? 'bg-white dark:bg-slate-700 shadow-sm text-rose-600 dark:text-rose-400'
+                                                : 'bg-transparent text-slate-500 dark:text-slate-400'
+                                        }`}
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                        Restar
+                                    </button>
+                                </div>
+                            </div>
+
+                            {states.length > 0 && (
+                                <div>
+                                    <label htmlFor="inventory-state" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-3">Estado del inventario</label>
+                                    <div className="relative">
+                                        <select
+                                            id="inventory-state"
+                                            value={selectedStateId ?? ''}
+                                            onChange={(e) => setSelectedStateId(e.target.value ? Number(e.target.value) : null)}
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                        >
+                                            {states.map((s) => (
+                                                <option key={s.id} value={s.id}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-3">Cantidad <span className="text-rose-500">*</span></label>
+                            <div className="flex gap-2 items-center">
                                 <button
                                     type="button"
-                                    onClick={() => setIsAdding(!isAdding)}
-                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                                        isAdding
-                                            ? 'bg-green-500 dark:bg-green-600'
-                                            : 'bg-red-500 dark:bg-red-600'
-                                    }`}
+                                    onClick={() => setQuantity(Math.max(0, quantity - 1))}
+                                    aria-label="Disminuir cantidad"
+                                    className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-[10px] text-slate-600 dark:text-slate-400 transition-colors"
                                 >
-                                    <span
-                                        className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-lg transition-transform ${
-                                            isAdding ? 'translate-x-0.5' : 'translate-x-4'
-                                        }`}
+                                    <Minus className="w-4 h-4" />
+                                </button>
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        value={quantity}
+                                        onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
+                                        className="w-full px-4 py-3 text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-2xl font-bold focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                        style={{
+                                            fontFamily: "'JetBrains Mono', monospace",
+                                            color: isAdding ? '#059669' : '#e11d48'
+                                        }}
+                                        min="0"
                                     />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuantity(quantity + 1)}
+                                    aria-label="Aumentar cantidad"
+                                    className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-[10px] text-slate-600 dark:text-slate-400 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
                                 </button>
                             </div>
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    value={quantity.toString()}
-                                    onChange={(e) => setQuantity(Math.abs(parseInt(e.target.value) || 0))}
-                                    placeholder="Ej: 10"
-                                    required
-                                />
-                                {quantity > 0 && (
-                                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200">
-                                        {isAdding ? `+${quantity}` : `-${quantity}`}
-                                    </span>
+                        </div>
+
+                        {hasMultipleUoms && (
+                            <div className="mt-4">
+                                <label htmlFor="uom" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Unidad</label>
+                                <div className="relative">
+                                    <select
+                                        id="uom"
+                                        value={selectedUomId ?? ''}
+                                        onChange={(e) => setSelectedUomId(e.target.value ? Number(e.target.value) : null)}
+                                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                    >
+                                        {uoms.map((u) => (
+                                            <option key={u.id} value={u.id}>{u.uom_code} {u.is_base ? '(base)' : `x${u.conversion_factor}`}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {(locations.length > 0 || tracksLots) && (
+                        <div className="mb-6">
+                            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    Contexto
+                                </label>
+                                <div className="flex-1 border-t border-slate-100 dark:border-slate-800"></div>
+                            </div>
+                            <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                {locations.length > 0 && (
+                                    <div>
+                                        <label htmlFor="location" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">
+                                            Ubicación <span className="text-slate-400">({locations.length})</span>
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                id="location"
+                                                value={selectedLocationId ?? ''}
+                                                onChange={(e) => setSelectedLocationId(e.target.value ? Number(e.target.value) : null)}
+                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                            >
+                                                <option value="">Stock general de bodega</option>
+                                                {locations.map((l) => (
+                                                    <option key={l.id} value={l.id}>{l.code} - {l.name}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                )}
+                                {tracksLots && (
+                                    <div>
+                                        <label htmlFor="lot" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">
+                                            Lote {!isAdding && <span className="text-rose-500">*</span>}
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                id="lot"
+                                                value={selectedLotId ?? ''}
+                                                onChange={(e) => setSelectedLotId(e.target.value ? Number(e.target.value) : null)}
+                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                            >
+                                                <option value="">Sin lote</option>
+                                                {lots.map((l) => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.lot_code}{l.expiration_date ? ` - vence ${format(new Date(l.expiration_date), 'dd/MM/yyyy')}` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                        </div>
+                                        {!isAdding && !selectedLotId && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Para retirar, elige el lote (FEFO).</p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
-                        {states.length > 0 && (
-                            <div>
-                                <label className={labelCls}>Estado del inventario</label>
-                                <select value={selectedStateId ?? ''} onChange={(e) => setSelectedStateId(e.target.value ? Number(e.target.value) : null)} className={selectCls}>
-                                    {states.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                        {hasMultipleUoms && (
-                            <div>
-                                <label className={labelCls}>Unidad</label>
-                                <select value={selectedUomId ?? ''} onChange={(e) => setSelectedUomId(e.target.value ? Number(e.target.value) : null)} className={selectCls}>
-                                    {uoms.map((u) => (
-                                        <option key={u.id} value={u.id}>{u.uom_code} {u.is_base ? '(base)' : `x${u.conversion_factor}`}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Fila 4: Ubicacion + Lote (condicionales) */}
-                    {(locations.length > 0 || tracksLots) && (
-                        <div className="grid grid-cols-2 gap-4">
-                            {locations.length > 0 && (
-                                <div>
-                                    <label className={labelCls}>
-                                        Ubicacion
-                                        <span className="ml-1 text-xs text-gray-400 font-normal">({locations.length} posiciones)</span>
-                                    </label>
-                                    <select value={selectedLocationId ?? ''} onChange={(e) => setSelectedLocationId(e.target.value ? Number(e.target.value) : null)} className={selectCls}>
-                                        <option value="">Stock general de bodega</option>
-                                        {locations.map((l) => (
-                                            <option key={l.id} value={l.id}>{l.code} - {l.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
-                            {tracksLots && (
-                                <div>
-                                    <label className={labelCls}>
-                                        Lote {quantity < 0 && <span className="text-red-500">*</span>}
-                                        <span className="ml-1 text-xs text-gray-400 font-normal">(maneja lotes)</span>
-                                    </label>
-                                    <select value={selectedLotId ?? ''} onChange={(e) => setSelectedLotId(e.target.value ? Number(e.target.value) : null)} className={selectCls}>
-                                        <option value="">Sin lote</option>
-                                        {lots.map((l) => (
-                                            <option key={l.id} value={l.id}>
-                                                {l.lot_code}{l.expiration_date ? ` - vence ${format(new Date(l.expiration_date), 'dd/MM/yyyy')}` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {quantity < 0 && !selectedLotId && (
-                                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Para retirar, elige el lote (FEFO).</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
                     )}
 
-                    {/* Fila 5: Razon + Notas */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className={labelCls}>Razon <span className="text-red-500">*</span></label>
-                            <Input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Conteo fisico, correccion, merma..." required />
+                    <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                Detalles
+                            </label>
+                            <div className="flex-1 border-t border-slate-100 dark:border-slate-800"></div>
                         </div>
-                        <div>
-                            <label className={labelCls}>Notas</label>
-                            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas adicionales..." rows={1} className="w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 resize-none" />
-                        </div>
-                    </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
-                        <Button type="submit" variant="primary" disabled={loading || !selectedProduct}>
-                            {loading ? 'Ajustando...' : 'Ajustar stock'}
-                        </Button>
+                        <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-3">Razón <span className="text-rose-500">*</span></label>
+                                <div className="flex flex-wrap gap-2 mb-3">
+                                    {reasonPresets.map((preset) => (
+                                        <button
+                                            key={preset}
+                                            type="button"
+                                            onClick={() => handleReasonChip(preset)}
+                                            className={`px-3 py-2 text-xs font-medium rounded-full transition-all border-[1.5px] ${
+                                                reason === preset
+                                                    ? 'border-teal-600 dark:border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                                            }`}
+                                        >
+                                            {preset}
+                                        </button>
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    value={reason}
+                                    onChange={(e) => setReason(e.target.value)}
+                                    placeholder="Detalle de la razón…"
+                                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                />
+                            </div>
+                            <div>
+                                <label htmlFor="notes" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-3">Notas</label>
+                                <textarea
+                                    id="notes"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Notas adicionales…"
+                                    className="w-full h-[96px] px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 resize-none"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </form>
+
+                <div className="px-7 py-[18px] bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <Info className="w-4 h-4 flex-shrink-0" />
+                        <span>Este movimiento queda registrado en el historial.</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="px-5 py-3 border-[1.5px] border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-[10px] text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            onClick={handleSubmit}
+                            disabled={loading || !isFormValid}
+                            className="px-5 py-3 bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500 text-white rounded-[10px] text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? 'Ajustando...' : 'Ajustar stock'}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
