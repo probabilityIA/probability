@@ -218,10 +218,10 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
             <div className="bg-white dark:bg-slate-900 rounded-[18px] shadow-[0_24px_80px_-20px_rgba(15,23,42,0.45)] w-full max-w-[720px] max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-start justify-between px-7 py-[22px] border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-start justify-between px-7 py-[22px]" style={{ borderBottomColor: 'var(--color-primary)' }}>
                     <div className="flex items-start gap-4">
-                        <div className="w-[34px] h-[34px] rounded-[10px] bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center flex-shrink-0">
-                            <Package className="w-5 h-5 text-teal-700 dark:text-teal-400" />
+                        <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'color-mix(in oklab, var(--color-primary) 10%, white)' }}>
+                            <Package className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Ajustar stock</h2>
@@ -249,7 +249,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                 id="warehouse"
                                 value={selectedWarehouseId}
                                 onChange={(e) => setSelectedWarehouseId(Number(e.target.value))}
-                                className="w-full px-3 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                className="w-full px-3 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10"
                             >
                                 {warehouses.map((w) => (
                                     <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
@@ -268,7 +268,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
 
                         <div ref={dropdownRef} className="relative">
                             {selectedProduct && !productId ? (
-                                <div className="flex items-center justify-between px-4 py-3 bg-teal-50 dark:bg-teal-900/20 border-[1.5px] border-teal-600 dark:border-teal-500 rounded-[10px]">
+                                <div className="flex items-center justify-between px-4 py-3 bg-slate-100 dark:bg-slate-800/20 border-[1.5px] border-slate-300 dark:border-slate-300 rounded-[10px]">
                                     <div className="flex-1">
                                         <span className="text-sm font-medium text-slate-900 dark:text-white">{selectedProduct.name}</span>
                                         <div className="flex items-center gap-2 mt-1">
@@ -294,9 +294,10 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                                     type="text"
                                                     value={searchName}
                                                     onChange={(e) => { setSearchName(e.target.value); setSearchSku(''); setActiveField('name'); }}
-                                                    onFocus={() => { if (searchName.length >= 2) setActiveField('name'); }}
+                                                    onFocus={(e) => { if (searchName.length >= 2) setActiveField('name'); e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = `0 0 0 4px color-mix(in oklab, var(--color-primary) 10%, transparent)`; }}
+                                                    onBlur={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }}
                                                     placeholder="Buscar por nombre…"
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -309,9 +310,10 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                                     type="text"
                                                     value={searchSku}
                                                     onChange={(e) => { setSearchSku(e.target.value); setSearchName(''); setActiveField('sku'); }}
-                                                    onFocus={() => { if (searchSku.length >= 2) setActiveField('sku'); }}
+                                                    onFocus={(e) => { if (searchSku.length >= 2) setActiveField('sku'); e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.boxShadow = `0 0 0 4px color-mix(in oklab, var(--color-primary) 10%, transparent)`; }}
+                                                    onBlur={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }}
                                                     placeholder="Buscar por SKU…"
-                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none"
                                                 />
                                             </div>
                                         </div>
@@ -324,7 +326,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                                 <ul>
                                                     {searchResults.map((p) => (
                                                         <li key={p.id}>
-                                                            <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-3 text-left hover:bg-teal-50 dark:hover:bg-teal-900/10 flex items-center justify-between gap-3">
+                                                            <button type="button" onClick={() => handleSelectProduct(p)} className="w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-teal-900/10 flex items-center justify-between gap-3">
                                                                 <div className="flex-1 min-w-0">
                                                                     <span className="text-sm font-medium text-slate-900 dark:text-white truncate block">{p.name}</span>
                                                                     {p.variant_label && <span className="text-xs text-slate-500 dark:text-slate-400 truncate block">{p.variant_label}</span>}
@@ -345,11 +347,11 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
 
                     {selectedProduct && productInWarehouse === false && (
-                        <div className="mb-6 flex gap-3 p-4 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-[10px]">
-                            <Info className="w-5 h-5 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5" />
+                        <div className="mb-6 flex gap-3 p-4 bg-slate-100 dark:bg-slate-800/20 border border-slate-200 dark:border-slate-800 rounded-[10px]">
+                            <Info className="w-5 h-5 text-slate-600 dark:text-slate-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-medium text-teal-800 dark:text-teal-200">Producto nuevo en esta bodega</p>
-                                <p className="text-xs text-teal-700 dark:text-teal-300 mt-1">
+                                <p className="text-sm font-medium text-teal-800 dark:text-slate-200">Producto nuevo en esta bodega</p>
+                                <p className="text-xs text-slate-700 dark:text-slate-300 mt-1">
                                     Este producto aún no tiene stock registrado aquí. El ajuste creará el registro e asignará el producto a esta bodega.
                                 </p>
                             </div>
@@ -377,7 +379,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                         role="radio"
                                         className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] text-sm font-semibold transition-all ${
                                             isAdding
-                                                ? 'bg-white dark:bg-slate-700 shadow-sm text-green-600 dark:text-green-400'
+                                                ? 'bg-white dark:bg-slate-700 shadow-sm'
                                                 : 'bg-transparent text-slate-500 dark:text-slate-400'
                                         }`}
                                     >
@@ -391,7 +393,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                         role="radio"
                                         className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-[10px] text-sm font-semibold transition-all ${
                                             !isAdding
-                                                ? 'bg-white dark:bg-slate-700 shadow-sm text-rose-600 dark:text-rose-400'
+                                                ? 'bg-white dark:bg-slate-700 shadow-sm'
                                                 : 'bg-transparent text-slate-500 dark:text-slate-400'
                                         }`}
                                     >
@@ -409,7 +411,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                             id="inventory-state"
                                             value={selectedStateId ?? ''}
                                             onChange={(e) => setSelectedStateId(e.target.value ? Number(e.target.value) : null)}
-                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none"
                                         >
                                             {states.map((s) => (
                                                 <option key={s.id} value={s.id}>{s.name}</option>
@@ -437,12 +439,19 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                         type="number"
                                         value={quantity}
                                         onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                                        className="w-full px-4 py-3 text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-2xl font-bold focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                        className="w-full px-4 py-3 text-center bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-2xl font-bold focus:outline-none"
                                         style={{
                                             fontFamily: "'JetBrains Mono', monospace",
-                                            color: isAdding ? '#059669' : '#e11d48'
+                                            color: isAdding ? 'var(--color-primary)' : 'var(--color-secondary, #e11d48)',
+                                            borderColor: 'var(--color-primary)'
                                         }}
                                         min="0"
+                                        onFocus={(e) => {
+                                            e.currentTarget.style.boxShadow = `0 0 0 4px color-mix(in oklab, var(--color-primary) 10%, transparent)`;
+                                        }}
+                                        onBlur={(e) => {
+                                            e.currentTarget.style.boxShadow = '';
+                                        }}
                                     />
                                 </div>
                                 <button
@@ -464,7 +473,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                         id="uom"
                                         value={selectedUomId ?? ''}
                                         onChange={(e) => setSelectedUomId(e.target.value ? Number(e.target.value) : null)}
-                                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none"
                                     >
                                         {uoms.map((u) => (
                                             <option key={u.id} value={u.id}>{u.uom_code} {u.is_base ? '(base)' : `x${u.conversion_factor}`}</option>
@@ -495,7 +504,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                                 id="location"
                                                 value={selectedLocationId ?? ''}
                                                 onChange={(e) => setSelectedLocationId(e.target.value ? Number(e.target.value) : null)}
-                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none"
                                             >
                                                 <option value="">Stock general de bodega</option>
                                                 {locations.map((l) => (
@@ -516,7 +525,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                                 id="lot"
                                                 value={selectedLotId ?? ''}
                                                 onChange={(e) => setSelectedLotId(e.target.value ? Number(e.target.value) : null)}
-                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 appearance-none"
+                                                className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none"
                                             >
                                                 <option value="">Sin lote</option>
                                                 {lots.map((l) => (
@@ -555,7 +564,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                             onClick={() => handleReasonChip(preset)}
                                             className={`px-3 py-2 text-xs font-medium rounded-full transition-all border-[1.5px] ${
                                                 reason === preset
-                                                    ? 'border-teal-600 dark:border-teal-500 bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300'
+                                                    ? 'border-slate-300 dark:border-slate-300 bg-slate-100 dark:bg-slate-800/30 text-slate-700 dark:text-slate-300'
                                                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
                                             }`}
                                         >
@@ -568,7 +577,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                     value={reason}
                                     onChange={(e) => setReason(e.target.value)}
                                     placeholder="Detalle de la razón…"
-                                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10"
+                                    className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10"
                                 />
                             </div>
                             <div>
@@ -578,7 +587,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     placeholder="Notas adicionales…"
-                                    className="w-full h-[96px] px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 resize-none"
+                                    className="w-full h-[96px] px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 resize-none"
                                 />
                             </div>
                         </div>
@@ -603,7 +612,10 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                             type="submit"
                             onClick={handleSubmit}
                             disabled={loading || !isFormValid}
-                            className="px-5 py-3 bg-teal-600 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500 text-white rounded-[10px] text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-5 py-3 text-white rounded-[10px] text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ backgroundColor: 'var(--color-primary)' }}
+                            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                         >
                             {loading ? 'Ajustando...' : 'Ajustar stock'}
                         </button>
