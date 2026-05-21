@@ -195,7 +195,8 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         else {
             const loc = locations.find((l) => l.id === selectedLocationId);
             const lot = lots.find((l) => l.id === selectedLotId);
-            const parts: string[] = [`${quantity > 0 ? '+' : ''}${quantity} uds`];
+            const displayQuantity = isAdding ? `+${quantity}` : `-${quantity}`;
+            const parts: string[] = [`${displayQuantity} uds`];
             if (loc) parts.push(`ubicación ${loc.code}`);
             else parts.push('stock general');
             if (lot) parts.push(`lote ${lot.lot_code}`);
