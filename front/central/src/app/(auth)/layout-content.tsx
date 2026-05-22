@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
@@ -11,6 +11,7 @@ import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-
 import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
 import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-context';
 import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-business-context';
+import { WalletBusinessProvider } from '@/shared/contexts/wallet-business-context';
 import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
@@ -98,20 +99,23 @@ function LayoutContent({ user, children }: LayoutContentProps) {
               <InvoicingBusinessProvider>
                 <DeliveryBusinessProvider>
                   <StorefrontBusinessProvider>
-                    <AnnouncementTicker />
-                    <OrdersSubNavbar />
-                    <InventorySubNavbar />
-                    <IntegrationsSubNavbar />
-                    <NotificationsSubNavbar />
-                    <InvoicingSubNavbar />
-                    <DeliverySubNavbar />
-                    <StorefrontSubNavbar />
-                    <IAMSubNavbar />
-                    <div className="w-full min-w-0 flex-1">
-                      <SubscriptionGuard>
-                        {children}
-                      </SubscriptionGuard>
-                    </div>
+                    <WalletBusinessProvider>
+                      <AnnouncementTicker />
+                      <OrdersSubNavbar />
+                      <InventorySubNavbar />
+                      <IntegrationsSubNavbar />
+                      <NotificationsSubNavbar />
+                      <InvoicingSubNavbar />
+                      <DeliverySubNavbar />
+                      <StorefrontSubNavbar />
+                      <IAMSubNavbar />
+                      <WalletSubNavbar />
+                      <div className="w-full min-w-0 flex-1">
+                        <SubscriptionGuard>
+                          {children}
+                        </SubscriptionGuard>
+                      </div>
+                    </WalletBusinessProvider>
                   </StorefrontBusinessProvider>
                 </DeliveryBusinessProvider>
               </InvoicingBusinessProvider>
