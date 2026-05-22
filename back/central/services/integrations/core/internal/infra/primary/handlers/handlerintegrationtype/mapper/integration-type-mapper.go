@@ -57,6 +57,11 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		}
 	}
 
+	inDevelopment := integrationType.InDevelopment
+	if integrationType.Code == "nequi" {
+		inDevelopment = true
+	}
+
 	return response.IntegrationTypeResponse{
 		ID:                     integrationType.ID,
 		Name:                   integrationType.Name,
@@ -67,7 +72,7 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		CategoryID:             integrationType.CategoryID,
 		Category:               category,
 		IsActive:               integrationType.IsActive,
-		InDevelopment:          integrationType.InDevelopment,
+		InDevelopment:          inDevelopment,
 		ConfigSchema:           integrationType.ConfigSchema,
 		CredentialsSchema:      integrationType.CredentialsSchema,
 		SetupInstructions:      integrationType.SetupInstructions,
