@@ -29,11 +29,11 @@ export function proxy(request: NextRequest) {
     const csp = [
         frameAncestors,
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com https://*.bold.co",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com https://*.bold.co https://maps.googleapis.com",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https: https://*.bold.co",
+        "img-src 'self' data: https: https://*.bold.co https://maps.gstatic.com",
         "font-src 'self' data:",
-        "connect-src 'self' http://localhost:3050 https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com https://*.bold.co",
+        "connect-src 'self' http://localhost:3050 https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com https://*.bold.co https://maps.googleapis.com https://maps.gstatic.com",
         "frame-src 'self' https://admin.shopify.com https://*.bold.co",
     ].join('; ');
 

@@ -9,10 +9,25 @@ import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipm
 import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
+import { usePermissions } from "@/shared/contexts/permissions-context";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
+import { lookupGeozoneAction, getDeliveryProbabilityAction } from "@/services/modules/geozones/infra/actions";
+import type { Geozone, ProbabilityResult } from "@/services/modules/geozones/domain/types";
 import '@/shared/ui/styles/shipment-modals.css';
+import dynamic from 'next/dynamic';
+import AddressAutocomplete from './AddressAutocomplete';
+
+const GeozoneMiniMap = dynamic(
+    () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
+    { ssr: false }
+);
+
+const CarrierEffectivenessRates = dynamic(
+    () => import('@/services/modules/geozones/ui/components/CarrierEffectivenessRates').then(m => m.CarrierEffectivenessRates),
+    { ssr: false }
+);
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -21,14 +36,6 @@ const normalizeLocationName = (str: string) => {
     return s;
 };
 
-const buildWarehouseAddress = (warehouse: Warehouse | null): string => {
-    if (!warehouse) return "";
-    const parts = [];
-    if (warehouse.street) parts.push(warehouse.street);
-    if (warehouse.suburb) parts.push(warehouse.suburb);
-    if (warehouse.address) parts.push(warehouse.address);
-    return parts.filter(p => p && p.trim()).join(", ") || "";
-};
 
 const getCarrierLogo = (carrierName: string): string => {
     const carrierLogos: { [key: string]: string } = {
@@ -47,10 +54,30 @@ const getCarrierLogo = (carrierName: string): string => {
         'TRANSPORTADORADECARACOLOMBIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
         '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
         'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
+        'MENSAJERIAUBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJEROSURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
     };
+
     const trimmedName = carrierName.trim();
-    if (carrierLogos[trimmedName]) return carrierLogos[trimmedName];
-    return 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
+    if (carrierLogos[trimmedName]) {
+        return carrierLogos[trimmedName];
+    }
+
+    const normalizedCarrier = normalizeLocationName(trimmedName).replace(/[_\s]/g, '');
+    const normalizedLogos = Object.keys(carrierLogos).reduce((acc, key) => {
+        acc[normalizeLocationName(key).replace(/[_\s]/g, '')] = carrierLogos[key];
+        return acc;
+    }, {} as Record<string, string>);
+    return normalizedLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
+};
+
+const formatCarrierName = (name: string): string => {
+    return name
+        .replace(/_/g, ' ')
+        .replace(/EXPRESS/g, '')
+        .trim();
 };
 
 const findDaneCode = (city: string, state: string) => {
@@ -98,6 +125,9 @@ const STEPS = [
 ];
 
 export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalProps) {
+    const { permissions, isSuperAdmin } = usePermissions();
+    const effectiveBusinessId = permissions?.business_id || undefined;
+
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -106,6 +136,12 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
     const [originSearch, setOriginSearch] = useState("");
     const [destSearch, setDestSearch] = useState("");
+    const [destLat, setDestLat] = useState<number | null>(null);
+    const [destLng, setDestLng] = useState<number | null>(null);
+    const [destGeozone, setDestGeozone] = useState<Geozone | null>(null);
+    const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
+    const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
+    const [selectedCarrierProb, setSelectedCarrierProb] = useState<ProbabilityResult | null>(null);
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
 
@@ -166,28 +202,47 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
         },
     });
 
+    const handleWarehouseSelect = (wh: Warehouse) => {
+        console.log("🏭 handleWarehouseSelect:", wh);
+        setSelectedOriginWarehouse(wh);
+        const daneCode = wh.city_dane_code || findDaneCode(wh.city || "", wh.state || "") || "";
+        console.log("Setting originDaneCode:", daneCode);
+        form.setValue("originDaneCode", daneCode, { shouldValidate: true });
+        const address = wh.street || wh.address;
+        console.log("Setting originAddress:", address);
+        form.setValue("originAddress", address, { shouldValidate: true });
+        setOriginSearch(`${wh.city} (${wh.state})`);
+    };
+
     useEffect(() => {
         if (isOpen) {
             getWarehousesAction({
+                business_id: effectiveBusinessId || undefined,
                 is_active: true,
                 page: 1,
                 page_size: 100,
             }).then(res => {
-                if (res.data) {
+                if (res.data && res.data.length > 0) {
                     setOriginWarehouses(res.data);
                     const defaultWh = res.data.find(w => w.is_default);
                     if (defaultWh) {
-                        setSelectedOriginWarehouse(defaultWh);
-                        const daneCode = defaultWh.city_dane_code || findDaneCode(defaultWh.city || "", defaultWh.state || "") || "";
-                        form.setValue("originDaneCode", daneCode, { shouldValidate: true });
-                        const warehouseAddress = buildWarehouseAddress(defaultWh);
-                        form.setValue("originAddress", warehouseAddress, { shouldValidate: true });
-                        setOriginSearch(`${defaultWh.city} (${defaultWh.state})`);
+                        handleWarehouseSelect(defaultWh);
                     }
                 }
-            }).catch(() => { });
+            }).catch(err => {
+                console.error("Error loading warehouses:", err);
+            });
         }
     }, [isOpen]);
+
+    const handleStepChange = (step: number) => {
+        setCurrentStep(step);
+        if (step === 1) {
+            setSelectedRateId(null);
+            setSelectedCarrier(null);
+            setSelectedCarrierProb(null);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -208,9 +263,67 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
             setRates([]);
             setError(null);
             setSelectedOriginWarehouse(null);
+            setDestGeozone(null);
+            setSelectedRateId(null);
+            setSelectedCarrier(null);
+            setSelectedCarrierProb(null);
             form.reset();
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        console.log('🔍 Geozone effect triggered - lat:', destLat, 'lng:', destLng, 'business:', effectiveBusinessId, 'currentStep:', currentStep);
+
+        if (destLat === null || destLat === undefined || destLng === null || destLng === undefined) {
+            console.log('⏭️ Coordinates not ready');
+            return;
+        }
+
+        if (!effectiveBusinessId && effectiveBusinessId !== 0) {
+            console.log('⏭️ Business ID not ready');
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            try {
+                console.log('📍 Calling lookupGeozoneAction with:', { lat: destLat, lng: destLng, business_id: effectiveBusinessId });
+                const geozones = await lookupGeozoneAction({
+                    lat: destLat,
+                    lng: destLng,
+                    business_id: effectiveBusinessId || 0,
+                });
+                console.log('✅ Lookup response:', geozones);
+                if (cancelled) {
+                    console.log('Request was cancelled');
+                    return;
+                }
+                if (geozones && geozones.data && Array.isArray(geozones.data) && geozones.data.length > 0) {
+                    const geozone = geozones.data[0];
+                    console.log('🎯 Setting geozone:', geozone.id, geozone.name, 'hasGeometry:', !!geozone.geometry);
+                    setDestGeozone(geozone);
+                } else {
+                    console.log('⚠️ No geozones in response. Data:', geozones?.data);
+                    setDestGeozone(null);
+                }
+            } catch (err) {
+                console.error('❌ Error getting geozone:', err, 'message:', (err as any)?.message);
+                if (!cancelled) {
+                    setDestGeozone(null);
+                }
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [destLat, destLng, effectiveBusinessId]);
+
+    useEffect(() => {
+        if (destGeozone) {
+            console.log('✅ destGeozone state updated:', { id: destGeozone.id, name: destGeozone.name, type: destGeozone.type, hasGeometry: !!destGeozone.geometry });
+        } else {
+            console.log('❌ destGeozone is now null or undefined');
+        }
+    }, [destGeozone]);
 
     const handleSubmit = async (data: FormValues) => {
         if (!data.originDaneCode || !data.destDaneCode) {
@@ -269,7 +382,7 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '85%', maxHeight: '90vh' }}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden" style={{ width: '95%', maxWidth: '1200px', maxHeight: '90vh' }}>
                 <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold" style={{ color: businessColors.primary }}>Cotizador Expres</h2>
@@ -291,7 +404,7 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                     )}
 
                     {currentStep === 1 && (
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full overflow-hidden min-h-0">
+                        <form id="quotation-form" onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full overflow-hidden min-h-0">
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
@@ -303,19 +416,14 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 </div>
                                                 {originWarehouses.length > 0 && (
                                                     <select
-                                                        className="text-[11px] px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                        className="text-[11px] px-1.5 py-0.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1"
                                                         onChange={(e) => {
-                                                            const addr = originWarehouses.find(a => a.id === parseInt(e.target.value));
-                                                            if (addr) {
-                                                                setSelectedOriginWarehouse(addr);
-                                                                const daneCode = addr.city_dane_code || findDaneCode(addr.city || "", addr.state || "") || "";
-                                                                form.setValue("originDaneCode", daneCode, { shouldValidate: true });
-                                                                const warehouseAddress = buildWarehouseAddress(addr);
-                                                                form.setValue("originAddress", warehouseAddress, { shouldValidate: true });
-                                                                setOriginSearch(`${addr.city} (${addr.state})`);
+                                                            const wh = originWarehouses.find(a => a.id === parseInt(e.target.value));
+                                                            if (wh) {
+                                                                handleWarehouseSelect(wh);
                                                             }
                                                         }}
-                                                        value={selectedOriginWarehouse?.id || ""}
+                                                        defaultValue=""
                                                     >
                                                         <option value="" disabled>Mis direcciones...</option>
                                                         {originWarehouses.map(a => (
@@ -360,16 +468,15 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 )}
                                             </div>
 
-                                            <div className="space-y-1">
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                                                    Dirección del remitente *
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                                    Calle y Número *
                                                 </label>
-                                                <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm text-gray-900 dark:text-gray-100">
-                                                    {selectedOriginWarehouse ? buildWarehouseAddress(selectedOriginWarehouse) : "Selecciona una bodega"}
-                                                </div>
-                                                <input
-                                                    type="hidden"
-                                                    {...form.register("originAddress")}
+                                                <AddressAutocomplete
+                                                    value={form.watch("originAddress")}
+                                                    onChange={(val) => form.setValue("originAddress", val, { shouldValidate: true })}
+                                                    city={originSearch}
+                                                    placeholder="Calle 98 62-37"
                                                 />
                                             </div>
                                         </div>
@@ -415,12 +522,30 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 )}
                                             </div>
 
-                                            <Input
-                                                compact
-                                                label="Calle y Número *"
-                                                {...form.register("destAddress")}
-                                                placeholder="Carrera 46 # 93 - 45"
-                                            />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                                    Calle y Número *
+                                                </label>
+                                                <AddressAutocomplete
+                                                    value={form.watch("destAddress")}
+                                                    onChange={(val) => form.setValue("destAddress", val, { shouldValidate: true })}
+                                                    onSelect={(suggestion) => {
+                                                        if (suggestion.city && suggestion.state) {
+                                                            const daneCode = findDaneCode(suggestion.city, suggestion.state);
+                                                            if (daneCode) {
+                                                                form.setValue("destDaneCode", daneCode, { shouldValidate: true });
+                                                                setDestSearch(`${suggestion.city} (${suggestion.state})`);
+                                                            }
+                                                        }
+                                                        if (suggestion.lat && suggestion.lon) {
+                                                            setDestLat(suggestion.lat);
+                                                            setDestLng(suggestion.lon);
+                                                        }
+                                                    }}
+                                                    city={destSearch}
+                                                    placeholder="Carrera 46 # 93 - 45"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -471,96 +596,282 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <Button
-                                    variant="secondary"
-                                    onClick={onClose}
-                                    className="flex-1"
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    loading={loading}
-                                    className="flex-1"
-                                    style={{ backgroundColor: businessColors.tertiary }}
-                                >
-                                    Cotizar
-                                </Button>
-                            </div>
                         </form>
                     )}
 
                     {currentStep === 2 && (
-                        <div className="flex flex-col h-full">
-                            <div className="flex-1 overflow-y-auto">
-                                <h3 className="font-semibold text-lg mb-4">Tarifas Disponibles</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {rates.map((rate) => (
-                                        <div
-                                            key={rate.idRate}
-                                            className="border-2 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg"
-                                            style={{
-                                                borderColor: businessColors.tertiary,
-                                                backgroundColor: businessColors.tertiary + '08'
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <img
-                                                    src={getCarrierLogo(rate.carrier)}
-                                                    alt={rate.carrier}
-                                                    className="w-12 h-12 object-contain"
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.display = 'none';
-                                                    }}
-                                                />
-                                                <div>
-                                                    <div className="font-bold text-sm">{rate.carrier}</div>
-                                                    <div className="text-xs text-gray-500">{rate.product}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs text-gray-600">Días de entrega:</span>
-                                                    <span className="font-semibold">{rate.deliveryDays} días</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs text-gray-600">Valor:</span>
-                                                    <span className="font-bold text-lg" style={{ color: businessColors.primary }}>
-                                                        ${rate.flete.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                {rate.minimumInsurance && (
-                                                    <div className="text-xs text-gray-500">
-                                                        Seguro mínimo: ${rate.minimumInsurance.toLocaleString()}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                        <div className="flex flex-row h-full gap-3 overflow-hidden">
+                            <div className="w-1/3 h-full flex-shrink-0 border border-gray-200 dark:border-gray-600 rounded-lg p-2 overflow-hidden">
+                                <GeozoneMiniMap
+                                    businessId={effectiveBusinessId || 0}
+                                    geozone={destGeozone}
+                                    lat={destLat || 4.5709}
+                                    lng={destLng || -74.2973}
+                                    height="400px"
+                                    showHeader={false}
+                                    origin={selectedOriginWarehouse ? {
+                                        address: [selectedOriginWarehouse.street || selectedOriginWarehouse.address, selectedOriginWarehouse.city, selectedOriginWarehouse.state].filter(Boolean).join(', '),
+                                        lat: selectedOriginWarehouse.latitude ?? null,
+                                        lng: selectedOriginWarehouse.longitude ?? null,
+                                    } : null}
+                                    destination={{
+                                        address: destSearch ? `${destSearch}, ${form.watch("destAddress")}` : form.watch("destAddress"),
+                                    }}
+                                    carrierRate={selectedCarrierProb?.delivery_rate ?? null}
+                                    carrierName={selectedCarrier || null}
+                                    carrierEstimated={selectedCarrierProb?.is_estimated || false}
+                                />
                             </div>
 
-                            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setCurrentStep(1)}
-                                    className="flex-1"
-                                >
-                                    Atrás
-                                </Button>
-                                <Button
-                                    onClick={onClose}
-                                    className="flex-1"
-                                    style={{ backgroundColor: businessColors.tertiary }}
-                                >
-                                    Cerrar
-                                </Button>
+                            <div className="w-2/3 flex flex-col overflow-y-auto">
+                                <div className="pb-2">
+                                    <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 mb-2">
+                                        Filtra por servicio / Transportadora
+                                    </h3>
+                                </div>
+
+                                <div className="overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-800 flex-1">
+                                    {rates.length === 0 ? (
+                                        <div className="flex items-center justify-center gap-3 py-10">
+                                            <div className="shipment-spinner" style={{ width: 28, height: 28 }} />
+                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Cargando cotizaciones...</span>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-4 auto-rows-max">
+                                            {rates.map((rate) => {
+                                                const minIns = rate.minimumInsurance ?? 0;
+                                                const totalCost = rate.flete + minIns;
+
+                                                const allCosts = rates.map(r => r.flete + (r.minimumInsurance ?? 0));
+                                                const minCost = Math.min(...allCosts);
+                                                const minDays = Math.min(...rates.map(r => r.deliveryDays || 999));
+
+                                                const isFastest = rate.deliveryDays === minDays;
+                                                const isCheapest = totalCost === minCost;
+                                                const isSameDay = rate.deliveryDays === 0;
+                                                const hasSpecialBadge = isCheapest || isFastest || isSameDay;
+
+                                                let badgeColor = businessColors.quaternary;
+                                                let badgeLabel = '';
+                                                let borderColor = businessColors.tertiary;
+
+                                                if (isCheapest) {
+                                                    badgeColor = businessColors.secondary;
+                                                    badgeLabel = 'MÁS ECONÓMICA';
+                                                } else if (isSameDay) {
+                                                    badgeColor = businessColors.quaternary;
+                                                    badgeLabel = 'MISMO DÍA';
+                                                } else if (isFastest) {
+                                                    badgeColor = businessColors.tertiary;
+                                                    badgeLabel = 'MÁS RÁPIDA';
+                                                }
+
+                                                const isSelected = selectedRateId === rate.idRate;
+
+                                                return (
+                                                    <div
+                                                        key={rate.idRate}
+                                                        onClick={async () => {
+                                                            setSelectedRateId(rate.idRate);
+                                                            setSelectedCarrier(rate.carrier);
+                                                            try {
+                                                                const prob = await getDeliveryProbabilityAction({
+                                                                    business_id: effectiveBusinessId || 0,
+                                                                    lat: destLat || undefined,
+                                                                    lng: destLng || undefined,
+                                                                    carrier: rate.carrier,
+                                                                });
+                                                                setSelectedCarrierProb(prob);
+                                                            } catch (err) {
+                                                                console.error('Error getting probability:', err);
+                                                            }
+                                                        }}
+                                                        className={`relative border-2 rounded-3xl transition-all cursor-pointer ${
+                                                            isSelected ? 'ring-2 ring-offset-2' : ''
+                                                        } ${
+                                                            hasSpecialBadge ? 'shadow-sm hover:shadow-lg hover:-translate-y-0.5' : 'shadow-sm hover:shadow-lg hover:-translate-y-0.5'
+                                                        }`}
+                                                        style={{
+                                                            backgroundColor: `${businessColors.tertiary}08`,
+                                                            borderColor: isSelected ? businessColors.tertiary : (hasSpecialBadge ? borderColor : '#d1d5db'),
+                                                            borderWidth: isSelected ? '2px' : '2px',
+                                                            padding: '18px',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            gap: '0',
+                                                            ringColor: businessColors.tertiary,
+                                                        }}
+                                                    >
+                                                        {hasSpecialBadge && (
+                                                            <div
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    top: '-14px',
+                                                                    left: '50%',
+                                                                    transform: 'translateX(-50%)',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    padding: '6px 20px',
+                                                                    borderRadius: '999px',
+                                                                    fontSize: '13px',
+                                                                    fontWeight: 700,
+                                                                    color: '#fff',
+                                                                    backgroundColor: badgeColor,
+                                                                    border: '3px solid #fff',
+                                                                    boxShadow: `0 4px 12px ${badgeColor}66`,
+                                                                    whiteSpace: 'nowrap',
+                                                                }}
+                                                            >
+                                                                {badgeLabel}
+                                                            </div>
+                                                        )}
+
+                                                        <div style={{ display: 'flex', gap: '0', flex: 1 }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '0 0 50%', textAlign: 'center' }}>
+                                                                <div
+                                                                    className="flex-shrink-0 rounded-[14px] overflow-hidden flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100"
+                                                                    style={{
+                                                                        width: '65px',
+                                                                        height: '65px',
+                                                                        margin: '0 auto',
+                                                                    }}
+                                                                >
+                                                                    <img
+                                                                        src={getCarrierLogo(rate.carrier)}
+                                                                        alt={rate.carrier}
+                                                                        className="w-full h-full object-contain"
+                                                                        onError={(e) => {
+                                                                            e.currentTarget.style.display = 'none';
+                                                                            e.currentTarget.parentElement!.textContent = rate.carrier.substring(0, 2);
+                                                                            e.currentTarget.parentElement!.style.fontSize = '20px';
+                                                                            e.currentTarget.parentElement!.style.fontWeight = '700';
+                                                                        }}
+                                                                    />
+                                                                </div>
+
+                                                                <div>
+                                                                    <div style={{
+                                                                        fontSize: '12px',
+                                                                        fontWeight: 800,
+                                                                        color: '#0f1417',
+                                                                        letterSpacing: '.01em',
+                                                                        lineHeight: 1.3,
+                                                                        wordBreak: 'break-word',
+                                                                        maxWidth: '100%',
+                                                                    }}>
+                                                                        {formatCarrierName(rate.carrier)}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '11px', color: '#6b757c', marginTop: '2px' }}>
+                                                                        {rate.product}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div
+                                                                    style={{
+                                                                        display: 'flex',
+                                                                        alignItems: 'baseline',
+                                                                        justifyContent: 'center',
+                                                                        gap: '4px',
+                                                                        fontSize: '28px',
+                                                                        fontWeight: 700,
+                                                                        color: '#0f1417',
+                                                                        letterSpacing: '-.02em',
+                                                                        lineHeight: 1,
+                                                                        fontVariantNumeric: 'tabular-nums',
+                                                                        margin: '4px 0 0',
+                                                                    }}
+                                                                >
+                                                                    <span>${totalCost.toLocaleString()}</span>
+                                                                    <span style={{ fontSize: '10px', color: '#6b757c', fontWeight: 500 }}>COP</span>
+                                                                </div>
+
+                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '10px', color: '#3b4248', marginTop: '4px', textAlign: 'center', fontWeight: 700 }}>
+                                                                    <div>Costo: ${totalCost.toLocaleString()}</div>
+                                                                    <div>Guía: ${rate.flete.toLocaleString()}</div>
+                                                                    {minIns > 0 ? (
+                                                                        <div style={{ color: '#059669', fontSize: '9px' }}>
+                                                                            (Seguro: ${minIns.toLocaleString()})
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div style={{ color: '#6b757c', fontSize: '9px' }}>(Sin asegurar)</div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div style={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '0',
+                                                                    padding: '0',
+                                                                    borderRadius: '0',
+                                                                    fontSize: '11px',
+                                                                    fontWeight: 600,
+                                                                    backgroundColor: 'transparent',
+                                                                    color: rate.deliveryDays === 0 || rate.deliveryDays <= 1 ? '#0891b2' : '#3b4248',
+                                                                    whiteSpace: 'nowrap',
+                                                                    border: 'none',
+                                                                    margin: '2px auto',
+                                                                }}>
+                                                                    {rate.deliveryDays === 0 ? 'Mismo día' : rate.deliveryDays === 1 ? '1 día' : `${rate.deliveryDays} días`}
+                                                                </div>
+                                                            </div>
+
+                                                            <div style={{
+                                                                width: '1px',
+                                                                backgroundColor: '#e5e7eb',
+                                                                margin: '12px 0',
+                                                                flexShrink: 0,
+                                                            }}></div>
+
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: '0 0 50%', padding: '0 12px', justifyContent: 'center' }}>
+                                                                <CarrierEffectivenessRates
+                                                                    businessId={effectiveBusinessId || 0}
+                                                                    carrier={rate.carrier}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 border-t px-3 py-3 flex-shrink-0">
+                    <div className="flex gap-2">
+                        {currentStep === 2 && (
+                            <Button
+                                variant="secondary"
+                                onClick={() => handleStepChange(1)}
+                                className="flex-1"
+                            >
+                                Atrás
+                            </Button>
+                        )}
+                        <Button
+                            variant="secondary"
+                            onClick={onClose}
+                            className="flex-1"
+                        >
+                            {currentStep === 1 ? 'Cancelar' : 'Cerrar'}
+                        </Button>
+                        {currentStep === 1 && (
+                            <Button
+                                type="submit"
+                                form="quotation-form"
+                                loading={loading}
+                                className="flex-1"
+                                style={{ backgroundColor: businessColors.tertiary }}
+                            >
+                                Cotizar
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

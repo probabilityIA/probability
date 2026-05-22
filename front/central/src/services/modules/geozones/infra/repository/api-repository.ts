@@ -84,7 +84,11 @@ export class GeozoneApiRepository implements IGeozoneRepository {
         });
         if (params.type) sp.append('type', params.type);
         if (params.business_id) sp.append('business_id', String(params.business_id));
-        return this.fetch<LookupResponse>(`/geozones/lookup?${sp.toString()}`);
+        const path = `/geozones/lookup?${sp.toString()}`;
+        console.log('🔗 Lookup API call:', `${this.baseUrl}${path}`);
+        const result = await this.fetch<LookupResponse>(path);
+        console.log('📦 Lookup API response:', result);
+        return result;
     }
 
     async getForDisplay(geozoneType: GeozoneType | '', zoom: number, bbox?: string, parentId?: number | null): Promise<DisplayFeatureCollection> {

@@ -4,6 +4,7 @@ import { Inter, Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import { FooterWrapper } from "./footer-wrapper";
 import { ClientProviders } from "@/providers/ClientProviders";
+import { GoogleMapsLoader } from "./google-maps-loader";
 import "./globals.css";
 
 const inter = Inter({
@@ -68,6 +69,7 @@ export default async function RootLayout({
         className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
+        <GoogleMapsLoader />
         <div className="flex-1">
           <ClientProviders>
             {children}

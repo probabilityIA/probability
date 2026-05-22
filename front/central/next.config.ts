@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Headers para CORS y Shopify iframes
+  // Headers para CORS, Shopify iframes y Google Maps
   async headers() {
     return [
       {
@@ -43,6 +43,10 @@ const nextConfig: NextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com https://*.bold.co https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' http://localhost:3050 https://maps.googleapis.com https://maps.gstatic.com https://*.bold.co; frame-src https://cdn.shopify.com https://*.bold.co;",
           },
         ],
       },

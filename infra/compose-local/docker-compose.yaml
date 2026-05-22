@@ -85,25 +85,25 @@ services:
       retries: 5
     restart: unless-stopped
 
-  back-testing:
-    build:
-      context: ../../back/testing
-      dockerfile: docker/Dockerfile
-    container_name: back_testing_local
-    ports:
-      - "9090:9090"
-      - "9091:9091"
-      - "9092:9092"
-      - "9093:9093"
-      - "9094:9094"
-      - "9095:9095"
-    env_file:
-      - ../../back/testing/.env
-    environment:
-      RUN_MODE: server
-    networks:
-      - app-network
-    restart: unless-stopped
+  # back-testing:
+  #   build:
+  #     context: ../../back/testing
+  #     dockerfile: docker/Dockerfile
+  #   container_name: back_testing_local
+  #   ports:
+  #     - "9090:9090"
+  #     - "9091:9091"
+  #     - "9092:9092"
+  #     - "9093:9093"
+  #     - "9094:9094"
+  #     - "9095:9095"
+  #   env_file:
+  #     - ../../back/testing/.env
+  #   environment:
+  #     RUN_MODE: server
+  #   networks:
+  #     - app-network
+  #   restart: unless-stopped
 
 networks:
   app-network:

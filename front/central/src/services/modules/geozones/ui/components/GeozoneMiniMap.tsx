@@ -145,18 +145,24 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
 
     useEffect(() => {
         if (geozoneProp) {
+            console.log('📍 GeozoneMiniMap received geozone from prop:', { id: geozoneProp.id, name: geozoneProp.name, type: geozoneProp.type, hasGeometry: !!geozoneProp.geometry });
             setZone(geozoneProp);
             setLevel(geozoneProp.type || '');
             setLoading(false);
             return;
         }
-        if (!businessId || !orderId) return;
+        if (!businessId || !orderId) {
+            console.log('⏭️ GeozoneMiniMap: missing businessId or orderId');
+            return;
+        }
         let cancelled = false;
         setLoading(true);
         setEmpty(false);
+        console.log('📍 GeozoneMiniMap: fetching zone for orderId:', orderId);
         (async () => {
             try {
                 const g = await getOrderZoneAction(orderId, businessId);
+                console.log('📍 GeozoneMiniMap: got zone from action:', g);
                 if (cancelled) return;
                 if (!g) {
                     setEmpty(true);
@@ -165,7 +171,8 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                 }
                 setZone(g);
                 setLevel(g.type || '');
-            } catch {
+            } catch (err) {
+                console.error('❌ GeozoneMiniMap: error getting zone:', err);
                 if (!cancelled) setEmpty(true);
             } finally {
                 if (!cancelled) setLoading(false);
@@ -177,6 +184,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
     const hasPoint = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
 
     if (loading) {
+        console.log('📍 GeozoneMiniMap: rendering loading state');
         return (
             <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xs text-gray-500" style={{ height }}>
                 Cargando geozona...
@@ -184,7 +192,9 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
         );
     }
     if (empty || !zone || !zone.geometry) {
+        console.log('📍 GeozoneMiniMap: no geozone to display', { empty, zone: !!zone, geometry: zone?.geometry ? 'yes' : 'no', hasPoint });
         if (hasPoint) {
+            console.log('📍 GeozoneMiniMap: rendering map with point only, no geozone');
             return (
                 <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ isolation: 'isolate' }}>
                     {destinationBanner}
@@ -199,12 +209,14 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                 </div>
             );
         }
+        console.log('📍 GeozoneMiniMap: no geozone and no point, showing error');
         return (
             <div className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-xs text-gray-500" style={{ height }}>
                 Sin geozona disponible para esta direccion
             </div>
         );
     }
+    console.log('📍 GeozoneMiniMap: rendering with geozone polygon');
     const defaultColor = typeColor[level] || '#6366f1';
     const polygonColor = carrierColor ?? defaultColor;
     const polygonOpacity = carrierColor ? (carrierEstimated ? 0.35 : 0.55) : 0.35;

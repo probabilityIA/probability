@@ -1,175 +1,270 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface AddressSuggestion {
-    display_name: string;
-    place_id: string;
-    lat: number;
-    lon: number;
-    city: string;
-    state: string;
-    neighbourhood: string;
-    postcode: string;
+    address: string;
+    city?: string;
+    state?: string;
+    postcode?: string;
+    neighbourhood?: string;
+    lat?: number;
+    lon?: number;
 }
 
 interface AddressAutocompleteProps {
     value: string;
     onChange: (value: string) => void;
-    onSelect: (suggestion: AddressSuggestion) => void;
-    placeholder?: string;
-    country?: string;
+    onSelect?: (suggestion: AddressSuggestion) => void;
     city?: string;
+    placeholder?: string;
+    className?: string;
 }
 
 export default function AddressAutocomplete({
     value,
     onChange,
     onSelect,
-    placeholder = 'Calle/Carrera número',
-    country = 'co',
     city = '',
+    placeholder = 'Calle y número',
+    className = '',
 }: AddressAutocompleteProps) {
-    const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [predictions, setPredictions] = useState<any[]>([]);
+    const [showPredictions, setShowPredictions] = useState(false);
     const [loading, setLoading] = useState(false);
+    const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+    const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const selectedRef = useRef(false);
+    const mapRef = useRef<HTMLDivElement>(null);
 
-    const searchAddress = useCallback(async (query: string) => {
-        if (query.length < 8) {
-            setSuggestions([]);
-            setShowDropdown(false);
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
-            const params = new URLSearchParams({ q: query, country });
-            if (city) params.set('city', city);
-            const response = await fetch(`${apiBase}/address-search?${params}`);
-
-            if (!response.ok) return;
-
-            const data: AddressSuggestion[] = await response.json();
-            setSuggestions(data);
-            setShowDropdown(data.length > 0);
-        } catch {
-            setSuggestions([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [country, city]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        onChange(val);
-
-        if (selectedRef.current) {
-            if (val.length < 4) {
-                selectedRef.current = false;
-            }
-            return;
-        }
-
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => searchAddress(val), 1000);
-    };
-
-    const handleSelect = (suggestion: AddressSuggestion) => {
-        // Set the full address from Google (e.g. "Avenida Calle 145 #128-40, Bogotá, Colombia")
-        // Remove the country suffix and duplicates for cleaner display
-        const parts = suggestion.display_name.split(', ').map(p => p.trim());
-
-        // Remove country (Colombia, co, etc)
-        const filtered = parts.filter(p =>
-            !['Colombia', 'colombia', 'co', 'CO'].includes(p)
-        );
-
-        // Remove duplicates while preserving order
-        const seen = new Set<string>();
-        const unique = filtered.filter(p => {
-            const lower = p.toLowerCase();
-            if (seen.has(lower)) return false;
-            seen.add(lower);
-            return true;
-        });
-
-        // Remove D.C. if we already have the city name (Bogotá)
-        const cleanParts = unique.filter((p, idx, arr) => {
-            if (p === 'D.C.' || p === 'D.C') {
-                // Check if the city name is already in the address
-                const cityInAddress = arr.some(part =>
-                    part.toLowerCase().includes('bogotá') || part.toLowerCase().includes('bogota')
-                );
-                return !cityInAddress;
-            }
-            return true;
-        });
-
-        const cleanAddress = cleanParts.join(', ');
-        onChange(cleanAddress);
-        setShowDropdown(false);
-        setSuggestions([]);
-        selectedRef.current = true;
-        onSelect(suggestion);
-    };
-
-    // Close on click outside
     useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setShowDropdown(false);
+        const loadGoogleMaps = async () => {
+            if (window.google && window.google.maps) {
+                console.log('✅ Google Maps already loaded');
+                initializeServices();
+                return;
+            }
+
+            const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+            console.log('🔍 Checking for API key:', !!apiKey);
+
+            if (!apiKey) {
+                console.error('❌ No API key found');
+                return;
+            }
+
+            if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+                console.log('⏳ Google Maps script already loading...');
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    if (window.google && window.google.maps) {
+                        clearInterval(checkInterval);
+                        initializeServices();
+                    }
+                    attempts++;
+                    if (attempts > 100) {
+                        clearInterval(checkInterval);
+                        console.warn('Google Maps failed to load');
+                    }
+                }, 100);
+                return;
+            }
+
+            console.log('📝 Loading Google Maps script...');
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=es`;
+            script.async = true;
+
+            script.onload = () => {
+                console.log('✅ Google Maps script loaded');
+                initializeServices();
+            };
+
+            script.onerror = (error) => {
+                console.error('❌ Failed to load Google Maps:', error);
+            };
+
+            document.head.appendChild(script);
+        };
+
+        const initializeServices = () => {
+            if (!window.google || !window.google.maps) {
+                console.error('❌ window.google.maps not available');
+                return;
+            }
+
+            if (!autocompleteServiceRef.current) {
+                try {
+                    autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+                    console.log('✅ AutocompleteService initialized');
+                } catch (e) {
+                    console.error('❌ Error initializing AutocompleteService:', e);
+                }
+            }
+
+            if (!placesServiceRef.current && mapRef.current) {
+                try {
+                    const hiddenMap = new window.google.maps.Map(mapRef.current, {
+                        center: { lat: 4.5709, lng: -74.2973 },
+                        zoom: 8,
+                    });
+                    placesServiceRef.current = new window.google.maps.places.PlacesService(hiddenMap);
+                    console.log('✅ PlacesService initialized');
+                } catch (e) {
+                    console.error('❌ Error initializing PlacesService:', e);
+                }
+            }
+        };
+
+        loadGoogleMaps();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setShowPredictions(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        onChange(val);
+
+        if (!val || val.length < 3) {
+            setPredictions([]);
+            setShowPredictions(false);
+            return;
+        }
+
+        if (!autocompleteServiceRef.current) {
+            if (!window.google || !window.google.maps || !window.google.maps.places) {
+                console.warn('Google Maps API not ready yet');
+                setPredictions([]);
+                return;
+            }
+            try {
+                autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
+            } catch (e) {
+                console.error('Error initializing AutocompleteService:', e);
+                return;
+            }
+        }
+
+        setLoading(true);
+        try {
+            console.log('🔍 Fetching predictions for:', val);
+            const results = await autocompleteServiceRef.current.getPlacePredictions({
+                input: val,
+                componentRestrictions: { country: 'co' },
+            });
+
+            console.log('📋 Got predictions:', results.predictions?.length ?? 0);
+            setPredictions(results.predictions || []);
+            setShowPredictions(true);
+        } catch (error) {
+            console.error('❌ Error fetching predictions:', error);
+            setPredictions([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelectPrediction = async (prediction: any) => {
+        console.log('🎯 Selected prediction:', prediction);
+        onChange(prediction.description);
+        setShowPredictions(false);
+        setPredictions([]);
+
+        if (!placesServiceRef.current || !mapRef.current) {
+            console.log('⚠️ PlacesService not ready, calling onSelect with basic data');
+            onSelect?.({
+                address: prediction.description,
+            });
+            return;
+        }
+
+        try {
+            placesServiceRef.current.getDetails(
+                { placeId: prediction.place_id },
+                (place: google.maps.places.PlaceResult | null) => {
+                    if (!place || !place.formatted_address) return;
+
+                    const suggestion: AddressSuggestion = {
+                        address: place.formatted_address,
+                        lat: place.geometry?.location?.lat(),
+                        lon: place.geometry?.location?.lng(),
+                    };
+
+                    const addressComponents = place.address_components || [];
+                    addressComponents.forEach(component => {
+                        if (component.types.includes('locality')) {
+                            suggestion.city = component.long_name;
+                        }
+                        if (component.types.includes('administrative_area_level_1')) {
+                            suggestion.state = component.long_name;
+                        }
+                        if (component.types.includes('postal_code')) {
+                            suggestion.postcode = component.long_name;
+                        }
+                        if (component.types.includes('neighborhood')) {
+                            suggestion.neighbourhood = component.long_name;
+                        }
+                    });
+
+                    console.log('✅ Calling onSelect with suggestion:', suggestion);
+                    onSelect?.(suggestion);
+                }
+            );
+        } catch (error) {
+            console.error('Error getting place details:', error);
+            onSelect?.({
+                address: prediction.description,
+            });
+        }
+    };
+
     return (
-        <div ref={containerRef} className="relative">
-            <div className="relative">
+        <>
+            <div ref={containerRef} className="relative">
                 <input
                     type="text"
                     value={value}
-                    onChange={handleChange}
-                    onFocus={() => {
-                        if (!selectedRef.current && suggestions.length > 0) {
-                            setShowDropdown(true);
-                        }
-                    }}
+                    onChange={handleInputChange}
+                    onFocus={() => value && predictions.length > 0 && setShowPredictions(true)}
                     placeholder={placeholder}
-                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
+                    className={`shipment-input ${className}`}
+                    autoComplete="off"
                 />
                 {loading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                    </div>
+                )}
+                {showPredictions && predictions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {predictions.map((pred) => (
+                            <div
+                                key={pred.place_id}
+                                onClick={() => handleSelectPrediction(pred)}
+                                className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                            >
+                                <div className="font-medium text-gray-900 dark:text-white">
+                                    {pred.structured_formatting?.main_text || pred.description}
+                                </div>
+                                {(pred.structured_formatting?.secondary_text || pred.description) && (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                        {pred.structured_formatting?.secondary_text}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
-
-            {showDropdown && suggestions.length > 0 && (
-                <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {suggestions.map((s, i) => (
-                        <button
-                            key={s.place_id || i}
-                            type="button"
-                            onClick={() => handleSelect(s)}
-                            className="w-full text-left px-3 py-2.5 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
-                        >
-                            <div className="flex items-start gap-2">
-                                <svg className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <p className="text-sm text-gray-800 dark:text-gray-100">{s.display_name}</p>
-                            </div>
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
+            <div ref={mapRef} style={{ display: 'none' }} />
+        </>
     );
 }
