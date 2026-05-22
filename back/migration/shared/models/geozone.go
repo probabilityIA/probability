@@ -16,6 +16,8 @@ type Geozone struct {
 	Type       string         `gorm:"size:32;not null;index"`
 	Code       *string        `gorm:"size:64;index"`
 	Name       string         `gorm:"size:255;not null"`
+	Geometry   datatypes.JSON `gorm:"type:jsonb"`
+	Centroid   datatypes.JSON `gorm:"type:jsonb"`
 	Properties datatypes.JSON `gorm:"type:jsonb;not null;default:'{}'"`
 	IsActive   bool           `gorm:"not null;default:true"`
 
