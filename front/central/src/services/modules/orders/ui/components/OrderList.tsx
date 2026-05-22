@@ -20,6 +20,7 @@ import RawOrderModal from './RawOrderModal';
 import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
 import { OrderStatusFlowModal } from './OrderStatusFlowModal';
 import { ChangeStatusModal } from './ChangeStatusModal';
+import { QuotationExpresModal } from './QuotationExpresModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
 
@@ -488,9 +489,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     // Download Orders Modal
     const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-    // Status Flow Info Modal
     const [isStatusFlowOpen, setIsStatusFlowOpen] = useState(false);
-    // Change Status Modal
+    const [isQuotationExpresOpen, setIsQuotationExpresOpen] = useState(false);
     const [changeStatusOrder, setChangeStatusOrder] = useState<Order | null>(null);
 
     // Integrations for filter
@@ -1375,7 +1375,16 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     onDownload={() => setIsDownloadModalOpen(true)}
                     downloadButtonText="↓ Descargar Ordenes"
                 />
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-between items-center mt-2 gap-2">
+                    <button
+                        onClick={() => setIsQuotationExpresOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Cotizador Expres
+                    </button>
                     <button
                         onClick={() => setIsStatusFlowOpen(true)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all"
@@ -1819,6 +1828,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             <OrderStatusFlowModal
                 isOpen={isStatusFlowOpen}
                 onClose={() => setIsStatusFlowOpen(false)}
+            />
+
+            {/* Quotation Expres Modal */}
+            <QuotationExpresModal
+                isOpen={isQuotationExpresOpen}
+                onClose={() => setIsQuotationExpresOpen(false)}
             />
 
             {/* Change Status Modal */}
