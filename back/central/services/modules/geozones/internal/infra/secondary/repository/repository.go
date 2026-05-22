@@ -190,8 +190,8 @@ func (r *Repository) LookupContaining(ctx context.Context, params dtos.LookupPar
 	var rows []geozoneRow
 	err := r.db.Conn(ctx).Raw(`
 		SELECT id, business_id, parent_id, type, code, name,
-		       NULL::text AS geometry_js,
-		       NULL::text AS centroid_js,
+		       ST_AsGeoJSON(geometry) AS geometry_js,
+		       ST_AsGeoJSON(centroid::geometry) AS centroid_js,
 		       properties, is_active, created_at, updated_at
 		FROM geozones
 		WHERE `+strings.Join(where, " AND ")+`

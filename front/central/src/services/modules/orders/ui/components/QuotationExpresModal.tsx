@@ -110,6 +110,7 @@ const formSchema = z.object({
     length: z.number().min(1).max(300),
     description: z.string().min(3).max(25),
     contentValue: z.number().min(0).max(3000000),
+    insurance: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -199,6 +200,7 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
             length: 10,
             description: "E-commerce Order",
             contentValue: 0,
+            insurance: false,
         },
     });
 
@@ -345,7 +347,7 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                 contentValue: data.contentValue,
                 codValue: 0,
                 includeGuideCost: false,
-                insurance: false,
+                insurance: data.insurance,
                 codPaymentMethod: "cash",
                 origin: {
                     daneCode: data.originDaneCode,
@@ -593,6 +595,19 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 {...form.register("contentValue", { valueAsNumber: true })}
                                             />
                                         </div>
+
+                                        <div className="flex items-center gap-3 mt-3">
+                                            <input
+                                                type="checkbox"
+                                                id="insurance"
+                                                checked={form.watch("insurance")}
+                                                onChange={(e) => form.setValue("insurance", e.target.checked)}
+                                                className="w-4 h-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                                            />
+                                            <label htmlFor="insurance" className="text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer">
+                                                Asegurar envío
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -827,6 +842,8 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: '0 0 50%', padding: '0 12px', justifyContent: 'center' }}>
                                                                 <CarrierEffectivenessRates
                                                                     businessId={effectiveBusinessId || 0}
+                                                                    lat={destLat || undefined}
+                                                                    lng={destLng || undefined}
                                                                     carrier={rate.carrier}
                                                                 />
                                                             </div>
