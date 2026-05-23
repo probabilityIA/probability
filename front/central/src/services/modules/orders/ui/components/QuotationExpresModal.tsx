@@ -12,6 +12,8 @@ import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
+import AddressAutocomplete, { AddressSuggestion } from './AddressAutocomplete';
+import MapComponent from '@/shared/ui/MapComponent';
 import '@/shared/ui/styles/shipment-modals.css';
 
 const normalizeLocationName = (str: string) => {
@@ -21,37 +23,11 @@ const normalizeLocationName = (str: string) => {
     return s;
 };
 
-const buildWarehouseAddress = (warehouse: Warehouse | null): string => {
-    if (!warehouse) return "";
-    const parts = [];
-    if (warehouse.street) parts.push(warehouse.street);
-    if (warehouse.suburb) parts.push(warehouse.suburb);
-    if (warehouse.address) parts.push(warehouse.address);
-    return parts.filter(p => p && p.trim()).join(", ") || "";
-};
-
-const getCarrierLogo = (carrierName: string): string => {
-    const carrierLogos: { [key: string]: string } = {
-        'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-        'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
-        'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-        'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-        'FEDEX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_fedex.png',
-        'INTERRAPIDISIMO': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_inerapidisimo.png',
-        '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
-        'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-        'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-        'ENVIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_envia.png',
-        'PIBOX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_pibox.png',
-        'TCC': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
-        'TRANSPORTADORADECARACOLOMBIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
-        '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
-        'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
-    };
-    const trimmedName = carrierName.trim();
-    if (carrierLogos[trimmedName]) return carrierLogos[trimmedName];
-    return 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
-};
+const normalizeCity = (s: string) =>
+    s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
+        .trim();
 
 const findDaneCode = (city: string, state: string) => {
     const targetCity = normalizeLocationName(city);
@@ -72,17 +48,61 @@ const findDaneCode = (city: string, state: string) => {
     return null;
 };
 
+const buildWarehouseAddress = (warehouse: Warehouse | null): string => {
+    if (!warehouse) return "";
+    const parts = [];
+    if (warehouse.street) parts.push(warehouse.street);
+    if (warehouse.suburb) parts.push(warehouse.suburb);
+    if (warehouse.address) parts.push(warehouse.address);
+    return parts.filter(p => p && p.trim()).join(", ") || "";
+};
+
+const formatCarrierName = (carrierName: string): string => {
+    return carrierName
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+};
+
+const getCarrierLogo = (carrierName: string): string => {
+    const carrierLogos: { [key: string]: string } = {
+        'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
+        'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
+        'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+        'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+        'FEDEX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_fedex.png',
+        'INTERRAPIDISIMO': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_inerapidisimo.png',
+        '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+        'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+        'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+        'ENVIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_envia.png',
+        'PIBOX': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_pibox.png',
+        'TCC': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
+        'TRANSPORTADORADECARACOLOMBIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
+        '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
+        'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
+        'MENSAJEROSURBANOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajeros_urbanos.png',
+        'MENSAJEROS URBANOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajeros_urbanos.png',
+        'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+    };
+    const trimmedName = carrierName.trim();
+    if (carrierLogos[trimmedName]) return carrierLogos[trimmedName];
+    return 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
+};
+
 const formSchema = z.object({
     originDaneCode: z.string().min(1, "Código DANE de origen requerido"),
-    originAddress: z.string().min(2, "Dirección de origen requerida").max(50),
+    originAddress: z.string().min(2, "Dirección de origen requerida").max(200),
     destDaneCode: z.string().min(1, "Código DANE de destino requerido"),
-    destAddress: z.string().min(8, "Dirección de destino requerida").max(50),
+    destAddress: z.string().min(8, "Dirección de destino requerida").max(200),
     weight: z.number().min(1).max(1000),
     height: z.number().min(1).max(300),
     width: z.number().min(1).max(300),
     length: z.number().min(1).max(300),
-    description: z.string().min(3).max(25),
-    contentValue: z.number().min(0).max(3000000),
+    description: z.string().min(3).max(100),
+    contentValue: z.number().min(1, "Valor a facturar es obligatorio").max(3000000),
+    enableCod: z.boolean().default(false),
+    enableInsurance: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -138,7 +158,9 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
 
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
         value: code,
-        label: `${data.ciudad} (${data.departamento})`
+        label: `${data.ciudad} (${data.departamento})`,
+        ciudad: data.ciudad,
+        departamento: data.departamento
     })).sort((a, b) => a.label.localeCompare(b.label));
 
     const filteredOriginOptions = daneOptions.filter(opt =>
@@ -163,6 +185,8 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
             length: 10,
             description: "E-commerce Order",
             contentValue: 0,
+            enableCod: false,
+            enableInsurance: false,
         },
     });
 
@@ -212,6 +236,34 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
         }
     }, [isOpen]);
 
+    const enrichRatesWithEffectivity = async (rates: EnvioClickRate[], destDaneCode: string): Promise<EnvioClickRate[]> => {
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+            const response = await fetch(`${apiBase}/geozones/probability-by-dane?dane_code=${destDaneCode}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) return rates;
+
+            const result = await response.json();
+            if (!result?.data) return rates;
+
+            const probData = result.data;
+            const deliveryRate = probData.delivery_rate !== null && probData.delivery_rate !== undefined ? probData.delivery_rate / 100 : undefined;
+            const collectionRate = probData.collection_rate !== null && probData.collection_rate !== undefined ? probData.collection_rate / 100 : undefined;
+
+            return rates.map(rate => ({
+                ...rate,
+                deliveryRate,
+                collectionRate,
+            }));
+        } catch (err) {
+            console.error('Error enriching rates with effectivity:', err);
+            return rates;
+        }
+    };
+
     const handleSubmit = async (data: FormValues) => {
         if (!data.originDaneCode || !data.destDaneCode) {
             setError("⚠️ Por favor selecciona códigos DANE válidos para origen y destino");
@@ -221,7 +273,23 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
         setLoading(true);
         setError(null);
         try {
-            const quotePayload: EnvioClickQuoteRequest = {
+            console.log('Form data antes de crear payload:', {
+                originDaneCode: data.originDaneCode,
+                originAddress: data.originAddress,
+                destDaneCode: data.destDaneCode,
+                destAddress: data.destAddress,
+                originSearch,
+                destSearch
+            });
+
+            const destDaneData = daneOptions.find(opt => opt.value === data.destDaneCode);
+            const originDaneData = daneOptions.find(opt => opt.value === data.originDaneCode);
+
+            const contactNameParts = selectedOriginWarehouse?.contact_name?.split(" ") || ["", ""];
+            const firstName = contactNameParts[0] || "Warehouse";
+            const lastName = contactNameParts.slice(1).join(" ") || "Contact";
+
+            const quotePayload: any = {
                 packages: [{
                     weight: data.weight,
                     height: data.height,
@@ -230,30 +298,55 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                 }],
                 description: data.description,
                 contentValue: data.contentValue,
-                codValue: 0,
+                codValue: data.enableCod ? data.contentValue : 0,
                 includeGuideCost: false,
-                insurance: false,
+                insurance: data.enableInsurance,
                 codPaymentMethod: "cash",
+                myShipmentReference: `REF-${Date.now()}`,
+                external_order_id: `EXT-${Date.now()}`,
+                requestPickup: false,
+                pickupDate: new Date().toISOString().split("T")[0],
                 origin: {
                     daneCode: data.originDaneCode,
                     address: data.originAddress,
+                    firstName,
+                    lastName,
+                    email: selectedOriginWarehouse?.contact_email || "",
+                    phone: selectedOriginWarehouse?.phone || "",
+                    company: "",
+                    crossStreet: "",
+                    reference: "",
+                    city: originDaneData?.ciudad || "",
+                    state: originDaneData?.departamento || "",
                 },
                 destination: {
                     daneCode: data.destDaneCode,
                     address: data.destAddress,
+                    firstName: "Destinatario",
+                    lastName: "Default",
+                    email: "",
+                    phone: "",
+                    company: "",
+                    crossStreet: "",
+                    reference: "",
+                    city: destDaneData?.ciudad || "",
+                    state: destDaneData?.departamento || "",
                 },
             };
 
             const response = await quoteShipmentAction(quotePayload);
-            if (!response.success) {
-                setError(response.message || "Error al cotizar");
+
+            if (!response.success || !(response.data as any)?.success) {
+                setError((response.data as any)?.message || response.message || "Error al cotizar");
                 setLoading(false);
                 return;
             }
 
-            const syncRates: EnvioClickRate[] = response.data?.data?.rates || [];
+            const syncRates: EnvioClickRate[] = (response.data as any)?.data?.rates || [];
+
             if (syncRates.length > 0) {
-                setRates(syncRates);
+                const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destDaneCode);
+                setRates(enrichedRates);
                 setCurrentStep(2);
             } else {
                 setError("No hay transportadoras disponibles para esta ruta");
@@ -291,7 +384,18 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                     )}
 
                     {currentStep === 1 && (
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full overflow-hidden min-h-0">
+                        <form
+                            onSubmit={form.handleSubmit(
+                                handleSubmit,
+                                (errors) => {
+                                    const errorMessages = Object.entries(errors)
+                                        .map(([field, error]: [string, any]) => `${field}: ${error?.message}`)
+                                        .join('\n');
+                                    setError(`Por favor completa los campos:\n${errorMessages}`);
+                                }
+                            )}
+                            className="flex flex-col h-full overflow-hidden min-h-0"
+                        >
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
@@ -375,9 +479,29 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                         </div>
 
                                         <div className="shipment-section-destination">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={{ backgroundColor: businessColors.secondary + '30' }}>B</div>
-                                                <h3 className="font-semibold">Destino</h3>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={{ backgroundColor: businessColors.secondary + '30' }}>B</div>
+                                                    <h3 className="font-semibold">Destino</h3>
+                                                </div>
+                                                <div className="flex gap-4">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            {...form.register("enableCod")}
+                                                            className="w-4 h-4 rounded border-gray-300 text-gray-600"
+                                                        />
+                                                        <span className="text-sm text-gray-700 dark:text-gray-200">Contra entrega</span>
+                                                    </label>
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            {...form.register("enableInsurance")}
+                                                            className="w-4 h-4 rounded border-gray-300 text-gray-600"
+                                                        />
+                                                        <span className="text-sm text-gray-700 dark:text-gray-200">Asegurar</span>
+                                                    </label>
+                                                </div>
                                             </div>
 
                                             <div ref={destRef} className="relative">
@@ -393,9 +517,12 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                         if (!e.target.value) form.setValue("destDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowDestResults(true)}
-                                                    className="shipment-input"
+                                                    className={`shipment-input ${form.formState.errors.destDaneCode ? 'border-red-500 focus:ring-red-500' : ''}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
+                                                {form.formState.errors.destDaneCode && (
+                                                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{form.formState.errors.destDaneCode.message}</p>
+                                                )}
                                                 {showDestResults && filteredDestOptions.length > 0 && (
                                                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                         {filteredDestOptions.slice(0, 50).map((opt) => (
@@ -415,12 +542,39 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 )}
                                             </div>
 
-                                            <Input
-                                                compact
-                                                label="Calle y Número *"
-                                                {...form.register("destAddress")}
-                                                placeholder="Carrera 46 # 93 - 45"
-                                            />
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                                    Calle y Número *
+                                                </label>
+                                                <AddressAutocomplete
+                                                    value={form.watch("destAddress")}
+                                                    onChange={(val) => form.setValue("destAddress", val, { shouldValidate: true })}
+                                                    city={destSearch}
+                                                    onSelect={(s: AddressSuggestion) => {
+                                                        form.setValue("destAddress", s.display_name, { shouldValidate: true });
+                                                        if (s.city) {
+                                                            const cityKey = normalizeCity(s.city);
+                                                            const stateKey = s.state ? normalizeCity(s.state) : '';
+                                                            const match =
+                                                                daneOptions.find(opt =>
+                                                                    normalizeCity(opt.ciudad) === cityKey &&
+                                                                    (!stateKey || normalizeCity(opt.departamento) === stateKey)
+                                                                ) ||
+                                                                daneOptions.find(opt => normalizeCity(opt.ciudad) === cityKey) ||
+                                                                daneOptions.find(opt => normalizeCity(opt.label).includes(cityKey));
+                                                            if (match) {
+                                                                form.setValue("destDaneCode", match.value, { shouldValidate: true });
+                                                                setDestSearch(match.label);
+                                                                setShowDestResults(false);
+                                                            }
+                                                        }
+                                                    }}
+                                                    placeholder="Carrera 46 # 93 - 45"
+                                                />
+                                                {form.formState.errors.destAddress && (
+                                                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{form.formState.errors.destAddress.message}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -461,12 +615,17 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                                 {...form.register("description")}
                                                 placeholder="descripción"
                                             />
-                                            <Input
-                                                compact
-                                                label="Valor factura *"
-                                                type="number"
-                                                {...form.register("contentValue", { valueAsNumber: true })}
-                                            />
+                                            <div>
+                                                <Input
+                                                    compact
+                                                    label="Valor factura *"
+                                                    type="number"
+                                                    {...form.register("contentValue", { valueAsNumber: true })}
+                                                />
+                                                {form.formState.errors.contentValue && (
+                                                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">{form.formState.errors.contentValue.message}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -493,72 +652,120 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                     )}
 
                     {currentStep === 2 && (
-                        <div className="flex flex-col h-full">
-                            <div className="flex-1 overflow-y-auto">
-                                <h3 className="font-semibold text-lg mb-4">Tarifas Disponibles</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {rates.map((rate) => (
+                        <div className="flex flex-col h-full min-h-0">
+                                <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-100">Cotizaciones Disponibles</h3>
+                                <div className="flex-1 overflow-y-auto min-h-0 pr-3">
+                                    {rates.filter(rate => !form.watch("enableCod") || rate.cod).length === 0 && (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            {form.watch("enableCod") ? (
+                                                <p>❌ No hay transportistas que soporten contra entrega para esta ruta</p>
+                                            ) : (
+                                                <p>No hay cotizaciones disponibles</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="grid grid-cols-3 gap-3">
+                                    {rates.filter(rate => {
+                                        if (form.watch("enableCod") && !rate.cod) return false;
+                                        return true;
+                                    }).map((rate, index) => {
+                                        const filteredRates = rates.filter(r => !form.watch("enableCod") || r.cod);
+                                        const getDisplayPrice = (r: EnvioClickRate) => {
+                                            const basePrice = r.flete;
+                                            const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
+                                            return basePrice + insuranceCost;
+                                        };
+                                        const minPrice = Math.min(...filteredRates.map(r => getDisplayPrice(r)));
+                                        const minDays = Math.min(...filteredRates.map(r => r.deliveryDays));
+                                        const isCheapest = rate.flete === minPrice;
+                                        const isFastest = rate.deliveryDays === minDays;
+                                        const isSameDay = rate.deliveryDays === 1;
+                                        return (
                                         <div
                                             key={rate.idRate}
-                                            className="border-2 rounded-xl p-4 cursor-pointer transition-all hover:shadow-lg"
+                                            className="relative border-2 rounded-2xl p-4 cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-gray-700"
                                             style={{
-                                                borderColor: businessColors.tertiary,
-                                                backgroundColor: businessColors.tertiary + '08'
+                                                borderColor: index === 0 ? businessColors.tertiary : '#d1d5db',
+                                                backgroundColor: index === 0 ? businessColors.tertiary + '08' : 'white'
                                             }}
                                         >
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <img
-                                                    src={getCarrierLogo(rate.carrier)}
-                                                    alt={rate.carrier}
-                                                    className="w-12 h-12 object-contain"
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.display = 'none';
-                                                    }}
-                                                />
-                                                <div>
-                                                    <div className="font-bold text-sm">{rate.carrier}</div>
-                                                    <div className="text-xs text-gray-500">{rate.product}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs text-gray-600">Días de entrega:</span>
-                                                    <span className="font-semibold">{rate.deliveryDays} días</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-xs text-gray-600">Valor:</span>
-                                                    <span className="font-bold text-lg" style={{ color: businessColors.primary }}>
-                                                        ${rate.flete.toLocaleString()}
+                                            <div className="flex flex-wrap gap-2 justify-center mb-2">
+                                                {index === 0 && (
+                                                    <span className="bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                        RECOMENDADO
                                                     </span>
-                                                </div>
-                                                {rate.minimumInsurance && (
-                                                    <div className="text-xs text-gray-500">
-                                                        Seguro mínimo: ${rate.minimumInsurance.toLocaleString()}
-                                                    </div>
+                                                )}
+                                                {isCheapest && (
+                                                    <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                        MÁS ECONÓMICA
+                                                    </span>
+                                                )}
+                                                {isFastest && (
+                                                    <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                        MÁS RÁPIDA
+                                                    </span>
+                                                )}
+                                                {isSameDay && (
+                                                    <span className="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                        MISMO DÍA
+                                                    </span>
                                                 )}
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
 
-                            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setCurrentStep(1)}
-                                    className="flex-1"
-                                >
-                                    Atrás
-                                </Button>
-                                <Button
-                                    onClick={onClose}
-                                    className="flex-1"
-                                    style={{ backgroundColor: businessColors.tertiary }}
-                                >
-                                    Cerrar
-                                </Button>
-                            </div>
+                                            <div className="flex flex-col items-center text-center">
+                                                <div className="w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
+                                                    <img
+                                                        src={getCarrierLogo(rate.carrier)}
+                                                        alt={rate.carrier}
+                                                        className="w-14 h-14 object-contain"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
+                                                    />
+                                                </div>
+                                                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">{rate.product}</p>
+
+                                                <div className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                                                    ${getDisplayPrice(rate).toLocaleString()}
+                                                </div>
+
+                                                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-3">
+                                                    <div>Flete: ${rate.flete.toLocaleString()}</div>
+                                                    {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                        <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
+                                                    )}
+                                                    {form.watch("enableCod") && (
+                                                        <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Contra entrega</div>
+                                                    )}
+                                                </div>
+
+                                                <div className="font-semibold text-sm" style={{ color: businessColors.primary }}>
+                                                    {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} días`}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        );
+                                    })}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setCurrentStep(1)}
+                                        className="flex-1"
+                                    >
+                                        Atrás
+                                    </Button>
+                                    <Button
+                                        onClick={onClose}
+                                        className="flex-1"
+                                        style={{ backgroundColor: businessColors.tertiary }}
+                                    >
+                                        Cerrar
+                                    </Button>
+                                </div>
                         </div>
                     )}
                 </div>

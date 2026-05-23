@@ -228,7 +228,7 @@ export const ShippingForm = () => {
             insurance: data.insurance,
             description: data.description,
             contentValue: Number(data.contentValue),
-            codValue: Number(data.contentValue), // Warning: codValue same as contentValue? inferred logic
+            codValue: Number(data.contentValue),
             includeGuideCost: false,
             codPaymentMethod: data.codPaymentMethod,
             packages: [
@@ -256,6 +256,34 @@ export const ShippingForm = () => {
         };
     };
 
+    const enrichRatesWithEffectivity = async (rates: EnvioClickRate[], destDaneCode: string): Promise<EnvioClickRate[]> => {
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+            const response = await fetch(`${apiBase}/geozones/probability-by-dane?dane_code=${destDaneCode}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) return rates;
+
+            const result = await response.json();
+            if (!result?.data) return rates;
+
+            const probData = result.data;
+            const deliveryRate = probData.delivery_rate !== null && probData.delivery_rate !== undefined ? probData.delivery_rate / 100 : undefined;
+            const collectionRate = probData.collection_rate !== null && probData.collection_rate !== undefined ? probData.collection_rate / 100 : undefined;
+
+            return rates.map(rate => ({
+                ...rate,
+                deliveryRate,
+                collectionRate,
+            }));
+        } catch (err) {
+            console.error('Error enriching rates with effectivity:', err);
+            return rates;
+        }
+    };
+
     const handleQuote = async (data: FormValues) => {
         setLoading(true);
         setError(null);
@@ -267,8 +295,12 @@ export const ShippingForm = () => {
             const payload = buildPayload(data);
             const res = await quoteShipmentAction(payload);
             if (res.success) {
-                // Quote request accepted. Rates will arrive via SSE events
-                // Just provide AI recommendations based on destination
+                const syncRates = (res.data?.rates || []) as EnvioClickRate[];
+
+                const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destination.daneCode);
+                setRates(enrichedRates);
+                setHasQuoted(true);
+
                 const destDane = daneCodes[data.destination.daneCode as keyof typeof daneCodes];
                 if (destDane) {
                     setLoadingAI(true);
@@ -670,25 +702,61 @@ export const ShippingForm = () => {
                         )}
 
                         <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Cotizaciones Disponibles</h3>
-                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
                             {rates.map((rate) => {
                                 const isRecommended = rate.carrier.toLowerCase() === aiAnalysis?.recommended_carrier.toLowerCase();
                                 return (
                                     <div
                                         key={rate.idRate}
-                                        className={`p-3 border rounded cursor-pointer flex justify-between items-center transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                                        className={`p-4 border rounded cursor-pointer transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
                                         onClick={() => setSelectedRate(rate)}
                                     >
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
-                                                {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
+                                                    {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
+                                                </div>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
                                             </div>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
+                                            <div className="text-right">
+                                                <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
-                                        </div>
+
+                                        {(rate.deliveryRate !== undefined || rate.collectionRate !== undefined) && (
+                                            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200/50">
+                                                <div>
+                                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold mb-1">Efectividad Entrega</p>
+                                                    {rate.deliveryRate !== undefined ? (
+                                                        <>
+                                                            <p className="text-[13px] font-bold text-gray-800 dark:text-gray-100 mb-1">{Math.round((rate.deliveryRate || 0) * 100)}%</p>
+                                                            <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                                                <div className="h-full rounded-full bg-green-500" style={{ width: `${Math.min(100, Math.round((rate.deliveryRate || 0) * 100))}%` }}></div>
+                                                            </div>
+                                                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1">{rate.deliveryRate ? `${(rate.deliveryRate * 10).toFixed(1)} de 10` : "Sin datos"}</p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-[12px] text-gray-500">N/A</p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold mb-1">Efectividad Recolección</p>
+                                                    {rate.collectionRate !== undefined ? (
+                                                        <>
+                                                            <p className="text-[13px] font-bold text-gray-800 dark:text-gray-100 mb-1">{Math.round((rate.collectionRate || 0) * 100)}%</p>
+                                                            <div className="w-full h-1.5 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                                                                <div className="h-full rounded-full bg-cyan-500" style={{ width: `${Math.min(100, Math.round((rate.collectionRate || 0) * 100))}%` }}></div>
+                                                            </div>
+                                                            <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1">{rate.collectionRate ? `${(rate.collectionRate * 10).toFixed(1)} de 10` : "Sin datos"}</p>
+                                                        </>
+                                                    ) : (
+                                                        <p className="text-[12px] text-gray-500">N/A</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}

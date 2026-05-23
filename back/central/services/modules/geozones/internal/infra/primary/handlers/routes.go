@@ -14,6 +14,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.GET("/lookup", h.Lookup)
 		g.GET("/probability", h.Probability)
 		g.GET("/order-zone", h.OrderZone)
+		g.GET("/probability-by-dane", h.ProbabilityByDaneCode)
 		g.GET("/probability/by-carrier", h.ProbabilityByCarrier)
 		g.GET("/:id", h.Get)
 		g.POST("", h.Create)

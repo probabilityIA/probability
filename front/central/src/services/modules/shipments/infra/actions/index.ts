@@ -178,3 +178,26 @@ export const syncShipmentStatusAction = async (params: { provider?: string; date
     }
 };
 
+export const getQuoteEffectivityAction = async (lat: number, lng: number, carrier?: string) => {
+    try {
+        const token = await getAuthToken();
+        const repo = new ShipmentApiRepository(token);
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+
+        const params = new URLSearchParams();
+        params.set('lat', lat.toString());
+        params.set('lng', lng.toString());
+        if (carrier) params.set('carrier', carrier);
+
+        const response = await fetch(`${apiBase}/geozones/probability?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error: any) {
+        console.error('Get Quote Effectivity Error:', error.message);
+        return null;
+    }
+};
+
