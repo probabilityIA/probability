@@ -80,8 +80,8 @@ export const createShipmentAction = async (req: CreateShipmentRequest) => {
 
 export const quoteShipmentAction = async (req: any): Promise<{ success: boolean; data?: { rates: EnvioClickRate[] }; message?: string }> => {
     try {
-        const data = await (await getUseCases()).quoteShipment(req);
-        return { success: true, data };
+        const response = await (await getUseCases()).quoteShipment(req);
+        return { success: response.success, data: response.data, message: response.message };
     } catch (error: any) {
         console.error('Quote Shipment Action Error:', error.message);
         return { success: false, message: error.message || 'Error al cotizar envío' };
