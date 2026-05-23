@@ -681,7 +681,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             // Asynchronous path: wait for SSE response
             pendingStep1DataRef.current = data;
-            setPendingCorrelationId(response.data?.correlation_id || null);
+            setPendingCorrelationId(response.correlation_id || null);
             // loading stays true until SSE response arrives
         } catch (err: any) {
             setError(getActionError(err, "Error al cotizar envío"));
@@ -886,7 +886,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             // Async path (202 Accepted): wait for SSE event shipment.guide_generated
-            setPendingGuideCorrelationId(response.data?.correlation_id || null);
+            setPendingGuideCorrelationId(response.correlation_id || null);
             setGuideGenerationRequested(true);
             setCurrentStep(4);
             // loading stays true until SSE arrives or timeout fires
