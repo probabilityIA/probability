@@ -294,8 +294,8 @@ export const ShippingForm = () => {
         try {
             const payload = buildPayload(data);
             const res = await quoteShipmentAction(payload);
-            if (res.success) {
-                const syncRates = (res.data?.rates || []) as EnvioClickRate[];
+            if (res.success && res.data?.rates) {
+                const syncRates = res.data.rates;
 
                 const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destination.daneCode);
                 setRates(enrichedRates);

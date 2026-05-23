@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { ShipmentApiRepository } from '../repository/api-repository';
 import { ShipmentUseCases } from '../../app/use-cases';
-import { GetShipmentsParams, CreateShipmentRequest, GetCODShipmentsParams, CollectCODRequest } from '../../domain/types';
+import { GetShipmentsParams, CreateShipmentRequest, GetCODShipmentsParams, CollectCODRequest, EnvioClickRate } from '../../domain/types';
 
 const getUseCases = async () => {
     const token = await getAuthToken();
@@ -78,7 +78,7 @@ export const createShipmentAction = async (req: CreateShipmentRequest) => {
     }
 };
 
-export const quoteShipmentAction = async (req: any) => {
+export const quoteShipmentAction = async (req: any): Promise<{ success: boolean; data?: { rates: EnvioClickRate[] }; message?: string }> => {
     try {
         const data = await (await getUseCases()).quoteShipment(req);
         return { success: true, data };
