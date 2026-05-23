@@ -665,7 +665,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             // Synchronous path: backend polled Redis and returned rates directly
-            const syncRates: EnvioClickRate[] = response.data?.data?.rates || [];
+            const syncRates: EnvioClickRate[] = response.data?.rates || [];
             if (syncRates.length > 0) {
                 setRates(syncRates);
                 setStep1Data(data);
