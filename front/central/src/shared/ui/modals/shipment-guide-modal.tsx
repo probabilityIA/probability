@@ -886,7 +886,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             // Async path (202 Accepted): wait for SSE event shipment.guide_generated
-            setPendingGuideCorrelationId(response.correlation_id || null);
+            setPendingGuideCorrelationId((response.data as any)?.correlation_id || null);
             setGuideGenerationRequested(true);
             setCurrentStep(4);
             // loading stays true until SSE arrives or timeout fires
