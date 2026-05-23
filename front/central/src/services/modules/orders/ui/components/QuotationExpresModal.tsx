@@ -336,13 +336,13 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
 
             const response = await quoteShipmentAction(quotePayload);
 
-            if (!response.success || !(response.data as any)?.success) {
-                setError((response.data as any)?.message || response.message || "Error al cotizar");
+            if (!response.success) {
+                setError(response.message || "Error al cotizar");
                 setLoading(false);
                 return;
             }
 
-            const syncRates: EnvioClickRate[] = (response.data as any)?.data?.rates || [];
+            const syncRates: EnvioClickRate[] = response.data?.rates || [];
 
             if (syncRates.length > 0) {
                 const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destDaneCode);
