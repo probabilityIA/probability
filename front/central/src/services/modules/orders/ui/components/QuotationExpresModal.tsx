@@ -101,8 +101,8 @@ const formSchema = z.object({
     length: z.number().min(1).max(300),
     description: z.string().min(3).max(100),
     contentValue: z.number().min(1, "Valor a facturar es obligatorio").max(3000000),
-    enableCod: z.boolean().default(false),
-    enableInsurance: z.boolean().default(false),
+    enableCod: z.boolean(),
+    enableInsurance: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
