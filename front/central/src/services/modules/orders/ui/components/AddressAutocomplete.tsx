@@ -78,17 +78,13 @@ export default function AddressAutocomplete({
         debounceRef.current = setTimeout(() => searchAddress(val), 1000);
     };
 
-    const handleSelect = (suggestion: AddressSuggestion) => {
-        // Set the full address from Google (e.g. "Avenida Calle 145 #128-40, Bogotá, Colombia")
-        // Remove the country suffix and duplicates for cleaner display
-        const parts = suggestion.display_name.split(', ').map(p => p.trim());
+    const cleanAddress = (displayName: string): string => {
+        const parts = displayName.split(', ').map(p => p.trim());
 
-        // Remove country (Colombia, co, etc)
         const filtered = parts.filter(p =>
             !['Colombia', 'colombia', 'co', 'CO'].includes(p)
         );
 
-        // Remove duplicates while preserving order
         const seen = new Set<string>();
         const unique = filtered.filter(p => {
             const lower = p.toLowerCase();
@@ -97,10 +93,8 @@ export default function AddressAutocomplete({
             return true;
         });
 
-        // Remove D.C. if we already have the city name (Bogotá)
         const cleanParts = unique.filter((p, idx, arr) => {
             if (p === 'D.C.' || p === 'D.C') {
-                // Check if the city name is already in the address
                 const cityInAddress = arr.some(part =>
                     part.toLowerCase().includes('bogotá') || part.toLowerCase().includes('bogota')
                 );
@@ -109,8 +103,12 @@ export default function AddressAutocomplete({
             return true;
         });
 
-        const cleanAddress = cleanParts.join(', ');
-        onChange(cleanAddress);
+        return cleanParts.join(', ');
+    };
+
+    const handleSelect = (suggestion: AddressSuggestion) => {
+        const cleaned = cleanAddress(suggestion.display_name);
+        onChange(cleaned);
         setShowDropdown(false);
         setSuggestions([]);
         selectedRef.current = true;
@@ -164,7 +162,7 @@ export default function AddressAutocomplete({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <p className="text-sm text-gray-800 dark:text-gray-100">{s.display_name}</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-100">{cleanAddress(s.display_name)}</p>
                             </div>
                         </button>
                     ))}

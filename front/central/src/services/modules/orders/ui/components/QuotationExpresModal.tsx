@@ -50,11 +50,7 @@ const findDaneCode = (city: string, state: string) => {
 
 const buildWarehouseAddress = (warehouse: Warehouse | null): string => {
     if (!warehouse) return "";
-    const parts = [];
-    if (warehouse.street) parts.push(warehouse.street);
-    if (warehouse.suburb) parts.push(warehouse.suburb);
-    if (warehouse.address) parts.push(warehouse.address);
-    return parts.filter(p => p && p.trim()).join(", ") || "";
+    return warehouse.address?.trim() || "";
 };
 
 const formatCarrierName = (carrierName: string): string => {
@@ -672,12 +668,13 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                                         const filteredRates = rates.filter(r => !form.watch("enableCod") || r.cod);
                                         const getDisplayPrice = (r: EnvioClickRate) => {
                                             const basePrice = r.flete;
+                                            const minimumIns = r.minimumInsurance ?? 0;
                                             const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
-                                            return basePrice + insuranceCost;
+                                            return basePrice + minimumIns + insuranceCost;
                                         };
                                         const minPrice = Math.min(...filteredRates.map(r => getDisplayPrice(r)));
                                         const minDays = Math.min(...filteredRates.map(r => r.deliveryDays));
-                                        const isCheapest = rate.flete === minPrice;
+                                        const isCheapest = getDisplayPrice(rate) === minPrice;
                                         const isFastest = rate.deliveryDays === minDays;
                                         const isSameDay = rate.deliveryDays === 1;
                                         return (
@@ -732,6 +729,9 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
 
                                                 <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-3">
                                                     <div>Flete: ${rate.flete.toLocaleString()}</div>
+                                                    {(rate.minimumInsurance ?? 0) > 0 && (
+                                                        <div className="text-orange-600 dark:text-orange-400 font-semibold">Seguro mín: ${(rate.minimumInsurance ?? 0).toLocaleString()}</div>
+                                                    )}
                                                     {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
                                                         <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
                                                     )}

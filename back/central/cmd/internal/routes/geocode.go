@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -135,8 +136,11 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 		}
 
 		for _, res := range geoResp.Results[:limit] {
+			displayName := res.FormattedAddress
+			displayName = strings.TrimSuffix(displayName, ", Colombia")
+			displayName = strings.TrimSuffix(displayName, ",Colombia")
 			result := AddressSearchResult{
-				DisplayName: res.FormattedAddress,
+				DisplayName: displayName,
 				PlaceID:     res.PlaceID,
 				Lat:         res.Geometry.Location.Lat,
 				Lon:         res.Geometry.Location.Lng,
