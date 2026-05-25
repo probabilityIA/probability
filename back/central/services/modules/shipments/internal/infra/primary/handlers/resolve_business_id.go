@@ -48,17 +48,31 @@ func (h *Handlers) resolveBusinessIDFromOrder(c *gin.Context) (uint, error) {
 	}
 
 	orderUUID, _ := bodyMap["order_uuid"].(string)
-	if orderUUID == "" {
-		return 0, errors.New("super admin: order_uuid es requerido en el body para determinar la empresa")
+	if orderUUID != "" {
+		bid, err := h.uc.Repo().GetOrderBusinessID(c.Request.Context(), orderUUID)
+		if err != nil {
+			return 0, err
+		}
+		return bid, nil
 	}
 
-	// Look up the order's business_id from the database
-	bid, err := h.uc.Repo().GetOrderBusinessID(c.Request.Context(), orderUUID)
-	if err != nil {
-		return 0, err
+	businessIDVal, ok := bodyMap["business_id"]
+	if !ok {
+		return 0, errors.New("super admin: order_uuid o business_id es requerido en el body para determinar la empresa")
 	}
 
-	return bid, nil
+	switch v := businessIDVal.(type) {
+	case float64:
+		return uint(v), nil
+	case string:
+		bid, err := strconv.ParseUint(v, 10, 64)
+		if err != nil {
+			return 0, errors.New("super admin: business_id inválido")
+		}
+		return uint(bid), nil
+	default:
+		return 0, errors.New("super admin: business_id debe ser número")
+	}
 }
 
 // resolveBusinessIDFromShipment returns the business ID for track/cancel operations.

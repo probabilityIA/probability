@@ -288,6 +288,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             const lastName = contactNameParts.slice(1).join(" ") || "Contact";
 
             const quotePayload: any = {
+                ...(business_id && { business_id }),
                 packages: [{
                     weight: data.weight,
                     height: data.height,
