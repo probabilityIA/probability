@@ -30,6 +30,7 @@ interface Props {
     carrierRate?: number | null;
     carrierName?: string | null;
     carrierEstimated?: boolean;
+    viewMode?: 'origin-destination' | 'destination-only';
 }
 
 function rateColor(rate: number): string {
@@ -100,7 +101,7 @@ const originIcon = L.divIcon({
     iconAnchor: [12, 12],
 });
 
-function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng }: { geometry: any; lat?: number | null; lng?: number | null; originLat?: number | null; originLng?: number | null }) {
+function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng, viewMode = 'origin-destination' }: { geometry: any; lat?: number | null; lng?: number | null; originLat?: number | null; originLng?: number | null; viewMode?: 'origin-destination' | 'destination-only' }) {
     const map = useMap();
     useEffect(() => {
         if (!geometry) return;
@@ -108,14 +109,14 @@ function FitBoundsToGeometry({ geometry, lat, lng, originLat, originLng }: { geo
             const layer = L.geoJSON(geometry);
             const bounds = layer.getBounds();
             if (lat != null && lng != null) bounds.extend([lat, lng]);
-            if (originLat != null && originLng != null) bounds.extend([originLat, originLng]);
+            if (viewMode === 'origin-destination' && originLat != null && originLng != null) bounds.extend([originLat, originLng]);
             if (bounds.isValid()) map.fitBounds(bounds, { padding: [16, 16], maxZoom: 14 });
         } catch { }
-    }, [geometry, lat, lng, originLat, originLng, map]);
+    }, [geometry, lat, lng, originLat, originLng, viewMode, map]);
     return null;
 }
 
-export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin, destination, carrierRate, carrierName, carrierEstimated }: Props) {
+export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat, lng, height = '220px', showHeader = true, origin, destination, carrierRate, carrierName, carrierEstimated, viewMode = 'origin-destination' }: Props) {
     const hasCarrierRate = carrierRate != null && Number.isFinite(carrierRate);
     const carrierPct = hasCarrierRate ? Math.round((carrierRate as number) * 100) : null;
     const carrierColor = hasCarrierRate ? rateColor(carrierRate as number) : null;
@@ -130,7 +131,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
         </div>
     ) : null;
 
-    const originBanner = origin?.address ? (
+    const originBanner = origin?.address && viewMode === 'origin-destination' ? (
         <div className="px-3 py-1.5 bg-emerald-50/60 border-b border-emerald-100 text-[11px] flex items-center gap-2">
             <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[9px] shrink-0">O</span>
             <span className="text-emerald-700 shrink-0">Origen:</span>
@@ -193,7 +194,7 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                         <MapContainer center={[lat as number, lng as number]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
-                            {hasOriginPoint && <Marker position={[originLat as number, originLng as number]} icon={originIcon} />}
+                            {viewMode === 'origin-destination' && hasOriginPoint && <Marker position={[originLat as number, originLng as number]} icon={originIcon} />}
                         </MapContainer>
                     </div>
                 </div>
@@ -233,10 +234,10 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                     {hasPoint && (
                         <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
                     )}
-                    {hasOriginPoint && (
+                    {viewMode === 'origin-destination' && hasOriginPoint && (
                         <Marker position={[originLat as number, originLng as number]} icon={originIcon} />
                     )}
-                    <FitBoundsToGeometry geometry={zone.geometry} lat={lat} lng={lng} originLat={originLat} originLng={originLng} />
+                    <FitBoundsToGeometry geometry={zone.geometry} lat={lat} lng={lng} originLat={originLat} originLng={originLng} viewMode={viewMode} />
                 </MapContainer>
                 {hasCarrierRate && carrierColor && (
                     <div
