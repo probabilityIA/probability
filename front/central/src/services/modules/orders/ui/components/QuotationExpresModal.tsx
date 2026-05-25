@@ -106,6 +106,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface QuotationExpresModalProps {
     isOpen: boolean;
     onClose: () => void;
+    business_id?: number;
 }
 
 const STEPS = [
@@ -113,7 +114,7 @@ const STEPS = [
     { id: 2, label: "Cotizaciones" },
 ];
 
-export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalProps) {
+export function QuotationExpresModal({ isOpen, onClose, business_id }: QuotationExpresModalProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -192,6 +193,7 @@ export function QuotationExpresModal({ isOpen, onClose }: QuotationExpresModalPr
                 is_active: true,
                 page: 1,
                 page_size: 100,
+                ...(business_id && { business_id }),
             }).then(res => {
                 if (res.data) {
                     setOriginWarehouses(res.data);

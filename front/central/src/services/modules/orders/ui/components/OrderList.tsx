@@ -1834,6 +1834,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             <QuotationExpresModal
                 isOpen={isQuotationExpresOpen}
                 onClose={() => setIsQuotationExpresOpen(false)}
+                business_id={selectedBusinessId || undefined}
             />
 
             {/* Change Status Modal */}
