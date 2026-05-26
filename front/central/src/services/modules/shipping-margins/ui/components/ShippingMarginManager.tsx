@@ -4,13 +4,14 @@ import { useState, useCallback } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ShippingMargin } from '../../domain/types';
 import ShippingMarginList from './ShippingMarginList';
+import ShippingCODMarginList from './ShippingCODMarginList';
 import ShippingMarginForm from './ShippingMarginForm';
 import ShippingProfitReport from './ShippingProfitReport';
 import { Button } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
 type ModalMode = 'create' | 'edit' | null;
-type Tab = 'config' | 'report';
+type Tab = 'config' | 'cod' | 'report';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -57,6 +58,8 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         {tab === 'config'
                             ? 'Configura el margen comercial por transportadora aplicado a cada guia'
+                            : tab === 'cod'
+                            ? 'Porcentaje de ganancia que cobramos sobre el costo de contra entrega del carrier'
                             : 'Reporte de ganancias por guia (precio cobrado al cliente vs costo real del carrier)'}
                     </p>
                 </div>
@@ -79,6 +82,18 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                 >
                     Configuracion
                 </button>
+                {isSuperAdmin && (
+                    <button
+                        onClick={() => setTab('cod')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                            tab === 'cod'
+                                ? 'border-purple-600 text-purple-700 dark:text-purple-300'
+                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                        }`}
+                    >
+                        Config COD
+                    </button>
+                )}
                 <button
                     onClick={() => setTab('report')}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
@@ -105,6 +120,12 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                     onEdit={openEdit}
                     onRefreshRef={handleRefreshRef}
                     selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
+                />
+            ) : tab === 'cod' && isSuperAdmin ? (
+                <ShippingCODMarginList
+                    onEdit={openEdit}
+                    onRefreshRef={handleRefreshRef}
+                    selectedBusinessId={selectedBusinessId ?? undefined}
                 />
             ) : (
                 <ShippingProfitReport
