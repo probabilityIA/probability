@@ -730,6 +730,7 @@ export const ShippingForm = () => {
                                                     </p>
                                                 ) : null}
                                             </div>
+                                        </div>
 
                                         {(rate.deliveryRate !== undefined || rate.collectionRate !== undefined) && (
                                             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200/50">
