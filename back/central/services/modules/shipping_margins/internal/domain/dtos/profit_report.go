@@ -33,15 +33,16 @@ type ProfitReportDetailParams struct {
 }
 
 type ProfitReportDetailRow struct {
-	ShipmentID      uint      `json:"shipment_id"`
-	OrderNumber     string    `json:"order_number"`
-	TrackingNumber  string    `json:"tracking_number"`
-	Carrier         string    `json:"carrier"`
-	CustomerCharge  float64   `json:"customer_charge"`
-	CarrierCost     float64   `json:"carrier_cost"`
-	Profit          float64   `json:"profit"`
-	Status          string    `json:"status"`
-	CreatedAt       time.Time `json:"created_at"`
+	ShipmentID     uint      `json:"shipment_id"`
+	OrderNumber    string    `json:"order_number"`
+	TrackingNumber string    `json:"tracking_number"`
+	Carrier        string    `json:"carrier"`
+	ServiceType    string    `json:"service_type"`
+	CustomerCharge float64   `json:"customer_charge"`
+	CarrierCost    float64   `json:"carrier_cost"`
+	Profit         float64   `json:"profit"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type ProfitReportDetailResponse struct {

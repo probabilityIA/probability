@@ -858,13 +858,36 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 		return
 	}
 
-	totalMargin := margin.MarginAmount + margin.InsuranceMargin
-	carrierCost := *shipment.TotalCost - totalMargin
-	if carrierCost < 0 {
-		carrierCost = 0
+	codCustomerCharge := 0.0
+	if shipment.CodCustomerCharge != nil {
+		codCustomerCharge = *shipment.CodCustomerCharge
 	}
-	shipment.CarrierCost = &carrierCost
-	shipment.AppliedMargin = &totalMargin
+
+	codAppliedMargin := 0.0
+	codCarrierCost := codCustomerCharge
+	if codCustomerCharge > 0 && margin.CODMarginPercent > 0 {
+		codBase := codCustomerCharge / (1 + margin.CODMarginPercent/100.0)
+		codAppliedMargin = codCustomerCharge - codBase
+		codCarrierCost = codBase
+	}
+
+	fleteCustomer := *shipment.TotalCost - codCustomerCharge
+	if fleteCustomer < 0 {
+		fleteCustomer = 0
+	}
+	fleteMargin := margin.MarginAmount + margin.InsuranceMargin
+	fleteCarrierCost := fleteCustomer - fleteMargin
+	if fleteCarrierCost < 0 {
+		fleteCarrierCost = 0
+	}
+
+	totalCarrierCost := fleteCarrierCost + codCarrierCost
+	shipment.CarrierCost = &totalCarrierCost
+	shipment.AppliedMargin = &fleteMargin
+	if codCustomerCharge > 0 {
+		applied := codAppliedMargin
+		shipment.CodAppliedMargin = &applied
+	}
 }
 
 func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]interface{}, carrierName string, businessID uint, codMarginPercent float64) {

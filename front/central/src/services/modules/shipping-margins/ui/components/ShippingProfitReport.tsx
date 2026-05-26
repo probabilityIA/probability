@@ -267,6 +267,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Orden</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Guia</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Transportadora</th>
+                                    <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Tipo</th>
                                     <th className="text-left px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Estado</th>
                                     <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Cobrado</th>
                                     <th className="text-right px-4 py-3 font-semibold text-gray-700 dark:text-gray-200">Costo carrier</th>
@@ -275,14 +276,23 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                 {detailLoading ? (
-                                    <tr><td colSpan={8} className="text-center py-10"><Spinner size="lg" /></td></tr>
+                                    <tr><td colSpan={9} className="text-center py-10"><Spinner size="lg" /></td></tr>
                                 ) : detailData?.data && detailData.data.length > 0 ? (
-                                    detailData.data.map((r) => (
-                                        <tr key={r.shipment_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                    detailData.data.map((r, idx) => (
+                                        <tr key={`${r.shipment_id}-${r.service_type}-${idx}`} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-200 whitespace-nowrap">{fmtDate(r.created_at)}</td>
                                             <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">{r.order_number || '-'}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-200 font-mono text-xs">{r.tracking_number || '-'}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.carrier}</td>
+                                            <td className="px-4 py-3">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                    r.service_type === 'cod'
+                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                                                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                                }`}>
+                                                    {r.service_type === 'cod' ? 'COD' : 'Guia'}
+                                                </span>
+                                            </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-200">{r.status}</td>
                                             <td className="px-4 py-3 text-right text-blue-700 dark:text-blue-300">{fmt(r.customer_charge)}</td>
                                             <td className="px-4 py-3 text-right text-orange-700 dark:text-orange-300">{fmt(r.carrier_cost)}</td>
@@ -290,7 +300,7 @@ export default function ShippingProfitReport({ selectedBusinessId }: Props) {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan={8} className="text-center py-10 text-gray-400">Sin guias en el rango</td></tr>
+                                    <tr><td colSpan={9} className="text-center py-10 text-gray-400">Sin guias en el rango</td></tr>
                                 )}
                             </tbody>
                         </table>

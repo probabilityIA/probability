@@ -211,7 +211,7 @@ export const ShippingForm = () => {
         }
     };
 
-    const buildPayload = (data: FormValues, idRate: number = 0, totalCost?: number): EnvioClickQuoteRequest => {
+    const buildPayload = (data: FormValues, idRate: number = 0, totalCost?: number, codExtraCost?: number): EnvioClickQuoteRequest => {
         const pkg =
             data.packageSize === "custom" && data.customPackage
                 ? data.customPackage
@@ -221,6 +221,7 @@ export const ShippingForm = () => {
             order_uuid: selectedOrder?.id,
             idRate: idRate,
             totalCost,
+            codExtraCost,
             myShipmentReference: data.myShipmentReference || `REF-${Date.now()}`,
             external_order_id: data.external_order_id || `EXT-${Date.now()}`,
             requestPickup: data.requestPickup,
@@ -351,7 +352,7 @@ export const ShippingForm = () => {
         try {
             const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
             const totalCost = selectedRate.flete + insuranceCost + codCost;
-            const payload = buildPayload(data, selectedRate.idRate, totalCost);
+            const payload = buildPayload(data, selectedRate.idRate, totalCost, codCost > 0 ? codCost : undefined);
             const res = await generateGuideAction(payload);
             if (res.success && res.data?.data) {
                 setSuccess(`Guía generada exitosamente! Tracking: ${res.data.data.tracker}`);

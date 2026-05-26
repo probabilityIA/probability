@@ -139,6 +139,11 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		req.TotalCost = float64Ptr(v)
 	}
 
+	// codExtraCost (lo que el cliente paga por el servicio COD = codBase carrier + nuestro margen)
+	if v, ok := raw["codExtraCost"].(float64); ok && v > 0 {
+		req.CodCustomerCharge = float64Ptr(v)
+	}
+
 	// destination -> ClientName, DestinationAddress
 	if dest, ok := raw["destination"].(map[string]interface{}); ok {
 		firstName, _ := dest["firstName"].(string)

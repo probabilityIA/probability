@@ -60,9 +60,10 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 
 		ShippingAddressID: req.ShippingAddressID,
 
-		ShippingCost:  req.ShippingCost,
-		InsuranceCost: req.InsuranceCost,
-		TotalCost:     req.TotalCost,
+		ShippingCost:      req.ShippingCost,
+		InsuranceCost:     req.InsuranceCost,
+		TotalCost:         req.TotalCost,
+		CodCustomerCharge: req.CodCustomerCharge,
 
 		Weight: req.Weight,
 		Height: req.Height,

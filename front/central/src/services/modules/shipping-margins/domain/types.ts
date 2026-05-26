@@ -70,6 +70,7 @@ export interface ProfitReportDetailRow {
     order_number: string;
     tracking_number: string;
     carrier: string;
+    service_type: 'guide' | 'cod';
     customer_charge: number;
     carrier_cost: number;
     profit: number;

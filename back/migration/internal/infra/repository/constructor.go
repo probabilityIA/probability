@@ -29,6 +29,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateShippingMarginCOD(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateShipmentCodMargin(ctx); err != nil {
+		return err
+	}
 	if err := r.backfillGeocodePendingOrders(ctx); err != nil {
 		return err
 	}

@@ -480,7 +480,7 @@ func GenerateRates(req domain.QuoteRequest) []domain.Rate {
 			supportsCOD = true
 		}
 
-		rates = append(rates, domain.Rate{
+		rate := domain.Rate{
 			IDRate:           idCounter,
 			IDProduct:        p.ID,
 			Product:          p.Name,
@@ -492,7 +492,27 @@ func GenerateRates(req domain.QuoteRequest) []domain.Rate {
 			DeliveryDays:     deliveryDays,
 			QuotationType:    "standard",
 			COD:              supportsCOD,
-		})
+		}
+
+		if supportsCOD {
+			codBase := math.Round(flete*0.08/100) * 100
+			if codBase < 1500 {
+				codBase = 1500
+			}
+			codBaseInsured := math.Round((codBase+extraInsurance*0.05)/100) * 100
+			codMethod := req.CODPaymentMethod
+			if codMethod == "" {
+				codMethod = "cash"
+			}
+			rate.CODDetails = &domain.CODDetails{
+				CODCost:              codBase,
+				CODCostWithInsurance: codBaseInsured,
+				CODPaymentMethod:     codMethod,
+				IncludeGuideCost:     req.IncludeGuideCost,
+			}
+		}
+
+		rates = append(rates, rate)
 	}
 
 	return rates
