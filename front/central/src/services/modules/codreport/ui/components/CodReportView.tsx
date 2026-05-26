@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { DollarSign, BarChart3, Package, CalendarCheck, Percent } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { DollarSign, BarChart3, Package, CalendarCheck } from 'lucide-react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { getCarrierConfigsAction } from '../../infra/actions';
 import { ReportFilters, RangeKey } from '../../domain/types';
 import { RANGE_OPTIONS, carrierLabel } from './helpers';
 import CodSummaryTab from './CodSummaryTab';
 import CodOrdersTab from './CodOrdersTab';
 import CodCutsTab from './CodCutsTab';
-import CarrierConfigModal from './CarrierConfigModal';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -32,14 +30,7 @@ export default function CodReportView({ selectedBusinessId }: Props) {
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
     const [carrier, setCarrier] = useState('');
-    const [carriers, setCarriers] = useState<string[]>([]);
-    const [showConfig, setShowConfig] = useState(false);
-
-    useEffect(() => {
-        getCarrierConfigsAction(selectedBusinessId || undefined).then(res => {
-            if (res.success) setCarriers((res.data || []).map(c => c.carrier_name));
-        });
-    }, [selectedBusinessId]);
+    const carriers: string[] = [];
 
     const filters: ReportFilters = useMemo(() => ({
         range,
@@ -73,26 +64,6 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                         </button>
                     ))}
                 </div>
-                {isAdmin && (
-                    <button
-                        onClick={() => setShowConfig(true)}
-                        className="px-3 py-1.5 rounded-md text-sm font-semibold inline-flex items-center gap-1.5"
-                        style={{
-                            color: 'var(--color-primary)',
-                            borderColor: 'color-mix(in srgb, var(--color-primary) 20%, transparent)',
-                            borderWidth: '1px',
-                            backgroundColor: 'transparent',
-                        }}
-                        onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'color-mix(in srgb, var(--color-primary) 8%, transparent)';
-                        }}
-                        onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
-                        }}
-                    >
-                        <Percent size={14} /> Descuentos transportadora
-                    </button>
-                )}
             </div>
 
             {tab !== 'cortes' && (
@@ -164,17 +135,6 @@ export default function CodReportView({ selectedBusinessId }: Props) {
                 {tab === 'cortes' && <CodCutsTab businessId={selectedBusinessId} isAdmin={isAdmin} />}
             </div>
 
-            {showConfig && (
-                <CarrierConfigModal
-                    businessId={selectedBusinessId}
-                    onClose={() => setShowConfig(false)}
-                    onSaved={() => {
-                        getCarrierConfigsAction(selectedBusinessId || undefined).then(res => {
-                            if (res.success) setCarriers((res.data || []).map(c => c.carrier_name));
-                        });
-                    }}
-                />
-            )}
         </div>
     );
 }

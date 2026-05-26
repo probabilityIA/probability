@@ -139,14 +139,6 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                     <div className="font-bold text-emerald-600">{formatMoney(cut.total_collected)}</div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-[10px] uppercase text-gray-400 font-bold">Descuento</div>
-                                    <div className="font-bold text-red-600">{formatMoney(cut.total_discount)}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] uppercase text-gray-400 font-bold">Neto</div>
-                                    <div className="font-bold text-purple-700 dark:text-purple-300">{formatMoney(cut.total_net)}</div>
-                                </div>
-                                <div className="text-right">
                                     <div className="text-[10px] uppercase text-gray-400 font-bold">Ordenes</div>
                                     <div className="font-bold text-gray-700 dark:text-gray-200">{cut.orders_count}</div>
                                 </div>
@@ -185,9 +177,6 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                                 <th className="text-left py-1 font-semibold">Transportadora</th>
                                                 <th className="text-right py-1 font-semibold">Ordenes</th>
                                                 <th className="text-right py-1 font-semibold">Recaudado</th>
-                                                <th className="text-right py-1 font-semibold">% Desc.</th>
-                                                <th className="text-right py-1 font-semibold">Descuento</th>
-                                                <th className="text-right py-1 font-semibold">Neto</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -196,9 +185,6 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                                                     <td className="py-1.5 font-medium text-gray-800 dark:text-gray-200">{carrierLabel(c.carrier)}</td>
                                                     <td className="py-1.5 text-right text-gray-600 dark:text-gray-300">{c.orders_count}</td>
                                                     <td className="py-1.5 text-right text-emerald-600 font-semibold">{formatMoney(c.total_collected)}</td>
-                                                    <td className="py-1.5 text-right text-gray-500">{c.discount_pct.toFixed(1)}%</td>
-                                                    <td className="py-1.5 text-right text-red-600">{formatMoney(c.total_discount)}</td>
-                                                    <td className="py-1.5 text-right text-purple-700 dark:text-purple-300 font-semibold">{formatMoney(c.total_net)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -222,9 +208,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             Una vez confirmado, el negocio podra ver esta semana como cerrada.
                         </p>
                         <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3 text-sm space-y-1 mb-4">
-                            <div className="flex justify-between"><span className="text-gray-500">Recaudado</span><span className="font-semibold text-emerald-600">{formatMoney(confirmTarget.total_collected)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-500">Descuento transportadoras</span><span className="font-semibold text-red-600">{formatMoney(confirmTarget.total_discount)}</span></div>
-                            <div className="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1 mt-1"><span className="text-gray-700 dark:text-gray-200 font-semibold">Neto a recibir</span><span className="font-bold text-purple-700 dark:text-purple-300">{formatMoney(confirmTarget.total_net)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-700 dark:text-gray-200 font-semibold">Recaudado</span><span className="font-bold text-emerald-600">{formatMoney(confirmTarget.total_collected)}</span></div>
                         </div>
                         <div className="flex justify-end gap-2">
                             <button

@@ -89,20 +89,6 @@ export default function CodSummaryTab({ filters }: Props) {
                     sub={`${data.orders_pending} ordenes en transito`}
                     tone="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200"
                 />
-                <Kpi
-                    icon={<Percent size={12} />}
-                    label="Descuento transportadoras"
-                    value={formatMoney(data.total_discount)}
-                    sub="Comision sobre el recaudo"
-                    tone="bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200"
-                />
-                <Kpi
-                    icon={<Wallet size={12} />}
-                    label="Neto a recibir"
-                    value={formatMoney(data.total_net)}
-                    sub="Recaudado menos descuentos"
-                    tone="bg-purple-50 border-purple-200 text-purple-800 dark:bg-purple-900/20 dark:border-purple-800 dark:text-purple-200"
-                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -166,9 +152,6 @@ export default function CodSummaryTab({ filters }: Props) {
                                     <th className="text-left px-4 py-2 font-semibold">Transportadora</th>
                                     <th className="text-right px-4 py-2 font-semibold">Ordenes</th>
                                     <th className="text-right px-4 py-2 font-semibold">Recaudado</th>
-                                    <th className="text-right px-4 py-2 font-semibold">% Desc.</th>
-                                    <th className="text-right px-4 py-2 font-semibold">Descuento</th>
-                                    <th className="text-right px-4 py-2 font-semibold">Neto</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -182,9 +165,6 @@ export default function CodSummaryTab({ filters }: Props) {
                                         </td>
                                         <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-300">{c.orders_count}</td>
                                         <td className="px-4 py-2 text-right font-semibold text-emerald-600 dark:text-emerald-400">{formatMoney(c.total_collected)}</td>
-                                        <td className="px-4 py-2 text-right text-gray-600 dark:text-gray-300">{c.discount_pct.toFixed(1)}%</td>
-                                        <td className="px-4 py-2 text-right text-red-600 dark:text-red-400">{formatMoney(c.total_discount)}</td>
-                                        <td className="px-4 py-2 text-right font-semibold text-purple-700 dark:text-purple-300">{formatMoney(c.total_net)}</td>
                                     </tr>
                                 ))}
                             </tbody>

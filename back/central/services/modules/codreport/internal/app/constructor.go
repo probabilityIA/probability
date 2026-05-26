@@ -27,16 +27,6 @@ func New(repo ports.IRepository, logger log.ILogger) Iapp {
 	return &UseCase{repo: repo, log: logger}
 }
 
-func (uc *UseCase) discountMap(ctx context.Context, businessID uint) map[string]float64 {
-	m := map[string]float64{}
-	configs, err := uc.repo.CarrierConfigs(ctx, businessID)
-	if err != nil {
-		return m
-	}
-	for i := range configs {
-		if configs[i].IsActive {
-			m[configs[i].CarrierName] = configs[i].DiscountPercentage
-		}
-	}
-	return m
+func (uc *UseCase) discountMap(_ context.Context, _ uint) map[string]float64 {
+	return map[string]float64{}
 }
