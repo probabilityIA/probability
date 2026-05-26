@@ -37,7 +37,7 @@ type CreateShipmentRequest struct {
 	ShippingCost      *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
 	InsuranceCost     *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
 	TotalCost         *float64 `json:"total_cost" binding:"omitempty,min=0"`
-	CodCustomerCharge *float64 `json:"cod_customer_charge" binding:"omitempty,min=0"`
+	CodCarrierFee *float64 `json:"cod_carrier_fee" binding:"omitempty,min=0"`
 
 	Weight *float64 `json:"weight" binding:"omitempty,min=0"`
 	Height *float64 `json:"height" binding:"omitempty,min=0"`
@@ -74,7 +74,7 @@ type UpdateShipmentRequest struct {
 	ShippingCost      *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
 	InsuranceCost     *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
 	TotalCost         *float64 `json:"total_cost" binding:"omitempty,min=0"`
-	CodCustomerCharge *float64 `json:"cod_customer_charge" binding:"omitempty,min=0"`
+	CodCarrierFee *float64 `json:"cod_carrier_fee" binding:"omitempty,min=0"`
 
 	Weight *float64 `json:"weight" binding:"omitempty,min=0"`
 	Height *float64 `json:"height" binding:"omitempty,min=0"`
@@ -131,8 +131,8 @@ type ShipmentResponse struct {
 	TotalCost         *float64 `json:"total_cost,omitempty"`
 	CarrierCost       *float64 `json:"carrier_cost,omitempty"`
 	AppliedMargin     *float64 `json:"applied_margin,omitempty"`
-	CodCustomerCharge *float64 `json:"cod_customer_charge,omitempty"`
-	CodAppliedMargin  *float64 `json:"cod_applied_margin,omitempty"`
+	CodCarrierFee *float64 `json:"cod_carrier_fee,omitempty"`
+	CodProbabilityMargin  *float64 `json:"cod_probability_margin,omitempty"`
 
 	Weight *float64 `json:"weight,omitempty"`
 	Height *float64 `json:"height,omitempty"`

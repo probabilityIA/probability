@@ -43,35 +43,28 @@ func (uc *UseCaseShipment) applyCarrierCost(ctx context.Context, shipment *domai
 		return
 	}
 
-	codCustomerCharge := 0.0
-	if shipment.CodCustomerCharge != nil {
-		codCustomerCharge = *shipment.CodCustomerCharge
+	codCarrierFee := 0.0
+	if shipment.CodCarrierFee != nil {
+		codCarrierFee = *shipment.CodCarrierFee
 	}
 
-	codAppliedMargin := 0.0
-	codCarrierCost := codCustomerCharge
-	if codCustomerCharge > 0 && margin.CODMarginPercent > 0 {
-		codBase := codCustomerCharge / (1 + margin.CODMarginPercent/100.0)
-		codAppliedMargin = codCustomerCharge - codBase
-		codCarrierCost = codBase
-	}
-
-	fleteCustomer := *shipment.TotalCost - codCustomerCharge
-	if fleteCustomer < 0 {
-		fleteCustomer = 0
+	codMargin := 0.0
+	if codCarrierFee > 0 && margin.CODMarginPercent > 0 {
+		codMargin = codCarrierFee * margin.CODMarginPercent / 100.0
 	}
 
 	fleteMargin := margin.MarginAmount + margin.InsuranceMargin
-	fleteCarrierCost := fleteCustomer - fleteMargin
-	if fleteCarrierCost < 0 {
-		fleteCarrierCost = 0
+	totalMargin := fleteMargin + codMargin
+
+	carrierCost := *shipment.TotalCost - totalMargin
+	if carrierCost < 0 {
+		carrierCost = 0
 	}
 
-	totalCarrierCost := fleteCarrierCost + codCarrierCost
-	shipment.CarrierCost = &totalCarrierCost
-	shipment.AppliedMargin = &fleteMargin
-	if codCustomerCharge > 0 {
-		applied := codAppliedMargin
-		shipment.CodAppliedMargin = &applied
+	shipment.CarrierCost = &carrierCost
+	shipment.AppliedMargin = &totalMargin
+	if codCarrierFee > 0 {
+		applied := codMargin
+		shipment.CodProbabilityMargin = &applied
 	}
 }

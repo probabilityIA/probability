@@ -57,13 +57,13 @@ type Shipment struct {
 	GeozoneBarrioID        *uint          `gorm:"index"`
 
 	// Costos
-	ShippingCost      *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
-	InsuranceCost     *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
-	TotalCost         *float64 `gorm:"type:decimal(12,2)"` // Costo total cobrado al cliente (con margen)
-	CarrierCost       *float64 `gorm:"type:decimal(12,2)"` // Costo real cobrado por la transportadora
-	AppliedMargin     *float64 `gorm:"type:decimal(12,2)"` // Margen aplicado al momento de generar la guia
-	CodCustomerCharge *float64 `gorm:"type:decimal(12,2)"` // Cargo total COD cobrado al cliente (cod_base + cod_margin)
-	CodAppliedMargin  *float64 `gorm:"type:decimal(12,2)"` // Ganancia COD para Probability
+	ShippingCost         *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
+	InsuranceCost        *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
+	TotalCost            *float64 `gorm:"type:decimal(12,2)"` // Cargado al wallet del business al generar guia
+	CarrierCost          *float64 `gorm:"type:decimal(12,2)"` // Lo que se lleva el carrier (flete + seguro carrier)
+	AppliedMargin        *float64 `gorm:"type:decimal(12,2)"` // Ganancia total Probability (flete + insurance + cod)
+	CodCarrierFee        *float64 `gorm:"type:decimal(12,2)"` // codCost que EnvioClick reporta - lo cobra el carrier al cliente final
+	CodProbabilityMargin *float64 `gorm:"type:decimal(12,2)"` // Ganancia Probability sobre cod_carrier_fee
 
 	// Dimensiones y peso
 	Weight *float64 `gorm:"type:decimal(10,2)"` // Peso en kg

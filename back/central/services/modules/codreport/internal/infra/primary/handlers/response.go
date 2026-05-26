@@ -36,13 +36,14 @@ type summaryResponse struct {
 }
 
 type codOrderResponse struct {
-	OrderID      string     `json:"order_id"`
-	OrderNumber  string     `json:"order_number"`
-	ShipmentID   uint       `json:"shipment_id"`
-	CustomerName string     `json:"customer_name"`
-	Carrier      string     `json:"carrier"`
-	CodTotal     float64    `json:"cod_total"`
-	ShippingCost float64    `json:"shipping_cost"`
+	OrderID       string     `json:"order_id"`
+	OrderNumber   string     `json:"order_number"`
+	ShipmentID    uint       `json:"shipment_id"`
+	CustomerName  string     `json:"customer_name"`
+	Carrier       string     `json:"carrier"`
+	CodTotal      float64    `json:"cod_total"`
+	CodCarrierFee float64    `json:"cod_carrier_fee"`
+	ShippingCost  float64    `json:"shipping_cost"`
 	DiscountPct  float64    `json:"discount_pct"`
 	Discount     float64    `json:"discount"`
 	Net          float64    `json:"net"`
@@ -119,13 +120,14 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 	out := make([]codOrderResponse, len(in))
 	for i := range in {
 		out[i] = codOrderResponse{
-			OrderID:      in[i].OrderID,
-			OrderNumber:  in[i].OrderNumber,
-			ShipmentID:   in[i].ShipmentID,
-			CustomerName: in[i].CustomerName,
-			Carrier:      in[i].Carrier,
-			CodTotal:     in[i].CodTotal,
-			ShippingCost: in[i].ShippingCost,
+			OrderID:       in[i].OrderID,
+			OrderNumber:   in[i].OrderNumber,
+			ShipmentID:    in[i].ShipmentID,
+			CustomerName:  in[i].CustomerName,
+			Carrier:       in[i].Carrier,
+			CodTotal:      in[i].CodTotal,
+			CodCarrierFee: in[i].CodCarrierFee,
+			ShippingCost:  in[i].ShippingCost,
 			DiscountPct:  in[i].DiscountPct,
 			Discount:     in[i].Discount,
 			Net:          in[i].Net,

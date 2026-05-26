@@ -50,7 +50,7 @@ func (r *Repository) ProfitReportDetail(ctx context.Context, params dtos.ProfitR
 
 	whereSQL := strings.Join(where, " AND ")
 
-	fleteCharge := "(COALESCE(s.total_cost, 0) - COALESCE(s.cod_customer_charge, 0))"
+	guideCharge := "GREATEST(COALESCE(s.total_cost, 0) - COALESCE(s.cod_probability_margin, 0), 0)"
 
 	baseSQL := `
 SELECT shipment_id, order_number, tracking_number, carrier, service_type,
@@ -61,8 +61,8 @@ FROM (
            COALESCE(s.tracking_number, '') AS tracking_number,
            COALESCE(NULLIF(s.carrier, ''), 'Sin transportadora') AS carrier,
            'guide' AS service_type,
-           ` + fleteCharge + ` AS customer_charge,
-           GREATEST(` + fleteCharge + ` - COALESCE(s.applied_margin, 0), 0) AS carrier_cost,
+           ` + guideCharge + ` AS customer_charge,
+           COALESCE(s.carrier_cost, 0) AS carrier_cost,
            COALESCE(s.status, '') AS status,
            s.created_at AS created_at,
            1 AS service_order
@@ -77,14 +77,14 @@ FROM (
            COALESCE(s.tracking_number, '') AS tracking_number,
            COALESCE(NULLIF(s.carrier, ''), 'Sin transportadora') AS carrier,
            'cod' AS service_type,
-           COALESCE(s.cod_customer_charge, 0) AS customer_charge,
-           GREATEST(COALESCE(s.cod_customer_charge, 0) - COALESCE(s.cod_applied_margin, 0), 0) AS carrier_cost,
+           COALESCE(s.cod_probability_margin, 0) AS customer_charge,
+           0 AS carrier_cost,
            COALESCE(s.status, '') AS status,
            s.created_at AS created_at,
            2 AS service_order
     FROM shipments s
     JOIN orders o ON o.id = s.order_id
-    WHERE ` + whereSQL + ` AND COALESCE(s.cod_customer_charge, 0) > 0
+    WHERE ` + whereSQL + ` AND COALESCE(s.cod_probability_margin, 0) > 0
 ) AS combined
 ORDER BY created_at DESC, shipment_id DESC, service_order ASC
 `
@@ -99,7 +99,7 @@ SELECT COUNT(*) FROM (
     SELECT 1
     FROM shipments s
     JOIN orders o ON o.id = s.order_id
-    WHERE ` + whereSQL + ` AND COALESCE(s.cod_customer_charge, 0) > 0
+    WHERE ` + whereSQL + ` AND COALESCE(s.cod_probability_margin, 0) > 0
 ) AS combined
 `
 

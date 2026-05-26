@@ -11,22 +11,23 @@ type CarrierConfig struct {
 }
 
 type CodOrder struct {
-	OrderID      string
-	OrderNumber  string
-	ShipmentID   uint
-	CustomerName string
-	Carrier      string
-	CodTotal     float64
-	ShippingCost float64
-	DiscountPct  float64
-	Discount     float64
-	Net          float64
-	Currency     string
-	Status       string
-	Collected    bool
-	CreatedAt    time.Time
-	DeliveredAt  *time.Time
-	CutStatus    string
+	OrderID       string
+	OrderNumber   string
+	ShipmentID    uint
+	CustomerName  string
+	Carrier       string
+	CodTotal      float64
+	CodCarrierFee float64
+	ShippingCost  float64
+	DiscountPct   float64
+	Discount      float64
+	Net           float64
+	Currency      string
+	Status        string
+	Collected     bool
+	CreatedAt     time.Time
+	DeliveredAt   *time.Time
+	CutStatus     string
 }
 
 type CarrierAggregate struct {

@@ -11,18 +11,19 @@ import (
 )
 
 type codOrderRow struct {
-	OrderID      string
-	OrderNumber  string
-	CustomerName string
-	Carrier      string
-	CodTotal     float64
-	ShippingCost float64
-	Currency     string
-	Status       string
-	Collected    bool
-	ShipmentID   uint
-	CreatedAt    time.Time
-	DeliveredAt  *time.Time
+	OrderID       string
+	OrderNumber   string
+	CustomerName  string
+	Carrier       string
+	CodTotal      float64
+	CodCarrierFee float64
+	ShippingCost  float64
+	Currency      string
+	Status        string
+	Collected     bool
+	ShipmentID    uint
+	CreatedAt     time.Time
+	DeliveredAt   *time.Time
 }
 
 func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
@@ -76,6 +77,7 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	s.id AS shipment_id,
 	UPPER(TRIM(COALESCE(NULLIF(s.carrier,''),'SIN TRANSPORTADORA'))) AS carrier,
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
+	COALESCE(s.cod_carrier_fee,0) AS cod_carrier_fee,
 	s.status, s.delivered_at,
 	(s.status = 'delivered') AS collected
 FROM orders o %s
@@ -92,18 +94,19 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 	out := make([]entities.CodOrder, len(rows))
 	for i := range rows {
 		out[i] = entities.CodOrder{
-			OrderID:      rows[i].OrderID,
-			OrderNumber:  rows[i].OrderNumber,
-			ShipmentID:   rows[i].ShipmentID,
-			CustomerName: rows[i].CustomerName,
-			Carrier:      rows[i].Carrier,
-			CodTotal:     rows[i].CodTotal,
-			ShippingCost: rows[i].ShippingCost,
-			Currency:     rows[i].Currency,
-			Status:       rows[i].Status,
-			Collected:    rows[i].Collected,
-			CreatedAt:    rows[i].CreatedAt,
-			DeliveredAt:  rows[i].DeliveredAt,
+			OrderID:       rows[i].OrderID,
+			OrderNumber:   rows[i].OrderNumber,
+			ShipmentID:    rows[i].ShipmentID,
+			CustomerName:  rows[i].CustomerName,
+			Carrier:       rows[i].Carrier,
+			CodTotal:      rows[i].CodTotal,
+			CodCarrierFee: rows[i].CodCarrierFee,
+			ShippingCost:  rows[i].ShippingCost,
+			Currency:      rows[i].Currency,
+			Status:        rows[i].Status,
+			Collected:     rows[i].Collected,
+			CreatedAt:     rows[i].CreatedAt,
+			DeliveredAt:   rows[i].DeliveredAt,
 		}
 	}
 	return out, total, nil

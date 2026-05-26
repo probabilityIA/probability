@@ -211,7 +211,7 @@ export const ShippingForm = () => {
         }
     };
 
-    const buildPayload = (data: FormValues, idRate: number = 0, totalCost?: number, codExtraCost?: number): EnvioClickQuoteRequest => {
+    const buildPayload = (data: FormValues, idRate: number = 0, totalCost?: number, codCarrierFee?: number): EnvioClickQuoteRequest => {
         const pkg =
             data.packageSize === "custom" && data.customPackage
                 ? data.customPackage
@@ -221,7 +221,7 @@ export const ShippingForm = () => {
             order_uuid: selectedOrder?.id,
             idRate: idRate,
             totalCost,
-            codExtraCost,
+            codCarrierFee,
             myShipmentReference: data.myShipmentReference || `REF-${Date.now()}`,
             external_order_id: data.external_order_id || `EXT-${Date.now()}`,
             requestPickup: data.requestPickup,
@@ -229,7 +229,7 @@ export const ShippingForm = () => {
             insurance: data.insurance,
             description: data.description,
             contentValue: Number(data.contentValue),
-            codValue: Number(data.contentValue),
+            codValue: Number(data.contentValue) + Number(codCarrierFee ?? 0),
             includeGuideCost: false,
             codPaymentMethod: data.codPaymentMethod,
             packages: [
@@ -331,8 +331,9 @@ export const ShippingForm = () => {
     };
 
     const handleGenerate = async (data: FormValues) => {
-        const codCost = selectedRate?.cod ? (selectedRate.codExtraCost ?? 0) : 0;
-        const upfrontCost = (selectedRate?.flete ?? 0) + codCost;
+        const codCarrierFee = selectedRate?.cod ? (selectedRate.codCarrierFee ?? 0) : 0;
+        const codMargin = selectedRate?.cod ? (selectedRate.codProbabilityMargin ?? 0) : 0;
+        const upfrontCost = (selectedRate?.flete ?? 0) + codMargin;
 
         if (selectedRate && walletBalance !== null && walletBalance < upfrontCost) {
             setInsufficientBalanceInfo({ balance: walletBalance, cost: upfrontCost });
@@ -351,8 +352,8 @@ export const ShippingForm = () => {
 
         try {
             const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
-            const totalCost = selectedRate.flete + insuranceCost + codCost;
-            const payload = buildPayload(data, selectedRate.idRate, totalCost, codCost > 0 ? codCost : undefined);
+            const totalCost = selectedRate.flete + insuranceCost + codMargin;
+            const payload = buildPayload(data, selectedRate.idRate, totalCost, codCarrierFee > 0 ? codCarrierFee : undefined);
             const res = await generateGuideAction(payload);
             if (res.success && res.data?.data) {
                 setSuccess(`Guía generada exitosamente! Tracking: ${res.data.data.tracker}`);
@@ -725,9 +726,9 @@ export const ShippingForm = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
-                                                {rate.cod && rate.codExtraCost ? (
+                                                {rate.cod && rate.codProbabilityMargin ? (
                                                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                                                        + ${rate.codExtraCost.toLocaleString()} contra entrega
+                                                        + ${rate.codProbabilityMargin.toLocaleString()} servicio COD
                                                     </p>
                                                 ) : null}
                                             </div>

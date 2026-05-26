@@ -514,8 +514,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                 if (selectedRate) {
                     const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
-                    const codCost = selectedRate.cod ? (selectedRate.codExtraCost ?? 0) : 0;
-                    const totalCost = selectedRate.flete + insuranceCost + codCost;
+                    const codMargin = selectedRate.cod ? (selectedRate.codProbabilityMargin ?? 0) : 0;
+                    const totalCost = selectedRate.flete + insuranceCost + codMargin;
                     const balanceResponse = await getWalletBalanceAction();
                     if (balanceResponse.success && balanceResponse.data) {
                         setWalletBalance(balanceResponse.data.Balance);
@@ -791,8 +791,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         // Check wallet balance
         if (!selectedRate || !step3Data || !step1Data) return;
         const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (step1Data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
-        const codCost = selectedRate.cod ? (selectedRate.codExtraCost ?? 0) : 0;
-        const totalCost = selectedRate.flete + insuranceCost + codCost;
+        const codCarrierFee = selectedRate.cod ? (selectedRate.codCarrierFee ?? 0) : 0;
+        const codMargin = selectedRate.cod ? (selectedRate.codProbabilityMargin ?? 0) : 0;
+        const totalCost = selectedRate.flete + insuranceCost + codMargin;
         if (walletBalance !== null && walletBalance < totalCost) {
             setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
             return;
@@ -800,10 +801,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
         setLoading(true);
         setError(null);
-
-        // DEBUG: Check carrier data
-        console.log('DEBUG: About to generate guide with selectedRate=', selectedRate);
-        console.log('DEBUG: selectedRate.carrier=', selectedRate.carrier);
 
         try {
             const generatePayload: EnvioClickQuoteRequest = {
@@ -817,11 +814,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: step1Data.codValue,
+                codValue: (step1Data.codValue ?? 0) + codCarrierFee,
                 includeGuideCost: step1Data.includeGuideCost,
                 codPaymentMethod: step1Data.codPaymentMethod,
                 totalCost: totalCost,
-                codExtraCost: codCost > 0 ? codCost : undefined,
+                codCarrierFee: codCarrierFee > 0 ? codCarrierFee : undefined,
                 packages: [{
                     weight: step1Data.weight,
                     height: step1Data.height,
@@ -1335,12 +1332,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             const minIns = rate.minimumInsurance ?? 0;
                                             const extraIns = rate.extraInsurance ?? 0;
                                             const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
-                                            const codExtraCost = rate.cod ? (rate.codExtraCost ?? 0) : 0;
-                                            const totalCost = rate.flete + insuranceCost + codExtraCost;
+                                            const codMargin = rate.cod ? (rate.codProbabilityMargin ?? 0) : 0;
+                                            const totalCost = rate.flete + insuranceCost + codMargin;
                                             const isInsured = step1Data?.insurance === true && insuranceCost > 0;
                                             const isCOD = rate.cod;
 
-                                            const allCosts = filteredRates.map(r => r.flete + (r.minimumInsurance ?? 0) + (step1Data?.insurance ? (r.extraInsurance ?? 0) : 0) + (r.cod ? (r.codExtraCost ?? 0) : 0));
+                                            const allCosts = filteredRates.map(r => r.flete + (r.minimumInsurance ?? 0) + (step1Data?.insurance ? (r.extraInsurance ?? 0) : 0) + (r.cod ? (r.codProbabilityMargin ?? 0) : 0));
                                             const minCost = Math.min(...allCosts);
                                             const minDays = Math.min(...filteredRates.map(r => r.deliveryDays || 999));
 
@@ -1493,9 +1490,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 ) : (
                                                                     <div style={{ color: '#6b757c', fontSize: '9px' }}>(Sin asegurar)</div>
                                                                 )}
-                                                                {isCOD && codExtraCost > 0 && (
+                                                                {isCOD && codMargin > 0 && (
                                                                     <div style={{ color: '#b45309', fontSize: '9px' }}>
-                                                                        + Contra entrega: ${codExtraCost.toLocaleString()}
+                                                                        + Servicio COD: ${codMargin.toLocaleString()}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1659,13 +1656,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="text-right">
                                             <div className="text-sm text-gray-600 dark:text-gray-300">TOTAL:</div>
                                             <div className="shipment-cost-amount text-2xl">
-                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0) + (selectedRate.cod ? (selectedRate.codExtraCost ?? 0) : 0)).toLocaleString()}
+                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (step1Data?.insurance ? (selectedRate.extraInsurance ?? 0) : 0) + (selectedRate.cod ? (selectedRate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}
                                             </div>
                                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right leading-tight">
                                                 Guía: ${selectedRate.flete.toLocaleString()}<br />
                                                 Seg. obligatorio: ${(selectedRate.minimumInsurance ?? 0).toLocaleString()}<br />
                                                 Seg. adicional: ${(selectedRate.extraInsurance ?? 0).toLocaleString()} <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
-                                                {selectedRate.cod && (selectedRate.codExtraCost ?? 0) > 0 && (<><br /><span className="text-amber-700 dark:text-amber-400">Contra entrega: ${(selectedRate.codExtraCost ?? 0).toLocaleString()}</span></>)}
+                                                {selectedRate.cod && (selectedRate.codProbabilityMargin ?? 0) > 0 && (<><br /><span className="text-amber-700 dark:text-amber-400">Servicio COD: ${(selectedRate.codProbabilityMargin ?? 0).toLocaleString()}</span></>)}
                                             </div>
                                         </div>
                                     </div>

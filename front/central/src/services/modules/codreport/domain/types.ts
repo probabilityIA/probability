@@ -34,6 +34,7 @@ export interface CodOrder {
     customer_name: string;
     carrier: string;
     cod_total: number;
+    cod_carrier_fee: number;
     shipping_cost: number;
     discount_pct: number;
     discount: number;

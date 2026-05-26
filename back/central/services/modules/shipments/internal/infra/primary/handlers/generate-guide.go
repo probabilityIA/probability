@@ -68,7 +68,7 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	} else {
 		updateReq := &domain.UpdateShipmentRequest{
 			TotalCost:         shipmentReq.TotalCost,
-			CodCustomerCharge: shipmentReq.CodCustomerCharge,
+			CodCarrierFee: shipmentReq.CodCarrierFee,
 			Carrier:           shipmentReq.Carrier,
 			CarrierCode:       shipmentReq.CarrierCode,
 			Weight:            shipmentReq.Weight,
@@ -140,9 +140,10 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		req.TotalCost = float64Ptr(v)
 	}
 
-	// codExtraCost (lo que el cliente paga por el servicio COD = codBase carrier + nuestro margen)
-	if v, ok := raw["codExtraCost"].(float64); ok && v > 0 {
-		req.CodCustomerCharge = float64Ptr(v)
+	// codCarrierFee: lo que el carrier cobra por servicio COD (codCost de EnvioClick).
+	// El cliente final lo paga al recibir; nosotros lo persistimos para reportes.
+	if v, ok := raw["codCarrierFee"].(float64); ok && v > 0 {
+		req.CodCarrierFee = float64Ptr(v)
 	}
 
 	// destination -> ClientName, DestinationAddress

@@ -45,8 +45,8 @@ type Shipment struct {
 	TotalCost         *float64 `json:"total_cost"`
 	CarrierCost       *float64 `json:"carrier_cost"`
 	AppliedMargin     *float64 `json:"applied_margin"`
-	CodCustomerCharge *float64 `json:"cod_customer_charge"`
-	CodAppliedMargin  *float64 `json:"cod_applied_margin"`
+	CodCarrierFee *float64 `json:"cod_carrier_fee"`
+	CodProbabilityMargin  *float64 `json:"cod_probability_margin"`
 
 	Weight *float64 `json:"weight"`
 	Height *float64 `json:"height"`

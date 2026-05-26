@@ -117,7 +117,9 @@ export default function CodOrdersTab({ filters }: Props) {
                             <th className="text-left px-3 py-2 font-semibold">Cliente</th>
                             <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
                             <th className="text-left px-3 py-2 font-semibold">Estado</th>
-                            <th className="text-right px-3 py-2 font-semibold">COD</th>
+                            <th className="text-right px-3 py-2 font-semibold">COD producto</th>
+                            <th className="text-right px-3 py-2 font-semibold">Cargo COD carrier</th>
+                            <th className="text-right px-3 py-2 font-semibold">Total cliente</th>
                             <th className="text-center px-3 py-2 font-semibold">Recaudo</th>
                             <th className="text-center px-3 py-2 font-semibold">Corte</th>
                             <th className="text-left px-3 py-2 font-semibold">Entregado</th>
@@ -125,12 +127,12 @@ export default function CodOrdersTab({ filters }: Props) {
                     </thead>
                     <tbody>
                         {loading && (
-                            <tr><td colSpan={8} className="text-center py-10 text-gray-400">
+                            <tr><td colSpan={10} className="text-center py-10 text-gray-400">
                                 <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
                             </td></tr>
                         )}
                         {!loading && orders.length === 0 && !error && (
-                            <tr><td colSpan={8} className="text-center py-10 text-gray-400 text-sm">
+                            <tr><td colSpan={10} className="text-center py-10 text-gray-400 text-sm">
                                 <Package size={28} className="mx-auto mb-2 opacity-50" />
                                 No hay ordenes contra entrega en el periodo.
                             </td></tr>
@@ -146,6 +148,8 @@ export default function CodOrdersTab({ filters }: Props) {
                                         <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
                                     </td>
                                     <td className="px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">{formatMoney(o.cod_total, o.currency)}</td>
+                                    <td className="px-3 py-2 text-right text-amber-700 dark:text-amber-400">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
+                                    <td className="px-3 py-2 text-right font-semibold text-blue-700 dark:text-blue-300">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
                                     <td className="px-3 py-2 text-center">
                                         {o.collected ? (
                                             <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">

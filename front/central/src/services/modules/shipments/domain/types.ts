@@ -131,7 +131,7 @@ export interface EnvioClickQuoteRequest {
     includeGuideCost: boolean;
     codPaymentMethod: string;
     totalCost?: number;
-    codExtraCost?: number;
+    codCarrierFee?: number;
     packages: EnvioClickPackage[];
     origin: EnvioClickAddress;
     destination: EnvioClickAddress;
@@ -166,8 +166,9 @@ export interface EnvioClickRate {
     cod?: boolean;
     deliveryRate?: number;
     collectionRate?: number;
-    codExtraCost?: number;
-    codExtraCostInsured?: number;
+    codCarrierFee?: number;
+    codCarrierFeeInsured?: number;
+    codProbabilityMargin?: number;
 }
 
 // Response from POST /shipments/quote (202 Accepted - async, result via SSE)

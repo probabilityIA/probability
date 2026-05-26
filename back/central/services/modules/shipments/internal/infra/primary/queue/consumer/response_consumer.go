@@ -858,35 +858,28 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 		return
 	}
 
-	codCustomerCharge := 0.0
-	if shipment.CodCustomerCharge != nil {
-		codCustomerCharge = *shipment.CodCustomerCharge
+	codCarrierFee := 0.0
+	if shipment.CodCarrierFee != nil {
+		codCarrierFee = *shipment.CodCarrierFee
 	}
 
-	codAppliedMargin := 0.0
-	codCarrierCost := codCustomerCharge
-	if codCustomerCharge > 0 && margin.CODMarginPercent > 0 {
-		codBase := codCustomerCharge / (1 + margin.CODMarginPercent/100.0)
-		codAppliedMargin = codCustomerCharge - codBase
-		codCarrierCost = codBase
+	codMargin := 0.0
+	if codCarrierFee > 0 && margin.CODMarginPercent > 0 {
+		codMargin = codCarrierFee * margin.CODMarginPercent / 100.0
 	}
 
-	fleteCustomer := *shipment.TotalCost - codCustomerCharge
-	if fleteCustomer < 0 {
-		fleteCustomer = 0
-	}
 	fleteMargin := margin.MarginAmount + margin.InsuranceMargin
-	fleteCarrierCost := fleteCustomer - fleteMargin
-	if fleteCarrierCost < 0 {
-		fleteCarrierCost = 0
-	}
+	totalMargin := fleteMargin + codMargin
 
-	totalCarrierCost := fleteCarrierCost + codCarrierCost
-	shipment.CarrierCost = &totalCarrierCost
-	shipment.AppliedMargin = &fleteMargin
-	if codCustomerCharge > 0 {
-		applied := codAppliedMargin
-		shipment.CodAppliedMargin = &applied
+	carrierCost := *shipment.TotalCost - totalMargin
+	if carrierCost < 0 {
+		carrierCost = 0
+	}
+	shipment.CarrierCost = &carrierCost
+	shipment.AppliedMargin = &totalMargin
+	if codCarrierFee > 0 {
+		applied := codMargin
+		shipment.CodProbabilityMargin = &applied
 	}
 }
 
@@ -896,23 +889,22 @@ func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]inte
 		return
 	}
 
-	baseCODCost, _ := toFloat(details["codCost"])
-	baseCODCostInsured, _ := toFloat(details["codCostWithInsurance"])
+	codCarrierFee, _ := toFloat(details["codCost"])
+	codCarrierFeeInsured, _ := toFloat(details["codCostWithInsurance"])
 
-	multiplier := 1.0 + (codMarginPercent / 100.0)
-	finalCOD := baseCODCost * multiplier
-	finalCODInsured := baseCODCostInsured * multiplier
+	codProbabilityMargin := codCarrierFee * codMarginPercent / 100.0
 
-	rate["codExtraCost"] = finalCOD
-	if finalCODInsured > 0 {
-		rate["codExtraCostInsured"] = finalCODInsured
+	rate["codCarrierFee"] = codCarrierFee
+	rate["codProbabilityMargin"] = codProbabilityMargin
+	if codCarrierFeeInsured > 0 {
+		rate["codCarrierFeeInsured"] = codCarrierFeeInsured
 	}
 
 	c.log.Info(ctx).
 		Str("carrier", carrierName).
 		Uint("business_id", businessID).
-		Float64("base_cod_cost", baseCODCost).
+		Float64("cod_carrier_fee", codCarrierFee).
 		Float64("cod_margin_percent", codMarginPercent).
-		Float64("final_cod_cost", finalCOD).
+		Float64("cod_probability_margin", codProbabilityMargin).
 		Msg("COD fee applied to quote")
 }

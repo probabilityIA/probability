@@ -63,7 +63,7 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 		ShippingCost:      req.ShippingCost,
 		InsuranceCost:     req.InsuranceCost,
 		TotalCost:         req.TotalCost,
-		CodCustomerCharge: req.CodCustomerCharge,
+		CodCarrierFee: req.CodCarrierFee,
 
 		Weight: req.Weight,
 		Height: req.Height,
@@ -242,11 +242,11 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 	if req.TotalCost != nil {
 		shipment.TotalCost = req.TotalCost
 	}
-	if req.CodCustomerCharge != nil {
-		shipment.CodCustomerCharge = req.CodCustomerCharge
+	if req.CodCarrierFee != nil {
+		shipment.CodCarrierFee = req.CodCarrierFee
 		shipment.CarrierCost = nil
 		shipment.AppliedMargin = nil
-		shipment.CodAppliedMargin = nil
+		shipment.CodProbabilityMargin = nil
 	}
 	if req.Weight != nil {
 		shipment.Weight = req.Weight
