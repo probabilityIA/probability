@@ -740,6 +740,13 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 			c.log.Warn(ctx).Err(err).Uint("business_id", businessID).Str("carrier", carrierCode).Msg("shipping margin lookup failed")
 			continue
 		}
+
+		isCOD, _ := rate["cod"].(bool)
+		if isCOD {
+			c.applyCODFee(ctx, rate, carrierName, businessID, margin.CODMarginPercent)
+		}
+		delete(rate, "codDetails")
+
 		if margin.MarginAmount == 0 && margin.InsuranceMargin == 0 {
 			continue
 		}
@@ -858,4 +865,31 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 	}
 	shipment.CarrierCost = &carrierCost
 	shipment.AppliedMargin = &totalMargin
+}
+
+func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]interface{}, carrierName string, businessID uint, codMarginPercent float64) {
+	details, ok := rate["codDetails"].(map[string]interface{})
+	if !ok || details == nil {
+		return
+	}
+
+	baseCODCost, _ := toFloat(details["codCost"])
+	baseCODCostInsured, _ := toFloat(details["codCostWithInsurance"])
+
+	multiplier := 1.0 + (codMarginPercent / 100.0)
+	finalCOD := baseCODCost * multiplier
+	finalCODInsured := baseCODCostInsured * multiplier
+
+	rate["codExtraCost"] = finalCOD
+	if finalCODInsured > 0 {
+		rate["codExtraCostInsured"] = finalCODInsured
+	}
+
+	c.log.Info(ctx).
+		Str("carrier", carrierName).
+		Uint("business_id", businessID).
+		Float64("base_cod_cost", baseCODCost).
+		Float64("cod_margin_percent", codMarginPercent).
+		Float64("final_cod_cost", finalCOD).
+		Msg("COD fee applied to quote")
 }

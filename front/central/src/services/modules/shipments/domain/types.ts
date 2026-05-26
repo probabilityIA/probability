@@ -165,6 +165,8 @@ export interface EnvioClickRate {
     cod?: boolean;
     deliveryRate?: number;
     collectionRate?: number;
+    codExtraCost?: number;
+    codExtraCostInsured?: number;
 }
 
 // Response from POST /shipments/quote (202 Accepted - async, result via SSE)

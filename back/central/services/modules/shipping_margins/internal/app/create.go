@@ -14,7 +14,7 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateShippingMarginDTO)
 	if code == "" {
 		return nil, domainerrors.ErrInvalidCarrierCode
 	}
-	if dto.MarginAmount < 0 || dto.InsuranceMargin < 0 {
+	if dto.MarginAmount < 0 || dto.InsuranceMargin < 0 || dto.CODMarginPercent < 0 || dto.CODMarginPercent > 100 {
 		return nil, domainerrors.ErrInvalidMargin
 	}
 
@@ -27,12 +27,13 @@ func (uc *UseCase) Create(ctx context.Context, dto dtos.CreateShippingMarginDTO)
 	}
 
 	m := &entities.ShippingMargin{
-		BusinessID:      dto.BusinessID,
-		CarrierCode:     code,
-		CarrierName:     dto.CarrierName,
-		MarginAmount:    dto.MarginAmount,
-		InsuranceMargin: dto.InsuranceMargin,
-		IsActive:        dto.IsActive,
+		BusinessID:       dto.BusinessID,
+		CarrierCode:      code,
+		CarrierName:      dto.CarrierName,
+		MarginAmount:     dto.MarginAmount,
+		InsuranceMargin:  dto.InsuranceMargin,
+		CODMarginPercent: dto.CODMarginPercent,
+		IsActive:         dto.IsActive,
 	}
 	created, err := uc.repo.Create(ctx, m)
 	if err != nil {

@@ -36,12 +36,13 @@ func (h *Handlers) Update(c *gin.Context) {
 		isActive = *req.IsActive
 	}
 	dto := dtos.UpdateShippingMarginDTO{
-		ID:              uint(id),
-		BusinessID:      businessID,
-		CarrierName:     req.CarrierName,
-		MarginAmount:    req.MarginAmount,
-		InsuranceMargin: req.InsuranceMargin,
-		IsActive:        isActive,
+		ID:               uint(id),
+		BusinessID:       businessID,
+		CarrierName:      req.CarrierName,
+		MarginAmount:     req.MarginAmount,
+		InsuranceMargin:  req.InsuranceMargin,
+		CODMarginPercent: req.CODMarginPercent,
+		IsActive:         isActive,
 	}
 	m, err := h.uc.Update(c.Request.Context(), dto)
 	if err != nil {

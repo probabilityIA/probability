@@ -18,8 +18,9 @@ const (
 )
 
 type cacheValue struct {
-	MarginAmount    float64 `json:"margin_amount"`
-	InsuranceMargin float64 `json:"insurance_margin"`
+	MarginAmount     float64 `json:"margin_amount"`
+	InsuranceMargin  float64 `json:"insurance_margin"`
+	CODMarginPercent float64 `json:"cod_margin_percent"`
 }
 
 type Writer struct {
@@ -43,8 +44,9 @@ func (w *Writer) Upsert(ctx context.Context, m *entities.ShippingMargin) error {
 		return nil
 	}
 	payload, err := json.Marshal(cacheValue{
-		MarginAmount:    m.MarginAmount,
-		InsuranceMargin: m.InsuranceMargin,
+		MarginAmount:     m.MarginAmount,
+		InsuranceMargin:  m.InsuranceMargin,
+		CODMarginPercent: m.CODMarginPercent,
 	})
 	if err != nil {
 		return err

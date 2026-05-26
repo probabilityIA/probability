@@ -20,6 +20,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
         carrier_name: margin?.carrier_name || CARRIER_OPTIONS[0].name,
         margin_amount: margin?.margin_amount?.toString() || '0',
         insurance_margin: margin?.insurance_margin?.toString() || '0',
+        cod_margin_percent: margin?.cod_margin_percent?.toString() || '0',
         is_active: margin?.is_active ?? true,
     });
     const [loading, setLoading] = useState(false);
@@ -37,12 +38,14 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
         try {
             const margin_amount = parseFloat(formData.margin_amount) || 0;
             const insurance_margin = parseFloat(formData.insurance_margin) || 0;
+            const cod_margin_percent = parseFloat(formData.cod_margin_percent) || 0;
 
             if (isEdit && margin) {
                 const payload: UpdateShippingMarginDTO = {
                     carrier_name: formData.carrier_name,
                     margin_amount,
                     insurance_margin,
+                    cod_margin_percent,
                     is_active: formData.is_active,
                 };
                 await updateShippingMarginAction(margin.id, payload, businessId);
@@ -52,6 +55,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     carrier_name: formData.carrier_name,
                     margin_amount,
                     insurance_margin,
+                    cod_margin_percent,
                     is_active: formData.is_active,
                 };
                 await createShippingMarginAction(payload, businessId);
@@ -140,6 +144,24 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Cargo adicional sobre el seguro obligatorio del carrier (0 = sin cargo extra)
+                    </p>
+                </div>
+
+                <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Margen ganancia COD (%)
+                    </label>
+                    <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={formData.cod_margin_percent}
+                        onChange={(e) => setFormData((p) => ({ ...p, cod_margin_percent: e.target.value }))}
+                        placeholder="0"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Porcentaje extra que cobramos sobre el costo COD del carrier. Se suma al codCost y el cliente solo ve el total. Ej: 30 = +30% sobre lo que cobra el carrier por contra entrega.
                     </p>
                 </div>
             </div>

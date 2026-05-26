@@ -21,8 +21,9 @@ const (
 )
 
 type cacheValue struct {
-	MarginAmount    float64 `json:"margin_amount"`
-	InsuranceMargin float64 `json:"insurance_margin"`
+	MarginAmount     float64 `json:"margin_amount"`
+	InsuranceMargin  float64 `json:"insurance_margin"`
+	CODMarginPercent float64 `json:"cod_margin_percent"`
 }
 
 type ShippingMarginReader struct {
@@ -52,7 +53,11 @@ func (r *ShippingMarginReader) Get(ctx context.Context, businessID uint, carrier
 		if err == nil && raw != "" {
 			var v cacheValue
 			if err := json.Unmarshal([]byte(raw), &v); err == nil {
-				return domain.ShippingMargin{MarginAmount: v.MarginAmount, InsuranceMargin: v.InsuranceMargin}, nil
+				return domain.ShippingMargin{
+					MarginAmount:     v.MarginAmount,
+					InsuranceMargin:  v.InsuranceMargin,
+					CODMarginPercent: v.CODMarginPercent,
+				}, nil
 			}
 		}
 	}
@@ -73,14 +78,16 @@ func (r *ShippingMarginReader) Get(ctx context.Context, businessID uint, carrier
 	}
 
 	margin := domain.ShippingMargin{
-		MarginAmount:    model.MarginAmount,
-		InsuranceMargin: model.InsuranceMargin,
+		MarginAmount:     model.MarginAmount,
+		InsuranceMargin:  model.InsuranceMargin,
+		CODMarginPercent: model.CODMarginPercent,
 	}
 
 	if r.rdb != nil {
 		payload, _ := json.Marshal(cacheValue{
-			MarginAmount:    margin.MarginAmount,
-			InsuranceMargin: margin.InsuranceMargin,
+			MarginAmount:     margin.MarginAmount,
+			InsuranceMargin:  margin.InsuranceMargin,
+			CODMarginPercent: margin.CODMarginPercent,
 		})
 		k := key(businessID)
 		_ = r.rdb.HSet(ctx, k, carrierCode, string(payload))

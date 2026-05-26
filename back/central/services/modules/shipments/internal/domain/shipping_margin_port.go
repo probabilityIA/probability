@@ -3,8 +3,9 @@ package domain
 import "context"
 
 type ShippingMargin struct {
-	MarginAmount    float64
-	InsuranceMargin float64
+	MarginAmount     float64
+	InsuranceMargin  float64
+	CODMarginPercent float64
 }
 
 type IShippingMarginReader interface {

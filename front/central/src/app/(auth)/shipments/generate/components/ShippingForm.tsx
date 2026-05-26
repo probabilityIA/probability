@@ -330,8 +330,11 @@ export const ShippingForm = () => {
     };
 
     const handleGenerate = async (data: FormValues) => {
-        if (selectedRate && walletBalance !== null && walletBalance < selectedRate.flete) {
-            setInsufficientBalanceInfo({ balance: walletBalance, cost: selectedRate.flete });
+        const codCost = selectedRate?.cod ? (selectedRate.codExtraCost ?? 0) : 0;
+        const upfrontCost = (selectedRate?.flete ?? 0) + codCost;
+
+        if (selectedRate && walletBalance !== null && walletBalance < upfrontCost) {
+            setInsufficientBalanceInfo({ balance: walletBalance, cost: upfrontCost });
             setShowBalanceModal(true);
             return;
         }
@@ -347,7 +350,7 @@ export const ShippingForm = () => {
 
         try {
             const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
-            const totalCost = selectedRate.flete + insuranceCost;
+            const totalCost = selectedRate.flete + insuranceCost + codCost;
             const payload = buildPayload(data, selectedRate.idRate, totalCost);
             const res = await generateGuideAction(payload);
             if (res.success && res.data?.data) {
@@ -721,8 +724,12 @@ export const ShippingForm = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
+                                                {rate.cod && rate.codExtraCost ? (
+                                                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                                                        + ${rate.codExtraCost.toLocaleString()} contra entrega
+                                                    </p>
+                                                ) : null}
                                             </div>
-                                        </div>
 
                                         {(rate.deliveryRate !== undefined || rate.collectionRate !== undefined) && (
                                             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200/50">

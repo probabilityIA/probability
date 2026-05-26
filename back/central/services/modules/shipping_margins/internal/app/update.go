@@ -9,7 +9,7 @@ import (
 )
 
 func (uc *UseCase) Update(ctx context.Context, dto dtos.UpdateShippingMarginDTO) (*entities.ShippingMargin, error) {
-	if dto.MarginAmount < 0 || dto.InsuranceMargin < 0 {
+	if dto.MarginAmount < 0 || dto.InsuranceMargin < 0 || dto.CODMarginPercent < 0 || dto.CODMarginPercent > 100 {
 		return nil, domainerrors.ErrInvalidMargin
 	}
 
@@ -21,6 +21,7 @@ func (uc *UseCase) Update(ctx context.Context, dto dtos.UpdateShippingMarginDTO)
 	existing.CarrierName = dto.CarrierName
 	existing.MarginAmount = dto.MarginAmount
 	existing.InsuranceMargin = dto.InsuranceMargin
+	existing.CODMarginPercent = dto.CODMarginPercent
 	existing.IsActive = dto.IsActive
 
 	updated, err := uc.repo.Update(ctx, existing)

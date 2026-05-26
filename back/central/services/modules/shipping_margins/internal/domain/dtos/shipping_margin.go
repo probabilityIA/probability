@@ -12,19 +12,21 @@ func (p ListShippingMarginsParams) Offset() int {
 }
 
 type CreateShippingMarginDTO struct {
-	BusinessID      uint
-	CarrierCode     string
-	CarrierName     string
-	MarginAmount    float64
-	InsuranceMargin float64
-	IsActive        bool
+	BusinessID       uint
+	CarrierCode      string
+	CarrierName      string
+	MarginAmount     float64
+	InsuranceMargin  float64
+	CODMarginPercent float64
+	IsActive         bool
 }
 
 type UpdateShippingMarginDTO struct {
-	ID              uint
-	BusinessID      uint
-	CarrierName     string
-	MarginAmount    float64
-	InsuranceMargin float64
-	IsActive        bool
+	ID               uint
+	BusinessID       uint
+	CarrierName      string
+	MarginAmount     float64
+	InsuranceMargin  float64
+	CODMarginPercent float64
+	IsActive         bool
 }

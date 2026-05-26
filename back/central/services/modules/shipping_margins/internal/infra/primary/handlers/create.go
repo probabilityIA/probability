@@ -30,12 +30,13 @@ func (h *Handlers) Create(c *gin.Context) {
 		isActive = *req.IsActive
 	}
 	dto := dtos.CreateShippingMarginDTO{
-		BusinessID:      businessID,
-		CarrierCode:     req.CarrierCode,
-		CarrierName:     req.CarrierName,
-		MarginAmount:    req.MarginAmount,
-		InsuranceMargin: req.InsuranceMargin,
-		IsActive:        isActive,
+		BusinessID:       businessID,
+		CarrierCode:      req.CarrierCode,
+		CarrierName:      req.CarrierName,
+		MarginAmount:     req.MarginAmount,
+		InsuranceMargin:  req.InsuranceMargin,
+		CODMarginPercent: req.CODMarginPercent,
+		IsActive:         isActive,
 	}
 	m, err := h.uc.Create(c.Request.Context(), dto)
 	if err != nil {

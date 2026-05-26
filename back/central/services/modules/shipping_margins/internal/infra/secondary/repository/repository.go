@@ -23,12 +23,13 @@ func New(database db.IDatabase) ports.IRepository {
 
 func (r *Repository) Create(ctx context.Context, m *entities.ShippingMargin) (*entities.ShippingMargin, error) {
 	model := &models.ShippingMargin{
-		BusinessID:      m.BusinessID,
-		CarrierCode:     m.CarrierCode,
-		CarrierName:     m.CarrierName,
-		MarginAmount:    m.MarginAmount,
-		InsuranceMargin: m.InsuranceMargin,
-		IsActive:        m.IsActive,
+		BusinessID:       m.BusinessID,
+		CarrierCode:      m.CarrierCode,
+		CarrierName:      m.CarrierName,
+		MarginAmount:     m.MarginAmount,
+		InsuranceMargin:  m.InsuranceMargin,
+		CODMarginPercent: m.CODMarginPercent,
+		IsActive:         m.IsActive,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -97,10 +98,11 @@ func (r *Repository) List(ctx context.Context, params dtos.ListShippingMarginsPa
 
 func (r *Repository) Update(ctx context.Context, m *entities.ShippingMargin) (*entities.ShippingMargin, error) {
 	updates := map[string]interface{}{
-		"carrier_name":     m.CarrierName,
-		"margin_amount":    m.MarginAmount,
-		"insurance_margin": m.InsuranceMargin,
-		"is_active":        m.IsActive,
+		"carrier_name":       m.CarrierName,
+		"margin_amount":      m.MarginAmount,
+		"insurance_margin":   m.InsuranceMargin,
+		"cod_margin_percent": m.CODMarginPercent,
+		"is_active":          m.IsActive,
 	}
 	res := r.db.Conn(ctx).Model(&models.ShippingMargin{}).
 		Where("id = ? AND business_id = ?", m.ID, m.BusinessID).
@@ -127,14 +129,15 @@ func (r *Repository) ExistsByCarrier(ctx context.Context, businessID uint, carri
 
 func modelToEntity(m *models.ShippingMargin) *entities.ShippingMargin {
 	return &entities.ShippingMargin{
-		ID:              m.ID,
-		BusinessID:      m.BusinessID,
-		CarrierCode:     m.CarrierCode,
-		CarrierName:     m.CarrierName,
-		MarginAmount:    m.MarginAmount,
-		InsuranceMargin: m.InsuranceMargin,
-		IsActive:        m.IsActive,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
+		ID:               m.ID,
+		BusinessID:       m.BusinessID,
+		CarrierCode:      m.CarrierCode,
+		CarrierName:      m.CarrierName,
+		MarginAmount:     m.MarginAmount,
+		InsuranceMargin:  m.InsuranceMargin,
+		CODMarginPercent: m.CODMarginPercent,
+		IsActive:         m.IsActive,
+		CreatedAt:        m.CreatedAt,
+		UpdatedAt:        m.UpdatedAt,
 	}
 }

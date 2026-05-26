@@ -76,6 +76,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
                     carrier_name: m.carrier_name,
                     margin_amount: field === 'margin_amount' ? next : m.margin_amount,
                     insurance_margin: field === 'insurance_margin' ? next : m.insurance_margin,
+                    cod_margin_percent: m.cod_margin_percent,
                     is_active: m.is_active,
                 },
                 selectedBusinessId,
