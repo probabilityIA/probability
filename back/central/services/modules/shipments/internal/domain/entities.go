@@ -71,9 +71,10 @@ type UpdateShipmentRequest struct {
 
 	ShippingAddressID *uint `json:"shipping_address_id"`
 
-	ShippingCost  *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
-	InsuranceCost *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
-	TotalCost     *float64 `json:"total_cost" binding:"omitempty,min=0"`
+	ShippingCost      *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
+	InsuranceCost     *float64 `json:"insurance_cost" binding:"omitempty,min=0"`
+	TotalCost         *float64 `json:"total_cost" binding:"omitempty,min=0"`
+	CodCustomerCharge *float64 `json:"cod_customer_charge" binding:"omitempty,min=0"`
 
 	Weight *float64 `json:"weight" binding:"omitempty,min=0"`
 	Height *float64 `json:"height" binding:"omitempty,min=0"`

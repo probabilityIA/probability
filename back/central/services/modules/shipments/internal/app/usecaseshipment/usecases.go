@@ -242,6 +242,12 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 	if req.TotalCost != nil {
 		shipment.TotalCost = req.TotalCost
 	}
+	if req.CodCustomerCharge != nil {
+		shipment.CodCustomerCharge = req.CodCustomerCharge
+		shipment.CarrierCost = nil
+		shipment.AppliedMargin = nil
+		shipment.CodAppliedMargin = nil
+	}
 	if req.Weight != nil {
 		shipment.Weight = req.Weight
 	}

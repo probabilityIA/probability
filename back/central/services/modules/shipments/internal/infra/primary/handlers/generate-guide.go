@@ -67,13 +67,14 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		shipmentID = shipmentResp.ID
 	} else {
 		updateReq := &domain.UpdateShipmentRequest{
-			TotalCost:   shipmentReq.TotalCost,
-			Carrier:     shipmentReq.Carrier,
-			CarrierCode: shipmentReq.CarrierCode,
-			Weight:      shipmentReq.Weight,
-			Height:      shipmentReq.Height,
-			Width:       shipmentReq.Width,
-			Length:      shipmentReq.Length,
+			TotalCost:         shipmentReq.TotalCost,
+			CodCustomerCharge: shipmentReq.CodCustomerCharge,
+			Carrier:           shipmentReq.Carrier,
+			CarrierCode:       shipmentReq.CarrierCode,
+			Weight:            shipmentReq.Weight,
+			Height:            shipmentReq.Height,
+			Width:             shipmentReq.Width,
+			Length:            shipmentReq.Length,
 		}
 		if _, err := h.uc.UpdateShipment(c.Request.Context(), shipmentID, updateReq); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar envío: " + err.Error()})
