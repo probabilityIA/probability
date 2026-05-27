@@ -1,0 +1,135 @@
+package repository
+
+import (
+	"context"
+	"strings"
+	"time"
+
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
+)
+
+func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
+	var row struct {
+		ID                 uint
+		TrackingNumber     *string
+		Carrier            *string
+		Weight             *float64
+		Height             *float64
+		Width              *float64
+		Length             *float64
+		EstimatedDelivery  *time.Time
+		DestinationAddress string
+		DestinationCity   string
+		DestinationState   string
+		DestinationSuburb string
+		CodTotal           *float64
+		OrderNumber        *string
+		CustomerName       *string
+		CustomerPhone      *string
+		CustomerDNI        *string
+		CustomerEmail      *string
+		TotalAmount        *float64
+		Currency           *string
+		BusinessName       *string
+		BusinessAddress    *string
+		WName              *string
+		WCompany           *string
+		WFirst             *string
+		WLast              *string
+		WAddress           *string
+		WStreet            *string
+		WCity              *string
+		WState             *string
+		WPhone             *string
+	}
+
+	err := r.db.Conn(ctx).Raw(`
+		SELECT
+			s.id,
+			s.tracking_number,
+			s.carrier,
+			s.weight, s.height, s.width, s.length,
+			s.estimated_delivery,
+			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
+			s.cod_carrier_fee AS cod_total,
+			o.order_number,
+			o.customer_name,
+			o.customer_phone,
+			o.customer_dni,
+			o.customer_email,
+			o.total_amount,
+			o.currency,
+			b.name AS business_name,
+			b.address AS business_address,
+			w.name AS w_name,
+			w.company AS w_company,
+			w.first_name AS w_first,
+			w.last_name AS w_last,
+			w.address AS w_address,
+			w.street AS w_street,
+			w.city AS w_city,
+			w.state AS w_state,
+			w.phone AS w_phone
+		FROM shipments s
+		LEFT JOIN orders o ON o.id = s.order_id
+		LEFT JOIN business b ON b.id = o.business_id
+		LEFT JOIN warehouses w ON w.id = s.warehouse_id
+		WHERE s.id = ? AND s.deleted_at IS NULL
+	`, shipmentID).Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.ID == 0 {
+		return nil, nil
+	}
+
+	val := func(p *string) string {
+		if p == nil {
+			return ""
+		}
+		return strings.TrimSpace(*p)
+	}
+	valF := func(p *float64) float64 {
+		if p == nil {
+			return 0
+		}
+		return *p
+	}
+	contact := strings.TrimSpace(val(row.WFirst) + " " + val(row.WLast))
+	wAddr := val(row.WAddress)
+	if wAddr == "" {
+		wAddr = val(row.WStreet)
+	}
+
+	return &domain.GuidePDFContext{
+		ShipmentID:         row.ID,
+		TrackingNumber:     val(row.TrackingNumber),
+		Carrier:            val(row.Carrier),
+		Weight:             valF(row.Weight),
+		Height:             valF(row.Height),
+		Width:              valF(row.Width),
+		Length:             valF(row.Length),
+		EstimatedDelivery:  row.EstimatedDelivery,
+		OrderNumber:        val(row.OrderNumber),
+		CustomerName:       val(row.CustomerName),
+		CustomerPhone:      val(row.CustomerPhone),
+		CustomerDNI:        val(row.CustomerDNI),
+		CustomerEmail:      val(row.CustomerEmail),
+		DestinationAddress: row.DestinationAddress,
+		DestinationCity:    row.DestinationCity,
+		DestinationState:   row.DestinationState,
+		DestinationSuburb:  row.DestinationSuburb,
+		DeclaredValue:      valF(row.TotalAmount),
+		Currency:           val(row.Currency),
+		CodTotal:           valF(row.CodTotal),
+		BusinessName:       val(row.BusinessName),
+		BusinessAddress:    val(row.BusinessAddress),
+		WarehouseName:      val(row.WName),
+		WarehouseCompany:   val(row.WCompany),
+		WarehouseContact:   contact,
+		WarehouseAddress:   wAddr,
+		WarehouseCity:      val(row.WCity),
+		WarehouseState:     val(row.WState),
+		WarehousePhone:     val(row.WPhone),
+	}, nil
+}

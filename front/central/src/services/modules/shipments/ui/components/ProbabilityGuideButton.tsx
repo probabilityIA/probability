@@ -1,0 +1,86 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { Printer, ChevronDown } from 'lucide-react';
+import { useGuideFormats } from '../hooks/useGuideFormats';
+import { GuideFormat } from '../../domain/types';
+
+interface Props {
+    shipmentId: number;
+    carrier?: string | null;
+    className?: string;
+}
+
+export function ProbabilityGuideButton({ shipmentId, carrier, className = '' }: Props) {
+    const { formats, defaultFormat, loading } = useGuideFormats(carrier || undefined);
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const openGuide = (format?: GuideFormat) => {
+        const code = format?.code || defaultFormat?.code || '';
+        const url = `/internal/shipment-guide/${shipmentId}${code ? `?format=${encodeURIComponent(code)}` : ''}`;
+        window.open(url, '_blank');
+        setOpen(false);
+    };
+
+    if (loading && formats.length === 0) {
+        return (
+            <button disabled className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-emerald-300 text-white text-[11px] font-semibold cursor-wait ${className}`}>
+                <Printer size={11} /> Cargando...
+            </button>
+        );
+    }
+    if (formats.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className={`relative inline-flex ${className}`} ref={ref}>
+            <button
+                onClick={() => openGuide()}
+                className="flex items-center justify-center gap-1 py-1.5 px-2 rounded-l-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition-colors"
+                title={defaultFormat ? `Imprimir ${defaultFormat.label}` : 'Imprimir'}
+            >
+                <Printer size={11} />
+                Probability
+            </button>
+            <button
+                onClick={() => setOpen((v) => !v)}
+                className="flex items-center justify-center px-1.5 rounded-r-md bg-emerald-700 hover:bg-emerald-800 text-white border-l border-emerald-800"
+                aria-label="Elegir formato"
+                title="Elegir formato"
+            >
+                <ChevronDown size={12} />
+            </button>
+            {open && (
+                <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg overflow-hidden">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold text-zinc-500 uppercase border-b border-zinc-100 dark:border-zinc-800">
+                        {carrier || 'Formatos'}
+                    </div>
+                    {formats.map((f) => (
+                        <button
+                            key={f.code}
+                            onClick={() => openGuide(f)}
+                            className="block w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[12px] text-zinc-700 dark:text-zinc-200"
+                        >
+                            <div className="font-medium">{f.label}</div>
+                            <div className="text-[10px] text-zinc-500">
+                                {f.width_cm} x {f.height_cm} cm
+                                {f.adhesive ? ' (adhesiva)' : ''}
+                                {f.is_default ? ' - default' : ''}
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}

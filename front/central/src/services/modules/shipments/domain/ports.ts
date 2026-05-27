@@ -1,4 +1,4 @@
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest } from './types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest, GuideFormat } from './types';
 
 export interface IShipmentRepository {
     getShipments(params?: GetShipmentsParams): Promise<PaginatedResponse<Shipment>>;
@@ -17,4 +17,6 @@ export interface IShipmentRepository {
 
     getCODShipments(params?: GetCODShipmentsParams): Promise<PaginatedResponse<Shipment>>;
     collectCOD(shipmentId: number, req: CollectCODRequest, businessId?: number): Promise<{ success: boolean; message: string; data?: Shipment }>;
+
+    getGuideFormats(carrier?: string): Promise<GuideFormat[]>;
 }

@@ -115,8 +115,9 @@ type ShipmentResponse struct {
 	Carrier        *string `json:"carrier,omitempty"`
 	CarrierCode    *string `json:"carrier_code,omitempty"`
 
-	GuideID  *string `json:"guide_id,omitempty"`
-	GuideURL *string `json:"guide_url,omitempty"`
+	GuideID             *string `json:"guide_id,omitempty"`
+	GuideURL            *string `json:"guide_url,omitempty"`
+	ProbabilityGuideURL *string `json:"probability_guide_url,omitempty"`
 
 	Status              string     `json:"status"`
 	CarrierStatus       *string    `json:"carrier_status,omitempty"`

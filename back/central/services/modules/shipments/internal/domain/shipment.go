@@ -6,7 +6,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-// Shipment representa un envío en el dominio
 type Shipment struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -29,8 +28,9 @@ type Shipment struct {
 	Carrier        *string `json:"carrier"`
 	CarrierCode    *string `json:"carrier_code"`
 
-	GuideID  *string `json:"guide_id"`
-	GuideURL *string `json:"guide_url"`
+	GuideID             *string `json:"guide_id"`
+	GuideURL            *string `json:"guide_url"`
+	ProbabilityGuideURL *string `json:"probability_guide_url"`
 
 	Status              string     `json:"status"`
 	CarrierStatus       *string    `json:"carrier_status,omitempty"`
@@ -40,13 +40,13 @@ type Shipment struct {
 
 	ShippingAddressID *uint `json:"shipping_address_id"`
 
-	ShippingCost      *float64 `json:"shipping_cost"`
-	InsuranceCost     *float64 `json:"insurance_cost"`
-	TotalCost         *float64 `json:"total_cost"`
-	CarrierCost       *float64 `json:"carrier_cost"`
-	AppliedMargin     *float64 `json:"applied_margin"`
-	CodCarrierFee *float64 `json:"cod_carrier_fee"`
-	CodProbabilityMargin  *float64 `json:"cod_probability_margin"`
+	ShippingCost         *float64 `json:"shipping_cost"`
+	InsuranceCost        *float64 `json:"insurance_cost"`
+	TotalCost            *float64 `json:"total_cost"`
+	CarrierCost          *float64 `json:"carrier_cost"`
+	AppliedMargin        *float64 `json:"applied_margin"`
+	CodCarrierFee        *float64 `json:"cod_carrier_fee"`
+	CodProbabilityMargin *float64 `json:"cod_probability_margin"`
 
 	Weight *float64 `json:"weight"`
 	Height *float64 `json:"height"`
@@ -64,7 +64,6 @@ type Shipment struct {
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
 
-	// Datos del cliente desde la orden
 	CustomerName  string `json:"customer_name,omitempty"`
 	CustomerEmail string `json:"customer_email,omitempty"`
 	CustomerPhone string `json:"customer_phone,omitempty"`

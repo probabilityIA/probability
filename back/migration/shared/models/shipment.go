@@ -7,43 +7,33 @@ import (
 	"gorm.io/gorm"
 )
 
-//
-//	SHIPMENTS - Envíos de la orden
-//
-
-// Shipment representa un envío asociado a una orden
 type Shipment struct {
 	gorm.Model
 
-	// Relación con la orden
-	OrderID *string `gorm:"type:varchar(36);index"` // UUID de la orden (opcional)
+	OrderID *string `gorm:"type:varchar(36);index"`
 
-	// Información manual (cuando no hay orden)
 	ClientName         string `gorm:"size:255"`
 	DestinationAddress string `gorm:"size:255"`
 	DestinationCity    string `gorm:"size:128"`
 	DestinationState   string `gorm:"size:128"`
 	DestinationSuburb  string `gorm:"size:128"`
 
-	// Información de tracking
-	TrackingNumber *string `gorm:"size:128;index"` // Número de rastreo
-	TrackingURL    *string `gorm:"size:512"`       // URL de rastreo
-	Carrier        *string `gorm:"size:128"`       // Transportista (ej: "FedEx", "DHL")
-	CarrierCode    *string `gorm:"size:50"`        // Código del transportista
+	TrackingNumber *string `gorm:"size:128;index"`
+	TrackingURL    *string `gorm:"size:512"`
+	Carrier        *string `gorm:"size:128"`
+	CarrierCode    *string `gorm:"size:50"`
 
-	// Información de guía
-	GuideID  *string `gorm:"size:128;index"` // ID de guía de envío
-	GuideURL *string `gorm:"size:512"`       // URL de la guía
+	GuideID             *string `gorm:"size:128;index"`
+	GuideURL            *string `gorm:"size:512"`
+	ProbabilityGuideURL *string `gorm:"size:512"`
 
-	// Estado del envío
 	Status              string     `gorm:"size:64;not null;index;default:'pending'"`
 	CarrierStatus       *string    `gorm:"size:128;index"`
 	CarrierStatusDetail *string    `gorm:"size:255"`
 	ShippedAt           *time.Time `gorm:"index"`
 	DeliveredAt         *time.Time
 
-	// Información de dirección
-	ShippingAddressID *uint    // FK a addresses (opcional, puede usar la de la orden)
+	ShippingAddressID *uint
 	ShippingAddress   *Address `gorm:"foreignKey:ShippingAddressID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
 	DestinationGeozoneID   *uint          `gorm:"index"`
@@ -56,39 +46,33 @@ type Shipment struct {
 	GeozoneNeighborhoodID  *uint          `gorm:"index"`
 	GeozoneBarrioID        *uint          `gorm:"index"`
 
-	// Costos
-	ShippingCost         *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
-	InsuranceCost        *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
-	TotalCost            *float64 `gorm:"type:decimal(12,2)"` // Cargado al wallet del business al generar guia
-	CarrierCost          *float64 `gorm:"type:decimal(12,2)"` // Lo que se lleva el carrier (flete + seguro carrier)
-	AppliedMargin        *float64 `gorm:"type:decimal(12,2)"` // Ganancia total Probability (flete + insurance + cod)
-	CodCarrierFee        *float64 `gorm:"type:decimal(12,2)"` // codCost que EnvioClick reporta - lo cobra el carrier al cliente final
-	CodProbabilityMargin *float64 `gorm:"type:decimal(12,2)"` // Ganancia Probability sobre cod_carrier_fee
+	ShippingCost         *float64 `gorm:"type:decimal(12,2)"`
+	InsuranceCost        *float64 `gorm:"type:decimal(12,2)"`
+	TotalCost            *float64 `gorm:"type:decimal(12,2)"`
+	CarrierCost          *float64 `gorm:"type:decimal(12,2)"`
+	AppliedMargin        *float64 `gorm:"type:decimal(12,2)"`
+	CodCarrierFee        *float64 `gorm:"type:decimal(12,2)"`
+	CodProbabilityMargin *float64 `gorm:"type:decimal(12,2)"`
 
-	// Dimensiones y peso
-	Weight *float64 `gorm:"type:decimal(10,2)"` // Peso en kg
-	Height *float64 `gorm:"type:decimal(10,2)"` // Alto en cm
-	Width  *float64 `gorm:"type:decimal(10,2)"` // Ancho en cm
-	Length *float64 `gorm:"type:decimal(10,2)"` // Largo en cm
+	Weight *float64 `gorm:"type:decimal(10,2)"`
+	Height *float64 `gorm:"type:decimal(10,2)"`
+	Width  *float64 `gorm:"type:decimal(10,2)"`
+	Length *float64 `gorm:"type:decimal(10,2)"`
 
-	// Información de fulfillment
-	WarehouseID   *uint  `gorm:"index"`         // ID del almacén
-	WarehouseName string `gorm:"size:128"`      // Nombre del almacén
-	DriverID      *uint  `gorm:"index"`         // ID del conductor
-	DriverName    string `gorm:"size:255"`      // Nombre del conductor
-	IsLastMile    bool   `gorm:"default:false"` // Si es última milla
-	IsTest        bool   `gorm:"default:false;index"` // Si es un envío de prueba (generado con modo testing)
+	WarehouseID   *uint  `gorm:"index"`
+	WarehouseName string `gorm:"size:128"`
+	DriverID      *uint  `gorm:"index"`
+	DriverName    string `gorm:"size:255"`
+	IsLastMile    bool   `gorm:"default:false"`
+	IsTest        bool   `gorm:"default:false;index"`
 
-	// Información adicional
-	EstimatedDelivery *time.Time     `gorm:"index"`      // Entrega estimada
-	DeliveryNotes     *string        `gorm:"type:text"`  // Notas de entrega
-	Metadata          datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal
+	EstimatedDelivery *time.Time     `gorm:"index"`
+	DeliveryNotes     *string        `gorm:"type:text"`
+	Metadata          datatypes.JSON `gorm:"type:jsonb"`
 
-	// Relación con la orden
 	Order *Order `gorm:"foreignKey:OrderID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-// TableName especifica el nombre de la tabla
 func (Shipment) TableName() string {
 	return "shipments"
 }

@@ -10,6 +10,42 @@ import (
 //
 
 // IRepository define todos los métodos de repositorio del módulo shipments
+type IPDFUploader interface {
+	UploadPDF(ctx context.Context, key string, content []byte) (string, error)
+}
+
+type GuidePDFContext struct {
+	ShipmentID         uint
+	TrackingNumber     string
+	Carrier            string
+	Weight             float64
+	Height             float64
+	Width              float64
+	Length             float64
+	EstimatedDelivery  *time.Time
+	OrderNumber        string
+	CustomerName       string
+	CustomerPhone      string
+	CustomerDNI        string
+	CustomerEmail      string
+	DestinationAddress string
+	DestinationCity    string
+	DestinationState   string
+	DestinationSuburb  string
+	DeclaredValue      float64
+	Currency           string
+	CodTotal           float64
+	BusinessName       string
+	BusinessAddress    string
+	WarehouseName      string
+	WarehouseCompany   string
+	WarehouseContact   string
+	WarehouseAddress   string
+	WarehouseCity      string
+	WarehouseState     string
+	WarehousePhone     string
+}
+
 type IRepository interface {
 	// CRUD Operations
 	CreateShipment(ctx context.Context, shipment *Shipment) error
@@ -33,6 +69,13 @@ type IRepository interface {
 	GetOrderBusinessID(ctx context.Context, orderUUID string) (uint, error)
 	GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
+
+	GetGuidePDFContext(ctx context.Context, shipmentID uint) (*GuidePDFContext, error)
+
+	GetGuideFormatByCode(ctx context.Context, code string) (*GuideFormat, error)
+	ListGuideFormatsByCarrier(ctx context.Context, carrier string) ([]GuideFormat, error)
+	ListGuideFormats(ctx context.Context) ([]GuideFormat, error)
+	GetDefaultGuideFormat(ctx context.Context, carrier string) (*GuideFormat, error)
 
 	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
 	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error

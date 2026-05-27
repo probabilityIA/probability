@@ -293,6 +293,24 @@ export interface ShipmentSSEEventData {
   error_message?: string;
   quotes?: Record<string, any>;
   tracking?: Record<string, any>;
-  [key: string]: any; // allow extra fields from backend
+  [key: string]: any;
+}
+
+export interface GuideFormat {
+  id: number;
+  carrier: string;
+  code: string;
+  label: string;
+  width_cm: number;
+  height_cm: number;
+  adhesive: boolean;
+  strategy: 'passthrough' | 'crop' | 'resize';
+  crop_llx_frac: number;
+  crop_lly_frac: number;
+  crop_urx_frac: number;
+  crop_ury_frac: number;
+  source_page: number;
+  is_default: boolean;
+  sort_order: number;
 }
 

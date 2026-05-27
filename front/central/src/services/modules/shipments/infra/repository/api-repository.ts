@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest } from '../../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest, GetCODShipmentsParams, CollectCODRequest, GuideFormat } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
@@ -152,5 +152,13 @@ export class ShipmentApiRepository implements IShipmentRepository {
             method: 'POST',
             body: JSON.stringify(req || {}),
         });
+    }
+
+    async getGuideFormats(carrier?: string): Promise<GuideFormat[]> {
+        const qs = carrier ? `?carrier=${encodeURIComponent(carrier)}` : '';
+        const res = await this.fetch<{ success: boolean; data: GuideFormat[] }>(`/shipments/guide-formats${qs}`, {
+            cache: 'no-store',
+        } as RequestInit);
+        return res.data || [];
     }
 }

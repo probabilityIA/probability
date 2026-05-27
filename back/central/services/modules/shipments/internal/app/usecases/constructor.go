@@ -17,11 +17,10 @@ type UseCases struct {
 	OriginAddress *usecaseoriginaddress.OriginAddressUseCase
 }
 
-// New crea una nueva instancia de UseCases
-func New(repo domain.IRepository, marginReader domain.IShippingMarginReader) *UseCases {
+func New(repo domain.IRepository, marginReader domain.IShippingMarginReader, pdfUploader domain.IPDFUploader) *UseCases {
 	return &UseCases{
 		repo:          repo,
-		ShipmentCRUD:  usecaseshipment.New(repo, marginReader),
+		ShipmentCRUD:  usecaseshipment.New(repo, marginReader, pdfUploader),
 		OriginAddress: usecaseoriginaddress.New(repo),
 	}
 }
@@ -61,6 +60,17 @@ func (uc *UseCases) DeleteShipment(ctx context.Context, id uint) error {
 // GetShipmentsByOrderID delega al caso de uso CRUD
 func (uc *UseCases) GetShipmentsByOrderID(ctx context.Context, orderID string) ([]domain.Shipment, error) {
 	return uc.ShipmentCRUD.GetShipmentsByOrderID(ctx, orderID)
+}
+
+func (uc *UseCases) RenderGuide(ctx context.Context, shipmentID uint, formatCode string) (*usecaseshipment.RenderedGuide, error) {
+	return uc.ShipmentCRUD.RenderGuide(ctx, shipmentID, formatCode)
+}
+
+func (uc *UseCases) ListGuideFormats(ctx context.Context, carrier string) ([]domain.GuideFormat, error) {
+	if carrier != "" {
+		return uc.repo.ListGuideFormatsByCarrier(ctx, carrier)
+	}
+	return uc.repo.ListGuideFormats(ctx)
 }
 
 func (uc *UseCases) GetStatsByGeozone(ctx context.Context, filter domain.ShipmentStatsFilter) ([]domain.ShipmentStatsByGeozone, error) {

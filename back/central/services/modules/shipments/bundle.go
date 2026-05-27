@@ -11,17 +11,19 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository"
+	pdfstorage "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/storage"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa el módulo de shipments
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) {
-	// 1. Init Repositories
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) {
 	repo := repository.New(database)
+	pdfUploader := pdfstorage.New(s3)
 
 	transportPub := queue.NewTransportRequestPublisher(rabbitMQ, logger)
 
@@ -34,7 +36,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	marginReader := cache.NewShippingMarginReader(redisClient, database, logger)
 
-	uc := usecases.New(repo, marginReader)
+	uc := usecases.New(repo, marginReader, pdfUploader)
 
 	// 5. Transport Response Consumer
 	if rabbitMQ != nil {

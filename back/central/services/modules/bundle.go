@@ -62,7 +62,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
-	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
+	shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
 	codreport.New(router, database, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
 

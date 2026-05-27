@@ -32,6 +32,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		// Transport Operations (carrier-agnostic — resolved dynamically per business)
 		shipments.POST("/quote", h.QuoteShipment)
 		shipments.POST("/generate", h.GenerateGuide)
+		shipments.GET("/guide-formats", h.ListGuideFormats)
+		shipments.GET("/:id/guide", h.RenderGuide)
 		shipments.POST("/tracking/:tracking_number/track", h.TrackShipment)
 		shipments.POST("/:id/cancel", h.CancelShipment)
 		shipments.POST("/cancel-batch", h.CancelBatchShipments)

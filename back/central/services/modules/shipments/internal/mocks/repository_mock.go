@@ -244,3 +244,23 @@ func (m *RepositoryMock) ResolveShipmentGeozone(ctx context.Context, shipmentID 
 func (m *RepositoryMock) GetShipmentStatsByGeozone(ctx context.Context, filter domain.ShipmentStatsFilter) ([]domain.ShipmentStatsByGeozone, error) {
 	return nil, nil
 }
+
+func (m *RepositoryMock) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetGuideFormatByCode(ctx context.Context, code string) (*domain.GuideFormat, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListGuideFormatsByCarrier(ctx context.Context, carrier string) ([]domain.GuideFormat, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListGuideFormats(ctx context.Context) ([]domain.GuideFormat, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetDefaultGuideFormat(ctx context.Context, carrier string) (*domain.GuideFormat, error) {
+	return nil, nil
+}

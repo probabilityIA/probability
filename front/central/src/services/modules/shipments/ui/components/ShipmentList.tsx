@@ -8,6 +8,7 @@ import { useHasPermission } from '@/shared/contexts/permissions-context';
 import { getShipmentsAction, trackShipmentAction, cancelShipmentAction, cancelBatchShipmentAction, syncShipmentStatusAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { useShipmentSSE } from '../hooks/useShipmentSSE';
+import { ProbabilityGuideButton } from './ProbabilityGuideButton';
 import {
     Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
     AlertTriangle, Plus, ChevronLeft, ChevronRight, FileText,
@@ -389,6 +390,9 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                                 <FileText size={11} />
                                 Ver Guía
                             </a>
+                        )}
+                        {shipment.guide_url && (
+                            <ProbabilityGuideButton shipmentId={shipment.id} carrier={shipment.carrier} className="flex-1" />
                         )}
                         {shipment.tracking_url && (
                             <a

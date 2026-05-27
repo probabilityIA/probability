@@ -201,3 +201,14 @@ export const getQuoteEffectivityAction = async (lat: number, lng: number, carrie
     }
 };
 
+
+export const getGuideFormatsAction = async (carrier?: string) => {
+    try {
+        const token = await getAuthToken();
+        const repository = new ShipmentApiRepository(token);
+        return await repository.getGuideFormats(carrier);
+    } catch (error: any) {
+        console.error('Get Guide Formats Action Error:', error.message);
+        return [];
+    }
+};

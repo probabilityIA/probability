@@ -35,6 +35,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateShipmentCodRefactor(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateShipmentProbabilityGuide(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateGuideFormats(ctx); err != nil {
+		return err
+	}
 	if err := r.backfillGeocodePendingOrders(ctx); err != nil {
 		return err
 	}
