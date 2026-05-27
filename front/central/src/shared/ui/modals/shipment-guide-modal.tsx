@@ -1267,9 +1267,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             destination={{
                                                 address: [order.shipping_street, order.shipping_city, order.shipping_state].filter(Boolean).join(', '),
                                             }}
-                                            carrierRate={selectedCarrierProb?.delivery_rate ?? null}
+                                            carrierRate={selectedCarrierProb?.delivery_rate ?? (selectedRate ? 0.85 : null)}
                                             carrierName={selectedRate?.carrier || null}
-                                            carrierEstimated={selectedCarrierProb?.is_estimated || !selectedCarrierProb?.found}
+                                            carrierEstimated={selectedCarrierProb?.is_estimated || !selectedCarrierProb?.found || !selectedCarrierProb}
                                             viewMode={mapViewMode}
                                         />
                                     </div>

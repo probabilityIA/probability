@@ -190,12 +190,23 @@ export function GeozoneMiniMap({ businessId, orderId, geozone: geozoneProp, lat,
                 <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ isolation: 'isolate' }}>
                     {destinationBanner}
                     {originBanner}
-                    <div style={{ height }}>
+                    <div className="relative" style={{ height }}>
                         <MapContainer center={[lat as number, lng as number]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false} dragging={false} zoomControl={false} doubleClickZoom={false} attributionControl={false}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <Marker position={[lat as number, lng as number]} icon={deliveryIcon} />
                             {viewMode === 'origin-destination' && hasOriginPoint && <Marker position={[originLat as number, originLng as number]} icon={originIcon} />}
                         </MapContainer>
+                        {hasCarrierRate && carrierColor && (
+                            <div
+                                className="absolute top-3 right-3 z-[400] flex items-center gap-2 rounded-full px-3 py-1.5 shadow-lg pointer-events-none"
+                                style={{ backgroundColor: carrierColor, color: '#fff' }}
+                            >
+                                <span className="text-xs font-semibold tracking-wide opacity-90">
+                                    {carrierName || 'Efectividad'}{carrierEstimated ? ' (est.)' : ''}
+                                </span>
+                                <span className="text-lg font-extrabold tabular-nums">{carrierPct}%</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             );

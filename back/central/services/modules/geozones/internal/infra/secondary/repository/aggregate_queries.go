@@ -54,6 +54,9 @@ func (r *Repository) AncestorsByOrderID(ctx context.Context, orderID string, bus
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+		if strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "unknown column") {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if rec.DestinationGeozoneID == nil && rec.GeozoneCountryID == nil && rec.GeozoneStateID == nil {

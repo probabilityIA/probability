@@ -689,8 +689,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             const basePrice = r.flete;
                                             const minimumIns = r.minimumInsurance ?? 0;
                                             const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
-                                            const codCost = form.watch("enableCod") ? ((r.codCarrierFee ?? 0) + (r.codProbabilityMargin ?? 0)) : 0;
-                                            return basePrice + minimumIns + insuranceCost + codCost;
+                                            const probabilityMargin = form.watch("enableCod") ? (r.codProbabilityMargin ?? 0) : 0;
+                                            return basePrice + minimumIns + insuranceCost + probabilityMargin;
                                         };
                                         const minPrice = Math.min(...filteredRates.map(r => getDisplayPrice(r)));
                                         const minDays = Math.min(...filteredRates.map(r => r.deliveryDays));

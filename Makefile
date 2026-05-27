@@ -138,13 +138,25 @@ install-mobile: ## Instalar dependencias del mobile
 # Testing (Simuladores + API)
 # ======================
 
-run-testing: ## Iniciar Testing Server (mocks + API en puerto 9092)
+run-testing: check-docker ## Iniciar Testing Server (mocks + API en puerto 9092)
 	@echo "🎭 Iniciando Testing Server..."
 	@echo "  📡 Softpymes HTTP en puerto 9090"
 	@echo "  📡 EnvioClick HTTP en puerto 9091"
 	@echo "  📡 Testing API en puerto 9092"
 	@echo "  🎮 CLI interactivo para Shopify/WhatsApp"
-	cd $(TESTING_DIR) && go run cmd/main.go
+	cd $(TESTING_DIR) && \
+	DB_HOST=127.0.0.1 \
+	DB_PORT=5433 \
+	DB_USER=postgres \
+	DB_PASS=postgres \
+	DB_NAME=probability \
+	PGSSLMODE=disable \
+	JWT_SECRET=test-secret-key \
+	SOFTPYMES_MOCK_PORT=9090 \
+	ENVIOCLICK_MOCK_PORT=9091 \
+	BOLD_MOCK_PORT=9094 \
+	SIIGO_MOCK_PORT=9095 \
+	go run cmd/main.go
 
 build-testing: ## Compilar monolito de testing
 	@echo "🔨 Compilando Testing Server..."
