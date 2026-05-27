@@ -31,9 +31,6 @@ func (uc *UseCaseShipment) RenderGuide(ctx context.Context, shipmentID uint, for
 	if shipment == nil {
 		return nil, fmt.Errorf("shipment %d no encontrado", shipmentID)
 	}
-	if shipment.GuideURL == nil || *shipment.GuideURL == "" {
-		return nil, fmt.Errorf("shipment %d sin guide_url del carrier", shipmentID)
-	}
 
 	carrier := ""
 	if shipment.Carrier != nil {
@@ -49,7 +46,8 @@ func (uc *UseCaseShipment) RenderGuide(ctx context.Context, shipmentID uint, for
 		if format == nil {
 			return nil, fmt.Errorf("formato %q no encontrado", formatCode)
 		}
-		if strings.ToUpper(format.Carrier) != carrier {
+		fmtCarrier := strings.ToUpper(strings.TrimSpace(format.Carrier))
+		if fmtCarrier != domain.CarrierUniversal && fmtCarrier != carrier {
 			return nil, fmt.Errorf("formato %q no aplica al carrier %s", formatCode, carrier)
 		}
 	} else {
@@ -57,6 +55,26 @@ func (uc *UseCaseShipment) RenderGuide(ctx context.Context, shipmentID uint, for
 		if err != nil {
 			return nil, fmt.Errorf("get default format: %w", err)
 		}
+	}
+
+	if format != nil && format.Strategy == domain.GuideStrategyRebuild {
+		pdfCtx, err := uc.repo.GetGuidePDFContext(ctx, shipmentID)
+		if err != nil {
+			return nil, fmt.Errorf("get pdf context: %w", err)
+		}
+		if pdfCtx == nil {
+			return nil, fmt.Errorf("contexto del shipment %d no disponible", shipmentID)
+		}
+		pdfBytes, err := buildProbabilityLabel(pdfCtx, format)
+		if err != nil {
+			return nil, fmt.Errorf("build probability label: %w", err)
+		}
+		filename := fmt.Sprintf("probability-%d-%s.pdf", shipment.ID, format.Code)
+		return &RenderedGuide{PDF: pdfBytes, Format: format, Filename: filename}, nil
+	}
+
+	if shipment.GuideURL == nil || *shipment.GuideURL == "" {
+		return nil, fmt.Errorf("shipment %d sin guide_url del carrier", shipmentID)
 	}
 
 	originalPDF, err := downloadPDF(ctx, *shipment.GuideURL)

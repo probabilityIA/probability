@@ -22,4 +22,7 @@ const (
 	GuideStrategyPassthrough = "passthrough"
 	GuideStrategyCrop        = "crop"
 	GuideStrategyResize      = "resize"
+	GuideStrategyRebuild     = "rebuild"
+
+	CarrierUniversal = "*"
 )

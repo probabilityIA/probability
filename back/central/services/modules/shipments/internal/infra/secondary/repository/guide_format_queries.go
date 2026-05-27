@@ -84,7 +84,7 @@ func (r *Repository) GetGuideFormatByCode(ctx context.Context, code string) (*do
 }
 
 func (r *Repository) ListGuideFormatsByCarrier(ctx context.Context, carrier string) ([]domain.GuideFormat, error) {
-	return r.scanGuideFormats(ctx, guideFormatSelect+" AND UPPER(carrier) = UPPER(?) ORDER BY sort_order, id", strings.TrimSpace(carrier))
+	return r.scanGuideFormats(ctx, guideFormatSelect+" AND (UPPER(carrier) = UPPER(?) OR carrier = '*') ORDER BY sort_order, id", strings.TrimSpace(carrier))
 }
 
 func (r *Repository) ListGuideFormats(ctx context.Context) ([]domain.GuideFormat, error) {
