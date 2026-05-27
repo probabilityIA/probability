@@ -70,10 +70,24 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 	rightX := leftW + 2
 	rightW := wMm - rightX - 3
 
-	pdf.SetXY(3, 3)
-	pdf.SetFont("Helvetica", "B", 10*scale)
-	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(leftW-3, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+	logoH := 6.0 * scale
+	logoW := logoH * 4.7
+	if logoW > leftW-3 {
+		logoW = leftW - 3
+		logoH = logoW / 4.7
+	}
+	if len(probabilityLogoPNG) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("prob-logo-l", opts, bytes.NewReader(probabilityLogoPNG))
+		pdf.ImageOptions("prob-logo-l", 3, 3, logoW, logoH, false, opts, 0, "")
+	} else {
+		pdf.SetXY(3, 3)
+		pdf.SetFont("Helvetica", "B", 10*scale)
+		pdf.SetTextColor(20, 40, 90)
+		pdf.CellFormat(leftW-3, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+	}
+	drawCarrierBadge(pdf, tr, c.Carrier, leftW, 3, scale)
+	pdf.SetXY(3, 3+logoH+0.5)
 
 	pdf.SetTextColor(0, 0, 0)
 	pdf.SetFont("Helvetica", "B", 7*scale)
@@ -177,10 +191,24 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 }
 
 func drawProbLabelSquare(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, scale float64) {
-	pdf.SetXY(3, 3)
-	pdf.SetFont("Helvetica", "B", 10*scale)
-	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(0, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+	logoH := 6.0 * scale
+	logoW := logoH * 4.7
+	if logoW > wMm*0.55 {
+		logoW = wMm * 0.55
+		logoH = logoW / 4.7
+	}
+	if len(probabilityLogoPNG) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("prob-logo-s", opts, bytes.NewReader(probabilityLogoPNG))
+		pdf.ImageOptions("prob-logo-s", 3, 3, logoW, logoH, false, opts, 0, "")
+	} else {
+		pdf.SetXY(3, 3)
+		pdf.SetFont("Helvetica", "B", 10*scale)
+		pdf.SetTextColor(20, 40, 90)
+		pdf.CellFormat(0, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+	}
+	drawCarrierBadge(pdf, tr, c.Carrier, wMm-3, 3, scale)
+	pdf.SetXY(3, 3+logoH+0.5)
 
 	pdf.SetTextColor(0, 0, 0)
 	pdf.SetFont("Helvetica", "B", 7*scale)
@@ -250,11 +278,29 @@ func drawProbLabelSquare(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Gui
 }
 
 func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
-	y0 := pdf.GetY()
-	pdf.SetFont("Helvetica", "B", 11*scale)
-	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(0, 5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+	pageW := pageWidth(pdf)
+	yStart := pdf.GetY()
 
+	logoH := 7.0 * scale
+	logoW := logoH * 4.7
+	if logoW > pageW*0.5 {
+		logoW = pageW * 0.5
+		logoH = logoW / 4.7
+	}
+	if len(probabilityLogoPNG) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("prob-logo", opts, bytes.NewReader(probabilityLogoPNG))
+		pdf.ImageOptions("prob-logo", 3, yStart, logoW, logoH, false, opts, 0, "")
+	} else {
+		pdf.SetFont("Helvetica", "B", 11*scale)
+		pdf.SetTextColor(20, 40, 90)
+		pdf.SetXY(3, yStart)
+		pdf.CellFormat(logoW, logoH, tr("PROBABILITY"), "", 0, "L", false, 0, "")
+	}
+
+	drawCarrierBadge(pdf, tr, c.Carrier, pageW-3, yStart, scale)
+
+	pdf.SetY(yStart + logoH + 1)
 	pdf.SetTextColor(0, 0, 0)
 	business := strings.ToUpper(strings.TrimSpace(c.BusinessName))
 	if business == "" {
@@ -274,12 +320,28 @@ func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 
 	pdf.SetDrawColor(20, 40, 90)
 	pdf.SetLineWidth(0.4)
-	pdf.Line(3, pdf.GetY()+0.5, pageWidth(pdf)-3, pdf.GetY()+0.5)
+	pdf.Line(3, pdf.GetY()+0.5, pageW-3, pdf.GetY()+0.5)
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.2)
-
-	_ = y0
 	pdf.Ln(1.5 * scale)
+}
+
+func drawCarrierBadge(pdf *gofpdf.Fpdf, tr func(string) string, carrier string, rightX, y, scale float64) {
+	carrier = strings.ToUpper(strings.TrimSpace(carrier))
+	if carrier == "" {
+		return
+	}
+	st := styleForCarrier(carrier)
+	pdf.SetFont("Helvetica", "B", 8*scale)
+	textW := pdf.GetStringWidth(carrier) + 4*scale
+	h := 5.5 * scale
+	x := rightX - textW
+	pdf.SetFillColor(st.BgR, st.BgG, st.BgB)
+	pdf.Rect(x, y, textW, h, "F")
+	pdf.SetTextColor(st.TxtR, st.TxtG, st.TxtB)
+	pdf.SetXY(x, y+0.5*scale)
+	pdf.CellFormat(textW, h-1*scale, tr(carrier), "", 0, "C", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
 }
 
 func drawProbCOD(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
