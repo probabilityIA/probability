@@ -725,10 +725,10 @@ export const ShippingForm = () => {
                                                 <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
-                                                {rate.cod && rate.codProbabilityMargin ? (
+                                                <p className="font-bold text-lg text-indigo-600">${(rate.flete + (rate.cod ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</p>
+                                                {rate.cod && rate.codCarrierFee ? (
                                                     <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                                                        + ${rate.codProbabilityMargin.toLocaleString()} servicio COD
+                                                        + ${rate.codCarrierFee.toLocaleString()} Comisión carrier
                                                     </p>
                                                 ) : null}
                                             </div>

@@ -62,7 +62,7 @@ const formatCarrierName = (carrierName: string): string => {
 
 const getCarrierLogo = (carrierName: string): string => {
     const carrierLogos: { [key: string]: string } = {
-        'SERVIENTREGA': 'https://images.seeklogo.com/logo-png/42/1/servientrega-logo-png_seeklogo-424932.png',
+        'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
         'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
         'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
         'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
@@ -82,8 +82,10 @@ const getCarrierLogo = (carrierName: string): string => {
         'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJERIAURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
     };
-    const trimmedName = carrierName.trim();
-    if (carrierLogos[trimmedName]) return carrierLogos[trimmedName];
+    const normalizedName = carrierName.trim().toUpperCase().replace(/\s+/g, '');
+    if (carrierLogos[normalizedName]) return carrierLogos[normalizedName];
+    const nameWithSpaces = carrierName.trim().toUpperCase();
+    if (carrierLogos[nameWithSpaces]) return carrierLogos[nameWithSpaces];
     return 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
 };
 
@@ -680,7 +682,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             )}
                                         </div>
                                     )}
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-3 gap-4">
                                     {rates.filter(rate => {
                                         if (form.watch("enableCod") && !rate.cod) return false;
                                         return true;
@@ -707,69 +709,49 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                 backgroundColor: index === 0 ? businessColors.tertiary + '08' : 'white'
                                             }}
                                         >
-                                            <div className="flex flex-wrap gap-2 justify-center mb-2">
-                                                {index === 0 && (
-                                                    <span className="bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                        RECOMENDADO
-                                                    </span>
-                                                )}
-                                                {isCheapest && (
-                                                    <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                        MÁS ECONÓMICA
-                                                    </span>
-                                                )}
-                                                {isFastest && (
-                                                    <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                        MÁS RÁPIDA
-                                                    </span>
-                                                )}
-                                                {isSameDay && (
-                                                    <span className="bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                                                        MISMO DÍA
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="flex flex-col items-center text-center">
-                                                <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
-                                                    <img
-                                                        src={getCarrierLogo(rate.carrier)}
-                                                        alt={rate.carrier}
-                                                        className="w-12 h-12 object-contain"
-                                                        onError={(e) => {
-                                                            e.currentTarget.style.display = 'none';
-                                                        }}
-                                                    />
-                                                </div>
-                                                <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{rate.product}</p>
-
-                                                <div className="font-bold text-gray-800 dark:text-gray-100 mb-2" style={{fontSize: '8px !important', lineHeight: '1'}}>
-                                                    ${getDisplayPrice(rate).toLocaleString()}
+                                            <div className="flex flex-row gap-4">
+                                                <div className="flex flex-col items-center min-w-fit">
+                                                    <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
+                                                        <img
+                                                            src={getCarrierLogo(rate.carrier)}
+                                                            alt={rate.carrier}
+                                                            className="w-20 h-20 object-contain"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100 text-center">{formatCarrierName(rate.carrier)}</h4>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-400 text-center">{rate.product}</p>
                                                 </div>
 
-                                                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-2">
-                                                    <div>Flete: ${rate.flete.toLocaleString()}</div>
-                                                    {(rate.minimumInsurance ?? 0) > 0 && (
-                                                        <div className="text-orange-600 dark:text-orange-400 font-semibold">Seguro mín: ${(rate.minimumInsurance ?? 0).toLocaleString()}</div>
-                                                    )}
-                                                    {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
-                                                        <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
-                                                    )}
-                                                    {form.watch("enableCod") && (
-                                                        <div className="space-y-1">
-                                                            {rate.codCarrierFee !== undefined && rate.codCarrierFee > 0 && (
-                                                                <div className="text-cyan-600 dark:text-cyan-400 text-xs font-semibold">Comisión carrier: ${rate.codCarrierFee.toLocaleString()}</div>
-                                                            )}
-                                                            {(!rate.codCarrierFee || rate.codCarrierFee <= 0) && (
-                                                                <div className="text-cyan-600 dark:text-cyan-400 font-semibold text-xs">Contra entrega</div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <div className="flex flex-col flex-1">
+                                                    <div className="font-bold text-gray-800 dark:text-gray-100 mb-3" style={{fontSize: '18px', lineHeight: '1.2'}}>
+                                                        ${getDisplayPrice(rate).toLocaleString()}
+                                                    </div>
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-3">
+                                                        <div>Flete: ${(rate.flete + (form.watch("enableCod") ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</div>
+                                                        {(rate.minimumInsurance ?? 0) > 0 && (
+                                                            <div className="text-orange-600 dark:text-orange-400 font-semibold">Seguro mín: ${(rate.minimumInsurance ?? 0).toLocaleString()}</div>
+                                                        )}
+                                                        {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                            <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
+                                                        )}
+                                                        {form.watch("enableCod") && (
+                                                            <div className="space-y-1">
+                                                                {rate.codCarrierFee !== undefined && rate.codCarrierFee > 0 && (
+                                                                    <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Comisión carrier: ${rate.codCarrierFee.toLocaleString()}</div>
+                                                                )}
+                                                                {(!rate.codCarrierFee || rate.codCarrierFee <= 0) && (
+                                                                    <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Contra entrega</div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                                                <div className="font-semibold text-sm" style={{ color: businessColors.primary }}>
-                                                    {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} días`}
+                                                    <div className="font-semibold text-base" style={{ color: businessColors.primary }}>
+                                                        {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} días`}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
