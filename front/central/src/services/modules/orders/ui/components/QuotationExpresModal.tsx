@@ -62,7 +62,7 @@ const formatCarrierName = (carrierName: string): string => {
 
 const getCarrierLogo = (carrierName: string): string => {
     const carrierLogos: { [key: string]: string } = {
-        'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
+        'SERVIENTREGA': 'https://images.seeklogo.com/logo-png/42/1/servientrega-logo-png_seeklogo-424932.png',
         'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
         'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
         'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
