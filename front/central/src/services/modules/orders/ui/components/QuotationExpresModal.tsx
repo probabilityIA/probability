@@ -97,6 +97,7 @@ const formSchema = z.object({
     length: z.number().min(1).max(300),
     description: z.string().min(3).max(100),
     contentValue: z.number().min(1, "Valor a facturar es obligatorio").max(3000000),
+    codValue: z.number().min(0).max(3000000).optional(),
     enableCod: z.boolean(),
     enableInsurance: z.boolean(),
 });
@@ -182,6 +183,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             length: 10,
             description: "E-commerce Order",
             contentValue: 0,
+            codValue: 0,
             enableCod: false,
             enableInsurance: false,
         },
@@ -297,7 +299,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                 }],
                 description: data.description,
                 contentValue: data.contentValue,
-                codValue: data.enableCod ? data.contentValue : 0,
+                codValue: data.enableCod ? (data.codValue || data.contentValue) : 0,
                 includeGuideCost: false,
                 insurance: data.enableInsurance,
                 codPaymentMethod: "cash",
@@ -614,6 +616,10 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                 {...form.register("description")}
                                                 placeholder="descripción"
                                             />
+                                            <div/>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
                                             <div>
                                                 <Input
                                                     compact
@@ -625,6 +631,16 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">{form.formState.errors.contentValue.message}</p>
                                                 )}
                                             </div>
+                                            {form.watch("enableCod") && (
+                                                <div>
+                                                    <Input
+                                                        compact
+                                                        label="Valor contra entrega"
+                                                        type="number"
+                                                        {...form.register("codValue", { valueAsNumber: true })}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -663,7 +679,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             )}
                                         </div>
                                     )}
-                                    <div className="grid grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 gap-4">
                                     {rates.filter(rate => {
                                         if (form.watch("enableCod") && !rate.cod) return false;
                                         return true;
@@ -673,7 +689,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             const basePrice = r.flete;
                                             const minimumIns = r.minimumInsurance ?? 0;
                                             const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
-                                            return basePrice + minimumIns + insuranceCost;
+                                            const codCost = form.watch("enableCod") ? ((r.codCarrierFee ?? 0) + (r.codProbabilityMargin ?? 0)) : 0;
+                                            return basePrice + minimumIns + insuranceCost + codCost;
                                         };
                                         const minPrice = Math.min(...filteredRates.map(r => getDisplayPrice(r)));
                                         const minDays = Math.min(...filteredRates.map(r => r.deliveryDays));
@@ -683,7 +700,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         return (
                                         <div
                                             key={rate.idRate}
-                                            className="relative border-2 rounded-2xl p-4 cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-gray-700"
+                                            className="relative border-2 rounded-2xl p-3 cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-gray-700"
                                             style={{
                                                 borderColor: index === 0 ? businessColors.tertiary : '#d1d5db',
                                                 backgroundColor: index === 0 ? businessColors.tertiary + '08' : 'white'
@@ -713,24 +730,24 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             </div>
 
                                             <div className="flex flex-col items-center text-center">
-                                                <div className="w-20 h-20 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
+                                                <div className="w-16 h-16 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
                                                     <img
                                                         src={getCarrierLogo(rate.carrier)}
                                                         alt={rate.carrier}
-                                                        className="w-14 h-14 object-contain"
+                                                        className="w-12 h-12 object-contain"
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                         }}
                                                     />
                                                 </div>
                                                 <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">{rate.product}</p>
+                                                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{rate.product}</p>
 
-                                                <div className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                                                <div className="font-bold text-gray-800 dark:text-gray-100 mb-2" style={{fontSize: '8px !important', lineHeight: '1'}}>
                                                     ${getDisplayPrice(rate).toLocaleString()}
                                                 </div>
 
-                                                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-3">
+                                                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5 mb-2">
                                                     <div>Flete: ${rate.flete.toLocaleString()}</div>
                                                     {(rate.minimumInsurance ?? 0) > 0 && (
                                                         <div className="text-orange-600 dark:text-orange-400 font-semibold">Seguro mín: ${(rate.minimumInsurance ?? 0).toLocaleString()}</div>
@@ -739,7 +756,14 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
                                                     )}
                                                     {form.watch("enableCod") && (
-                                                        <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Contra entrega</div>
+                                                        <div className="space-y-1">
+                                                            {rate.codCarrierFee !== undefined && rate.codCarrierFee > 0 && (
+                                                                <div className="text-cyan-600 dark:text-cyan-400 text-xs font-semibold">Comisión carrier: ${rate.codCarrierFee.toLocaleString()}</div>
+                                                            )}
+                                                            {(!rate.codCarrierFee || rate.codCarrierFee <= 0) && (
+                                                                <div className="text-cyan-600 dark:text-cyan-400 font-semibold text-xs">Contra entrega</div>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
 
