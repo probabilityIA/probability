@@ -1333,6 +1333,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             const extraIns = rate.extraInsurance ?? 0;
                                             const insuranceCost = minIns + (step1Data?.insurance ? extraIns : 0);
                                             const codMargin = rate.cod ? (rate.codProbabilityMargin ?? 0) : 0;
+                                            const codCarrierFee = rate.cod ? (rate.codCarrierFee ?? 0) : 0;
                                             const totalCost = rate.flete + insuranceCost + codMargin;
                                             const isInsured = step1Data?.insurance === true && insuranceCost > 0;
                                             const isCOD = rate.cod;
@@ -1480,19 +1481,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 <span style={{ fontSize: '10px', color: '#6b757c', fontWeight: 500 }}>COP</span>
                                                             </div>
 
-                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '10px', color: '#3b4248', marginTop: '4px', textAlign: 'center', fontWeight: 700 }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#3b4248', marginTop: '8px', textAlign: 'center', fontWeight: 700 }}>
                                                                 <div>Costo: ${totalCost.toLocaleString()}</div>
                                                                 <div>Guía: ${rate.flete.toLocaleString()}</div>
                                                                 {isInsured ? (
-                                                                    <div style={{ color: '#059669', fontSize: '9px' }}>
+                                                                    <div style={{ color: '#059669', fontSize: '13px' }}>
                                                                         (Seguro: ${insuranceCost.toLocaleString()})
                                                                     </div>
                                                                 ) : (
-                                                                    <div style={{ color: '#6b757c', fontSize: '9px' }}>(Sin asegurar)</div>
+                                                                    <div style={{ color: '#6b757c', fontSize: '13px' }}>(Sin asegurar)</div>
                                                                 )}
-                                                                {isCOD && codMargin > 0 && (
-                                                                    <div style={{ color: '#b45309', fontSize: '9px' }}>
-                                                                        + Servicio COD: ${codMargin.toLocaleString()}
+                                                                {isCOD && codCarrierFee > 0 && (
+                                                                    <div style={{ color: '#0891b2', fontSize: '13px' }}>
+                                                                        Comisión carrier: ${codCarrierFee.toLocaleString()}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -1662,7 +1663,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 Guía: ${selectedRate.flete.toLocaleString()}<br />
                                                 Seg. obligatorio: ${(selectedRate.minimumInsurance ?? 0).toLocaleString()}<br />
                                                 Seg. adicional: ${(selectedRate.extraInsurance ?? 0).toLocaleString()} <span className={step1Data?.insurance ? 'text-emerald-600' : 'text-gray-400'}>{step1Data?.insurance ? '(incluido)' : '(no incluido)'}</span>
-                                                {selectedRate.cod && (selectedRate.codProbabilityMargin ?? 0) > 0 && (<><br /><span className="text-amber-700 dark:text-amber-400">Servicio COD: ${(selectedRate.codProbabilityMargin ?? 0).toLocaleString()}</span></>)}
+                                                {selectedRate.cod && (selectedRate.codCarrierFee ?? 0) > 0 && (<><br /><span className="text-cyan-700 dark:text-cyan-400">Comisión carrier: ${(selectedRate.codCarrierFee ?? 0).toLocaleString()}</span></>)}
                                             </div>
                                         </div>
                                     </div>

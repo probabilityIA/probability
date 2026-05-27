@@ -726,11 +726,11 @@ export const ShippingForm = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-lg text-indigo-600">${(rate.flete + (rate.cod ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</p>
-                                                {rate.cod && rate.codCarrierFee ? (
-                                                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                                                {rate.cod && (rate.codCarrierFee ?? 0) > 0 && (
+                                                    <p className="text-xs text-cyan-700 dark:text-cyan-400 mt-0.5">
                                                         + ${rate.codCarrierFee.toLocaleString()} Comisión carrier
                                                     </p>
-                                                ) : null}
+                                                )}
                                             </div>
                                         </div>
 
