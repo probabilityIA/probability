@@ -304,7 +304,7 @@ export interface GuideFormat {
   width_cm: number;
   height_cm: number;
   adhesive: boolean;
-  strategy: 'passthrough' | 'crop' | 'resize';
+  strategy: 'passthrough' | 'crop' | 'resize' | 'rebuild';
   crop_llx_frac: number;
   crop_lly_frac: number;
   crop_urx_frac: number;
