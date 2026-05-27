@@ -77,9 +77,10 @@ const getCarrierLogo = (carrierName: string): string => {
         'TRANSPORTADORADECARACOLOMBIA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_TCC.png',
         '99MINUTOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_99minutos.webp',
         'DEPRISA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_deprisa.png',
-        'MENSAJEROSURBANOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajeros_urbanos.png',
-        'MENSAJEROS URBANOS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajeros_urbanos.png',
+        'MENSAJERIAUBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'MENSAJERIAURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
     };
     const trimmedName = carrierName.trim();
     if (carrierLogos[trimmedName]) return carrierLogos[trimmedName];
