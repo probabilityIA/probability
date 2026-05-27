@@ -25,6 +25,7 @@ func (r *Repository) seedGuideFormats(ctx context.Context) error {
 		"servientrega-original", "servientrega-10x15",
 		"99minutos-10x15",
 		"deprisa-10x15",
+		"probability-4x6", "probability-6x10",
 	}
 	if err := r.db.Conn(ctx).Where("code IN ?", obsolete).Delete(&models.GuideFormat{}).Error; err != nil {
 		return fmt.Errorf("cleanup obsolete guide formats: %w", err)
@@ -40,9 +41,9 @@ func (r *Repository) seedGuideFormats(ctx context.Context) error {
 		{Carrier: "99MINUTOS", Code: "99minutos-original", Label: "Guia recortada", WidthCm: 21.6, HeightCm: 27.9, Strategy: "passthrough", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, IsDefault: true, SortOrder: 10},
 		{Carrier: "DEPRISA", Code: "deprisa-original", Label: "Guia recortada", WidthCm: 10.4, HeightCm: 11.2, Strategy: "passthrough", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, IsDefault: true, SortOrder: 10},
 
-		{Carrier: "*", Code: "probability-10x15", Label: "Adhesiva 10x15 cm", WidthCm: 10, HeightCm: 15, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 100},
-		{Carrier: "*", Code: "probability-4x6", Label: "Termica 4x6 in", WidthCm: 10.16, HeightCm: 15.24, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 110},
-		{Carrier: "*", Code: "probability-6x10", Label: "Mini 6x10 cm", WidthCm: 6, HeightCm: 10, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 120},
+		{Carrier: "*", Code: "probability-10x15", Label: "Estandar 10x15 cm", WidthCm: 10, HeightCm: 15, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 100},
+		{Carrier: "*", Code: "probability-10x10", Label: "Cuadrada 10x10 cm", WidthCm: 10, HeightCm: 10, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 110},
+		{Carrier: "*", Code: "probability-15x10", Label: "Horizontal 15x10 cm", WidthCm: 15, HeightCm: 10, Adhesive: true, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 120},
 		{Carrier: "*", Code: "probability-letter", Label: "Carta completa", WidthCm: 21.6, HeightCm: 27.9, Strategy: "rebuild", CropURxFrac: 1, CropURyFrac: 1, SourcePage: 1, SortOrder: 130},
 	}
 

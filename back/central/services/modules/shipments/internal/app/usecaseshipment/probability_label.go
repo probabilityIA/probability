@@ -43,17 +43,210 @@ func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat
 		scale = 1.5
 	}
 
-	drawProbHeader(pdf, tr, c, scale)
-	drawProbCOD(pdf, tr, c, scale)
-	drawProbRecipient(pdf, tr, c, scale)
-	drawProbBarcode(pdf, tr, c, wCm*10-6, scale)
-	drawProbFooter(pdf, tr, c, scale)
+	isLandscape := wCm > hCm
+	isSquare := wCm == hCm
+
+	if isLandscape {
+		drawProbLabelLandscape(pdf, tr, c, wCm*10, hCm*10, scale)
+	} else if isSquare {
+		drawProbLabelSquare(pdf, tr, c, wCm*10, hCm*10, scale)
+	} else {
+		drawProbHeader(pdf, tr, c, scale)
+		drawProbCOD(pdf, tr, c, scale)
+		drawProbRecipient(pdf, tr, c, scale)
+		drawProbBarcode(pdf, tr, c, wCm*10-6, scale)
+		drawProbFooter(pdf, tr, c, scale)
+	}
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, scale float64) {
+	leftW := wMm * 0.55
+	rightX := leftW + 2
+	rightW := wMm - rightX - 3
+
+	pdf.SetXY(3, 3)
+	pdf.SetFont("Helvetica", "B", 10*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(leftW-3, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	business := strings.ToUpper(strings.TrimSpace(c.BusinessName))
+	if business != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 3*scale, tr(business), "", 1, "L", false, 0, "")
+	}
+	if c.OrderNumber != "" {
+		pdf.SetX(3)
+		pdf.SetFont("Helvetica", "", 6*scale)
+		pdf.SetTextColor(80, 80, 80)
+		pdf.CellFormat(leftW-3, 2.5*scale, tr("Pedido: "+c.OrderNumber), "", 1, "L", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+	}
+
+	pdf.SetX(3)
+	pdf.SetDrawColor(20, 40, 90)
+	pdf.SetLineWidth(0.3)
+	pdf.Line(3, pdf.GetY()+0.5, leftW, pdf.GetY()+0.5)
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.Ln(1.5 * scale)
+
+	if c.CodTotal > 0 {
+		y := pdf.GetY()
+		pdf.SetFillColor(220, 40, 40)
+		pdf.SetTextColor(255, 255, 255)
+		pdf.SetFont("Helvetica", "B", 7*scale)
+		currency := c.Currency
+		if currency == "" {
+			currency = "COP"
+		}
+		codTxt := fmt.Sprintf("COD: $%s %s", formatMoneyProb(c.CodTotal), currency)
+		pdf.Rect(3, y, leftW-3, 4*scale, "F")
+		pdf.SetXY(3, y+0.3*scale)
+		pdf.CellFormat(leftW-3, 3.4*scale, tr(codTxt), "", 1, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+		pdf.SetFillColor(255, 255, 255)
+		pdf.Ln(0.5)
+	}
+
+	pdf.SetX(3)
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(leftW-3, 2.5*scale, tr("PARA:"), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "B", 8*scale)
+	pdf.SetX(3)
+	pdf.CellFormat(leftW-3, 3.5*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "", 6.5*scale)
+	if c.CustomerDNI != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 2.8*scale, tr("CC: "+c.CustomerDNI), "", 1, "L", false, 0, "")
+	}
+	if c.CustomerPhone != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 2.8*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetX(3)
+	pdf.MultiCell(leftW-3, 3*scale, tr(c.DestinationAddress), "", "L", false)
+	cityState := joinNonEmptyProb(", ", c.DestinationCity, c.DestinationState)
+	if cityState != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 3*scale, tr(cityState), "", 1, "L", false, 0, "")
+	}
+
+	pdf.SetXY(rightX, 3)
+	pdf.SetFont("Helvetica", "", 6*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(rightW, 2.5*scale, tr("GUIA - "+strings.ToUpper(c.Carrier)), "", 1, "C", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+
+	bcImg := buildCode128PNGProb(c.TrackingNumber, int(rightW*8), int(20*scale*8))
+	if bcImg != nil {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("bcL.png", opts, bytes.NewReader(bcImg))
+		pdf.ImageOptions("bcL.png", rightX, pdf.GetY(), rightW, 20*scale, false, opts, 0, "")
+		pdf.SetY(pdf.GetY() + 20*scale + 0.5)
+	}
+	pdf.SetX(rightX)
+	pdf.SetFont("Courier", "B", 11*scale)
+	pdf.CellFormat(rightW, 5*scale, tr(c.TrackingNumber), "", 1, "C", false, 0, "")
+
+	pdf.SetY(hMm - 7*scale)
+	pdf.SetDrawColor(20, 40, 90)
+	pdf.SetLineWidth(0.3)
+	pdf.Line(3, pdf.GetY(), wMm-3, pdf.GetY())
+	pdf.Ln(0.5)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.SetFont("Helvetica", "", 5*scale)
+	footer := joinNonEmptyProb("  |  ",
+		"Desde: "+joinNonEmptyProb(" - ", c.WarehouseCompany, c.WarehouseCity),
+		fmt.Sprintf("%.1f kg", c.Weight),
+		fmt.Sprintf("Vlr $%s", formatMoneyProb(c.DeclaredValue)),
+		"Probability "+time.Now().Format("2006-01-02 15:04"),
+	)
+	pdf.SetX(3)
+	pdf.CellFormat(wMm-6, 2.5*scale, tr(footer), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+}
+
+func drawProbLabelSquare(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, scale float64) {
+	pdf.SetXY(3, 3)
+	pdf.SetFont("Helvetica", "B", 10*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(0, 4.5*scale, tr("PROBABILITY"), "", 1, "L", false, 0, "")
+
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	business := strings.ToUpper(strings.TrimSpace(c.BusinessName))
+	if business != "" {
+		pdf.CellFormat(0, 3*scale, tr(business), "", 1, "L", false, 0, "")
+	}
+	if c.OrderNumber != "" {
+		pdf.SetFont("Helvetica", "", 6*scale)
+		pdf.SetTextColor(80, 80, 80)
+		pdf.CellFormat(0, 2.5*scale, tr("Pedido: "+c.OrderNumber), "", 1, "L", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+	}
+
+	pdf.SetDrawColor(20, 40, 90)
+	pdf.SetLineWidth(0.3)
+	pdf.Line(3, pdf.GetY()+0.3, wMm-3, pdf.GetY()+0.3)
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.Ln(1 * scale)
+
+	if c.CodTotal > 0 {
+		y := pdf.GetY()
+		pdf.SetFillColor(220, 40, 40)
+		pdf.SetTextColor(255, 255, 255)
+		pdf.SetFont("Helvetica", "B", 7*scale)
+		currency := c.Currency
+		if currency == "" {
+			currency = "COP"
+		}
+		codTxt := fmt.Sprintf("COD $%s %s", formatMoneyProb(c.CodTotal), currency)
+		pdf.Rect(3, y, wMm-6, 4*scale, "F")
+		pdf.SetXY(3, y+0.3*scale)
+		pdf.CellFormat(wMm-6, 3.4*scale, tr(codTxt), "", 1, "C", false, 0, "")
+		pdf.SetTextColor(0, 0, 0)
+		pdf.SetFillColor(255, 255, 255)
+		pdf.Ln(0.3)
+	}
+
+	pdf.SetFont("Helvetica", "B", 8*scale)
+	pdf.CellFormat(0, 3*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "", 6.5*scale)
+	if c.CustomerPhone != "" {
+		pdf.CellFormat(0, 2.5*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.MultiCell(0, 2.8*scale, tr(c.DestinationAddress), "", "L", false)
+	cityState := joinNonEmptyProb(", ", c.DestinationCity, c.DestinationState)
+	if cityState != "" {
+		pdf.CellFormat(0, 2.8*scale, tr(cityState), "", 1, "L", false, 0, "")
+	}
+	pdf.Ln(0.5)
+
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(0, 2*scale, tr("GUIA - "+strings.ToUpper(c.Carrier)), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+
+	bcImg := buildCode128PNGProb(c.TrackingNumber, int((wMm-6)*8), int(12*scale*8))
+	if bcImg != nil {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("bcS.png", opts, bytes.NewReader(bcImg))
+		pdf.ImageOptions("bcS.png", 3, pdf.GetY(), wMm-6, 12*scale, false, opts, 0, "")
+		pdf.SetY(pdf.GetY() + 12*scale + 0.3)
+	}
+	pdf.SetFont("Courier", "B", 9*scale)
+	pdf.CellFormat(0, 3.5*scale, tr(c.TrackingNumber), "", 1, "C", false, 0, "")
 }
 
 func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
