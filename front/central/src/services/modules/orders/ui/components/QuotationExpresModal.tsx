@@ -702,11 +702,10 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         }
 
                                         const getDisplayPrice = (r: EnvioClickRate) => {
-                                            const basePrice = r.flete;
+                                            const basePrice = r.flete + (r.codProbabilityMargin ?? 0);
                                             const minimumIns = r.minimumInsurance ?? 0;
                                             const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
-                                            const probabilityMargin = form.watch("enableCod") ? (r.codProbabilityMargin ?? 0) : 0;
-                                            return basePrice + minimumIns + insuranceCost + probabilityMargin;
+                                            return basePrice + minimumIns + insuranceCost;
                                         };
 
                                         const isSelected = selectedRate === rate.idRate;
@@ -782,7 +781,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.flete + (form.watch("enableCod") ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${(rate.flete + (rate.codProbabilityMargin ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
 
