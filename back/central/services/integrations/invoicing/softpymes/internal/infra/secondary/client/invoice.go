@@ -226,11 +226,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		shippingPrice := req.ShippingCostBase
 
 		if shippingPrice == 0 && effectiveShipping > 0 {
-			rate := 0.19
-			if req.ShippingTaxRate != nil && *req.ShippingTaxRate > 0 {
-				rate = *req.ShippingTaxRate
-			}
-			shippingPrice = effectiveShipping / (1 + rate)
+			shippingPrice = effectiveShipping / 1.19
 		}
 
 		if shippingPrice == 0 {
