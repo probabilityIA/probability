@@ -781,9 +781,21 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.flete + (form.watch("enableCod") ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
+
+                                                            {(rate.codProbabilityMargin ?? 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#6366f1' }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300">Margen Probability</span>
+                                                                    </div>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${(rate.codProbabilityMargin ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
 
                                                             {(rate.minimumInsurance ?? 0) > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
