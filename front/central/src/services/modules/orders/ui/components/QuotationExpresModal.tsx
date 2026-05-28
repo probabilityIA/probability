@@ -781,21 +781,9 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${(rate.flete + (form.watch("enableCod") ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
-
-                                                            {(rate.codProbabilityMargin ?? 0) > 0 && (
-                                                                <div className="flex justify-between items-center text-sm">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#6366f1' }}></div>
-                                                                        <span className="text-gray-700 dark:text-gray-300">Margen Probability</span>
-                                                                    </div>
-                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.codProbabilityMargin ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </span>
-                                                                </div>
-                                                            )}
 
                                                             {(rate.minimumInsurance ?? 0) > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
@@ -822,28 +810,15 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             )}
 
                                                             {form.watch("enableCod") && (rate.codCarrierFee ?? 0) > 0 && (
-                                                                <>
-                                                                    <div className="flex justify-between items-center text-sm">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
-                                                                            <span className="text-gray-700 dark:text-gray-300">Comisión carrier</span>
-                                                                        </div>
-                                                                        <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                            ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                        </span>
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300">Comisión carrier</span>
                                                                     </div>
-                                                                    {(rate.codProbabilityMargin ?? 0) > 0 && (
-                                                                        <div className="flex justify-between items-center text-sm">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#6366f1' }}></div>
-                                                                                <span className="text-gray-700 dark:text-gray-300">Margen Probability</span>
-                                                                            </div>
-                                                                            <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                                ${(rate.codProbabilityMargin ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                            </span>
-                                                                        </div>
-                                                                    )}
-                                                                </>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </div>
@@ -855,7 +830,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         </div>
                                                         {form.watch("enableCod") && (rate.codCarrierFee ?? 0) > 0 && (
                                                             <>
-                                                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier + Margen</div>
+                                                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier</div>
                                                                 <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                                                     ${(displayPrice + (rate.codCarrierFee ?? 0) + (rate.codProbabilityMargin ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
