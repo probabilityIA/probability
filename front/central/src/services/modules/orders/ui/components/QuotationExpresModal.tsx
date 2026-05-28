@@ -129,7 +129,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
-    const [selectedRate, setSelectedRate] = useState<string | null>(null);
+    const [selectedRate, setSelectedRate] = useState<number | null>(null);
 
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
