@@ -904,10 +904,9 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                 </>
                                                             );
                                                         })()}
-                                                    </div>
+                                                        </div>
                                                     </div>
                                                 )}
-                                                </div>
 
                                                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between items-center">
                                                     <div className="flex items-center gap-2 text-sm font-semibold bg-gray-50 dark:bg-gray-700/40 px-3 py-2 rounded-lg" style={{ color: businessColors.primary }}>
