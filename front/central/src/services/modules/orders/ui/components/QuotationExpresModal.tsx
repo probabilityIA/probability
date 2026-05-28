@@ -786,33 +786,25 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     <div className="space-y-3">
                                                         <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Desglose</h5>
 
-                                                        <div className="flex justify-between items-center text-sm">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
-                                                                <span className="text-gray-700 dark:text-gray-300 font-medium">Flete</span>
-                                                            </div>
-                                                            <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                            </span>
-                                                        </div>
-
                                                         {(() => {
-                                                        const margin = getCarrierMargin(shippingMargins, rate.carrier);
-                                                        const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                            ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
-                                                            : 0;
-                                                        return probabilityCommission > 0 && (
-                                                            <div className="flex justify-between items-center text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
-                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión Probability ({margin?.cod_margin_percent}%)</span>
+                                                            const margin = getCarrierMargin(shippingMargins, rate.carrier);
+                                                            const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
+                                                                ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                : 0;
+                                                            const fleteTotal = rate.flete + probabilityCommission;
+
+                                                            return (
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Flete</span>
+                                                                    </div>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${fleteTotal.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
                                                                 </div>
-                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${probabilityCommission.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })()}
+                                                            );
+                                                        })()}
 
                                                         {(rate.minimumInsurance ?? 0) > 0 && (
                                                             <div className="flex justify-between items-center text-sm">
@@ -852,19 +844,32 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     </div>
 
                                                     <div className="border border-gray-300 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-700/40">
-                                                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Precio {formatCarrierName(rate.carrier)}</div>
-                                                        <div className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                            ${(rate.flete + (rate.codProbabilityMargin ?? 0) + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                        </div>
-                                                        {(rate.codCarrierFee ?? 0) > 0 && (
-                                                            <>
-                                                                <div className="border-t border-gray-200 dark:border-gray-600 my-3"></div>
-                                                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">+ Comisión Carrier</div>
-                                                                <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${((rate.flete + (rate.codProbabilityMargin ?? 0) + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)) + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                </div>
-                                                            </>
-                                                        )}
+                                                        {(() => {
+                                                            const margin = getCarrierMargin(shippingMargins, rate.carrier);
+                                                            const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
+                                                                ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                : 0;
+                                                            const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
+                                                            const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
+
+                                                            return (
+                                                                <>
+                                                                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Precio {formatCarrierName(rate.carrier)}</div>
+                                                                    <div className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${basePrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </div>
+                                                                    {(rate.codCarrierFee ?? 0) > 0 && (
+                                                                        <>
+                                                                            <div className="border-t border-gray-200 dark:border-gray-600 my-3"></div>
+                                                                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">+ Comisión Carrier</div>
+                                                                            <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                                ${totalWithCarrier.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </div>
 
