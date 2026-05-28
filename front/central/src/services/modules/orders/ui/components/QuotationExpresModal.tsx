@@ -840,7 +840,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                 </div>
 
                                                 <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                                                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                    <div className="text-sm font-semibold" style={{ color: businessColors.primary }}>
                                                         {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} día${rate.deliveryDays !== 1 ? 's' : ''}`}
                                                     </div>
                                                     <span className="text-xs font-bold uppercase tracking-wide" style={{ color: businessColors.tertiary }}>
