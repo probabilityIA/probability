@@ -823,7 +823,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         </div>
                                                     </div>
 
-                                                    <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-4 flex flex-col justify-center border border-gray-200 dark:border-gray-700">
+                                                    <div className="bg-white dark:bg-gray-800/60 rounded-xl p-5 flex flex-col justify-center border-2 border-gray-300 dark:border-gray-600">
                                                         <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Precio {formatCarrierName(rate.carrier)}</div>
                                                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                                             ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
