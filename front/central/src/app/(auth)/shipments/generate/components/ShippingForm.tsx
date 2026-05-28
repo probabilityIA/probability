@@ -717,20 +717,35 @@ export const ShippingForm = () => {
                                         className={`p-4 border rounded cursor-pointer transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
                                         onClick={() => setSelectedRate(rate)}
                                     >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
-                                                    {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
-                                                </div>
-                                                <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
+                                        <div className="mb-3">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
+                                                {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-lg text-indigo-600">${(rate.flete + (rate.cod ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</p>
-                                                {rate.cod && (rate.codCarrierFee ?? 0) > 0 && (
-                                                    <p className="text-xs text-cyan-700 dark:text-cyan-400 mt-0.5">
-                                                        + ${(rate.codCarrierFee ?? 0).toLocaleString()} Comisión carrier
-                                                    </p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{rate.deliveryDays} días de entrega</p>
+
+                                            <div className="space-y-1 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-700 dark:text-gray-300">Flete:</span>
+                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.flete + (rate.cod ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</span>
+                                                </div>
+                                                {(rate.minimumInsurance ?? 0) > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-700 dark:text-gray-300">Seguro mín:</span>
+                                                        <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.minimumInsurance ?? 0).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+                                                {(rate.extraInsurance ?? 0) > 0 && (
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-700 dark:text-gray-300">Seguro adicional:</span>
+                                                        <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.extraInsurance ?? 0).toLocaleString()}</span>
+                                                    </div>
+                                                )}
+                                                {(rate.codCarrierFee ?? 0) > 0 && (
+                                                    <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
+                                                        <span className="text-gray-700 dark:text-gray-300">Comisión carrier:</span>
+                                                        <span className="font-semibold text-cyan-600 dark:text-cyan-400">${(rate.codCarrierFee ?? 0).toLocaleString()}</span>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
