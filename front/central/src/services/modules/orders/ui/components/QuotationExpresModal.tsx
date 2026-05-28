@@ -824,8 +824,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                 </div>
 
                                                 <div className="flex justify-between items-center pt-3">
-                                                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700/40 px-3 py-2 rounded-lg">
-                                                        🕐 {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} día${rate.deliveryDays !== 1 ? 's' : ''}`}
+                                                    <div className="flex items-center gap-2 text-sm font-semibold bg-gray-50 dark:bg-gray-700/40 px-3 py-2 rounded-lg" style={{ color: businessColors.primary }}>
+                                                        {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} día${rate.deliveryDays !== 1 ? 's' : ''}`}
                                                     </div>
                                                     <span className="text-xs font-bold uppercase tracking-wide" style={{ color: businessColors.tertiary }}>
                                                         {isSelected ? '✓ Seleccionada' : 'Seleccionar'}
