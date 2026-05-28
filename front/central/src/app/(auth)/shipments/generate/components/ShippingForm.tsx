@@ -726,8 +726,8 @@ export const ShippingForm = () => {
 
                                             <div className="space-y-1 text-sm">
                                                 <div className="flex justify-between">
-                                                    <span className="text-gray-700 dark:text-gray-300">Flete:</span>
-                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.flete + (rate.cod ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</span>
+                                                    <span className="text-gray-700 dark:text-gray-300">Guía:</span>
+                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">${rate.flete.toLocaleString()}</span>
                                                 </div>
                                                 {(rate.minimumInsurance ?? 0) > 0 && (
                                                     <div className="flex justify-between">
