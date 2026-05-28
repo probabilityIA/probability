@@ -745,37 +745,39 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     </>
                                                 )}
 
-                                                <div className="flex gap-4 mb-5">
-                                                    <div
-                                                        className="w-16 h-16 rounded-2xl flex-shrink-0 flex items-center justify-center"
-                                                        style={{
-                                                            background: `linear-gradient(135deg, ${businessColors.tertiary}14 0%, ${businessColors.tertiary}08 100%)`
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={getCarrierLogo(rate.carrier)}
-                                                            alt={rate.carrier}
-                                                            className="w-12 h-12 object-contain"
-                                                            onError={(e) => {
-                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                <div className="flex gap-4 mb-5 items-start justify-between">
+                                                    <div className="flex gap-4 flex-1">
+                                                        <div
+                                                            className="w-16 h-16 rounded-2xl flex-shrink-0 flex items-center justify-center"
+                                                            style={{
+                                                                background: `linear-gradient(135deg, ${businessColors.tertiary}14 0%, ${businessColors.tertiary}08 100%)`
                                                             }}
-                                                        />
-                                                    </div>
+                                                        >
+                                                            <img
+                                                                src={getCarrierLogo(rate.carrier)}
+                                                                alt={rate.carrier}
+                                                                className="w-12 h-12 object-contain"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                }}
+                                                            />
+                                                        </div>
 
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
-                                                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
-                                                                {rate.product || 'Normal'}
-                                                            </span>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <h4 className="font-semibold text-gray-900 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
+                                                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
+                                                                    {rate.product || 'Normal'}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="mb-5">
-                                                    <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total</div>
-                                                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                        ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                    <div className="text-right">
+                                                        <div className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total</div>
+                                                        <div className="text-2xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                            ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                        </div>
                                                     </div>
                                                 </div>
 
