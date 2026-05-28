@@ -787,7 +787,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         {(() => {
                                                             const margin = getCarrierMargin(shippingMargins, rate.carrier);
                                                             const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
                                                                 : 0;
                                                             const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
                                                             const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
@@ -823,7 +823,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             {(() => {
                                                                 const margin = getCarrierMargin(shippingMargins, rate.carrier);
                                                                 const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                    ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                    ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
                                                                     : 0;
                                                                 const fleteTotal = rate.flete + probabilityCommission;
 
@@ -881,7 +881,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         {(() => {
                                                             const margin = getCarrierMargin(shippingMargins, rate.carrier);
                                                             const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
                                                                 : 0;
                                                             const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
                                                             const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
