@@ -20,6 +20,13 @@ Archivos 500+ lineas: CERO non-ASCII (acentos, box-drawing, emojis). Archivos co
 
 Monorepo multi-tenant: ordenes, productos, pagos, envios desde Shopify, Amazon, MercadoLibre, WhatsApp.
 
+## Git - NUNCA hacer push sin permiso explicito
+
+**PROHIBIDO hacer push automaticamente.** Siempre esperar autorizacion explicita del usuario.
+- NO hacer push despues de commits
+- NO hacer push como parte de flujos de trabajo
+- Informar al usuario que hay cambios listos, pero esperar instruccion para hacer push
+
 ## Produccion - iptables CRITICO
 
 Si el sitio deja de funcionar desde Internet (AWS/SGs siempre estan bien, el problema es siempre iptables):
