@@ -782,68 +782,102 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-2 gap-6 mb-5">
-                                                    <div className="space-y-3">
-                                                        <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Desglose</h5>
-
+                                                {form.watch("enableCod") ? (
+                                                    <div className="flex items-center gap-4 mb-5 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200 dark:border-gray-600">
                                                         {(() => {
                                                             const margin = getCarrierMargin(shippingMargins, rate.carrier);
                                                             const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
                                                                 ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
                                                                 : 0;
-                                                            const fleteTotal = rate.flete + probabilityCommission;
+                                                            const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
+                                                            const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
 
                                                             return (
-                                                                <div className="flex justify-between items-center text-sm">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
-                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Flete</span>
+                                                                <>
+                                                                    <div className="flex-1">
+                                                                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Precio</div>
+                                                                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                            ${basePrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        </div>
                                                                     </div>
-                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${fleteTotal.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </span>
-                                                                </div>
+                                                                    {(rate.codCarrierFee ?? 0) > 0 && (
+                                                                        <>
+                                                                            <div className="w-px bg-gray-300 dark:bg-gray-600 h-12"></div>
+                                                                            <div className="flex-1">
+                                                                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">+ Comisión</div>
+                                                                                <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                                    ${totalWithCarrier.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                                </div>
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </>
                                                             );
                                                         })()}
-
-                                                        {(rate.minimumInsurance ?? 0) > 0 && (
-                                                            <div className="flex justify-between items-center text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9500' }}></div>
-                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro mín.</span>
-                                                                </div>
-                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.minimumInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
-                                                            <div className="flex justify-between items-center text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
-                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro</span>
-                                                                </div>
-                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.extraInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        {(rate.codCarrierFee ?? 0) > 0 && (
-                                                            <div className="flex justify-between items-center text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
-                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión carrier</span>
-                                                                </div>
-                                                                <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                </span>
-                                                            </div>
-                                                        )}
                                                     </div>
+                                                ) : (
+                                                    <div className="grid grid-cols-2 gap-6 mb-5">
+                                                        <div className="space-y-3">
+                                                            <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Desglose</h5>
 
-                                                    <div className="border border-gray-300 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-700/40">
+                                                            {(() => {
+                                                                const margin = getCarrierMargin(shippingMargins, rate.carrier);
+                                                                const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
+                                                                    ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                                    : 0;
+                                                                const fleteTotal = rate.flete + probabilityCommission;
+
+                                                                return (
+                                                                    <div className="flex justify-between items-center text-sm">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
+                                                                            <span className="text-gray-700 dark:text-gray-300 font-medium">Flete</span>
+                                                                        </div>
+                                                                        <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                            ${fleteTotal.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        </span>
+                                                                    </div>
+                                                                );
+                                                            })()}
+
+                                                            {(rate.minimumInsurance ?? 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9500' }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro mín.</span>
+                                                                    </div>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${(rate.minimumInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro</span>
+                                                                    </div>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${(rate.extraInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {(rate.codCarrierFee ?? 0) > 0 && (
+                                                                <div className="flex justify-between items-center text-sm">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
+                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión carrier</span>
+                                                                    </div>
+                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                        ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="border border-gray-300 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-700/40">
                                                         {(() => {
                                                             const margin = getCarrierMargin(shippingMargins, rate.carrier);
                                                             const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
@@ -871,6 +905,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             );
                                                         })()}
                                                     </div>
+                                                    </div>
+                                                )}
                                                 </div>
 
                                                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between items-center">
