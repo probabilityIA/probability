@@ -710,7 +710,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+                                <div className={`grid gap-6 pb-4 ${form.watch("enableCod") ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                                     {rates.filter(rate => {
                                         if (form.watch("enableCod") && !rate.cod) return false;
                                         return true;
