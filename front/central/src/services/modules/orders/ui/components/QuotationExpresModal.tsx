@@ -832,7 +832,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             <>
                                                                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier</div>
                                                                 <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(displayPrice + (rate.codCarrierFee ?? 0) + (rate.codProbabilityMargin ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${(displayPrice + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
                                                             </>
                                                         )}
