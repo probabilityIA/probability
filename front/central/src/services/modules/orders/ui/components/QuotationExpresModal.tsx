@@ -829,12 +829,12 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                         </div>
                                                         {form.watch("enableCod") && (rate.codCarrierFee ?? 0) > 0 && (
-                                                            <>
+                                                            <div className="pt-3 mt-3 border-t border-gray-300 dark:border-gray-600">
                                                                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier</div>
                                                                 <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                                                     ${(displayPrice + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
-                                                            </>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
