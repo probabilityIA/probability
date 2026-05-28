@@ -9,8 +9,6 @@ import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipm
 import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
-import { listShippingMarginsAction } from "@/services/modules/shipping-margins/infra/actions";
-import { ShippingMargin } from "@/services/modules/shipping-margins/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
@@ -60,11 +58,6 @@ const formatCarrierName = (carrierName: string): string => {
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
-};
-
-const getCarrierMargin = (shippingMargins: ShippingMargin[], carrierName: string): ShippingMargin | undefined => {
-    const normalized = carrierName.toLowerCase().trim();
-    return shippingMargins.find(m => m.carrier_code.toLowerCase() === normalized || m.carrier_name.toLowerCase() === normalized);
 };
 
 const getCarrierLogo = (carrierName: string): string => {
@@ -136,8 +129,6 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
-    const [selectedRate, setSelectedRate] = useState<number | null>(null);
-    const [shippingMargins, setShippingMargins] = useState<ShippingMargin[]>([]);
 
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
@@ -222,18 +213,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                     }
                 }
             }).catch(() => { });
-
-            listShippingMarginsAction({
-                page: 1,
-                page_size: 100,
-                ...(business_id && { business_id }),
-            }).then(res => {
-                if (res.data) {
-                    setShippingMargins(res.data);
-                }
-            }).catch(() => { });
         }
-    }, [isOpen, business_id]);
+    }, [isOpen]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -690,35 +671,23 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
 
                     {currentStep === 2 && (
                         <div className="flex flex-col h-full min-h-0">
-                            <div className="mb-6">
-                                <div className="flex justify-between items-center">
-                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Cotizaciones Disponibles</h2>
-                                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                                        {rates.filter(r => !form.watch("enableCod") || r.cod).length} transportadoras encontradas
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto min-h-0 pr-3">
-                                {rates.filter(rate => !form.watch("enableCod") || rate.cod).length === 0 && (
-                                    <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                                        {form.watch("enableCod") ? (
-                                            <p>No hay transportistas que soporten contra entrega para esta ruta</p>
-                                        ) : (
-                                            <p>No hay cotizaciones disponibles</p>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className={`grid gap-6 pb-4 ${form.watch("enableCod") ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+                                <h3 className="font-semibold text-lg mb-3 text-gray-800 dark:text-gray-100">Cotizaciones Disponibles</h3>
+                                <div className="flex-1 overflow-y-auto min-h-0 pr-3">
+                                    {rates.filter(rate => !form.watch("enableCod") || rate.cod).length === 0 && (
+                                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                            {form.watch("enableCod") ? (
+                                                <p>❌ No hay transportistas que soporten contra entrega para esta ruta</p>
+                                            ) : (
+                                                <p>No hay cotizaciones disponibles</p>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="grid grid-cols-3 gap-4">
                                     {rates.filter(rate => {
                                         if (form.watch("enableCod") && !rate.cod) return false;
                                         return true;
                                     }).map((rate, index) => {
-                                        if (index === 0 && selectedRate === null) {
-                                            setSelectedRate(rate.idRate);
-                                        }
-
+                                        const filteredRates = rates.filter(r => !form.watch("enableCod") || r.cod);
                                         const getDisplayPrice = (r: EnvioClickRate) => {
                                             const basePrice = r.flete;
                                             const minimumIns = r.minimumInsurance ?? 0;
@@ -726,218 +695,87 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             const probabilityMargin = form.watch("enableCod") ? (r.codProbabilityMargin ?? 0) : 0;
                                             return basePrice + minimumIns + insuranceCost + probabilityMargin;
                                         };
-
-                                        const isSelected = selectedRate === rate.idRate;
-                                        const displayPrice = getDisplayPrice(rate);
-
+                                        const minPrice = Math.min(...filteredRates.map(r => getDisplayPrice(r)));
+                                        const minDays = Math.min(...filteredRates.map(r => r.deliveryDays));
+                                        const isCheapest = getDisplayPrice(rate) === minPrice;
+                                        const isFastest = rate.deliveryDays === minDays;
+                                        const isSameDay = rate.deliveryDays === 1;
                                         return (
-                                            <div
-                                                key={rate.idRate}
-                                                onClick={() => setSelectedRate(isSelected ? null : rate.idRate)}
-                                                className={`relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 overflow-hidden
-                                                    ${isSelected
-                                                        ? 'shadow-lg dark:shadow-lg'
-                                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md'
-                                                    }
-                                                `}
-                                                style={{
-                                                    borderColor: isSelected ? businessColors.tertiary : '#e5e7eb',
-                                                    backgroundColor: isSelected ? businessColors.tertiary + '05' : 'transparent',
-                                                    boxShadow: isSelected ? `0 0 0 1px ${businessColors.tertiary}, 0 12px 32px ${businessColors.tertiary}20` : undefined
-                                                }}
-                                            >
-                                                {isSelected && (
-                                                    <div
-                                                        className="absolute inset-0 top-0 h-1 opacity-40"
-                                                        style={{
-                                                            background: `radial-gradient(ellipse at center, ${businessColors.tertiary} 0%, transparent 70%)`
-                                                        }}
-                                                    />
-                                                )}
-
-                                                <div className="flex gap-3 mb-5 items-center">
-                                                    <div
-                                                        className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center"
-                                                        style={{
-                                                            background: `linear-gradient(135deg, ${businessColors.tertiary}14 0%, ${businessColors.tertiary}08 100%)`
-                                                        }}
-                                                    >
+                                        <div
+                                            key={rate.idRate}
+                                            className="relative border-2 rounded-2xl p-3 cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-gray-700"
+                                            style={{
+                                                borderColor: index === 0 ? businessColors.tertiary : '#d1d5db',
+                                                backgroundColor: index === 0 ? businessColors.tertiary + '08' : 'white'
+                                            }}
+                                        >
+                                            <div className="flex flex-row gap-4">
+                                                <div className="flex flex-col items-center min-w-fit">
+                                                    <div className="w-24 h-24 flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg mb-2">
                                                         <img
                                                             src={getCarrierLogo(rate.carrier)}
                                                             alt={rate.carrier}
-                                                            className="w-10 h-10 object-contain"
+                                                            className="w-20 h-20 object-contain"
                                                             onError={(e) => {
-                                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                                e.currentTarget.style.display = 'none';
                                                             }}
                                                         />
                                                     </div>
-
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{formatCarrierName(rate.carrier)}</h4>
-                                                            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                                                                {rate.product || 'Normal'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
+                                                    <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100 text-center">{formatCarrierName(rate.carrier)}</h4>
+                                                    <p className="text-xs text-gray-600 dark:text-gray-400 text-center">{rate.product}</p>
                                                 </div>
 
-                                                {form.watch("enableCod") ? (
-                                                    <div className="flex items-center gap-4 mb-5 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-2xl border border-gray-200 dark:border-gray-600">
-                                                        {(() => {
-                                                            const margin = getCarrierMargin(shippingMargins, rate.carrier);
-                                                            const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
-                                                                : 0;
-                                                            const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
-                                                            const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
-
-                                                            return (
-                                                                <>
-                                                                    <div className="flex-1">
-                                                                        <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Precio</div>
-                                                                        <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                            ${basePrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                        </div>
-                                                                    </div>
-                                                                    {(rate.codCarrierFee ?? 0) > 0 && (
-                                                                        <>
-                                                                            <div className="w-px bg-gray-300 dark:bg-gray-600 h-12"></div>
-                                                                            <div className="flex-1">
-                                                                                <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">+ Comisión</div>
-                                                                                <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                                    ${totalWithCarrier.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                                </div>
-                                                                            </div>
-                                                                        </>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
+                                                <div className="flex flex-col flex-1">
+                                                    <div className="font-bold text-gray-800 dark:text-gray-100 mb-3" style={{fontSize: '18px', lineHeight: '1.2'}}>
+                                                        ${getDisplayPrice(rate).toLocaleString()}
                                                     </div>
-                                                ) : (
-                                                    <div className="grid grid-cols-2 gap-6 mb-5">
-                                                        <div className="space-y-3">
-                                                            <h5 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Desglose</h5>
-
-                                                            {(() => {
-                                                                const margin = getCarrierMargin(shippingMargins, rate.carrier);
-                                                                const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                    ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
-                                                                    : 0;
-                                                                const fleteTotal = rate.flete + probabilityCommission;
-
-                                                                return (
-                                                                    <div className="flex justify-between items-center text-sm">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#999' }}></div>
-                                                                            <span className="text-gray-700 dark:text-gray-300 font-medium">Flete</span>
-                                                                        </div>
-                                                                        <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                            ${fleteTotal.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                        </span>
-                                                                    </div>
-                                                                );
-                                                            })()}
-
-                                                            {(rate.minimumInsurance ?? 0) > 0 && (
-                                                                <div className="flex justify-between items-center text-sm">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9500' }}></div>
-                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro mín.</span>
-                                                                    </div>
-                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.minimumInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
-                                                                <div className="flex justify-between items-center text-sm">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
-                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Seguro</span>
-                                                                    </div>
-                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.extraInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {(rate.codCarrierFee ?? 0) > 0 && (
-                                                                <div className="flex justify-between items-center text-sm">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
-                                                                        <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión carrier</span>
-                                                                    </div>
-                                                                    <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        <div className="border border-gray-300 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-700/40">
-                                                        {(() => {
-                                                            const margin = getCarrierMargin(shippingMargins, rate.carrier);
-                                                            const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
-                                                                ? ((rate.codCarrierFee ?? 0) * margin.cod_margin_percent / 100)
-                                                                : 0;
-                                                            const basePrice = rate.flete + probabilityCommission + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0);
-                                                            const totalWithCarrier = basePrice + (rate.codCarrierFee ?? 0);
-
-                                                            return (
-                                                                <>
-                                                                    <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Precio {formatCarrierName(rate.carrier)}</div>
-                                                                    <div className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${basePrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                    </div>
-                                                                    {(rate.codCarrierFee ?? 0) > 0 && (
-                                                                        <>
-                                                                            <div className="border-t border-gray-200 dark:border-gray-600 my-3"></div>
-                                                                            <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">+ Comisión Carrier</div>
-                                                                            <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                                ${totalWithCarrier.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
-                                                                            </div>
-                                                                        </>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
-                                                        </div>
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1 mb-3">
+                                                        <div>Flete: ${(rate.flete + (form.watch("enableCod") ? (rate.codProbabilityMargin ?? 0) : 0)).toLocaleString()}</div>
+                                                        {(rate.minimumInsurance ?? 0) > 0 && (
+                                                            <div className="text-orange-600 dark:text-orange-400 font-semibold">Seguro mín: ${(rate.minimumInsurance ?? 0).toLocaleString()}</div>
+                                                        )}
+                                                        {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                            <div className="text-green-600 dark:text-green-400 font-semibold">Seguro: ${(rate.extraInsurance ?? 0).toLocaleString()}</div>
+                                                        )}
+                                                        {form.watch("enableCod") && (
+                                                            <div className="space-y-1">
+                                                                {rate.codCarrierFee !== undefined && rate.codCarrierFee > 0 && (
+                                                                    <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Comisión carrier: ${rate.codCarrierFee.toLocaleString()}</div>
+                                                                )}
+                                                                {(!rate.codCarrierFee || rate.codCarrierFee <= 0) && (
+                                                                    <div className="text-cyan-600 dark:text-cyan-400 font-semibold">Contra entrega</div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
 
-                                                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between items-center">
-                                                    <div className="flex items-center gap-2 text-sm font-semibold bg-gray-50 dark:bg-gray-700/40 px-3 py-2 rounded-lg" style={{ color: businessColors.primary }}>
-                                                        {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} día${rate.deliveryDays !== 1 ? 's' : ''}`}
+                                                    <div className="font-semibold text-base" style={{ color: businessColors.primary }}>
+                                                        {rate.deliveryDays === 0 || rate.deliveryDays === 1 ? 'Mismo día' : `${rate.deliveryDays} días`}
                                                     </div>
-                                                    <span className="text-xs font-bold uppercase tracking-wide cursor-pointer" style={{ color: businessColors.tertiary }}>
-                                                        {isSelected ? '✓ Seleccionada' : 'Seleccionar'}
-                                                    </span>
                                                 </div>
                                             </div>
+                                        </div>
                                         );
                                     })}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => setCurrentStep(1)}
-                                    className="flex-1"
-                                >
-                                    Atrás
-                                </Button>
-                                <Button
-                                    onClick={onClose}
-                                    className="flex-1"
-                                    style={{ backgroundColor: businessColors.tertiary }}
-                                >
-                                    Confirmar selección
-                                </Button>
-                            </div>
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setCurrentStep(1)}
+                                        className="flex-1"
+                                    >
+                                        Atrás
+                                    </Button>
+                                    <Button
+                                        onClick={onClose}
+                                        className="flex-1"
+                                        style={{ backgroundColor: businessColors.tertiary }}
+                                    >
+                                        Cerrar
+                                    </Button>
+                                </div>
                         </div>
                     )}
                 </div>
