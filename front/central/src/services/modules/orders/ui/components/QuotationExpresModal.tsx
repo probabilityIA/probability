@@ -9,6 +9,8 @@ import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipm
 import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
+import { listShippingMarginsAction } from "@/services/modules/shipping-margins/infra/actions";
+import { ShippingMargin } from "@/services/modules/shipping-margins/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
@@ -58,6 +60,11 @@ const formatCarrierName = (carrierName: string): string => {
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
+};
+
+const getCarrierMargin = (shippingMargins: ShippingMargin[], carrierName: string): ShippingMargin | undefined => {
+    const normalized = carrierName.toLowerCase().trim();
+    return shippingMargins.find(m => m.carrier_code.toLowerCase() === normalized || m.carrier_name.toLowerCase() === normalized);
 };
 
 const getCarrierLogo = (carrierName: string): string => {
@@ -130,6 +137,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
     const [selectedRate, setSelectedRate] = useState<number | null>(null);
+    const [shippingMargins, setShippingMargins] = useState<ShippingMargin[]>([]);
 
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
@@ -214,8 +222,18 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                     }
                 }
             }).catch(() => { });
+
+            listShippingMarginsAction({
+                page: 1,
+                page_size: 100,
+                ...(business_id && { business_id }),
+            }).then(res => {
+                if (res.data) {
+                    setShippingMargins(res.data);
+                }
+            }).catch(() => { });
         }
-    }, [isOpen]);
+    }, [isOpen, business_id]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -778,17 +796,23 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                             </span>
                                                         </div>
 
-                                                        {(rate.codProbabilityMargin ?? 0) > 0 && (
+                                                        {(() => {
+                                                        const margin = getCarrierMargin(shippingMargins, rate.carrier);
+                                                        const probabilityCommission = margin && (rate.codCarrierFee ?? 0) > 0
+                                                            ? (rate.codCarrierFee * margin.cod_margin_percent / 100)
+                                                            : 0;
+                                                        return probabilityCommission > 0 && (
                                                             <div className="flex justify-between items-center text-sm">
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
-                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión Probability</span>
+                                                                    <span className="text-gray-700 dark:text-gray-300 font-medium">Comisión Probability ({margin?.cod_margin_percent}%)</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.codProbabilityMargin ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${probabilityCommission.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
-                                                        )}
+                                                        );
+                                                    })()}
 
                                                         {(rate.minimumInsurance ?? 0) > 0 && (
                                                             <div className="flex justify-between items-center text-sm">
