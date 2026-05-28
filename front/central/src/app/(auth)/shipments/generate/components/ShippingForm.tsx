@@ -385,7 +385,7 @@ export const ShippingForm = () => {
         : [];
 
     return (
-        <div style={{ transform: 'scale(0.90)', transformOrigin: 'top center' }}>
+        <div>
             <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
 
@@ -708,7 +708,7 @@ export const ShippingForm = () => {
                         )}
 
                         <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Cotizaciones Disponibles</h3>
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                        <div className={`grid max-h-96 overflow-y-auto ${rates.some(r => r.cod) ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-4`}>
                             {rates.map((rate) => {
                                 const isRecommended = rate.carrier.toLowerCase() === aiAnalysis?.recommended_carrier.toLowerCase();
                                 return (
