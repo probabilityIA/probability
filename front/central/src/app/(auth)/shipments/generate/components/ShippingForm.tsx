@@ -352,7 +352,7 @@ export const ShippingForm = () => {
 
         try {
             const insuranceCost = (selectedRate.minimumInsurance ?? 0) + (data.insurance ? (selectedRate.extraInsurance ?? 0) : 0);
-            const totalCost = selectedRate.flete + insuranceCost + codMargin;
+            const totalCost = selectedRate.flete + insuranceCost + codMargin + codCarrierFee;
             const payload = buildPayload(data, selectedRate.idRate, totalCost, codCarrierFee > 0 ? codCarrierFee : undefined);
             const res = await generateGuideAction(payload);
             if (res.success && res.data?.data) {
