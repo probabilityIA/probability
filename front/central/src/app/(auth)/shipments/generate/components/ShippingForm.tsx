@@ -385,8 +385,9 @@ export const ShippingForm = () => {
         : [];
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
+        <div style={{ transform: 'scale(0.90)', transformOrigin: 'top center' }}>
+            <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
 
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Seleccionar Orden</label>
@@ -811,6 +812,7 @@ export const ShippingForm = () => {
                     )}
                 </div>
             </form>
+            </div>
         </div>
     );
 };
