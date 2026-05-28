@@ -768,14 +768,14 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                     <div className="border border-gray-300 dark:border-gray-600 rounded-2xl p-4 bg-white dark:bg-gray-700/40 min-w-max">
                                                         <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Precio {formatCarrierName(rate.carrier)}</div>
                                                         <div className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                            ${(rate.flete + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                            ${(rate.flete + (rate.codProbabilityMargin ?? 0) + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                         </div>
                                                         {(rate.codCarrierFee ?? 0) > 0 && (
                                                             <>
                                                                 <div className="border-t border-gray-200 dark:border-gray-600 my-3"></div>
                                                                 <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">+ Comisión Carrier</div>
                                                                 <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${((rate.flete + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)) + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${((rate.flete + (rate.codProbabilityMargin ?? 0) + (rate.minimumInsurance ?? 0) + (form.watch("enableInsurance") ? (rate.extraInsurance ?? 0) : 0)) + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
                                                             </>
                                                         )}
