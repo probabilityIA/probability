@@ -729,20 +729,12 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                 }}
                                             >
                                                 {isSelected && (
-                                                    <>
-                                                        <div
-                                                            className="absolute inset-0 top-0 h-1 opacity-40"
-                                                            style={{
-                                                                background: `radial-gradient(ellipse at center, ${businessColors.tertiary} 0%, transparent 70%)`
-                                                            }}
-                                                        />
-                                                        <div
-                                                            className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                                                            style={{ backgroundColor: businessColors.tertiary }}
-                                                        >
-                                                            ✓
-                                                        </div>
-                                                    </>
+                                                    <div
+                                                        className="absolute inset-0 top-0 h-1 opacity-40"
+                                                        style={{
+                                                            background: `radial-gradient(ellipse at center, ${businessColors.tertiary} 0%, transparent 70%)`
+                                                        }}
+                                                    />
                                                 )}
 
                                                 <div className="flex gap-4 mb-5 items-start justify-between">
