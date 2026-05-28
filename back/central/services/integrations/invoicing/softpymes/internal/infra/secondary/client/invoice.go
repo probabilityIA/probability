@@ -189,6 +189,15 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		itemCode := resolveItemCode(item.SKU, item.Name, item.ProductID, itemMappings)
 
 		unitPrice := item.UnitPriceBase
+
+		if unitPrice == 0 && item.UnitPrice > 0 {
+			rate := 0.19
+			if item.TaxRate != nil && *item.TaxRate > 0 {
+				rate = *item.TaxRate
+			}
+			unitPrice = item.UnitPrice / (1 + rate)
+		}
+
 		if unitPrice == 0 {
 			unitPrice = item.UnitPrice
 		}
@@ -215,8 +224,17 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	if effectiveShipping > 0 {
 		shippingPrice := req.ShippingCostBase
+
+		if shippingPrice == 0 && effectiveShipping > 0 {
+			rate := 0.19
+			if req.ShippingTaxRate != nil && *req.ShippingTaxRate > 0 {
+				rate = *req.ShippingTaxRate
+			}
+			shippingPrice = effectiveShipping / (1 + rate)
+		}
+
 		if shippingPrice == 0 {
-			shippingPrice = effectiveShipping // fallback órdenes antiguas
+			shippingPrice = effectiveShipping
 		}
 
 		shippingItem := map[string]interface{}{

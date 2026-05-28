@@ -27,6 +27,15 @@ func ToInvoiceRequest(req *dtos.InvoiceRequest) *request.InvoiceRequest {
 	items := make([]request.InvoiceItem, 0, len(req.InvoiceItems))
 	for _, item := range req.InvoiceItems {
 		unitPrice := item.UnitPriceBase
+
+		if unitPrice == 0 && item.UnitPrice > 0 {
+			rate := 0.19
+			if item.TaxRate != nil && *item.TaxRate > 0 {
+				rate = *item.TaxRate
+			}
+			unitPrice = item.UnitPrice / (1 + rate)
+		}
+
 		if unitPrice == 0 {
 			unitPrice = item.UnitPrice
 		}
