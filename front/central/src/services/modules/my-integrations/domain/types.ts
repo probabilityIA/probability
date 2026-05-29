@@ -16,3 +16,12 @@ export const CATEGORY_ICONS: Record<string, string> = {
     shipping: '🚚',
     internal: '⚙️',
 };
+
+export const INTERNAL_MODULE_RESOURCE_NAME: Record<string, string> = {
+    inventory: 'Inventario',
+    delivery: 'Ultima Milla',
+    notifications: 'Notificaciones',
+    customers: 'Clientes',
+    storefront_module: 'Storefront',
+    invoicing_module: 'Facturacion',
+};

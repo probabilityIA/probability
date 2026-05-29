@@ -9,7 +9,8 @@ import {
     deactivateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
-import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
+import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
+import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, INTERNAL_MODULE_RESOURCE_NAME } from '../../domain/types';
 import { CategoryCard } from './CategoryCard';
 import { FlowConverge, FlowDiverge } from './FlowArrow';
 import { InternalModuleRow } from './InternalModuleRow';
@@ -23,6 +24,7 @@ interface MyIntegrationsModalProps {
 export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
+    const [resourceActive, setResourceActive] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState<number | null>(null);
 
@@ -32,9 +34,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             const intParams: Record<string, any> = { page_size: 100 };
             if (businessId) intParams.business_id = businessId;
 
-            const [catRes, intRes] = await Promise.all([
+            const [catRes, intRes, resourcesRes] = await Promise.all([
                 getIntegrationCategoriesAction(),
                 getIntegrationsAction(intParams),
+                businessId ? getBusinessConfiguredResourcesAction(businessId) : Promise.resolve(null),
             ]);
 
             if (catRes.success && catRes.data) {
@@ -46,6 +49,16 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
 
             if (intRes.success && intRes.data) {
                 setIntegrations(intRes.data as Integration[]);
+            }
+
+            if (resourcesRes?.success && resourcesRes.data) {
+                const map: Record<string, boolean> = {};
+                for (const r of resourcesRes.data.resources || []) {
+                    map[r.resource_name] = r.is_active;
+                }
+                setResourceActive(map);
+            } else {
+                setResourceActive({});
             }
         } catch (err) {
             console.error('Error fetching integrations data:', err);
@@ -127,14 +140,17 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     {internal.length > 0 && (
                         <div className="flex flex-wrap justify-center gap-2 w-full">
                             {internal.flatMap(cat =>
-                                (integrationsByCategory[cat.code] || []).map(integration => (
-                                    <InternalModuleRow
-                                        key={integration.id}
-                                        integration={integration}
-                                        onToggle={handleToggle}
-                                        togglingId={togglingId}
-                                    />
-                                ))
+                                (integrationsByCategory[cat.code] || []).map(integration => {
+                                    const resourceName = INTERNAL_MODULE_RESOURCE_NAME[integration.integration_type?.code || ''];
+                                    const isActive = resourceName ? resourceActive[resourceName] === true : false;
+                                    return (
+                                        <InternalModuleRow
+                                            key={integration.id}
+                                            integration={integration}
+                                            isActive={isActive}
+                                        />
+                                    );
+                                })
                             )}
                         </div>
                     )}

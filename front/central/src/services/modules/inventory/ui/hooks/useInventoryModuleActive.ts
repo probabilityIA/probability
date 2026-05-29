@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
-import type { Integration } from '@/services/integrations/core/domain/types';
+import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
 
 interface UseInventoryModuleActiveResult {
     isActive: boolean;
@@ -22,14 +21,12 @@ export function useInventoryModuleActive(businessId?: number | null): UseInvento
 
         let cancelled = false;
         setLoading(true);
-        getIntegrationsAction({ business_id: businessId, page_size: 100 } as any)
+        getBusinessConfiguredResourcesAction(businessId)
             .then(res => {
                 if (cancelled) return;
-                if (res?.success && Array.isArray(res.data)) {
-                    const inventory = (res.data as Integration[]).find(
-                        i => i.category === 'internal' && i.code?.startsWith('inventory_business_'),
-                    );
-                    setIsActive(Boolean(inventory?.is_active));
+                if (res?.success && res.data) {
+                    const inventory = res.data.resources?.find(r => r.resource_name === 'Inventario');
+                    setIsActive(inventory?.is_active === true);
                 } else {
                     setIsActive(false);
                 }
