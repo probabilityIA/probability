@@ -52,11 +52,14 @@ export const IntegrationsSubNavbar = memo(function IntegrationsSubNavbar() {
         return null;
     }
 
-    // Filter and sort categories by permissions
+    const SUPER_ADMIN_ONLY_CATEGORIES = new Set(['storefront', 'internal']);
+
     const allowedCategories = categories
         .filter(c => c.is_visible && c.is_active)
         .filter(c => {
-            if (isSuperAdmin || permissionsNotLoaded) return true;
+            if (isSuperAdmin) return true;
+            if (SUPER_ADMIN_ONLY_CATEGORIES.has(c.code)) return false;
+            if (permissionsNotLoaded) return true;
             const resource = CATEGORY_RESOURCE_MAP[c.code];
             if (!resource) return true;
             return hasPermission(resource, 'Read');
