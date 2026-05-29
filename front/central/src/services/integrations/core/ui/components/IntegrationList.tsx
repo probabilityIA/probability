@@ -22,6 +22,8 @@ import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-
 import { useToast } from '@/shared/providers/toast-provider';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { playNotificationSound } from '@/shared/utils';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { SuperAdminBusinessSelector } from '@/shared/ui';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
@@ -89,12 +91,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         setFilterType,
         filterCategory,
         setFilterCategory,
+        filterBusinessId,
+        setFilterBusinessId,
         deleteIntegration,
         toggleActive,
         testConnection,
         syncOrders,
         setError
     } = useIntegrations(propFilterCategory || '');
+
+    const { isSuperAdmin } = usePermissions();
 
     // Sincronizar cambios de categoría después del montaje inicial (cambio de pestaña)
     // No causa doble fetch en el montaje porque el hook ya inicia con propFilterCategory
@@ -1060,7 +1066,18 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
     return (
         <div className="space-y-4">
-            {/* Dynamic Filters */}
+            {isSuperAdmin && (
+                <div className="flex items-center gap-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                    <span className="text-sm font-semibold text-purple-700 dark:text-purple-300 whitespace-nowrap">Filtrar por negocio:</span>
+                    <div className="flex-1 max-w-md">
+                        <SuperAdminBusinessSelector
+                            value={filterBusinessId ?? null}
+                            onChange={(id) => { setFilterBusinessId(id); setPage(1); }}
+                            placeholder="— Todos los negocios —"
+                        />
+                    </div>
+                </div>
+            )}
             <DynamicFilters
                 availableFilters={availableFilters}
                 activeFilters={activeFilters}
