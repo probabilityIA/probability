@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, ClockIcon, FunnelIcon, ArrowsUpDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
-import { getBusinessesAction } from '@/services/auth/business/infra/actions';
+import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import {
   getInvoiceableOrdersAction,
   createBulkInvoicesAction,
@@ -164,8 +164,8 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         setIsSuperAdmin(true);
         setLoadingBusinesses(true);
         try {
-          const r = await getBusinessesAction();
-          setBusinesses(r.data.map((b: any) => ({ id: b.id, name: b.name })));
+          const r = await getBusinessesSimpleAction();
+          setBusinesses(r.data?.map((b: any) => ({ id: b.id, name: b.name })) || []);
         } finally {
           setLoadingBusinesses(false);
         }
