@@ -50,13 +50,25 @@ export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [permissions, setPermissions] = useState<UserPermissions | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Cargar permisos del localStorage al iniciar
     useEffect(() => {
         const stored = TokenStorage.getPermissions();
         if (stored) {
             setPermissions(stored);
         }
         setIsLoading(false);
+
+        (async () => {
+            try {
+                const { getRolesPermissionsAction } = await import('@/services/auth/login/infra/actions');
+                const res = await getRolesPermissionsAction();
+                if (res?.success && res.data) {
+                    const fresh = res.data as unknown as UserPermissions;
+                    TokenStorage.setPermissions(fresh);
+                    setPermissions(fresh);
+                }
+            } catch {
+            }
+        })();
     }, []);
 
     const isSuperAdmin = permissions?.is_super === true;
