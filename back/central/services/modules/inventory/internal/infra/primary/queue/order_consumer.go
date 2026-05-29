@@ -8,9 +8,12 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
+
+const inventoryModuleCode = "inventory"
 
 const queueName = rabbitmq.QueueOrdersToInventory
 
@@ -55,13 +58,15 @@ type inventoryFeedbackMessage struct {
 type OrderConsumer struct {
 	queue  rabbitmq.IQueue
 	uc     app.IUseCase
+	repo   ports.IRepository
 	logger log.ILogger
 }
 
-func NewOrderConsumer(queue rabbitmq.IQueue, uc app.IUseCase, logger log.ILogger) *OrderConsumer {
+func NewOrderConsumer(queue rabbitmq.IQueue, uc app.IUseCase, repo ports.IRepository, logger log.ILogger) *OrderConsumer {
 	return &OrderConsumer{
 		queue:  queue,
 		uc:     uc,
+		repo:   repo,
 		logger: logger.WithModule("inventory.consumer"),
 	}
 }
@@ -122,6 +127,20 @@ func (c *OrderConsumer) handleMessage(ctx context.Context, body []byte) {
 	}
 	if businessID == 0 {
 		c.logger.Warn(ctx).Str("order_id", msg.OrderID).Msg("Order event without business_id, skipping")
+		return
+	}
+
+	active, err := c.repo.IsBusinessModuleActive(ctx, businessID, inventoryModuleCode)
+	if err != nil {
+		c.logger.Error(ctx).Err(err).Uint("business_id", businessID).Msg("Failed to check inventory module status, skipping")
+		return
+	}
+	if !active {
+		c.logger.Info(ctx).
+			Uint("business_id", businessID).
+			Str("order_id", msg.OrderID).
+			Str("event_type", msg.EventType).
+			Msg("Inventory module disabled for business, skipping event")
 		return
 	}
 

@@ -49,7 +49,8 @@ type IRepository interface {
 	ReleaseStockTx(ctx context.Context, params dtos.ReleaseTxParams) error
 	ReturnStockTx(ctx context.Context, params dtos.ReturnStockTxParams) error
 
-	// Warehouse queries
+	IsBusinessModuleActive(ctx context.Context, businessID uint, moduleCode string) (bool, error)
+
 	GetDefaultWarehouseID(ctx context.Context, businessID uint) (uint, error)
 
 	GetLocationCapacity(ctx context.Context, locationID uint) (*LocationCapacityInfo, error)

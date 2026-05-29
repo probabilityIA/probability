@@ -137,6 +137,15 @@ type RepositoryMock struct {
 	GetSyncLogByHashFn    func(ctx context.Context, businessID uint, direction, hash string) (*entities.InventorySyncLog, error)
 	UpdateSyncLogStatusFn func(ctx context.Context, id uint, status, errorMsg string) error
 	ListSyncLogsFn        func(ctx context.Context, params dtos.ListSyncLogsParams) ([]entities.InventorySyncLog, int64, error)
+
+	IsBusinessModuleActiveFn func(ctx context.Context, businessID uint, moduleCode string) (bool, error)
+}
+
+func (m *RepositoryMock) IsBusinessModuleActive(ctx context.Context, businessID uint, moduleCode string) (bool, error) {
+	if m.IsBusinessModuleActiveFn != nil {
+		return m.IsBusinessModuleActiveFn(ctx, businessID, moduleCode)
+	}
+	return true, nil
 }
 
 func (m *RepositoryMock) GetLocationCapacity(ctx context.Context, locationID uint) (*ports.LocationCapacityInfo, error) {

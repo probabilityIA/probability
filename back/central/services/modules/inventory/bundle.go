@@ -44,7 +44,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	h.RegisterRoutes(router)
 
 	// 8. Start Order Event Consumer (RabbitMQ)
-	consumer := orderqueue.NewOrderConsumer(rabbitMQ, uc, logger)
+	consumer := orderqueue.NewOrderConsumer(rabbitMQ, uc, repo, logger)
 	consumer.Start(context.Background())
 
 	// 9. Start Bulk Load Consumer (RabbitMQ)
