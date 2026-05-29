@@ -731,7 +731,7 @@ export const ShippingForm = () => {
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-700 dark:text-gray-300">Guía + Comisión:</span>
-                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.flete + (rate.codCarrierFee ?? 0)).toLocaleString()}</span>
+                                                    <span className="font-semibold text-gray-900 dark:text-gray-100">${(rate.flete + (rate.codProbabilityMargin ?? 0) + (rate.codCarrierFee ?? 0)).toLocaleString()}</span>
                                                 </div>
                                                 {(rate.minimumInsurance ?? 0) > 0 && (
                                                     <div className="flex justify-between">

@@ -702,7 +702,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         }
 
                                         const getDisplayPrice = (r: EnvioClickRate) => {
-                                            const basePrice = r.flete + (r.codProbabilityMargin ?? 0);
+                                            const basePrice = r.flete;
                                             const minimumIns = r.minimumInsurance ?? 0;
                                             const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
                                             return basePrice + minimumIns + insuranceCost;
@@ -781,7 +781,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(rate.flete + (rate.codProbabilityMargin ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
 
@@ -828,10 +828,10 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums', marginBottom: '2px' }}>
                                                             ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                         </div>
-                                                        {form.watch("enableCod") && (rate.codCarrierFee ?? 0) > 0 && (
-                                                            <div className="pt-2 mt-2 border-t border-gray-300 dark:border-gray-600">
+                                                        {rate.cod && (rate.codCarrierFee ?? 0) > 0 && (
+                                                            <div className="pt-3 mt-3 border-t border-gray-300 dark:border-gray-600">
                                                                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier</div>
-                                                                <div className="text-xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                                                <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
                                                                     ${(displayPrice + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
                                                             </div>

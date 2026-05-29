@@ -1483,7 +1483,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px', color: '#3b4248', marginTop: '8px', textAlign: 'center', fontWeight: 700 }}>
                                                                 <div>Costo Guía: ${totalCost.toLocaleString()}</div>
-                                                                <div>Guía + Comisión: ${(rate.flete + (codCarrierFee || 0)).toLocaleString()}</div>
+                                                                <div>Guía + Comisión: ${(totalCost + (codCarrierFee || 0)).toLocaleString()}</div>
                                                                 {isInsured ? (
                                                                     <div style={{ color: '#059669', fontSize: '13px' }}>
                                                                         (Seguro: ${insuranceCost.toLocaleString()})
