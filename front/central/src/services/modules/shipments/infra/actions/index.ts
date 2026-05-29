@@ -5,6 +5,7 @@ import { getAuthToken } from '@/shared/utils/server-auth';
 import { ShipmentApiRepository } from '../repository/api-repository';
 import { ShipmentUseCases } from '../../app/use-cases';
 import { GetShipmentsParams, CreateShipmentRequest, GetCODShipmentsParams, CollectCODRequest, EnvioClickRate } from '../../domain/types';
+import { env } from '@/shared/config/env';
 
 const getUseCases = async () => {
     const token = await getAuthToken();
@@ -230,6 +231,10 @@ export interface ManifestPendingShipment {
     cod_total: number;
     business_id: number;
     business_name: string;
+    shipment_created_at?: string;
+    order_created_at?: string;
+    shipment_status: string;
+    order_status: string;
 }
 
 export interface ManifestGroup {
@@ -241,7 +246,7 @@ export interface ManifestGroup {
 export const getManifestPendingAction = async (businessId: number, carrier?: string): Promise<{ success: boolean; data: ManifestGroup[]; total: number; message?: string }> => {
     try {
         const token = await getAuthToken();
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+        const apiBase = env.API_BASE_URL;
         const params = new URLSearchParams();
         params.set('business_id', String(businessId));
         params.set('include_children', 'true');
@@ -264,7 +269,7 @@ export const getManifestPendingAction = async (businessId: number, carrier?: str
 export const generateManifestPdfAction = async (businessId: number, shipmentIds: number[], carrier?: string): Promise<{ success: boolean; blob?: string; filename?: string; message?: string }> => {
     try {
         const token = await getAuthToken();
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+        const apiBase = env.API_BASE_URL;
         const res = await fetch(`${apiBase}/shipments/manifest/pdf`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },

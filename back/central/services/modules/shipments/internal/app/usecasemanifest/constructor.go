@@ -24,22 +24,26 @@ type PendingFilter struct {
 }
 
 type PendingShipmentDTO struct {
-	ShipmentID         uint    `json:"shipment_id"`
-	OrderID            *string `json:"order_id,omitempty"`
-	OrderNumber        string  `json:"order_number"`
-	TrackingNumber     string  `json:"tracking_number"`
-	Carrier            string  `json:"carrier"`
-	CarrierCode        string  `json:"carrier_code"`
-	CustomerName       string  `json:"customer_name"`
-	CustomerDocument   string  `json:"customer_document"`
-	DestinationAddress string  `json:"destination_address"`
-	DestinationCity    string  `json:"destination_city"`
-	DestinationState   string  `json:"destination_state"`
-	Weight             float64 `json:"weight"`
-	DeclaredValue      float64 `json:"declared_value"`
-	CodTotal           float64 `json:"cod_total"`
-	BusinessID         uint    `json:"business_id"`
-	BusinessName       string  `json:"business_name"`
+	ShipmentID         uint       `json:"shipment_id"`
+	OrderID            *string    `json:"order_id,omitempty"`
+	OrderNumber        string     `json:"order_number"`
+	TrackingNumber     string     `json:"tracking_number"`
+	Carrier            string     `json:"carrier"`
+	CarrierCode        string     `json:"carrier_code"`
+	CustomerName       string     `json:"customer_name"`
+	CustomerDocument   string     `json:"customer_document"`
+	DestinationAddress string     `json:"destination_address"`
+	DestinationCity    string     `json:"destination_city"`
+	DestinationState   string     `json:"destination_state"`
+	Weight             float64    `json:"weight"`
+	DeclaredValue      float64    `json:"declared_value"`
+	CodTotal           float64    `json:"cod_total"`
+	BusinessID         uint       `json:"business_id"`
+	BusinessName       string     `json:"business_name"`
+	ShipmentCreatedAt  *time.Time `json:"shipment_created_at,omitempty"`
+	OrderCreatedAt     *time.Time `json:"order_created_at,omitempty"`
+	ShipmentStatus     string     `json:"shipment_status"`
+	OrderStatus        string     `json:"order_status"`
 }
 
 type GroupedPending struct {
@@ -88,6 +92,10 @@ func (uc *UseCaseManifest) ListPending(ctx context.Context, f PendingFilter) ([]
 			CodTotal:           r.CodTotal,
 			BusinessID:         r.BusinessID,
 			BusinessName:       r.BusinessName,
+			ShipmentCreatedAt:  r.ShipmentCreatedAt,
+			OrderCreatedAt:     r.OrderCreatedAt,
+			ShipmentStatus:     r.ShipmentStatus,
+			OrderStatus:        r.OrderStatus,
 		})
 		g.Count++
 	}

@@ -135,7 +135,14 @@ func drawInfoBox(pdf *gofpdf.Fpdf, tr func(string) string, in domain.ManifestPDF
 	pdf.SetXY(leftCol, y+18)
 	pdf.CellFormat(28, 3, tr("TRANSPORTADORA:"), "", 0, "L", false, 0, "")
 	pdf.SetFont("Helvetica", "", 8)
-	pdf.CellFormat(120, 3, tr(in.Carrier), "", 0, "L", false, 0, "")
+	pdf.CellFormat(60, 3, tr(in.Carrier), "", 0, "L", false, 0, "")
+
+	if logo := getCarrierLogoPNG(in.Carrier); len(logo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		key := "carrier-" + carrierKey(in.Carrier)
+		pdf.RegisterImageOptionsReader(key, opts, bytes.NewReader(logo))
+		pdf.ImageOptions(key, pageW-mLeft-26, y+2, 22, 18, false, opts, 0, "")
+	}
 }
 
 func drawTable(pdf *gofpdf.Fpdf, tr func(string) string, rows []domain.ManifestShipmentRow, startNum int) {
@@ -151,10 +158,10 @@ func drawTable(pdf *gofpdf.Fpdf, tr func(string) string, rows []domain.ManifestS
 		{10, "N°", "C"},
 		{14, "Prod", "C"},
 		{30, "Guia", "L"},
-		{12, "Bultos", "C"},
+		{16, "N° Paquete", "C"},
 		{24, "Documento", "L"},
-		{60, "Destinatario", "L"},
-		{44, "Ciudad", "L"},
+		{58, "Destinatario", "L"},
+		{42, "Ciudad", "L"},
 	}
 
 	pdf.SetFillColor(220, 220, 220)
@@ -171,7 +178,7 @@ func drawTable(pdf *gofpdf.Fpdf, tr func(string) string, rows []domain.ManifestS
 		pdf.CellFormat(cols[0].W, 5, num, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[1].W, 5, tr(truncate(r.CarrierCode, 6)), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[2].W, 5, tr(truncate(r.TrackingNumber, 16)), "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[3].W, 5, "1", "1", 0, "C", false, 0, "")
+		pdf.CellFormat(cols[3].W, 5, fmt.Sprintf("%d", r.ShipmentID), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[4].W, 5, tr(truncate(r.CustomerDocument, 14)), "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cols[5].W, 5, tr(truncate(r.CustomerName, 40)), "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cols[6].W, 5, tr(truncate(r.DestinationCity, 28)), "1", 0, "L", false, 0, "")

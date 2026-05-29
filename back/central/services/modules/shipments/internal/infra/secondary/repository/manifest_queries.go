@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
@@ -15,7 +16,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 	if filter.IncludeChildren {
 		var childIDs []uint
 		if err := r.db.Conn(ctx).
-			Table("businesses").
+			Table("business").
 			Select("id").
 			Where("parent_business_id = ? AND deleted_at IS NULL", filter.BusinessID).
 			Scan(&childIDs).Error; err == nil {
@@ -41,7 +42,10 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 		BusinessID         *uint
 		BusinessName       string
 		WarehouseName      *string
-		CreatedAt          interface{}
+		ShipmentCreatedAt  *time.Time
+		OrderCreatedAt     *time.Time
+		ShipmentStatus     string
+		OrderStatus        string
 	}
 
 	q := r.db.Conn(ctx).
@@ -63,9 +67,12 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			o.business_id,
 			COALESCE(b.name, '') AS business_name,
 			w.name AS warehouse_name,
-			s.created_at`).
+			s.created_at AS shipment_created_at,
+			o.created_at AS order_created_at,
+			COALESCE(s.status, '') AS shipment_status,
+			COALESCE(o.status, '') AS order_status`).
 		Joins("LEFT JOIN orders o ON o.id = s.order_id").
-		Joins("LEFT JOIN businesses b ON b.id = o.business_id").
+		Joins("LEFT JOIN business b ON b.id = o.business_id").
 		Joins("LEFT JOIN warehouses w ON w.id = s.warehouse_id").
 		Where("s.deleted_at IS NULL").
 		Where("s.status = ?", "pending").
@@ -117,6 +124,10 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 		if r.WarehouseName != nil {
 			item.WarehouseName = *r.WarehouseName
 		}
+		item.ShipmentCreatedAt = r.ShipmentCreatedAt
+		item.OrderCreatedAt = r.OrderCreatedAt
+		item.ShipmentStatus = r.ShipmentStatus
+		item.OrderStatus = r.OrderStatus
 		out = append(out, item)
 	}
 	return out, nil
@@ -132,7 +143,7 @@ func (r *Repository) GetBusinessForManifest(ctx context.Context, businessID uint
 	}
 	var b row
 	err := r.db.Conn(ctx).
-		Table("businesses").
+		Table("business").
 		Select("id, name, code, address, parent_business_id").
 		Where("id = ? AND deleted_at IS NULL", businessID).
 		Scan(&b).Error
@@ -154,7 +165,7 @@ func (r *Repository) GetBusinessForManifest(ctx context.Context, businessID uint
 func (r *Repository) GetChildBusinessIDs(ctx context.Context, parentID uint) ([]uint, error) {
 	var ids []uint
 	err := r.db.Conn(ctx).
-		Table("businesses").
+		Table("business").
 		Select("id").
 		Where("parent_business_id = ? AND deleted_at IS NULL", parentID).
 		Scan(&ids).Error

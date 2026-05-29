@@ -30,6 +30,10 @@ type ManifestShipmentRow struct {
 	BusinessName       string
 	WarehouseName      string
 	CreatedAt          time.Time
+	ShipmentCreatedAt  *time.Time
+	OrderCreatedAt     *time.Time
+	ShipmentStatus     string
+	OrderStatus        string
 }
 
 type ManifestPDFInput struct {

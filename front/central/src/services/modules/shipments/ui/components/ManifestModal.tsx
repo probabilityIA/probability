@@ -5,6 +5,14 @@ import { X, FileText, RefreshCw, Truck, Download, Search } from 'lucide-react';
 import { getManifestPendingAction, generateManifestPdfAction, ManifestGroup, ManifestPendingShipment } from '../../infra/actions';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 
+function formatDate(s?: string): string {
+    if (!s) return '—';
+    try {
+        const d = new Date(s);
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' });
+    } catch { return '—'; }
+}
+
 interface ManifestModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -182,13 +190,29 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                                             </label>
                                         </div>
                                         <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                            <div className="hidden md:grid grid-cols-[24px_120px_100px_minmax(0,1fr)_110px_90px_90px_90px] gap-2 px-4 py-1.5 bg-gray-50/60 dark:bg-gray-700/30 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                                                <span></span>
+                                                <span>Guia</span>
+                                                <span>Orden</span>
+                                                <span>Cliente</span>
+                                                <span>Ciudad</span>
+                                                <span>F. Orden</span>
+                                                <span>F. Guia</span>
+                                                <span>Estados</span>
+                                            </div>
                                             {g.shipments.map((s) => (
-                                                <label key={s.shipment_id} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer text-sm">
+                                                <label key={s.shipment_id} className="grid grid-cols-[24px_120px_100px_minmax(0,1fr)_110px_90px_90px_90px] gap-2 items-center px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer text-sm">
                                                     <input type="checkbox" checked={selected.has(s.shipment_id)} onChange={() => toggle(s.shipment_id)} className="rounded" />
-                                                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 w-28 truncate">{s.tracking_number || '—'}</span>
-                                                    <span className="text-purple-700 dark:text-purple-300 font-semibold text-xs w-24 truncate">{s.order_number}</span>
-                                                    <span className="flex-1 truncate text-gray-700 dark:text-gray-200">{s.customer_name || '—'}</span>
-                                                    <span className="text-gray-500 dark:text-gray-400 text-xs w-32 truncate">{s.destination_city}</span>
+                                                    <span className="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">{s.tracking_number || '—'}</span>
+                                                    <span className="text-purple-700 dark:text-purple-300 font-semibold text-xs truncate">{s.order_number}</span>
+                                                    <span className="truncate text-gray-700 dark:text-gray-200">{s.customer_name || '—'}</span>
+                                                    <span className="text-gray-500 dark:text-gray-400 text-xs truncate">{s.destination_city}</span>
+                                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{formatDate(s.order_created_at)}</span>
+                                                    <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{formatDate(s.shipment_created_at)}</span>
+                                                    <span className="flex flex-col gap-0.5">
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 truncate">Guia: {s.shipment_status || '—'}</span>
+                                                        <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 truncate">Ord: {s.order_status || '—'}</span>
+                                                    </span>
                                                 </label>
                                             ))}
                                         </div>
