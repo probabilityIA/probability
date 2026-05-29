@@ -329,7 +329,6 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     setSelectedOrderIds(new Set());
                     setPage(1);
                   }}
-                  size={30}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}
                   disabled={loadingBusinesses}
                 >
