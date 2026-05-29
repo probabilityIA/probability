@@ -125,7 +125,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     <FlowConverge count={channels.length} />
 
                     {internal.length > 0 && (
-                        <div className="flex flex-col gap-2 w-72">
+                        <div className="flex flex-wrap justify-center gap-2 w-full">
                             {internal.flatMap(cat =>
                                 (integrationsByCategory[cat.code] || []).map(integration => (
                                     <InternalModuleRow
