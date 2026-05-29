@@ -19,13 +19,17 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-    const menuItems = [
-        { href: '/businesses', label: 'Empresas', icon: '🏢' },
-        { href: '/users', label: 'Usuarios', icon: '👤' },
-        { href: '/resources', label: 'Recursos', icon: '📦' },
-        { href: '/roles', label: 'Roles', icon: '🔐' },
-        { href: '/permissions', label: 'Permisos', icon: '📋' },
-    ];
+    const menuItems = isSuperAdmin
+        ? [
+            { href: '/businesses', label: 'Empresas', icon: '🏢' },
+            { href: '/users', label: 'Usuarios', icon: '👤' },
+            { href: '/resources', label: 'Recursos', icon: '📦' },
+            { href: '/roles', label: 'Roles', icon: '🔐' },
+            { href: '/permissions', label: 'Permisos', icon: '📋' },
+        ]
+        : [
+            { href: '/users', label: 'Usuarios', icon: '👤' },
+        ];
 
     return (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">

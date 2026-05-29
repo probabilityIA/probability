@@ -260,9 +260,9 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
     // - El scope seleccionado es "business" (2)
     const showBusinessSelector = isSuperAdmin && isCreating && selectedScope === '2';
 
-    // Mostrar selector de scope al crear usuario (sin depender de currentUser cargado)
-    // Si estamos en crear modo, mostrar selector. Se oculta si el usuario no es admin.
-    const showScopeSelector = isCreating;
+    // Solo super admins pueden elegir el scope del nuevo usuario.
+    // Para usuarios tipo business, el scope queda fijado a business (2) y el negocio se asigna automaticamente.
+    const showScopeSelector = isCreating && isSuperAdmin;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">

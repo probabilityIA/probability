@@ -80,6 +80,28 @@ func (h *handlers) Createhandlers(c *gin.Context) {
 		}
 	}
 
+	isSuperAdmin, _ := c.Get("is_super_admin")
+	requesterIsSuper, _ := isSuperAdmin.(bool)
+	if !requesterIsSuper {
+		if req.ScopeID != nil && *req.ScopeID != 2 {
+			h.logger.Warn().
+				Str("email", req.Email).
+				Any("attempted_scope_id", req.ScopeID).
+				Msg("Usuario no super admin intento crear usuario con scope distinto a business; rechazado")
+			c.JSON(http.StatusForbidden, response.UserErrorResponse{
+				Error: "No tienes permiso para crear usuarios de ese tipo",
+			})
+			return
+		}
+		businessScope := uint(2)
+		req.ScopeID = &businessScope
+
+		requesterBusinessIDRaw, _ := c.Get("business_id")
+		if requesterBusinessID, ok := requesterBusinessIDRaw.(uint); ok && requesterBusinessID > 0 {
+			req.BusinessIDs = []uint{requesterBusinessID}
+		}
+	}
+
 	h.logger.Info().
 		Str("email", req.Email).
 		Int("business_ids_count", len(req.BusinessIDs)).
