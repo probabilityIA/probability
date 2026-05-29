@@ -15,24 +15,30 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
     const icon = CATEGORY_ICONS[integration.category] || '🔗';
     const isToggling = togglingId === integration.id;
     const isEnvioClick = integration.integration_type?.code === 'envioclick';
-    const typeName = isEnvioClick ? 'Transportadora' : integration.integration_type?.name;
+    const isInternal = integration.category === 'internal';
+    const rawTypeName = integration.integration_type?.name || '';
+    const typeName = isEnvioClick
+        ? 'Transportadora'
+        : isInternal
+            ? rawTypeName.replace(/\s*\(Modulo\)\s*$/i, '')
+            : rawTypeName;
     const hideLogo = isEnvioClick;
-    const hideInstanceName = isEnvioClick;
+    const hideInstanceName = isEnvioClick || isInternal;
 
     return (
         <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
             {hideLogo ? (
-                <div className="w-7 h-7 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-full ring-1 ring-gray-200 dark:ring-gray-600 bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
                     <span className="text-xs">{icon}</span>
                 </div>
             ) : integration.integration_type?.image_url ? (
                 <img
                     src={integration.integration_type.image_url}
                     alt={typeName || integration.name}
-                    className="w-7 h-7 rounded object-contain flex-shrink-0"
+                    className="w-9 h-9 rounded-full ring-1 ring-gray-200 dark:ring-gray-600 object-contain flex-shrink-0"
                 />
             ) : (
-                <div className="w-7 h-7 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-full ring-1 ring-gray-200 dark:ring-gray-600 bg-gray-200 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
                     <span className="text-xs">{icon}</span>
                 </div>
             )}
@@ -50,13 +56,15 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                 )}
             </div>
 
-            <button
-                onClick={() => onEdit?.(integration)}
-                className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex-shrink-0"
-                title="Editar integración"
-            >
-                <PencilSquareIcon className="w-4 h-4" />
-            </button>
+            {!isInternal && (
+                <button
+                    onClick={() => onEdit?.(integration)}
+                    className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex-shrink-0"
+                    title="Editar integración"
+                >
+                    <PencilSquareIcon className="w-4 h-4" />
+                </button>
+            )}
 
             <button
                 onClick={() => onToggle(integration)}
