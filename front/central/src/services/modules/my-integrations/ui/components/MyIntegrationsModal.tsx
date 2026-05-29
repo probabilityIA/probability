@@ -10,10 +10,10 @@ import {
 } from '@/services/integrations/core/infra/actions';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
-import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, INTERNAL_MODULE_RESOURCE_NAME } from '../../domain/types';
-import { CategoryCard } from './CategoryCard';
+import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
 import { FlowConverge, FlowDiverge } from './FlowArrow';
-import { InternalModuleRow } from './InternalModuleRow';
+import { IntegrationOrb } from './IntegrationOrb';
+import { InternalModulesOrb } from './InternalModulesOrb';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
@@ -121,10 +121,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             ) : categories.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-12">No hay categorías disponibles</p>
             ) : (
-                <div className="flex flex-col items-center w-full gap-2">
-                    <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
+                <div className="flex flex-col items-center w-full gap-3 pt-2">
+                    <div className="flex flex-wrap lg:flex-nowrap gap-6 w-full pt-2">
                         {channels.map(cat => (
-                            <CategoryCard
+                            <IntegrationOrb
                                 key={cat.code}
                                 category={cat}
                                 integrations={integrationsByCategory[cat.code] || []}
@@ -137,29 +137,20 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
 
                     <FlowConverge count={channels.length} />
 
-                    {internal.length > 0 && (
-                        <div className="flex flex-wrap justify-center gap-2 w-full">
-                            {internal.flatMap(cat =>
-                                (integrationsByCategory[cat.code] || []).map(integration => {
-                                    const resourceName = INTERNAL_MODULE_RESOURCE_NAME[integration.integration_type?.code || ''];
-                                    const isActive = resourceName ? resourceActive[resourceName] === true : false;
-                                    return (
-                                        <InternalModuleRow
-                                            key={integration.id}
-                                            integration={integration}
-                                            isActive={isActive}
-                                        />
-                                    );
-                                })
-                            )}
-                        </div>
-                    )}
+                    {internal.length > 0 && internal.map(cat => (
+                        <InternalModulesOrb
+                            key={cat.code}
+                            category={cat}
+                            integrations={integrationsByCategory[cat.code] || []}
+                            resourceActive={resourceActive}
+                        />
+                    ))}
 
                     <FlowDiverge count={services.length} />
 
-                    <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
+                    <div className="flex flex-wrap lg:flex-nowrap gap-6 w-full pt-2">
                         {services.map(cat => (
-                            <CategoryCard
+                            <IntegrationOrb
                                 key={cat.code}
                                 category={cat}
                                 integrations={integrationsByCategory[cat.code] || []}
