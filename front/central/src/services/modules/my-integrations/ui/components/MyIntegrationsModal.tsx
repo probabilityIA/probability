@@ -12,6 +12,7 @@ import type { IntegrationCategory, Integration } from '@/services/integrations/c
 import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
 import { CategoryCard } from './CategoryCard';
 import { FlowConverge, FlowDiverge } from './FlowArrow';
+import { InternalModuleRow } from './InternalModuleRow';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
@@ -107,51 +108,50 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             ) : categories.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-12">No hay categorías disponibles</p>
             ) : (
-                <div className="flex gap-4 w-full">
+                <div className="flex flex-col items-center w-full gap-2">
+                    <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
+                        {channels.map(cat => (
+                            <CategoryCard
+                                key={cat.code}
+                                category={cat}
+                                integrations={integrationsByCategory[cat.code] || []}
+                                onToggle={handleToggle}
+                                onEdit={handleEdit}
+                                togglingId={togglingId}
+                            />
+                        ))}
+                    </div>
+
+                    <FlowConverge count={channels.length} />
+
                     {internal.length > 0 && (
-                        <div className="flex flex-col gap-3 w-64 flex-shrink-0">
-                            {internal.map(cat => (
-                                <CategoryCard
-                                    key={cat.code}
-                                    category={cat}
-                                    integrations={integrationsByCategory[cat.code] || []}
-                                    onToggle={handleToggle}
-                                    onEdit={handleEdit}
-                                    togglingId={togglingId}
-                                />
-                            ))}
+                        <div className="flex flex-col gap-2 w-72">
+                            {internal.flatMap(cat =>
+                                (integrationsByCategory[cat.code] || []).map(integration => (
+                                    <InternalModuleRow
+                                        key={integration.id}
+                                        integration={integration}
+                                        onToggle={handleToggle}
+                                        togglingId={togglingId}
+                                    />
+                                ))
+                            )}
                         </div>
                     )}
 
-                    <div className="flex flex-col items-center flex-1 min-w-0">
-                        <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
-                            {channels.map(cat => (
-                                <CategoryCard
-                                    key={cat.code}
-                                    category={cat}
-                                    integrations={integrationsByCategory[cat.code] || []}
-                                    onToggle={handleToggle}
-                                    onEdit={handleEdit}
-                                    togglingId={togglingId}
-                                />
-                            ))}
-                        </div>
+                    <FlowDiverge count={services.length} />
 
-                        <FlowConverge count={channels.length} />
-                        <FlowDiverge count={services.length} />
-
-                        <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
-                            {services.map(cat => (
-                                <CategoryCard
-                                    key={cat.code}
-                                    category={cat}
-                                    integrations={integrationsByCategory[cat.code] || []}
-                                    onToggle={handleToggle}
-                                    onEdit={handleEdit}
-                                    togglingId={togglingId}
-                                />
-                            ))}
-                        </div>
+                    <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
+                        {services.map(cat => (
+                            <CategoryCard
+                                key={cat.code}
+                                category={cat}
+                                integrations={integrationsByCategory[cat.code] || []}
+                                onToggle={handleToggle}
+                                onEdit={handleEdit}
+                                togglingId={togglingId}
+                            />
+                        ))}
                     </div>
                 </div>
             )}
