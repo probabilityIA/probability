@@ -42,10 +42,9 @@ export const OrdersSidebar = memo(function OrdersSidebar() {
     const canViewProducts = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
     const canViewOrders = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
     const canViewShipments = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
-    const canViewOrderStatus = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
     const canViewNotifications = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
 
-    const hasAnyPermission = useMemo(() => canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications, [canViewProducts, canViewOrders, canViewShipments, canViewOrderStatus, canViewNotifications]);
+    const hasAnyPermission = useMemo(() => canViewProducts || canViewOrders || canViewShipments || canViewNotifications, [canViewProducts, canViewOrders, canViewShipments, canViewNotifications]);
     if (!hasAnyPermission) {
         return null;
     }
@@ -151,7 +150,7 @@ export const OrdersSidebar = memo(function OrdersSidebar() {
                     )}
 
                     {/* CONFIGURACIÓN */}
-                    {(canViewOrderStatus || canViewNotifications) && (
+                    {canViewNotifications && (
                         <div>
                             {isExpanded && (
                                 <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
@@ -159,23 +158,6 @@ export const OrdersSidebar = memo(function OrdersSidebar() {
                                 </h3>
                             )}
                             <ul className="space-y-0.5">
-                                {canViewOrderStatus && (
-                                    <li>
-                                        <Link 
-                                            href="/order-status" 
-                                            className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
-                                                isActive('/order-status') 
-                                                    ? 'bg-gray-100 text-gray-900 dark:text-white border-l-2 border-gray-300' 
-                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:bg-gray-50 hover:text-gray-900 dark:text-white'
-                                            }`}
-                                        >
-                                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            {isExpanded && <span>Estados de Orden</span>}
-                                        </Link>
-                                    </li>
-                                )}
                                 {canViewNotifications && (
                                     <li>
                                         <Link 

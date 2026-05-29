@@ -16,7 +16,6 @@ const RESOURCE_ROUTE_MAP: Record<string, string> = {
     'Envios': '/shipments',
     'Integraciones': '/integrations',
     'Configuración de Notificaciones': '/notification-config',
-    'Estado de Ordenes': '/order-status',
     'Facturacion': '/invoicing',
 };
 

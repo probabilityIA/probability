@@ -21,12 +21,9 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     // Verificar permisos para cada recurso
     const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
     const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
-    const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
 
-    // Solo mostrar si estamos en alguna de estas secciones
     const isInOrdersModule = pathname.startsWith('/orders') ||
                             pathname.startsWith('/shipments') ||
-                            pathname.startsWith('/order-status') ||
                             pathname.startsWith('/shipping-margins');
 
     if (!isInOrdersModule) {
@@ -56,7 +53,6 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
             canViewShipments && { href: '/shipments/cod', label: 'Recaudo contra entrega', icon: '💵' },
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
-            canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },
             isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '💰' },
         ].filter(Boolean) },
     ];

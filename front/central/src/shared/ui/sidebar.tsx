@@ -69,7 +69,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
-  const ordersRoutes = ['/orders', '/shipments', '/order-status'];
+  const ordersRoutes = ['/orders', '/shipments'];
   const inventoryRoutes = ['/products', '/warehouses', '/inventory'];
   const invoicingRoutes = ['/invoicing'];
   const deliveryRoutes = ['/delivery'];
@@ -122,8 +122,6 @@ export function Sidebar({ user }: SidebarProps) {
     || hasPermission('Inventario-Scan', 'Read')
     || hasPermission('Inventario-Sync-Logs', 'Read');
 
-  // Configuracion de Ordenes: Solo para super admins (Plataforma)
-  const canViewOrderStatus = isSuperAdmin;
   const canViewNotifications = isSuperAdmin || hasPermission('Notificaciones', 'Read');
 
   // Billetera
@@ -147,7 +145,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
-  const canAccessOrders = canViewOrders || canViewShipments || canViewOrderStatus;
+  const canAccessOrders = canViewOrders || canViewShipments;
   const canAccessInventory = canViewProducts || canViewWarehouses || canViewInventory;
   const canAccessInvoicing = canViewInvoices || canViewInvoicingProviders || canViewInvoicingConfigs;
 
@@ -167,7 +165,6 @@ export function Sidebar({ user }: SidebarProps) {
     if (canViewOrders) return '/orders';
     if (canViewProducts) return '/products';
     if (canViewShipments) return '/shipments';
-    if (canViewOrderStatus) return '/order-status';
     if (canViewNotifications) return '/notification-config';
     return '/orders';
   };
@@ -435,13 +432,13 @@ export function Sidebar({ user }: SidebarProps) {
                     href="/orders"
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${pathname.startsWith('/orders') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status')
+                      ${pathname.startsWith('/orders') || pathname.startsWith('/shipments')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
-                    {(pathname.startsWith('/orders') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status')) && (
+                    {(pathname.startsWith('/orders') || pathname.startsWith('/shipments')) && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
                         style={{ backgroundColor: 'var(--color-tertiary)' }}
