@@ -5,6 +5,7 @@
  */
 export const CHANNEL_CODES = ['platform', 'ecommerce'] as const;
 export const SERVICE_CODES = ['messaging', 'invoicing', 'shipping', 'payment'] as const;
+export const INTERNAL_CODES = ['internal'] as const;
 
 export const CATEGORY_ICONS: Record<string, string> = {
     platform: '🧩',
@@ -13,4 +14,5 @@ export const CATEGORY_ICONS: Record<string, string> = {
     messaging: '💬',
     payment: '💳',
     shipping: '🚚',
+    internal: '⚙️',
 };

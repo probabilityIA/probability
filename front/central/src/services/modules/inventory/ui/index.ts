@@ -10,3 +10,5 @@ export { default as InventoryAnalyticsView } from './components/InventoryAnalyti
 export { default as MovementsByProductView } from './components/MovementsByProductView';
 export { default as MovementsByWarehouseView } from './components/MovementsByWarehouseView';
 export { default as MovementsByFamilyView } from './components/MovementsByFamilyView';
+export { InventoryDisabledNotice } from './components/InventoryDisabledNotice';
+export { useInventoryModuleActive } from './hooks/useInventoryModuleActive';

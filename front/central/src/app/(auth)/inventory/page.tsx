@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AdjustmentsHorizontalIcon, BuildingStorefrontIcon, CubeIcon, ChartBarIcon } from '@heroicons/react/24/outline';
-import { AdjustStockModal, TransferStockModal, ProductInventoryView, WarehouseInventoryView, InventoryAnalyticsView } from '@/services/modules/inventory/ui';
+import { AdjustStockModal, TransferStockModal, ProductInventoryView, WarehouseInventoryView, InventoryAnalyticsView, InventoryDisabledNotice, useInventoryModuleActive } from '@/services/modules/inventory/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
@@ -23,6 +23,7 @@ export default function InventoryStockPage() {
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+    const { isActive: inventoryActive, loading: inventoryActiveLoading } = useInventoryModuleActive(effectiveBusinessId);
 
     const handleProductViewRefreshRef = useCallback((ref: () => void) => {
         setRefreshProductView(() => ref);
@@ -66,6 +67,8 @@ export default function InventoryStockPage() {
                         </svg>
                         <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver el inventario</p>
                     </div>
+                ) : !inventoryActiveLoading && !inventoryActive ? (
+                    <InventoryDisabledNotice />
                 ) : (
                     <>
                         <div className="flex gap-2">
