@@ -22,6 +22,16 @@ export function InternalModulesOrb({ category, integrations, resourceActive }: I
     const icon = CATEGORY_ICONS[category.code] || '⚙️';
     const color = category.color || '#6366F1';
 
+    const visibleIntegrations = integrations.filter(integration => {
+        const typeCode = integration.integration_type?.code || '';
+        const resourceName = INTERNAL_MODULE_RESOURCE_NAME[typeCode];
+        return resourceName ? resourceActive[resourceName] === true : false;
+    });
+
+    if (visibleIntegrations.length === 0) {
+        return null;
+    }
+
     return (
         <div className="relative">
             <div
@@ -37,12 +47,11 @@ export function InternalModulesOrb({ category, integrations, resourceActive }: I
                 style={{ borderColor: `${color}55` }}
             >
                 <div className="flex flex-wrap items-center justify-center gap-2 max-w-[42rem]">
-                    {integrations.map(integration => {
+                    {visibleIntegrations.map(integration => {
                         const typeCode = integration.integration_type?.code || '';
-                        const resourceName = INTERNAL_MODULE_RESOURCE_NAME[typeCode];
-                        const isActive = resourceName ? resourceActive[resourceName] === true : false;
                         const moduleIcon = MODULE_ICONS[typeCode] || '⚙️';
                         const displayName = (integration.integration_type?.name || integration.name).replace(/\s*\(Modulo\)\s*$/i, '');
+                        const isFunctional = integration.is_active === true;
 
                         return (
                             <div
@@ -57,9 +66,9 @@ export function InternalModulesOrb({ category, integrations, resourceActive }: I
                                 </span>
                                 <span
                                     className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                        isActive ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-gray-300 dark:bg-gray-600'
+                                        isFunctional ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'bg-gray-300 dark:bg-gray-600'
                                     }`}
-                                    title={isActive ? 'Modulo activo' : 'Modulo inactivo'}
+                                    title={isFunctional ? 'Modulo activo' : 'Modulo inactivo (sin procesamiento)'}
                                 />
                             </div>
                         );
