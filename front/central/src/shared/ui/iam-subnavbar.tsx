@@ -4,14 +4,29 @@ import React, { memo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 
 export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const pathname = usePathname();
-    const { isSuperAdmin } = usePermissions();
+    const { isSuperAdmin, permissions } = usePermissions();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
 
     const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users');
+
+    const businessIdForConfig = isSuperAdmin
+        ? (selectedBusinessId || 0)
+        : (permissions?.business_id || 0);
+    const { config } = useResourceConfig(businessIdForConfig);
+
+    const businessActiveResources = new Set<string>(
+        (config?.resources || []).filter((r: any) => r.is_active).map((r: any) => r.resource_name)
+    );
+
+    const isResourceActive = (name: string) => {
+        if (isSuperAdmin) return true;
+        return businessActiveResources.has(name);
+    };
 
     if (!isInModule) {
         return null;
@@ -19,17 +34,14 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
 
     const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
 
-    const menuItems = isSuperAdmin
-        ? [
-            { href: '/businesses', label: 'Empresas', icon: '🏢' },
-            { href: '/users', label: 'Usuarios', icon: '👤' },
-            { href: '/resources', label: 'Recursos', icon: '📦' },
-            { href: '/roles', label: 'Roles', icon: '🔐' },
-            { href: '/permissions', label: 'Permisos', icon: '📋' },
-        ]
-        : [
-            { href: '/users', label: 'Usuarios', icon: '👤' },
-        ];
+    const allMenuItems = [
+        { href: '/businesses', label: 'Empresas', icon: '🏢', resource: 'Empresas' },
+        { href: '/users', label: 'Usuarios', icon: '👤', resource: 'Usuarios' },
+        { href: '/resources', label: 'Recursos', icon: '📦', resource: 'Recursos' },
+        { href: '/roles', label: 'Roles', icon: '🔐', resource: 'Roles' },
+        { href: '/permissions', label: 'Permisos', icon: '📋', resource: 'Permisos' },
+    ];
+    const menuItems = allMenuItems.filter(i => isResourceActive(i.resource));
 
     return (
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
