@@ -258,9 +258,9 @@ func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) (
 		// Además, si tiene un business_id, solo mostrar usuarios de sus mismos negocios
 		if filters.BusinessID != nil {
 			subquery := r.database.Conn(ctx).
-				Table("user_businesses").
+				Table("business_staff").
 				Select("user_id").
-				Where("business_id = ?", *filters.BusinessID)
+				Where("business_id = ? AND user_id IS NOT NULL", *filters.BusinessID)
 			query = query.Where("\"user\".id IN (?)", subquery)
 		}
 	}
@@ -291,9 +291,9 @@ func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) (
 	if filters.BusinessID != nil && filters.RequesterScope != "business" {
 		// Solo aplicar si no es usuario business (ya se aplicó arriba)
 		subquery := r.database.Conn(ctx).
-			Table("user_businesses").
+			Table("business_staff").
 			Select("user_id").
-			Where("business_id = ?", *filters.BusinessID)
+			Where("business_id = ? AND user_id IS NOT NULL", *filters.BusinessID)
 		query = query.Where("\"user\".id IN (?)", subquery)
 	}
 	// Filtro por scope específico

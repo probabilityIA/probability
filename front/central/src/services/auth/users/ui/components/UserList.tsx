@@ -16,6 +16,7 @@ import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import { Role } from '@/services/auth/roles/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { TokenStorage } from '@/shared/utils/token-storage';
 
 export const UserList: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -285,17 +286,32 @@ export const UserList: React.FC = () => {
         }
 
         try {
-            const [rolesResponse, businessesResponse] = await Promise.all([
-                getRolesAction({ page_size: 100 }),
-                getBusinessesAction({ page: 1, per_page: 100 })
-            ]);
+            let businessesList: { id: number; name: string }[] = [];
 
-            if (rolesResponse.success && rolesResponse.data) {
-                setRoles(rolesResponse.data);
+            if (isSuperAdmin) {
+                const [rolesResponse, businessesResponse] = await Promise.all([
+                    getRolesAction({ page_size: 100 }),
+                    getBusinessesAction({ page: 1, per_page: 100 })
+                ]);
+                if (rolesResponse.success && rolesResponse.data) {
+                    setRoles(rolesResponse.data);
+                }
+                if (businessesResponse.success && businessesResponse.data) {
+                    businessesList = businessesResponse.data.map((b: any) => ({ id: b.id, name: b.name }));
+                }
+            } else {
+                const rolesResponse = await getRolesAction({ page_size: 100 });
+                if (rolesResponse.success && rolesResponse.data) {
+                    setRoles(rolesResponse.data);
+                }
+                const ownBusinesses = TokenStorage.getBusinessesData() || [];
+                businessesList = ownBusinesses.map((b: any) => ({ id: b.id, name: b.name }));
             }
 
-            if (businessesResponse.success && businessesResponse.data) {
-                setBusinesses(businessesResponse.data.map((b: any) => ({ id: b.id, name: b.name })));
+            setBusinesses(businessesList);
+
+            if (!firstAssignment && businessesList.length === 1) {
+                setSelectedBusinessId(String(businessesList[0].id));
             }
         } catch (err: any) {
             console.error('Error loading roles/businesses:', err);
