@@ -11,6 +11,7 @@ import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 import InventoryTour from '@/services/modules/inventory/ui/components/InventoryTour';
 import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
+import { InventoryDisabledNotice, useInventoryModuleActive } from '@/services/modules/inventory/ui';
 
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const [tourOpen, setTourOpen] = useState(false);
@@ -33,6 +34,8 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
         ? (selectedBusinessId || 0)
         : (permissions?.business_id || 0);
     const { config: businessConfig, loading: businessConfigLoading } = useResourceConfig(businessIdForConfig);
+    const inventoryBusinessId = businessIdForConfig > 0 ? businessIdForConfig : null;
+    const { isActive: inventoryModuleActive, loading: inventoryModuleLoading } = useInventoryModuleActive(inventoryBusinessId);
     const businessActiveResources = businessConfig?.resources
         ?.filter((r: any) => r.is_active)
         .map((r: any) => r.resource_name) ?? [];
@@ -160,6 +163,11 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
                 </div>
             </div>
             <InventoryTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
+            {!inventoryModuleLoading && !inventoryModuleActive && inventoryBusinessId !== null && (
+                <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50/50 dark:bg-amber-900/10 border-t border-amber-200 dark:border-amber-800">
+                    <InventoryDisabledNotice />
+                </div>
+            )}
         </div>
     );
 });
