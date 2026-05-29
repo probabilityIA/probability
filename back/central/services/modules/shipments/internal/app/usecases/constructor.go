@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecasemanifest"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseoriginaddress"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseshipment"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -15,6 +16,7 @@ type UseCases struct {
 	// Casos de uso modulares
 	ShipmentCRUD  *usecaseshipment.UseCaseShipment
 	OriginAddress *usecaseoriginaddress.OriginAddressUseCase
+	Manifest      *usecasemanifest.UseCaseManifest
 }
 
 func New(repo domain.IRepository, marginReader domain.IShippingMarginReader, pdfUploader domain.IPDFUploader) *UseCases {
@@ -22,6 +24,7 @@ func New(repo domain.IRepository, marginReader domain.IShippingMarginReader, pdf
 		repo:          repo,
 		ShipmentCRUD:  usecaseshipment.New(repo, marginReader, pdfUploader),
 		OriginAddress: usecaseoriginaddress.New(repo),
+		Manifest:      usecasemanifest.New(repo),
 	}
 }
 

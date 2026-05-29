@@ -245,6 +245,18 @@ func (m *RepositoryMock) GetShipmentStatsByGeozone(ctx context.Context, filter d
 	return nil, nil
 }
 
+func (m *RepositoryMock) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetBusinessForManifest(ctx context.Context, businessID uint) (*domain.ManifestBusinessInfo, error) {
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetChildBusinessIDs(ctx context.Context, parentID uint) ([]uint, error) {
+	return nil, nil
+}
+
 func (m *RepositoryMock) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
 	return nil, nil
 }

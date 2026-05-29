@@ -19,6 +19,7 @@ import {
 import { getOrdersAction } from '@/services/modules/orders/infra/actions';
 import { ManualShipmentModal } from './ManualShipmentModal';
 import { SyncProgressModal } from './SyncProgressModal';
+import { ManifestModal } from './ManifestModal';
 import { MiniAddressMap } from './MiniAddressMap';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -687,6 +688,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [isSyncing, setIsSyncing] = useState(false);
     const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+    const [isManifestModalOpen, setIsManifestModalOpen] = useState(false);
     const [isCancelingBatch, setIsCancelingBatch] = useState(false);
     const [cancelModalData, setCancelModalData] = useState<{ isOpen: boolean; type: 'single' | 'batch'; shipmentId?: string } | null>(null);
 
@@ -939,6 +941,14 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         </select>
                     )}
                     <button
+                        onClick={() => setIsManifestModalOpen(true)}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap"
+                        title="Genera el manifiesto de recolección para entregar al transportador"
+                    >
+                        <FileText size={14} />
+                        Ver Manifiesto
+                    </button>
+                    <button
                         onClick={() => setIsSyncModalOpen(true)}
                         className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors whitespace-nowrap"
                         title="Consulta el carrier y actualiza los estados de las guías activas"
@@ -1163,6 +1173,12 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 onClose={() => setIsSyncModalOpen(false)}
                 businessId={selectedBusinessId}
                 onCompleted={fetchShipments}
+            />
+
+            <ManifestModal
+                isOpen={isManifestModalOpen}
+                onClose={() => setIsManifestModalOpen(false)}
+                businessId={isSuperAdmin ? (selectedBusinessId ?? null) : (defaultBusinessId ?? null)}
             />
 
             {/* Modal de confirmación de cancelación */}

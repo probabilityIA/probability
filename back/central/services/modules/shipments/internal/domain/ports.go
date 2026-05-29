@@ -111,6 +111,10 @@ type IRepository interface {
 
 	ResolveShipmentGeozone(ctx context.Context, shipmentID uint, businessID uint) error
 	GetShipmentStatsByGeozone(ctx context.Context, filter ShipmentStatsFilter) ([]ShipmentStatsByGeozone, error)
+
+	ListPendingForManifest(ctx context.Context, filter ManifestFilter) ([]ManifestShipmentRow, error)
+	GetBusinessForManifest(ctx context.Context, businessID uint) (*ManifestBusinessInfo, error)
+	GetChildBusinessIDs(ctx context.Context, parentID uint) ([]uint, error)
 }
 
 type ShipmentStatsFilter struct {

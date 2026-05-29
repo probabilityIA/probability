@@ -212,3 +212,77 @@ export const getGuideFormatsAction = async (carrier?: string) => {
         return [];
     }
 };
+
+export interface ManifestPendingShipment {
+    shipment_id: number;
+    order_id?: string;
+    order_number: string;
+    tracking_number: string;
+    carrier: string;
+    carrier_code: string;
+    customer_name: string;
+    customer_document: string;
+    destination_address: string;
+    destination_city: string;
+    destination_state: string;
+    weight: number;
+    declared_value: number;
+    cod_total: number;
+    business_id: number;
+    business_name: string;
+}
+
+export interface ManifestGroup {
+    carrier: string;
+    count: number;
+    shipments: ManifestPendingShipment[];
+}
+
+export const getManifestPendingAction = async (businessId: number, carrier?: string): Promise<{ success: boolean; data: ManifestGroup[]; total: number; message?: string }> => {
+    try {
+        const token = await getAuthToken();
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+        const params = new URLSearchParams();
+        params.set('business_id', String(businessId));
+        params.set('include_children', 'true');
+        if (carrier) params.set('carrier', carrier);
+        const res = await fetch(`${apiBase}/shipments/manifest/pending?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store',
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            return { success: false, data: [], total: 0, message: text };
+        }
+        return await res.json();
+    } catch (error: any) {
+        console.error('Get Manifest Pending Error:', error.message);
+        return { success: false, data: [], total: 0, message: error.message };
+    }
+};
+
+export const generateManifestPdfAction = async (businessId: number, shipmentIds: number[], carrier?: string): Promise<{ success: boolean; blob?: string; filename?: string; message?: string }> => {
+    try {
+        const token = await getAuthToken();
+        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+        const res = await fetch(`${apiBase}/shipments/manifest/pdf`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: businessId, shipment_ids: shipmentIds, carrier: carrier || '' }),
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            return { success: false, message: text };
+        }
+        const buf = Buffer.from(await res.arrayBuffer());
+        const disp = res.headers.get('content-disposition') || '';
+        const match = disp.match(/filename="([^"]+)"/);
+        const filename = match ? match[1] : 'manifiesto.pdf';
+        const contentType = res.headers.get('content-type') || 'application/pdf';
+        const dataUrl = `data:${contentType};base64,${buf.toString('base64')}`;
+        return { success: true, blob: dataUrl, filename };
+    } catch (error: any) {
+        console.error('Generate Manifest PDF Error:', error.message);
+        return { success: false, message: error.message };
+    }
+};
