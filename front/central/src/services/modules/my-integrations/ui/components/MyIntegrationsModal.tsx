@@ -11,6 +11,7 @@ import {
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
 import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import { FlowConverge, FlowDiverge } from './FlowArrow';
 import { IntegrationOrb } from './IntegrationOrb';
 import { InternalModulesOrb } from './InternalModulesOrb';
@@ -22,6 +23,9 @@ interface MyIntegrationsModalProps {
 }
 
 export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
+    const { permissions, isSuperAdmin } = usePermissions();
+    const effectiveBusinessId = businessId ?? (isSuperAdmin ? null : permissions?.business_id ?? null);
+
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [resourceActive, setResourceActive] = useState<Record<string, boolean>>({});
@@ -32,12 +36,12 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         setLoading(true);
         try {
             const intParams: Record<string, any> = { page_size: 100 };
-            if (businessId) intParams.business_id = businessId;
+            if (effectiveBusinessId) intParams.business_id = effectiveBusinessId;
 
             const [catRes, intRes, resourcesRes] = await Promise.all([
                 getIntegrationCategoriesAction(),
                 getIntegrationsAction(intParams),
-                businessId ? getBusinessConfiguredResourcesAction(businessId) : Promise.resolve(null),
+                effectiveBusinessId ? getBusinessConfiguredResourcesAction(effectiveBusinessId) : Promise.resolve(null),
             ]);
 
             if (catRes.success && catRes.data) {
@@ -65,7 +69,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         } finally {
             setLoading(false);
         }
-    }, [businessId]);
+    }, [effectiveBusinessId]);
 
     useEffect(() => {
         if (isOpen) fetchData();
