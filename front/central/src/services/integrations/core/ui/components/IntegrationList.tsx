@@ -23,7 +23,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { playNotificationSound } from '@/shared/utils';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { SuperAdminBusinessSelector } from '@/shared/ui';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
@@ -101,6 +101,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     } = useIntegrations(propFilterCategory || '');
 
     const { isSuperAdmin } = usePermissions();
+    const { businesses: businessOptions } = useBusinessesSimple();
 
     // Sincronizar cambios de categoría después del montaje inicial (cambio de pestaña)
     // No causa doble fetch en el montaje porque el hook ya inicia con propFilterCategory
@@ -626,11 +627,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     const [filters, setFilters] = useState<{
         search?: string;
         type?: string;
+        business?: string;
     }>({});
 
     // Definir filtros disponibles
     const availableFilters: FilterOption[] = useMemo(() => {
-        return [
+        const filters: FilterOption[] = [
             {
                 key: 'search',
                 label: 'Nombre',
@@ -644,7 +646,19 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 options: integrationTypes,
             },
         ];
-    }, [integrationTypes]);
+        if (isSuperAdmin) {
+            filters.push({
+                key: 'business',
+                label: 'Negocio',
+                type: 'select',
+                options: (businessOptions || []).map((b: any) => ({
+                    value: String(b.id),
+                    label: b.name,
+                })),
+            });
+        }
+        return filters;
+    }, [integrationTypes, isSuperAdmin, businessOptions]);
 
     // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
@@ -668,6 +682,15 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             });
         }
 
+        if (filters.business) {
+            active.push({
+                key: 'business',
+                label: 'Negocio',
+                value: filters.business,
+                type: 'select',
+            });
+        }
+
         return active;
     }, [filters]);
 
@@ -680,11 +703,14 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 setSearch(value);
             } else if (filterKey === 'type') {
                 setFilterType(value);
+            } else if (filterKey === 'business') {
+                const parsed = value ? parseInt(value, 10) : null;
+                setFilterBusinessId(Number.isFinite(parsed as number) ? (parsed as number) : null);
             }
             return newFilters;
         });
         setPage(1);
-    }, [setSearch, setFilterType, setPage]);
+    }, [setSearch, setFilterType, setFilterBusinessId, setPage]);
 
     // Manejar eliminar filtro
     const handleRemoveFilter = useCallback((filterKey: string) => {
@@ -696,11 +722,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 setSearch('');
             } else if (filterKey === 'type') {
                 setFilterType('');
+            } else if (filterKey === 'business') {
+                setFilterBusinessId(null);
             }
             return newFilters;
         });
         setPage(1);
-    }, [setSearch, setFilterType, setPage]);
+    }, [setSearch, setFilterType, setFilterBusinessId, setPage]);
 
     // Manejar cambio de ordenamiento
     const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -1066,18 +1094,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
     return (
         <div className="space-y-4">
-            {isSuperAdmin && (
-                <div className="flex items-center gap-3 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                    <span className="text-sm font-semibold text-purple-700 dark:text-purple-300 whitespace-nowrap">Filtrar por negocio:</span>
-                    <div className="flex-1 max-w-md">
-                        <SuperAdminBusinessSelector
-                            value={filterBusinessId ?? null}
-                            onChange={(id) => { setFilterBusinessId(id); setPage(1); }}
-                            placeholder="— Todos los negocios —"
-                        />
-                    </div>
-                </div>
-            )}
             <DynamicFilters
                 availableFilters={availableFilters}
                 activeFilters={activeFilters}
