@@ -81,6 +81,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
   const [showBusinessAlert, setShowBusinessAlert] = useState(false);
+  const [businessSearch, setBusinessSearch] = useState('');
 
   const superAdminNeedsBusiness = isSuperAdmin && !selectedBusinessId;
   const currentBusinessId = propBusinessId ?? selectedBusinessId ?? 0;
@@ -320,21 +321,55 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Seleccionar Negocio <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={selectedBusinessId ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setShowBusinessAlert(false);
-                    setSelectedBusinessId(v === '' ? null : parseInt(v));
-                    setSelectedOrderIds(new Set());
-                    setPage(1);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}
-                  disabled={loadingBusinesses}
-                >
-                  <option value="">-- Selecciona un negocio --</option>
-                  {businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar negocio..."
+                    value={businessSearch}
+                    onChange={(e) => setBusinessSearch(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 ${superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}
+                    disabled={loadingBusinesses}
+                  />
+                  <div className={`border rounded-md max-h-48 overflow-y-auto ${superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'}`}>
+                    {loadingBusinesses ? (
+                      <div className="p-3 text-center text-gray-500">Cargando negocios...</div>
+                    ) : (
+                      <>
+                        <div
+                          onClick={() => {
+                            setShowBusinessAlert(false);
+                            setSelectedBusinessId(null);
+                            setBusinessSearch('');
+                            setSelectedOrderIds(new Set());
+                            setPage(1);
+                          }}
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-700 dark:hover:bg-gray-700 dark:text-gray-200"
+                        >
+                          -- Selecciona un negocio --
+                        </div>
+                        {businesses
+                          .filter(b => b.name.toLowerCase().includes(businessSearch.toLowerCase()))
+                          .map(b => (
+                            <div
+                              key={b.id}
+                              onClick={() => {
+                                setShowBusinessAlert(false);
+                                setSelectedBusinessId(b.id);
+                                setBusinessSearch('');
+                                setSelectedOrderIds(new Set());
+                                setPage(1);
+                              }}
+                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer dark:hover:bg-gray-700 ${
+                                selectedBusinessId === b.id ? 'bg-blue-100 dark:bg-blue-900 font-medium' : 'text-gray-700 dark:text-gray-200'
+                              }`}
+                            >
+                              {b.name}
+                            </div>
+                          ))}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
