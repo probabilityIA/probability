@@ -237,32 +237,66 @@ export interface ManifestPendingShipment {
     order_status: string;
 }
 
-export interface ManifestGroup {
+export interface ManifestCarrierOption {
     carrier: string;
     count: number;
-    shipments: ManifestPendingShipment[];
 }
 
-export const getManifestPendingAction = async (businessId: number, carrier?: string): Promise<{ success: boolean; data: ManifestGroup[]; total: number; message?: string }> => {
+export interface ManifestPendingPage {
+    success: boolean;
+    data: ManifestPendingShipment[];
+    carrier: string;
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    message?: string;
+}
+
+export const getManifestCarriersAction = async (businessId: number): Promise<{ success: boolean; data: ManifestCarrierOption[]; message?: string }> => {
     try {
         const token = await getAuthToken();
         const apiBase = env.API_BASE_URL;
         const params = new URLSearchParams();
         params.set('business_id', String(businessId));
         params.set('include_children', 'true');
-        if (carrier) params.set('carrier', carrier);
+        const res = await fetch(`${apiBase}/shipments/manifest/carriers?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store',
+        });
+        if (!res.ok) {
+            const text = await res.text();
+            return { success: false, data: [], message: text };
+        }
+        return await res.json();
+    } catch (error: any) {
+        console.error('Get Manifest Carriers Error:', error.message);
+        return { success: false, data: [], message: error.message };
+    }
+};
+
+export const getManifestPendingAction = async (businessId: number, carrier: string, page: number = 1, pageSize: number = 25): Promise<ManifestPendingPage> => {
+    try {
+        const token = await getAuthToken();
+        const apiBase = env.API_BASE_URL;
+        const params = new URLSearchParams();
+        params.set('business_id', String(businessId));
+        params.set('include_children', 'true');
+        params.set('carrier', carrier);
+        params.set('page', String(page));
+        params.set('page_size', String(pageSize));
         const res = await fetch(`${apiBase}/shipments/manifest/pending?${params}`, {
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store',
         });
         if (!res.ok) {
             const text = await res.text();
-            return { success: false, data: [], total: 0, message: text };
+            return { success: false, data: [], carrier, total: 0, page, page_size: pageSize, total_pages: 0, message: text };
         }
         return await res.json();
     } catch (error: any) {
         console.error('Get Manifest Pending Error:', error.message);
-        return { success: false, data: [], total: 0, message: error.message };
+        return { success: false, data: [], carrier, total: 0, page, page_size: pageSize, total_pages: 0, message: error.message };
     }
 };
 

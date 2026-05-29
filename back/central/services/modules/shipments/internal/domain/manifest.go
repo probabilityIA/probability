@@ -9,6 +9,13 @@ type ManifestFilter struct {
 	BusinessID      uint
 	IncludeChildren bool
 	Carrier         string
+	Page            int
+	PageSize        int
+}
+
+type ManifestCarrierCount struct {
+	Carrier string `json:"carrier"`
+	Count   int64  `json:"count"`
 }
 
 type ManifestShipmentRow struct {

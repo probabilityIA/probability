@@ -25,27 +25,54 @@ func (h *Handlers) ListManifestPending(c *gin.Context) {
 
 	includeChildren := c.DefaultQuery("include_children", "true") == "true"
 	carrier := strings.TrimSpace(c.Query("carrier"))
+	if carrier == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "carrier requerido"})
+		return
+	}
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "25"))
 
-	groups, err := h.uc.Manifest.ListPending(c.Request.Context(), usecasemanifest.PendingFilter{
+	result, err := h.uc.Manifest.ListPending(c.Request.Context(), usecasemanifest.PendingFilter{
 		BusinessID:      uint(bid),
 		IncludeChildren: includeChildren,
 		Carrier:         carrier,
+		Page:            page,
+		PageSize:        pageSize,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
 		return
 	}
 
-	total := 0
-	for _, g := range groups {
-		total += g.Count
-	}
-
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    groups,
-		"total":   total,
+		"success":     true,
+		"data":        result.Data,
+		"carrier":     result.Carrier,
+		"total":       result.Total,
+		"page":        result.Page,
+		"page_size":   result.PageSize,
+		"total_pages": result.TotalPages,
 	})
+}
+
+func (h *Handlers) ListManifestCarriers(c *gin.Context) {
+	businessIDStr := c.Query("business_id")
+	if businessIDStr == "" {
+		businessIDStr = strconv.Itoa(int(c.GetUint("business_id")))
+	}
+	bid, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || bid == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "business_id requerido"})
+		return
+	}
+	includeChildren := c.DefaultQuery("include_children", "true") == "true"
+
+	carriers, err := h.uc.Manifest.ListCarriers(c.Request.Context(), uint(bid), includeChildren)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": carriers})
 }
 
 type generateManifestRequest struct {

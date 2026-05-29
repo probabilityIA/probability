@@ -44,6 +44,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.GET("/cod", h.ListCODShipments)
 		shipments.POST("/:id/collect-cod", h.CollectCOD)
 
+		shipments.GET("/manifest/carriers", h.ListManifestCarriers)
 		shipments.GET("/manifest/pending", h.ListManifestPending)
 		shipments.POST("/manifest/pdf", h.GenerateManifestPDF)
 	}

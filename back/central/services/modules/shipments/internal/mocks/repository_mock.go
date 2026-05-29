@@ -245,7 +245,11 @@ func (m *RepositoryMock) GetShipmentStatsByGeozone(ctx context.Context, filter d
 	return nil, nil
 }
 
-func (m *RepositoryMock) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, error) {
+func (m *RepositoryMock) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, int64, error) {
+	return nil, 0, nil
+}
+
+func (m *RepositoryMock) ListPendingCarriers(ctx context.Context, businessID uint, includeChildren bool) ([]domain.ManifestCarrierCount, error) {
 	return nil, nil
 }
 

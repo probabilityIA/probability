@@ -21,6 +21,8 @@ type PendingFilter struct {
 	BusinessID      uint
 	IncludeChildren bool
 	Carrier         string
+	Page            int
+	PageSize        int
 }
 
 type PendingShipmentDTO struct {
@@ -46,36 +48,57 @@ type PendingShipmentDTO struct {
 	OrderStatus        string     `json:"order_status"`
 }
 
-type GroupedPending struct {
-	Carrier   string               `json:"carrier"`
-	Count     int                  `json:"count"`
-	Shipments []PendingShipmentDTO `json:"shipments"`
+type PendingPage struct {
+	Carrier    string               `json:"carrier"`
+	Data       []PendingShipmentDTO `json:"data"`
+	Total      int64                `json:"total"`
+	Page       int                  `json:"page"`
+	PageSize   int                  `json:"page_size"`
+	TotalPages int                  `json:"total_pages"`
 }
 
-func (uc *UseCaseManifest) ListPending(ctx context.Context, f PendingFilter) ([]GroupedPending, error) {
-	rows, err := uc.repo.ListPendingForManifest(ctx, domain.ManifestFilter{
+type CarrierOption struct {
+	Carrier string `json:"carrier"`
+	Count   int64  `json:"count"`
+}
+
+func (uc *UseCaseManifest) ListCarriers(ctx context.Context, businessID uint, includeChildren bool) ([]CarrierOption, error) {
+	rows, err := uc.repo.ListPendingCarriers(ctx, businessID, includeChildren)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]CarrierOption, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, CarrierOption{Carrier: r.Carrier, Count: r.Count})
+	}
+	return out, nil
+}
+
+func (uc *UseCaseManifest) ListPending(ctx context.Context, f PendingFilter) (*PendingPage, error) {
+	if f.Page < 1 {
+		f.Page = 1
+	}
+	if f.PageSize < 1 {
+		f.PageSize = 25
+	}
+	if f.PageSize > 200 {
+		f.PageSize = 200
+	}
+
+	rows, total, err := uc.repo.ListPendingForManifest(ctx, domain.ManifestFilter{
 		BusinessID:      f.BusinessID,
 		IncludeChildren: f.IncludeChildren,
 		Carrier:         f.Carrier,
+		Page:            f.Page,
+		PageSize:        f.PageSize,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	groups := map[string]*GroupedPending{}
-	order := []string{}
+	data := make([]PendingShipmentDTO, 0, len(rows))
 	for _, r := range rows {
-		key := strings.TrimSpace(r.Carrier)
-		if key == "" {
-			key = "Sin asignar"
-		}
-		g, ok := groups[key]
-		if !ok {
-			g = &GroupedPending{Carrier: key}
-			groups[key] = g
-			order = append(order, key)
-		}
-		g.Shipments = append(g.Shipments, PendingShipmentDTO{
+		data = append(data, PendingShipmentDTO{
 			ShipmentID:         r.ShipmentID,
 			OrderID:            r.OrderID,
 			OrderNumber:        r.OrderNumber,
@@ -97,14 +120,21 @@ func (uc *UseCaseManifest) ListPending(ctx context.Context, f PendingFilter) ([]
 			ShipmentStatus:     r.ShipmentStatus,
 			OrderStatus:        r.OrderStatus,
 		})
-		g.Count++
 	}
 
-	out := make([]GroupedPending, 0, len(order))
-	for _, k := range order {
-		out = append(out, *groups[k])
+	totalPages := int((total + int64(f.PageSize) - 1) / int64(f.PageSize))
+	if totalPages == 0 {
+		totalPages = 1
 	}
-	return out, nil
+
+	return &PendingPage{
+		Carrier:    f.Carrier,
+		Data:       data,
+		Total:      total,
+		Page:       f.Page,
+		PageSize:   f.PageSize,
+		TotalPages: totalPages,
+	}, nil
 }
 
 type GeneratePDFInput struct {
@@ -128,7 +158,7 @@ func (uc *UseCaseManifest) GeneratePDF(ctx context.Context, in GeneratePDFInput)
 		return nil, fmt.Errorf("no hay envios seleccionados")
 	}
 
-	rows, err := uc.repo.ListPendingForManifest(ctx, domain.ManifestFilter{
+	rows, _, err := uc.repo.ListPendingForManifest(ctx, domain.ManifestFilter{
 		BusinessID:      in.BusinessID,
 		IncludeChildren: true,
 		Carrier:         in.Carrier,
