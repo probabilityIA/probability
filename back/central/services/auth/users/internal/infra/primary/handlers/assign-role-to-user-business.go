@@ -56,16 +56,6 @@ func (h *handlers) AssignRoleToUserBusinessHandler(c *gin.Context) {
 	}
 
 	isSuperAdmin := middleware.IsSuperAdmin(c)
-	if !isSuperAdmin && authenticatedUserID != uint(userID) {
-		h.logger.Warn(ctx).
-			Uint("authenticated_user_id", authenticatedUserID).
-			Uint("target_user_id", uint(userID)).
-			Msg("Usuario no super admin intentando asignar roles a otro usuario")
-		c.JSON(http.StatusForbidden, response.UserErrorResponse{
-			Error: "No tienes permisos para asignar roles a otros usuarios",
-		})
-		return
-	}
 
 	// Parsear request body
 	var req request.AssignRoleToUserBusinessRequest
@@ -75,6 +65,57 @@ func (h *handlers) AssignRoleToUserBusinessHandler(c *gin.Context) {
 			Error: "Datos de entrada inválidos: " + err.Error(),
 		})
 		return
+	}
+
+	if !isSuperAdmin {
+		requesterBusinessID, ok := middleware.GetBusinessID(c)
+		if !ok || requesterBusinessID == 0 {
+			c.JSON(http.StatusForbidden, response.UserErrorResponse{
+				Error: "No tienes un negocio asociado para asignar roles",
+			})
+			return
+		}
+
+		targetBusinesses, err := h.usecase.GetUserBusinesses(ctx, uint(userID))
+		if err != nil {
+			h.logger.Error(ctx).Err(err).Msg("Error verificando pertenencia del usuario al negocio")
+			c.JSON(http.StatusInternalServerError, response.UserErrorResponse{
+				Error: "Error interno al validar permisos",
+			})
+			return
+		}
+		targetInSameBusiness := false
+		for _, b := range targetBusinesses {
+			if b.ID == requesterBusinessID {
+				targetInSameBusiness = true
+				break
+			}
+		}
+		if !targetInSameBusiness && authenticatedUserID != uint(userID) {
+			h.logger.Warn(ctx).
+				Uint("authenticated_user_id", authenticatedUserID).
+				Uint("target_user_id", uint(userID)).
+				Uint("requester_business_id", requesterBusinessID).
+				Msg("Usuario no super admin intentando asignar rol a usuario fuera de su negocio")
+			c.JSON(http.StatusForbidden, response.UserErrorResponse{
+				Error: "Solo puedes asignar roles a usuarios de tu propio negocio",
+			})
+			return
+		}
+
+		for _, a := range req.Assignments {
+			if a.BusinessID != requesterBusinessID {
+				h.logger.Warn(ctx).
+					Uint("authenticated_user_id", authenticatedUserID).
+					Uint("requester_business_id", requesterBusinessID).
+					Uint("attempted_business_id", a.BusinessID).
+					Msg("Intento de asignacion fuera del negocio del solicitante")
+				c.JSON(http.StatusForbidden, response.UserErrorResponse{
+					Error: "Solo puedes asignar roles dentro de tu propio negocio",
+				})
+				return
+			}
+		}
 	}
 
 	if len(req.Assignments) == 0 {

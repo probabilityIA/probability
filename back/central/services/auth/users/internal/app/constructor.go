@@ -11,10 +11,15 @@ import (
 type Iapp interface {
 	GetUsers(ctx context.Context, filters domain.UserFilters) (*domain.UserListDTO, error)
 	GetUserByID(ctx context.Context, id uint) (*domain.UserDTO, error)
+	GetUserBusinesses(ctx context.Context, userID uint) ([]domain.BusinessInfoEntity, error)
 	CreateUser(ctx context.Context, user domain.CreateUserDTO) (string, string, string, error)
 	UpdateUser(ctx context.Context, id uint, user domain.UpdateUserDTO) (string, error)
 	DeleteUser(ctx context.Context, id uint) (string, error)
 	AssignRoleToUserBusiness(ctx context.Context, userID uint, assignments []domain.BusinessRoleAssignment) error
+}
+
+func (uc *UserUseCase) GetUserBusinesses(ctx context.Context, userID uint) ([]domain.BusinessInfoEntity, error) {
+	return uc.repository.GetUserBusinesses(ctx, userID)
 }
 
 // UserUseCase implementa los casos de uso para usuarios
