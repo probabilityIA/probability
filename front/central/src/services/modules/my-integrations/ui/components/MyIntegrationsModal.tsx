@@ -12,7 +12,6 @@ import type { IntegrationCategory, Integration } from '@/services/integrations/c
 import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
 import { CategoryCard } from './CategoryCard';
 import { FlowConverge, FlowDiverge } from './FlowArrow';
-import { OrdersHub } from './OrdersHub';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
@@ -139,7 +138,6 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                         </div>
 
                         <FlowConverge count={channels.length} />
-                        <OrdersHub />
                         <FlowDiverge count={services.length} />
 
                         <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full">
