@@ -56,7 +56,10 @@ type mockShopifyClient struct {
 	CreateWebhookFn  func(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error)
 	ListWebhooksFn   func(ctx context.Context, storeName, accessToken string) ([]domain.WebhookInfo, error)
 	DeleteWebhookFn  func(ctx context.Context, storeName, accessToken, webhookID string) error
-	SetDebugFn       func(enabled bool)
+
+	CreateCarrierServiceFn func(ctx context.Context, storeName, accessToken, callbackURL, name string) (string, error)
+	DeleteCarrierServiceFn func(ctx context.Context, storeName, accessToken, carrierServiceID string) error
+	SetDebugFn             func(enabled bool)
 }
 
 func (m *mockShopifyClient) ValidateToken(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error) {
@@ -104,6 +107,20 @@ func (m *mockShopifyClient) ListWebhooks(ctx context.Context, storeName, accessT
 func (m *mockShopifyClient) DeleteWebhook(ctx context.Context, storeName, accessToken, webhookID string) error {
 	if m.DeleteWebhookFn != nil {
 		return m.DeleteWebhookFn(ctx, storeName, accessToken, webhookID)
+	}
+	return nil
+}
+
+func (m *mockShopifyClient) CreateCarrierService(ctx context.Context, storeName, accessToken, callbackURL, name string) (string, error) {
+	if m.CreateCarrierServiceFn != nil {
+		return m.CreateCarrierServiceFn(ctx, storeName, accessToken, callbackURL, name)
+	}
+	return "mock-carrier-service-id", nil
+}
+
+func (m *mockShopifyClient) DeleteCarrierService(ctx context.Context, storeName, accessToken, carrierServiceID string) error {
+	if m.DeleteCarrierServiceFn != nil {
+		return m.DeleteCarrierServiceFn(ctx, storeName, accessToken, carrierServiceID)
 	}
 	return nil
 }

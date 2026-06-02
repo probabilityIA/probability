@@ -10,6 +10,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	router.GET("/tracking/search", h.PublicSearchTracking)
 	router.GET("/tracking/:tracking_number/history", h.PublicGetTrackingHistory)
 
+	router.POST("/shopify/shipping-rates/:integration_id", h.ShopifyShippingRates)
+
 	shipments := router.Group("/shipments", middleware.JWT())
 	{
 		// CRUD básico

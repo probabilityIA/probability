@@ -15,7 +15,8 @@ import {
     VerifyWebhooksResponse,
     CreateWebhookResponse,
     SyncOrdersParams,
-    IntegrationCategoriesResponse
+    IntegrationCategoriesResponse,
+    CarrierServiceResponse
 } from './types';
 
 export interface IIntegrationRepository {
@@ -39,6 +40,8 @@ export interface IIntegrationRepository {
     deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse>;
     verifyWebhooks(id: number): Promise<VerifyWebhooksResponse>;
     createWebhook(id: number): Promise<CreateWebhookResponse>;
+    enableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
+    disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
 
     // Integration Types
     getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>>;

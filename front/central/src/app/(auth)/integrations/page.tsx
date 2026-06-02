@@ -177,7 +177,7 @@ export default function IntegrationsPage() {
                 isOpen={showEditIntegrationModal}
                 onClose={handleModalClose}
                 title="Editar Integración"
-                size="full"
+                size="5xl"
             >
                 <IntegrationForm
                     integration={selectedIntegration}

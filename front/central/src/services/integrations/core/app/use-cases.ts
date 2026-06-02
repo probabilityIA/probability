@@ -16,7 +16,8 @@ import {
     VerifyWebhooksResponse,
     CreateWebhookResponse,
     SyncOrdersParams,
-    IntegrationCategoriesResponse
+    IntegrationCategoriesResponse,
+    CarrierServiceResponse
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -129,6 +130,14 @@ export class IntegrationUseCases {
 
     async createWebhook(id: number): Promise<CreateWebhookResponse> {
         return this.repository.createWebhook(id);
+    }
+
+    async enableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
+        return this.repository.enableShopifyCarrierService(id);
+    }
+
+    async disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
+        return this.repository.disableShopifyCarrierService(id);
     }
 
     // Integration Categories

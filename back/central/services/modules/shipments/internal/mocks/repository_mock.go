@@ -25,6 +25,8 @@ type RepositoryMock struct {
 	ClearOrderGuideDataFn             func(ctx context.Context, orderID string) error
 	EnsureAllBusinessesActiveFn       func(ctx context.Context) error
 	GetOrderIntegrationIDFn           func(ctx context.Context, orderUUID string) (uint, error)
+	GetIntegrationBusinessIDFn        func(ctx context.Context, integrationID uint) (uint, error)
+	GetCityDaneByNameFn               func(ctx context.Context, city, province string) (string, error)
 	CreateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	GetOriginAddressByIDFn            func(ctx context.Context, id uint) (*domain.OriginAddress, error)
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
@@ -158,6 +160,20 @@ func (m *RepositoryMock) GetOrderIntegrationID(ctx context.Context, orderUUID st
 		return m.GetOrderIntegrationIDFn(ctx, orderUUID)
 	}
 	return 0, nil
+}
+
+func (m *RepositoryMock) GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error) {
+	if m.GetIntegrationBusinessIDFn != nil {
+		return m.GetIntegrationBusinessIDFn(ctx, integrationID)
+	}
+	return 0, nil
+}
+
+func (m *RepositoryMock) GetCityDaneByName(ctx context.Context, city, province string) (string, error) {
+	if m.GetCityDaneByNameFn != nil {
+		return m.GetCityDaneByNameFn(ctx, city, province)
+	}
+	return "", nil
 }
 
 func (m *RepositoryMock) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {

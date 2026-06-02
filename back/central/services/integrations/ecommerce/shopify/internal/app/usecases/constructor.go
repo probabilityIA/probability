@@ -33,6 +33,8 @@ type IShopifyUseCase interface {
 	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookInfo, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 	GetClientSecretByShopDomain(ctx context.Context, shopDomain string) (string, error)
+	EnableCarrierCalculatedShipping(ctx context.Context, integrationID string, publicBaseURL string) (string, error)
+	DisableCarrierCalculatedShipping(ctx context.Context, integrationID string) error
 }
 
 // New crea una nueva instancia de IShopifyUseCase

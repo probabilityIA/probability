@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -48,6 +49,55 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 
 	correlationID := uuid.New().String()
 
+	result, err := h.runQuote(c.Request.Context(), carrier, businessID, raw, correlationID, 30*time.Second)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al enviar solicitud de cotización: " + err.Error()})
+		return
+	}
+
+	switch result.Status {
+	case quoteStatusTimeout:
+		c.JSON(http.StatusRequestTimeout, gin.H{
+			"success":        false,
+			"message":        "La cotización tardó demasiado. Por favor intente nuevamente.",
+			"correlation_id": correlationID,
+		})
+	case quoteStatusAccepted:
+		c.JSON(http.StatusAccepted, gin.H{
+			"success":        true,
+			"message":        "Solicitud de cotización enviada. Será procesada en breve.",
+			"correlation_id": correlationID,
+		})
+	case quoteStatusError:
+		c.JSON(http.StatusOK, gin.H{
+			"success":        false,
+			"message":        result.Error,
+			"correlation_id": correlationID,
+		})
+	default:
+		c.JSON(http.StatusOK, gin.H{
+			"success":        true,
+			"message":        "Cotización exitosa",
+			"correlation_id": correlationID,
+			"data":           gin.H{"rates": getRatesFromData(result.Data)},
+		})
+	}
+}
+
+const (
+	quoteStatusSuccess  = "success"
+	quoteStatusError    = "error"
+	quoteStatusTimeout  = "timeout"
+	quoteStatusAccepted = "accepted"
+)
+
+type quoteResult struct {
+	Status string
+	Data   map[string]interface{}
+	Error  string
+}
+
+func (h *Handlers) runQuote(ctx context.Context, carrier *domain.CarrierInfo, businessID uint, payload map[string]interface{}, correlationID string, timeout time.Duration) (*quoteResult, error) {
 	effectiveBaseURL := carrier.BaseURL
 	if carrier.IsTesting && carrier.BaseURLTest != "" {
 		effectiveBaseURL = carrier.BaseURLTest
@@ -63,81 +113,53 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		BaseURL:           effectiveBaseURL,
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
-		Payload:           raw,
+		Payload:           payload,
 	}
 
-	if err := h.transportPub.PublishTransportRequest(c.Request.Context(), msg); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al enviar solicitud de cotización: " + err.Error()})
-		return
+	if err := h.transportPub.PublishTransportRequest(ctx, msg); err != nil {
+		return nil, err
 	}
 
-	// If Redis is available, poll synchronously for the quote result
-	if h.redisClient != nil {
-		redisKey := fmt.Sprintf("shipment:quote:result:%s", correlationID)
+	if h.redisClient == nil {
+		return &quoteResult{Status: quoteStatusAccepted}, nil
+	}
 
-		ticker := time.NewTicker(200 * time.Millisecond)
-		defer ticker.Stop()
-		timeoutTimer := time.NewTimer(30 * time.Second)
-		defer timeoutTimer.Stop()
+	redisKey := fmt.Sprintf("shipment:quote:result:%s", correlationID)
 
-		for {
-			select {
-			case <-c.Request.Context().Done():
-				return
-			case <-timeoutTimer.C:
-				c.JSON(http.StatusRequestTimeout, gin.H{
-					"success":        false,
-					"message":        "La cotización tardó demasiado. Por favor intente nuevamente.",
-					"correlation_id": correlationID,
-				})
-				return
-			case <-ticker.C:
-				val, err := h.redisClient.Get(c.Request.Context(), redisKey)
-				if err != nil {
-					continue // Key not yet available
-				}
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+	timeoutTimer := time.NewTimer(timeout)
+	defer timeoutTimer.Stop()
 
-				var result struct {
-					Status string                 `json:"status"`
-					Data   map[string]interface{} `json:"data"`
-					Error  string                 `json:"error"`
-				}
-				if err := json.Unmarshal([]byte(val), &result); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"success": false,
-						"error":   "Error al procesar resultado de cotización",
-					})
-					return
-				}
-
-				h.redisClient.Delete(c.Request.Context(), redisKey)
-
-				if result.Status == "error" {
-					c.JSON(http.StatusOK, gin.H{
-						"success":        false,
-						"message":        result.Error,
-						"correlation_id": correlationID,
-					})
-					return
-				}
-
-				c.JSON(http.StatusOK, gin.H{
-					"success":        true,
-					"message":        "Cotización exitosa",
-					"correlation_id": correlationID,
-					"data":           gin.H{"rates": getRatesFromData(result.Data)},
-				})
-				return
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-timeoutTimer.C:
+			return &quoteResult{Status: quoteStatusTimeout}, nil
+		case <-ticker.C:
+			val, err := h.redisClient.Get(ctx, redisKey)
+			if err != nil {
+				continue
 			}
+
+			var result struct {
+				Status string                 `json:"status"`
+				Data   map[string]interface{} `json:"data"`
+				Error  string                 `json:"error"`
+			}
+			if err := json.Unmarshal([]byte(val), &result); err != nil {
+				return nil, err
+			}
+
+			h.redisClient.Delete(ctx, redisKey)
+
+			if result.Status == quoteStatusError {
+				return &quoteResult{Status: quoteStatusError, Error: result.Error}, nil
+			}
+			return &quoteResult{Status: quoteStatusSuccess, Data: result.Data}, nil
 		}
 	}
-
-	// Fallback: async response when Redis is unavailable
-	c.JSON(http.StatusAccepted, gin.H{
-		"success":        true,
-		"message":        "Solicitud de cotización enviada. Será procesada en breve.",
-		"correlation_id": correlationID,
-	})
 }
 
 // getRatesFromData extracts the rates array from the transport provider response data.

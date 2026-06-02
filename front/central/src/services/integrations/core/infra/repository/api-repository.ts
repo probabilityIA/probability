@@ -18,7 +18,8 @@ import {
     CreateWebhookResponse,
     SyncOrdersParams,
     IntegrationCategory,
-    IntegrationCategoriesResponse
+    IntegrationCategoriesResponse,
+    CarrierServiceResponse
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -294,6 +295,18 @@ export class IntegrationApiRepository implements IIntegrationRepository {
 
     async createWebhook(id: number): Promise<CreateWebhookResponse> {
         return this.fetch<CreateWebhookResponse>(`/integrations/${id}/webhooks/create`, {
+            method: 'POST',
+        });
+    }
+
+    async enableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
+        return this.fetch<CarrierServiceResponse>(`/integrations/shopify/carrier-service/${id}/enable`, {
+            method: 'POST',
+        });
+    }
+
+    async disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
+        return this.fetch<CarrierServiceResponse>(`/integrations/shopify/carrier-service/${id}/disable`, {
             method: 'POST',
         });
     }

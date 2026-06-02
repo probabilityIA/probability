@@ -13,13 +13,14 @@ type ShopifyClient interface {
 	GetOrders(ctx context.Context, storeName, accessToken string, params *GetOrdersParams) ([]ShopifyOrder, string, error)
 	GetOrdersByURL(ctx context.Context, nextPageURL, accessToken string) ([]ShopifyOrder, string, error)
 	GetOrder(ctx context.Context, storeName, accessToken string, orderID string) (*ShopifyOrder, error)
-	CreateWebhook(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error) // Crea un webhook en Shopify y retorna el webhook ID
-	ListWebhooks(ctx context.Context, storeName, accessToken string) ([]WebhookInfo, error)              // Lista todos los webhooks de la tienda
-	DeleteWebhook(ctx context.Context, storeName, accessToken, webhookID string) error                   // Elimina un webhook por ID
-	SetDebug(enabled bool)                                                                               // Habilita logging de peticiones HTTP
+	CreateWebhook(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error)
+	ListWebhooks(ctx context.Context, storeName, accessToken string) ([]WebhookInfo, error)
+	DeleteWebhook(ctx context.Context, storeName, accessToken, webhookID string) error
+	CreateCarrierService(ctx context.Context, storeName, accessToken, callbackURL, name string) (string, error)
+	DeleteCarrierService(ctx context.Context, storeName, accessToken, carrierServiceID string) error
+	SetDebug(enabled bool)
 }
 
-// ISyncEventPublisher publica eventos de sincronización al exchange de eventos
 type ISyncEventPublisher interface {
 	PublishSyncEvent(ctx context.Context, integrationID uint, businessID *uint, eventType string, data map[string]interface{})
 }

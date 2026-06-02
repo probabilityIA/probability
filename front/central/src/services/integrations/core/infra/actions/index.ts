@@ -176,6 +176,14 @@ export const createWebhookAction = async (id: number, token?: string | null) => 
     return safeAction(() => getUseCases(token).then(uc => uc.createWebhook(id)));
 };
 
+export const enableShopifyCarrierServiceAction = async (id: number, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.enableShopifyCarrierService(id)));
+};
+
+export const disableShopifyCarrierServiceAction = async (id: number, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.disableShopifyCarrierService(id)));
+};
+
 // ============================================
 // Simple Actions - Para Dropdowns/Selectores
 // ============================================

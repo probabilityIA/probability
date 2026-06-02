@@ -99,6 +99,13 @@ export interface ActionResponse {
     error?: string;
 }
 
+export interface CarrierServiceResponse {
+    success: boolean;
+    message: string;
+    enabled: boolean;
+    carrier_service_id?: string;
+}
+
 export interface IntegrationType {
     id: number;
     name: string;
