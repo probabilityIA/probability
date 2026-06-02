@@ -6,7 +6,7 @@ import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import { DashboardStats } from '../../domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { TokenStorage } from '@/shared/utils/token-storage';
-import { ColombiaMap } from './ColombiaMap';
+import DashboardInteractiveMapLoader from './DashboardInteractiveMapLoader';
 import DashboardCharts from './DashboardCharts';
 import { Spinner, Alert, Select, DateRangePicker } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
@@ -1253,36 +1253,122 @@ export default function Dashboard() {
             {/* DashboardCharts con 4 tabs de gráficas interactivas */}
             {stats && <DashboardCharts stats={stats} selectedBusinessId={selectedBusinessId} />}
 
-            {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-0">
-                {/* Orders by Location - Mapa de Colombia */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 md:col-span-2 relative z-0" style={{ overflow: 'hidden' }}>
+            {/* Mapa interactivo de órdenes */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 relative z-0" style={{ overflow: 'visible' }}>
+                {(locationData || []).length > 0 ? (
+                    <DashboardInteractiveMapLoader
+                        ordersByDepartment={ordersByDepartmentData}
+                        ordersByLocation={locationData}
+                        selectedBusinessId={selectedBusinessId}
+                        height={500}
+                    />
+                ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
+                )}
+            </div>
+
+            {/* Segunda fila (después del mapa): Envíos por Transportista + Envíos por Día */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Shipments by Carrier */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
-                            <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Ubicación</h2>
+                            <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Envíos por Transportista</h2>
                         </div>
-                        <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        <div className="flex items-center gap-2">
+                            {/* Toggle Hoy / Total */}
+                            <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs font-medium">
+                                <button
+                                    onClick={() => setCarrierFilter('total')}
+                                    className={`px-3 py-1.5 transition-colors ${
+                                        carrierFilter === 'total'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    Total
+                                </button>
+                                <button
+                                    onClick={() => setCarrierFilter('today')}
+                                    className={`px-3 py-1.5 transition-colors border-l border-gray-200 dark:border-gray-700 ${
+                                        carrierFilter === 'today'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    Hoy
+                                </button>
+                            </div>
+                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        </div>
                     </div>
-                    {(locationData || []).length > 0 ? (
-                        <ColombiaMap data={locationData} height={420} />
+
+                    {/* Mostrar aviso si no hay datos */}
+                    {shipmentsByCarrierData.length > 0 ? (
+                        <CarrierBarChart data={shipmentsByCarrierData} height={340} />
+                    ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles para el período seleccionado</p>
+                    )}
+                </div>
+
+                {/* Shipments by Day of Week */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            <CalendarDaysIcon className="w-5 h-5 text-gray-400 mr-2" />
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Día</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {weekStartDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    const newDate = new Date(weekStartDate);
+                                    newDate.setDate(newDate.getDate() - 7);
+                                    setWeekStartDate(newDate);
+                                }}
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
+                                title="Semana anterior"
+                            >
+                                ←
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const newDate = new Date(weekStartDate);
+                                    newDate.setDate(newDate.getDate() + 7);
+                                    setWeekStartDate(newDate);
+                                }}
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
+                                title="Semana siguiente"
+                            >
+                                →
+                            </button>
+                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        </div>
+                    </div>
+
+                    {shipmentsByDayOfWeekData.length > 0 ? (
+                        <ChartContainer config={{}} className="h-full w-full">
+                            <ResponsiveContainer width="100%" height={340}>
+                                <BarChart data={shipmentsByDayOfWeekData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.5} vertical={false} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <Tooltip cursor={false} content={<CustomTooltip />} />
+                                    <Bar dataKey="value" shape={(props: any) => <ChartCustomGradientBar {...props} fill={CHART_GRADIENTS.amber.colors[0]} />}
+                                        className="transition-all duration-300 hover:opacity-80" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     ) : (
                         <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
-
-                {/* Orders by Department - Horizontal Bar Chart */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center">
-                            <MapPinIcon className="w-6 h-6 text-purple-500 mr-3" />
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Órdenes por Departamento</h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total de órdenes agrupadas por región</p>
-                            </div>
-                        </div>
-                        <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
-                    </div>
+            </div>
                     {ordersByDepartmentData.length > 0 ? (
                         <div style={{ height: 420, overflowY: 'auto', paddingRight: 8, borderRadius: 8 }}>
                             <ChartContainer config={{}} className="h-full w-full">
