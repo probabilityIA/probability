@@ -916,28 +916,26 @@ export default function Dashboard() {
         };
     });
 
-    // Agrupar y sumar por departamento (evitar duplicados y combinaciones ciudad+departamento)
     const ordersByDepartmentData = (() => {
         const departmentMap = new Map<string, number>();
 
-        // Normalizar variaciones de Bogotá
         const normalizeDepartment = (dept: string): string => {
-            const normalized = dept.toUpperCase().trim();
-            // Si contiene D.C, D.D, S.C o es Bogotá, devolver solo BOGOTÁ
-            if (normalized.includes('D.C') || normalized.includes('D.D') || normalized.includes('S.C') ||
-                normalized === 'BOGOTÁ' || normalized === 'BOGOTA' || normalized === 'DC' || normalized === 'DD' || normalized === 'SC') {
-                return 'BOGOTÁ';
+            let normalized = dept.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+            const parts = normalized.split(',').map((p: string) => p.trim());
+            const mainPart = parts[0];
+            const districtPart = parts.length > 1 ? parts[1] : '';
+
+            if (mainPart === 'BOGOTA' || mainPart.includes('BOGOTA') ||
+                districtPart.includes('D.C') || districtPart.includes('D.D') || districtPart.includes('S.C') ||
+                districtPart === 'DC' || districtPart === 'DD' || districtPart === 'SC') {
+                return 'BOGOTA';
             }
-            return normalized;
+            return mainPart || normalized;
         };
 
         (stats.orders_by_department || []).forEach((item: any) => {
-            // Usar solo el departamento (última parte después de la coma si existe)
             const dept = item.department || item.name || '';
-            const parts = dept.split(',').map((p: string) => p.trim());
-            let departmentName = parts[parts.length - 1]; // Tomar el último elemento (departamento)
-
-            departmentName = normalizeDepartment(departmentName);
+            const departmentName = normalizeDepartment(dept);
 
             if (departmentName) {
                 const current = departmentMap.get(departmentName) || 0;
@@ -945,7 +943,6 @@ export default function Dashboard() {
             }
         });
 
-        // Convertir a array y ordenar por valor descendente
         return Array.from(departmentMap.entries())
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value);

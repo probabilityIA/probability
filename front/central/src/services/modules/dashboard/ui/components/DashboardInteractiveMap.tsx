@@ -32,12 +32,17 @@ const DRILL_CONFIG: Record<DrillLevel, { type: string; zoomLevel: number; nextLe
 };
 
 function normalizeDepartment(dept: string): string {
-    const normalized = dept.toUpperCase().trim();
-    if (normalized.includes('D.C') || normalized.includes('D.D') || normalized.includes('S.C') ||
-        normalized === 'BOGOTA' || normalized === 'BOGOTA' || normalized === 'DC' || normalized === 'DD' || normalized === 'SC') {
+    let normalized = dept.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+    const parts = normalized.split(',').map((p: string) => p.trim());
+    const mainPart = parts[0];
+    const districtPart = parts.length > 1 ? parts[1] : '';
+
+    if (mainPart === 'BOGOTA' || mainPart.includes('BOGOTA') ||
+        districtPart.includes('D.C') || districtPart.includes('D.D') || districtPart.includes('S.C') ||
+        districtPart === 'DC' || districtPart === 'DD' || districtPart === 'SC') {
         return 'BOGOTA';
     }
-    return normalized;
+    return mainPart || normalized;
 }
 
 function FitBounds({ features, fitKey }: { features: DisplayFeature[]; fitKey: string }) {
@@ -98,10 +103,14 @@ export default function DashboardInteractiveMap({
     const ordersMap = useMemo(() => {
         if (drillLevel === 'state') {
             const map = new Map<string, number>();
+            console.log('🗺️ [STATE] Raw orders:', ordersByDepartment.map((item) => ({ raw: item.name, normalized: normalizeDepartment(item.name), value: item.value })));
             ordersByDepartment.forEach((item) => {
                 const normalized = normalizeDepartment(item.name);
                 map.set(normalized, item.value);
             });
+            console.log('🗺️ [STATE] Final orders map:', Array.from(map.entries()));
+            console.log('🗺️ [STATE] Geozones raw names:', geojsonData?.features.map((f) => f.properties.name) || []);
+            console.log('🗺️ [STATE] Geozones normalized:', geojsonData?.features.map((f) => normalizeDepartment(f.properties.name)) || []);
             return map;
         }
 
@@ -116,14 +125,35 @@ export default function DashboardInteractiveMap({
                     map.set(cityNorm, item.value);
                 }
             });
+            console.log('🗺️ [CITY] Parent:', parentDept, '| Orders:', Array.from(map.entries()));
+            console.log('🗺️ [CITY] Geozones:', geojsonData?.features.map((f) => f.properties.name) || []);
             return map;
         }
 
         return new Map<string, number>();
-    }, [drillLevel, breadcrumb, ordersByDepartment, ordersByLocation]);
+    }, [drillLevel, breadcrumb, ordersByDepartment, ordersByLocation, geojsonData]);
 
     const totalOrders = useMemo(() => {
         return Array.from(ordersMap.values()).reduce((sum, val) => sum + val, 0) || 1;
+    }, [ordersMap]);
+
+    const getQuantiles = useMemo(() => {
+        const values = Array.from(ordersMap.values()).filter((v) => v > 0).sort((a, b) => a - b);
+        if (values.length === 0) return { q1: 0, q2: 0, q3: 0 };
+
+        const getPercentile = (arr: number[], p: number) => {
+            const index = (p / 100) * (arr.length - 1);
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            const weight = index % 1;
+            return arr[lower] * (1 - weight) + arr[upper] * weight;
+        };
+
+        return {
+            q1: getPercentile(values, 25),
+            q2: getPercentile(values, 50),
+            q3: getPercentile(values, 75),
+        };
     }, [ordersMap]);
 
     const getDensityColor = (featureName: string, metric: MetricType): string => {
@@ -134,15 +164,16 @@ export default function DashboardInteractiveMap({
 
         if (metric === 'percentage') {
             const percentage = (count / totalOrders) * 100;
-            if (percentage > 66) return '#16a34a';
-            if (percentage > 33) return '#ca8a04';
+            const q3Percent = (getQuantiles.q3 / totalOrders) * 100;
+            const q1Percent = (getQuantiles.q1 / totalOrders) * 100;
+
+            if (percentage >= q3Percent) return '#16a34a';
+            if (percentage >= q1Percent) return '#ca8a04';
             return '#dc2626';
         }
 
-        const maxCount = Math.max(...Array.from(ordersMap.values()));
-        const ratio = maxCount > 0 ? count / maxCount : 0;
-        if (ratio > 0.66) return '#16a34a';
-        if (ratio > 0.33) return '#ca8a04';
+        if (count >= getQuantiles.q3) return '#16a34a';
+        if (count >= getQuantiles.q1) return '#ca8a04';
         return '#dc2626';
     };
 
@@ -150,16 +181,21 @@ export default function DashboardInteractiveMap({
         try {
             setLoading(true);
             const config = DRILL_CONFIG[level];
+            console.log(`📡 [FETCH] Requesting geozones: type=${config.type}, zoom=${config.zoomLevel}, parentId=${parentId}`);
             const response = await getGeozonesForDisplayAction(
                 config.type as any,
                 config.zoomLevel,
                 undefined,
                 parentId || undefined
             );
+            console.log(`📡 [RESPONSE] Got response:`, response);
+            console.log(`📡 [RESPONSE] Features count:`, response?.features?.length || 0);
             setGeojsonData(response);
             setDrillLevel(level);
-        } catch (error) {
-            console.error('Error loading geozones:', error);
+        } catch (error: any) {
+            console.error('❌ Error loading geozones:', error);
+            console.error('❌ Error details:', error?.message || error?.toString());
+            console.error('❌ Full error:', JSON.stringify(error));
             setGeojsonData(null);
         } finally {
             setLoading(false);
@@ -404,24 +440,30 @@ export default function DashboardInteractiveMap({
 
             {/* Leyenda de colores */}
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-                <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-200">Escala de Densidad</p>
+                <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-200">Escala de Densidad (Cuartiles)</p>
                 <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded" style={{ backgroundColor: '#16a34a' }}></div>
                         <span className="text-gray-600 dark:text-gray-300">
-                            {metricType === 'percentage' ? '&gt; 66% del total' : 'Alta densidad'}
+                            {metricType === 'percentage'
+                                ? `Top 25% (>=${((getQuantiles.q3 / totalOrders) * 100).toFixed(1)}%)`
+                                : `Top 25% (>${getQuantiles.q3.toLocaleString()} órdenes)`}
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ca8a04' }}></div>
                         <span className="text-gray-600 dark:text-gray-300">
-                            {metricType === 'percentage' ? '33-66% del total' : 'Densidad media'}
+                            {metricType === 'percentage'
+                                ? `Middle 50% (${((getQuantiles.q1 / totalOrders) * 100).toFixed(1)}%-${((getQuantiles.q3 / totalOrders) * 100).toFixed(1)}%)`
+                                : `Middle 50% (${getQuantiles.q1.toLocaleString()}-${getQuantiles.q3.toLocaleString()} órdenes)`}
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="w-4 h-4 rounded" style={{ backgroundColor: '#dc2626' }}></div>
                         <span className="text-gray-600 dark:text-gray-300">
-                            {metricType === 'percentage' ? '&lt; 33% del total' : 'Baja densidad'}
+                            {metricType === 'percentage'
+                                ? `Bottom 25% (<${((getQuantiles.q1 / totalOrders) * 100).toFixed(1)}%)`
+                                : `Bottom 25% (<${getQuantiles.q1.toLocaleString()} órdenes)`}
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
