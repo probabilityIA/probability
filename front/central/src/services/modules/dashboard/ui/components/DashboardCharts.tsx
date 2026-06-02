@@ -344,9 +344,6 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
       const filteredPayload = payload.filter((p: any) => p.value !== null && p.value !== undefined);
 
       if (data.week && data.dateRange) {
-        setHoveredValue(data.orders);
-        setHoverX(data.weekLabel);
-
         return (
           <div style={{ backgroundColor: '#1e1e2e', padding: '16px 20px', borderRadius: '12px', border: '1.5px solid #3a3a4a', minWidth: '220px' }}>
             <p style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', margin: '0 0 12px 0' }}>

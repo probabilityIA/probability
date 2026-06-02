@@ -201,6 +201,20 @@ export default function DashboardInteractiveMap({
         return geojsonData.features.filter((f) => !!f.geometry);
     }, [geojsonData]);
 
+    const departmentOptions = useMemo(() => {
+        if (!geojsonData || drillLevel !== 'state') return [];
+        return geojsonData.features
+            .map((f) => ({ id: f.properties.id, name: f.properties.name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [geojsonData, drillLevel]);
+
+    const cityOptions = useMemo(() => {
+        if (!geojsonData || drillLevel !== 'city') return [];
+        return geojsonData.features
+            .map((f) => ({ id: f.properties.id, name: f.properties.name }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }, [geojsonData, drillLevel]);
+
     return (
         <div className="space-y-4">
             {/* Header con titulo y selector de metrica */}
@@ -227,6 +241,84 @@ export default function DashboardInteractiveMap({
                     >
                         Porcentaje
                     </button>
+                </div>
+            </div>
+
+            {/* Filtros por nivel */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Colombia */}
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">País</label>
+                    <button
+                        onClick={() => handleBreadcrumbClick(-1)}
+                        className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
+                            breadcrumb.length === 0
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200'
+                        }`}
+                    >
+                        Colombia
+                    </button>
+                </div>
+
+                {/* Departamentos */}
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Departamento</label>
+                    <select
+                        value={breadcrumb.length > 0 ? breadcrumb[0].id : ''}
+                        onChange={(e) => {
+                            if (!e.target.value) {
+                                handleBreadcrumbClick(-1);
+                            } else {
+                                const dept = departmentOptions.find((d) => d.id.toString() === e.target.value);
+                                if (dept) {
+                                    setBreadcrumb([{ id: dept.id, name: dept.name, type: 'state' }]);
+                                    fetchGeozones('city', dept.id);
+                                }
+                            }
+                        }}
+                        className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600"
+                    >
+                        <option value="">Todos</option>
+                        {departmentOptions.map((dept) => (
+                            <option key={dept.id} value={dept.id}>
+                                {dept.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Ciudades */}
+                <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Ciudad</label>
+                    <select
+                        value={breadcrumb.length > 1 ? breadcrumb[1].id : ''}
+                        onChange={(e) => {
+                            if (!e.target.value) {
+                                const newBreadcrumb = breadcrumb.slice(0, 1);
+                                setBreadcrumb(newBreadcrumb);
+                                if (newBreadcrumb.length > 0) {
+                                    fetchGeozones('city', newBreadcrumb[0].id);
+                                }
+                            } else {
+                                const city = cityOptions.find((c) => c.id.toString() === e.target.value);
+                                if (city && breadcrumb.length > 0) {
+                                    const newBreadcrumb = [breadcrumb[0], { id: city.id, name: city.name, type: 'city' }];
+                                    setBreadcrumb(newBreadcrumb);
+                                    fetchGeozones('admin_district', city.id);
+                                }
+                            }
+                        }}
+                        disabled={breadcrumb.length === 0}
+                        className="w-full px-3 py-2 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                    >
+                        <option value="">Todas</option>
+                        {cityOptions.map((city) => (
+                            <option key={city.id} value={city.id}>
+                                {city.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
@@ -297,7 +389,9 @@ export default function DashboardInteractiveMap({
                                     );
                                     if (DRILL_CONFIG[drillLevel].nextLevel) {
                                         layer.on('click', () => handlePolygonClick(f));
-                                        (layer as any)._path.style.cursor = 'pointer';
+                                        if ((layer as any)._path) {
+                                            (layer as any)._path.style.cursor = 'pointer';
+                                        }
                                     }
                                 }}
                             />

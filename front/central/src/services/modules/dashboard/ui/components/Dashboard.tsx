@@ -1267,146 +1267,6 @@ export default function Dashboard() {
                 )}
             </div>
 
-            {/* Segunda fila (después del mapa): Envíos por Transportista + Envíos por Día */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Shipments by Carrier */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                            <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Envíos por Transportista</h2>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {/* Toggle Hoy / Total */}
-                            <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs font-medium">
-                                <button
-                                    onClick={() => setCarrierFilter('total')}
-                                    className={`px-3 py-1.5 transition-colors ${
-                                        carrierFilter === 'total'
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    Total
-                                </button>
-                                <button
-                                    onClick={() => setCarrierFilter('today')}
-                                    className={`px-3 py-1.5 transition-colors border-l border-gray-200 dark:border-gray-700 ${
-                                        carrierFilter === 'today'
-                                            ? 'bg-indigo-600 text-white'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
-                                    }`}
-                                >
-                                    Hoy
-                                </button>
-                            </div>
-                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
-                        </div>
-                    </div>
-
-                    {/* Mostrar aviso si no hay datos */}
-                    {shipmentsByCarrierData.length > 0 ? (
-                        <CarrierBarChart data={shipmentsByCarrierData} height={340} />
-                    ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles para el período seleccionado</p>
-                    )}
-                </div>
-
-                {/* Shipments by Day of Week */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                            <CalendarDaysIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <div>
-                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Día</h2>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {weekStartDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => {
-                                    const newDate = new Date(weekStartDate);
-                                    newDate.setDate(newDate.getDate() - 7);
-                                    setWeekStartDate(newDate);
-                                }}
-                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
-                                title="Semana anterior"
-                            >
-                                ←
-                            </button>
-                            <button
-                                onClick={() => {
-                                    const newDate = new Date(weekStartDate);
-                                    newDate.setDate(newDate.getDate() + 7);
-                                    setWeekStartDate(newDate);
-                                }}
-                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
-                                title="Semana siguiente"
-                            >
-                                →
-                            </button>
-                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
-                        </div>
-                    </div>
-
-                    {shipmentsByDayOfWeekData.length > 0 ? (
-                        <ChartContainer config={{}} className="h-full w-full">
-                            <ResponsiveContainer width="100%" height={340}>
-                                <BarChart data={shipmentsByDayOfWeekData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.5} vertical={false} />
-                                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                                    <Tooltip cursor={false} content={<CustomTooltip />} />
-                                    <Bar dataKey="value" shape={(props: any) => <ChartCustomGradientBar {...props} fill={CHART_GRADIENTS.amber.colors[0]} />}
-                                        className="transition-all duration-300 hover:opacity-80" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </ChartContainer>
-                    ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
-                    )}
-                </div>
-            </div>
-                    {ordersByDepartmentData.length > 0 ? (
-                        <div style={{ height: 420, overflowY: 'auto', paddingRight: 8, borderRadius: 8 }}>
-                            <ChartContainer config={{}} className="h-full w-full">
-                                <ResponsiveContainer width="100%" height={Math.max(420, ordersByDepartmentData.length * 40)}>
-                                    <BarChart data={ordersByDepartmentData} layout="vertical" margin={{ top: 10, right: 100, left: 10, bottom: 10 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
-                                        <XAxis type="number" tick={{ fontSize: 13, fill: '#6b7280', fontWeight: 500 }} />
-                                        <YAxis type="category" dataKey="name" width={0} tick={false} />
-                                        <Tooltip
-                                            cursor={{ fill: 'rgba(168, 85, 247, 0.1)' }}
-                                            content={<CustomTooltip />}
-                                            contentStyle={{ borderRadius: 8, border: '2px solid #a855f7' }}
-                                        />
-                                        <Bar
-                                            dataKey="value"
-                                            shape={(props: any) => <ChartCustomGradientBar {...props} fill={CHART_GRADIENTS.purple.colors[0]} />}
-                                            className="transition-all duration-300 hover:opacity-90"
-                                            radius={[0, 8, 8, 0]}
-                                        >
-                                            <LabelList
-                                                dataKey="name"
-                                                position="right"
-                                                fill="#6b7280"
-                                                fontSize={12}
-                                                fontWeight={500}
-                                                offset={8}
-                                            />
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </ChartContainer>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
-                    )}
-                </div>
-            </div>
-
             {/* Segunda fila: Envíos por Transportista + Envíos por Día */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Shipments by Carrier */}
@@ -1417,7 +1277,6 @@ export default function Dashboard() {
                             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Envíos por Transportista</h2>
                         </div>
                         <div className="flex items-center gap-2">
-                            {/* Toggle Hoy / Total */}
                             <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs font-medium">
                                 <button
                                     onClick={() => setCarrierFilter('total')}
@@ -1444,7 +1303,6 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    {/* Mostrar aviso si no hay datos */}
                     {shipmentsByCarrierData.length > 0 ? (
                         <CarrierBarChart data={shipmentsByCarrierData} height={340} />
                     ) : (
