@@ -363,6 +363,37 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               </li>
 
+              {/* Item Billetera */}
+              {canViewWallet && (
+                <li>
+                  <Link
+                    href="/wallet"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${isActive('/wallet')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {isActive('/wallet') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">
+                        Billetera
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
               {/* Item Integraciones - Solo si tiene permiso */}
               {canViewIntegrations && (
                 <li>
@@ -652,37 +683,6 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Facturación</span>
-                    )}
-                  </Link>
-                </li>
-              )}
-
-              {/* Item Billetera */}
-              {canViewWallet && (
-                <li>
-                  <Link
-                    href="/wallet"
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${isActive('/wallet')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
-                      }
-                    `}
-                  >
-                    {isActive('/wallet') && (
-                      <div
-                        className="absolute left-0 w-1 h-8 rounded-r-full"
-                        style={{ backgroundColor: 'var(--color-tertiary)' }}
-                      />
-                    )}
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">
-                        Billetera
-                      </span>
                     )}
                   </Link>
                 </li>
