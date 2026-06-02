@@ -20,6 +20,27 @@ interface StatusCount {
   icon: React.ReactNode;
 }
 
+const countByStatus = (shipments: Shipment[]): StatusCount[] => {
+  const statusMap: Record<string, StatusCount> = {
+    pending: { status: 'pending', label: 'Pendiente', count: 0, color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', icon: <Clock size={20} /> },
+    picked_up: { status: 'picked_up', label: 'Recolectado', count: 0, color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200', icon: <PackageCheck size={20} /> },
+    in_transit: { status: 'in_transit', label: 'En tránsito', count: 0, color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', icon: <Truck size={20} /> },
+    out_for_delivery: { status: 'out_for_delivery', label: 'En reparto', count: 0, color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200', icon: <MapPinned size={20} /> },
+    delivered: { status: 'delivered', label: 'Entregado', count: 0, color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={20} /> },
+    on_hold: { status: 'on_hold', label: 'Novedad', count: 0, color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', icon: <PauseCircle size={20} /> },
+    returned: { status: 'returned', label: 'Devuelto', count: 0, color: 'text-rose-700', bgColor: 'bg-rose-50 border-rose-200', icon: <RotateCcw size={20} /> },
+    cancelled: { status: 'cancelled', label: 'Cancelado', count: 0, color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', icon: <X size={20} /> },
+  };
+
+  shipments.forEach((shipment) => {
+    if (shipment.status && statusMap[shipment.status]) {
+      statusMap[shipment.status].count++;
+    }
+  });
+
+  return Object.values(statusMap).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
+};
+
 export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidgetProps) {
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,27 +78,6 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
       loadShipments();
     }
   }, [selectedBusinessId]);
-
-  const countByStatus = (shipments: Shipment[]): StatusCount[] => {
-    const statusMap: Record<string, StatusCount> = {
-      pending: { status: 'pending', label: 'Pendiente', count: 0, color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', icon: <Clock size={20} /> },
-      picked_up: { status: 'picked_up', label: 'Recolectado', count: 0, color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200', icon: <PackageCheck size={20} /> },
-      in_transit: { status: 'in_transit', label: 'En tránsito', count: 0, color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', icon: <Truck size={20} /> },
-      out_for_delivery: { status: 'out_for_delivery', label: 'En reparto', count: 0, color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200', icon: <MapPinned size={20} /> },
-      delivered: { status: 'delivered', label: 'Entregado', count: 0, color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={20} /> },
-      on_hold: { status: 'on_hold', label: 'Novedad', count: 0, color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', icon: <PauseCircle size={20} /> },
-      returned: { status: 'returned', label: 'Devuelto', count: 0, color: 'text-rose-700', bgColor: 'bg-rose-50 border-rose-200', icon: <RotateCcw size={20} /> },
-      cancelled: { status: 'cancelled', label: 'Cancelado', count: 0, color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', icon: <X size={20} /> },
-    };
-
-    shipments.forEach((shipment) => {
-      if (shipment.status && statusMap[shipment.status]) {
-        statusMap[shipment.status].count++;
-      }
-    });
-
-    return Object.values(statusMap).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
-  };
 
   if (loading) {
     return (
