@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON as GeoJSONLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getGeozonesForDisplayAction } from '@/services/modules/geozones/infra/actions';
 import { DisplayFeatureCollection, DisplayFeature } from '@/services/modules/geozones/domain/types';
 import { Spinner } from '@/shared/ui';
 
@@ -121,7 +120,8 @@ export default function DashboardInteractiveMap({
                 const parts = item.fullName.split(', ');
                 const state = parts[parts.length - 1] || '';
                 if (normalizeDepartment(state) === normalizeDepartment(parentDept)) {
-                    const cityNorm = item.name.toUpperCase().trim();
+                    const cityPart = parts[0] || item.name;
+                    const cityNorm = cityPart.toUpperCase().trim();
                     map.set(cityNorm, item.value);
                 }
             });
@@ -181,21 +181,28 @@ export default function DashboardInteractiveMap({
         try {
             setLoading(true);
             const config = DRILL_CONFIG[level];
-            console.log(`📡 [FETCH] Requesting geozones: type=${config.type}, zoom=${config.zoomLevel}, parentId=${parentId}`);
-            const response = await getGeozonesForDisplayAction(
-                config.type as any,
-                config.zoomLevel,
-                undefined,
-                parentId || undefined
-            );
-            console.log(`📡 [RESPONSE] Got response:`, response);
-            console.log(`📡 [RESPONSE] Features count:`, response?.features?.length || 0);
-            setGeojsonData(response);
+            const params = new URLSearchParams({
+                type: config.type,
+                zoom: config.zoomLevel.toString(),
+            });
+            if (parentId) {
+                params.append('parent_id', parentId.toString());
+            }
+
+            console.log(`📡 [FETCH] Requesting geozones: ${config.type} (zoom=${config.zoomLevel}, parentId=${parentId})`);
+            const url = `/api/v1/geozones/display?${params.toString()}`;
+            const response = await fetch(url, { cache: 'no-store' });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = (await response.json()) as DisplayFeatureCollection;
+            console.log(`📡 [RESPONSE] Got ${data?.features?.length || 0} features`);
+            setGeojsonData(data);
             setDrillLevel(level);
         } catch (error: any) {
-            console.error('❌ Error loading geozones:', error);
-            console.error('❌ Error details:', error?.message || error?.toString());
-            console.error('❌ Full error:', JSON.stringify(error));
+            console.error('❌ Error loading geozones:', error?.message || error);
             setGeojsonData(null);
         } finally {
             setLoading(false);
