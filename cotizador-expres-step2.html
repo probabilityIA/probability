@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador Expres - Paso 2: Cotizaciones</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafb 0%, #f0f4f8 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 900px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        /* Encabezado */
+        .modal-header {
+            padding: 32px 40px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .header-content h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2aa3b5;
+            margin-bottom: 4px;
+        }
+
+        .header-content p {
+            font-size: 14px;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #ccc;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #999;
+        }
+
+        /* Stepper */
+        .stepper {
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .step.completed .step-circle {
+            background: #2aa3b5;
+            color: white;
+        }
+
+        .step.completed .step-circle::after {
+            content: '✓';
+            font-size: 20px;
+        }
+
+        .step.active .step-circle {
+            background: #2aa3b5;
+            color: white;
+            box-shadow: 0 0 0 8px rgba(42, 163, 181, 0.15);
+        }
+
+        .step-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .step.completed .step-label {
+            color: #999;
+        }
+
+        .step.active .step-label {
+            color: #2aa3b5;
+            font-weight: 600;
+        }
+
+        .step-divider {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(90deg, #2aa3b5 0%, #2aa3b5 50%, #e0e0e0 50%, #e0e0e0 100%);
+            max-width: 100px;
+        }
+
+        /* Contenido principal */
+        .modal-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .content-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            background: #f8f8f8;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-weight: 500;
+        }
+
+        /* Grid de tarjetas */
+        .quotations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .quotations-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tarjeta de cotización */
+        .quotation-card {
+            border: 2px solid #e8e8e8;
+            border-radius: 16px;
+            padding: 24px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quotation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: radial-gradient(ellipse at center, rgba(42, 163, 181, 0.2) 0%, transparent 70%);
+        }
+
+        .quotation-card:hover {
+            border-color: #2aa3b5;
+            box-shadow: 0 8px 24px rgba(42, 163, 181, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .quotation-card.selected {
+            border-color: #2aa3b5;
+            box-shadow: 0 0 0 1px #2aa3b5, 0 12px 32px rgba(42, 163, 181, 0.15);
+            background: linear-gradient(135deg, rgba(42, 163, 181, 0.02) 0%, transparent 100%);
+        }
+
+        .quotation-card.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: #2aa3b5;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(42, 163, 181, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .carrier-logo {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(42, 163, 181, 0.08) 0%, rgba(59, 182, 200, 0.04) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 700;
+            font-size: 12px;
+            color: #2aa3b5;
+            text-align: center;
+            padding: 8px;
+            line-height: 1.2;
+        }
+
+        .carrier-info {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .carrier-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .service-badge {
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        /* Bloque de precio */
+        .price-block {
+            margin-bottom: 20px;
+        }
+
+        .price-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .price-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Divisor */
+        .card-divider {
+            height: 1px;
+            background: #f0f0f0;
+            margin: 20px 0;
+        }
+
+        /* Desglose */
+        .breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .breakdown-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .breakdown-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .breakdown-dot.freight {
+            background: #999;
+        }
+
+        .breakdown-dot.insurance-min {
+            background: #ff9500;
+        }
+
+        .breakdown-dot.insurance {
+            background: #22c55e;
+        }
+
+        .breakdown-dot.commission {
+            background: #2aa3b5;
+        }
+
+        .breakdown-value {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Pie de tarjeta */
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .delivery-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8f8f8;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+
+        .delivery-chip::before {
+            content: '🕐';
+            font-size: 14px;
+        }
+
+        .select-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #2aa3b5;
+            white-space: nowrap;
+        }
+
+        .quotation-card.selected .select-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .quotation-card.selected .select-label::before {
+            content: '✓';
+            font-weight: 700;
+        }
+
+        /* Pie del modal */
+        .modal-footer {
+            padding: 24px 40px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: #666;
+            border: 1px solid #e0e0e0;
+        }
+
+        .btn-ghost:hover {
+            background: #f8f8f8;
+            border-color: #ccc;
+            color: #1a1a1a;
+        }
+
+        .btn-primary {
+            background: #2aa3b5;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #1f8a9b;
+            box-shadow: 0 4px 12px rgba(42, 163, 181, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .modal-header,
+            .modal-content,
+            .modal-footer {
+                padding: 20px 24px;
+            }
+
+            .header-content h1 {
+                font-size: 24px;
+            }
+
+            .stepper {
+                padding: 24px 24px;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .step-label {
+                font-size: 12px;
+            }
+
+            .step-divider {
+                max-width: 50px;
+            }
+
+            .quotations-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .price-value {
+                font-size: 24px;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal">
+        <!-- Encabezado -->
+        <div class="modal-header">
+            <div class="header-content">
+                <h1>Cotizador Expres</h1>
+                <p>Selecciona la mejor opción para tu envío</p>
+            </div>
+            <button class="close-btn" onclick="alert('Modal cerrado')">×</button>
+        </div>
+
+        <!-- Stepper -->
+        <div class="stepper">
+            <div class="step completed">
+                <div class="step-circle"></div>
+                <span class="step-label">Origen y Destino</span>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step active">
+                <div class="step-circle">2</div>
+                <span class="step-label">Cotizaciones</span>
+            </div>
+        </div>
+
+        <!-- Contenido -->
+        <div class="modal-content">
+            <div class="content-header">
+                <h2>Cotizaciones Disponibles</h2>
+                <span class="hint">3 transportadoras encontradas</span>
+            </div>
+
+            <div class="quotations-grid">
+                <!-- Tarjeta 1: Coordinadora (seleccionada) -->
+                <div class="quotation-card selected" onclick="selectCard(this)">
+                    <div class="card-header">
+                        <div class="carrier-logo">COORDINADORA</div>
+                        <div class="carrier-info">
+                            <span class="carrier-name">Coordinadora</span>
+                            <span class="service-badge">Normal</span>
+                        </div>
+                    </div>
+
+                    <div class="price-block">
+                        <div class="price-label">Total</div>
+                        <div class="price-value">$10,599.20</div>
+                    </div>
+
+                    <div class="card-divider"></div>
+
+                    <div class="breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot freight"></span>
+                                Flete
+                            </span>
+                            <span class="breakdown-value">$10,019.20</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot insurance-min"></span>
+                                Seguro mín.
+                            </span>
+                            <span class="breakdown-value">$580.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot commission"></span>
+                                Comisión carrier
+                            </span>
+                            <span class="breakdown-value">$6,116.00</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="delivery-chip">2 días</span>
+                        <span class="select-label">Seleccionada</span>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Envia -->
+                <div class="quotation-card" onclick="selectCard(this)">
+                    <div class="card-header">
+                        <div class="carrier-logo">ENVIA</div>
+                        <div class="carrier-info">
+                            <span class="carrier-name">Envia</span>
+                            <span class="service-badge">Normal</span>
+                        </div>
+                    </div>
+
+                    <div class="price-block">
+                        <div class="price-label">Total</div>
+                        <div class="price-value">$11,770.80</div>
+                    </div>
+
+                    <div class="card-divider"></div>
+
+                    <div class="breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot freight"></span>
+                                Flete
+                            </span>
+                            <span class="breakdown-value">$11,770.80</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot commission"></span>
+                                Comisión carrier
+                            </span>
+                            <span class="breakdown-value">$7,299.00</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="delivery-chip">3 días</span>
+                        <span class="select-label">Seleccionar</span>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: TCC -->
+                <div class="quotation-card" onclick="selectCard(this)">
+                    <div class="card-header">
+                        <div class="carrier-logo">TCC</div>
+                        <div class="carrier-info">
+                            <span class="carrier-name">TCC</span>
+                            <span class="service-badge">Normal</span>
+                        </div>
+                    </div>
+
+                    <div class="price-block">
+                        <div class="price-label">Total</div>
+                        <div class="price-value">$18,461.76</div>
+                    </div>
+
+                    <div class="card-divider"></div>
+
+                    <div class="breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot freight"></span>
+                                Flete
+                            </span>
+                            <span class="breakdown-value">$17,781.76</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot insurance-min"></span>
+                                Seguro mín.
+                            </span>
+                            <span class="breakdown-value">$500.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot insurance"></span>
+                                Seguro
+                            </span>
+                            <span class="breakdown-value">$180.00</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">
+                                <span class="breakdown-dot commission"></span>
+                                Comisión carrier
+                            </span>
+                            <span class="breakdown-value">$4,788.00</span>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <span class="delivery-chip">2 días</span>
+                        <span class="select-label">Seleccionar</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie -->
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="alert('Volver al paso anterior')">Atrás</button>
+            <button class="btn btn-primary" onclick="confirmSelection()">Confirmar selección</button>
+        </div>
+    </div>
+
+    <script>
+        function selectCard(element) {
+            // Remover clase 'selected' de todas las tarjetas
+            document.querySelectorAll('.quotation-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            // Agregar clase 'selected' a la tarjeta clickeada
+            element.classList.add('selected');
+        }
+
+        function confirmSelection() {
+            const selectedCard = document.querySelector('.quotation-card.selected');
+            const carrierName = selectedCard.querySelector('.carrier-name').textContent;
+            const totalPrice = selectedCard.querySelector('.price-value').textContent;
+            alert(`Cotización seleccionada:\n${carrierName}\n${totalPrice}`);
+        }
+    </script>
+</body>
+</html>

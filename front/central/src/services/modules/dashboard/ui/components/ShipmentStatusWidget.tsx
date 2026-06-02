@@ -11,38 +11,40 @@ interface ShipmentStatusWidgetProps {
   selectedBusinessId?: number;
 }
 
-interface StatusCount {
-  status: string;
+interface StatusConfig {
   label: string;
-  count: number;
   color: string;
   bgColor: string;
-  icon: React.ReactNode;
+  iconType: string;
 }
 
-const countByStatus = (shipments: Shipment[]): StatusCount[] => {
-  const statusMap: Record<string, StatusCount> = {
-    pending: { status: 'pending', label: 'Pendiente', count: 0, color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', icon: <Clock size={20} /> },
-    picked_up: { status: 'picked_up', label: 'Recolectado', count: 0, color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200', icon: <PackageCheck size={20} /> },
-    in_transit: { status: 'in_transit', label: 'En tránsito', count: 0, color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', icon: <Truck size={20} /> },
-    out_for_delivery: { status: 'out_for_delivery', label: 'En reparto', count: 0, color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200', icon: <MapPinned size={20} /> },
-    delivered: { status: 'delivered', label: 'Entregado', count: 0, color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={20} /> },
-    on_hold: { status: 'on_hold', label: 'Novedad', count: 0, color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', icon: <PauseCircle size={20} /> },
-    returned: { status: 'returned', label: 'Devuelto', count: 0, color: 'text-rose-700', bgColor: 'bg-rose-50 border-rose-200', icon: <RotateCcw size={20} /> },
-    cancelled: { status: 'cancelled', label: 'Cancelado', count: 0, color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', icon: <X size={20} /> },
-  };
-
-  shipments.forEach((shipment) => {
-    if (shipment.status && statusMap[shipment.status]) {
-      statusMap[shipment.status].count++;
-    }
-  });
-
-  return Object.values(statusMap).filter(s => s.count > 0).sort((a, b) => b.count - a.count);
+const STATUS_CONFIG: Record<string, StatusConfig> = {
+  pending: { label: 'Pendiente', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200', iconType: 'clock' },
+  picked_up: { label: 'Recolectado', color: 'text-indigo-700', bgColor: 'bg-indigo-50 border-indigo-200', iconType: 'package' },
+  in_transit: { label: 'En tránsito', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200', iconType: 'truck' },
+  out_for_delivery: { label: 'En reparto', color: 'text-purple-700', bgColor: 'bg-purple-50 border-purple-200', iconType: 'mappin' },
+  delivered: { label: 'Entregado', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200', iconType: 'check' },
+  on_hold: { label: 'Novedad', color: 'text-orange-700', bgColor: 'bg-orange-50 border-orange-200', iconType: 'pause' },
+  returned: { label: 'Devuelto', color: 'text-rose-700', bgColor: 'bg-rose-50 border-rose-200', iconType: 'rotate' },
+  cancelled: { label: 'Cancelado', color: 'text-red-700', bgColor: 'bg-red-50 border-red-200', iconType: 'x' },
 };
 
+function getIcon(iconType: string) {
+  switch (iconType) {
+    case 'clock': return <Clock size={20} />;
+    case 'package': return <PackageCheck size={20} />;
+    case 'truck': return <Truck size={20} />;
+    case 'mappin': return <MapPinned size={20} />;
+    case 'check': return <CheckCircle2 size={20} />;
+    case 'pause': return <PauseCircle size={20} />;
+    case 'rotate': return <RotateCcw size={20} />;
+    case 'x': return <X size={20} />;
+    default: return null;
+  }
+}
+
 export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidgetProps) {
-  const [statusCounts, setStatusCounts] = useState<StatusCount[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalShipments, setTotalShipments] = useState(0);
@@ -62,13 +64,20 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
         }
 
         const shipments = (result as any).data || [];
-        const counts = countByStatus(shipments);
-        setStatusCounts(counts);
+        const statusCounts: Record<string, number> = {};
+
+        shipments.forEach((shipment: Shipment) => {
+          if (shipment.status) {
+            statusCounts[shipment.status] = (statusCounts[shipment.status] || 0) + 1;
+          }
+        });
+
+        setCounts(statusCounts);
         setTotalShipments(shipments.length);
         setError(null);
       } catch (err: any) {
         setError(err.message);
-        setStatusCounts([]);
+        setCounts({});
       } finally {
         setLoading(false);
       }
@@ -95,6 +104,12 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
     );
   }
 
+  const statusEntries = Object.entries(counts)
+    .filter(([_, count]) => count > 0)
+    .map(([status, count]) => ({ status, count, config: STATUS_CONFIG[status] }))
+    .filter(item => item.config)
+    .sort((a, b) => b.count - a.count);
+
   return (
     <div>
       {/* Total Summary */}
@@ -105,24 +120,22 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
 
       {/* Status Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statusCounts.map((status) => (
+        {statusEntries.map(({ status, count, config }) => (
           <Link
-            key={status.status}
-            href={`/shipments?status=${status.status}`}
-            className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md hover:scale-105 ${status.bgColor}`}
+            key={status}
+            href={`/shipments?status=${status}`}
+            className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md hover:scale-105 ${config.bgColor}`}
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className={status.color}>
-                {status.icon}
-              </div>
+            <div className={`flex items-start justify-between mb-3 ${config.color}`}>
+              {getIcon(config.iconType)}
             </div>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{status.count.toLocaleString()}</p>
-            <p className="text-sm text-gray-600">{status.label}</p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{count.toLocaleString()}</p>
+            <p className="text-sm text-gray-600">{config.label}</p>
           </Link>
         ))}
       </div>
 
-      {statusCounts.length === 0 && (
+      {statusEntries.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           <p>No hay envíos registrados</p>
         </div>
