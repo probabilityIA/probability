@@ -44,6 +44,7 @@ function getIcon(iconType: string) {
 }
 
 export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidgetProps) {
+  console.log('ShipmentStatusWidget: Mounted');
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
   useEffect(() => {
     const loadShipments = async () => {
       try {
+        console.log('ShipmentStatusWidget: Loading shipments, selectedBusinessId:', selectedBusinessId);
         setLoading(true);
         const params: any = {
           page: 1,
@@ -61,7 +63,9 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
           params.business_id = selectedBusinessId;
         }
 
+        console.log('ShipmentStatusWidget: Calling getShipmentsAction with params:', params);
         const result = await getShipmentsAction(params);
+        console.log('ShipmentStatusWidget: Got result:', result);
 
         if (!result || typeof result !== 'object' || !('data' in result)) {
           throw new Error('Invalid response format');
