@@ -7,7 +7,6 @@ import { es } from 'date-fns/locale';
 import { DashboardStats, OrdersByWeek, OrdersByMonth, ShipmentsByDayOfWeek, ShipmentsByCarrier } from '../../domain/types';
 import { CarrierDistributionCard } from '@/shared/ui/carrier-distribution-card';
 import { TopDaysChart } from './TopDaysChart';
-import { ShipmentStatusWidget } from './ShipmentStatusWidget';
 import {
   ComposedChart,
   BarChart,
@@ -121,10 +120,9 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
     { id: 'monthly', label: 'Órdenes por Mes', icon: '📊' },
     { id: 'demand', label: 'Días de Mayor Demanda', icon: '🔥' },
     { id: 'carrier', label: 'Por Transportadora', icon: '🚚' },
-    { id: 'shipment-status', label: 'Estados de Envíos', icon: '📦' },
   ];
 
-  const [activeTab, setActiveTab] = useState<'forecast' | 'monthly' | 'demand' | 'carrier' | 'shipment-status'>('forecast');
+  const [activeTab, setActiveTab] = useState<'forecast' | 'monthly' | 'demand' | 'carrier'>('forecast');
   const [tabs, setTabs] = useState(defaultTabs);
   const [draggedTab, setDraggedTab] = useState<string | null>(null);
   const [topSellingDays, setTopSellingDays] = useState<any[]>([]);
@@ -573,11 +571,6 @@ export default function DashboardCharts({ stats, selectedBusinessId }: Dashboard
             subtitle="Distribución de envíos por operador logístico"
             valueLabel="count"
           />
-        )}
-
-        {/* TAB 5: Estados de Envíos */}
-        {activeTab === 'shipment-status' && (
-          <ShipmentStatusWidget selectedBusinessId={selectedBusinessId} />
         )}
       </div>
     </div>
