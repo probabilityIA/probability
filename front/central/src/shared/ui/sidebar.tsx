@@ -533,7 +533,7 @@ export function Sidebar({ user }: SidebarProps) {
                         style={{ backgroundColor: 'var(--color-tertiary)' }}
                       />
                     )}
-                    <img src="/notification-icon.png" alt="Notificaciones" className="w-6 h-6 flex-shrink-0 object-contain" />
+                    <img src="/notification-icon.png" alt="Notificaciones" className="w-5 h-5 flex-shrink-0 object-contain" />
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Notificaciones</span>
                     )}
