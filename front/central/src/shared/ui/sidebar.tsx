@@ -337,7 +337,7 @@ export function Sidebar({ user }: SidebarProps) {
                 <Link
                   href="/home"
                   className={`
-                    flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                    flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                     ${isActive('/home')
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                       : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -369,7 +369,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/wallet"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${isActive('/wallet')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -400,7 +400,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/integrations"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${isActive('/integrations') || pathname.startsWith('/integrations')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -433,7 +433,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href={getInventoryEntryRoute()}
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/products') || pathname.startsWith('/warehouses') || pathname.startsWith('/inventory')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -462,7 +462,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/orders"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/orders') || pathname.startsWith('/shipments')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -491,7 +491,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/delivery/routes"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/delivery')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -520,7 +520,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/notification-config"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/notification-config')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -547,7 +547,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/customers"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/customers')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -576,7 +576,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/tickets"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/tickets')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
@@ -604,7 +604,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/announcements"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/announcements')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -633,7 +633,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/storefront/catalogo"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -662,7 +662,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/invoicing/invoices"
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/invoicing')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -691,7 +691,7 @@ export function Sidebar({ user }: SidebarProps) {
                 <Link
                   href="/subscription"
                   className={`
-                    flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                    flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                     ${pathname.startsWith('/subscription')
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                       : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
@@ -721,7 +721,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href={getIAMEntryRoute()}
                     className={`
-                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 p-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/users') || pathname.startsWith('/roles') || pathname.startsWith('/permissions') || pathname.startsWith('/businesses') || pathname.startsWith('/resources')
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
