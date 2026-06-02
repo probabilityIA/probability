@@ -337,10 +337,10 @@ export function Sidebar({ user }: SidebarProps) {
                 <Link
                   href="/home"
                   className={`
-                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                     ${isActive('/home')
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                      : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                     }
                   `}
                 >
@@ -369,10 +369,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/wallet"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${isActive('/wallet')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -400,10 +400,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/integrations"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${isActive('/integrations') || pathname.startsWith('/integrations')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -433,10 +433,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href={getInventoryEntryRoute()}
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/products') || pathname.startsWith('/warehouses') || pathname.startsWith('/inventory')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -462,10 +462,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/orders"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/orders') || pathname.startsWith('/shipments')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -491,10 +491,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/delivery/routes"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/delivery')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -547,10 +547,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/customers"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/customers')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -576,10 +576,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/tickets"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/tickets')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -604,10 +604,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/announcements"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/announcements')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -633,10 +633,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/storefront/catalogo"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -662,10 +662,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/invoicing/invoices"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/invoicing')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
@@ -691,10 +691,10 @@ export function Sidebar({ user }: SidebarProps) {
                 <Link
                   href="/subscription"
                   className={`
-                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                     ${pathname.startsWith('/subscription')
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                      : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                     }
                   `}
                 >
@@ -721,10 +721,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href={getIAMEntryRoute()}
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/users') || pathname.startsWith('/roles') || pathname.startsWith('/permissions') || pathname.startsWith('/businesses') || pathname.startsWith('/resources')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
