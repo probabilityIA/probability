@@ -53,11 +53,15 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
     const loadShipments = async () => {
       try {
         setLoading(true);
-        const result = await getShipmentsAction({
-          business_id: selectedBusinessId,
+        const params: any = {
           page: 1,
           page_size: 10000,
-        });
+        };
+        if (selectedBusinessId) {
+          params.business_id = selectedBusinessId;
+        }
+
+        const result = await getShipmentsAction(params);
 
         if (!result || typeof result !== 'object' || !('data' in result)) {
           throw new Error('Invalid response format');
@@ -83,9 +87,7 @@ export function ShipmentStatusWidget({ selectedBusinessId }: ShipmentStatusWidge
       }
     };
 
-    if (selectedBusinessId) {
-      loadShipments();
-    }
+    loadShipments();
   }, [selectedBusinessId]);
 
   if (loading) {
