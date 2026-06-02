@@ -520,10 +520,10 @@ export function Sidebar({ user }: SidebarProps) {
                   <Link
                     href="/notification-config"
                     className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      flex items-center gap-3 p-3 rounded-lg transition-colors duration-300
                       ${pathname.startsWith('/notification-config')
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm scale-105'
-                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                       }
                     `}
                   >
