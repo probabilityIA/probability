@@ -53,8 +53,11 @@ func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat
 	} else {
 		drawProbHeader(pdf, tr, c, scale)
 		drawProbCOD(pdf, tr, c, scale)
+		drawProbSender(pdf, tr, c, scale)
 		drawProbRecipient(pdf, tr, c, scale)
+		drawProbDetailsBox(pdf, tr, c, scale)
 		drawProbBarcode(pdf, tr, c, wCm*10-6, scale)
+		drawProbProofOfDelivery(pdf, tr, c, scale)
 		drawProbFooter(pdf, tr, c, scale)
 	}
 
@@ -283,8 +286,8 @@ func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 
 	logoH := 7.0 * scale
 	logoW := logoH * 4.7
-	if logoW > pageW*0.5 {
-		logoW = pageW * 0.5
+	if logoW > pageW*0.45 {
+		logoW = pageW * 0.45
 		logoH = logoW / 4.7
 	}
 	if len(probabilityLogoPNG) > 0 {
@@ -298,9 +301,13 @@ func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 		pdf.CellFormat(logoW, logoH, tr("PROBABILITY"), "", 0, "L", false, 0, "")
 	}
 
-	drawCarrierBadge(pdf, tr, c.Carrier, pageW-3, yStart, scale)
+	drawCarrierLogo(pdf, tr, c.Carrier, pageW-3, yStart, scale)
 
 	pdf.SetY(yStart + logoH + 1)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.SetFont("Helvetica", "B", 10*scale)
+	pdf.CellFormat(0, 4.5*scale, tr("GUIA DE TRANSPORTE"), "", 1, "C", false, 0, "")
+
 	pdf.SetTextColor(0, 0, 0)
 	business := strings.ToUpper(strings.TrimSpace(c.BusinessName))
 	if business == "" {
@@ -311,10 +318,17 @@ func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 		pdf.CellFormat(0, 3.5*scale, tr(business), "", 1, "L", false, 0, "")
 	}
 
+	line2 := []string{}
 	if c.OrderNumber != "" {
+		line2 = append(line2, "PEDIDO: "+c.OrderNumber)
+	}
+	if c.TrackingNumber != "" {
+		line2 = append(line2, "GUIA: "+c.TrackingNumber)
+	}
+	if len(line2) > 0 {
 		pdf.SetFont("Helvetica", "", 7*scale)
 		pdf.SetTextColor(80, 80, 80)
-		pdf.CellFormat(0, 3*scale, tr("Pedido: "+c.OrderNumber), "", 1, "L", false, 0, "")
+		pdf.CellFormat(0, 3*scale, tr(strings.Join(line2, "   |   ")), "", 1, "L", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
 	}
 
@@ -324,6 +338,34 @@ func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.2)
 	pdf.Ln(1.5 * scale)
+}
+
+func drawCarrierLogo(pdf *gofpdf.Fpdf, tr func(string) string, carrier string, rightX, y, scale float64) {
+	logo := getCarrierLogoBytes(carrier)
+	if len(logo) == 0 {
+		drawCarrierBadge(pdf, tr, carrier, rightX, y, scale)
+		return
+	}
+	opts := gofpdf.ImageOptions{ImageType: "PNG"}
+	name := "carrier-logo-" + carrierLogoKey(carrier)
+	pdf.RegisterImageOptionsReader(name, opts, bytes.NewReader(logo))
+	info := pdf.GetImageInfo(name)
+	boxH := 9.0 * scale
+	boxW := 22.0 * scale
+	dispW := boxW
+	dispH := boxH
+	if info != nil && info.Width() > 0 && info.Height() > 0 {
+		ratio := info.Width() / info.Height()
+		dispH = boxH
+		dispW = dispH * ratio
+		if dispW > boxW {
+			dispW = boxW
+			dispH = dispW / ratio
+		}
+	}
+	x := rightX - dispW
+	yImg := y + (boxH-dispH)/2
+	pdf.ImageOptions(name, x, yImg, dispW, dispH, false, opts, 0, "")
 }
 
 func drawCarrierBadge(pdf *gofpdf.Fpdf, tr func(string) string, carrier string, rightX, y, scale float64) {
@@ -366,12 +408,56 @@ func drawProbCOD(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFCon
 	pdf.Ln(1 * scale)
 }
 
-func drawProbRecipient(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
-	pdf.SetFont("Helvetica", "B", 7*scale)
-	pdf.SetTextColor(80, 80, 80)
-	pdf.CellFormat(0, 3*scale, tr("PARA:"), "", 1, "L", false, 0, "")
+func drawProbSender(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
+	sender := strings.ToUpper(strings.TrimSpace(c.WarehouseCompany))
+	if sender == "" {
+		sender = strings.ToUpper(strings.TrimSpace(c.BusinessName))
+	}
+	lines := []string{}
+	if v := strings.TrimSpace(c.WarehouseContact); v != "" {
+		lines = append(lines, "Contacto: "+v)
+	}
+	if v := strings.TrimSpace(c.WarehouseAddress); v != "" {
+		lines = append(lines, v)
+	}
+	if cityState := joinNonEmptyProb(", ", c.WarehouseCity, c.WarehouseState); cityState != "" {
+		lines = append(lines, cityState)
+	}
+	if v := strings.TrimSpace(c.WarehousePhone); v != "" {
+		lines = append(lines, "Tel: "+v)
+	}
+	if sender == "" && len(lines) == 0 {
+		return
+	}
 
+	pageW := pageWidth(pdf)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetFillColor(20, 40, 90)
+	pdf.SetTextColor(255, 255, 255)
+	pdf.CellFormat(pageW-6, 4*scale, tr("REMITENTE"), "", 1, "L", true, 0, "")
+	pdf.SetFillColor(255, 255, 255)
 	pdf.SetTextColor(0, 0, 0)
+
+	if sender != "" {
+		pdf.SetFont("Helvetica", "B", 8*scale)
+		pdf.CellFormat(0, 3.5*scale, tr(sender), "", 1, "L", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "", 7*scale)
+	for _, l := range lines {
+		pdf.CellFormat(0, 3*scale, tr(l), "", 1, "L", false, 0, "")
+	}
+	pdf.Ln(1 * scale)
+}
+
+func drawProbRecipient(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
+	pageW := pageWidth(pdf)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetFillColor(20, 40, 90)
+	pdf.SetTextColor(255, 255, 255)
+	pdf.CellFormat(pageW-6, 4*scale, tr("DESTINATARIO"), "", 1, "L", true, 0, "")
+	pdf.SetFillColor(255, 255, 255)
+	pdf.SetTextColor(0, 0, 0)
+
 	pdf.SetFont("Helvetica", "B", 10*scale)
 	name := strings.TrimSpace(c.CustomerName)
 	if name == "" {
@@ -409,7 +495,7 @@ func drawProbBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePD
 
 	pdf.SetFont("Helvetica", "", 7*scale)
 	pdf.SetTextColor(80, 80, 80)
-	pdf.CellFormat(0, 3*scale, tr("GUIA - "+strings.ToUpper(c.Carrier)), "", 1, "L", false, 0, "")
+	pdf.CellFormat(0, 3*scale, tr("CODIGO DE GUIA - "+strings.ToUpper(c.Carrier)), "", 1, "C", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
 
 	bcImg := buildCode128PNGProb(c.TrackingNumber, int(widthMm*8), int(10*scale*8))
@@ -425,35 +511,124 @@ func drawProbBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePD
 	pdf.Ln(1 * scale)
 }
 
+func drawProbDetailsBox(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
+	pageW := pageWidth(pdf)
+	x := 3.0
+	boxW := pageW - 6
+	colW := boxW / 4
+
+	type cell struct {
+		label string
+		value string
+	}
+	currency := c.Currency
+	if currency == "" {
+		currency = "COP"
+	}
+	weight := "N/D"
+	if c.Weight > 0 {
+		weight = fmt.Sprintf("%.1f kg", c.Weight)
+	}
+	dims := "N/D"
+	if c.Length > 0 || c.Width > 0 || c.Height > 0 {
+		dims = fmt.Sprintf("%.0fx%.0fx%.0f", c.Length, c.Width, c.Height)
+	}
+	declared := "N/D"
+	if c.DeclaredValue > 0 {
+		declared = "$" + formatMoneyProb(c.DeclaredValue)
+	}
+	cells := []cell{
+		{"PESO", weight},
+		{"DIM (cm)", dims},
+		{"VLR DECLARADO", declared},
+		{"FECHA", time.Now().Format("2006-01-02")},
+	}
+	if c.CodTotal > 0 {
+		cells[2] = cell{"CONTRA ENTREGA", "$" + formatMoneyProb(c.CodTotal)}
+	}
+
+	y := pdf.GetY()
+	labelH := 3.2 * scale
+	valueH := 4.0 * scale
+
+	pdf.SetDrawColor(120, 120, 120)
+	pdf.SetLineWidth(0.2)
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
+	pdf.SetFillColor(235, 238, 245)
+	for i, cl := range cells {
+		cx := x + float64(i)*colW
+		pdf.Rect(cx, y, colW, labelH, "FD")
+		pdf.SetXY(cx, y)
+		pdf.SetTextColor(60, 60, 60)
+		pdf.CellFormat(colW, labelH, tr(cl.label), "", 0, "C", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "B", 7.5*scale)
+	for i, cl := range cells {
+		cx := x + float64(i)*colW
+		pdf.Rect(cx, y+labelH, colW, valueH, "D")
+		pdf.SetXY(cx, y+labelH)
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(colW, valueH, tr(cl.value), "", 0, "C", false, 0, "")
+	}
+	pdf.SetFillColor(255, 255, 255)
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetY(y + labelH + valueH + 1.5*scale)
+}
+
+func drawProbProofOfDelivery(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
+	pageW := pageWidth(pdf)
+	x := 3.0
+	boxW := pageW - 6
+	y := pdf.GetY()
+	boxH := 14.0 * scale
+
+	pdf.SetDrawColor(120, 120, 120)
+	pdf.SetLineWidth(0.2)
+	pdf.Rect(x, y, boxW, boxH, "D")
+
+	pdf.SetXY(x+1.5, y+1)
+	pdf.SetFont("Helvetica", "B", 6.5*scale)
+	pdf.SetTextColor(60, 60, 60)
+	pdf.CellFormat(boxW-3, 3*scale, tr("PRUEBA DE ENTREGA"), "", 1, "L", false, 0, "")
+
+	lineY := y + boxH - 4.5*scale
+	half := (boxW - 6) / 2
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.Line(x+2, lineY, x+2+half, lineY)
+	pdf.Line(x+boxW-2-half, lineY, x+boxW-2, lineY)
+
+	pdf.SetXY(x+2, lineY+0.3)
+	pdf.SetFont("Helvetica", "", 5.5*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(half, 3*scale, tr("RECIBIDO POR (NOMBRE / CC)"), "", 0, "L", false, 0, "")
+	pdf.SetX(x + boxW - 2 - half)
+	pdf.CellFormat(half, 3*scale, tr("FIRMA / FECHA"), "", 0, "L", false, 0, "")
+
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetY(y + boxH + 1*scale)
+}
+
 func drawProbFooter(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
 	_, pageH := pdf.GetPageSize()
-	pdf.SetY(pageH - 10*scale)
+	pageW := pageWidth(pdf)
+
+	legal := "ESTE CONTRATO DE TRANSPORTE SE RIGE POR EL DECRETO 229 DE 1995 Y NORMAS QUE LO MODIFIQUEN, Y POR LOS ARTICULOS 981 Y SIGUIENTES DEL CODIGO DE COMERCIO. EL REMITENTE DECLARA QUE LA INFORMACION DE ESTA GUIA ES VERIDICA Y QUE LA MERCANCIA NO CONTIENE ARTICULOS PROHIBIDOS O DE TENENCIA RESTRINGIDA. EL VALOR DECLARADO DETERMINA EL LIMITE DE RESPONSABILIDAD DEL TRANSPORTADOR. RECLAMACIONES DENTRO DE LOS TERMINOS LEGALES."
+
+	pdf.SetY(pageH - 13*scale)
 	pdf.SetDrawColor(20, 40, 90)
 	pdf.SetLineWidth(0.3)
-	pdf.Line(3, pdf.GetY(), pageWidth(pdf)-3, pdf.GetY())
+	pdf.Line(3, pdf.GetY(), pageW-3, pdf.GetY())
 	pdf.Ln(0.5)
 
-	pdf.SetFont("Helvetica", "", 6*scale)
-	pdf.SetTextColor(80, 80, 80)
-	origen := joinNonEmptyProb(" - ", c.WarehouseCompany, c.WarehouseCity, c.WarehouseState)
-	if origen != "" {
-		pdf.CellFormat(0, 2.5*scale, tr("Desde: "+origen), "", 1, "L", false, 0, "")
-	}
+	pdf.SetFont("Helvetica", "", 4.2*scale)
+	pdf.SetTextColor(110, 110, 110)
+	pdf.MultiCell(pageW-6, 1.9*scale, tr(legal), "", "J", false)
 
-	details := []string{}
-	if c.Weight > 0 {
-		details = append(details, fmt.Sprintf("%.1f kg", c.Weight))
-	}
-	if c.Length > 0 || c.Width > 0 || c.Height > 0 {
-		details = append(details, fmt.Sprintf("%.0fx%.0fx%.0f cm", c.Length, c.Width, c.Height))
-	}
-	if c.DeclaredValue > 0 {
-		details = append(details, fmt.Sprintf("Vlr $%s", formatMoneyProb(c.DeclaredValue)))
-	}
-	if len(details) > 0 {
-		pdf.CellFormat(0, 2.5*scale, tr(strings.Join(details, "  |  ")), "", 1, "L", false, 0, "")
-	}
-	pdf.CellFormat(0, 2.5*scale, tr("Generada por Probability "+time.Now().Format("2006-01-02 15:04")), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "B", 5*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(0, 2.5*scale, tr("MERCANCIA GENERAL   |   Generada por Probability "+time.Now().Format("2006-01-02 15:04")), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
 }
 
