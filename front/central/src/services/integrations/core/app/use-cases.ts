@@ -140,6 +140,10 @@ export class IntegrationUseCases {
         return this.repository.disableShopifyCarrierService(id);
     }
 
+    async setShopifyAutoGuide(id: number, enabled: boolean): Promise<CarrierServiceResponse> {
+        return this.repository.setShopifyAutoGuide(id, enabled);
+    }
+
     // Integration Categories
     async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
         return this.repository.getIntegrationCategories();

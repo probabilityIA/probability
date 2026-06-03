@@ -311,6 +311,13 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
+    async setShopifyAutoGuide(id: number, enabled: boolean): Promise<CarrierServiceResponse> {
+        return this.fetch<CarrierServiceResponse>(`/integrations/shopify/auto-guide/${id}`, {
+            method: 'POST',
+            body: JSON.stringify({ enabled }),
+        });
+    }
+
     // Integration Categories
     async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
         return this.fetch<IntegrationCategoriesResponse>('/integration-categories', {

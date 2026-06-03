@@ -38,7 +38,8 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         if (path === '/shipments') {
             return pathname.startsWith('/shipments')
                 && !pathname.startsWith('/shipments/origin-addresses')
-                && !pathname.startsWith('/shipments/cod');
+                && !pathname.startsWith('/shipments/cod')
+                && !pathname.startsWith('/shipments/quotes');
         }
 
         // For other paths, use startsWith
@@ -51,6 +52,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
             canViewOrders && { href: '/orders', label: 'Órdenes', icon: '📦' },
             canViewShipments && { href: '/shipments', label: 'Envíos', icon: '🚚' },
             canViewShipments && { href: '/shipments/cod', label: 'Recaudo contra entrega', icon: '💵' },
+            canViewShipments && { href: '/shipments/quotes', label: 'Cotizaciones', icon: '🧾' },
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
             isSuperAdmin && { href: '/shipping-margins', label: 'Margenes de envio', icon: '💰' },

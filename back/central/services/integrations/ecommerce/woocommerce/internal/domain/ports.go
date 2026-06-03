@@ -19,6 +19,9 @@ type IWooCommerceClient interface {
 	// GetOrder obtiene una orden específica por ID.
 	// Retorna la orden tipada, los bytes crudos, y error.
 	GetOrder(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*WooCommerceOrder, []byte, error)
+
+	// CreateWebhook registra un webhook en WooCommerce para un topic y retorna su ID.
+	CreateWebhook(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
 }
 
 // IIntegrationService define las operaciones del core de integraciones

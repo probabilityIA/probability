@@ -20,6 +20,9 @@ type IWooCommerceUseCase interface {
 
 	// ProcessWebhookOrder procesa una orden recibida por webhook.
 	ProcessWebhookOrder(ctx context.Context, topic string, storeURL string, rawBody []byte) error
+
+	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
+	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
 }
 
 type wooCommerceUseCase struct {

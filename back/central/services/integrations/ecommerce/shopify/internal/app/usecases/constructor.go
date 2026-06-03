@@ -35,6 +35,7 @@ type IShopifyUseCase interface {
 	GetClientSecretByShopDomain(ctx context.Context, shopDomain string) (string, error)
 	EnableCarrierCalculatedShipping(ctx context.Context, integrationID string, publicBaseURL string) (string, error)
 	DisableCarrierCalculatedShipping(ctx context.Context, integrationID string) error
+	SetAutoGenerateGuide(ctx context.Context, integrationID string, enabled bool) error
 }
 
 // New crea una nueva instancia de IShopifyUseCase

@@ -97,7 +97,8 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 
 	payload := buildShopifyQuotePayload(req, origin, destDane)
 
-	result, err := h.runQuote(ctx, carrier, businessID, payload, uuid.New().String(), 8*time.Second)
+	correlationID := uuid.New().String()
+	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 8*time.Second)
 	if err != nil || result.Status != quoteStatusSuccess {
 		c.JSON(http.StatusOK, emptyRates)
 		return
@@ -108,8 +109,40 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 		currency = "COP"
 	}
 
-	rates := mapQuoteRatesToShopify(getRatesFromData(result.Data), currency)
+	ratesList := toRatesList(getRatesFromData(result.Data))
+
+	var quoteID uint
+	if len(ratesList) > 0 {
+		saved, saveErr := h.uc.Quotes.SaveQuote(ctx, domain.SaveQuoteInput{
+			BusinessID:       businessID,
+			IntegrationID:    uint(integrationID64),
+			Source:           domain.QuoteSourceShopify,
+			CorrelationID:    correlationID,
+			ExternalOrderRef: req.Rate.Destination.Name,
+			RequestPayload:   payload,
+			Rates:            ratesList,
+		})
+		if saveErr == nil && saved != nil {
+			quoteID = saved.ID
+		}
+	}
+
+	rates := mapQuoteRatesToShopify(ratesList, currency, quoteID)
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
+}
+
+func toRatesList(ratesData interface{}) []map[string]interface{} {
+	rawList, ok := ratesData.([]interface{})
+	if !ok {
+		return nil
+	}
+	out := make([]map[string]interface{}, 0, len(rawList))
+	for _, raw := range rawList {
+		if m, ok := raw.(map[string]interface{}); ok {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 func buildShopifyQuotePayload(req shopifyRateRequest, origin *domain.OriginAddress, destDane string) map[string]interface{} {
@@ -174,22 +207,12 @@ func buildShopifyQuotePayload(req shopifyRateRequest, origin *domain.OriginAddre
 	}
 }
 
-func mapQuoteRatesToShopify(ratesData interface{}, currency string) []shopifyRate {
+func mapQuoteRatesToShopify(ratesList []map[string]interface{}, currency string, quoteID uint) []shopifyRate {
 	out := make([]shopifyRate, 0)
-
-	rawList, ok := ratesData.([]interface{})
-	if !ok {
-		return out
-	}
 
 	now := time.Now()
 
-	for i, raw := range rawList {
-		rate, ok := raw.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
+	for i, rate := range ratesList {
 		carrierName := toStr(rate["carrier"])
 		product := toStr(rate["product"])
 		flete := toFloat(rate["flete"])
@@ -202,11 +225,16 @@ func mapQuoteRatesToShopify(ratesData interface{}, currency string) []shopifyRat
 			serviceName = carrierName + " - " + product
 		}
 
-		serviceCode := slugify(carrierName)
-		if product != "" {
-			serviceCode += "_" + slugify(product)
+		var serviceCode string
+		if quoteID > 0 {
+			serviceCode = "pq-" + strconv.FormatUint(uint64(quoteID), 10) + "-" + strconv.Itoa(i)
+		} else {
+			serviceCode = slugify(carrierName)
+			if product != "" {
+				serviceCode += "_" + slugify(product)
+			}
+			serviceCode += "_" + strconv.Itoa(i)
 		}
-		serviceCode += "_" + strconv.Itoa(i)
 
 		totalPriceCents := int64(math.Round(flete * 100))
 

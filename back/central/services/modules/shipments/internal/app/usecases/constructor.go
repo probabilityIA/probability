@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecasemanifest"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseoriginaddress"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecasequotes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseshipment"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
@@ -17,6 +18,7 @@ type UseCases struct {
 	ShipmentCRUD  *usecaseshipment.UseCaseShipment
 	OriginAddress *usecaseoriginaddress.OriginAddressUseCase
 	Manifest      *usecasemanifest.UseCaseManifest
+	Quotes        *usecasequotes.UseCaseQuotes
 }
 
 func New(repo domain.IRepository, marginReader domain.IShippingMarginReader, pdfUploader domain.IPDFUploader) *UseCases {
@@ -25,6 +27,7 @@ func New(repo domain.IRepository, marginReader domain.IShippingMarginReader, pdf
 		ShipmentCRUD:  usecaseshipment.New(repo, marginReader, pdfUploader),
 		OriginAddress: usecaseoriginaddress.New(repo),
 		Manifest:      usecasemanifest.New(repo),
+		Quotes:        usecasequotes.New(repo),
 	}
 }
 

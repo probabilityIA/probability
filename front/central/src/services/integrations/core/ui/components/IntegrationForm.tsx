@@ -5,6 +5,7 @@ import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationT
 import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert, Button } from '@/shared/ui';
 import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
+import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
 import { WhatsAppIntegrationView } from '@/services/integrations/messages/whatsapp/ui';
 import { SoftpymesConfigForm, SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 import { FactusConfigForm, FactusEditForm } from '@/services/integrations/invoicing/factus/ui';
@@ -306,6 +307,25 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                     }}
                     isEdit={true}
                     integrationId={integration.id}
+                />
+            );
+        }
+
+        // Show edit form for WooCommerce
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE) {
+            return (
+                <WooCommerceConfigForm
+                    isEdit={true}
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        store_id: integration.store_id,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
                 />
             );
         }

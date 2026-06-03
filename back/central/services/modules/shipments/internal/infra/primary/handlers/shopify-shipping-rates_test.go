@@ -99,7 +99,7 @@ func TestMapQuoteRatesToShopify(t *testing.T) {
 		},
 	}
 
-	out := mapQuoteRatesToShopify(rates, "COP")
+	out := mapQuoteRatesToShopify(toRatesList(rates), "COP", 0)
 
 	if len(out) != 2 {
 		t.Fatalf("got %d rates, want 2 (zero-flete dropped)", len(out))
@@ -110,6 +110,11 @@ func TestMapQuoteRatesToShopify(t *testing.T) {
 	}
 	if out[0].ServiceCode != "coordinadora_express_0" {
 		t.Fatalf("service_code = %q", out[0].ServiceCode)
+	}
+
+	withQuote := mapQuoteRatesToShopify(toRatesList(rates), "COP", 77)
+	if withQuote[0].ServiceCode != "pq-77-0" {
+		t.Fatalf("service_code con quoteID = %q, want pq-77-0", withQuote[0].ServiceCode)
 	}
 	if out[0].TotalPrice != "2500000" {
 		t.Fatalf("total_price = %q, want 2500000 (25000 * 100)", out[0].TotalPrice)
@@ -130,10 +135,10 @@ func TestMapQuoteRatesToShopify(t *testing.T) {
 }
 
 func TestMapQuoteRatesToShopifyEmpty(t *testing.T) {
-	if got := mapQuoteRatesToShopify(nil, "COP"); len(got) != 0 {
+	if got := mapQuoteRatesToShopify(nil, "COP", 0); len(got) != 0 {
 		t.Fatalf("nil rates -> %d, want 0", len(got))
 	}
-	if got := mapQuoteRatesToShopify("not-a-list", "COP"); len(got) != 0 {
+	if got := mapQuoteRatesToShopify(toRatesList("not-a-list"), "COP", 0); len(got) != 0 {
 		t.Fatalf("bad type -> %d, want 0", len(got))
 	}
 }

@@ -92,6 +92,13 @@ type IRepository interface {
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetCityDaneByName(ctx context.Context, city, province string) (string, error)
 
+	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error
+	GetSavedQuoteByID(ctx context.Context, id uint) (*SavedQuote, error)
+	ListSavedQuotes(ctx context.Context, filter SavedQuoteFilter) ([]SavedQuote, int64, error)
+	UpdateSavedQuote(ctx context.Context, quote *SavedQuote) error
+	GetOrderSelectedShipping(ctx context.Context, orderUUID string) (*OrderSelectedShipping, error)
+	GetIntegrationConfigFlag(ctx context.Context, integrationID uint, key string) (bool, error)
+
 	ListShipmentsForSync(ctx context.Context, filter SyncShipmentsFilter) ([]SyncShipmentRow, error)
 	GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error)
 

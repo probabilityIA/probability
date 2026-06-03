@@ -48,6 +48,15 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 				logger.Error(ctx).Err(err).Msg("❌ Transport response consumer failed")
 			}
 		}()
+
+		orderCreatedConsumer := queueconsumer.NewOrderCreatedConsumer(rabbitMQ, uc, transportPub, redisClient, logger)
+		go func() {
+			ctx := context.Background()
+			logger.Info(ctx).Msg("🚀 Starting order created consumer in background...")
+			if err := orderCreatedConsumer.Start(ctx); err != nil {
+				logger.Error(ctx).Err(err).Msg("❌ Order created consumer failed")
+			}
+		}()
 	}
 
 	// 6. Init Handlers (repo satisfies ICarrierResolver via GetActiveShippingCarrier)

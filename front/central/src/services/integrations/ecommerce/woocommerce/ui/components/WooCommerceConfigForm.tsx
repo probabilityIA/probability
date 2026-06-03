@@ -3,7 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
 import { WooCommerceCredentials, WooCommerceConfig } from '../../domain/types';
-import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
+import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
@@ -18,9 +18,18 @@ import {
 interface WooCommerceConfigFormProps {
     onSuccess?: () => void;
     onCancel?: () => void;
+    isEdit?: boolean;
+    integrationId?: number;
+    initialData?: {
+        name?: string;
+        store_id?: string;
+        config?: any;
+        credentials?: any;
+        business_id?: number | null;
+    };
 }
 
-export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfigFormProps) {
+export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: WooCommerceConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
@@ -32,10 +41,10 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '',
-        store_url: '',
-        consumer_key: '',
-        consumer_secret: '',
+        name: initialData?.name || '',
+        store_url: initialData?.config?.store_url || initialData?.store_id || '',
+        consumer_key: initialData?.credentials?.consumer_key || '',
+        consumer_secret: initialData?.credentials?.consumer_secret || '',
     });
 
     // Check if user is super admin and load businesses
@@ -105,6 +114,30 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
         setLoading(true);
 
         try {
+            const config: WooCommerceConfig = {
+                store_url: formData.store_url,
+            };
+
+            if (isEdit && integrationId) {
+                const credentials: any = {};
+                if (formData.consumer_key) credentials.consumer_key = formData.consumer_key;
+                if (formData.consumer_secret) credentials.consumer_secret = formData.consumer_secret;
+
+                const response: any = await updateIntegrationAction(integrationId, {
+                    name: formData.name,
+                    store_id: formData.store_url,
+                    config: config as any,
+                    credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
+                });
+
+                if (!response || response.success === false) {
+                    throw new Error(response?.message || 'Error al actualizar integracion');
+                }
+                showToast('Integracion WooCommerce actualizada', 'success');
+                onSuccess?.();
+                return;
+            }
+
             if (isSuperAdmin && !selectedBusinessId) {
                 setErrorModal('Debes seleccionar un negocio antes de crear la integracion.');
                 setLoading(false);
@@ -114,10 +147,6 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
             const credentials: WooCommerceCredentials = {
                 consumer_key: formData.consumer_key,
                 consumer_secret: formData.consumer_secret,
-            };
-
-            const config: WooCommerceConfig = {
-                store_url: formData.store_url,
             };
 
             const response = await createIntegrationAction({
@@ -139,7 +168,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                 throw new Error(response.message || 'Error al crear integracion');
             }
         } catch (err: any) {
-            setErrorModal(err.message || 'Error al crear la integracion de WooCommerce');
+            setErrorModal(err.message || 'Error al guardar la integracion de WooCommerce');
         } finally {
             setLoading(false);
         }
@@ -208,8 +237,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                     </p>
                 </div>
 
-                {/* Business Selector - Only for Super Admins */}
-                {isSuperAdmin && (
+                {/* Business Selector - Only for Super Admins (create) */}
+                {isSuperAdmin && !isEdit && (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Negocio <span className="text-red-500">*</span>
@@ -269,7 +298,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                         value={formData.consumer_key}
                         onChange={(e) => setFormData({ ...formData, consumer_key: e.target.value })}
                         placeholder="ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        required
+                        required={!isEdit}
                         className="bg-white dark:bg-gray-800 font-mono text-sm"
                     />
                 </div>
@@ -282,7 +311,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                         value={formData.consumer_secret}
                         onChange={(e) => setFormData({ ...formData, consumer_secret: e.target.value })}
                         placeholder="cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        required
+                        required={!isEdit}
                         className="bg-white dark:bg-gray-800 font-mono text-sm"
                     />
                 </div>
@@ -353,12 +382,12 @@ export function WooCommerceConfigForm({ onSuccess, onCancel }: WooCommerceConfig
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            Conectando...
+                            {isEdit ? 'Guardando...' : 'Conectando...'}
                         </>
                     ) : (
                         <>
                             <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                            Crear Integracion
+                            {isEdit ? 'Guardar Cambios' : 'Crear Integracion'}
                         </>
                     )}
                 </Button>

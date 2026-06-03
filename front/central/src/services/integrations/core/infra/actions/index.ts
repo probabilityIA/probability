@@ -184,6 +184,10 @@ export const disableShopifyCarrierServiceAction = async (id: number, token?: str
     return safeAction(() => getUseCases(token).then(uc => uc.disableShopifyCarrierService(id)));
 };
 
+export const setShopifyAutoGuideAction = async (id: number, enabled: boolean, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.setShopifyAutoGuide(id, enabled)));
+};
+
 // ============================================
 // Simple Actions - Para Dropdowns/Selectores
 // ============================================

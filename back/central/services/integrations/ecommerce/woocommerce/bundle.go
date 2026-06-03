@@ -2,6 +2,7 @@ package woocommerce
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
@@ -46,6 +47,28 @@ func New(
 	handler := handlers.New(uc, logger)
 	handler.RegisterRoutes(router, logger)
 
-	// 4. Retornar provider para que el bundle padre lo registre en el core
+	// 4. Auto-registro de webhooks al crear una integracion WooCommerce
+	baseURL := config.Get("WEBHOOK_BASE_URL")
+	if baseURL == "" {
+		baseURL = config.Get("URL_BASE_SWAGGER")
+	}
+	if baseURL != "" {
+		webhookSecret := config.Get("WOOCOMMERCE_WEBHOOK_SECRET")
+		coreIntegration.OnIntegrationCreated(integrationcore.IntegrationTypeWoocommerce, func(obsCtx context.Context, integration *integrationcore.PublicIntegration) {
+			go func() {
+				bgCtx := context.Background()
+				integrationID := fmt.Sprintf("%d", integration.ID)
+				if err := uc.CreateWebhooks(bgCtx, integrationID, baseURL, webhookSecret); err != nil {
+					logger.Error(bgCtx).Err(err).Str("integration_id", integrationID).Msg("Error al crear webhooks automaticamente para WooCommerce")
+				} else {
+					logger.Info(bgCtx).Str("integration_id", integrationID).Msg("Webhooks creados automaticamente para WooCommerce")
+				}
+			}()
+		})
+	} else {
+		logger.Warn(context.Background()).Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER configuradas, no se crearan webhooks automaticamente para WooCommerce")
+	}
+
+	// 5. Retornar provider para que el bundle padre lo registre en el core
 	return woocore.New(uc)
 }

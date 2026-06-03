@@ -41,6 +41,42 @@ func (h *ShopifyHandler) EnableCarrierServiceHandler(c *gin.Context) {
 	})
 }
 
+func (h *ShopifyHandler) SetAutoGuideHandler(c *gin.Context) {
+	integrationID := c.Param("integration_id")
+	if integrationID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "integration_id es requerido"})
+		return
+	}
+
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "body invalido"})
+		return
+	}
+
+	if err := h.useCase.SetAutoGenerateGuide(c.Request.Context(), integrationID, body.Enabled); err != nil {
+		h.logger.Error(c.Request.Context()).Err(err).Str("integration_id", integrationID).Msg("Error al configurar auto-guia")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": err.Error(),
+			"enabled": !body.Enabled,
+		})
+		return
+	}
+
+	msg := "Generacion automatica de guia desactivada"
+	if body.Enabled {
+		msg = "Generacion automatica de guia activada"
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": msg,
+		"enabled": body.Enabled,
+	})
+}
+
 func (h *ShopifyHandler) DisableCarrierServiceHandler(c *gin.Context) {
 	integrationID := c.Param("integration_id")
 	if integrationID == "" {

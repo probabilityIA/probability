@@ -42,6 +42,7 @@ export interface IIntegrationRepository {
     createWebhook(id: number): Promise<CreateWebhookResponse>;
     enableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
     disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
+    setShopifyAutoGuide(id: number, enabled: boolean): Promise<CarrierServiceResponse>;
 
     // Integration Types
     getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>>;

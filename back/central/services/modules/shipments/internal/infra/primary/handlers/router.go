@@ -26,6 +26,9 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.GET("/tracking/:tracking_number", h.GetShipmentByTrackingNumber)
 
 		// Direcciones de Origen
+		shipments.GET("/quotes", h.ListSavedQuotes)
+		shipments.GET("/quotes/:id", h.GetSavedQuote)
+
 		shipments.GET("/origin-addresses", h.ListOriginAddresses)
 		shipments.POST("/origin-addresses", h.CreateOriginAddress)
 		shipments.PUT("/origin-addresses/:id", h.UpdateOriginAddress)

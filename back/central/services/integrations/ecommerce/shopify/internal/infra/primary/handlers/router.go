@@ -20,6 +20,7 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 
 		shopifyGroup.POST("/carrier-service/:integration_id/enable", middleware.JWT(), h.EnableCarrierServiceHandler)
 		shopifyGroup.POST("/carrier-service/:integration_id/disable", middleware.JWT(), h.DisableCarrierServiceHandler)
+		shopifyGroup.POST("/auto-guide/:integration_id", middleware.JWT(), h.SetAutoGuideHandler)
 
 		shopifyGroup.POST("/webhook", h.WebhookHandler)
 		shopifyGroup.POST("/webhook/:integration_id", h.WebhookHandler)

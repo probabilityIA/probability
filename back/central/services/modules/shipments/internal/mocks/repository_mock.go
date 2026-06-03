@@ -27,6 +27,12 @@ type RepositoryMock struct {
 	GetOrderIntegrationIDFn           func(ctx context.Context, orderUUID string) (uint, error)
 	GetIntegrationBusinessIDFn        func(ctx context.Context, integrationID uint) (uint, error)
 	GetCityDaneByNameFn               func(ctx context.Context, city, province string) (string, error)
+	CreateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
+	GetSavedQuoteByIDFn               func(ctx context.Context, id uint) (*domain.SavedQuote, error)
+	ListSavedQuotesFn                 func(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error)
+	UpdateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
+	GetOrderSelectedShippingFn        func(ctx context.Context, orderUUID string) (*domain.OrderSelectedShipping, error)
+	GetIntegrationConfigFlagFn        func(ctx context.Context, integrationID uint, key string) (bool, error)
 	CreateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	GetOriginAddressByIDFn            func(ctx context.Context, id uint) (*domain.OriginAddress, error)
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
@@ -174,6 +180,48 @@ func (m *RepositoryMock) GetCityDaneByName(ctx context.Context, city, province s
 		return m.GetCityDaneByNameFn(ctx, city, province)
 	}
 	return "", nil
+}
+
+func (m *RepositoryMock) CreateSavedQuote(ctx context.Context, quote *domain.SavedQuote) error {
+	if m.CreateSavedQuoteFn != nil {
+		return m.CreateSavedQuoteFn(ctx, quote)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetSavedQuoteByID(ctx context.Context, id uint) (*domain.SavedQuote, error) {
+	if m.GetSavedQuoteByIDFn != nil {
+		return m.GetSavedQuoteByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListSavedQuotes(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error) {
+	if m.ListSavedQuotesFn != nil {
+		return m.ListSavedQuotesFn(ctx, filter)
+	}
+	return nil, 0, nil
+}
+
+func (m *RepositoryMock) UpdateSavedQuote(ctx context.Context, quote *domain.SavedQuote) error {
+	if m.UpdateSavedQuoteFn != nil {
+		return m.UpdateSavedQuoteFn(ctx, quote)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetOrderSelectedShipping(ctx context.Context, orderUUID string) (*domain.OrderSelectedShipping, error) {
+	if m.GetOrderSelectedShippingFn != nil {
+		return m.GetOrderSelectedShippingFn(ctx, orderUUID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetIntegrationConfigFlag(ctx context.Context, integrationID uint, key string) (bool, error) {
+	if m.GetIntegrationConfigFlagFn != nil {
+		return m.GetIntegrationConfigFlagFn(ctx, integrationID, key)
+	}
+	return false, nil
 }
 
 func (m *RepositoryMock) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
