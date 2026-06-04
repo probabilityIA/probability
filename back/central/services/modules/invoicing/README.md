@@ -83,6 +83,9 @@ integrations/invoicing/siigo (futuro)
 | `POST` | `/invoicing/invoices/:id/cancel` | Cancelar factura |
 | `POST` | `/invoicing/invoices/:id/retry` | Reintentar emisión de factura |
 | `POST` | `/invoicing/invoices/:id/credit-notes` | Crear nota de crédito |
+| `POST` | `/invoicing/invoices/compare` | Auditoría: comparar facturas del sistema vs proveedor (rango <=7 dias) |
+| `GET` | `/invoicing/invoices/compare/:correlationId` | Obtener resultado de comparación (Redis, TTL 5 min) |
+| `POST` | `/invoicing/invoices/sync-cancellations` | Sincronizar anuladas: cancela en el sistema y libera la orden (rango <=30 dias) |
 
 #### Filtros disponibles para listado
 
@@ -97,6 +100,43 @@ GET /invoicing/invoices?business_id=1&status=issued&integration_id=2&invoicing_i
 - `order_id` (string): Buscar factura de una orden específica
 - `created_after` (date): Facturas creadas después de esta fecha
 - `created_before` (date): Facturas creadas antes de esta fecha
+
+### Conciliación con el proveedor (Comparar y Sincronizar anuladas)
+
+Ambos flujos reutilizan la misma maquinaria asíncrona: el módulo publica una request a la
+cola del proveedor (Softpymes) con `operation = "compare"`, el proveedor lista sus documentos
+del rango (campo `annuled` incluido) y responde; el `ResponseConsumer.handleCompareResponse`
+cruza esos documentos contra las facturas del sistema (`GetIssuedInvoicesByDateRange`, filtrado
+por `business_id`) y guarda el resultado en Redis + SSE (`invoice.compare_ready`).
+
+El cruce clasifica cada factura en: `matched`, `system_only`, `provider_only` y
+`annulled_in_provider` (existe en ambos pero el proveedor la reporta `annuled = true` y en el
+sistema sigue distinta de `cancelled`).
+
+**Modo auditoría** (`/compare`): solo muestra el diff, no muta nada. Rango maximo 7 dias.
+
+**Modo sincronización** (`/sync-cancellations`): el request lleva `mode = "sync"`. Por cada
+factura `annulled_in_provider` ejecuta `CancelInvoiceAndReleaseOrder` (transaccional, idempotente):
+
+1. Factura -> `status = "cancelled"`, `cancelled_at = now` (se conserva la fila y su `order_id`).
+2. Orden -> `invoice_id = NULL`, `invoice_url = NULL` (queda disponible para re-facturar; NO se re-factura sola).
+
+El payload de respuesta en modo sync se filtra a solo las `annulled_in_provider` para no saturar
+el front. El resumen incluye `annulled_in_provider` y `released`. Rango maximo 30 dias.
+
+**Aislamiento multi-tenant:** el `business_id` del usuario normal sale del JWT (no del body);
+solo super admin (`business_id = 0`) lo pasa en el body. La liberación solo opera sobre facturas
+ya filtradas por ese `business_id`.
+
+**Re-facturación de la orden liberada.** Para que la orden vuelva a aparecer como facturable:
+
+- `GetInvoiceableOrders` excluye las facturas `cancelled` del chequeo `NOT EXISTS`.
+- El indice unico `idx_order_provider (order_id, invoicing_provider_id)` es **parcial**:
+  `WHERE status <> 'cancelled' AND deleted_at IS NULL`. Asi una orden solo puede tener una
+  factura activa por proveedor, pero N canceladas historicas (relacion orden->facturas 1:N).
+
+> Nota: la cancelación manual via proveedor (`handleCancelSuccess`) hoy NO libera la orden;
+> solo el sync de anuladas lo hace.
 
 ### Estadísticas y Resúmenes (✨ NUEVO)
 

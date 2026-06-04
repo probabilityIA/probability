@@ -88,7 +88,7 @@ Orders Module
             |
             +- ConfigCache (Redis) -> fallback IntegrationCore
             +- Validar filtros (monto, pago, estado)
-            +- Verificar duplicado en Redis Hash
+            +- Verificar duplicado (Softpymes: busqueda por comment "order:<UUID>")
             +- Obtener credenciales desde integration_cache
             +- Client.CreateInvoice()               <- mismo flujo que Flujo A
             +- Marcar como procesado en Redis (30 días)
@@ -121,6 +121,15 @@ Orders Module
 | `/app/integration/cash_receipt/` | POST | Generar recibo de caja |
 | `/app/integration/bank_accounts` | GET | Listar cuentas bancarias |
 
+### Campo `annuled` (estado de anulación)
+
+`POST /app/integration/search/documents/` retorna por cada documento `annuled: true/false`
+(y `electronicDocument: true/false`). No existe filtro por estado: hay que listar el rango
+(dateFrom/dateTo obligatorios, maximo 30 dias entre ambos, sin tope hacia atras) y leer el
+campo. Estos campos se propagan al modulo invoicing en la operacion `compare` para conciliar
+y, en `mode = "sync"`, cancelar en el sistema las facturas anuladas y liberar sus ordenes.
+Ver `modules/invoicing/README.md` ("Conciliación con el proveedor").
+
 ---
 
 ## Queues de RabbitMQ
@@ -138,7 +147,6 @@ Orders Module
 | Key Pattern | Tipo | TTL | Propósito |
 |-------------|------|-----|-----------|
 | `probability:invoicing:config:{integration_id}` | String (JSON) | 1 hora | Config de facturación automática |
-| `probability:invoices:processed:{order_id}` | Hash | 30 días | Prevenir facturación duplicada |
 | `integration:meta:{integration_id}` | String | — | Metadata de la integración (IntegrationCore) |
 | `integration:creds:{integration_id}` | String | — | Credenciales encriptadas (IntegrationCore) |
 
@@ -192,7 +200,7 @@ El use case `ProcessOrderForInvoicing` valida los siguientes criterios antes de 
 
 1. Config habilitada (`enabled = true`)
 2. Facturación automática activa (`auto_invoice = true`)
-3. Orden no procesada previamente (Redis Hash)
+3. Orden no facturada previamente (la valida el modulo invoicing en DB; en reintentos el cliente consulta Softpymes por comment "order:<UUID>")
 4. Monto `>=` `min_amount` (si está configurado)
 5. Método de pago en lista permitida (si está configurado)
 6. Estado de pago coincide con el requerido (si está configurado)
@@ -314,7 +322,7 @@ Los campos de audit del recibo de caja se guardan **separados** de los de la fac
 | Sin base de datos propia | Solo HTTP, RabbitMQ y Redis |
 | Aislamiento de módulos | DTOs replicados localmente; no importa de otros módulos |
 | Dual Read Pattern | ConfigCache (Redis) primero, fallback a IntegrationCore |
-| Idempotencia | Redis Hash previene facturación duplicada |
+| Idempotencia | Busqueda en Softpymes por comment "order:<UUID>" en reintentos + DB del modulo invoicing (NO Redis) |
 | Audit trail | AuditData en cada request HTTP |
 | Token resilience | TokenCache en memoria con invalidación automática por 401 |
 
