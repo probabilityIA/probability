@@ -32,6 +32,12 @@ const STATUS_CONFIG = {
     rowClass: 'bg-yellow-50 border-yellow-100',
     badgeClass: 'bg-yellow-100 text-yellow-800',
   },
+  annulled_in_provider: {
+    label: 'Anulada en proveedor',
+    icon: '🚫',
+    rowClass: 'bg-orange-50 border-orange-100',
+    badgeClass: 'bg-orange-100 text-orange-800',
+  },
 } as const;
 
 function formatCurrency(value: string | number | undefined): string {

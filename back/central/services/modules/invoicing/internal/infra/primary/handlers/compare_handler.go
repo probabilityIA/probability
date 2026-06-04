@@ -59,6 +59,46 @@ func (h *handler) CompareInvoices(c *gin.Context) {
 	})
 }
 
+func (h *handler) SyncCancellations(c *gin.Context) {
+	var req compareRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date_from and date_to are required (YYYY-MM-DD format)"})
+		return
+	}
+
+	businessID, ok := middleware.GetBusinessIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "business context not found"})
+		return
+	}
+
+	if businessID == 0 {
+		if req.BusinessID == nil || *req.BusinessID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required for super admin"})
+			return
+		}
+		businessID = *req.BusinessID
+	}
+
+	dto := &dtos.CompareRequestDTO{
+		DateFrom:   req.DateFrom,
+		DateTo:     req.DateTo,
+		BusinessID: businessID,
+	}
+
+	correlationID, err := h.useCase.SyncCancellations(c.Request.Context(), dto)
+	if err != nil {
+		h.log.Error(c.Request.Context()).Err(err).Msg("Failed to start cancellations sync")
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"correlation_id": correlationID,
+		"message":        "Sincronizacion de anuladas iniciada. Recibiras el resultado por SSE.",
+	})
+}
+
 // GetCompareResult retorna el resultado de una comparación almacenado en Redis.
 // Es un mecanismo de entrega alternativo a SSE (belt + suspenders).
 // Retorna 404 si el resultado aún no está listo o expiró.

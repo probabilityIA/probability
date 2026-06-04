@@ -19,6 +19,7 @@ func (c *InvoiceRequestConsumer) processCompareRequest(
 	// 1. Extraer parámetros del Config
 	dateFrom, _ := request.InvoiceData.Config["date_from"].(string)
 	dateTo, _ := request.InvoiceData.Config["date_to"].(string)
+	mode, _ := request.InvoiceData.Config["mode"].(string)
 	businessID := uint(0)
 	if bid, ok := request.InvoiceData.Config["business_id"].(float64); ok {
 		businessID = uint(bid)
@@ -35,6 +36,7 @@ func (c *InvoiceRequestConsumer) processCompareRequest(
 	publishErr := func(errMsg string) error {
 		return c.responsePublisher.PublishCompareResponse(ctx, &queue.CompareResponseMessage{
 			Operation:     "compare",
+			Mode:          mode,
 			CorrelationID: request.CorrelationID,
 			BusinessID:    businessID,
 			DateFrom:      dateFrom,
@@ -140,14 +142,16 @@ func (c *InvoiceRequestConsumer) processCompareRequest(
 				})
 			}
 			allDocs = append(allDocs, queue.CompareDocument{
-				DocumentNumber: doc.DocumentNumber,
-				DocumentDate:   doc.DocumentDate,
-				Total:          doc.Total,
-				CustomerNit:    doc.CustomerNit,
-				CustomerName:   doc.CustomerName,
-				Comment:        doc.Comment,
-				Prefix:         doc.Prefix,
-				Details:        details,
+				DocumentNumber:     doc.DocumentNumber,
+				DocumentDate:       doc.DocumentDate,
+				Total:              doc.Total,
+				CustomerNit:        doc.CustomerNit,
+				CustomerName:       doc.CustomerName,
+				Comment:            doc.Comment,
+				Prefix:             doc.Prefix,
+				Annuled:            doc.Annuled,
+				ElectronicDocument: doc.ElectronicDocument,
+				Details:            details,
 			})
 		}
 
@@ -171,6 +175,7 @@ func (c *InvoiceRequestConsumer) processCompareRequest(
 	// 6. Publicar resultado
 	return c.responsePublisher.PublishCompareResponse(ctx, &queue.CompareResponseMessage{
 		Operation:         "compare",
+		Mode:              mode,
 		CorrelationID:     request.CorrelationID,
 		BusinessID:        businessID,
 		DateFrom:          dateFrom,

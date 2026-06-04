@@ -59,19 +59,22 @@ type CompareDocumentDetail struct {
 
 // CompareDocument documento del proveedor para la comparación
 type CompareDocument struct {
-	DocumentNumber string                  `json:"document_number"`
-	DocumentDate   string                  `json:"document_date"`
-	Total          string                  `json:"total"`
-	CustomerNit    string                  `json:"customer_nit"`
-	CustomerName   string                  `json:"customer_name"`
-	Comment        string                  `json:"comment"`
-	Prefix         string                  `json:"prefix"`
-	Details        []CompareDocumentDetail `json:"details,omitempty"`
+	DocumentNumber     string                  `json:"document_number"`
+	DocumentDate       string                  `json:"document_date"`
+	Total              string                  `json:"total"`
+	CustomerNit        string                  `json:"customer_nit"`
+	CustomerName       string                  `json:"customer_name"`
+	Comment            string                  `json:"comment"`
+	Prefix             string                  `json:"prefix"`
+	Annuled            bool                    `json:"annuled"`
+	ElectronicDocument bool                    `json:"electronic_document"`
+	Details            []CompareDocumentDetail `json:"details,omitempty"`
 }
 
 // CompareResponseMessage mensaje de respuesta de comparación publicado a invoicing.responses
 type CompareResponseMessage struct {
 	Operation         string            `json:"operation"` // "compare"
+	Mode              string            `json:"mode,omitempty"`
 	CorrelationID     string            `json:"correlation_id"`
 	BusinessID        uint              `json:"business_id"`
 	DateFrom          string            `json:"date_from"`

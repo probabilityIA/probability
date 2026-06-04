@@ -509,7 +509,7 @@ export interface InvoiceSSEEventData {
 // AUDITORÍA COMPARATIVA (Sistema ↔ Proveedor)
 // ===================================
 
-export type CompareStatus = 'matched' | 'system_only' | 'provider_only';
+export type CompareStatus = 'matched' | 'system_only' | 'provider_only' | 'annulled_in_provider';
 
 export interface CompareItemDetail {
   item_code: string;
@@ -525,9 +525,12 @@ export interface CompareResult {
   prefix: string;
   document_date: string;
   provider_total: string;
+  provider_annuled?: boolean;
+  released?: boolean;
   system_invoice_id?: number;
   system_order_id?: string;
   system_total?: number;
+  system_status?: string;
   customer_nit: string;
   customer_name: string;
   comment: string;
@@ -540,6 +543,8 @@ export interface CompareSummary {
   matched: number;
   system_only: number;
   provider_only: number;
+  annulled_in_provider?: number;
+  released?: number;
 }
 
 export interface CompareResponseData {

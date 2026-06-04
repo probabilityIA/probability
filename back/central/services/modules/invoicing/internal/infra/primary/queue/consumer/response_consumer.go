@@ -60,19 +60,22 @@ const (
 
 // compareProviderDocument documento retornado por el proveedor en comparación
 type compareProviderDocument struct {
-	DocumentNumber string              `json:"document_number"`
-	DocumentDate   string              `json:"document_date"`
-	Total          string              `json:"total"`
-	CustomerNit    string              `json:"customer_nit"`
-	CustomerName   string              `json:"customer_name"`
-	Comment        string              `json:"comment"`
-	Prefix         string              `json:"prefix"`
-	Details        []compareItemDetail `json:"details,omitempty"`
+	DocumentNumber     string              `json:"document_number"`
+	DocumentDate       string              `json:"document_date"`
+	Total              string              `json:"total"`
+	CustomerNit        string              `json:"customer_nit"`
+	CustomerName       string              `json:"customer_name"`
+	Comment            string              `json:"comment"`
+	Prefix             string              `json:"prefix"`
+	Annuled            bool                `json:"annuled"`
+	ElectronicDocument bool                `json:"electronic_document"`
+	Details            []compareItemDetail `json:"details,omitempty"`
 }
 
 // compareResponseMessage mensaje de respuesta de comparación del proveedor
 type compareResponseMessage struct {
 	Operation         string                    `json:"operation"`
+	Mode              string                    `json:"mode,omitempty"`
 	CorrelationID     string                    `json:"correlation_id"`
 	BusinessID        uint                      `json:"business_id"`
 	DateFrom          string                    `json:"date_from"`
@@ -776,25 +779,45 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	}
 
 	// Cruzar resultados
+	isSync := msg.Mode == "sync"
 	results := make([]dtos.CompareResult, 0)
-	matched, systemOnly, providerOnly := 0, 0, 0
+	matched, systemOnly, providerOnly, annulledInProvider, released := 0, 0, 0, 0, 0
 
 	// 1. Recorrer documentos del proveedor
 	for docNum, doc := range providerMap {
 		if sysInv, found := systemMap[docNum]; found {
-			// Matched: existe en ambos
 			total := sysInv.TotalAmount
 			orderID := sysInv.OrderID
 			orderCreatedAt := formatOrderDate(orderDates, sysInv.OrderID)
+			status := dtos.CompareStatusMatched
+			wasReleased := false
+			if doc.Annuled && sysInv.Status != constants.InvoiceStatusCancelled {
+				status = dtos.CompareStatusAnnulledInProvider
+				annulledInProvider++
+				if isSync {
+					ok, _, relErr := c.repo.CancelInvoiceAndReleaseOrder(ctx, sysInv.ID)
+					if relErr != nil {
+						c.log.Error(ctx).Err(relErr).Uint("invoice_id", sysInv.ID).Msg("Failed to release order for annulled invoice")
+					} else if ok {
+						wasReleased = true
+						released++
+					}
+				}
+			} else {
+				matched++
+			}
 			results = append(results, dtos.CompareResult{
-				Status:          dtos.CompareStatusMatched,
+				Status:          status,
 				InvoiceNumber:   docNum,
 				Prefix:          doc.Prefix,
 				DocumentDate:    doc.DocumentDate,
 				ProviderTotal:   doc.Total,
+				ProviderAnnuled: doc.Annuled,
+				Released:        wasReleased,
 				SystemInvoiceID: &sysInv.ID,
 				SystemOrderID:   &orderID,
 				SystemTotal:     &total,
+				SystemStatus:    sysInv.Status,
 				CustomerNit:     doc.CustomerNit,
 				CustomerName:    doc.CustomerName,
 				Comment:         doc.Comment,
@@ -802,7 +825,6 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 				ProviderDetails: mapProviderDetailsToCompareDetails(doc.Details),
 				SystemItems:     mapInvoiceItemsToCompareDetails(sysInv.Items),
 			})
-			matched++
 		} else {
 			// provider_only: está en proveedor pero no en sistema
 			results = append(results, dtos.CompareResult{
@@ -851,9 +873,21 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	})
 
 	summary := dtos.CompareSummary{
-		Matched:      matched,
-		SystemOnly:   systemOnly,
-		ProviderOnly: providerOnly,
+		Matched:            matched,
+		SystemOnly:         systemOnly,
+		ProviderOnly:       providerOnly,
+		AnnulledInProvider: annulledInProvider,
+		Released:           released,
+	}
+
+	if isSync {
+		filtered := make([]dtos.CompareResult, 0, annulledInProvider)
+		for _, r := range results {
+			if r.Status == dtos.CompareStatusAnnulledInProvider {
+				filtered = append(filtered, r)
+			}
+		}
+		results = filtered
 	}
 
 	responseData := &dtos.CompareResponseData{

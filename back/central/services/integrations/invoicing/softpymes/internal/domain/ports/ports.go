@@ -95,14 +95,16 @@ type ListedDocumentDetail struct {
 
 // ListedDocument documento simplificado retornado por ListDocuments
 type ListedDocument struct {
-	DocumentNumber string
-	DocumentDate   string
-	Total          string
-	CustomerNit    string
-	CustomerName   string
-	Comment        string
-	Prefix         string
-	Details        []ListedDocumentDetail
+	DocumentNumber     string
+	DocumentDate       string
+	Total              string
+	CustomerNit        string
+	CustomerName       string
+	Comment            string
+	Prefix             string
+	Annuled            bool
+	ElectronicDocument bool
+	Details            []ListedDocumentDetail
 }
 
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)

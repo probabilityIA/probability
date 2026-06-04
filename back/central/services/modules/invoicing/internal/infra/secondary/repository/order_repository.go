@@ -204,7 +204,7 @@ func (r *Repository) GetInvoiceableOrders(ctx context.Context, filter dtos.Invoi
 	var orders []models.Order
 	var total int64
 
-	noInvoiceSubquery := "NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = orders.id AND i.deleted_at IS NULL)"
+	noInvoiceSubquery := "NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = orders.id AND i.deleted_at IS NULL AND i.status <> 'cancelled')"
 	base := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("invoiceable = ?", true).
 		Where("invoice_id IS NULL").

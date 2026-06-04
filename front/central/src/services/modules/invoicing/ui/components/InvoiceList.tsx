@@ -15,6 +15,7 @@ import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
 import { ManualInvoiceModal } from './ManualInvoiceModal';
 import { InvoiceDetailModal } from './InvoiceDetailPanel';
 import { InvoiceComparisonModal } from './InvoiceComparisonModal';
+import { SyncCancellationsModal } from './SyncCancellationsModal';
 import { ItemsComparisonModal } from './ItemsComparisonModal';
 import { ConfigsModal } from './ConfigsModal';
 import {
@@ -22,6 +23,7 @@ import {
   getInvoiceByIdAction,
   cancelInvoiceAction,
   requestInvoiceComparisonAction,
+  syncCancellationsAction,
   getCompareResultAction,
   requestListItemsComparisonAction,
   getListItemsResultAction,
@@ -59,6 +61,10 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareCorrelationId, setCompareCorrelationId] = useState<string | null>(null);
   const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncCorrelationId, setSyncCorrelationId] = useState<string | null>(null);
+  const [syncData, setSyncData] = useState<CompareResponseData | null>(null);
   const [showConfigsModal, setShowConfigsModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [showItemsModal, setShowItemsModal] = useState(false);
@@ -141,6 +147,12 @@ export const InvoiceList = forwardRef(function InvoiceList(
       }
     },
     onCompareReady: (data) => {
+      if (syncCorrelationId && data.correlation_id === syncCorrelationId) {
+        setSyncData(data);
+        setSyncLoading(false);
+        clearSyncTimers();
+        return;
+      }
       if (!compareCorrelationId || data.correlation_id === compareCorrelationId) {
         setCompareData(data);
         setCompareLoading(false);
@@ -254,6 +266,21 @@ export const InvoiceList = forwardRef(function InvoiceList(
     if (compareTimeoutRef.current) {
       clearTimeout(compareTimeoutRef.current);
       compareTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Sync cancellations timers
+  const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearSyncTimers = useCallback(() => {
+    if (syncPollingRef.current) {
+      clearInterval(syncPollingRef.current);
+      syncPollingRef.current = null;
+    }
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = null;
     }
   }, []);
 
@@ -371,6 +398,52 @@ export const InvoiceList = forwardRef(function InvoiceList(
       clearCompareTimers();
     }
   }, [showToast, isSuperAdmin, selectedBusinessId, clearCompareTimers]);
+
+  const handleSyncCancellations = useCallback(async (dateFrom: string, dateTo: string) => {
+    if (isSuperAdmin && !selectedBusinessId) {
+      showToast('Selecciona un negocio antes de sincronizar', 'error');
+      return;
+    }
+    setSyncLoading(true);
+    setSyncData(null);
+    setSyncCorrelationId(null);
+    clearSyncTimers();
+
+    try {
+      const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
+      const result = await syncCancellationsAction(dateFrom, dateTo, effectiveBusinessId);
+      const correlationId = result.correlation_id;
+      setSyncCorrelationId(correlationId);
+
+      syncPollingRef.current = setInterval(async () => {
+        try {
+          const data = await getCompareResultAction(correlationId, effectiveBusinessId);
+          if (data !== null) {
+            setSyncData(data);
+            setSyncLoading(false);
+            clearSyncTimers();
+          }
+        } catch {
+          // Polling errors are non-fatal; keep retrying until timeout
+        }
+      }, 3000);
+
+      syncTimeoutRef.current = setTimeout(() => {
+        setSyncLoading(prev => {
+          if (prev) {
+            showToast('La sincronización tardó demasiado. Intenta de nuevo.', 'error');
+            return false;
+          }
+          return prev;
+        });
+        clearSyncTimers();
+      }, 90000);
+    } catch (error: any) {
+      showToast('Error al iniciar la sincronización: ' + error.message, 'error');
+      setSyncLoading(false);
+      clearSyncTimers();
+    }
+  }, [showToast, isSuperAdmin, selectedBusinessId, clearSyncTimers]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; type: 'success' | 'warning' | 'error' | 'secondary' }> = {
@@ -653,6 +726,21 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
         <button
           onClick={() => {
+            clearSyncTimers();
+            setShowSyncModal(true);
+            setSyncData(null);
+            setSyncLoading(false);
+            setSyncCorrelationId(null);
+          }}
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Sincronizar facturas anuladas"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
             clearItemsTimers();
             setShowItemsModal(true);
             setItemsData(null);
@@ -871,6 +959,21 @@ export const InvoiceList = forwardRef(function InvoiceList(
         loading={compareLoading}
         compareData={compareData}
         onRequestComparison={handleRequestComparison}
+      />
+
+      {/* Modal de sincronización de anuladas */}
+      <SyncCancellationsModal
+        isOpen={showSyncModal}
+        onClose={() => {
+          setShowSyncModal(false);
+          clearSyncTimers();
+          if ((syncData?.summary.released ?? 0) > 0) {
+            loadInvoices(currentPage, pageSize);
+          }
+        }}
+        loading={syncLoading}
+        syncData={syncData}
+        onRequestSync={handleSyncCancellations}
       />
 
       {/* Modal de comparación de productos */}

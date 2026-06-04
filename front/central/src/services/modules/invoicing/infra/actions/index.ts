@@ -407,6 +407,29 @@ export async function requestInvoiceComparisonAction(
 }
 
 /**
+ * Inicia una sincronización de facturas anuladas: consulta el proveedor en el rango
+ * (máximo 30 días), cancela en el sistema las facturas que figuran anuladas en el
+ * proveedor y libera sus órdenes para re-facturar. El resultado llega via SSE con el
+ * evento "invoice.compare_ready".
+ *
+ * @param businessId - ID del negocio (solo requerido para super admin)
+ */
+export async function syncCancellationsAction(
+  dateFrom: string,
+  dateTo: string,
+  businessId?: number
+): Promise<{ correlation_id: string; message: string }> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/sync-cancellations`, {
+    method: 'POST',
+    body: JSON.stringify({
+      date_from: dateFrom,
+      date_to: dateTo,
+      ...(businessId ? { business_id: businessId } : {}),
+    }),
+  });
+}
+
+/**
  * Polls for a compare result by correlation ID.
  * Returns the data if ready, null if not yet available (404).
  *

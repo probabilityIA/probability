@@ -12,6 +12,8 @@ import (
 // Estructura basada en la documentación oficial:
 // https://api-integracion.softpymes.com.co/doc/#api-Documentos-GetSearchDocument
 type Document struct {
+	Annuled                bool              `json:"annuled"`
+	ElectronicDocument     bool              `json:"electronicDocument"`
 	BranchCode             string            `json:"branchCode"`
 	BranchName             string            `json:"branchName"`
 	Comment                string            `json:"comment"`
@@ -205,14 +207,16 @@ func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer s
 			})
 		}
 		result = append(result, ports.ListedDocument{
-			DocumentNumber: doc.DocumentNumber,
-			DocumentDate:   doc.DocumentDate,
-			Total:          doc.Total,
-			CustomerNit:    doc.CustomerIdentification,
-			CustomerName:   doc.CustomerName,
-			Comment:        doc.Comment,
-			Prefix:         doc.Prefix,
-			Details:        details,
+			DocumentNumber:     doc.DocumentNumber,
+			DocumentDate:       doc.DocumentDate,
+			Total:              doc.Total,
+			CustomerNit:        doc.CustomerIdentification,
+			CustomerName:       doc.CustomerName,
+			Comment:            doc.Comment,
+			Prefix:             doc.Prefix,
+			Annuled:            doc.Annuled,
+			ElectronicDocument: doc.ElectronicDocument,
+			Details:            details,
 		})
 	}
 	return result, nil

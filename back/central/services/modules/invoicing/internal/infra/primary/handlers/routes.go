@@ -33,6 +33,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			// Comparación con proveedor (auditoría esporádica)
 			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)                          // Iniciar comparación
 			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)            // Obtener resultado de comparación
+			invoices.POST("/sync-cancellations", middleware.JWT(), h.SyncCancellations)              // Sincronizar anuladas y liberar ordenes
 			invoices.POST("/items", middleware.JWT(), h.ListItems)                                   // Comparar ítems del proveedor vs productos del sistema
 			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)             // Obtener resultado de comparación de ítems
 			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)                     // Listar cuentas bancarias del proveedor

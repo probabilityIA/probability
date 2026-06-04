@@ -91,6 +91,7 @@ type IRepository interface {
 	GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
 	UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
 	GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error)
+	CancelInvoiceAndReleaseOrder(ctx context.Context, invoiceID uint) (bool, string, error)
 
 	// ============================================
 	// MÉTODOS DE CONSULTA A TABLAS DE INTEGRACIONES
@@ -295,6 +296,11 @@ type IUseCase interface {
 	// Comparación de facturas con proveedor (auditoría esporádica, sin persistencia)
 	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.compare_ready"
 	RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
+
+	// SyncCancellations consulta el proveedor en un rango (<=30 dias) y libera las ordenes
+	// de las facturas que figuran anuladas en el proveedor. Retorna un correlationID;
+	// el resultado llega por SSE con evento "invoice.compare_ready".
+	SyncCancellations(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
 
 	// GetCompareResult recupera el resultado de una comparación almacenado en Redis.
 	// Retorna nil si no existe (aún no listo o expirado).
