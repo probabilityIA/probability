@@ -175,21 +175,42 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 	pdf.SetFont("Courier", "B", 11*scale)
 	pdf.CellFormat(rightW, 5*scale, tr(c.TrackingNumber), "", 1, "C", false, 0, "")
 
-	pdf.SetY(hMm - 7*scale)
+	pdf.SetY(hMm - 16*scale)
 	pdf.SetDrawColor(20, 40, 90)
 	pdf.SetLineWidth(0.3)
 	pdf.Line(3, pdf.GetY(), wMm-3, pdf.GetY())
 	pdf.Ln(0.5)
+
+	pdf.SetFont("Helvetica", "B", 4*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(wMm-6, 2*scale, tr("COLVANES S.A.S. - ENVIA  |  NIT: 800.185.306-4"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 3.5*scale)
+	pdf.SetTextColor(60, 60, 60)
+	pdf.CellFormat(wMm-6, 1.5*scale, tr("Tel: (1) 7943670 | www.envia.co | administradorpqr1@enviacolvanes.com.co"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 3*scale)
 	pdf.SetTextColor(80, 80, 80)
-	pdf.SetFont("Helvetica", "", 5*scale)
-	footer := joinNonEmptyProb("  |  ",
-		"Desde: "+joinNonEmptyProb(" - ", c.WarehouseCompany, c.WarehouseCity),
-		fmt.Sprintf("%.1f kg", c.Weight),
-		fmt.Sprintf("Vlr $%s", formatMoneyProb(c.DeclaredValue)),
-		"Probability "+time.Now().Format("2006-01-02 15:04"),
+	lic := "Lic Min Transporte 0080 | MinTIC 001368 | CIIU 5320 Mensajeria Express"
+	pdf.CellFormat(wMm-6, 1.3*scale, tr(lic), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 3*scale)
+	pdf.SetTextColor(80, 80, 80)
+	weight := "N/D"
+	if c.Weight > 0 {
+		weight = fmt.Sprintf("%.1f kg", c.Weight)
+	}
+	dims := "N/D"
+	if c.Length > 0 || c.Width > 0 || c.Height > 0 {
+		dims = fmt.Sprintf("%.0fx%.0fx%.0f cm", c.Length, c.Width, c.Height)
+	}
+	details := joinNonEmptyProb("  |  ",
+		"Peso: "+weight,
+		"Dim: "+dims,
+		"Vlr: $"+formatMoneyProb(c.DeclaredValue),
+		time.Now().Format("2006-01-02 15:04"),
 	)
-	pdf.SetX(3)
-	pdf.CellFormat(wMm-6, 2.5*scale, tr(footer), "", 1, "L", false, 0, "")
+	pdf.CellFormat(wMm-6, 1.3*scale, tr(details), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
 }
 
@@ -278,6 +299,40 @@ func drawProbLabelSquare(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Gui
 	}
 	pdf.SetFont("Courier", "B", 9*scale)
 	pdf.CellFormat(0, 3.5*scale, tr(c.TrackingNumber), "", 1, "C", false, 0, "")
+
+	pdf.Ln(0.5)
+	pdf.SetDrawColor(20, 40, 90)
+	pdf.SetLineWidth(0.3)
+	pdf.Line(3, pdf.GetY(), wMm-3, pdf.GetY())
+	pdf.Ln(0.5)
+
+	pdf.SetFont("Helvetica", "B", 4.5*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(0, 1.8*scale, tr("REMITE: "+strings.ToUpper(strings.TrimSpace(c.WarehouseCompany))), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 3.5*scale)
+	pdf.SetTextColor(0, 0, 0)
+	if c.WarehouseAddress != "" {
+		pdf.CellFormat(0, 1.5*scale, tr(c.WarehouseAddress), "", 1, "L", false, 0, "")
+	}
+
+	pdf.SetFont("Helvetica", "B", 4*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(0, 1.6*scale, tr("COLVANES S.A.S. - ENVIA | NIT: 800.185.306-4"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 2.8*scale)
+	pdf.SetTextColor(80, 80, 80)
+	weight := "N/D"
+	if c.Weight > 0 {
+		weight = fmt.Sprintf("%.1f kg", c.Weight)
+	}
+	dims := "N/D"
+	if c.Length > 0 || c.Width > 0 || c.Height > 0 {
+		dims = fmt.Sprintf("%.0fx%.0fx%.0f cm", c.Length, c.Width, c.Height)
+	}
+	details := joinNonEmptyProb(" | ", "Peso: "+weight, "Dim: "+dims)
+	pdf.CellFormat(0, 1.4*scale, tr(details), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
 }
 
 func drawProbHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, scale float64) {
