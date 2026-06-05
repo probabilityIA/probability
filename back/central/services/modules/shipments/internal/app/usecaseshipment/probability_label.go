@@ -614,30 +614,43 @@ func drawProbFooter(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 	_, pageH := pdf.GetPageSize()
 	pageW := pageWidth(pdf)
 
-	pdf.SetY(pageH - 20*scale)
+	pdf.SetY(pageH - 24*scale)
 	pdf.SetDrawColor(20, 40, 90)
 	pdf.SetLineWidth(0.3)
 	pdf.Line(3, pdf.GetY(), pageW-3, pdf.GetY())
 	pdf.Ln(0.5)
 
-	pdf.SetFont("Helvetica", "B", 5*scale)
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(pageW-6, 2.5*scale, tr("COLVANES S.A.S.  |  NIT: 800.184.633-4"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(pageW-6, 2.5*scale, tr("COLVANES S.A.S. - ENVIA"), "", 1, "L", false, 0, "")
 
-	pdf.SetFont("Helvetica", "", 4*scale)
-	pdf.SetTextColor(80, 80, 80)
-	pdf.CellFormat(pageW-6, 1.8*scale, tr("Licencia Sanitaria: 2022DV0009843  |  Registrada en la Deprisa como transportista"), "", 1, "L", false, 0, "")
-	pdf.CellFormat(pageW-6, 1.8*scale, tr("Sedes: Bogota, Medellin, Cali, Barranquilla"), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "B", 4.5*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.CellFormat(pageW-6, 2*scale, tr("NIT: 800.185.306-4  |  Carrera 88 # 17B-10 Bogota"), "", 1, "L", false, 0, "")
 
-	pdf.Ln(0.5 * scale)
-	legal := "ESTE CONTRATO DE TRANSPORTE SE RIGE POR EL DECRETO 229 DE 1995 Y NORMAS QUE LO MODIFIQUEN, Y POR LOS ARTICULOS 981 Y SIGUIENTES DEL CODIGO DE COMERCIO. EL REMITENTE DECLARA QUE LA INFORMACION DE ESTA GUIA ES VERIDICA Y QUE LA MERCANCIA NO CONTIENE ARTICULOS PROHIBIDOS O DE TENENCIA RESTRINGIDA. EL VALOR DECLARADO DETERMINA EL LIMITE DE RESPONSABILIDAD DEL TRANSPORTADOR. RECLAMACIONES DENTRO DE LOS TERMINOS LEGALES."
 	pdf.SetFont("Helvetica", "", 3.5*scale)
-	pdf.SetTextColor(100, 100, 100)
-	pdf.MultiCell(pageW-6, 1.6*scale, tr(legal), "", "J", false)
+	pdf.SetTextColor(60, 60, 60)
+	pdf.CellFormat(pageW-6, 1.6*scale, tr("Tel: (1) 7943670 | www.envia.co | administradorpqr1@enviacolvanes.com.co"), "", 1, "L", false, 0, "")
 
-	pdf.SetFont("Helvetica", "B", 4*scale)
+	pdf.SetFont("Helvetica", "", 3*scale)
 	pdf.SetTextColor(80, 80, 80)
-	pdf.CellFormat(0, 2*scale, tr("MERCANCIA GENERAL  |  Probability "+time.Now().Format("2006-01-02 15:04")), "", 1, "L", false, 0, "")
+	lic1 := "Lic Min Transporte 0080 (14/3/2000) | Lic MinTIC 001368 (4/8/2020) | CIIU 5320 Mensajeria Express"
+	pdf.MultiCell(pageW-6, 1.4*scale, tr(lic1), "", "L", false)
+
+	pdf.SetFont("Helvetica", "", 3*scale)
+	pdf.SetTextColor(80, 80, 80)
+	lic2 := "Autorretenedores Res 4327 (Jul/97) | Grandes Contribuyentes Res 9061 (Dic/20) | Agente Retenedor de IVA"
+	pdf.MultiCell(pageW-6, 1.4*scale, tr(lic2), "", "L", false)
+
+	pdf.Ln(0.3 * scale)
+	legal := "ESTE CONTRATO DE TRANSPORTE SE RIGE POR EL DECRETO 229 DE 1995 Y NORMAS QUE LO MODIFIQUEN, Y POR LOS ARTICULOS 981 Y SIGUIENTES DEL CODIGO DE COMERCIO. EL REMITENTE DECLARA QUE LA INFORMACION DE ESTA GUIA ES VERIDICA Y QUE LA MERCANCIA NO CONTIENE ARTICULOS PROHIBIDOS O DE TENENCIA RESTRINGIDA. EL VALOR DECLARADO DETERMINA EL LIMITE DE RESPONSABILIDAD DEL TRANSPORTADOR. ESTE ES UN SERVICIO DE MENSAJERIA EXPRESA. RECLAMACIONES DENTRO DE LOS TERMINOS LEGALES."
+	pdf.SetFont("Helvetica", "", 3*scale)
+	pdf.SetTextColor(100, 100, 100)
+	pdf.MultiCell(pageW-6, 1.4*scale, tr(legal), "", "J", false)
+
+	pdf.SetFont("Helvetica", "B", 3.5*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.CellFormat(0, 1.8*scale, tr("Generada por Probability "+time.Now().Format("2006-01-02 15:04")), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
 }
 
