@@ -20,6 +20,12 @@ Archivos 500+ lineas: CERO non-ASCII (acentos, box-drawing, emojis). Archivos co
 
 Monorepo multi-tenant: ordenes, productos, pagos, envios desde Shopify, Amazon, MercadoLibre, WhatsApp.
 
+## WooCommerce de Pruebas (local)
+
+WordPress + WooCommerce en Docker para probar la integracion (conexion, sync, webhooks).
+Carpeta `/wordpress` (volumenes nombrados, no toca prod). Levantar: `cd wordpress && ./setup.sh`.
+Tienda en `http://localhost:8088`, wp-admin admin/admin. Detalles: `wordpress/README.md`.
+
 ## Git - NUNCA hacer push sin permiso explicito
 
 **PROHIBIDO hacer push automaticamente.** Siempre esperar autorizacion explicita del usuario.
