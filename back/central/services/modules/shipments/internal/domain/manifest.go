@@ -41,6 +41,7 @@ type ManifestShipmentRow struct {
 	OrderCreatedAt     *time.Time
 	ShipmentStatus     string
 	OrderStatus        string
+	PackageQuantity    int64
 }
 
 type ManifestPDFInput struct {

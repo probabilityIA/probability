@@ -111,6 +111,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 		OrderCreatedAt     *time.Time
 		ShipmentStatus     string
 		OrderStatus        string
+		PackageQuantity    int64
 	}
 
 	q := base.
@@ -134,7 +135,8 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			s.created_at AS shipment_created_at,
 			o.created_at AS order_created_at,
 			COALESCE(s.status, '') AS shipment_status,
-			COALESCE(o.status, '') AS order_status`).
+			COALESCE(o.status, '') AS order_status,
+			1 AS package_quantity`).
 		Joins("LEFT JOIN business b ON b.id = o.business_id").
 		Joins("LEFT JOIN warehouses w ON w.id = s.warehouse_id").
 		Order("s.created_at DESC")
@@ -168,6 +170,7 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 			OrderCreatedAt:     r.OrderCreatedAt,
 			ShipmentStatus:     r.ShipmentStatus,
 			OrderStatus:        r.OrderStatus,
+			PackageQuantity:    r.PackageQuantity,
 		}
 		if r.TrackingNumber != nil {
 			item.TrackingNumber = *r.TrackingNumber

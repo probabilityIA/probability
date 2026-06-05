@@ -158,7 +158,7 @@ func drawTable(pdf *gofpdf.Fpdf, tr func(string) string, rows []domain.ManifestS
 		{10, "N°", "C"},
 		{14, "Prod", "C"},
 		{30, "Guia", "L"},
-		{16, "N° Paquete", "C"},
+		{16, "# Bultos", "C"},
 		{24, "Documento", "L"},
 		{58, "Destinatario", "L"},
 		{42, "Ciudad", "L"},
@@ -178,7 +178,7 @@ func drawTable(pdf *gofpdf.Fpdf, tr func(string) string, rows []domain.ManifestS
 		pdf.CellFormat(cols[0].W, 5, num, "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[1].W, 5, tr(truncate(r.CarrierCode, 6)), "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[2].W, 5, tr(truncate(r.TrackingNumber, 16)), "1", 0, "L", false, 0, "")
-		pdf.CellFormat(cols[3].W, 5, fmt.Sprintf("%d", r.ShipmentID), "1", 0, "C", false, 0, "")
+		pdf.CellFormat(cols[3].W, 5, "1", "1", 0, "C", false, 0, "")
 		pdf.CellFormat(cols[4].W, 5, tr(truncate(r.CustomerDocument, 14)), "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cols[5].W, 5, tr(truncate(r.CustomerName, 40)), "1", 0, "L", false, 0, "")
 		pdf.CellFormat(cols[6].W, 5, tr(truncate(r.DestinationCity, 28)), "1", 0, "L", false, 0, "")
