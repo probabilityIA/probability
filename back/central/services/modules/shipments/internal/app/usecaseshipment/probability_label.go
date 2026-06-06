@@ -530,9 +530,15 @@ func drawProbSender(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 		pdf.SetFont("Helvetica", "B", 8*scale)
 		pdf.CellFormat(0, 3.5*scale, tr(sender), "", 1, "L", false, 0, "")
 	}
-	pdf.SetFont("Helvetica", "", 7*scale)
-	for _, l := range lines {
-		pdf.CellFormat(0, 3*scale, tr(l), "", 1, "L", false, 0, "")
+
+	if len(lines) > 0 {
+		pdf.SetFont("Helvetica", "", 7*scale)
+		for _, l := range lines {
+			pdf.CellFormat(0, 3*scale, tr(l), "", 1, "L", false, 0, "")
+		}
+	} else if sender != "" {
+		pdf.SetFont("Helvetica", "", 7*scale)
+		pdf.CellFormat(0, 3*scale, tr("(Sin información adicional en BD)"), "", 1, "L", false, 0, "")
 	}
 	pdf.Ln(1 * scale)
 }
@@ -718,7 +724,7 @@ func drawProbFooter(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
 	pdf.SetTextColor(0, 0, 0)
-	pdf.CellFormat(pageW-6, 2*scale, tr("COLVANES S.A.S. - ENVIA"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(pageW-6, 2*scale, tr("COLVANES S.A.S."), "", 1, "L", false, 0, "")
 
 	pdf.SetFont("Helvetica", "B", 4*scale)
 	pdf.SetTextColor(0, 0, 0)
