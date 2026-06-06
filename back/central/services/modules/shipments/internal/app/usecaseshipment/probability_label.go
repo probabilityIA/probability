@@ -499,10 +499,16 @@ func drawProbSender(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 	if v := strings.TrimSpace(c.WarehouseContact); v != "" {
 		lines = append(lines, "Contacto: "+v)
 	}
-	if v := strings.TrimSpace(c.WarehouseAddress); v != "" {
-		lines = append(lines, v)
+	addr := strings.TrimSpace(c.WarehouseAddress)
+	if addr == "" {
+		addr = strings.TrimSpace(c.BusinessAddress)
 	}
-	if cityState := joinNonEmptyProb(", ", c.WarehouseCity, c.WarehouseState); cityState != "" {
+	if addr != "" {
+		lines = append(lines, addr)
+	}
+	city := strings.TrimSpace(c.WarehouseCity)
+	state := strings.TrimSpace(c.WarehouseState)
+	if cityState := joinNonEmptyProb(", ", city, state); cityState != "" {
 		lines = append(lines, cityState)
 	}
 	if v := strings.TrimSpace(c.WarehousePhone); v != "" {
