@@ -133,55 +133,46 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 	}
 
 	pdf.SetX(3)
-	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(leftW-3, 2.5*scale, tr("REMITE (DESDE):"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(leftW-3, 2*scale, tr("REMITE:"), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
-	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetFont("Helvetica", "B", 6*scale)
 	warehouse := strings.ToUpper(strings.TrimSpace(c.WarehouseCompany))
 	if warehouse != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.8*scale, tr(warehouse), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 2.2*scale, tr(warehouse), "", 1, "L", false, 0, "")
 	}
-	pdf.SetFont("Helvetica", "", 6*scale)
-	if c.WarehouseAddress != "" {
+	pdf.SetFont("Helvetica", "", 5*scale)
+	if c.WarehouseCity != "" && c.WarehousePhone != "" {
 		pdf.SetX(3)
-		pdf.MultiCell(leftW-3, 2.5*scale, tr(c.WarehouseAddress), "", "L", false)
-	}
-	if c.WarehouseCity != "" {
+		pdf.CellFormat(leftW-3, 1.8*scale, tr(c.WarehouseCity+" | Tel: "+c.WarehousePhone), "", 1, "L", false, 0, "")
+	} else if c.WarehouseCity != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.5*scale, tr(c.WarehouseCity), "", 1, "L", false, 0, "")
-	}
-	if c.WarehousePhone != "" {
-		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.5*scale, tr("Tel: "+c.WarehousePhone), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 1.8*scale, tr(c.WarehouseCity), "", 1, "L", false, 0, "")
 	}
 
-	pdf.Ln(1*scale)
+	pdf.Ln(0.5*scale)
 	pdf.SetX(3)
-	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(leftW-3, 2.5*scale, tr("PARA: (CLIENTE)"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(leftW-3, 2*scale, tr("PARA:"), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
-	pdf.SetFont("Helvetica", "B", 7.5*scale)
-	pdf.SetX(3)
-	pdf.CellFormat(leftW-3, 3*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
-	pdf.SetFont("Helvetica", "", 6*scale)
-	if c.CustomerDNI != "" {
-		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.5*scale, tr("CC: "+c.CustomerDNI), "", 1, "L", false, 0, "")
-	}
-	if c.CustomerPhone != "" {
-		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.5*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
-	}
 	pdf.SetFont("Helvetica", "B", 6.5*scale)
 	pdf.SetX(3)
-	pdf.MultiCell(leftW-3, 2.8*scale, tr(c.DestinationAddress), "", "L", false)
+	pdf.CellFormat(leftW-3, 2.5*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "", 5*scale)
+	if c.CustomerPhone != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 1.8*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
+	pdf.SetX(3)
+	pdf.MultiCell(leftW-3, 2.2*scale, tr(c.DestinationAddress), "", "L", false)
 	cityState := joinNonEmptyProb(", ", c.DestinationCity, c.DestinationState)
 	if cityState != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.5*scale, tr(cityState), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 1.8*scale, tr(cityState), "", 1, "L", false, 0, "")
 	}
 
 	pdf.SetXY(rightX, 3)
