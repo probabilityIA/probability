@@ -704,11 +704,19 @@ func drawProbFooter(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDF
 
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(pageW-6, 2.5*scale, tr("COLVANES S.A.S. - ENVIA"), "", 1, "L", false, 0, "")
+	carrierName := strings.ToUpper(strings.TrimSpace(c.Carrier))
+	if carrierName == "" {
+		carrierName = "PROBABILITY"
+	}
+	pdf.CellFormat(pageW-6, 2.5*scale, tr(carrierName), "", 1, "L", false, 0, "")
 
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
 	pdf.SetTextColor(0, 0, 0)
-	pdf.CellFormat(pageW-6, 2*scale, tr("NIT: 800.185.306-4  |  Carrera 88 # 17B-10 Bogota"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(pageW-6, 2*scale, tr("COLVANES S.A.S. - ENVIA"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "B", 4*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.CellFormat(pageW-6, 1.8*scale, tr("NIT: 800.185.306-4  |  Carrera 88 # 17B-10 Bogota"), "", 1, "L", false, 0, "")
 
 	pdf.SetFont("Helvetica", "", 3.5*scale)
 	pdf.SetTextColor(60, 60, 60)
