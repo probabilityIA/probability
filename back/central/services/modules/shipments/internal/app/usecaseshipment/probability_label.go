@@ -134,28 +134,54 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 
 	pdf.SetX(3)
 	pdf.SetFont("Helvetica", "B", 6*scale)
-	pdf.SetTextColor(80, 80, 80)
-	pdf.CellFormat(leftW-3, 2.5*scale, tr("PARA:"), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(leftW-3, 2.5*scale, tr("REMITE (DESDE):"), "", 1, "L", false, 0, "")
 	pdf.SetTextColor(0, 0, 0)
-	pdf.SetFont("Helvetica", "B", 8*scale)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	warehouse := strings.ToUpper(strings.TrimSpace(c.WarehouseCompany))
+	if warehouse != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 2.8*scale, tr(warehouse), "", 1, "L", false, 0, "")
+	}
+	pdf.SetFont("Helvetica", "", 6*scale)
+	if c.WarehouseAddress != "" {
+		pdf.SetX(3)
+		pdf.MultiCell(leftW-3, 2.5*scale, tr(c.WarehouseAddress), "", "L", false)
+	}
+	if c.WarehouseCity != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 2.5*scale, tr(c.WarehouseCity), "", 1, "L", false, 0, "")
+	}
+	if c.WarehousePhone != "" {
+		pdf.SetX(3)
+		pdf.CellFormat(leftW-3, 2.5*scale, tr("Tel: "+c.WarehousePhone), "", 1, "L", false, 0, "")
+	}
+
+	pdf.Ln(1*scale)
 	pdf.SetX(3)
-	pdf.CellFormat(leftW-3, 3.5*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
-	pdf.SetFont("Helvetica", "", 6.5*scale)
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(20, 40, 90)
+	pdf.CellFormat(leftW-3, 2.5*scale, tr("PARA: (CLIENTE)"), "", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "B", 7.5*scale)
+	pdf.SetX(3)
+	pdf.CellFormat(leftW-3, 3*scale, tr(c.CustomerName), "", 1, "L", false, 0, "")
+	pdf.SetFont("Helvetica", "", 6*scale)
 	if c.CustomerDNI != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.8*scale, tr("CC: "+c.CustomerDNI), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 2.5*scale, tr("CC: "+c.CustomerDNI), "", 1, "L", false, 0, "")
 	}
 	if c.CustomerPhone != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 2.8*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 2.5*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
 	}
-	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetFont("Helvetica", "B", 6.5*scale)
 	pdf.SetX(3)
-	pdf.MultiCell(leftW-3, 3*scale, tr(c.DestinationAddress), "", "L", false)
+	pdf.MultiCell(leftW-3, 2.8*scale, tr(c.DestinationAddress), "", "L", false)
 	cityState := joinNonEmptyProb(", ", c.DestinationCity, c.DestinationState)
 	if cityState != "" {
 		pdf.SetX(3)
-		pdf.CellFormat(leftW-3, 3*scale, tr(cityState), "", 1, "L", false, 0, "")
+		pdf.CellFormat(leftW-3, 2.5*scale, tr(cityState), "", 1, "L", false, 0, "")
 	}
 
 	pdf.SetXY(rightX, 3)
@@ -175,26 +201,36 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 	pdf.SetFont("Courier", "B", 11*scale)
 	pdf.CellFormat(rightW, 5*scale, tr(c.TrackingNumber), "", 1, "C", false, 0, "")
 
-	pdf.SetY(hMm - 16*scale)
+	pdf.SetY(hMm - 22*scale)
 	pdf.SetDrawColor(20, 40, 90)
 	pdf.SetLineWidth(0.3)
 	pdf.Line(3, pdf.GetY(), wMm-3, pdf.GetY())
 	pdf.Ln(0.5)
 
-	pdf.SetFont("Helvetica", "B", 4*scale)
+	pdf.SetFont("Helvetica", "B", 5*scale)
 	pdf.SetTextColor(20, 40, 90)
-	pdf.CellFormat(wMm-6, 2*scale, tr("COLVANES S.A.S. - ENVIA  |  NIT: 800.185.306-4"), "", 1, "L", false, 0, "")
+	pdf.CellFormat(wMm-6, 2.2*scale, tr("COLVANES S.A.S. - ENVIA"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "B", 4.5*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.CellFormat(wMm-6, 1.8*scale, tr("NIT: 800.185.306-4  |  Carrera 88 # 17B-10 Bogota"), "", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 4*scale)
+	pdf.SetTextColor(60, 60, 60)
+	pdf.CellFormat(wMm-6, 1.6*scale, tr("Tel: (1) 7943670 | www.envia.co | administradorpqr1@enviacolvanes.com.co"), "", 1, "L", false, 0, "")
 
 	pdf.SetFont("Helvetica", "", 3.5*scale)
-	pdf.SetTextColor(60, 60, 60)
-	pdf.CellFormat(wMm-6, 1.5*scale, tr("Tel: (1) 7943670 | www.envia.co | administradorpqr1@enviacolvanes.com.co"), "", 1, "L", false, 0, "")
-
-	pdf.SetFont("Helvetica", "", 3*scale)
 	pdf.SetTextColor(80, 80, 80)
-	lic := "Lic Min Transporte 0080 | MinTIC 001368 | CIIU 5320 Mensajeria Express"
-	pdf.CellFormat(wMm-6, 1.3*scale, tr(lic), "", 1, "L", false, 0, "")
+	lic1 := "Lic Min Transporte 0080 (14/3/2000) | Lic MinTIC 001368 (4/8/2020) | CIIU 5320 Mensajeria Express"
+	pdf.MultiCell(wMm-6, 1.3*scale, tr(lic1), "", "L", false)
 
-	pdf.SetFont("Helvetica", "", 3*scale)
+	pdf.SetFont("Helvetica", "", 3.5*scale)
+	pdf.SetTextColor(80, 80, 80)
+	lic2 := "Autorretenedores Res 4327 (Jul/97) | Grandes Contribuyentes Res 9061 (Dic/20) | Agente Retenedor de IVA"
+	pdf.MultiCell(wMm-6, 1.3*scale, tr(lic2), "", "L", false)
+
+	pdf.Ln(0.3*scale)
+	pdf.SetFont("Helvetica", "", 3.5*scale)
 	pdf.SetTextColor(80, 80, 80)
 	weight := "N/D"
 	if c.Weight > 0 {
@@ -210,7 +246,7 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 		"Vlr: $"+formatMoneyProb(c.DeclaredValue),
 		time.Now().Format("2006-01-02 15:04"),
 	)
-	pdf.CellFormat(wMm-6, 1.3*scale, tr(details), "", 1, "L", false, 0, "")
+	pdf.MultiCell(wMm-6, 1.3*scale, tr(details), "", "L", false)
 	pdf.SetTextColor(0, 0, 0)
 }
 
