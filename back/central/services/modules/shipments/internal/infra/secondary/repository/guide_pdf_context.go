@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		Height             *float64
 		Width              *float64
 		Length             *float64
+		CreatedAt          *time.Time
 		EstimatedDelivery  *time.Time
 		DestinationAddress string
 		DestinationCity   string
@@ -49,6 +51,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			s.tracking_number,
 			s.carrier,
 			s.weight, s.height, s.width, s.length,
+			s.created_at,
 			s.estimated_delivery,
 			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
 			s.cod_carrier_fee AS cod_total,
@@ -101,7 +104,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		wAddr = val(row.WStreet)
 	}
 
-	return &domain.GuidePDFContext{
+	result := &domain.GuidePDFContext{
 		ShipmentID:         row.ID,
 		TrackingNumber:     val(row.TrackingNumber),
 		Carrier:            val(row.Carrier),
@@ -109,6 +112,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		Height:             valF(row.Height),
 		Width:              valF(row.Width),
 		Length:             valF(row.Length),
+		CreatedAt:          row.CreatedAt,
 		EstimatedDelivery:  row.EstimatedDelivery,
 		OrderNumber:        val(row.OrderNumber),
 		CustomerName:       val(row.CustomerName),
@@ -131,5 +135,10 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WarehouseCity:      val(row.WCity),
 		WarehouseState:     val(row.WState),
 		WarehousePhone:     val(row.WPhone),
-	}, nil
+	}
+
+	fmt.Printf("DEBUG [Shipment %d]: Warehouse=%s | Address=%s | City=%s | Phone=%s\n",
+		row.ID, val(row.WCompany), wAddr, val(row.WCity), val(row.WPhone))
+
+	return result, nil
 }

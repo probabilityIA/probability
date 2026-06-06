@@ -6,6 +6,9 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -18,6 +21,16 @@ import (
 )
 
 func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
+	carrier := strings.ToUpper(strings.TrimSpace(c.Carrier))
+
+	if carrier == "ENVIA" {
+		return buildEnviaLabel(c, format)
+	}
+
+	return buildGenericCarrierLabel(c, format)
+}
+
+func buildEnviaLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
 	wCm := format.WidthCm
 	hCm := format.HeightCm
 	if wCm < 4 || hCm < 4 {
@@ -60,6 +73,43 @@ func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat
 		drawProbProofOfDelivery(pdf, tr, c, scale)
 		drawProbFooter(pdf, tr, c, scale)
 	}
+
+	var buf bytes.Buffer
+	if err := pdf.Output(&buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func buildGenericCarrierLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
+	wCm := format.WidthCm
+	hCm := format.HeightCm
+	if wCm < 4 || hCm < 4 {
+		wCm = 10
+		hCm = 15
+	}
+
+	pdf := gofpdf.NewCustom(&gofpdf.InitType{
+		UnitStr:        "mm",
+		Size:           gofpdf.SizeType{Wd: wCm * 10, Ht: hCm * 10},
+		OrientationStr: "P",
+	})
+	pdf.SetMargins(3, 3, 3)
+	pdf.SetAutoPageBreak(false, 3)
+	pdf.AddPage()
+
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
+	pageW := wCm*10 - 6
+	scale := 1.0
+	if wCm < 8 {
+		scale = 0.75
+	} else if wCm >= 20 {
+		scale = 1.5
+	}
+
+	drawGenericCarrierHeader(pdf, tr, c, pageW, scale)
+	drawGenericSenderRecipient(pdf, tr, c, pageW, scale)
+	drawGenericQRAndBarcode(pdf, tr, c, pageW, scale)
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
@@ -843,4 +893,210 @@ var _ = buildQRPNGProb
 func pageWidth(pdf *gofpdf.Fpdf) float64 {
 	w, _ := pdf.GetPageSize()
 	return w
+}
+
+func drawGenericCarrierHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
+	y := 1.5
+	logoH := 7 * scale
+	carrierLogoW := logoH * 2.5
+	probLogoW := logoH * 4.2
+
+	carrier := strings.ToUpper(strings.TrimSpace(c.Carrier))
+
+	logoImg := getCarrierLogo(carrier)
+	if logoImg != nil && len(logoImg) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("carrier_logo.png", opts, bytes.NewReader(logoImg))
+		pdf.ImageOptions("carrier_logo.png", 5, y, carrierLogoW, logoH, false, opts, 0, "")
+	}
+
+	probLogoImg := readLocalAsset("probability-logo.png")
+	if probLogoImg != nil && len(probLogoImg) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("prob_logo.png", opts, bytes.NewReader(probLogoImg))
+		rightLogoX := 5 + pageW - probLogoW - 0.5
+		pdf.ImageOptions("prob_logo.png", rightLogoX, y, probLogoW, logoH, false, opts, 0, "")
+	}
+
+	y += logoH + 1.5
+
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	if c.TrackingNumber != "" {
+		pdf.SetXY(5, y)
+		pdf.CellFormat(pageW, 3*scale, tr("Tracking: "+c.TrackingNumber), "1", 1, "C", false, 0, "")
+		y += 3.5*scale
+	}
+}
+
+func drawGenericSenderRecipient(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
+	y := pdf.GetY() + 2*scale
+	colW := (pageW - 2) / 2
+
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetXY(5, y)
+	pdf.CellFormat(colW, 3*scale, tr("REMITE"), "1", 0, "C", false, 0, "")
+	pdf.SetX(5 + colW + 2)
+	pdf.CellFormat(colW, 3*scale, tr("DESTINATARIO"), "1", 0, "C", false, 0, "")
+
+	y += 3.5*scale
+	pdf.SetFont("Helvetica", "", 5.5*scale)
+
+	senderText := fmt.Sprintf("%s\n%s\n%s\n%s %s\nTel: %s",
+		c.WarehouseCompany,
+		c.WarehouseAddress,
+		c.WarehouseCity,
+		c.WarehouseContact,
+		c.WarehousePhone,
+		c.WarehousePhone,
+	)
+
+	recipientText := fmt.Sprintf("%s\n%s\n%s, %s\nTel: %s\nDNI: %s",
+		c.CustomerName,
+		c.DestinationAddress,
+		c.DestinationCity,
+		c.DestinationState,
+		c.CustomerPhone,
+		c.CustomerDNI,
+	)
+
+	pdf.SetXY(5, y)
+	pdf.MultiCell(colW, 2.2*scale, tr(senderText), "1", "L", false)
+
+	senderH := pdf.GetY() - y
+
+	pdf.SetXY(5+colW+2, y)
+	pdf.MultiCell(colW, 2.2*scale, tr(recipientText), "1", "L", false)
+
+	if pdf.GetY() < y+senderH {
+		pdf.SetY(y + senderH)
+	}
+
+	y = pdf.GetY() + 1.5*scale
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetXY(5, y)
+
+	createdDate := ""
+	if c.CreatedAt != nil {
+		createdDate = c.CreatedAt.Format("02/01/2006")
+	}
+	currency := c.Currency
+	if currency == "" {
+		currency = "COP"
+	}
+
+	infoText := fmt.Sprintf("Orden: %s | Fecha: %s | Valor: %.0f %s", c.OrderNumber, createdDate, c.DeclaredValue, currency)
+	pdf.CellFormat(pageW, 3*scale, tr(infoText), "1", 1, "C", false, 0, "")
+}
+
+func drawGenericQRAndBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
+	y := pdf.GetY() + 1*scale
+	boxMargin := 0.5 * scale
+
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetLineWidth(0.3)
+
+	leftX := 5.0
+	bcHeight := 10.0 * scale
+
+	if c.TrackingNumber != "" {
+		barcodePNG := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(bcHeight*8))
+		if barcodePNG != nil {
+			pdf.Rect(leftX-boxMargin, y-boxMargin, pageW+2*boxMargin, bcHeight+2*boxMargin, "D")
+
+			opts := gofpdf.ImageOptions{ImageType: "PNG"}
+			pdf.RegisterImageOptionsReader("bc.png", opts, bytes.NewReader(barcodePNG))
+			pdf.ImageOptions("bc.png", leftX, y, pageW, bcHeight, false, opts, 0, "")
+		}
+	}
+
+	y += bcHeight + 1.5*scale
+
+	pdf.SetFont("Helvetica", "B", 7.5*scale)
+	pdf.SetXY(leftX, y)
+
+	dimText := fmt.Sprintf("Peso: %.1f kg | Dim: %.0f x %.0f x %.0f cm",
+		c.Weight, c.Length, c.Width, c.Height)
+	pdf.CellFormat(pageW, 3.5*scale, tr(dimText), "1", 1, "C", false, 0, "")
+
+	y = pdf.GetY() + 1*scale
+	colW := (pageW - 2) / 2
+	leftColW := colW
+	rightColW := colW
+	rightX := leftX + leftColW + 2
+	boxHeight := 35*scale
+
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetLineWidth(0.2)
+	pdf.Rect(leftX-boxMargin, y-boxMargin, leftColW+2*boxMargin, boxHeight+2*boxMargin, "D")
+	pdf.Rect(rightX-boxMargin, y-boxMargin, rightColW+2*boxMargin, boxHeight+2*boxMargin, "D")
+
+	pdf.SetFont("Helvetica", "", 4.5*scale)
+	pdf.SetXY(leftX+1, y+1)
+
+	legalText := "ESTE CONTRATO DE TRANSPORTE SE RIGE POR EL DECRETO 229 DE 1995. " +
+		"EN VIRTUD DE DICHO DECRETO, EL REMITENTE DECLARA QUE LOS ARTICULOS AQUI RELACIONADOS " +
+		"NO SON PELIGROSOS Y QUE SU CONTENIDO ESTA DESCRITO CORRECTAMENTE. " +
+		"LA EMPRESA TRANSPORTADORA NO SERA RESPONSABLE DE DAÑOS CUANDO EL CLIENTE NO DECLARE EL VALOR DE LA CARGA. " +
+		"LA RESPONSABILIDAD DE LA EMPRESA POR PERDIDA, DAÑO O AVERÍA DE LA MERCANCIA TRASPORTADA " +
+		"ESTA LIMITADA AL VALOR DECLARADO EN ESTA GUIA. RECLAMACIONES DENTRO DE LOS TERMINOS LEGALES"
+
+	pdf.MultiCell(leftColW-2, 1.6*scale, tr(legalText), "0", "J", false)
+
+	qrSize := rightColW * 0.65
+
+	if qrPNG := buildQRPNGProb(c.TrackingNumber); qrPNG != nil {
+		qrCenterX := rightX + (rightColW-qrSize)/2
+		qrCenterY := y + (boxHeight-qrSize)/2
+
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("qr.png", opts, bytes.NewReader(qrPNG))
+		pdf.ImageOptions("qr.png", qrCenterX, qrCenterY, qrSize, qrSize, false, opts, 0, "")
+	}
+
+	pdf.SetY(y + boxHeight)
+}
+
+
+func getCarrierLogo(carrier string) []byte {
+	switch carrier {
+	case "COORDINADORA":
+		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png")
+	case "INTERRAPIDISIMO":
+		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_inerapidisimo.png")
+	case "SERVIENTREGA":
+		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png")
+	default:
+		return nil
+	}
+}
+
+func readLocalAsset(filename string) []byte {
+	paths := []string{
+		fmt.Sprintf("./services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
+		fmt.Sprintf("services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
+		fmt.Sprintf("back/central/services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
+	}
+
+	for _, path := range paths {
+		data, err := os.ReadFile(path)
+		if err == nil && len(data) > 0 {
+			return data
+		}
+	}
+	return nil
+}
+
+func downloadLogoFromS3(url string) []byte {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil
+	}
+
+	return data
 }

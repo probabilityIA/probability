@@ -22,6 +22,7 @@ type GuidePDFContext struct {
 	Height             float64
 	Width              float64
 	Length             float64
+	CreatedAt          *time.Time
 	EstimatedDelivery  *time.Time
 	OrderNumber        string
 	CustomerName       string
