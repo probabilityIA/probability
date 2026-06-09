@@ -1067,6 +1067,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetAutoPageBreak(false, 3)
 	pdf.AddPage()
 
+	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	scale := 1.0
 	pageW := wCm * 10 - 6
 	pdf.SetDrawColor(0, 0, 0)
@@ -1075,9 +1076,31 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	y := 3.0
 
+	logoH := 5.0 * scale
+	logoW := logoH * 1.5
+
+	probLogo := readLocalAsset("probability-logo.png")
+	if len(probLogo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("prob_logo_coord.png", opts, bytes.NewReader(probLogo))
+		pdf.ImageOptions("prob_logo_coord.png", 3, y, logoW, logoH, false, opts, 0, "")
+	}
+
+	coordLogo := getCarrierLogo("COORDINADORA")
+	if len(coordLogo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("coord_logo.png", opts, bytes.NewReader(coordLogo))
+		pdf.ImageOptions("coord_logo.png", 3+pageW-logoW, y, logoW, logoH, false, opts, 0, "")
+	}
+
+	y = y + logoH + 0.5
+
 	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 7*scale)
-	pdf.CellFormat(pageW, 3*scale, "UNIDAD: 1/1", "1", 1, "C", false, 0, "")
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	colW := pageW / 2
+	pdf.CellFormat(colW, 2.5*scale, "", "1", 0, "L", false, 0, "")
+	pdf.SetX(3 + colW)
+	pdf.CellFormat(colW, 2.5*scale, tr("UNIDAD: 1/1"), "1", 1, "R", false, 0, "")
 	y = pdf.GetY() + 0.3
 
 	pdf.SetXY(3, y)
@@ -1091,9 +1114,31 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	y = pdf.GetY() + 0.3
 
 	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetFont("Helvetica", "B", 5*scale)
 	pdf.SetFillColor(240, 240, 240)
-	pdf.CellFormat(pageW, 3*scale, "Ref: ORDEN ORD-"+c.OrderNumber, "1", 1, "L", true, 0, "")
+	colRef := pageW / 2
+	colObs := pageW / 2
+
+	pdf.CellFormat(colRef-0.2, 3*scale, tr("Ref:"), "1", 0, "L", true, 0, "")
+	pdf.SetX(3 + colRef + 0.2)
+	pdf.CellFormat(colObs-0.2, 3*scale, tr("Observaciones Cliente:"), "1", 1, "L", true, 0, "")
+
+	pdf.SetFont("Helvetica", "", 4*scale)
+	pdf.SetFillColor(255, 255, 255)
+	pdf.SetXY(3, pdf.GetY())
+	refText := "ORDEN\nORD-" + c.OrderNumber
+	pdf.MultiCell(colRef-0.2, 1.5*scale, tr(refText), "1", "L", false)
+
+	obsStartY := pdf.GetY()
+	pdf.SetXY(3+colRef+0.2, pdf.GetY()-3*scale)
+	obsText := tr("CASA 126 Doc.\nORDEN " + c.OrderNumber)
+	pdf.MultiCell(colObs-0.2, 1.5*scale, obsText, "1", "L", false)
+
+	maxObsY := pdf.GetY()
+	if obsStartY > maxObsY {
+		maxObsY = obsStartY
+	}
+	pdf.SetY(maxObsY)
 	y = pdf.GetY() + 0.3
 
 	pdf.SetXY(3, y)
@@ -1116,10 +1161,10 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
-	colW := pageW / 2
-	pdf.CellFormat(colW, 3*scale, "REMITENTE", "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colW)
-	pdf.CellFormat(colW, 3*scale, "DESTINATARIO", "1", 1, "C", false, 0, "")
+	colRemDest := pageW / 2
+	pdf.CellFormat(colRemDest, 3*scale, tr("REMITENTE"), "1", 0, "C", false, 0, "")
+	pdf.SetX(3 + colRemDest)
+	pdf.CellFormat(colRemDest, 3*scale, tr("DESTINATARIO"), "1", 1, "C", false, 0, "")
 	y = pdf.GetY()
 
 	warehouse := c.WarehouseCompany
@@ -1129,13 +1174,13 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "", 4*scale)
-	remText := warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone
-	pdf.MultiCell(colW-0.3, 1.7*scale, remText, "1", "L", false)
+	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
+	pdf.MultiCell(colRemDest-0.3, 1.7*scale, remText, "1", "L", false)
 
 	destY := pdf.GetY()
-	pdf.SetXY(3+colW+0.3, y)
-	destText := c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone
-	pdf.MultiCell(colW-0.3, 1.7*scale, destText, "1", "L", false)
+	pdf.SetXY(3+colRemDest+0.3, y)
+	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
+	pdf.MultiCell(colRemDest-0.3, 1.7*scale, destText, "1", "L", false)
 
 	maxY := pdf.GetY()
 	if destY > maxY {
@@ -1171,33 +1216,13 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	colRight := pageW / 2
 
 	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 4.5*scale)
-	pdf.CellFormat(colLeft-0.2, 2*scale, "Ref:", "1", 1, "L", false, 0, "")
-	pdf.SetFont("Helvetica", "", 3.5*scale)
-	pdf.SetX(3)
-	refText := "ORDEN\nORD-" + c.OrderNumber + "\n" + c.OrderNumber
-	pdf.MultiCell(colLeft-0.2, 1.5*scale, refText, "1", "L", false)
-
-	obsY := pdf.GetY()
-	pdf.SetXY(3+colLeft+0.2, y+2)
 	qrImg := buildQRPNGProb(c.TrackingNumber)
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := colRight - 1
-		pdf.ImageOptions("qr_coord.png", 3+colLeft+0.5, y+2.2, qrSize-0.5, qrSize-0.5, false, opts, 0, "")
+		qrSize := colRight - 0.5
+		pdf.ImageOptions("qr_coord.png", 3+colLeft+0.5, y, qrSize, qrSize, false, opts, 0, "")
 	}
-
-	pdf.SetY(obsY)
-	y = pdf.GetY() + 0.3
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 4.5*scale)
-	pdf.CellFormat(pageW, 2*scale, "Observaciones Cliente:", "1", 1, "L", false, 0, "")
-	pdf.SetFont("Helvetica", "", 3.5*scale)
-	pdf.SetX(3)
-	obsText := "CASA 126 Doc. ORDEN " + c.OrderNumber
-	pdf.MultiCell(pageW, 1.8*scale, obsText, "1", "L", false)
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
