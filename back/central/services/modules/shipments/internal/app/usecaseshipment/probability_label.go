@@ -1086,6 +1086,13 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		pdf.ImageOptions("prob_logo_coord.png", 3, y, 0, logoH, true, opts, 0, "")
 	}
 
+	coordLogo := getCarrierLogo("COORDINADORA")
+	if len(coordLogo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("coord_logo_header.png", opts, bytes.NewReader(coordLogo))
+		pdf.ImageOptions("coord_logo_header.png", pageW-5, y, 5, logoH, true, opts, 0, "")
+	}
+
 	y = y + logoH + 1.5
 
 	pdf.SetXY(3, y)
@@ -1203,38 +1210,24 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.CellFormat(pageW, 2.5*scale, dimText, "1", 1, "C", false, 0, "")
 	y = pdf.GetY() + 1.5
 
-	colLogoBox := pageW * 0.3
-	colQRBox := pageW * 0.7
-
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
 
-	coordLogo := getCarrierLogo("COORDINADORA")
-	logoBoxH := 9.0 * scale
+	qrBoxH := 10.0 * scale
+	qrSize := qrBoxH - 1.0
 
-	pdf.Rect(3, y, colLogoBox, logoBoxH, "")
-	if len(coordLogo) > 0 {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
-		logoImgW := colLogoBox - 1.2
-		logoImgH := logoBoxH - 1.2
-		logoX := 3 + (colLogoBox-logoImgW)/2
-		logoY := y + 0.6
-		pdf.ImageOptions("coord_logo_box.png", logoX, logoY, logoImgW, logoImgH, true, opts, 0, "")
-	}
+	pdf.Rect(3, y, pageW, qrBoxH, "")
 
-	pdf.Rect(3+colLogoBox, y, colQRBox, logoBoxH, "")
 	qrImg := buildQRPNGProb(c.TrackingNumber)
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := logoBoxH - 1.0
-		qrX := 3 + colLogoBox + (colQRBox-qrSize)/2
-		qrY := y + (logoBoxH-qrSize)/2
+		qrX := 3 + (pageW-qrSize)/2
+		qrY := y + (qrBoxH-qrSize)/2
 		pdf.ImageOptions("qr_coord.png", qrX, qrY, qrSize, qrSize, false, opts, 0, "")
 	}
 
-	y = y + logoBoxH + 1.0
+	y = y + qrBoxH + 1.0
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
