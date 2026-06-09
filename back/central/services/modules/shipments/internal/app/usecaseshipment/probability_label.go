@@ -1176,7 +1176,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if destEndY > y {
 		y = destEndY
 	}
-	y = y + 1.5
+	y = y + 3.0
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
