@@ -1114,12 +1114,12 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetFont("Helvetica", "", 4.5*scale)
 	pdf.SetFillColor(255, 255, 255)
 	pdf.SetXY(3, pdf.GetY())
-	refText := "ORDEN\nORD-" + c.OrderNumber
+	refText := "  ORDEN\n  ORD-" + c.OrderNumber
 	pdf.MultiCell(colRef-0.2, 2*scale, tr(refText), "1", "L", false)
 
 	obsStartY := pdf.GetY()
 	pdf.SetXY(3+colRef+0.2, pdf.GetY()-4*scale)
-	obsText := tr("CASA 126 Doc.\nORDEN " + c.OrderNumber)
+	obsText := tr("  CASA 126 Doc.\n  ORDEN " + c.OrderNumber)
 	pdf.MultiCell(colObs-0.2, 2*scale, obsText, "1", "L", false)
 
 	maxObsY := pdf.GetY()
@@ -1162,12 +1162,12 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "", 4*scale)
-	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
+	remText := tr("  " + warehouse + "\n  " + c.WarehouseAddress + "\n  " + c.WarehouseCity + "\n  Tel: " + c.WarehousePhone)
 	pdf.MultiCell(colRemDest-0.3, 1.7*scale, remText, "1", "L", false)
 
 	destY := pdf.GetY()
 	pdf.SetXY(3+colRemDest+0.3, y)
-	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
+	destText := tr("  " + c.CustomerName + "\n  " + c.DestinationAddress + "\n  " + c.DestinationCity + "\n  Tel: " + c.CustomerPhone)
 	pdf.MultiCell(colRemDest-0.3, 1.7*scale, destText, "1", "L", false)
 
 	maxY := pdf.GetY()
@@ -1186,7 +1186,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.CellFormat(barcodeBoxW-0.3, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
 	y = pdf.GetY()
 
-	coordLogo := readLocalAsset("coordinadora-logo.png")
+	coordLogo := getCarrierLogo("COORDINADORA")
 	logoBoxH := 8.5 * scale
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
