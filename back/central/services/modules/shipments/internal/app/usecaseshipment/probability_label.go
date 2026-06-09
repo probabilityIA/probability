@@ -1210,16 +1210,16 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetLineWidth(0.3)
 
 	coordLogo := getCarrierLogo("COORDINADORA")
-	logoBoxH := 7.0 * scale
+	logoBoxH := 9.0 * scale
 
 	pdf.Rect(3, y, colLogoBox, logoBoxH, "")
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
-		logoImgW := colLogoBox - 0.8
-		logoImgH := logoBoxH - 0.8
+		logoImgW := colLogoBox - 1.2
+		logoImgH := logoBoxH - 1.2
 		logoX := 3 + (colLogoBox-logoImgW)/2
-		logoY := y + (logoBoxH-logoImgH)/2
+		logoY := y + 0.6
 		pdf.ImageOptions("coord_logo_box.png", logoX, logoY, logoImgW, logoImgH, true, opts, 0, "")
 	}
 
@@ -1228,9 +1228,9 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := colQRBox - 1.0
+		qrSize := colQRBox - 1.5
 		qrX := 3 + colLogoBox + (colQRBox-qrSize)/2
-		qrY := y + (logoBoxH-qrSize)/2
+		qrY := y + logoBoxH - qrSize - 0.8
 		pdf.ImageOptions("qr_coord.png", qrX, qrY, qrSize, qrSize, false, opts, 0, "")
 	}
 
