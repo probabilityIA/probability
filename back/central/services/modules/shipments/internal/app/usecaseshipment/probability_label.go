@@ -1113,21 +1113,21 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	pdf.SetFont("Helvetica", "", 4.5*scale)
 	pdf.SetFillColor(255, 255, 255)
-	pdf.SetXY(3, pdf.GetY())
-	refText := "  ORDEN\n  ORD-" + c.OrderNumber
-	pdf.MultiCell(colRef-0.2, 2*scale, tr(refText), "1", "L", false)
+	pdf.SetXY(3.5, pdf.GetY())
+	refText := "ORDEN\nORD-" + c.OrderNumber
+	pdf.MultiCell(colRef-0.5, 2.5*scale, tr(refText), "1", "L", false)
 
 	obsStartY := pdf.GetY()
-	pdf.SetXY(3+colRef+0.2, pdf.GetY()-4*scale)
-	obsText := tr("  CASA 126 Doc.\n  ORDEN " + c.OrderNumber)
-	pdf.MultiCell(colObs-0.2, 2*scale, obsText, "1", "L", false)
+	pdf.SetXY(3+colRef+0.7, pdf.GetY()-5*scale)
+	obsText := tr("CASA 126 Doc.\nORDEN " + c.OrderNumber)
+	pdf.MultiCell(colObs-0.5, 2.5*scale, obsText, "1", "L", false)
 
 	maxObsY := pdf.GetY()
 	if obsStartY > maxObsY {
 		maxObsY = obsStartY
 	}
 	pdf.SetY(maxObsY)
-	y = pdf.GetY() + 0.8
+	y = pdf.GetY() + 1.5
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
@@ -1145,7 +1145,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 9*scale)
 	pdf.CellFormat(pageW, 3.5*scale, time.Now().Format("2006-01-02"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 0.3
+	y = pdf.GetY() + 1.0
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
@@ -1160,21 +1160,21 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		warehouse = c.BusinessName
 	}
 
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "", 4*scale)
-	remText := tr("  " + warehouse + "\n  " + c.WarehouseAddress + "\n  " + c.WarehouseCity + "\n  Tel: " + c.WarehousePhone)
-	pdf.MultiCell(colRemDest-0.3, 1.7*scale, remText, "1", "L", false)
+	pdf.SetXY(3.5, y)
+	pdf.SetFont("Helvetica", "", 3.8*scale)
+	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
+	pdf.MultiCell(colRemDest-0.8, 2.0*scale, remText, "1", "L", false)
 
 	destY := pdf.GetY()
-	pdf.SetXY(3+colRemDest+0.3, y)
-	destText := tr("  " + c.CustomerName + "\n  " + c.DestinationAddress + "\n  " + c.DestinationCity + "\n  Tel: " + c.CustomerPhone)
-	pdf.MultiCell(colRemDest-0.3, 1.7*scale, destText, "1", "L", false)
+	pdf.SetXY(3+colRemDest+0.7, y)
+	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
+	pdf.MultiCell(colRemDest-0.8, 2.0*scale, destText, "1", "L", false)
 
 	maxY := pdf.GetY()
 	if destY > maxY {
 		maxY = destY
 	}
-	y = maxY + 0.3
+	y = maxY + 1.2
 
 	logoBoxW := pageW / 2
 	barcodeBoxW := pageW / 2
