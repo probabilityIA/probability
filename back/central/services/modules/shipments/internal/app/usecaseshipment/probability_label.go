@@ -1076,42 +1076,36 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	y := 3.0
 
-	logoH := 5.0 * scale
-	logoW := logoH * 1.5
+	logoH := 6.0 * scale
 
 	probLogo := readLocalAsset("probability-logo.png")
 	if len(probLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("prob_logo_coord.png", opts, bytes.NewReader(probLogo))
-		pdf.ImageOptions("prob_logo_coord.png", 3, y, logoW, logoH, false, opts, 0, "")
+		pdf.ImageOptions("prob_logo_coord.png", 3, y, 0, logoH, true, opts, 0, "")
 	}
 
 	coordLogo := getCarrierLogo("COORDINADORA")
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo.png", opts, bytes.NewReader(coordLogo))
-		pdf.ImageOptions("coord_logo.png", 3+pageW-logoW, y, logoW, logoH, false, opts, 0, "")
+		pdf.ImageOptions("coord_logo.png", 3+pageW-12, y, 0, logoH, true, opts, 0, "")
 	}
 
-	y = y + logoH + 0.5
+	y = y + logoH + 1.0
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 6*scale)
-	colW := pageW / 2
-	pdf.CellFormat(colW, 2.5*scale, "", "1", 0, "L", false, 0, "")
-	pdf.SetX(3 + colW)
-	pdf.CellFormat(colW, 2.5*scale, tr("UNIDAD: 1/1"), "1", 1, "R", false, 0, "")
-	y = pdf.GetY() + 0.3
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	colW1 := pageW / 3
 	colW2 := pageW / 3
+	colW3 := pageW / 3
 
-	pdf.CellFormat(colW1, 4*scale, "Origin\n1\nBOG", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(colW1, 5.5*scale, "Origin\n1\nBOG", "1", 0, "C", false, 0, "")
 	pdf.SetX(3 + colW1)
-	pdf.CellFormat(colW2, 4*scale, "AS\nPAQ\n1-2", "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 0.3
+	pdf.CellFormat(colW2, 5.5*scale, "AS\nPAQ\n1-2", "1", 0, "C", false, 0, "")
+	pdf.SetX(3 + colW1 + colW2)
+	pdf.CellFormat(colW3, 5.5*scale, tr("UNIDAD:\n1/1"), "1", 1, "C", false, 0, "")
+	y = pdf.GetY() + 0.5
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5*scale)
