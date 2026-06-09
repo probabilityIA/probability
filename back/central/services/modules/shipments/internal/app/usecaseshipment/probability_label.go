@@ -1163,18 +1163,20 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetXY(3.5, y)
 	pdf.SetFont("Helvetica", "", 3.8*scale)
 	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
-	pdf.MultiCell(colRemDest-0.8, 2.0*scale, remText, "1", "L", false)
+	pdf.MultiCell(colRemDest-0.8, 2.2*scale, remText, "1", "L", false)
+	remEndY := pdf.GetY()
 
-	destY := pdf.GetY()
 	pdf.SetXY(3+colRemDest+0.7, y)
+	pdf.SetFont("Helvetica", "", 3.8*scale)
 	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
-	pdf.MultiCell(colRemDest-0.8, 2.0*scale, destText, "1", "L", false)
+	pdf.MultiCell(colRemDest-0.8, 2.2*scale, destText, "1", "L", false)
+	destEndY := pdf.GetY()
 
-	maxY := pdf.GetY()
-	if destY > maxY {
-		maxY = destY
+	y = remEndY
+	if destEndY > y {
+		y = destEndY
 	}
-	y = maxY + 1.2
+	y = y + 1.5
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
@@ -1201,26 +1203,38 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.CellFormat(pageW, 2.5*scale, dimText, "1", 1, "C", false, 0, "")
 	y = pdf.GetY() + 1.5
 
-	colLogoBox := pageW / 3
-	colQR := pageW * 2 / 3
+	colLogoBox := pageW * 0.3
+	colQRBox := pageW * 0.7
 
-	pdf.SetXY(3, y)
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetLineWidth(0.3)
+
 	coordLogo := getCarrierLogo("COORDINADORA")
-	logoBoxH := 6.0 * scale
+	logoBoxH := 7.0 * scale
+
+	pdf.Rect(3, y, colLogoBox, logoBoxH, "")
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
-		pdf.ImageOptions("coord_logo_box.png", 3.5, y+0.3, colLogoBox-1.0, logoBoxH-0.6, true, opts, 0, "")
-		pdf.Rect(3, y, colLogoBox-0.2, logoBoxH, "")
+		logoImgW := colLogoBox - 0.8
+		logoImgH := logoBoxH - 0.8
+		logoX := 3 + (colLogoBox-logoImgW)/2
+		logoY := y + (logoBoxH-logoImgH)/2
+		pdf.ImageOptions("coord_logo_box.png", logoX, logoY, logoImgW, logoImgH, true, opts, 0, "")
 	}
 
+	pdf.Rect(3+colLogoBox, y, colQRBox, logoBoxH, "")
 	qrImg := buildQRPNGProb(c.TrackingNumber)
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := colQR - 0.5
-		pdf.ImageOptions("qr_coord.png", 3+colLogoBox+0.3, y+(logoBoxH-qrSize)/2, qrSize, qrSize, false, opts, 0, "")
+		qrSize := colQRBox - 1.0
+		qrX := 3 + colLogoBox + (colQRBox-qrSize)/2
+		qrY := y + (logoBoxH-qrSize)/2
+		pdf.ImageOptions("qr_coord.png", qrX, qrY, qrSize, qrSize, false, opts, 0, "")
 	}
+
+	y = y + logoBoxH + 1.0
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
