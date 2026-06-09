@@ -285,6 +285,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
 
+    // Guide format states
+    const [guideFormats, setGuideFormats] = useState<any[]>([]);
+    const [showGuideFormatDropdown, setShowGuideFormatDropdown] = useState(false);
+    const [selectedGuideFormat, setSelectedGuideFormat] = useState<string | null>(null);
+    const formatDropdownRef = useRef<HTMLDivElement>(null);
+
     // DANE search states
     const [originSearch, setOriginSearch] = useState("");
     const [destSearch, setDestSearch] = useState("");
@@ -567,6 +573,42 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         return () => clearTimeout(timeout);
     }, [pendingGuideCorrelationId]);
 
+    useEffect(() => {
+        if (!trackingNumber || !selectedCarrier) return;
+
+        let cancelled = false;
+        const loadFormats = async () => {
+            try {
+                const params = new URLSearchParams({ carrier: selectedCarrier });
+                const response = await fetch(`/api/v1/shipments/guide-formats?${params}`, {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!cancelled && response.ok) {
+                    const data = await response.json();
+                    setGuideFormats(data.data || []);
+                    if (data.data && data.data.length > 0) {
+                        setSelectedGuideFormat(data.data[0].code);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load guide formats:', err);
+            }
+        };
+
+        loadFormats();
+        return () => { cancelled = true; };
+    }, [trackingNumber, selectedCarrier]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (formatDropdownRef.current && !formatDropdownRef.current.contains(event.target as Node)) {
+                setShowGuideFormatDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     // Reset on close
     useEffect(() => {
         if (!isOpen) {
@@ -584,6 +626,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setPendingCorrelationId(null);
             setPendingGuideCorrelationId(null);
             pendingStep1DataRef.current = null;
+            setGuideFormats([]);
+            setShowGuideFormatDropdown(false);
+            setSelectedGuideFormat(null);
             step1Form.reset();
             step3Form.reset();
         }
@@ -1740,16 +1785,49 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         </svg>
                                                         Abrir
                                                     </a>
-                                                    <a
-                                                        href={generatedPdfUrl}
-                                                        download
-                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 dark:text-gray-200 font-semibold rounded-lg transition-colors text-xs"
-                                                    >
-                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Descargar
-                                                    </a>
+                                                    <div ref={formatDropdownRef} className="relative">
+                                                        <button
+                                                            onClick={() => setShowGuideFormatDropdown(!showGuideFormatDropdown)}
+                                                            className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-xs"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                            </svg>
+                                                            Descargar
+                                                            {guideFormats.length > 0 && (
+                                                                <svg className={`w-3 h-3 transition-transform ${showGuideFormatDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                                                </svg>
+                                                            )}
+                                                        </button>
+                                                        {showGuideFormatDropdown && guideFormats.length > 0 && (
+                                                            <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg overflow-hidden">
+                                                                {guideFormats.map((format) => (
+                                                                    <a
+                                                                        key={format.code}
+                                                                        href={`${generatedPdfUrl}?format=${format.code}`}
+                                                                        download
+                                                                        onClick={() => setShowGuideFormatDropdown(false)}
+                                                                        className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs border-b dark:border-gray-700 last:border-b-0 transition-colors"
+                                                                    >
+                                                                        <div>
+                                                                            <div className="font-medium">{format.code.toUpperCase()}</div>
+                                                                            {format.width_cm && format.height_cm && (
+                                                                                <div className="text-gray-500 dark:text-gray-400 text-[10px]">
+                                                                                    {format.width_cm} x {format.height_cm} cm
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        {selectedGuideFormat === format.code && (
+                                                                            <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        )}
+                                                                    </a>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

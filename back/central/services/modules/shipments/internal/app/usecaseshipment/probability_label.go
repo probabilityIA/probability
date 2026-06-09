@@ -27,6 +27,10 @@ func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat
 		return buildEnviaLabel(c, format)
 	}
 
+	if carrier == "COORDINADORA" {
+		return buildCoordinadoraLabel(c, format)
+	}
+
 	return buildGenericCarrierLabel(c, format)
 }
 
@@ -1031,16 +1035,6 @@ func drawGenericQRAndBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain
 	pdf.Rect(rightX-boxMargin, y-boxMargin, rightColW+2*boxMargin, boxHeight+2*boxMargin, "D")
 
 	pdf.SetFont("Helvetica", "", 4.5*scale)
-	pdf.SetXY(leftX+1, y+1)
-
-	legalText := "ESTE CONTRATO DE TRANSPORTE SE RIGE POR EL DECRETO 229 DE 1995. " +
-		"EN VIRTUD DE DICHO DECRETO, EL REMITENTE DECLARA QUE LOS ARTICULOS AQUI RELACIONADOS " +
-		"NO SON PELIGROSOS Y QUE SU CONTENIDO ESTA DESCRITO CORRECTAMENTE. " +
-		"LA EMPRESA TRANSPORTADORA NO SERA RESPONSABLE DE DAÑOS CUANDO EL CLIENTE NO DECLARE EL VALOR DE LA CARGA. " +
-		"LA RESPONSABILIDAD DE LA EMPRESA POR PERDIDA, DAÑO O AVERÍA DE LA MERCANCIA TRASPORTADA " +
-		"ESTA LIMITADA AL VALOR DECLARADO EN ESTA GUIA. RECLAMACIONES DENTRO DE LOS TERMINOS LEGALES"
-
-	pdf.MultiCell(leftColW-2, 1.6*scale, tr(legalText), "0", "J", false)
 
 	qrSize := rightColW * 0.65
 
@@ -1056,6 +1050,142 @@ func drawGenericQRAndBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain
 	pdf.SetY(y + boxHeight)
 }
 
+func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
+	wCm := format.WidthCm
+	hCm := format.HeightCm
+	if wCm < 4 || hCm < 4 {
+		wCm = 10
+		hCm = 15
+	}
+
+	pdf := gofpdf.NewCustom(&gofpdf.InitType{
+		UnitStr:        "mm",
+		Size:           gofpdf.SizeType{Wd: wCm * 10, Ht: hCm * 10},
+		OrientationStr: "P",
+	})
+	pdf.SetMargins(3, 3, 3)
+	pdf.SetAutoPageBreak(false, 3)
+	pdf.AddPage()
+
+	scale := 1.0
+	pageW := wCm * 10 - 6
+
+	y := 3.0
+
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetLineWidth(0.3)
+
+	pdf.SetFont("Helvetica", "B", 8*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetXY(3, y)
+	pdf.CellFormat(pageW, 3*scale, "UNIDAD: 1/1", "", 1, "L", false, 0, "")
+	y = pdf.GetY() + 1
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.CellFormat(pageW*0.3, 4*scale, "Origin\n1\nBOG", "1", 0, "C", false, 0, "")
+
+	pdf.SetX(3 + pageW*0.3)
+	pdf.CellFormat(pageW*0.7, 4*scale, "AS\nPAQ\n1-2", "1", 1, "C", false, 0, "")
+	y = pdf.GetY() + 1
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "", 6*scale)
+	pdf.SetFillColor(240, 240, 240)
+	pdf.CellFormat(pageW, 3.5*scale, "Ref: "+c.OrderNumber, "1", 1, "L", true, 0, "")
+	y = pdf.GetY() + 1
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	colW := pageW / 3
+	pdf.CellFormat(colW, 4*scale, "Destino\n1", "1", 0, "C", false, 0, "")
+	pdf.SetX(3 + colW)
+	pdf.CellFormat(colW, 4*scale, "Zona Hub", "1", 0, "C", false, 0, "")
+	pdf.SetX(3 + colW*2)
+	pdf.CellFormat(colW, 4*scale, "Equipo\nReparto", "1", 1, "C", false, 0, "")
+	y = pdf.GetY() + 1
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 8*scale)
+	pdf.CellFormat(pageW, 4*scale, time.Now().Format("2006-01-02"), "1", 1, "C", false, 0, "")
+	y = pdf.GetY() + 1
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(0, 51, 102)
+	pdf.CellFormat(pageW, 2.5*scale, "REMITENTE", "1", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "", 5*scale)
+
+	warehouse := c.WarehouseCompany
+	if warehouse == "" {
+		warehouse = c.BusinessName
+	}
+	pdf.SetX(3)
+	pdf.MultiCell(pageW, 2*scale, warehouse+"\n"+c.WarehouseAddress+"\nTel: "+c.WarehousePhone, "1", "L", false)
+	y = pdf.GetY() + 0.5
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(0, 51, 102)
+	pdf.CellFormat(pageW, 2.5*scale, "DESTINATARIO", "1", 1, "L", false, 0, "")
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+
+	pdf.SetX(3)
+	pdf.CellFormat(pageW, 3*scale, c.CustomerName, "1", 1, "L", false, 0, "")
+
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetX(3)
+	if c.CustomerDNI != "" {
+		pdf.CellFormat(pageW, 2*scale, "CC: "+c.CustomerDNI, "1", 1, "L", false, 0, "")
+	}
+	pdf.SetX(3)
+	pdf.MultiCell(pageW, 2*scale, c.DestinationAddress+"\n"+c.DestinationCity+", "+c.DestinationState+"\nTel: "+c.CustomerPhone, "1", "L", false)
+
+	y = pdf.GetY() + 0.5
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetTextColor(100, 100, 100)
+	pdf.CellFormat(pageW, 2*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
+
+	bcImg := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(12*scale*8))
+	if bcImg != nil {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("coord_bc.png", opts, bytes.NewReader(bcImg))
+		pdf.ImageOptions("coord_bc.png", 3, pdf.GetY(), pageW, 12*scale, false, opts, 0, "")
+		pdf.SetY(pdf.GetY() + 12*scale)
+	}
+
+	pdf.SetFont("Courier", "B", 11*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.SetX(3)
+	pdf.CellFormat(pageW, 4*scale, c.TrackingNumber, "1", 1, "C", false, 0, "")
+
+	y = pdf.GetY() + 0.5
+
+	if c.CodTotal > 0 {
+		pdf.SetXY(3, y)
+		pdf.SetFont("Helvetica", "B", 6*scale)
+		pdf.SetFillColor(255, 200, 0)
+		pdf.SetTextColor(0, 0, 0)
+		pdf.CellFormat(pageW, 3.5*scale, "CONTRA ENTREGA: $"+formatMoneyProb(c.CodTotal), "1", 1, "C", true, 0, "")
+		pdf.SetFillColor(255, 255, 255)
+		y = pdf.GetY() + 0.5
+	}
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetTextColor(0, 0, 0)
+	pdf.MultiCell(pageW, 2.2*scale, "Observaciones Cliente:\n"+c.OrderNumber, "1", "L", false)
+
+	var buf bytes.Buffer
+	if err := pdf.Output(&buf); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
 
 func getCarrierLogo(carrier string) []byte {
 	switch carrier {
