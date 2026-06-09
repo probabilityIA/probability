@@ -1078,20 +1078,22 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	y := 3.0
 
 	logoH := 5.5 * scale
+	probLogoW := 12.0 * scale
 
 	probLogo := readLocalAsset("probability-logo.png")
 	if len(probLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("prob_logo_coord.png", opts, bytes.NewReader(probLogo))
-		pdf.ImageOptions("prob_logo_coord.png", 3, y, 0, logoH, true, opts, 0, "")
+		pdf.ImageOptions("prob_logo_coord.png", 3, y, probLogoW, logoH, true, opts, 0, "")
 	}
 
 	coordLogo := getCarrierLogo("COORDINADORA")
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo_header.png", opts, bytes.NewReader(coordLogo))
-		coordLogoW := 8.0 * scale
-		pdf.ImageOptions("coord_logo_header.png", pageW-coordLogoW-0.5, y, coordLogoW, logoH, true, opts, 0, "")
+		coordLogoW := 7.5 * scale
+		coordLogoX := 3 + probLogoW + 0.3
+		pdf.ImageOptions("coord_logo_header.png", coordLogoX, y, coordLogoW, logoH, true, opts, 0, "")
 	}
 
 	y = y + logoH + 1.5
@@ -1214,8 +1216,8 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
 
-	qrBoxH := 14.0 * scale
-	qrSize := qrBoxH - 1.5
+	qrBoxH := 20.0 * scale
+	qrSize := qrBoxH - 1.0
 
 	pdf.Rect(3, y, pageW, qrBoxH, "")
 
