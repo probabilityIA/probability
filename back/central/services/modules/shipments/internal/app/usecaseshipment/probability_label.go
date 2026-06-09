@@ -1066,6 +1066,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetMargins(3, 3, 3)
 	pdf.SetAutoPageBreak(false, 3)
 	pdf.AddPage()
+	pdf.SetCellMargin(1.0)
 
 	tr := pdf.UnicodeTranslatorFromDescriptor("")
 	scale := 1.0
@@ -1175,18 +1176,38 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	}
 	y = maxY + 0.3
 
+	logoBoxW := pageW / 2
+	barcodeBoxW := pageW / 2
+
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
-	pdf.CellFormat(pageW, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
+	pdf.CellFormat(logoBoxW-0.3, 2.5*scale, "LOGO", "1", 0, "C", false, 0, "")
+	pdf.SetX(3 + logoBoxW + 0.3)
+	pdf.CellFormat(barcodeBoxW-0.3, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
 	y = pdf.GetY()
 
-	bcImg := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(9*scale*8))
+	coordLogo := readLocalAsset("coordinadora-logo.png")
+	logoBoxH := 8.5 * scale
+	if len(coordLogo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
+		pdf.ImageOptions("coord_logo_box.png", 3.5, y+0.5, logoBoxW-1.5, logoBoxH-1, true, opts, 0, "")
+	}
+
+	pdf.SetXY(3+logoBoxW+0.3, y)
+	bcImg := buildCode128PNGProb(c.TrackingNumber, int(barcodeBoxW*8), int(logoBoxH*8))
 	if bcImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_bc.png", opts, bytes.NewReader(bcImg))
-		pdf.ImageOptions("coord_bc.png", 3, y, pageW, 9*scale, false, opts, 0, "")
-		pdf.SetY(y + 9*scale)
+		pdf.ImageOptions("coord_bc.png", 3+logoBoxW+0.3, y, barcodeBoxW-0.6, logoBoxH, false, opts, 0, "")
 	}
+
+	pdf.SetDrawColor(0, 0, 0)
+	pdf.SetLineWidth(0.3)
+	pdf.Rect(3, y, logoBoxW-0.3, logoBoxH, "")
+	pdf.Rect(3+logoBoxW+0.3, y, barcodeBoxW-0.3, logoBoxH, "")
+
+	pdf.SetY(y + logoBoxH)
 
 	pdf.SetFont("Courier", "B", 9*scale)
 	pdf.SetXY(3, pdf.GetY())
