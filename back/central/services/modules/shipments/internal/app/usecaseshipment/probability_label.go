@@ -1077,8 +1077,8 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	y := 3.0
 
-	logoH := 5.5 * scale
-	probLogoW := 12.0 * scale
+	logoH := 6.5 * scale
+	probLogoW := 13.0 * scale
 
 	probLogo := readLocalAsset("probability-logo.png")
 	if len(probLogo) > 0 {
@@ -1091,9 +1091,10 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo_header.png", opts, bytes.NewReader(coordLogo))
-		coordLogoW := 7.5 * scale
-		coordLogoX := 3 + probLogoW + 0.3
-		pdf.ImageOptions("coord_logo_header.png", coordLogoX, y, coordLogoW, logoH, true, opts, 0, "")
+		coordLogoW := 10.0 * scale
+		coordLogoX := 3 + probLogoW + 0.5
+		coordLogoY := y
+		pdf.ImageOptions("coord_logo_header.png", coordLogoX, coordLogoY, coordLogoW, logoH, true, opts, 0, "")
 	}
 
 	y = y + logoH + 1.5
