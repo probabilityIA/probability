@@ -1228,9 +1228,9 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := colQRBox - 1.5
+		qrSize := logoBoxH - 1.0
 		qrX := 3 + colLogoBox + (colQRBox-qrSize)/2
-		qrY := y + logoBoxH - qrSize - 0.8
+		qrY := y + (logoBoxH-qrSize)/2
 		pdf.ImageOptions("qr_coord.png", qrX, qrY, qrSize, qrSize, false, opts, 0, "")
 	}
 
