@@ -1099,7 +1099,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.CellFormat(colW2, 7*scale, "AS\nPAQ\n1-2", "1", 0, "C", false, 0, "")
 	pdf.SetX(3 + colW1 + colW2)
 	pdf.CellFormat(colW3, 7*scale, tr("UNIDAD:\n1/1"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 1.0
+	y = pdf.GetY() + 2.0
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
@@ -1145,7 +1145,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 9*scale)
 	pdf.CellFormat(pageW, 3.5*scale, time.Now().Format("2006-01-02"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 1.0
+	y = pdf.GetY() + 2.0
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
@@ -1176,60 +1176,50 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	}
 	y = maxY + 1.2
 
-	logoBoxW := pageW / 2
-	barcodeBoxW := pageW / 2
-
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 4.5*scale)
-	pdf.CellFormat(logoBoxW-0.3, 2.5*scale, "LOGO", "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + logoBoxW + 0.3)
-	pdf.CellFormat(barcodeBoxW-0.3, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
+	pdf.CellFormat(pageW, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
 	y = pdf.GetY()
 
-	coordLogo := getCarrierLogo("COORDINADORA")
-	logoBoxH := 8.5 * scale
-	if len(coordLogo) > 0 {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
-		pdf.ImageOptions("coord_logo_box.png", 3.5, y+0.5, logoBoxW-1.5, logoBoxH-1, true, opts, 0, "")
-	}
-
-	pdf.SetXY(3+logoBoxW+0.3, y)
-	bcImg := buildCode128PNGProb(c.TrackingNumber, int(barcodeBoxW*8), int(logoBoxH*8))
+	bcImg := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(9*scale*8))
 	if bcImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_bc.png", opts, bytes.NewReader(bcImg))
-		pdf.ImageOptions("coord_bc.png", 3+logoBoxW+0.3, y, barcodeBoxW-0.6, logoBoxH, false, opts, 0, "")
+		pdf.ImageOptions("coord_bc.png", 3, y, pageW, 9*scale, false, opts, 0, "")
+		pdf.SetY(y + 9*scale)
 	}
-
-	pdf.SetDrawColor(0, 0, 0)
-	pdf.SetLineWidth(0.3)
-	pdf.Rect(3, y, logoBoxW-0.3, logoBoxH, "")
-	pdf.Rect(3+logoBoxW+0.3, y, barcodeBoxW-0.3, logoBoxH, "")
-
-	pdf.SetY(y + logoBoxH)
+	y = pdf.GetY()
 
 	pdf.SetFont("Courier", "B", 9*scale)
-	pdf.SetXY(3, pdf.GetY())
+	pdf.SetXY(3, y)
 	pdf.CellFormat(pageW, 3*scale, c.TrackingNumber, "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 0.3
+	y = pdf.GetY() + 1.5
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "", 4.5*scale)
 	dimText := fmt.Sprintf("Peso: %.1f kg | Dim: %.0f x %.0f x %.0f cm", c.Weight, c.Length, c.Width, c.Height)
 	pdf.CellFormat(pageW, 2.5*scale, dimText, "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 0.3
+	y = pdf.GetY() + 1.5
 
-	colLeft := pageW / 2
-	colRight := pageW / 2
+	colLogoBox := pageW / 3
+	colQR := pageW * 2 / 3
 
 	pdf.SetXY(3, y)
+	coordLogo := getCarrierLogo("COORDINADORA")
+	logoBoxH := 6.0 * scale
+	if len(coordLogo) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		pdf.RegisterImageOptionsReader("coord_logo_box.png", opts, bytes.NewReader(coordLogo))
+		pdf.ImageOptions("coord_logo_box.png", 3.5, y+0.3, colLogoBox-1.0, logoBoxH-0.6, true, opts, 0, "")
+		pdf.Rect(3, y, colLogoBox-0.2, logoBoxH, "")
+	}
+
 	qrImg := buildQRPNGProb(c.TrackingNumber)
 	if qrImg != nil {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrSize := colRight - 0.5
-		pdf.ImageOptions("qr_coord.png", 3+colLeft+0.5, y, qrSize, qrSize, false, opts, 0, "")
+		qrSize := colQR - 0.5
+		pdf.ImageOptions("qr_coord.png", 3+colLogoBox+0.3, y+(logoBoxH-qrSize)/2, qrSize, qrSize, false, opts, 0, "")
 	}
 
 	var buf bytes.Buffer
