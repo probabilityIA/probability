@@ -1090,7 +1090,8 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if len(coordLogo) > 0 {
 		opts := gofpdf.ImageOptions{ImageType: "PNG"}
 		pdf.RegisterImageOptionsReader("coord_logo_header.png", opts, bytes.NewReader(coordLogo))
-		pdf.ImageOptions("coord_logo_header.png", pageW-5, y, 5, logoH, true, opts, 0, "")
+		coordLogoW := 8.0 * scale
+		pdf.ImageOptions("coord_logo_header.png", pageW-coordLogoW-0.5, y, coordLogoW, logoH, true, opts, 0, "")
 	}
 
 	y = y + logoH + 1.5
@@ -1213,8 +1214,8 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
 
-	qrBoxH := 10.0 * scale
-	qrSize := qrBoxH - 1.0
+	qrBoxH := 14.0 * scale
+	qrSize := qrBoxH - 1.5
 
 	pdf.Rect(3, y, pageW, qrBoxH, "")
 
