@@ -30,14 +30,16 @@ func (h *wooCommerceHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
-	// 2. Extraer headers
+	// 2. Extraer headers y la integracion embebida en el delivery URL
 	topic := c.GetHeader("X-WC-Webhook-Topic")
 	source := c.GetHeader("X-WC-Webhook-Source")
 	signature := c.GetHeader("X-WC-Webhook-Signature")
+	integrationID := c.Query("integration_id")
 
 	h.logger.Info(ctx).
 		Str("topic", topic).
 		Str("source", source).
+		Str("integration_id", integrationID).
 		Int("body_size", len(rawBody)).
 		Msg("WooCommerce webhook received")
 
@@ -59,17 +61,18 @@ func (h *wooCommerceHandler) HandleWebhook(c *gin.Context) {
 
 	// 5. Procesar asincrónicamente
 	if topic != "" && len(rawBody) > 0 {
-		go h.processWebhookAsync(topic, source, rawBody)
+		go h.processWebhookAsync(topic, source, integrationID, rawBody)
 	}
 }
 
-func (h *wooCommerceHandler) processWebhookAsync(topic, source string, rawBody []byte) {
+func (h *wooCommerceHandler) processWebhookAsync(topic, source, integrationID string, rawBody []byte) {
 	ctx := context.Background()
 
-	if err := h.useCase.ProcessWebhookOrder(ctx, topic, source, rawBody); err != nil {
+	if err := h.useCase.ProcessWebhookOrder(ctx, topic, source, integrationID, rawBody); err != nil {
 		h.logger.Error(ctx).Err(err).
 			Str("topic", topic).
 			Str("source", source).
+			Str("integration_id", integrationID).
 			Msg("Failed to process WooCommerce webhook order")
 	}
 }

@@ -7,7 +7,7 @@ import "time"
 type OrderError struct {
 	ID              uint
 	ExternalID      string
-	IntegrationID   uint
+	IntegrationID   *uint
 	BusinessID      *uint
 	IntegrationType string
 	Platform        string
