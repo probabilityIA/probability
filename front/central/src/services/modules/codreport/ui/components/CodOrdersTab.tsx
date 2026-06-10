@@ -117,7 +117,7 @@ export default function CodOrdersTab({ filters }: Props) {
                             <th className="text-left px-3 py-2 font-semibold">Cliente</th>
                             <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
                             <th className="text-left px-3 py-2 font-semibold">Estado</th>
-                            <th className="text-right px-3 py-2 font-semibold">COD producto</th>
+                            <th className="text-right px-3 py-2 font-semibold">COD orden (prod + envio)</th>
                             <th className="text-right px-3 py-2 font-semibold">Cargo COD carrier</th>
                             <th className="text-right px-3 py-2 font-semibold">Total cliente</th>
                             <th className="text-center px-3 py-2 font-semibold">Recaudo</th>

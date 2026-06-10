@@ -9,15 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// ============================================
-// BUSINESS ID RESOLUTION QUERIES
-// (Replicated locally — module isolation rule)
-// Table consulted: orders, shipments
-// ============================================
-// NOTE: UpdateOrderGuideLink is also here (replicated write — module isolation rule)
-
-// GetOrderBusinessID retrieves the business_id for an order by its UUID.
-// Used by super admin handlers to resolve which business owns the order.
 func (r *Repository) GetOrderBusinessID(ctx context.Context, orderUUID string) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`
@@ -44,8 +35,6 @@ func (r *Repository) GetOrderBusinessID(ctx context.Context, orderUUID string) (
 	return result.BusinessID, nil
 }
 
-// GetShipmentBusinessIDByTracking resolves the business_id for a shipment via its tracking number.
-// Joins shipments -> orders to get the business_id.
 func (r *Repository) GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`
@@ -74,8 +63,6 @@ func (r *Repository) GetShipmentBusinessIDByTracking(ctx context.Context, tracki
 	return result.BusinessID, nil
 }
 
-// GetShipmentBusinessIDByID resolves the business_id for a shipment via its DB ID.
-// Joins shipments -> orders to get the business_id.
 func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`
@@ -104,8 +91,6 @@ func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID u
 	return result.BusinessID, nil
 }
 
-// GetOrderIntegrationID retrieves the integration_id for an order by its UUID.
-// Replicated query — module isolation rule.
 func (r *Repository) GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error) {
 	var result struct {
 		IntegrationID uint `gorm:"column:integration_id"`
@@ -129,9 +114,6 @@ func (r *Repository) GetOrderIntegrationID(ctx context.Context, orderUUID string
 	return result.IntegrationID, nil
 }
 
-// UpdateOrderGuideLink updates guide_link, tracking_number, and carrier on the orders table
-// after a guide is generated. Replicated write — orders table is owned by the orders
-// module but we update it directly to avoid inter-module repository sharing.
 func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {
 	updates := map[string]interface{}{}
 	if guideLink != "" {
@@ -145,6 +127,10 @@ func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, g
 	}
 	if shippingCost > 0 {
 		updates["shipping_cost"] = shippingCost
+		updates["cod_total"] = gorm.Expr(
+			"CASE WHEN cod_total > 0 AND platform = 'manual' THEN total_amount + ? ELSE cod_total END",
+			shippingCost,
+		)
 	}
 	if len(updates) == 0 {
 		return nil
