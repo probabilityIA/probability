@@ -1120,7 +1120,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	obsStartY := pdf.GetY()
 	pdf.SetXY(3+colRef+0.7, pdf.GetY()-5*scale)
-	obsText := tr("CASA 126 Doc.\nORDEN " + c.OrderNumber)
+	obsText := tr("Email: " + c.CustomerEmail + "\nORDEN: " + c.OrderNumber)
 	pdf.MultiCell(colObs-0.5, 2.5*scale, obsText, "1", "L", false)
 
 	maxObsY := pdf.GetY()
@@ -1202,6 +1202,12 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetFont("Helvetica", "", 4.5*scale)
 	dimText := fmt.Sprintf("Peso: %.1f kg | Dim: %.0f x %.0f x %.0f cm", c.Weight, c.Length, c.Width, c.Height)
 	pdf.CellFormat(pageW, 2.5*scale, dimText, "1", 1, "C", false, 0, "")
+	y = pdf.GetY()
+
+	pdf.SetXY(3, y)
+	pdf.SetFont("Helvetica", "B", 5*scale)
+	priceText := fmt.Sprintf("VALOR: %.2f %s", c.DeclaredValue, c.Currency)
+	pdf.CellFormat(pageW, 2.5*scale, priceText, "1", 1, "C", false, 0, "")
 	y = pdf.GetY() + 1.5
 
 	pdf.SetDrawColor(0, 0, 0)
