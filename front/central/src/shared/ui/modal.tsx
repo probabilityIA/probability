@@ -11,7 +11,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   showCloseButton?: boolean; // NEW: Mostrar o no el botón de cerrar
-  title?: string;
+  title?: ReactNode;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   glass?: boolean; // Efecto glassmorphism
@@ -123,7 +123,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           >
             {/* Header */}
             {title && (
-              <div className="relative mb-4 flex-shrink-0 px-6 py-4 -mx-6 -mt-6 rounded-t-2xl" style={{ backgroundColor: 'var(--color-primary)' }}>
+              <div className="relative mb-4 flex-shrink-0 px-6 py-4 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 rounded-t-2xl" style={{ backgroundColor: 'var(--color-primary)' }}>
                 <h3 className="text-xl font-bold text-center text-white">{title}</h3>
                 {showCloseButton && (
                   <button

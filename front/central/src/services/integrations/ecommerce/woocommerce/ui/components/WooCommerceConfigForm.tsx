@@ -29,17 +29,17 @@ interface WooCommerceConfigFormProps {
     };
 }
 
-const GREEN = '#1F8A5B';
-const GREEN_DARK = '#15803d';
-const GREEN_SOFT = '#eafaf0';
-const GREEN_BORDER = '#c7eed5';
+const GREEN = 'var(--color-primary)';
+const GREEN_DARK = 'color-mix(in srgb, var(--color-primary) 85%, black)';
+const GREEN_SOFT = 'color-mix(in srgb, var(--color-primary) 10%, white)';
+const GREEN_BORDER = 'color-mix(in srgb, var(--color-primary) 25%, white)';
 const CARD_BG = '#fafafd';
 const CARD_BORDER = '#eceaf3';
 const INPUT_BORDER = '#e9e9f0';
 
-const fieldLabel = 'block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5';
-const fieldHint = 'text-xs text-gray-400 dark:text-gray-500 mt-1.5 flex items-start gap-1';
-const inputCls = 'w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500';
+const fieldLabel = 'block text-[13px] font-semibold text-gray-900 dark:text-gray-100 mb-1';
+const fieldHint = 'text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-start gap-1';
+const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
 
 const GUIDE_STEPS = [
     'Ingresa al panel de WordPress',
@@ -210,54 +210,54 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+        <form onSubmit={handleSubmit} className="space-y-3" autoComplete="off">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3.5">
+                <div className="flex items-center gap-3">
                     <span
-                        className="flex h-14 w-14 items-center justify-center rounded-2xl overflow-hidden shrink-0"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl overflow-hidden shrink-0"
                         style={{ backgroundColor: logoUrl && !logoFailed ? GREEN_SOFT : GREEN, border: `1px solid ${GREEN_BORDER}` }}
                     >
                         {logoUrl && !logoFailed ? (
                             <img
                                 src={logoUrl}
                                 alt="WooCommerce"
-                                className="h-10 w-10 object-contain"
+                                className="h-8 w-8 object-contain"
                                 onError={() => setLogoFailed(true)}
                             />
                         ) : (
-                            <ShoppingBagIcon className="h-7 w-7 text-white" />
+                            <ShoppingBagIcon className="h-6 w-6 text-white" />
                         )}
                     </span>
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">WooCommerce</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-300">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">WooCommerce</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-300">
                             Conecta tu tienda para sincronizar ordenes y productos a Probability.
                         </p>
                     </div>
                 </div>
                 <span
-                    className="inline-flex items-center gap-2 self-start rounded-full px-3.5 py-1.5 text-xs font-semibold"
+                    className="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-semibold"
                     style={connectionReady
                         ? { backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}`, color: GREEN_DARK }
                         : { backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb', color: '#6b7280' }}
                 >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: connectionReady ? '#22c55e' : '#9ca3af' }} />
+                    <span className={connectionReady ? 'h-2 w-2 rounded-full animate-pulse' : 'h-2 w-2 rounded-full'} style={{ backgroundColor: connectionReady ? 'var(--color-primary)' : '#9ca3af' }} />
                     {connectionReady ? 'Listo para probar' : 'Datos incompletos'}
                 </span>
             </div>
 
             <div
-                className="rounded-2xl p-5 dark:bg-gray-800/60"
+                className="rounded-xl p-4 dark:bg-gray-800/60"
                 style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
             >
-                <div className="flex items-center gap-2.5 mb-4">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: GREEN_SOFT }}>
-                        <Cog6ToothIcon className="w-4.5 h-4.5" style={{ color: GREEN, width: 18, height: 18 }} />
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
+                        <Cog6ToothIcon className="w-4.5 h-4.5" style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Configuracion general</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Configuracion general</h3>
                 </div>
 
-                <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
                         <label className={fieldLabel}>
                             Nombre de la Integracion <span style={{ color: GREEN }}>*</span>
@@ -335,17 +335,17 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
             </div>
 
             <div
-                className="rounded-2xl p-5 dark:bg-gray-800/60"
+                className="rounded-xl p-4 dark:bg-gray-800/60"
                 style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
             >
-                <div className="flex items-center gap-2.5 mb-4">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: GREEN_SOFT }}>
-                        <KeyIcon style={{ color: GREEN, width: 18, height: 18 }} />
+                <div className="flex items-center gap-2 mb-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
+                        <KeyIcon style={{ color: GREEN, width: 16, height: 16 }} />
                     </span>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">Credenciales de acceso</h3>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Credenciales de acceso</h3>
                 </div>
 
-                <div className="grid grid-cols-1 gap-x-5 gap-y-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
                     <div>
                         <label className={fieldLabel}>
                             Consumer Key <span style={{ color: GREEN }}>*</span>
@@ -377,7 +377,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     type="button"
                     onClick={handleTestConnection}
                     disabled={testingConnection || loading || !connectionReady}
-                    className="mt-5 w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
+                    className="mt-3.5 w-full flex items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold transition-colors disabled:opacity-50"
                     style={{
                         border: `2px dashed ${GREEN_BORDER}`,
                         backgroundColor: 'rgba(234, 250, 240, 0.5)',
@@ -402,15 +402,15 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
             </div>
 
             <div
-                className="rounded-2xl p-5 dark:bg-gray-800/60"
+                className="rounded-xl p-4 dark:bg-gray-800/60"
                 style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
             >
-                <div className="flex flex-col gap-1.5 mb-4 sm:flex-row sm:items-center sm:justify-between">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                        <InformationCircleIcon className="w-5 h-5 text-gray-400" />
+                <div className="flex flex-col gap-1 mb-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                        <InformationCircleIcon className="w-4 h-4 text-gray-400" />
                         Como obtener tus credenciales
                     </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
                         En WordPress:{' '}
                         <strong style={{ color: GREEN_DARK }}>WooCommerce</strong>
                         <span className="mx-1 text-gray-400">&rarr;</span>
@@ -426,7 +426,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         <li key={i} className="flex flex-col">
                             <div className="flex items-center">
                                 <span
-                                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
                                     style={{ backgroundColor: GREEN }}
                                 >
                                     {i + 1}
@@ -435,19 +435,19 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                     <span className="hidden sm:block flex-1 h-px mx-2" style={{ backgroundColor: INPUT_BORDER }} />
                                 )}
                             </div>
-                            <span className="mt-2 pr-3 text-xs text-gray-500 dark:text-gray-400 leading-snug">{step}</span>
+                            <span className="mt-1.5 pr-2 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">{step}</span>
                         </li>
                     ))}
                 </ol>
             </div>
 
-            <div className="flex flex-col-reverse gap-3 pt-4 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
+            <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (
                     <button
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="px-6 py-2.5 text-sm font-semibold rounded-xl bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        className="px-5 py-2 text-[13px] font-semibold rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                         style={{ border: `1px solid ${INPUT_BORDER}` }}
                     >
                         Cancelar
@@ -456,7 +456,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-2.5 text-sm font-semibold rounded-xl text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    className="px-5 py-2 text-[13px] font-semibold rounded-lg text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
                     style={{ backgroundColor: GREEN }}
                     onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}

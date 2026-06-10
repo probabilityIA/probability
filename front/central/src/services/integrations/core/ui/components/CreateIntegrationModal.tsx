@@ -125,6 +125,7 @@ export function CreateIntegrationModal({
             case 2: // Provider selection
                 return '4xl';
             case 3: // Form
+                if (selectedProvider?.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE) return '4xl';
                 return 'full';
             default:
                 return '4xl';
@@ -135,7 +136,12 @@ export function CreateIntegrationModal({
         <Modal
             isOpen={isOpen}
             onClose={handleClose}
-            title={step === 1 ? 'Nueva Integración' : step === 2 ? selectedCategory?.name : selectedProvider?.name}
+            title={step === 1 ? 'Nueva Integración' : step === 2 ? selectedCategory?.name : (
+                <span className="inline-flex items-center justify-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.9)]" />
+                    {selectedProvider?.name}
+                </span>
+            )}
             size={getModalSize()}
         >
             {/* Step 1: Select Category */}
@@ -389,15 +395,19 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
         }
     };
 
+    const hideBackLink = integrationType.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE;
+
     return (
-        <div className="p-6">
-            <button
-                onClick={onBack}
-                className="text-blue-600 hover:text-blue-800 mb-6 flex items-center gap-2 font-medium transition-colors"
-            >
-                <span>←</span>
-                <span>Volver a proveedores</span>
-            </button>
+        <div className={hideBackLink ? 'p-4' : 'p-6'}>
+            {!hideBackLink && (
+                <button
+                    onClick={onBack}
+                    className="text-blue-600 hover:text-blue-800 mb-6 flex items-center gap-2 font-medium transition-colors"
+                >
+                    <span>←</span>
+                    <span>Volver a proveedores</span>
+                </button>
+            )}
 
             {renderSpecificForm()}
         </div>
