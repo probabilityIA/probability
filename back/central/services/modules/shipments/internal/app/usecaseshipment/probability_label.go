@@ -1206,7 +1206,11 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 
 	pdf.SetXY(3, y)
 	pdf.SetFont("Helvetica", "B", 5*scale)
-	priceText := fmt.Sprintf("VALOR: %.2f %s", c.DeclaredValue, c.Currency)
+	priceValue := c.CodTotal
+	if priceValue <= 0 {
+		priceValue = c.DeclaredValue
+	}
+	priceText := fmt.Sprintf("VALOR: %.2f %s", priceValue, c.Currency)
 	pdf.CellFormat(pageW, 2.5*scale, priceText, "1", 1, "C", false, 0, "")
 	y = pdf.GetY() + 1.5
 
