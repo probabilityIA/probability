@@ -142,13 +142,20 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 		}
 
 		gateway := order.PaymentMethod
+		paymentMethodID := mapWooPaymentMethod(order.PaymentMethod)
 		dto.Payments = append(dto.Payments, canonical.ProbabilityPaymentDTO{
-			Amount:   totalAmount,
-			Currency: order.Currency,
-			Status:   paymentStatus,
-			PaidAt:   paidAt,
-			Gateway:  &gateway,
+			PaymentMethodID: paymentMethodID,
+			Amount:          totalAmount,
+			Currency:        order.Currency,
+			Status:          paymentStatus,
+			PaidAt:          paidAt,
+			Gateway:         &gateway,
 		})
+
+		if paymentMethodID == paymentMethodCOD {
+			codTotal := totalAmount
+			dto.CodTotal = &codTotal
+		}
 	}
 
 	// Shipments from shipping lines
@@ -178,6 +185,38 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	}
 
 	return dto
+}
+
+// IDs del catalogo seed payment_methods (migration/shared).
+const (
+	paymentMethodCreditCard   uint = 1
+	paymentMethodPaypal       uint = 3
+	paymentMethodBankTransfer uint = 4
+	paymentMethodCash         uint = 5
+	paymentMethodCOD          uint = 6
+	paymentMethodMercadoPago  uint = 7
+	paymentMethodStripe       uint = 8
+)
+
+// mapWooPaymentMethod mapea el slug del gateway de WooCommerce al catalogo payment_methods.
+func mapWooPaymentMethod(method string) uint {
+	m := strings.ToLower(method)
+	switch {
+	case m == "cod" || strings.Contains(m, "contra"):
+		return paymentMethodCOD
+	case m == "bacs" || strings.Contains(m, "transfer"):
+		return paymentMethodBankTransfer
+	case m == "cheque" || strings.Contains(m, "cash"):
+		return paymentMethodCash
+	case strings.Contains(m, "paypal") || m == "ppcp-gateway":
+		return paymentMethodPaypal
+	case strings.Contains(m, "stripe"):
+		return paymentMethodStripe
+	case strings.Contains(m, "mercado"):
+		return paymentMethodMercadoPago
+	default:
+		return paymentMethodCreditCard
+	}
 }
 
 // mapWooStatus mapea el estado de WooCommerce al estado canónico de Probability.
