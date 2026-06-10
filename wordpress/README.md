@@ -96,8 +96,12 @@ en local (HTTP plano) `setup.sh` instala un mu-plugin
 El backend valida HMAC solo si `WOOCOMMERCE_WEBHOOK_SECRET` esta seteado en su `.env`.
 Para local, dejarlo vacio = se omite la validacion (mas simple).
 
-Los webhooks de WooCommerce se entregan via wp-cron (async). Para forzar la entrega
-sin esperar:
+Los webhooks de WooCommerce se entregan via wp-cron (async). El servicio `wpcron`
+del compose (contenedor `woo_test_cron`) ejecuta `wp cron event run --due-now` y
+`wp action-scheduler run` cada 20s, simulando el trafico de una tienda real:
+las ordenes llegan solas a Probability en menos de un minuto.
+
+Si necesitas forzar la entrega inmediata:
 
 ```bash
 docker compose run --rm wpcli wp action-scheduler run

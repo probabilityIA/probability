@@ -37,6 +37,26 @@ services:
     volumes:
       - wp_data:/var/www/html
 
+  wpcron:
+    image: wordpress:cli-php8.3
+    container_name: woo_test_cron
+    restart: unless-stopped
+    user: "33:33"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      HOME: /tmp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - wp_data:/var/www/html
+    entrypoint: ["/bin/sh", "-c", "while true; do wp cron event run --due-now >/dev/null 2>&1; wp action-scheduler run >/dev/null 2>&1; sleep 20; done"]
+
   wpcli:
     image: wordpress:cli-php8.3
     container_name: woo_test_cli
