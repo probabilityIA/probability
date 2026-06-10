@@ -60,12 +60,16 @@ interface ToggleRowProps {
     activeColor?: 'indigo' | 'orange';
 }
 
-function ToggleRow({ icon, title, subtitle, checked, onToggle, disabled, activeColor = 'indigo' }: ToggleRowProps) {
-    const onColor = activeColor === 'orange' ? 'bg-orange-500' : 'bg-indigo-500';
+function ToggleRow({ icon, title, subtitle, checked, onToggle, disabled }: ToggleRowProps) {
     return (
         <div className="flex items-center justify-between gap-3 px-3 py-2.5">
             <div className="flex items-center gap-2.5 min-w-0">
-                <span className="shrink-0">{icon}</span>
+                <span
+                    className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, white)' }}
+                >
+                    {icon}
+                </span>
                 <div className="min-w-0">
                     <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100 leading-tight">{title}</p>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{subtitle}</p>
@@ -73,11 +77,14 @@ function ToggleRow({ icon, title, subtitle, checked, onToggle, disabled, activeC
             </div>
             <button
                 type="button"
+                role="switch"
+                aria-checked={checked}
                 onClick={onToggle}
                 disabled={disabled}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 disabled:opacity-50 ${checked ? onColor : 'bg-gray-300 dark:bg-gray-600'}`}
+                className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none shrink-0 disabled:opacity-50"
+                style={{ backgroundColor: checked ? 'var(--color-primary)' : '#e5e7eb' }}
             >
-                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
         </div>
     );
@@ -382,7 +389,7 @@ export default function ShopifyOAuthForm({
                             style={{ border: `1px solid ${INPUT_BORDER}` }}
                         >
                             <ToggleRow
-                                icon={<TruckIcon className="w-4 h-4 text-indigo-500" />}
+                                icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
                                 title="Cotizacion en checkout"
                                 subtitle="Tarifas en tiempo real con varias transportadoras al pagar"
                                 checked={carrierEnabled}
@@ -392,7 +399,7 @@ export default function ShopifyOAuthForm({
                             />
                             <div>
                                 <ToggleRow
-                                    icon={<BeakerIcon className="w-4 h-4 text-orange-500" />}
+                                    icon={<BeakerIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
                                     title="Modo de pruebas"
                                     subtitle="Redirige las peticiones a la URL de pruebas"
                                     checked={isTesting}
