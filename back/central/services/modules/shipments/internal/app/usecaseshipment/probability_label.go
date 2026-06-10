@@ -1213,8 +1213,8 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
 
-	qrBoxH := 20.0 * scale
-	qrSize := qrBoxH - 1.0
+	qrBoxH := 26.0 * scale
+	qrSize := qrBoxH - 1.5
 
 	pdf.Rect(3, y, pageW, qrBoxH, "")
 
