@@ -28,14 +28,14 @@ func (c *WooCommerceClient) TestConnection(ctx context.Context, storeURL, consum
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return fmt.Errorf("woocommerce client: creating request: %w", err)
+		return fmt.Errorf("la URL de la tienda no es valida: %w", err)
 	}
 
 	req.SetBasicAuth(consumerKey, consumerSecret)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("woocommerce client: request failed: %w", err)
+		return fmt.Errorf("no se pudo conectar con la tienda (verifica la URL y que el sitio este en linea): %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -43,8 +43,12 @@ func (c *WooCommerceClient) TestConnection(ctx context.Context, storeURL, consum
 		return domain.ErrInvalidCredentials
 	}
 
+	if resp.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("la tienda respondio 404: verifica que la URL apunte a un WordPress con WooCommerce y permalinks activos")
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("woocommerce client: unexpected status %d", resp.StatusCode)
+		return fmt.Errorf("la tienda respondio con estado inesperado %d", resp.StatusCode)
 	}
 
 	return nil
