@@ -1162,15 +1162,15 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	}
 
 	pdf.SetXY(3.5, y)
-	pdf.SetFont("Helvetica", "", 3.8*scale)
+	pdf.SetFont("Helvetica", "", 3.6*scale)
 	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
-	pdf.MultiCell(colRemDest-0.8, 2.2*scale, remText, "1", "L", false)
+	pdf.MultiCell(colRemDest-0.8, 1.8*scale, remText, "1", "L", false)
 	remEndY := pdf.GetY()
 
 	pdf.SetXY(3+colRemDest+0.7, y)
-	pdf.SetFont("Helvetica", "", 3.8*scale)
+	pdf.SetFont("Helvetica", "", 3.6*scale)
 	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
-	pdf.MultiCell(colRemDest-0.8, 2.2*scale, destText, "1", "L", false)
+	pdf.MultiCell(colRemDest-0.8, 1.8*scale, destText, "1", "L", false)
 	destEndY := pdf.GetY()
 
 	y = remEndY
