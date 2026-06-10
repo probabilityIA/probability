@@ -193,6 +193,10 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		return nil, fmt.Errorf("error al crear integración: %w", err)
 	}
 
+	// Los observers de OnIntegrationCreated filtran por integration.IntegrationType.Code;
+	// la entidad recien creada no trae la relacion cargada, sin esto nunca se disparan.
+	integration.IntegrationType = integrationType
+
 	// ✅ NUEVO - Cachear metadata
 	configMap := make(map[string]interface{})
 	if len(integration.Config) > 0 {
