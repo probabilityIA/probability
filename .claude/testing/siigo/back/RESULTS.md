@@ -44,3 +44,25 @@ Cola siigo drenada (0 pendientes), respuestas consumidas por el orquestador (0 p
   `.claude/alerts/siigo-pendientes.md`). Los paths annul/vouchers/stamp y los valores
   de stamp.status estan segun documentacion, verificados solo contra el mock.
 - Integracion 198 (Siigo E2E Demo) quedo creada en la DB del business demo.
+
+## E2E en PROD via WooCommerce (2026-06-11)
+
+Flujo real: 20 webhooks WooCommerce (order.created) -> ordenes demo (business 26,
+integracion woo 197) -> auto-factura a Siigo -> mock prod back-testing:9095.
+
+- 20/20 webhooks 200, 20/20 ordenes creadas, 20/20 auto-facturadas (issued + CUFE).
+- Operaciones Siigo validadas en prod sobre esas facturas:
+  - cancel -> status cancelled.
+  - cash_receipt -> voucher (sync log success). Requiere send_cash_receipt + cash_receipt_document_id/payment_id en config de la integracion.
+  - credit_note -> NC-701 issued con CUFE. Requiere credit_note_document_id en config de la integracion.
+- Validacion visual con Playwright en /invoicing/invoices (proveedor Siigo, Emitida/Cancelada).
+
+### Bugs reales encontrados y corregidos (commits en main)
+1. fix(woocommerce): mapper emitia payment status 'paid' pero ordenes espera 'completed' -> woo nunca quedaba is_paid.
+2. fix(woocommerce): mapper no seteaba Invoiceable -> woo nunca facturable (regla COP como Shopify).
+3. fix(invoicing): credit_notes.created_by_id NOT NULL no se asignaba -> 500 al crear NC.
+4. feat(siigo): notas de credito end-to-end (no existian en ningun consumer).
+
+### Config requerida en la integracion Siigo para todas las operaciones
+document_id, payment_method_id, cash_receipt_document_id, cash_receipt_payment_id,
+credit_note_document_id (todos en el config de la INTEGRACION, no solo en invoicing_config).
