@@ -5,7 +5,7 @@ import { ChevronDown, X, Package } from 'lucide-react';
 import { TransferStockDTO } from '../../domain/types';
 import { transferStockAction, getProductInventoryAction } from '../../infra/actions';
 import { listZonesAction, listAislesAction, listRacksAction, listRackLevelsAction } from '@/services/modules/warehouses/infra/actions/hierarchy';
-import { getLocationsAction } from '@/services/modules/warehouses/infra/actions';
+import { getLocationsAction, createLocationAction } from '@/services/modules/warehouses/infra/actions';
 import { Zone, Aisle, Rack, RackLevel } from '@/services/modules/warehouses/domain/hierarchy-types';
 import { WarehouseLocation } from '@/services/modules/warehouses/domain/types';
 import { Alert } from '@/shared/ui';
@@ -141,18 +141,30 @@ export default function RelocationStockModal({
             return;
         }
 
-        const existingLocation = locations.find((loc) => loc.level_id === selectedLevelId);
-        const toLocationId = existingLocation?.id;
-
-        if (!toLocationId) {
-            setError('No se encontró ubicación para el nivel seleccionado');
-            return;
-        }
+        let existingLocation = locations.find((loc) => loc.level_id === selectedLevelId);
+        let toLocationId = existingLocation?.id;
 
         setLoading(true);
         setError(null);
 
         try {
+            if (!toLocationId) {
+                const locationCode = `LOC-${selectedZone.code}-${selectedAisle.code}-${selectedRack.code}-${String(selectedLevel.ordinal).padStart(2, '0')}`;
+                const locationName = `${selectedZone.name} / ${selectedAisle.name} / ${selectedRack.name} / Nivel ${selectedLevel.ordinal}`;
+                const newLoc = await createLocationAction(warehouseId, {
+                    name: locationName,
+                    code: locationCode,
+                    type: 'storage',
+                    level_id: selectedLevelId,
+                }, businessId);
+                if (!newLoc || !newLoc.id) {
+                    setLoading(false);
+                    setError('Error al crear ubicación para el nivel');
+                    return;
+                }
+                toLocationId = newLoc.id;
+            }
+
             const dto: TransferStockDTO = {
                 product_id: productId,
                 from_warehouse_id: warehouseId,
