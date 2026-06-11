@@ -45,6 +45,17 @@ type GuidePDFContext struct {
 	WarehouseCity      string
 	WarehouseState     string
 	WarehousePhone     string
+	WarehousePostal    string
+	Origen             string
+	AsCode             string
+	Paq                string
+	Unidad             string
+	Destino            string
+	ZonaHub            string
+	EquipoReparto      string
+	Ref                string
+	Guia               string
+	Observaciones      string
 }
 
 type IRepository interface {

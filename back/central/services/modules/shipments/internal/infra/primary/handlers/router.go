@@ -39,6 +39,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.POST("/generate", h.GenerateGuide)
 		shipments.GET("/guide-formats", h.ListGuideFormats)
 		shipments.GET("/:id/guide", h.RenderGuide)
+		shipments.POST("/:id/extract-coordinadora-data", h.ExtractCoordinadoraData)
 		shipments.POST("/tracking/:tracking_number/track", h.TrackShipment)
 		shipments.POST("/:id/cancel", h.CancelShipment)
 		shipments.POST("/cancel-batch", h.CancelBatchShipments)

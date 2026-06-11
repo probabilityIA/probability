@@ -43,6 +43,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WCity              *string
 		WState             *string
 		WPhone             *string
+		Metadata           map[string]interface{}
 	}
 
 	err := r.db.Conn(ctx).Raw(`
@@ -72,7 +73,8 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			w.street AS w_street,
 			w.city AS w_city,
 			w.state AS w_state,
-			w.phone AS w_phone
+			w.phone AS w_phone,
+			s.metadata
 		FROM shipments s
 		LEFT JOIN orders o ON o.id = s.order_id
 		LEFT JOIN business b ON b.id = o.business_id
@@ -102,6 +104,18 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 	wAddr := val(row.WAddress)
 	if wAddr == "" {
 		wAddr = val(row.WStreet)
+	}
+
+	metaStr := func(key string) string {
+		if row.Metadata == nil {
+			return ""
+		}
+		if v, ok := row.Metadata[key]; ok {
+			if s, ok := v.(string); ok {
+				return strings.TrimSpace(s)
+			}
+		}
+		return ""
 	}
 
 	result := &domain.GuidePDFContext{
@@ -135,6 +149,17 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WarehouseCity:      val(row.WCity),
 		WarehouseState:     val(row.WState),
 		WarehousePhone:     val(row.WPhone),
+		WarehousePostal:    metaStr("postal_origen"),
+		Origen:             metaStr("origen"),
+		AsCode:             metaStr("as_code"),
+		Paq:                metaStr("paq"),
+		Unidad:             metaStr("unidad"),
+		Destino:            metaStr("destino"),
+		ZonaHub:            metaStr("zona_hub"),
+		EquipoReparto:      metaStr("equipo_reparto"),
+		Ref:                metaStr("ref"),
+		Guia:               metaStr("guia"),
+		Observaciones:      metaStr("observaciones"),
 	}
 
 	fmt.Printf("DEBUG [Shipment %d]: Warehouse=%s | Address=%s | City=%s | Phone=%s\n",

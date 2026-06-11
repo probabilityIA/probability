@@ -1136,11 +1136,24 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	colZona := pageW / 3
 	colEquipo := pageW / 3
 
-	pdf.CellFormat(colDestino, 3.5*scale, "Destino\n1", "1", 0, "C", false, 0, "")
+	destinoVal := c.Destino
+	if destinoVal == "" {
+		destinoVal = "-"
+	}
+	zonaVal := c.ZonaHub
+	if zonaVal == "" {
+		zonaVal = "-"
+	}
+	equipoVal := c.EquipoReparto
+	if equipoVal == "" {
+		equipoVal = "-"
+	}
+
+	pdf.CellFormat(colDestino, 3.5*scale, "Destino\n"+destinoVal, "1", 0, "C", false, 0, "")
 	pdf.SetX(3 + colDestino)
-	pdf.CellFormat(colZona, 3.5*scale, "Zona Hub", "1", 0, "C", false, 0, "")
+	pdf.CellFormat(colZona, 3.5*scale, "Zona Hub\n"+zonaVal, "1", 0, "C", false, 0, "")
 	pdf.SetX(3 + colDestino + colZona)
-	pdf.CellFormat(colEquipo, 3.5*scale, "Equipo\nReparto", "1", 1, "C", false, 0, "")
+	pdf.CellFormat(colEquipo, 3.5*scale, "Equipo\n"+equipoVal, "1", 1, "C", false, 0, "")
 	y = pdf.GetY()
 
 	pdf.SetXY(3, y)
