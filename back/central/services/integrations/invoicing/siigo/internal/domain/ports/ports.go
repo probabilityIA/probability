@@ -30,6 +30,8 @@ type ISiigoClient interface {
 
 	CreateCashReceipt(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
 
+	CreateCreditNote(ctx context.Context, req *dtos.CreateCreditNoteRequest) (*dtos.CreateCreditNoteResult, error)
+
 	CreateJournal(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
 }
 

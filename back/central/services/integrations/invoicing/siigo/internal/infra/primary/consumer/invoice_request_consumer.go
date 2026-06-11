@@ -154,6 +154,8 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		response = c.processCancelInvoice(ctx, &request, startTime)
 	case "cash_receipt":
 		response = c.processCashReceipt(ctx, &request, startTime)
+	case "credit_note":
+		response = c.processCreditNote(ctx, &request, startTime)
 	case "create_journal":
 		response = c.processCreateJournal(ctx, &request, startTime)
 	default:

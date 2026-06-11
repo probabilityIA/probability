@@ -262,6 +262,55 @@ func (s *APISimulator) HandleCreateVoucher(body map[string]interface{}) (*domain
 	return voucher, nil
 }
 
+func (s *APISimulator) HandleCreateCreditNote(body map[string]interface{}) (*domain.CreditNote, error) {
+	invoiceRef := ""
+	if v, ok := body["invoice"].(string); ok {
+		invoiceRef = v
+	}
+
+	amount := 0.0
+	if items, ok := body["items"].([]interface{}); ok {
+		for _, it := range items {
+			if m, ok := it.(map[string]interface{}); ok {
+				if p, ok := m["price"].(float64); ok {
+					q := 1.0
+					if qv, ok := m["quantity"].(float64); ok {
+						q = qv
+					}
+					amount += p * q
+				}
+			}
+		}
+	}
+
+	reason := ""
+	if v, ok := body["reason"].(string); ok {
+		reason = v
+	}
+
+	number := s.Repository.NextCreditNoteNumber()
+	note := &domain.CreditNote{
+		ID:         uuid.New().String(),
+		Name:       fmt.Sprintf("NC-%d", number),
+		Number:     number,
+		InvoiceRef: invoiceRef,
+		Amount:     amount,
+		Reason:     reason,
+		CUFE:       randomCUFE(),
+		Date:       time.Now().Format("2006-01-02"),
+		CreatedAt:  time.Now(),
+	}
+	s.Repository.SaveCreditNote(note)
+
+	s.logger.Info().
+		Str("credit_note_id", note.ID).
+		Str("invoice_ref", invoiceRef).
+		Float64("amount", amount).
+		Msg("Siigo mock: credit note created")
+
+	return note, nil
+}
+
 func (s *APISimulator) HandleCreateJournal(body map[string]interface{}) (*domain.JournalEntry, error) {
 	docID := ""
 	if doc, ok := body["document"].(map[string]interface{}); ok {

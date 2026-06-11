@@ -18,7 +18,18 @@ type SiigoClientMock struct {
 	ListProductsFn                func(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
 	ListPaymentTypesFn            func(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
 	CreateCashReceiptFn           func(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
+	CreateCreditNoteFn            func(ctx context.Context, req *dtos.CreateCreditNoteRequest) (*dtos.CreateCreditNoteResult, error)
 	CreateJournalFn               func(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
+}
+
+func (m *SiigoClientMock) CreateCreditNote(
+	ctx context.Context,
+	req *dtos.CreateCreditNoteRequest,
+) (*dtos.CreateCreditNoteResult, error) {
+	if m.CreateCreditNoteFn != nil {
+		return m.CreateCreditNoteFn(ctx, req)
+	}
+	return &dtos.CreateCreditNoteResult{}, nil
 }
 
 func (m *SiigoClientMock) TestAuthentication(

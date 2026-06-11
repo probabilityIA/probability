@@ -21,6 +21,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.GET("/v1/products", h.handleListProducts)
 	router.GET("/v1/payment-types", h.handleListPaymentTypes)
 	router.POST("/v1/vouchers", h.handleCreateVoucher)
+	router.POST("/v1/credit-notes", h.handleCreateCreditNote)
 	router.POST("/v1/journals", h.handleCreateJournal)
 }
 
@@ -254,6 +255,34 @@ func (h *Handler) handleListPaymentTypes(c *gin.Context) {
 	}
 
 	c.JSON(200, results)
+}
+
+func (h *Handler) handleCreateCreditNote(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	var body map[string]interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_body", "Message": "invalid request body"}}})
+		return
+	}
+
+	note, err := h.apiSimulator.HandleCreateCreditNote(body)
+	if err != nil {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_data", "Message": err.Error()}}})
+		return
+	}
+
+	c.JSON(201, gin.H{
+		"id":       note.ID,
+		"name":     note.Name,
+		"number":   note.Number,
+		"date":     note.Date,
+		"total":    note.Amount,
+		"metadata": gin.H{"cufe": note.CUFE},
+		"stamp":    gin.H{"cufe": note.CUFE, "status": "Stamped"},
+	})
 }
 
 func (h *Handler) handleCreateVoucher(c *gin.Context) {

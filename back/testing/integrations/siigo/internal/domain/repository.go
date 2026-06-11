@@ -12,10 +12,12 @@ type Repository struct {
 	journals     map[string]*JournalEntry
 	tokens       map[string]*AuthToken
 	vouchers     map[string]*Voucher
+	creditNotes  map[string]*CreditNote
 	products     []*Product
 	paymentTypes []*PaymentType
 	invoiceSeq   int
 	voucherSeq   int
+	creditSeq    int
 }
 
 func NewRepository() *Repository {
@@ -23,10 +25,12 @@ func NewRepository() *Repository {
 		customers:  make(map[string]*Customer),
 		invoices:   make(map[string]*Invoice),
 		journals:   make(map[string]*JournalEntry),
-		tokens:     make(map[string]*AuthToken),
-		vouchers:   make(map[string]*Voucher),
-		invoiceSeq: 1000,
-		voucherSeq: 500,
+		tokens:      make(map[string]*AuthToken),
+		vouchers:    make(map[string]*Voucher),
+		creditNotes: make(map[string]*CreditNote),
+		invoiceSeq:  1000,
+		voucherSeq:  500,
+		creditSeq:   700,
 	}
 	r.seedCatalogs()
 	return r
@@ -139,6 +143,19 @@ func (r *Repository) SaveVoucher(v *Voucher) {
 			}
 		}
 	}
+}
+
+func (r *Repository) SaveCreditNote(n *CreditNote) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.creditNotes[n.ID] = n
+}
+
+func (r *Repository) NextCreditNoteNumber() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.creditSeq++
+	return r.creditSeq
 }
 
 func (r *Repository) ListProducts() []*Product {

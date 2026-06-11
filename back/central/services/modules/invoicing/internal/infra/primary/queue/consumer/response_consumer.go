@@ -186,6 +186,8 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		}
 	} else if response.Operation == dtos.OperationCashReceipt {
 		c.handleCashReceiptResponse(ctx, invoice, syncLog, &response)
+	} else if response.Operation == dtos.OperationCreditNote {
+		c.handleCreditNoteResponse(ctx, invoice, syncLog, &response)
 	} else {
 		switch response.Status {
 		case dtos.ResponseStatusSuccess:

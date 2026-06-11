@@ -52,3 +52,22 @@ type CreateCashReceiptResult struct {
 	ProviderInfo map[string]interface{}
 	AuditData    *AuditData
 }
+
+type CreateCreditNoteRequest struct {
+	InvoiceExternalID string
+	InvoiceNumber     string
+	Amount            float64
+	Reason            string
+	NoteType          string
+	CustomerDNI       string
+	Credentials       Credentials
+	Config            map[string]interface{}
+}
+
+type CreateCreditNoteResult struct {
+	CreditNoteID     string
+	CreditNoteNumber string
+	CUFE             string
+	ProviderInfo     map[string]interface{}
+	AuditData        *AuditData
+}
