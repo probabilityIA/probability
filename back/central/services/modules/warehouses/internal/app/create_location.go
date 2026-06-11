@@ -26,6 +26,7 @@ func (uc *UseCase) CreateLocation(ctx context.Context, dto dtos.CreateLocationDT
 
 	location := &entities.WarehouseLocation{
 		WarehouseID:   dto.WarehouseID,
+		LevelID:       dto.LevelID,
 		Name:          dto.Name,
 		Code:          dto.Code,
 		Type:          dto.Type,

@@ -7,6 +7,7 @@ type CreateLocationDTO struct {
 	Name          string
 	Code          string
 	Type          string
+	LevelID       *uint
 	IsActive      bool
 	IsFulfillment bool
 	Capacity      *int
@@ -20,6 +21,7 @@ type UpdateLocationDTO struct {
 	Name          string
 	Code          string
 	Type          string
+	LevelID       *uint
 	IsActive      bool
 	IsFulfillment bool
 	Capacity      *int
