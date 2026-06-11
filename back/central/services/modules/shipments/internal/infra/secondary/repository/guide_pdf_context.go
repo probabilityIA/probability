@@ -43,6 +43,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WCity              *string
 		WState             *string
 		WPhone             *string
+		GuideURL           *string
 		Metadata           map[string]interface{}
 	}
 
@@ -74,6 +75,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			w.city AS w_city,
 			w.state AS w_state,
 			w.phone AS w_phone,
+			s.guide_url,
 			s.metadata
 		FROM shipments s
 		LEFT JOIN orders o ON o.id = s.order_id
