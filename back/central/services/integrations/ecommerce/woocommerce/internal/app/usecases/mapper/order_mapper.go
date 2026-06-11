@@ -184,6 +184,8 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 		}
 	}
 
+	dto.Invoiceable = strings.EqualFold(order.Currency, "COP")
+
 	return dto
 }
 
