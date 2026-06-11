@@ -53,6 +53,7 @@ type WarehouseDetailResponse struct {
 type LocationResponse struct {
 	ID            uint      `json:"id"`
 	WarehouseID   uint      `json:"warehouse_id"`
+	LevelID       *uint     `json:"level_id"`
 	Name          string    `json:"name"`
 	Code          string    `json:"code"`
 	Type          string    `json:"type"`
@@ -128,6 +129,7 @@ func LocationFromEntity(l *entities.WarehouseLocation) LocationResponse {
 	return LocationResponse{
 		ID:            l.ID,
 		WarehouseID:   l.WarehouseID,
+		LevelID:       l.LevelID,
 		Name:          l.Name,
 		Code:          l.Code,
 		Type:          l.Type,
