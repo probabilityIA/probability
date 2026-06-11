@@ -9,11 +9,18 @@ import (
 
 func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.GET("/health", h.handleHealth)
+	router.POST("/auth", h.handleAuth)
 	router.POST("/v1/auth", h.handleAuth)
 	router.POST("/v1/customers", h.handleCreateCustomer)
 	router.GET("/v1/customers", h.handleGetCustomer)
 	router.POST("/v1/invoices", h.handleCreateInvoice)
+	router.GET("/v1/invoices", h.handleListInvoices)
 	router.GET("/v1/invoices/:id", h.handleGetInvoice)
+	router.POST("/v1/invoices/:id/annul", h.handleAnnulInvoice)
+	router.GET("/v1/invoices/:id/stamp/errors", h.handleStampErrors)
+	router.GET("/v1/products", h.handleListProducts)
+	router.GET("/v1/payment-types", h.handleListPaymentTypes)
+	router.POST("/v1/vouchers", h.handleCreateVoucher)
 	router.POST("/v1/journals", h.handleCreateJournal)
 }
 
@@ -135,6 +142,146 @@ func (h *Handler) handleGetInvoice(c *gin.Context) {
 	c.JSON(200, invoicePayload(invoice))
 }
 
+func (h *Handler) handleListInvoices(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	name := c.Query("name")
+	invoices := h.apiSimulator.HandleListInvoices()
+	results := make([]gin.H, 0, len(invoices))
+	for _, inv := range invoices {
+		if name != "" && inv.Name != name {
+			continue
+		}
+		results = append(results, invoicePayload(inv))
+	}
+
+	c.JSON(200, gin.H{
+		"results": results,
+		"pagination": gin.H{
+			"page":          1,
+			"page_size":     len(results),
+			"total_results": len(results),
+		},
+	})
+}
+
+func (h *Handler) handleAnnulInvoice(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	id := c.Param("id")
+	invoice, err := h.apiSimulator.HandleAnnulInvoice(id)
+	if err != nil {
+		switch err.Error() {
+		case "not_found":
+			c.JSON(404, gin.H{"Status": 404, "Errors": []gin.H{{"Code": "not_found", "Message": "invoice not found"}}})
+		case "annul_not_allowed":
+			c.JSON(409, gin.H{"Status": 409, "Errors": []gin.H{{"Code": "annul_not_allowed", "Message": "invoice already annulled or has associated documents"}}})
+		default:
+			c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_data", "Message": err.Error()}}})
+		}
+		return
+	}
+
+	c.JSON(200, invoicePayload(invoice))
+}
+
+func (h *Handler) handleStampErrors(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	id := c.Param("id")
+	stampErrors, ok := h.apiSimulator.HandleGetStampErrors(id)
+	if !ok {
+		c.JSON(404, gin.H{"Status": 404, "Errors": []gin.H{{"Code": "not_found", "Message": "invoice not found"}}})
+		return
+	}
+
+	errs := make([]gin.H, 0, len(stampErrors))
+	for _, e := range stampErrors {
+		errs = append(errs, gin.H{"Code": e.Code, "Message": e.Message})
+	}
+	c.JSON(200, gin.H{"Errors": errs})
+}
+
+func (h *Handler) handleListProducts(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	products := h.apiSimulator.HandleListProducts()
+	results := make([]gin.H, 0, len(products))
+	for _, p := range products {
+		results = append(results, gin.H{
+			"id":          p.ID,
+			"code":        p.Code,
+			"name":        p.Name,
+			"description": p.Description,
+			"prices": []gin.H{{
+				"price_list": []gin.H{{"position": 1, "value": p.Price}},
+			}},
+		})
+	}
+
+	c.JSON(200, gin.H{
+		"results": results,
+		"pagination": gin.H{
+			"page":          1,
+			"page_size":     len(results),
+			"total_results": len(results),
+		},
+	})
+}
+
+func (h *Handler) handleListPaymentTypes(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	paymentTypes := h.apiSimulator.HandleListPaymentTypes()
+	results := make([]gin.H, 0, len(paymentTypes))
+	for _, pt := range paymentTypes {
+		results = append(results, gin.H{
+			"id":     pt.ID,
+			"name":   pt.Name,
+			"type":   pt.Type,
+			"active": true,
+		})
+	}
+
+	c.JSON(200, results)
+}
+
+func (h *Handler) handleCreateVoucher(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	var body map[string]interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_body", "Message": "invalid request body"}}})
+		return
+	}
+
+	voucher, err := h.apiSimulator.HandleCreateVoucher(body)
+	if err != nil {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_data", "Message": err.Error()}}})
+		return
+	}
+
+	c.JSON(201, gin.H{
+		"id":     voucher.ID,
+		"name":   voucher.Name,
+		"number": voucher.Number,
+		"date":   voucher.Date,
+		"total":  voucher.Value,
+	})
+}
+
 func (h *Handler) handleCreateJournal(c *gin.Context) {
 	if !h.requireAuth(c) {
 		return
@@ -185,19 +332,31 @@ func invoicePayload(invoice *domain.Invoice) gin.H {
 	return gin.H{
 		"id":     invoice.ID,
 		"name":   invoice.Name,
+		"prefix": invoice.Prefix,
 		"date":   invoice.Date,
 		"number": invoice.Number,
+		"status": invoice.Status,
 		"document": gin.H{
+			"id":     invoice.Number,
 			"prefix": invoice.Prefix,
 			"number": invoice.Number,
 		},
 		"customer": gin.H{
 			"id":             invoice.CustomerID,
 			"identification": invoice.CustomerNIT,
+			"branch_office":  0,
 		},
 		"items":      items,
 		"total":      invoice.Total,
+		"balance":    invoice.Balance,
 		"cufe":       invoice.CUFE,
 		"public_url": invoice.PublicURL,
+		"stamp": gin.H{
+			"status": invoice.StampStatus,
+			"cufe":   invoice.CUFE,
+		},
+		"metadata": gin.H{
+			"cufe": invoice.CUFE,
+		},
 	}
 }

@@ -161,6 +161,9 @@ func (s *APISimulator) HandleCreateInvoice(body map[string]interface{}) (*domain
 		CustomerNIT: customerNIT,
 		Items:       items,
 		Total:       total,
+		Balance:     total,
+		StampStatus: "Stamped",
+		Status:      "active",
 		CUFE:        randomCUFE(),
 		CreatedAt:   time.Now(),
 	}
@@ -179,6 +182,84 @@ func (s *APISimulator) HandleCreateInvoice(body map[string]interface{}) (*domain
 
 func (s *APISimulator) HandleGetInvoice(id string) (*domain.Invoice, bool) {
 	return s.Repository.GetInvoice(id)
+}
+
+func (s *APISimulator) HandleListInvoices() []*domain.Invoice {
+	return s.Repository.ListInvoices()
+}
+
+func (s *APISimulator) HandleAnnulInvoice(id string) (*domain.Invoice, error) {
+	inv, ok := s.Repository.GetInvoice(id)
+	if !ok {
+		return nil, fmt.Errorf("not_found")
+	}
+	if inv.Annulled {
+		return nil, fmt.Errorf("annul_not_allowed")
+	}
+	annulled, _ := s.Repository.AnnulInvoice(id)
+	s.logger.Info().
+		Str("invoice_id", id).
+		Str("name", annulled.Name).
+		Msg("Siigo mock: invoice annulled")
+	return annulled, nil
+}
+
+func (s *APISimulator) HandleGetStampErrors(id string) ([]domain.StampError, bool) {
+	inv, ok := s.Repository.GetInvoice(id)
+	if !ok {
+		return nil, false
+	}
+	return inv.StampErrors, true
+}
+
+func (s *APISimulator) HandleListProducts() []*domain.Product {
+	return s.Repository.ListProducts()
+}
+
+func (s *APISimulator) HandleListPaymentTypes() []*domain.PaymentType {
+	return s.Repository.ListPaymentTypes()
+}
+
+func (s *APISimulator) HandleCreateVoucher(body map[string]interface{}) (*domain.Voucher, error) {
+	invoiceRef := ""
+	value := 0.0
+	if items, ok := body["items"].([]interface{}); ok {
+		for _, it := range items {
+			itMap, ok := it.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if due, ok := itMap["due"].(map[string]interface{}); ok {
+				prefix, _ := due["prefix"].(string)
+				if cons, ok := due["consecutive"].(float64); ok {
+					invoiceRef = fmt.Sprintf("%s-%d", prefix, int(cons))
+				}
+			}
+			if v, ok := itMap["value"].(float64); ok {
+				value += v
+			}
+		}
+	}
+
+	number := s.Repository.NextVoucherNumber()
+	voucher := &domain.Voucher{
+		ID:            uuid.New().String(),
+		Name:          fmt.Sprintf("RC-%d", number),
+		Number:        number,
+		InvoiceNumber: invoiceRef,
+		Value:         value,
+		Date:          time.Now().Format("2006-01-02"),
+		CreatedAt:     time.Now(),
+	}
+	s.Repository.SaveVoucher(voucher)
+
+	s.logger.Info().
+		Str("voucher_id", voucher.ID).
+		Str("invoice_ref", invoiceRef).
+		Float64("value", value).
+		Msg("Siigo mock: voucher (cash receipt) created")
+
+	return voucher, nil
 }
 
 func (s *APISimulator) HandleCreateJournal(body map[string]interface{}) (*domain.JournalEntry, error) {
