@@ -12,7 +12,8 @@ import { Zone, Aisle, Rack, RackLevel } from '@/services/modules/warehouses/doma
 import { listLotsAction, listProductUoMsAction, listInventoryStatesAction } from '../../infra/actions/traceability';
 import { InventoryLot, ProductUoM, InventoryState } from '../../domain/traceability-types';
 import { Button, Alert, Input } from '@/shared/ui';
-import { Package, Search, X, Plus, Minus, ChevronDown, Info } from 'lucide-react';
+import { Package, Search, X, Plus, Minus, ChevronDown, Info, RefreshCw } from 'lucide-react';
+import RelocationStockModal from './RelocationStockModal';
 
 interface ProductOption {
     id: string;
@@ -70,6 +71,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [showRelocationModal, setShowRelocationModal] = useState(false);
 
     useEffect(() => {
         if (productId) {
@@ -611,11 +613,18 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
 
                     {zones.length > 0 && (
                         <div className="mb-6">
-                            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
                                 <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                     Ubicación en Jerarquía
                                 </label>
-                                <div className="flex-1 border-t border-slate-100 dark:border-slate-800"></div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRelocationModal(true)}
+                                    className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors border border-amber-200 dark:border-amber-800"
+                                >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    Reubicar Stock
+                                </button>
                             </div>
                             <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
                                 <div>
@@ -831,6 +840,19 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
                 </div>
             </div>
+
+            {showRelocationModal && selectedProduct && (
+                <RelocationStockModal
+                    productId={selectedProduct.id}
+                    warehouseId={selectedWarehouseId}
+                    businessId={businessId}
+                    onSuccess={() => {
+                        setShowRelocationModal(false);
+                        onSuccess();
+                    }}
+                    onClose={() => setShowRelocationModal(false)}
+                />
+            )}
         </div>
     );
 }
