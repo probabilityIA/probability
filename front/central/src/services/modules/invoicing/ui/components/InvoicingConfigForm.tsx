@@ -64,7 +64,7 @@ export function InvoicingConfigForm({
 
   const providerName = initialData?.provider_name ?? '';
   const providerImageUrl = initialData?.provider_image_url;
-  const isSiigo = providerName.toLowerCase().includes('siigo');
+  const isSiigo = providerName.toLowerCase().includes('siigo') || (providerImageUrl ?? '').toLowerCase().includes('siigo');
   const cashReceiptDesc = isSiigo
     ? 'Registra un recibo de caja en Siigo al crear la factura'
     : 'Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)';
