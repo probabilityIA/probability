@@ -141,7 +141,8 @@ export default function RelocationStockModal({
             return;
         }
 
-        let existingLocation = locations.find((loc) => loc.level_id === selectedLevelId);
+        const locationCode = `LOC-${selectedZone.code}-${selectedAisle.code}-${selectedRack.code}-${String(selectedLevel.ordinal).padStart(2, '0')}`;
+        let existingLocation = locations.find((loc) => loc.code === locationCode || loc.level_id === selectedLevelId);
         let toLocationId = existingLocation?.id;
 
         setLoading(true);
@@ -149,7 +150,6 @@ export default function RelocationStockModal({
 
         try {
             if (!toLocationId) {
-                const locationCode = `LOC-${selectedZone.code}-${selectedAisle.code}-${selectedRack.code}-${String(selectedLevel.ordinal).padStart(2, '0')}`;
                 const locationName = `${selectedZone.name} / ${selectedAisle.name} / ${selectedRack.name} / Nivel ${selectedLevel.ordinal}`;
                 const newLoc = await createLocationAction(warehouseId, {
                     name: locationName,
