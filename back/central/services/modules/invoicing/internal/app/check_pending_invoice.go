@@ -12,24 +12,18 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
 
-// CheckPendingInvoice busca en el proveedor si una factura pendiente de validación DIAN
-// ya fue procesada. NO re-envía POST — solo consulta documentos existentes.
-// No tiene límite de intentos porque buscar es inofensivo (solo lectura).
 func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) error {
 	uc.log.Info(ctx).Uint("invoice_id", invoiceID).Msg("Checking pending invoice status in provider")
 
-	// 1. Obtener factura
 	invoice, err := uc.repo.GetInvoiceByID(ctx, invoiceID)
 	if err != nil {
 		return errors.ErrInvoiceNotFound
 	}
 
-	// 2. Solo facturas en pending
 	if invoice.Status != constants.InvoiceStatusPending {
 		return errors.ErrRetryNotAllowed
 	}
 
-	// 3. Obtener sync logs para conteo (sin límite — buscar es seguro)
 	logs, err := uc.repo.GetSyncLogsByInvoiceID(ctx, invoiceID)
 	if err != nil || len(logs) == 0 {
 		return fmt.Errorf("no sync logs found for invoice")
@@ -37,7 +31,6 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 
 	lastLog := logs[0]
 
-	// 4. Cancelar checks pendientes anteriores
 	for _, l := range logs {
 		if l.Status == constants.SyncStatusPending && l.NextRetryAt != nil {
 			l.Status = constants.SyncStatusCancelled
@@ -48,7 +41,6 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		}
 	}
 
-	// 5. Crear sync log para este check
 	syncLog := &entities.InvoiceSyncLog{
 		InvoiceID:     invoiceID,
 		OperationType: constants.OperationTypeQuery,
@@ -63,7 +55,6 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		uc.log.Error(ctx).Err(err).Msg("Failed to create check sync log")
 	}
 
-	// 6. Obtener config para autenticación con el proveedor
 	order, err := uc.repo.GetOrderByID(ctx, invoice.OrderID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get order for check")
@@ -99,7 +90,6 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		provider = dtos.ProviderSoftpymes
 	}
 
-	// 7. Construir config mínimo (solo necesita auth + order_id para buscar)
 	invoiceConfigData := make(map[string]interface{})
 	if config.InvoiceConfig != nil {
 		invoiceConfigData = config.InvoiceConfig
@@ -107,6 +97,10 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 	invoiceConfigData["is_testing"] = config.IsTesting
 	invoiceConfigData["base_url"] = config.BaseURL
 	invoiceConfigData["base_url_test"] = config.BaseURLTest
+
+	if invoice.ExternalID != nil && *invoice.ExternalID != "" {
+		invoiceConfigData["external_id"] = *invoice.ExternalID
+	}
 
 	invoiceData := dtos.InvoiceData{
 		IntegrationID: integrationID,
@@ -118,7 +112,6 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 
 	correlationID := uuid.New().String()
 
-	// 8. Publicar check_status (NO retry) — el consumer solo buscará, no creará
 	requestMessage := &dtos.InvoiceRequestMessage{
 		InvoiceID:     invoice.ID,
 		Provider:      provider,
@@ -148,7 +141,7 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		Str("provider", provider).
 		Str("correlation_id", correlationID).
 		Int("check_count", syncLog.RetryCount).
-		Msg("Check status request published — searching for existing document")
+		Msg("Check status request published - searching for existing document")
 
 	return nil
 }
