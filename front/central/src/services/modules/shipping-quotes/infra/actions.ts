@@ -17,7 +17,9 @@ export interface SavedQuote {
     integration_id: number;
     source: string;
     order_uuid?: string | null;
+    order_number?: string;
     external_order_ref?: string;
+    request_payload?: Record<string, any>;
     rates: SavedQuoteRate[];
     selected_carrier?: string;
     selected_service_code?: string;
@@ -73,5 +75,41 @@ export async function getSavedQuotesAction(params: {
     } catch (e) {
         console.error('getSavedQuotesAction error:', e);
         return empty;
+    }
+}
+
+export async function associateQuoteAction(
+    quoteId: number,
+    body: {
+        order_uuid: string;
+        selected_carrier?: string;
+        selected_id_rate?: number;
+        guide_requested?: boolean;
+    },
+    businessId?: number | null,
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const qs = businessId ? `?business_id=${businessId}` : '';
+        const res = await fetch(`${env.API_BASE_URL}/shipments/quotes/${quoteId}/associate${qs}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+            cache: 'no-store',
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return { success: false, message: data?.error || 'No se pudo asociar la cotizacion' };
+        }
+        return { success: true };
+    } catch (e: any) {
+        console.error('associateQuoteAction error:', e);
+        return { success: false, message: e?.message || 'Error de red' };
     }
 }

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/mocks"
 )
 
@@ -20,7 +21,7 @@ func TestProcessWebhookOrder_Success_OrderCreated(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "1", rawBody)
 
 	if err != nil {
 		t.Fatalf("esperaba sin error, recibí: %v", err)
@@ -57,7 +58,7 @@ func TestProcessWebhookOrder_Success_OrderUpdated(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.updated", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.updated", "https://mitienda.com", "1", rawBody)
 
 	if err != nil {
 		t.Fatalf("esperaba sin error, recibí: %v", err)
@@ -77,7 +78,7 @@ func TestProcessWebhookOrder_OrderDeletedSkipped(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.deleted", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.deleted", "https://mitienda.com", "1", rawBody)
 
 	if err != nil {
 		t.Fatalf("esperaba sin error para order.deleted, recibí: %v", err)
@@ -95,7 +96,7 @@ func TestProcessWebhookOrder_InvalidJSON(t *testing.T) {
 
 	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
 
-	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", []byte("invalid json{"))
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "1", []byte("invalid json{"))
 
 	if err == nil {
 		t.Fatal("esperaba error por JSON inválido, recibí nil")
@@ -121,7 +122,7 @@ func TestProcessWebhookOrder_PublishError(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "1", rawBody)
 
 	if err == nil {
 		t.Fatal("esperaba error de publicación, recibí nil")
@@ -141,7 +142,7 @@ func TestProcessWebhookOrder_OrderRestored(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.restored", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.restored", "https://mitienda.com", "1", rawBody)
 
 	if err != nil {
 		t.Fatalf("esperaba sin error para order.restored, recibí: %v", err)
@@ -161,7 +162,7 @@ func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 
 	rawBody := buildSampleOrderJSON(t)
 
-	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", rawBody)
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "1", rawBody)
 
 	if err != nil {
 		t.Fatalf("esperaba sin error, recibí: %v", err)
@@ -298,4 +299,47 @@ func buildSampleOrderJSON(t *testing.T) []byte {
 		t.Fatalf("error marshaling sample order: %v", err)
 	}
 	return data
+}
+
+func TestProcessWebhookOrder_MissingIntegrationID(t *testing.T) {
+	ctx := context.Background()
+	publisher := &mocks.OrderPublisherMock{}
+
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "", buildSampleOrderJSON(t))
+
+	if err == nil {
+		t.Fatal("esperaba error por integration_id faltante, recibi nil")
+	}
+	if len(publisher.Published) != 0 {
+		t.Fatalf("no debe publicar sin integration_id, se publicaron %d", len(publisher.Published))
+	}
+}
+
+func TestProcessWebhookOrder_SetsIntegrationAndBusiness(t *testing.T) {
+	ctx := context.Background()
+	publisher := &mocks.OrderPublisherMock{}
+	bid := uint(26)
+
+	service := &mocks.IntegrationServiceMock{
+		GetIntegrationByIDFn: func(_ context.Context, _ string) (*domain.Integration, error) {
+			return &domain.Integration{ID: 197, BusinessID: &bid, Name: "Woo Test"}, nil
+		},
+	}
+
+	uc := New(&mocks.WooClientMock{}, service, publisher, mocks.NewLoggerMock())
+
+	err := uc.ProcessWebhookOrder(ctx, "order.created", "http://localhost:8088/", "197", buildSampleOrderJSON(t))
+
+	if err != nil {
+		t.Fatalf("esperaba sin error, recibi: %v", err)
+	}
+	dto := publisher.Published[0]
+	if dto.IntegrationID != 197 {
+		t.Errorf("IntegrationID esperado 197, recibi %d", dto.IntegrationID)
+	}
+	if dto.BusinessID == nil || *dto.BusinessID != 26 {
+		t.Errorf("BusinessID esperado 26, recibi %v", dto.BusinessID)
+	}
 }

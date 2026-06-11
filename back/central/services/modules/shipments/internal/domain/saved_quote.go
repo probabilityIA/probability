@@ -21,6 +21,7 @@ type SavedQuote struct {
 	Source              string
 	CorrelationID       string
 	OrderUUID           *string
+	OrderNumber         string
 	ExternalOrderRef    string
 	RequestPayload      map[string]interface{}
 	Rates               []map[string]interface{}
@@ -61,13 +62,24 @@ type SavedQuoteResponse struct {
 	Source              string                   `json:"source"`
 	CorrelationID       string                   `json:"correlation_id,omitempty"`
 	OrderUUID           *string                  `json:"order_uuid,omitempty"`
+	OrderNumber         string                   `json:"order_number,omitempty"`
 	ExternalOrderRef    string                   `json:"external_order_ref,omitempty"`
+	RequestPayload      map[string]interface{}   `json:"request_payload,omitempty"`
 	Rates               []map[string]interface{} `json:"rates"`
 	SelectedCarrier     string                   `json:"selected_carrier,omitempty"`
 	SelectedServiceCode string                   `json:"selected_service_code,omitempty"`
 	Status              string                   `json:"status"`
 	ExpiresAt           *time.Time               `json:"expires_at,omitempty"`
 	CreatedAt           time.Time                `json:"created_at"`
+}
+
+type AssociateQuoteInput struct {
+	QuoteID         uint
+	BusinessID      uint
+	OrderUUID       string
+	SelectedCarrier string
+	SelectedIDRate  *int64
+	GuideRequested  bool
 }
 
 type SavedQuotesListResponse struct {

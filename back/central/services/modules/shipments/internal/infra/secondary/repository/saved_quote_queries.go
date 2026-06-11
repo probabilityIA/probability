@@ -48,7 +48,9 @@ func (r *Repository) GetSavedQuoteByID(ctx context.Context, id uint) (*domain.Sa
 		}
 		return nil, err
 	}
-	return savedQuoteModelToDomain(&m), nil
+	q := savedQuoteModelToDomain(&m)
+	r.fillQuoteOrderNumbers(ctx, []*domain.SavedQuote{q})
+	return q, nil
 }
 
 func (r *Repository) ListSavedQuotes(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error) {
@@ -89,10 +91,47 @@ func (r *Repository) ListSavedQuotes(ctx context.Context, filter domain.SavedQuo
 	}
 
 	out := make([]domain.SavedQuote, len(rows))
+	refs := make([]*domain.SavedQuote, len(rows))
 	for i := range rows {
 		out[i] = *savedQuoteModelToDomain(&rows[i])
+		refs[i] = &out[i]
 	}
+	r.fillQuoteOrderNumbers(ctx, refs)
 	return out, total, nil
+}
+
+func (r *Repository) fillQuoteOrderNumbers(ctx context.Context, quotes []*domain.SavedQuote) {
+	ids := make([]string, 0, len(quotes))
+	for _, q := range quotes {
+		if q != nil && q.OrderUUID != nil && *q.OrderUUID != "" {
+			ids = append(ids, *q.OrderUUID)
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	var rows []struct {
+		ID          string
+		OrderNumber string
+	}
+	if err := r.db.Conn(ctx).
+		Table("orders").
+		Select("id, order_number").
+		Where("id IN ? AND deleted_at IS NULL", ids).
+		Scan(&rows).Error; err != nil {
+		return
+	}
+
+	numbers := make(map[string]string, len(rows))
+	for _, row := range rows {
+		numbers[row.ID] = row.OrderNumber
+	}
+	for _, q := range quotes {
+		if q != nil && q.OrderUUID != nil {
+			q.OrderNumber = numbers[*q.OrderUUID]
+		}
+	}
 }
 
 func (r *Repository) UpdateSavedQuote(ctx context.Context, quote *domain.SavedQuote) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 )
@@ -15,14 +16,15 @@ type listInvoicesResponse struct {
 		TotalResults int `json:"total_results"`
 	} `json:"pagination"`
 	Results []struct {
-		ID       string  `json:"id"`
+		ID       string `json:"id"`
 		Document struct {
 			ID int `json:"id"`
 		} `json:"document"`
-		Prefix   string  `json:"prefix"`
-		Number   int     `json:"number"`
-		Name     string  `json:"name"`
-		Date     string  `json:"date"`
+		Prefix   string `json:"prefix"`
+		Number   int    `json:"number"`
+		Name     string `json:"name"`
+		Date     string `json:"date"`
+		Status   string `json:"status"`
 		Customer struct {
 			ID             string `json:"id"`
 			Identification string `json:"identification"`
@@ -30,24 +32,31 @@ type listInvoicesResponse struct {
 		} `json:"customer"`
 		Total   float64 `json:"total"`
 		Balance float64 `json:"balance"`
+		Stamp   struct {
+			Status string `json:"status"`
+		} `json:"stamp"`
 	} `json:"results"`
 }
 
-// ListInvoices consulta la lista paginada de facturas emitidas en Siigo
-// Endpoint: GET /v1/invoices
+func isAnnulledStatus(status string) bool {
+	switch strings.ToLower(status) {
+	case "annulled", "cancelled", "canceled", "anulada", "anulado":
+		return true
+	}
+	return false
+}
+
 func (c *Client) ListInvoices(ctx context.Context, credentials dtos.Credentials, params dtos.ListInvoicesParams) (*dtos.ListInvoicesResult, error) {
 	c.log.Info(ctx).
 		Int("page", params.Page).
 		Int("page_size", params.PageSize).
-		Msg("📋 Listing Siigo invoices")
+		Msg("Listing Siigo invoices")
 
-	// Autenticar
 	token, err := c.authenticate(ctx, credentials.Username, credentials.AccessKey, credentials.AccountID, credentials.PartnerID, credentials.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to authenticate with Siigo: %w", err)
 	}
 
-	// Valores por defecto de paginación
 	page := params.Page
 	if page < 1 {
 		page = 1
@@ -78,34 +87,36 @@ func (c *Client) ListInvoices(ctx context.Context, credentials dtos.Credentials,
 		Get(c.endpointURL(credentials.BaseURL, "/v1/invoices"))
 
 	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("❌ Siigo list invoices request failed - network error")
+		c.log.Error(ctx).Err(err).Msg("Siigo list invoices request failed - network error")
 		return nil, fmt.Errorf("error de red al listar facturas en Siigo: %w", err)
 	}
 
 	c.log.Info(ctx).
 		Int("status_code", resp.StatusCode()).
 		Int("results_count", len(listResp.Results)).
-		Msg("📥 Siigo list invoices response received")
+		Msg("Siigo list invoices response received")
 
 	if resp.IsError() {
 		c.log.Error(ctx).
 			Int("status", resp.StatusCode()).
 			Str("body", string(resp.Body())).
-			Msg("❌ Siigo list invoices failed")
-		return nil, fmt.Errorf("error al listar facturas en Siigo (código %d)", resp.StatusCode())
+			Msg("Siigo list invoices failed")
+		return nil, fmt.Errorf("error al listar facturas en Siigo (codigo %d)", resp.StatusCode())
 	}
 
-	// Mapear resultados
 	items := make([]dtos.InvoiceSummary, 0, len(listResp.Results))
 	for _, r := range listResp.Results {
 		items = append(items, dtos.InvoiceSummary{
 			ID:           r.ID,
 			Number:       r.Name,
+			Prefix:       r.Prefix,
 			Date:         r.Date,
 			CustomerName: "",
 			CustomerID:   r.Customer.Identification,
 			Total:        r.Total,
-			Status:       "",
+			Status:       r.Status,
+			StampStatus:  r.Stamp.Status,
+			Annulled:     isAnnulledStatus(r.Status),
 		})
 	}
 

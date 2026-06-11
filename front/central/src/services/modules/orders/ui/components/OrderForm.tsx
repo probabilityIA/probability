@@ -166,8 +166,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 ...prev,
                 items: products,
                 subtotal,
-                total_amount: orderValue + prev.shipping_cost,
-                cod_total: isCOD ? orderValue : prev.cod_total,
+                total_amount: orderValue,
+                cod_total: isCOD ? orderValue + prev.shipping_cost : prev.cod_total,
             };
         });
     };
@@ -568,11 +568,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         }
     };
 
-    // Auto-calculate total
     const calculateTotal = () => {
         setFormData(prev => ({
             ...prev,
-            total_amount: prev.subtotal + prev.tax - prev.discount + prev.shipping_cost,
+            total_amount: prev.subtotal + prev.tax - prev.discount,
         }));
     };
 
@@ -1005,7 +1004,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Total *
+                                    Valor productos (sin envio) *
                                 </label>
                                 <div className="flex items-center w-full">
                                     <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
@@ -1046,7 +1045,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 setFormData(prev => ({
                                                     ...prev,
                                                     shipping_cost: sc,
-                                                    total_amount: prev.subtotal + prev.tax - prev.discount + sc,
+                                                    cod_total: isCOD ? prev.total_amount + sc : prev.cod_total,
                                                 }));
                                             }}
                                             className="rounded-l-none rounded-r-none w-full"
@@ -1072,7 +1071,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         onClick={() => {
                                             const next = !isCOD;
                                             setIsCOD(next);
-                                            setFormData(prev => ({ ...prev, cod_total: next ? prev.total_amount - prev.shipping_cost : 0 }));
+                                            setFormData(prev => ({ ...prev, cod_total: next ? prev.total_amount + prev.shipping_cost : 0 }));
                                         }}
                                         className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                                         style={{ backgroundColor: isCOD ? primaryColor : '#d1d5db' }}
@@ -1082,8 +1081,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </div>
                                 {isCOD && (
                                     <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                                        Se cobrara contra entrega: <strong>{formData.currency} {(formData.total_amount - formData.shipping_cost).toLocaleString()}</strong>
-                                        <span className="text-gray-400"> (valor de la orden sin el envio)</span>
+                                        Se cobrara contra entrega: <strong>{formData.currency} {(formData.total_amount + formData.shipping_cost).toLocaleString()}</strong>
+                                        <span className="text-gray-400"> (producto + envio)</span>
                                     </p>
                                 )}
                             </div>

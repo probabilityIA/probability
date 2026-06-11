@@ -27,7 +27,7 @@ func (uc *wooCommerceUseCase) TestConnection(ctx context.Context, config map[str
 
 	if err := uc.client.TestConnection(ctx, storeURL, consumerKey, consumerSecret); err != nil {
 		uc.logger.Error(ctx).Err(err).Msg("WooCommerce test connection failed")
-		return fmt.Errorf("woocommerce: test connection failed: %w", err)
+		return err
 	}
 
 	uc.logger.Info(ctx).Msg("WooCommerce test connection successful")

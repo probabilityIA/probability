@@ -13,7 +13,7 @@ type OrderError struct {
 
 	// Contexto del error
 	ExternalID      string `gorm:"size:255;index"` // ID en plataforma externa (si se pudo extraer)
-	IntegrationID   uint   `gorm:"index"`          // ID de la integración (si se conoce)
+	IntegrationID   *uint  `gorm:"index"`          // ID de la integración (NULL si no se conoce)
 	BusinessID      *uint  `gorm:"index"`          // ID del negocio (si se conoce)
 	IntegrationType string `gorm:"size:50;index"`  // "shopify", "whatsapp", etc.
 	Platform        string `gorm:"size:50;index"`  // Plataforma origen

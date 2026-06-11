@@ -4,7 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getIntegrationsAction, setShopifyAutoGuideAction } from '@/services/integrations/core/infra/actions';
+import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
+import { Order } from '@/services/modules/orders/domain/types';
+import OrderDetails from '@/services/modules/orders/ui/components/OrderDetails';
+import { Modal } from '@/shared/ui';
 import { getSavedQuotesAction, SavedQuote } from '../../infra/actions';
+import CreateOrderFromQuoteModal from './CreateOrderFromQuoteModal';
 
 interface QuotesViewProps {
     selectedBusinessId: number | null;
@@ -47,6 +52,9 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
     const [total, setTotal] = useState(0);
     const [sourceFilter, setSourceFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [createFromQuote, setCreateFromQuote] = useState<SavedQuote | null>(null);
+    const [viewOrder, setViewOrder] = useState<Order | null>(null);
+    const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
 
     const needsBusiness = isSuperAdmin && !selectedBusinessId;
 
@@ -95,6 +103,23 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
         if (needsBusiness) return;
         loadQuotes();
     }, [needsBusiness, loadQuotes]);
+
+    const openOrderDetails = async (orderUuid: string) => {
+        setLoadingOrderId(orderUuid);
+        try {
+            const res: any = await getOrderByIdAction(orderUuid);
+            const order = res?.data;
+            if (res?.success && order) {
+                setViewOrder(order);
+            } else {
+                showToast(res?.message || 'No se pudo cargar la orden', 'error');
+            }
+        } catch {
+            showToast('No se pudo cargar la orden', 'error');
+        } finally {
+            setLoadingOrderId(null);
+        }
+    };
 
     const toggleAutoGuide = async (integ: AutoGuideIntegration) => {
         setIntegrations((prev) => prev.map((i) => (i.id === integ.id ? { ...i, loading: true } : i)));
@@ -211,13 +236,14 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                 <th className="px-4 py-2 font-medium">Tarifas</th>
                                 <th className="px-4 py-2 font-medium">Orden</th>
                                 <th className="px-4 py-2 font-medium">Estado</th>
+                                <th className="px-4 py-2 font-medium text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
+                                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
                             ) : quotes.length === 0 ? (
-                                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">No hay cotizaciones.</td></tr>
+                                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No hay cotizaciones.</td></tr>
                             ) : (
                                 quotes.map((q) => (
                                     <tr key={q.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/60 dark:hover:bg-gray-700/30">
@@ -227,13 +253,32 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                         <td className="px-4 py-2.5 capitalize">{q.source}</td>
                                         <td className="px-4 py-2.5">{q.selected_carrier || <span className="text-gray-400">—</span>}</td>
                                         <td className="px-4 py-2.5 text-gray-500">{q.rates?.length || 0}</td>
-                                        <td className="px-4 py-2.5 font-mono text-xs text-gray-500">
-                                            {q.order_uuid ? q.order_uuid.slice(0, 8) : <span className="text-gray-400">—</span>}
+                                        <td className="px-4 py-2.5 font-mono text-xs">
+                                            {q.order_uuid ? (
+                                                <button
+                                                    onClick={() => openOrderDetails(q.order_uuid!)}
+                                                    disabled={loadingOrderId === q.order_uuid}
+                                                    className="text-purple-600 dark:text-purple-400 hover:underline font-semibold disabled:opacity-50"
+                                                    title="Ver detalle de la orden"
+                                                >
+                                                    {loadingOrderId === q.order_uuid ? 'Cargando...' : `#${q.order_number || q.order_uuid.slice(0, 8)}`}
+                                                </button>
+                                            ) : <span className="text-gray-400">—</span>}
                                         </td>
                                         <td className="px-4 py-2.5">
                                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[q.status] || 'bg-gray-100 text-gray-700'}`}>
                                                 {statusLabels[q.status] || q.status}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-right">
+                                            {!q.order_uuid && (q.rates?.length || 0) > 0 && (
+                                                <button
+                                                    onClick={() => setCreateFromQuote(q)}
+                                                    className="text-xs font-semibold px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white"
+                                                >
+                                                    Crear orden
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))
@@ -260,6 +305,21 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                     </div>
                 )}
             </div>
+
+            {createFromQuote && (
+                <CreateOrderFromQuoteModal
+                    quote={createFromQuote}
+                    businessId={selectedBusinessId}
+                    onClose={() => setCreateFromQuote(null)}
+                    onSuccess={loadQuotes}
+                />
+            )}
+
+            <Modal isOpen={!!viewOrder} onClose={() => setViewOrder(null)} title={undefined} size="full">
+                {viewOrder && (
+                    <OrderDetails initialOrder={viewOrder} onClose={() => setViewOrder(null)} />
+                )}
+            </Modal>
         </div>
     );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button, Alert, Spinner } from '@/shared/ui';
+import { Alert, Spinner } from '@/shared/ui';
+import { BoltIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useToast } from '@/shared/providers/toast-provider';
 import {
     listWebhooksAction,
@@ -13,6 +14,12 @@ import type { ShopifyWebhookInfo } from '@/services/integrations/core/domain/typ
 interface ShopifyWebhookManagerProps {
     integrationId: number;
 }
+
+const GREEN = 'var(--color-primary)';
+const GREEN_DARK = 'color-mix(in srgb, var(--color-primary) 85%, black)';
+const GREEN_SOFT = 'color-mix(in srgb, var(--color-primary) 10%, white)';
+const GREEN_BORDER = 'color-mix(in srgb, var(--color-primary) 25%, white)';
+const INPUT_BORDER = '#e9e9f0';
 
 export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookManagerProps) {
     const { showToast } = useToast();
@@ -83,69 +90,113 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-6">
                 <Spinner />
-                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">Cargando webhooks...</span>
+                <span className="ml-2 text-[13px] text-gray-500 dark:text-gray-400">Cargando webhooks...</span>
             </div>
         );
     }
 
+    const thCls = 'px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500';
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                    {webhooks.length === 0
-                        ? 'No hay webhooks configurados. Crea los webhooks para recibir eventos de Shopify.'
-                        : `${webhooks.length} webhook${webhooks.length !== 1 ? 's' : ''} activo${webhooks.length !== 1 ? 's' : ''}`}
-                </p>
-                <Button
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
+                        <BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />
+                    </span>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Webhooks</h3>
+                    {webhooks.length > 0 && (
+                        <span
+                            className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}`, color: GREEN_DARK }}
+                        >
+                            {webhooks.length} activo{webhooks.length !== 1 ? 's' : ''}
+                        </span>
+                    )}
+                </div>
+                <button
+                    type="button"
                     onClick={handleCreate}
-                    loading={creating}
                     disabled={creating}
-                    variant="primary"
-                    size="sm"
+                    className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors disabled:opacity-60"
+                    style={{ backgroundColor: GREEN }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
                 >
-                    {creating ? 'Creando...' : 'Crear Webhooks'}
-                </Button>
+                    {creating ? (
+                        <>
+                            <svg className="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Creando...
+                        </>
+                    ) : (
+                        <>
+                            <PlusIcon className="w-3.5 h-3.5" />
+                            Crear webhooks
+                        </>
+                    )}
+                </button>
             </div>
 
-            {webhooks.length > 0 && (
-                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+            {webhooks.length === 0 ? (
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">
+                    No hay webhooks configurados. Crea los webhooks para recibir eventos de Shopify.
+                </p>
+            ) : (
+                <div
+                    className="overflow-x-auto rounded-lg bg-white dark:bg-gray-800"
+                    style={{ border: `1px solid ${INPUT_BORDER}` }}
+                >
+                    <table className="min-w-full text-sm">
+                        <thead className="bg-[#f6f6fa] dark:bg-gray-700/60">
                             <tr>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Topic</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">URL</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Formato</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Fecha</th>
-                                <th className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Acciones</th>
+                                <th className={thCls}>Topic</th>
+                                <th className={thCls}>URL destino</th>
+                                <th className={thCls}>Formato</th>
+                                <th className={thCls}>Creado</th>
+                                <th className={thCls}></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white dark:bg-gray-800">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                             {webhooks.map((wh) => (
-                                <tr key={wh.id} className="hover:bg-gray-50 dark:bg-gray-700">
-                                    <td className="px-4 py-2 font-mono text-xs">{wh.topic}</td>
-                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 max-w-[300px] truncate" title={wh.address}>
+                                <tr key={wh.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-700/40">
+                                    <td className="px-3 py-2 font-mono text-[11px] text-gray-800 dark:text-gray-200 whitespace-nowrap">{wh.topic}</td>
+                                    <td className="px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400 max-w-[260px] truncate" title={wh.address}>
                                         {wh.address}
                                     </td>
-                                    <td className="px-4 py-2 text-xs uppercase">{wh.format}</td>
-                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">{formatDate(wh.created_at)}</td>
-                                    <td className="px-4 py-2 text-right">
-                                        <Button
+                                    <td className="px-3 py-2">
+                                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+                                            {wh.format}
+                                        </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-[11px] text-gray-500 dark:text-gray-400 whitespace-nowrap">{formatDate(wh.created_at)}</td>
+                                    <td className="px-3 py-2 text-right">
+                                        <button
+                                            type="button"
                                             onClick={() => handleDelete(wh.id, wh.topic)}
-                                            loading={deletingId === wh.id}
                                             disabled={deletingId === wh.id}
-                                            variant="danger"
-                                            size="sm"
+                                            title="Eliminar webhook"
+                                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
                                         >
-                                            Eliminar
-                                        </Button>
+                                            {deletingId === wh.id ? (
+                                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : (
+                                                <TrashIcon className="h-4 w-4" />
+                                            )}
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

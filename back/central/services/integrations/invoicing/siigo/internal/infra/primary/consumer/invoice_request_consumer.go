@@ -14,9 +14,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// DTOs locales replicados del módulo Invoicing para deserialización
-// (Regla de aislamiento: no importar entre módulos)
-
 type invoiceCustomerData struct {
 	Name    string `json:"name"`
 	Email   string `json:"email"`
@@ -52,7 +49,6 @@ type invoiceData struct {
 	Config        map[string]interface{} `json:"config"`
 }
 
-// InvoiceRequestMessage es el mensaje recibido desde Invoicing Module
 type InvoiceRequestMessage struct {
 	InvoiceID     uint        `json:"invoice_id"`
 	Provider      string      `json:"provider"`
@@ -62,7 +58,6 @@ type InvoiceRequestMessage struct {
 	Timestamp     time.Time   `json:"timestamp"`
 }
 
-// InvoiceRequestConsumer consume solicitudes de facturación desde Invoicing Module
 type InvoiceRequestConsumer struct {
 	rabbit            rabbitmq.IQueue
 	integrationCore   integrationCore.IIntegrationService
@@ -71,7 +66,6 @@ type InvoiceRequestConsumer struct {
 	log               log.ILogger
 }
 
-// New crea una nueva instancia del consumer
 func New(
 	rabbit rabbitmq.IQueue,
 	integrationCore integrationCore.IIntegrationService,
@@ -92,7 +86,6 @@ const (
 	QueueSiigoRequests = rabbitmq.QueueInvoicingSiigoRequests
 )
 
-// Start inicia el consumer
 func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
 	if c.rabbit == nil {
 		c.log.Warn(ctx).Msg("RabbitMQ client is nil, consumer cannot start")
@@ -120,7 +113,6 @@ func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleInvoiceRequest procesa una solicitud de facturación
 func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -140,10 +132,28 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		Str("correlation_id", request.CorrelationID).
 		Msg("Received Siigo invoice request")
 
+	if request.Operation == "compare" {
+		return c.processCompareRequest(ctx, &request)
+	}
+
+	if request.Operation == "list_items" {
+		return c.processListItemsRequest(ctx, &request)
+	}
+
+	if request.Operation == "list_bank_accounts" {
+		return c.processListBankAccountsRequest(ctx, &request)
+	}
+
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {
 	case "create", "retry":
 		response = c.processCreateInvoice(ctx, &request, startTime)
+	case "check_status":
+		response = c.processCheckStatus(ctx, &request, startTime)
+	case "cancel":
+		response = c.processCancelInvoice(ctx, &request, startTime)
+	case "cash_receipt":
+		response = c.processCashReceipt(ctx, &request, startTime)
 	case "create_journal":
 		response = c.processCreateJournal(ctx, &request, startTime)
 	default:
@@ -164,77 +174,22 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	return nil
 }
 
-// processCreateInvoice procesa la creación de una factura en Siigo
 func (c *InvoiceRequestConsumer) processCreateInvoice(
 	ctx context.Context,
 	request *InvoiceRequestMessage,
 	startTime time.Time,
 ) *queue.InvoiceResponseMessage {
-	// 1. Obtener integration_id del DTO
-	integrationID := request.InvoiceData.IntegrationID
-	if integrationID == 0 {
-		c.log.Error(ctx).Msg("integration_id is 0 in invoice_data")
-		return c.createErrorResponse(request, "missing_integration_id", "integration_id is 0", startTime, nil)
-	}
-
-	// 2. Obtener integración desde IntegrationCore
-	integrationIDStr := fmt.Sprintf("%d", integrationID)
-	integration, err := c.integrationCore.GetIntegrationByID(ctx, integrationIDStr)
+	ictx, errCode, err := c.resolveIntegration(ctx, request)
 	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to get integration")
-		return c.createErrorResponse(request, "integration_not_found", err.Error(), startTime, nil)
-	}
-
-	// 3. Desencriptar credenciales de Siigo
-	username, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "username")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt username")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt username", startTime, nil)
-	}
-
-	accessKey, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "access_key")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt access_key")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt access_key", startTime, nil)
-	}
-
-	accountID, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "account_id")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt account_id")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt account_id", startTime, nil)
-	}
-
-	partnerID, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "partner_id")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt partner_id")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt partner_id", startTime, nil)
-	}
-
-	// api_url es opcional: si no está configurado, el cliente usa su default
-	apiURL, _ := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_url")
-
-	// Resolver URL efectiva: si is_testing, usar base_url_test del integration_type
-	effectiveURL := apiURL
-	if integration.IsTesting && integration.BaseURLTest != "" {
-		effectiveURL = integration.BaseURLTest
+		c.log.Error(ctx).Err(err).Uint("invoice_id", request.InvoiceID).Msg("Failed to resolve integration for create")
+		return c.createErrorResponse(request, errCode, err.Error(), startTime, nil)
 	}
 
 	c.log.Info(ctx).
-		Bool("is_testing", integration.IsTesting).
-		Str("effective_url", effectiveURL).
+		Bool("is_testing", ictx.IsTesting).
+		Str("effective_url", ictx.Credentials.BaseURL).
 		Msg("Resolved effective Siigo URL")
 
-	// 4. Combinar config de integración con config de facturación
-	combinedConfig := make(map[string]interface{})
-	for k, v := range integration.Config {
-		combinedConfig[k] = v
-	}
-
-	for k, v := range request.InvoiceData.Config {
-		combinedConfig[k] = v
-	}
-
-	// 5. Construir request tipado para el cliente Siigo
 	invoiceReq := &siigoDtos.CreateInvoiceRequest{
 		Customer: siigoDtos.CustomerData{
 			Name:    request.InvoiceData.Customer.Name,
@@ -251,17 +206,10 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ShippingCost: request.InvoiceData.ShippingCost,
 		Currency:     request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,
-		Credentials: siigoDtos.Credentials{
-			Username:  username,
-			AccessKey: accessKey,
-			AccountID: accountID,
-			PartnerID: partnerID,
-			BaseURL:   effectiveURL,
-		},
-		Config: combinedConfig,
+		Credentials:  ictx.Credentials,
+		Config:       ictx.Config,
 	}
 
-	// 6. Llamar al cliente HTTP de Siigo
 	c.log.Info(ctx).
 		Uint("invoice_id", request.InvoiceID).
 		Str("order_id", request.InvoiceData.OrderID).
@@ -281,7 +229,6 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		return c.createErrorResponse(request, "api_error", err.Error(), startTime, auditData)
 	}
 
-	// 7. Parsear issued_at si existe
 	var issuedAt *time.Time
 	if result.IssuedAt != "" {
 		if parsed, parseErr := time.Parse(time.RFC3339, result.IssuedAt); parseErr == nil {
@@ -289,7 +236,6 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 8. Construir response exitosa
 	processingTime := time.Since(startTime).Milliseconds()
 
 	resp := &queue.InvoiceResponseMessage{
@@ -315,7 +261,6 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	return resp
 }
 
-// mapItemsToClientDTOs convierte items del mensaje a DTOs del cliente Siigo
 func mapItemsToClientDTOs(items []invoiceItemData) []siigoDtos.ItemData {
 	result := make([]siigoDtos.ItemData, 0, len(items))
 	for _, item := range items {
@@ -335,7 +280,6 @@ func mapItemsToClientDTOs(items []invoiceItemData) []siigoDtos.ItemData {
 	return result
 }
 
-// createErrorResponse crea una respuesta de error
 func (c *InvoiceRequestConsumer) createErrorResponse(
 	request *InvoiceRequestMessage,
 	errorCode string,
@@ -366,7 +310,6 @@ func (c *InvoiceRequestConsumer) createErrorResponse(
 	return resp
 }
 
-// toMapPayload convierte cualquier valor (struct o map) a map[string]interface{} via JSON.
 func toMapPayload(v interface{}) map[string]interface{} {
 	if v == nil {
 		return nil

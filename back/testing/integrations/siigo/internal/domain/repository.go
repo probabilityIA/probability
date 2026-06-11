@@ -6,21 +6,42 @@ import (
 )
 
 type Repository struct {
-	mu         sync.RWMutex
-	customers  map[string]*Customer
-	invoices   map[string]*Invoice
-	journals   map[string]*JournalEntry
-	tokens     map[string]*AuthToken
-	invoiceSeq int
+	mu           sync.RWMutex
+	customers    map[string]*Customer
+	invoices     map[string]*Invoice
+	journals     map[string]*JournalEntry
+	tokens       map[string]*AuthToken
+	vouchers     map[string]*Voucher
+	products     []*Product
+	paymentTypes []*PaymentType
+	invoiceSeq   int
+	voucherSeq   int
 }
 
 func NewRepository() *Repository {
-	return &Repository{
+	r := &Repository{
 		customers:  make(map[string]*Customer),
 		invoices:   make(map[string]*Invoice),
 		journals:   make(map[string]*JournalEntry),
 		tokens:     make(map[string]*AuthToken),
+		vouchers:   make(map[string]*Voucher),
 		invoiceSeq: 1000,
+		voucherSeq: 500,
+	}
+	r.seedCatalogs()
+	return r
+}
+
+func (r *Repository) seedCatalogs() {
+	r.products = []*Product{
+		{ID: "prod-1", Code: "ITEM-1", Name: "Producto demo 1", Description: "Producto de prueba 1", Price: 50000},
+		{ID: "prod-2", Code: "ITEM-2", Name: "Producto demo 2", Description: "Producto de prueba 2", Price: 75000},
+		{ID: "prod-3", Code: "SERV-1", Name: "Servicio demo", Description: "Servicio de prueba", Price: 120000},
+	}
+	r.paymentTypes = []*PaymentType{
+		{ID: 5636, Name: "Efectivo", Type: "Cash"},
+		{ID: 5637, Name: "Transferencia", Type: "Transfer"},
+		{ID: 5638, Name: "Tarjeta de credito", Type: "CreditCard"},
 	}
 }
 
@@ -54,6 +75,40 @@ func (r *Repository) GetInvoice(id string) (*Invoice, bool) {
 	return inv, ok
 }
 
+func (r *Repository) GetInvoiceByName(name string) (*Invoice, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, inv := range r.invoices {
+		if inv.Name == name {
+			return inv, true
+		}
+	}
+	return nil, false
+}
+
+func (r *Repository) ListInvoices() []*Invoice {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]*Invoice, 0, len(r.invoices))
+	for _, inv := range r.invoices {
+		out = append(out, inv)
+	}
+	return out
+}
+
+func (r *Repository) AnnulInvoice(id string) (*Invoice, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	inv, ok := r.invoices[id]
+	if !ok {
+		return nil, false
+	}
+	inv.Annulled = true
+	inv.Status = "annulled"
+	inv.Balance = 0
+	return inv, true
+}
+
 func (r *Repository) SaveJournal(j *JournalEntry) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -66,11 +121,50 @@ func (r *Repository) SaveToken(t *AuthToken) {
 	r.tokens[t.Token] = t
 }
 
+func (r *Repository) SaveVoucher(v *Voucher) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.vouchers[v.ID] = v
+	if inv, ok := r.invoices[v.InvoiceNumber]; ok {
+		inv.Balance -= v.Value
+		if inv.Balance < 0 {
+			inv.Balance = 0
+		}
+	}
+	for _, inv := range r.invoices {
+		if inv.Name == v.InvoiceNumber {
+			inv.Balance -= v.Value
+			if inv.Balance < 0 {
+				inv.Balance = 0
+			}
+		}
+	}
+}
+
+func (r *Repository) ListProducts() []*Product {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.products
+}
+
+func (r *Repository) ListPaymentTypes() []*PaymentType {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.paymentTypes
+}
+
 func (r *Repository) NextInvoiceNumber() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.invoiceSeq++
 	return r.invoiceSeq
+}
+
+func (r *Repository) NextVoucherNumber() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.voucherSeq++
+	return r.voucherSeq
 }
 
 func (r *Repository) NextInvoiceName(prefix string) string {

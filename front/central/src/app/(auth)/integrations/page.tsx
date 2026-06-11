@@ -176,8 +176,13 @@ export default function IntegrationsPage() {
             <Modal
                 isOpen={showEditIntegrationModal}
                 onClose={handleModalClose}
-                title="Editar Integración"
-                size="5xl"
+                title={(
+                    <span className="inline-flex items-center justify-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.9)]" />
+                        Editar Integración
+                    </span>
+                )}
+                size={selectedIntegration && [1, 4].includes(selectedIntegration.integration_type_id) ? '4xl' : '5xl'}
             >
                 <IntegrationForm
                     integration={selectedIntegration}

@@ -88,8 +88,30 @@ type WooLineItemResponse struct {
 }
 
 type WooLineItemImage struct {
-	ID  int64  `json:"id"`
-	Src string `json:"src"`
+	ID  FlexInt64 `json:"id"`
+	Src string    `json:"src"`
+}
+
+// FlexInt64 tolera valores numericos o string en el JSON de WooCommerce
+// (image.id llega como string, incluso vacio, en algunas versiones).
+type FlexInt64 int64
+
+func (f *FlexInt64) UnmarshalJSON(b []byte) error {
+	s := string(b)
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		s = s[1 : len(s)-1]
+	}
+	if s == "" || s == "null" {
+		*f = 0
+		return nil
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		*f = 0
+		return nil
+	}
+	*f = FlexInt64(v)
+	return nil
 }
 
 type WooShippingLineResponse struct {

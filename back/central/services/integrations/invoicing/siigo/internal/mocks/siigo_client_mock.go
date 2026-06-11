@@ -6,18 +6,21 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 )
 
-// SiigoClientMock es el mock de ports.ISiigoClient.
-// Cada campo *Fn permite configurar el comportamiento por test.
 type SiigoClientMock struct {
 	TestAuthenticationFn          func(ctx context.Context, username, accessKey, accountID, partnerID, baseURL string) error
 	CreateInvoiceFn               func(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error)
 	GetCustomerByIdentificationFn func(ctx context.Context, credentials dtos.Credentials, identification string) (*dtos.CustomerResult, error)
 	CreateCustomerFn              func(ctx context.Context, credentials dtos.Credentials, req *dtos.CreateCustomerRequest) (*dtos.CustomerResult, error)
 	ListInvoicesFn                func(ctx context.Context, credentials dtos.Credentials, params dtos.ListInvoicesParams) (*dtos.ListInvoicesResult, error)
+	GetInvoiceByIDFn              func(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.InvoiceDetail, error)
+	GetStampErrorsFn              func(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]dtos.StampError, error)
+	AnnulInvoiceFn                func(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.AnnulInvoiceResult, error)
+	ListProductsFn                func(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
+	ListPaymentTypesFn            func(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
+	CreateCashReceiptFn           func(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
 	CreateJournalFn               func(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
 }
 
-// TestAuthentication implementa ports.ISiigoClient.
 func (m *SiigoClientMock) TestAuthentication(
 	ctx context.Context,
 	username, accessKey, accountID, partnerID, baseURL string,
@@ -28,7 +31,6 @@ func (m *SiigoClientMock) TestAuthentication(
 	return nil
 }
 
-// CreateInvoice implementa ports.ISiigoClient.
 func (m *SiigoClientMock) CreateInvoice(
 	ctx context.Context,
 	req *dtos.CreateInvoiceRequest,
@@ -39,7 +41,6 @@ func (m *SiigoClientMock) CreateInvoice(
 	return &dtos.CreateInvoiceResult{}, nil
 }
 
-// GetCustomerByIdentification implementa ports.ISiigoClient.
 func (m *SiigoClientMock) GetCustomerByIdentification(
 	ctx context.Context,
 	credentials dtos.Credentials,
@@ -51,7 +52,6 @@ func (m *SiigoClientMock) GetCustomerByIdentification(
 	return nil, nil
 }
 
-// CreateCustomer implementa ports.ISiigoClient.
 func (m *SiigoClientMock) CreateCustomer(
 	ctx context.Context,
 	credentials dtos.Credentials,
@@ -63,7 +63,6 @@ func (m *SiigoClientMock) CreateCustomer(
 	return &dtos.CustomerResult{}, nil
 }
 
-// ListInvoices implementa ports.ISiigoClient.
 func (m *SiigoClientMock) ListInvoices(
 	ctx context.Context,
 	credentials dtos.Credentials,
@@ -75,7 +74,71 @@ func (m *SiigoClientMock) ListInvoices(
 	return &dtos.ListInvoicesResult{}, nil
 }
 
-// CreateJournal implementa ports.ISiigoClient.
+func (m *SiigoClientMock) GetInvoiceByID(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	invoiceID string,
+) (*dtos.InvoiceDetail, error) {
+	if m.GetInvoiceByIDFn != nil {
+		return m.GetInvoiceByIDFn(ctx, credentials, invoiceID)
+	}
+	return &dtos.InvoiceDetail{}, nil
+}
+
+func (m *SiigoClientMock) GetStampErrors(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	invoiceID string,
+) ([]dtos.StampError, error) {
+	if m.GetStampErrorsFn != nil {
+		return m.GetStampErrorsFn(ctx, credentials, invoiceID)
+	}
+	return nil, nil
+}
+
+func (m *SiigoClientMock) AnnulInvoice(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	invoiceID string,
+) (*dtos.AnnulInvoiceResult, error) {
+	if m.AnnulInvoiceFn != nil {
+		return m.AnnulInvoiceFn(ctx, credentials, invoiceID)
+	}
+	return &dtos.AnnulInvoiceResult{}, nil
+}
+
+func (m *SiigoClientMock) ListProducts(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	page, pageSize int,
+) ([]dtos.ProductItem, error) {
+	if m.ListProductsFn != nil {
+		return m.ListProductsFn(ctx, credentials, page, pageSize)
+	}
+	return nil, nil
+}
+
+func (m *SiigoClientMock) ListPaymentTypes(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	documentType string,
+) ([]dtos.PaymentTypeItem, error) {
+	if m.ListPaymentTypesFn != nil {
+		return m.ListPaymentTypesFn(ctx, credentials, documentType)
+	}
+	return nil, nil
+}
+
+func (m *SiigoClientMock) CreateCashReceipt(
+	ctx context.Context,
+	req *dtos.CreateCashReceiptRequest,
+) (*dtos.CreateCashReceiptResult, error) {
+	if m.CreateCashReceiptFn != nil {
+		return m.CreateCashReceiptFn(ctx, req)
+	}
+	return &dtos.CreateCashReceiptResult{}, nil
+}
+
 func (m *SiigoClientMock) CreateJournal(
 	ctx context.Context,
 	req *dtos.CreateJournalRequest,

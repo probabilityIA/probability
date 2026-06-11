@@ -207,14 +207,17 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 	}
 
 	var externalID string
-	var integrationID uint
+	var integrationID *uint
 	var businessID *uint
 	var integrationType string
 	var platform string
 
 	if orderDTO != nil {
 		externalID = orderDTO.ExternalID
-		integrationID = orderDTO.IntegrationID
+		if orderDTO.IntegrationID > 0 {
+			iid := orderDTO.IntegrationID
+			integrationID = &iid
+		}
 		businessID = orderDTO.BusinessID
 		integrationType = orderDTO.IntegrationType
 		platform = orderDTO.Platform
@@ -224,8 +227,9 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 			if extID, ok := rawMap["external_id"].(string); ok {
 				externalID = extID
 			}
-			if intID, ok := rawMap["integration_id"].(float64); ok {
-				integrationID = uint(intID)
+			if intID, ok := rawMap["integration_id"].(float64); ok && intID > 0 {
+				iid := uint(intID)
+				integrationID = &iid
 			}
 			if busID, ok := rawMap["business_id"].(float64); ok {
 				bid := uint(busID)

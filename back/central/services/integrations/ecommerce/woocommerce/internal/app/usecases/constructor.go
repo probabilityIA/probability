@@ -19,7 +19,7 @@ type IWooCommerceUseCase interface {
 	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error
 
 	// ProcessWebhookOrder procesa una orden recibida por webhook.
-	ProcessWebhookOrder(ctx context.Context, topic string, storeURL string, rawBody []byte) error
+	ProcessWebhookOrder(ctx context.Context, topic string, storeURL string, integrationID string, rawBody []byte) error
 
 	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error

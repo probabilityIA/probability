@@ -28,7 +28,7 @@ func (uc *wooCommerceUseCase) CreateWebhooks(ctx context.Context, integrationID,
 
 	base := strings.TrimRight(baseURL, "/")
 	base = strings.TrimSuffix(base, "/api/v1")
-	deliveryURL := fmt.Sprintf("%s/api/v1/woocommerce/webhook", base)
+	deliveryURL := fmt.Sprintf("%s/api/v1/woocommerce/webhook?integration_id=%s", base, integrationID)
 
 	topics := []string{"order.created", "order.updated"}
 	ids := make([]int64, 0, len(topics))
