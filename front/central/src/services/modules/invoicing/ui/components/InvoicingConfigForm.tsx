@@ -52,7 +52,22 @@ export function InvoicingConfigForm({
     item_mappings_shipping: (initialData?.config?.item_mappings?.shipping as string) ?? '',
     item_mappings_membership: (initialData?.config?.item_mappings?.membership as string) ?? '',
     item_mappings_tip: (initialData?.config?.item_mappings?.tip as string) ?? '',
+    // Siigo-specific ids
+    siigo_document_id: (initialData?.config?.document_id as number | string) ?? '',
+    siigo_payment_method_id: (initialData?.config?.payment_method_id as number | string) ?? '',
+    siigo_tax_id: (initialData?.config?.tax_id as number | string) ?? '',
+    siigo_seller_id: (initialData?.config?.seller_id as number | string) ?? '',
+    siigo_cash_receipt_document_id: (initialData?.config?.cash_receipt_document_id as number | string) ?? '',
+    siigo_cash_receipt_payment_id: (initialData?.config?.cash_receipt_payment_id as number | string) ?? '',
+    siigo_credit_note_document_id: (initialData?.config?.credit_note_document_id as number | string) ?? '',
   });
+
+  const providerName = initialData?.provider_name ?? '';
+  const providerImageUrl = initialData?.provider_image_url;
+  const isSiigo = providerName.toLowerCase().includes('siigo');
+  const cashReceiptDesc = isSiigo
+    ? 'Registra un recibo de caja en Siigo al crear la factura'
+    : 'Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)';
 
   const [showItemMappings, setShowItemMappings] = useState(
     !!(initialData?.config?.item_mappings?.shipping ||
@@ -149,23 +164,36 @@ export function InvoicingConfigForm({
     if (formData.force_default_customer) {
       invoiceConfig.force_default_customer = true;
     }
+    if (isSiigo) {
+      if (formData.siigo_document_id) invoiceConfig.document_id = Number(formData.siigo_document_id);
+      if (formData.siigo_payment_method_id) invoiceConfig.payment_method_id = Number(formData.siigo_payment_method_id);
+      if (formData.siigo_tax_id) invoiceConfig.tax_id = Number(formData.siigo_tax_id);
+      if (formData.siigo_seller_id) invoiceConfig.seller_id = Number(formData.siigo_seller_id);
+      if (formData.siigo_credit_note_document_id) invoiceConfig.credit_note_document_id = Number(formData.siigo_credit_note_document_id);
+    }
+
     if (formData.send_cash_receipt) {
       invoiceConfig.send_cash_receipt = true;
-      invoiceConfig.payment_type = formData.payment_type || 'EF';
-      if (formData.payment_type === 'TR' && formData.payment_bank_account_id)
-        invoiceConfig.payment_bank_account_id = String(formData.payment_bank_account_id);
-      if (formData.payment_type === 'CH') {
-        if (formData.payment_account_number) invoiceConfig.payment_account_number = formData.payment_account_number;
-        if (formData.payment_bank_name) invoiceConfig.payment_bank_name = formData.payment_bank_name;
-      }
-      if ((formData.payment_type === 'TC' || formData.payment_type === 'TD') && formData.payment_financial_entity_id)
-        invoiceConfig.payment_financial_entity_id = Number(formData.payment_financial_entity_id);
-      if (formData.payment_type === 'BN' && formData.payment_bonus_code)
-        invoiceConfig.payment_bonus_code = formData.payment_bonus_code;
-      if (formData.cod_use_alternate_bank) {
-        invoiceConfig.cod_use_alternate_bank = true;
-        if (formData.cod_payment_bank_account_id)
-          invoiceConfig.cod_payment_bank_account_id = String(formData.cod_payment_bank_account_id);
+      if (isSiigo) {
+        if (formData.siigo_cash_receipt_document_id) invoiceConfig.cash_receipt_document_id = Number(formData.siigo_cash_receipt_document_id);
+        if (formData.siigo_cash_receipt_payment_id) invoiceConfig.cash_receipt_payment_id = Number(formData.siigo_cash_receipt_payment_id);
+      } else {
+        invoiceConfig.payment_type = formData.payment_type || 'EF';
+        if (formData.payment_type === 'TR' && formData.payment_bank_account_id)
+          invoiceConfig.payment_bank_account_id = String(formData.payment_bank_account_id);
+        if (formData.payment_type === 'CH') {
+          if (formData.payment_account_number) invoiceConfig.payment_account_number = formData.payment_account_number;
+          if (formData.payment_bank_name) invoiceConfig.payment_bank_name = formData.payment_bank_name;
+        }
+        if ((formData.payment_type === 'TC' || formData.payment_type === 'TD') && formData.payment_financial_entity_id)
+          invoiceConfig.payment_financial_entity_id = Number(formData.payment_financial_entity_id);
+        if (formData.payment_type === 'BN' && formData.payment_bonus_code)
+          invoiceConfig.payment_bonus_code = formData.payment_bonus_code;
+        if (formData.cod_use_alternate_bank) {
+          invoiceConfig.cod_use_alternate_bank = true;
+          if (formData.cod_payment_bank_account_id)
+            invoiceConfig.cod_payment_bank_account_id = String(formData.cod_payment_bank_account_id);
+        }
       }
     }
 
@@ -220,6 +248,51 @@ export function InvoicingConfigForm({
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      {providerName && (
+        <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 p-3 rounded-lg border border-blue-100 dark:border-gray-700">
+          {providerImageUrl ? (
+            <img src={providerImageUrl} alt={providerName} className="w-8 h-8 object-contain flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+              {providerName.charAt(0)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Facturador electrónico</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{providerName}</p>
+          </div>
+        </div>
+      )}
+
+      {isSiigo && (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Identificadores de Siigo</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo de documento (FV)</label>
+              <input type="number" value={formData.siigo_document_id} onChange={(e) => setFormData({ ...formData, siigo_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago (factura)</label>
+              <input type="number" value={formData.siigo_payment_method_id} onChange={(e) => setFormData({ ...formData, siigo_payment_method_id: e.target.value })} placeholder="payment_method_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Impuesto (IVA) — opcional</label>
+              <input type="number" value={formData.siigo_tax_id} onChange={(e) => setFormData({ ...formData, siigo_tax_id: e.target.value })} placeholder="tax_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Vendedor — opcional</label>
+              <input type="number" value={formData.siigo_seller_id} onChange={(e) => setFormData({ ...formData, siigo_seller_id: e.target.value })} placeholder="seller_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo doc. Nota Crédito</label>
+              <input type="number" value={formData.siigo_credit_note_document_id} onChange={(e) => setFormData({ ...formData, siigo_credit_note_document_id: e.target.value })} placeholder="credit_note_document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">IDs del catálogo de Siigo (consúltalos en tu cuenta Siigo).</p>
         </div>
       )}
 
@@ -306,11 +379,39 @@ export function InvoicingConfigForm({
             />
             <div>
               <span className="text-sm font-medium text-gray-900 dark:text-white">Enviar recibo de caja</span>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{cashReceiptDesc}</p>
             </div>
           </label>
 
-          {formData.send_cash_receipt && (
+          {formData.send_cash_receipt && isSiigo && (
+            <div className="space-y-3 pl-8">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo doc. Recibo (RC)</label>
+                  <input type="number" value={formData.siigo_cash_receipt_document_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_document_id: e.target.value })} placeholder="cash_receipt_document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago (Siigo)</label>
+                  <input type="number" value={formData.siigo_cash_receipt_payment_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_payment_id: e.target.value })} placeholder="cash_receipt_payment_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
+                </div>
+              </div>
+              <button type="button" onClick={handleFetchBankAccounts} disabled={loadingBankAccounts} className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50">
+                {loadingBankAccounts ? 'Consultando...' : 'Consultar medios de pago de Siigo'}
+              </button>
+              {bankAccounts && bankAccounts.length > 0 && (
+                <div className="space-y-1">
+                  {bankAccounts.map((account, idx) => (
+                    <button key={idx} type="button" onClick={() => setFormData({ ...formData, siigo_cash_receipt_payment_id: account.account_number })} className={`w-full text-left p-2 rounded text-xs border ${String(formData.siigo_cash_receipt_payment_id) === String(account.account_number) ? 'border-green-500 bg-green-50' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}>
+                      <span className="font-medium">{account.account_number}</span>
+                      <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {formData.send_cash_receipt && !isSiigo && (
             <div className="space-y-3 pl-8">
               <div>
                 <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago</label>

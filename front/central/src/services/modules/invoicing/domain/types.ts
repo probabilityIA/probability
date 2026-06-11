@@ -178,6 +178,15 @@ export interface InvoicingSettings {
 
   cod_use_alternate_bank?: boolean;
   cod_payment_bank_account_id?: string | number;
+
+  // Siigo-specific ids
+  document_id?: number;
+  payment_method_id?: number;
+  tax_id?: number;
+  seller_id?: number;
+  cash_receipt_document_id?: number;
+  cash_receipt_payment_id?: number;
+  credit_note_document_id?: number;
 }
 
 // ===================================

@@ -192,14 +192,23 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		Str("effective_url", ictx.Credentials.BaseURL).
 		Msg("Resolved effective Siigo URL")
 
+	customer := siigoDtos.CustomerData{
+		Name:    request.InvoiceData.Customer.Name,
+		Email:   request.InvoiceData.Customer.Email,
+		Phone:   request.InvoiceData.Customer.Phone,
+		DNI:     request.InvoiceData.Customer.DNI,
+		Address: request.InvoiceData.Customer.Address,
+	}
+	if forceFinal, _ := ictx.Config["force_default_customer"].(bool); forceFinal {
+		customer = siigoDtos.CustomerData{
+			Name: "CONSUMIDOR FINAL",
+			DNI:  "222222222222",
+		}
+		c.log.Info(ctx).Uint("invoice_id", request.InvoiceID).Msg("Invoicing as CONSUMIDOR FINAL")
+	}
+
 	invoiceReq := &siigoDtos.CreateInvoiceRequest{
-		Customer: siigoDtos.CustomerData{
-			Name:    request.InvoiceData.Customer.Name,
-			Email:   request.InvoiceData.Customer.Email,
-			Phone:   request.InvoiceData.Customer.Phone,
-			DNI:     request.InvoiceData.Customer.DNI,
-			Address: request.InvoiceData.Customer.Address,
-		},
+		Customer: customer,
 		Items:        mapItemsToClientDTOs(request.InvoiceData.Items),
 		Total:        request.InvoiceData.Total,
 		Subtotal:     request.InvoiceData.Subtotal,

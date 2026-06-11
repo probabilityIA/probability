@@ -35,6 +35,16 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 		items = append(items, siigoItem)
 	}
 
+	if req.ShippingCost > 0 {
+		shippingCode := getServiceCode(config, "shipping", "SHIPPING")
+		items = append(items, request.SiigoItem{
+			Code:        shippingCode,
+			Description: "Envio",
+			Quantity:    1,
+			Price:       req.ShippingCost,
+		})
+	}
+
 	customerIdentification := req.Customer.DNI
 	if customerIdentification == "" {
 		customerIdentification = customerID
@@ -78,6 +88,15 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 	}
 
 	return invoice
+}
+
+func getServiceCode(config map[string]interface{}, service, defaultVal string) string {
+	if mappings, ok := config["item_mappings"].(map[string]interface{}); ok {
+		if code, ok := mappings[service].(string); ok && code != "" {
+			return code
+		}
+	}
+	return defaultVal
 }
 
 func getStringFromConfig(config map[string]interface{}, key, defaultVal string) string {
