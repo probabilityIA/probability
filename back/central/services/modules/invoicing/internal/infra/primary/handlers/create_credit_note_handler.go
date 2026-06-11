@@ -47,6 +47,7 @@ func (h *handler) CreateCreditNote(c *gin.Context) {
 
 	// Convertir a DTO de dominio
 	dto := mappers.CreateCreditNoteRequestToDTO(&req)
+	dto.CreatedByUserID = c.GetUint("user_id")
 
 	// Llamar caso de uso
 	creditNote, err := h.useCase.CreateCreditNote(ctx, dto)

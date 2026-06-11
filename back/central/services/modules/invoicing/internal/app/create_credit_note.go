@@ -61,6 +61,7 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 		Reason:         dto.Reason,
 		Description:    dto.Description,
 		Status:         constants.CreditNoteStatusPending,
+		CreatedByID:    dto.CreatedByUserID,
 	}
 	if err := uc.repo.CreateCreditNote(ctx, creditNote); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to persist credit note")
