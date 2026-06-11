@@ -5,12 +5,15 @@ import { format } from 'date-fns';
 import { AdjustStockDTO } from '../../domain/types';
 import { adjustStockAction, getProductInventoryAction } from '../../infra/actions';
 import { getProductsAction } from '@/services/modules/products/infra/actions';
-import { getLocationsAction, getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
+import { getLocationsAction, getWarehousesAction, createLocationAction } from '@/services/modules/warehouses/infra/actions';
+import { listZonesAction, listAislesAction, listRacksAction, listRackLevelsAction } from '@/services/modules/warehouses/infra/actions/hierarchy';
 import { WarehouseLocation, Warehouse } from '@/services/modules/warehouses/domain/types';
+import { Zone, Aisle, Rack, RackLevel } from '@/services/modules/warehouses/domain/hierarchy-types';
 import { listLotsAction, listProductUoMsAction, listInventoryStatesAction } from '../../infra/actions/traceability';
 import { InventoryLot, ProductUoM, InventoryState } from '../../domain/traceability-types';
 import { Button, Alert, Input } from '@/shared/ui';
-import { Package, Search, X, Plus, Minus, ChevronDown, Info } from 'lucide-react';
+import { Package, Search, X, Plus, Minus, ChevronDown, Info, RefreshCw } from 'lucide-react';
+import RelocationStockModal from './RelocationStockModal';
 
 interface ProductOption {
     id: string;
@@ -53,11 +56,22 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
     const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
     const [loadingContext, setLoadingContext] = useState(false);
 
+    const [zones, setZones] = useState<Zone[]>([]);
+    const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
+    const [aisles, setAisles] = useState<Aisle[]>([]);
+    const [selectedAisleId, setSelectedAisleId] = useState<number | null>(null);
+    const [racks, setRacks] = useState<Rack[]>([]);
+    const [selectedRackId, setSelectedRackId] = useState<number | null>(null);
+    const [levels, setLevels] = useState<RackLevel[]>([]);
+    const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
+    const [hierarchyLoading, setHierarchyLoading] = useState(false);
+
     const [productInWarehouse, setProductInWarehouse] = useState<boolean | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [showRelocationModal, setShowRelocationModal] = useState(false);
 
     useEffect(() => {
         if (productId) {
@@ -91,13 +105,83 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
 
     useEffect(() => {
         setSelectedLocationId(null);
+        setSelectedZoneId(null);
+        setSelectedAisleId(null);
+        setSelectedRackId(null);
+        setSelectedLevelId(null);
+        setZones([]);
+        setAisles([]);
+        setRacks([]);
+        setLevels([]);
         (async () => {
             try {
                 const r = await getLocationsAction(selectedWarehouseId, businessId);
                 setLocations(r || []);
-            } catch { setLocations([]); }
+                const zonesRes = await listZonesAction(selectedWarehouseId, { page: 1, page_size: 100 }, businessId);
+                setZones(zonesRes.data || []);
+            } catch {
+                setLocations([]);
+                setZones([]);
+            }
         })();
     }, [selectedWarehouseId, businessId]);
+
+    useEffect(() => {
+        setSelectedAisleId(null);
+        setSelectedRackId(null);
+        setSelectedLevelId(null);
+        setAisles([]);
+        setRacks([]);
+        setLevels([]);
+        if (!selectedZoneId) return;
+        (async () => {
+            setHierarchyLoading(true);
+            try {
+                const aislesRes = await listAislesAction(selectedZoneId, businessId);
+                setAisles(aislesRes.data || []);
+            } catch {
+                setAisles([]);
+            } finally {
+                setHierarchyLoading(false);
+            }
+        })();
+    }, [selectedZoneId, businessId]);
+
+    useEffect(() => {
+        setSelectedRackId(null);
+        setSelectedLevelId(null);
+        setRacks([]);
+        setLevels([]);
+        if (!selectedAisleId) return;
+        (async () => {
+            setHierarchyLoading(true);
+            try {
+                const racksRes = await listRacksAction(selectedAisleId, businessId);
+                setRacks(racksRes.data || []);
+            } catch {
+                setRacks([]);
+            } finally {
+                setHierarchyLoading(false);
+            }
+        })();
+    }, [selectedAisleId, businessId]);
+
+    useEffect(() => {
+        setSelectedLevelId(null);
+        setLevels([]);
+        if (!selectedRackId) return;
+        (async () => {
+            setHierarchyLoading(true);
+            try {
+                const levelsRes = await listRackLevelsAction(selectedRackId, businessId);
+                setLevels(levelsRes.data || []);
+            } catch {
+                setLevels([]);
+            } finally {
+                setHierarchyLoading(false);
+            }
+        })();
+    }, [selectedRackId, businessId]);
 
     useEffect(() => {
         if (!selectedProduct?.id) {
@@ -135,6 +219,41 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
             } catch { setProductInWarehouse(null); }
         })();
     }, [selectedProduct?.id, selectedWarehouseId, businessId]);
+
+    useEffect(() => {
+        if (!selectedLevelId || !selectedRackId) return;
+        const selectedLevel = levels.find((l) => l.id === selectedLevelId);
+        if (!selectedLevel) return;
+        (async () => {
+            try {
+                const selectedRack = racks.find((r) => r.id === selectedRackId);
+                if (!selectedRack) return;
+                const selectedAisle = aisles.find((a) => a.id === selectedAisleId);
+                if (!selectedAisle) return;
+                const selectedZone = zones.find((z) => z.id === selectedZoneId);
+                if (!selectedZone) return;
+                const existingLocation = locations.find((loc) => loc.level_id === selectedLevelId);
+                if (existingLocation) {
+                    setSelectedLocationId(existingLocation.id);
+                    return;
+                }
+                const locationCode = `LOC-${selectedZone.code}-${selectedAisle.code}-${selectedRack.code}-${String(selectedLevel.ordinal).padStart(2, '0')}`;
+                const locationName = `${selectedZone.name} / ${selectedAisle.name} / ${selectedRack.name} / Nivel ${selectedLevel.ordinal}`;
+                const newLoc = await createLocationAction(selectedWarehouseId, {
+                    name: locationName,
+                    code: locationCode,
+                    type: 'storage',
+                    level_id: selectedLevelId,
+                }, businessId);
+                if (newLoc && newLoc.id) {
+                    setLocations([...locations, newLoc]);
+                    setSelectedLocationId(newLoc.id);
+                }
+            } catch (err) {
+                console.error('Error creating location for level:', err);
+            }
+        })();
+    }, [selectedLevelId]);
 
     const searchProducts = useCallback(async (params: { name?: string; sku?: string }) => {
         const term = params.name || params.sku || '';
@@ -492,6 +611,98 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                         )}
                     </div>
 
+                    {zones.length > 0 && (
+                        <div className="mb-6">
+                            <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                                    Ubicación en Jerarquía
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRelocationModal(true)}
+                                    className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-lg transition-colors border border-amber-200 dark:border-amber-800"
+                                >
+                                    <RefreshCw className="w-3.5 h-3.5" />
+                                    Reubicar Stock
+                                </button>
+                            </div>
+                            <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
+                                <div>
+                                    <label htmlFor="zone-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Zona</label>
+                                    <div className="relative">
+                                        <select
+                                            id="zone-select"
+                                            value={selectedZoneId ?? ''}
+                                            onChange={(e) => setSelectedZoneId(e.target.value ? Number(e.target.value) : null)}
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none"
+                                        >
+                                            <option value="">Selecciona zona</option>
+                                            {zones.map((z) => (
+                                                <option key={z.id} value={z.id}>{z.code} - {z.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="aisle-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Pasillo</label>
+                                    <div className="relative">
+                                        <select
+                                            id="aisle-select"
+                                            value={selectedAisleId ?? ''}
+                                            onChange={(e) => setSelectedAisleId(e.target.value ? Number(e.target.value) : null)}
+                                            disabled={!selectedZoneId}
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">Selecciona pasillo</option>
+                                            {aisles.map((a) => (
+                                                <option key={a.id} value={a.id}>{a.code} - {a.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="rack-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Estantería</label>
+                                    <div className="relative">
+                                        <select
+                                            id="rack-select"
+                                            value={selectedRackId ?? ''}
+                                            onChange={(e) => setSelectedRackId(e.target.value ? Number(e.target.value) : null)}
+                                            disabled={!selectedAisleId}
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">Selecciona estantería</option>
+                                            {racks.map((r) => (
+                                                <option key={r.id} value={r.id}>{r.code} - {r.name}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="level-select" className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-2">Nivel</label>
+                                    <div className="relative">
+                                        <select
+                                            id="level-select"
+                                            value={selectedLevelId ?? ''}
+                                            onChange={(e) => setSelectedLevelId(e.target.value ? Number(e.target.value) : null)}
+                                            disabled={!selectedRackId}
+                                            className="w-full px-3 py-2.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-[1.5px] border-slate-200 dark:border-slate-700 rounded-[10px] text-sm focus:outline-none focus:border-slate-300 focus:ring-4 focus:ring-slate-500/10 appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">Selecciona nivel</option>
+                                            {levels.map((l) => (
+                                                <option key={l.id} value={l.id}>Nivel {l.ordinal}</option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+                            {hierarchyLoading && <p className="text-xs text-slate-400 animate-pulse mt-2">Cargando opciones...</p>}
+                        </div>
+                    )}
+
                     {(locations.length > 0 || tracksLots) && (
                         <div className="mb-6">
                             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -629,6 +840,19 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
                 </div>
             </div>
+
+            {showRelocationModal && selectedProduct && (
+                <RelocationStockModal
+                    productId={selectedProduct.id}
+                    warehouseId={selectedWarehouseId}
+                    businessId={businessId}
+                    onSuccess={() => {
+                        setShowRelocationModal(false);
+                        onSuccess();
+                    }}
+                    onClose={() => setShowRelocationModal(false)}
+                />
+            )}
         </div>
     );
 }

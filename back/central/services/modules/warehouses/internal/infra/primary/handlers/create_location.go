@@ -47,6 +47,7 @@ func (h *Handlers) CreateLocation(c *gin.Context) {
 		Name:          req.Name,
 		Code:          req.Code,
 		Type:          locType,
+		LevelID:       req.LevelID,
 		IsActive:      isActive,
 		IsFulfillment: req.IsFulfillment,
 		Capacity:      req.Capacity,

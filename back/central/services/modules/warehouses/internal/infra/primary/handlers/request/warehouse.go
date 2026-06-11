@@ -61,6 +61,7 @@ type CreateLocationRequest struct {
 	Name          string `json:"name" binding:"required,min=1,max=255"`
 	Code          string `json:"code" binding:"required,min=1,max=50"`
 	Type          string `json:"type" binding:"omitempty,oneof=storage picking packing receiving shipping"`
+	LevelID       *uint  `json:"level_id" binding:"omitempty,min=1"`
 	IsActive      *bool  `json:"is_active"`
 	IsFulfillment bool   `json:"is_fulfillment"`
 	Capacity      *int   `json:"capacity" binding:"omitempty,min=0"`
@@ -71,6 +72,7 @@ type UpdateLocationRequest struct {
 	Name          string `json:"name" binding:"required,min=1,max=255"`
 	Code          string `json:"code" binding:"required,min=1,max=50"`
 	Type          string `json:"type" binding:"omitempty,oneof=storage picking packing receiving shipping"`
+	LevelID       *uint  `json:"level_id" binding:"omitempty,min=1"`
 	IsActive      *bool  `json:"is_active"`
 	IsFulfillment bool   `json:"is_fulfillment"`
 	Capacity      *int   `json:"capacity" binding:"omitempty,min=0"`

@@ -12,7 +12,10 @@ func (uc *useCase) TransferStock(ctx context.Context, dto request.TransferStockD
 	if dto.Quantity <= 0 {
 		return domainerrors.ErrTransferQtyNeg
 	}
-	if dto.FromWarehouseID == dto.ToWarehouseID {
+	isSameLocation := (dto.FromLocationID == nil && dto.ToLocationID == nil) ||
+		(dto.FromLocationID != nil && dto.ToLocationID != nil && *dto.FromLocationID == *dto.ToLocationID)
+
+	if dto.FromWarehouseID == dto.ToWarehouseID && isSameLocation {
 		return domainerrors.ErrSameWarehouse
 	}
 

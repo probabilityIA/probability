@@ -47,6 +47,7 @@ export interface WarehouseDetail extends Warehouse {
 export interface WarehouseLocation {
     id: number;
     warehouse_id: number;
+    level_id?: number | null;
     name: string;
     code: string;
     type: string;
@@ -127,6 +128,7 @@ export interface CreateLocationDTO {
     name: string;
     code: string;
     type?: string;
+    level_id?: number | null;
     is_fulfillment?: boolean;
     capacity?: number | null;
 }
@@ -135,6 +137,7 @@ export interface UpdateLocationDTO {
     name: string;
     code: string;
     type?: string;
+    level_id?: number | null;
     is_active?: boolean;
     is_fulfillment?: boolean;
     capacity?: number | null;

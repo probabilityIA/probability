@@ -65,6 +65,24 @@ func (uc *UseCaseShipment) RenderGuide(ctx context.Context, shipmentID uint, for
 		if pdfCtx == nil {
 			return nil, fmt.Errorf("contexto del shipment %d no disponible", shipmentID)
 		}
+
+		if pdfCtx.Destino == "" && pdfCtx.ZonaHub == "" && pdfCtx.EquipoReparto == "" && shipment.GuideURL != nil && *shipment.GuideURL != "" {
+			metadata, err := ExtractCoordinadoraMetadata(ctx, *shipment.GuideURL)
+			if err == nil && len(metadata) > 0 {
+				pdfCtx.Destino = getMetaStr(metadata, "destino")
+				pdfCtx.ZonaHub = getMetaStr(metadata, "zona_hub")
+				pdfCtx.EquipoReparto = getMetaStr(metadata, "equipo_reparto")
+				pdfCtx.Origen = getMetaStr(metadata, "origen")
+				pdfCtx.AsCode = getMetaStr(metadata, "as_code")
+				pdfCtx.Paq = getMetaStr(metadata, "paq")
+				pdfCtx.Unidad = getMetaStr(metadata, "unidad")
+				pdfCtx.WarehousePostal = getMetaStr(metadata, "postal_origen")
+				pdfCtx.Ref = getMetaStr(metadata, "ref")
+				pdfCtx.Guia = getMetaStr(metadata, "guia")
+				pdfCtx.Observaciones = getMetaStr(metadata, "observaciones")
+			}
+		}
+
 		pdfBytes, err := buildProbabilityLabel(pdfCtx, format)
 		if err != nil {
 			return nil, fmt.Errorf("build probability label: %w", err)
@@ -226,4 +244,16 @@ func resizePDF(pdfBytes []byte, format *domain.GuideFormat, selPages []string) (
 
 func cmToPoints(cm float64) float64 {
 	return cm * 28.3464567
+}
+
+func getMetaStr(metadata map[string]interface{}, key string) string {
+	if metadata == nil {
+		return ""
+	}
+	if v, ok := metadata[key]; ok {
+		if s, ok := v.(string); ok {
+			return strings.TrimSpace(s)
+		}
+	}
+	return ""
 }

@@ -185,3 +185,30 @@ export const validateCubingAction = async (input: ValidateCubingInput, businessI
         return { success: false as const, error: error.message || 'Error al validar cubicaje' };
     }
 };
+
+export const listAislesAction = async (zoneId: number, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        return await repo.listAisles(zoneId, {}, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const listRacksAction = async (aisleId: number, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        return await repo.listRacks(aisleId, {}, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const listRackLevelsAction = async (rackId: number, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        return await repo.listRackLevels(rackId, {}, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};

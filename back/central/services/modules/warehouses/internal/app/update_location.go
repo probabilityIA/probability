@@ -33,6 +33,7 @@ func (uc *UseCase) UpdateLocation(ctx context.Context, dto dtos.UpdateLocationDT
 	location := &entities.WarehouseLocation{
 		ID:            dto.ID,
 		WarehouseID:   dto.WarehouseID,
+		LevelID:       dto.LevelID,
 		Name:          dto.Name,
 		Code:          dto.Code,
 		Type:          dto.Type,
