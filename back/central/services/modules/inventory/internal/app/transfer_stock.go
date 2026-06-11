@@ -12,7 +12,7 @@ func (uc *useCase) TransferStock(ctx context.Context, dto request.TransferStockD
 	if dto.Quantity <= 0 {
 		return domainerrors.ErrTransferQtyNeg
 	}
-	if dto.FromWarehouseID == dto.ToWarehouseID {
+	if dto.FromWarehouseID == dto.ToWarehouseID && (dto.FromLocationID == dto.ToLocationID) {
 		return domainerrors.ErrSameWarehouse
 	}
 
