@@ -138,7 +138,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 		var paidAt *time.Time
 		if order.DatePaid != nil {
 			paidAt = order.DatePaid
-			paymentStatus = "paid"
+			paymentStatus = "completed"
 		}
 
 		gateway := order.PaymentMethod

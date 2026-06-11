@@ -221,8 +221,8 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	if payment.Gateway == nil || *payment.Gateway != "bacs" {
 		t.Errorf("payment.Gateway esperado 'bacs'")
 	}
-	if payment.Status != "paid" {
-		t.Errorf("payment.Status esperado 'paid' (tiene DatePaid), recibí '%s'", payment.Status)
+	if payment.Status != "completed" {
+		t.Errorf("payment.Status esperado 'completed' (tiene DatePaid), recibí '%s'", payment.Status)
 	}
 	if payment.PaidAt == nil {
 		t.Error("payment.PaidAt no debe ser nil cuando DatePaid está presente")
