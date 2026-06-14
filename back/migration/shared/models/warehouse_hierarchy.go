@@ -22,11 +22,12 @@ func (WarehouseZone) TableName() string {
 
 type WarehouseAisle struct {
 	gorm.Model
-	ZoneID     uint   `gorm:"not null;index;uniqueIndex:idx_aisle_zone_code,priority:1"`
-	BusinessID uint   `gorm:"not null;index"`
-	Code       string `gorm:"size:50;not null;uniqueIndex:idx_aisle_zone_code,priority:2"`
-	Name       string `gorm:"size:255;not null"`
-	IsActive   bool   `gorm:"default:true;index"`
+	ZoneID     uint    `gorm:"not null;index;uniqueIndex:idx_aisle_zone_code,priority:1"`
+	BusinessID uint    `gorm:"not null;index"`
+	Code       string  `gorm:"size:50;not null;uniqueIndex:idx_aisle_zone_code,priority:2"`
+	Name       string  `gorm:"size:255;not null"`
+	IsActive   bool    `gorm:"default:true;index"`
+	WidthCm    float64 `gorm:"default:0"`
 
 	Zone  WarehouseZone   `gorm:"foreignKey:ZoneID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Racks []WarehouseRack `gorm:"foreignKey:AisleID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -40,10 +41,13 @@ type WarehouseRack struct {
 	gorm.Model
 	AisleID     uint   `gorm:"not null;index;uniqueIndex:idx_rack_aisle_code,priority:1"`
 	BusinessID  uint   `gorm:"not null;index"`
-	Code        string `gorm:"size:50;not null;uniqueIndex:idx_rack_aisle_code,priority:2"`
-	Name        string `gorm:"size:255;not null"`
-	LevelsCount int    `gorm:"default:0"`
-	IsActive    bool   `gorm:"default:true;index"`
+	Code        string  `gorm:"size:50;not null;uniqueIndex:idx_rack_aisle_code,priority:2"`
+	Name        string  `gorm:"size:255;not null"`
+	LevelsCount int     `gorm:"default:0"`
+	IsActive    bool    `gorm:"default:true;index"`
+	WidthCm     float64 `gorm:"default:0"`
+	DepthCm     float64 `gorm:"default:0"`
+	HeightCm    float64 `gorm:"default:0"`
 
 	Aisle  WarehouseAisle         `gorm:"foreignKey:AisleID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Levels []WarehouseRackLevel `gorm:"foreignKey:RackID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

@@ -17,5 +17,6 @@ type SaveLayoutRequest struct {
 	CanvasWidth  float64             `json:"canvas_width"`
 	CanvasHeight float64             `json:"canvas_height"`
 	GridSize     float64             `json:"grid_size"`
+	Scale        float64             `json:"scale"`
 	Nodes        []LayoutNodeRequest `json:"nodes"`
 }

@@ -41,6 +41,7 @@ export interface Aisle {
     code: string;
     name: string;
     is_active: boolean;
+    width_cm: number;
     created_at: string;
     updated_at: string;
 }
@@ -53,6 +54,9 @@ export interface Rack {
     name: string;
     levels_count: number;
     is_active: boolean;
+    width_cm: number;
+    depth_cm: number;
+    height_cm: number;
     created_at: string;
     updated_at: string;
 }
@@ -118,6 +122,7 @@ export interface WarehouseLayout {
     canvas_width: number;
     canvas_height: number;
     grid_size: number;
+    scale: number;
     nodes: LayoutNode[];
     updated_at?: string;
 }
@@ -126,6 +131,7 @@ export interface SaveLayoutDTO {
     canvas_width: number;
     canvas_height: number;
     grid_size: number;
+    scale: number;
     nodes: LayoutNode[];
 }
 
@@ -151,12 +157,14 @@ export interface CreateAisleDTO {
     code: string;
     name: string;
     is_active?: boolean;
+    width_cm?: number;
 }
 
 export interface UpdateAisleDTO {
     code?: string;
     name?: string;
     is_active?: boolean;
+    width_cm?: number;
 }
 
 export interface CreateRackDTO {
@@ -165,6 +173,9 @@ export interface CreateRackDTO {
     name: string;
     levels_count?: number;
     is_active?: boolean;
+    width_cm?: number;
+    depth_cm?: number;
+    height_cm?: number;
 }
 
 export interface UpdateRackDTO {
@@ -172,6 +183,9 @@ export interface UpdateRackDTO {
     name?: string;
     levels_count?: number;
     is_active?: boolean;
+    width_cm?: number;
+    depth_cm?: number;
+    height_cm?: number;
 }
 
 export interface CreateRackLevelDTO {

@@ -26,6 +26,7 @@ type CreateAisleDTO struct {
 	Code       string
 	Name       string
 	IsActive   bool
+	WidthCm    float64
 }
 
 type UpdateAisleDTO struct {
@@ -34,6 +35,7 @@ type UpdateAisleDTO struct {
 	Code       string
 	Name       string
 	IsActive   *bool
+	WidthCm    *float64
 }
 
 type CreateRackDTO struct {
@@ -43,6 +45,9 @@ type CreateRackDTO struct {
 	Name        string
 	LevelsCount int
 	IsActive    bool
+	WidthCm     float64
+	DepthCm     float64
+	HeightCm    float64
 }
 
 type UpdateRackDTO struct {
@@ -52,6 +57,9 @@ type UpdateRackDTO struct {
 	Name        string
 	LevelsCount *int
 	IsActive    *bool
+	WidthCm     *float64
+	DepthCm     *float64
+	HeightCm    *float64
 }
 
 type CreateRackLevelDTO struct {

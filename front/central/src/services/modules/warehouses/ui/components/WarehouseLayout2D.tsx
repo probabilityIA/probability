@@ -72,12 +72,12 @@ function flattenTree(tree: WarehouseTree | null): PaletteItem[] {
     return items;
 }
 
-function findRackInTree(tree: WarehouseTree | null, rackId: number): { name: string; levels: any[] } | null {
+function findRackInTree(tree: WarehouseTree | null, rackId: number): { name: string; levels: any[]; width_cm: number; depth_cm: number; height_cm: number } | null {
     if (!tree) return null;
     for (const z of tree.zones || []) {
         for (const a of z.aisles || []) {
             for (const r of a.racks || []) {
-                if (r.id === rackId) return { name: r.name || r.code, levels: r.levels || [] };
+                if (r.id === rackId) return { name: r.name || r.code, levels: r.levels || [], width_cm: r.width_cm || 0, depth_cm: r.depth_cm || 0, height_cm: r.height_cm || 0 };
             }
         }
     }
@@ -212,11 +212,10 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
         const zonePadTop = 36;
         const zonePadBottom = 16;
         const aisleGap = 20;
-        const rackH = 30;
-        const corridorH = 26;
         const rackGap = 10;
         const contentX = M + 20;
-        const contentW = W - 2 * (M + 20);
+        const pxPerM = layout?.scale && layout.scale > 0 ? layout.scale : 40;
+        const cmPx = (cm: number, def: number) => ((cm && cm > 0 ? cm : def) / 100) * pxPerM;
         const zoneColors = ['#6366f1', '#14b8a6', '#f59e0b', '#ec4899', '#0ea5e9', '#84cc16'];
 
         const mk = (refType: LayoutRefType, refId: number, x: number, y: number, w: number, h: number, color: string, label: string): LayoutNode => ({
@@ -226,38 +225,56 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
 
         const nodes: LayoutNode[] = [];
         let y = M + 10;
+        let canvasWidth = W;
 
         (tree.zones || []).forEach((z, zi) => {
             const zoneTop = y;
             let inner = zoneTop + zonePadTop;
+            let zoneRight = contentX;
             (z.aisles || []).forEach((a) => {
                 const racks = a.racks || [];
                 const half = Math.max(1, Math.ceil(racks.length / 2));
                 const sideA = racks.slice(0, half);
                 const sideB = racks.slice(half);
-                const rackW = Math.max(60, (contentW - (half - 1) * rackGap) / half);
-                sideA.forEach((r, i) => {
-                    nodes.push(mk('rack', r.id, contentX + i * (rackW + rackGap), inner, rackW, rackH, TYPE_COLOR.rack, `${r.name || r.code} (A)`));
+                const rowDepthA = sideA.length ? Math.max(...sideA.map((r) => cmPx(r.depth_cm, 100))) : cmPx(0, 100);
+                const rowDepthB = sideB.length ? Math.max(...sideB.map((r) => cmPx(r.depth_cm, 100))) : cmPx(0, 100);
+                const corridorH = cmPx(a.width_cm, 300);
+
+                let xa = contentX;
+                sideA.forEach((r) => {
+                    const w = cmPx(r.width_cm, 120);
+                    const h = cmPx(r.depth_cm, 100);
+                    nodes.push(mk('rack', r.id, xa, inner + (rowDepthA - h), w, h, TYPE_COLOR.rack, `${r.name || r.code} (A)`));
+                    xa += w + rackGap;
                 });
-                const corrY = inner + rackH + 4;
-                nodes.push(mk('aisle', a.id, contentX, corrY, contentW, corridorH, '#cbd5e1', `${a.name || a.code} (transito)`));
+                const corrY = inner + rowDepthA + 4;
+                const corridorW = Math.max(xa - contentX - rackGap, 200);
+                const widthM = a.width_cm && a.width_cm > 0 ? a.width_cm / 100 : 3;
+                nodes.push(mk('aisle', a.id, contentX, corrY, corridorW, corridorH, '#cbd5e1', `${a.name || a.code} (transito ${widthM} m)`));
                 const botY = corrY + corridorH + 4;
-                sideB.forEach((r, i) => {
-                    nodes.push(mk('rack', r.id, contentX + i * (rackW + rackGap), botY, rackW, rackH, TYPE_COLOR.rack, `${r.name || r.code} (B)`));
+                let xb = contentX;
+                sideB.forEach((r) => {
+                    const w = cmPx(r.width_cm, 120);
+                    const h = cmPx(r.depth_cm, 100);
+                    nodes.push(mk('rack', r.id, xb, botY, w, h, TYPE_COLOR.rack, `${r.name || r.code} (B)`));
+                    xb += w + rackGap;
                 });
-                inner = botY + rackH + aisleGap;
+                zoneRight = Math.max(zoneRight, xa, xb, contentX + corridorW);
+                inner = botY + rowDepthB + aisleGap;
             });
+            const zoneW = Math.max(W - 2 * M, zoneRight - M + 20);
             const zoneBottom = inner + zonePadBottom;
-            nodes.unshift(mk('zone', z.id, M, zoneTop, W - 2 * M, zoneBottom - zoneTop, zoneColors[zi % zoneColors.length], `ZONA ${z.name || z.code}`));
+            nodes.unshift(mk('zone', z.id, M, zoneTop, zoneW, zoneBottom - zoneTop, zoneColors[zi % zoneColors.length], `ZONA ${z.name || z.code}`));
+            canvasWidth = Math.max(canvasWidth, M + zoneW + M);
             y = zoneBottom + zoneGap;
         });
 
         const canvasHeight = Math.max(600, Math.round(y + M));
-        setLayout((prev) => (prev ? { ...prev, canvas_width: W, canvas_height: canvasHeight, nodes } : prev));
+        setLayout((prev) => (prev ? { ...prev, canvas_width: Math.round(canvasWidth), canvas_height: canvasHeight, nodes } : prev));
         setSelectedId(null);
         setDirty(true);
         setSaved(false);
-    }, [tree]);
+    }, [tree, layout?.scale]);
 
     const onPointerDownNode = (e: React.PointerEvent, id: string, mode: 'move' | 'resize') => {
         e.stopPropagation();
@@ -298,6 +315,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
             canvas_width: layout.canvas_width,
             canvas_height: layout.canvas_height,
             grid_size: layout.grid_size,
+            scale: layout.scale,
             nodes: layout.nodes,
         }, businessId);
         setSaving(false);
@@ -325,6 +343,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
     const W = layout.canvas_width;
     const H = layout.canvas_height;
     const grid = layout.grid_size || 20;
+    const pxPerM = layout.scale && layout.scale > 0 ? layout.scale : 40;
 
     return (
         <div className="space-y-3">
@@ -336,6 +355,16 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                     <button className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm" onClick={() => setZoom((z) => Math.min(2, +(z + 0.1).toFixed(2)))}>+</button>
                     <button className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm" onClick={autoArrange}>Auto acomodar</button>
                     <button className="px-2 py-1 rounded bg-indigo-600 text-white text-sm" onClick={buildAutoPlan}>Auto-plano</button>
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Escala</span>
+                    <input
+                        type="number"
+                        min={5}
+                        max={200}
+                        value={Math.round(pxPerM)}
+                        onChange={(e) => { const v = Number(e.target.value) || 40; setLayout((p) => p ? { ...p, scale: v } : p); setDirty(true); setSaved(false); }}
+                        className="w-16 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm bg-transparent"
+                    />
+                    <span className="text-xs text-gray-400">px/m</span>
                 </div>
                 <div className="flex items-center gap-2">
                     {dirty && <span className="text-xs text-amber-600">Cambios sin guardar</span>}
@@ -403,6 +432,13 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                             </pattern>
                         </defs>
                         <rect x={0} y={0} width={W} height={H} fill="url(#grid)" onPointerDown={() => setSelectedId(null)} />
+
+                        <g transform={`translate(${grid} ${H - grid})`} style={{ pointerEvents: 'none' }}>
+                            <line x1={0} y1={0} x2={pxPerM} y2={0} stroke="#111827" strokeWidth={2} />
+                            <line x1={0} y1={-5} x2={0} y2={5} stroke="#111827" strokeWidth={2} />
+                            <line x1={pxPerM} y1={-5} x2={pxPerM} y2={5} stroke="#111827" strokeWidth={2} />
+                            <text x={pxPerM / 2} y={-8} textAnchor="middle" fontSize={12} fill="#111827">1 m</text>
+                        </g>
 
                         {layout.nodes.map((n) => {
                             const isSel = n.node_id === selectedId;
@@ -486,6 +522,9 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-200 mb-1">
                                         Elevacion frontal - {rackDetail.name}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 mb-1">
+                                        {((rackDetail.width_cm || 0) / 100) || '?'} m ancho · {((rackDetail.depth_cm || 0) / 100) || '?'} m fondo · {((rackDetail.height_cm || 0) / 100) || '?'} m alto
                                     </p>
                                     {rackDetail.levels.length === 0 ? (
                                         <p className="text-[11px] text-gray-400">Este rack no tiene niveles</p>

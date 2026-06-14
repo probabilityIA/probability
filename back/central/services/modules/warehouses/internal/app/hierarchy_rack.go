@@ -29,6 +29,9 @@ func (u *UseCase) CreateRack(ctx context.Context, dto request.CreateRackDTO) (*e
 		Name:        dto.Name,
 		LevelsCount: dto.LevelsCount,
 		IsActive:    dto.IsActive,
+		WidthCm:     dto.WidthCm,
+		DepthCm:     dto.DepthCm,
+		HeightCm:    dto.HeightCm,
 	}
 	return u.repo.CreateRack(ctx, rack)
 }
@@ -71,6 +74,15 @@ func (u *UseCase) UpdateRack(ctx context.Context, dto request.UpdateRackDTO) (*e
 	}
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
+	}
+	if dto.WidthCm != nil {
+		existing.WidthCm = *dto.WidthCm
+	}
+	if dto.DepthCm != nil {
+		existing.DepthCm = *dto.DepthCm
+	}
+	if dto.HeightCm != nil {
+		existing.HeightCm = *dto.HeightCm
 	}
 
 	return u.repo.UpdateRack(ctx, existing)

@@ -76,16 +76,18 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
                     result = await updateZoneAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, purpose: form.purpose, color_hex: form.color_hex, is_active: form.is_active }, businessId);
                 }
             } else if (type === 'aisle') {
+                const aisleDims = { width_cm: Number(form.width_cm) || 0 };
                 if (mode === 'create') {
-                    result = await createAisleAction({ zone_id: parentId!, code: resolvedCode, name: form.name, is_active: form.is_active }, warehouseId, businessId);
+                    result = await createAisleAction({ zone_id: parentId!, code: resolvedCode, name: form.name, is_active: form.is_active, ...aisleDims }, warehouseId, businessId);
                 } else {
-                    result = await updateAisleAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, is_active: form.is_active }, businessId);
+                    result = await updateAisleAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, is_active: form.is_active, ...aisleDims }, businessId);
                 }
             } else if (type === 'rack') {
+                const rackDims = { width_cm: Number(form.width_cm) || 0, depth_cm: Number(form.depth_cm) || 0, height_cm: Number(form.height_cm) || 0 };
                 if (mode === 'create') {
-                    result = await createRackAction({ aisle_id: parentId!, code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, warehouseId, businessId);
+                    result = await createRackAction({ aisle_id: parentId!, code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active, ...rackDims }, warehouseId, businessId);
                 } else {
-                    result = await updateRackAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active }, businessId);
+                    result = await updateRackAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active, ...rackDims }, businessId);
                 }
             } else {
                 if (mode === 'create') {
@@ -157,14 +159,49 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
                 )}
 
                 {type === 'rack' && (
+                    <>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"># Niveles</label>
+                            <input
+                                type="number"
+                                min={1}
+                                max={20}
+                                value={form.levels_count}
+                                onChange={(e) => handleChange('levels_count', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                            />
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                            {([
+                                ['width_cm', 'Ancho (m)'],
+                                ['depth_cm', 'Fondo (m)'],
+                                ['height_cm', 'Alto (m)'],
+                            ] as const).map(([key, label]) => (
+                                <div key={key}>
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">{label}</label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        step={0.1}
+                                        value={form[key] ? Number(form[key]) / 100 : ''}
+                                        onChange={(e) => handleChange(key, e.target.value ? Math.round(Number(e.target.value) * 100) : 0)}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+
+                {type === 'aisle' && (
                     <div>
-                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1"># Niveles</label>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Ancho del pasillo (m)</label>
                         <input
                             type="number"
-                            min={1}
-                            max={20}
-                            value={form.levels_count}
-                            onChange={(e) => handleChange('levels_count', e.target.value)}
+                            min={0}
+                            step={0.1}
+                            value={form.width_cm ? Number(form.width_cm) / 100 : ''}
+                            onChange={(e) => handleChange('width_cm', e.target.value ? Math.round(Number(e.target.value) * 100) : 0)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                         />
                     </div>

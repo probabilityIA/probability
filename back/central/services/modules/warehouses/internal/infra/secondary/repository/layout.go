@@ -40,6 +40,7 @@ func (r *Repository) UpsertLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (
 			CanvasWidth:  dto.CanvasWidth,
 			CanvasHeight: dto.CanvasHeight,
 			GridSize:     dto.GridSize,
+			Scale:        dto.Scale,
 			Nodes:        nodesJSON,
 		}
 		if err := r.db.Conn(ctx).Create(&model).Error; err != nil {
@@ -55,6 +56,7 @@ func (r *Repository) UpsertLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (
 		"canvas_width":  dto.CanvasWidth,
 		"canvas_height": dto.CanvasHeight,
 		"grid_size":     dto.GridSize,
+		"scale":         dto.Scale,
 		"nodes":         nodesJSON,
 	}
 	if err := r.db.Conn(ctx).Model(&models.WarehouseLayout{}).
@@ -84,6 +86,7 @@ func layoutModelToEntity(m *models.WarehouseLayout) *entities.WarehouseLayout {
 		CanvasWidth:  m.CanvasWidth,
 		CanvasHeight: m.CanvasHeight,
 		GridSize:     m.GridSize,
+		Scale:        m.Scale,
 		Nodes:        []entities.LayoutNode{},
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,

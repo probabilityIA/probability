@@ -38,6 +38,9 @@ func (h *Handlers) CreateRack(c *gin.Context) {
 		Name:        req.Name,
 		LevelsCount: req.LevelsCount,
 		IsActive:    isActive,
+		WidthCm:     req.WidthCm,
+		DepthCm:     req.DepthCm,
+		HeightCm:    req.HeightCm,
 	})
 	if err != nil {
 		switch {
@@ -143,6 +146,9 @@ func (h *Handlers) UpdateRack(c *gin.Context) {
 		Name:        req.Name,
 		LevelsCount: req.LevelsCount,
 		IsActive:    req.IsActive,
+		WidthCm:     req.WidthCm,
+		DepthCm:     req.DepthCm,
+		HeightCm:    req.HeightCm,
 	})
 	if err != nil {
 		switch {

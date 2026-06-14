@@ -27,6 +27,7 @@ func (u *UseCase) GetLayout(ctx context.Context, businessID, warehouseID uint) (
 			CanvasWidth:  1200,
 			CanvasHeight: 800,
 			GridSize:     20,
+			Scale:        40,
 			Nodes:        []entities.LayoutNode{},
 		}, nil
 	}
@@ -49,6 +50,9 @@ func (u *UseCase) SaveLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*enti
 	}
 	if dto.GridSize <= 0 {
 		dto.GridSize = 20
+	}
+	if dto.Scale <= 0 {
+		dto.Scale = 40
 	}
 	return u.repo.UpsertLayout(ctx, dto)
 }
