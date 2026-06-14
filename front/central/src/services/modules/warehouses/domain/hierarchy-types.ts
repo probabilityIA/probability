@@ -57,6 +57,7 @@ export interface Rack {
     width_cm: number;
     depth_cm: number;
     height_cm: number;
+    side: string;
     created_at: string;
     updated_at: string;
 }
@@ -176,6 +177,7 @@ export interface CreateRackDTO {
     width_cm?: number;
     depth_cm?: number;
     height_cm?: number;
+    side?: string;
 }
 
 export interface UpdateRackDTO {
@@ -186,6 +188,7 @@ export interface UpdateRackDTO {
     width_cm?: number;
     depth_cm?: number;
     height_cm?: number;
+    side?: string;
 }
 
 export interface CreateRackLevelDTO {

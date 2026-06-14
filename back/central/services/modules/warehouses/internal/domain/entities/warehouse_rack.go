@@ -13,6 +13,7 @@ type WarehouseRack struct {
 	WidthCm     float64
 	DepthCm     float64
 	HeightCm    float64
+	Side        string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

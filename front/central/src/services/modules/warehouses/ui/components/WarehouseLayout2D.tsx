@@ -233,9 +233,9 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
             let zoneRight = contentX;
             (z.aisles || []).forEach((a) => {
                 const racks = a.racks || [];
-                const half = Math.max(1, Math.ceil(racks.length / 2));
-                const sideA = racks.slice(0, half);
-                const sideB = racks.slice(half);
+                const sideA = racks.filter((r) => r.side === 'A');
+                const sideB = racks.filter((r) => r.side === 'B');
+                racks.filter((r) => r.side !== 'A' && r.side !== 'B').forEach((r, i) => (i % 2 === 0 ? sideA : sideB).push(r));
                 const rowDepthA = sideA.length ? Math.max(...sideA.map((r) => cmPx(r.depth_cm, 100))) : cmPx(0, 100);
                 const rowDepthB = sideB.length ? Math.max(...sideB.map((r) => cmPx(r.depth_cm, 100))) : cmPx(0, 100);
                 const corridorH = cmPx(a.width_cm, 300);

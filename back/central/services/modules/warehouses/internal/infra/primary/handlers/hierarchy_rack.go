@@ -41,6 +41,7 @@ func (h *Handlers) CreateRack(c *gin.Context) {
 		WidthCm:     req.WidthCm,
 		DepthCm:     req.DepthCm,
 		HeightCm:    req.HeightCm,
+		Side:        req.Side,
 	})
 	if err != nil {
 		switch {
@@ -149,6 +150,7 @@ func (h *Handlers) UpdateRack(c *gin.Context) {
 		WidthCm:     req.WidthCm,
 		DepthCm:     req.DepthCm,
 		HeightCm:    req.HeightCm,
+		Side:        req.Side,
 	})
 	if err != nil {
 		switch {

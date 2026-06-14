@@ -43,6 +43,7 @@ type RackResponse struct {
 	WidthCm     float64   `json:"width_cm"`
 	DepthCm     float64   `json:"depth_cm"`
 	HeightCm    float64   `json:"height_cm"`
+	Side        string    `json:"side"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -165,6 +166,7 @@ func RackFromEntity(e *entities.WarehouseRack) RackResponse {
 		WidthCm:     e.WidthCm,
 		DepthCm:     e.DepthCm,
 		HeightCm:    e.HeightCm,
+		Side:        e.Side,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 	}

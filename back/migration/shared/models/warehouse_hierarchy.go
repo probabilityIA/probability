@@ -48,6 +48,7 @@ type WarehouseRack struct {
 	WidthCm     float64 `gorm:"default:0"`
 	DepthCm     float64 `gorm:"default:0"`
 	HeightCm    float64 `gorm:"default:0"`
+	Side        string  `gorm:"size:1;default:''"`
 
 	Aisle  WarehouseAisle         `gorm:"foreignKey:AisleID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Levels []WarehouseRackLevel `gorm:"foreignKey:RackID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

@@ -83,7 +83,7 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
                     result = await updateAisleAction(initial!.id, warehouseId, { code: resolvedCode, name: form.name, is_active: form.is_active, ...aisleDims }, businessId);
                 }
             } else if (type === 'rack') {
-                const rackDims = { width_cm: Number(form.width_cm) || 0, depth_cm: Number(form.depth_cm) || 0, height_cm: Number(form.height_cm) || 0 };
+                const rackDims = { width_cm: Number(form.width_cm) || 0, depth_cm: Number(form.depth_cm) || 0, height_cm: Number(form.height_cm) || 0, side: form.side || '' };
                 if (mode === 'create') {
                     result = await createRackAction({ aisle_id: parentId!, code: resolvedCode, name: form.name, levels_count: Number(form.levels_count) || 1, is_active: form.is_active, ...rackDims }, warehouseId, businessId);
                 } else {
@@ -189,6 +189,18 @@ export default function HierarchyNodeModal({ warehouseId, businessId, mode, type
                                     />
                                 </div>
                             ))}
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">Lado del pasillo</label>
+                            <select
+                                value={form.side || ''}
+                                onChange={(e) => handleChange('side', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                            >
+                                <option value="">(sin lado)</option>
+                                <option value="A">Lado A</option>
+                                <option value="B">Lado B</option>
+                            </select>
                         </div>
                     </>
                 )}

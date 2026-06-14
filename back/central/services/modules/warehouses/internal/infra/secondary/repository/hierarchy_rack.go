@@ -21,6 +21,7 @@ func (r *Repository) CreateRack(ctx context.Context, rack *entities.WarehouseRac
 		WidthCm:     rack.WidthCm,
 		DepthCm:     rack.DepthCm,
 		HeightCm:    rack.HeightCm,
+		Side:        rack.Side,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -73,6 +74,7 @@ func (r *Repository) UpdateRack(ctx context.Context, rack *entities.WarehouseRac
 		"width_cm":     rack.WidthCm,
 		"depth_cm":     rack.DepthCm,
 		"height_cm":    rack.HeightCm,
+		"side":         rack.Side,
 	}
 	res := r.db.Conn(ctx).Model(&models.WarehouseRack{}).
 		Where("id = ? AND business_id = ?", rack.ID, rack.BusinessID).
