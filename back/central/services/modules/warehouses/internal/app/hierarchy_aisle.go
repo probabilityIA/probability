@@ -30,6 +30,7 @@ func (u *UseCase) CreateAisle(ctx context.Context, dto request.CreateAisleDTO) (
 		Code:       dto.Code,
 		Name:       dto.Name,
 		IsActive:   dto.IsActive,
+		WidthCm:    dto.WidthCm,
 	}
 	return u.repo.CreateAisle(ctx, aisle)
 }
@@ -69,6 +70,9 @@ func (u *UseCase) UpdateAisle(ctx context.Context, dto request.UpdateAisleDTO) (
 	}
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
+	}
+	if dto.WidthCm != nil {
+		existing.WidthCm = *dto.WidthCm
 	}
 
 	return u.repo.UpdateAisle(ctx, existing)

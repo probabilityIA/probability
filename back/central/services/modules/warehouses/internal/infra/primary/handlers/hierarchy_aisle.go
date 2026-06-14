@@ -37,6 +37,7 @@ func (h *Handlers) CreateAisle(c *gin.Context) {
 		Code:       req.Code,
 		Name:       req.Name,
 		IsActive:   isActive,
+		WidthCm:    req.WidthCm,
 	})
 	if err != nil {
 		switch {
@@ -141,6 +142,7 @@ func (h *Handlers) UpdateAisle(c *gin.Context) {
 		Code:       req.Code,
 		Name:       req.Name,
 		IsActive:   req.IsActive,
+		WidthCm:    req.WidthCm,
 	})
 	if err != nil {
 		switch {

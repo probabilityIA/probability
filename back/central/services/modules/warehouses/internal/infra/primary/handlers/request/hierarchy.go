@@ -18,31 +18,39 @@ type UpdateZoneRequest struct {
 }
 
 type CreateAisleRequest struct {
-	ZoneID   uint   `json:"zone_id" binding:"required,min=1"`
-	Code     string `json:"code" binding:"required,min=1,max=50"`
-	Name     string `json:"name" binding:"required,min=1,max=255"`
-	IsActive *bool  `json:"is_active"`
+	ZoneID   uint    `json:"zone_id" binding:"required,min=1"`
+	Code     string  `json:"code" binding:"required,min=1,max=50"`
+	Name     string  `json:"name" binding:"required,min=1,max=255"`
+	IsActive *bool   `json:"is_active"`
+	WidthCm  float64 `json:"width_cm"`
 }
 
 type UpdateAisleRequest struct {
-	Code     string `json:"code"`
-	Name     string `json:"name"`
-	IsActive *bool  `json:"is_active"`
+	Code     string   `json:"code"`
+	Name     string   `json:"name"`
+	IsActive *bool    `json:"is_active"`
+	WidthCm  *float64 `json:"width_cm"`
 }
 
 type CreateRackRequest struct {
-	AisleID     uint   `json:"aisle_id" binding:"required,min=1"`
-	Code        string `json:"code" binding:"required,min=1,max=50"`
-	Name        string `json:"name" binding:"required,min=1,max=255"`
-	LevelsCount int    `json:"levels_count"`
-	IsActive    *bool  `json:"is_active"`
+	AisleID     uint    `json:"aisle_id" binding:"required,min=1"`
+	Code        string  `json:"code" binding:"required,min=1,max=50"`
+	Name        string  `json:"name" binding:"required,min=1,max=255"`
+	LevelsCount int     `json:"levels_count"`
+	IsActive    *bool   `json:"is_active"`
+	WidthCm     float64 `json:"width_cm"`
+	DepthCm     float64 `json:"depth_cm"`
+	HeightCm    float64 `json:"height_cm"`
 }
 
 type UpdateRackRequest struct {
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	LevelsCount *int   `json:"levels_count"`
-	IsActive    *bool  `json:"is_active"`
+	Code        string   `json:"code"`
+	Name        string   `json:"name"`
+	LevelsCount *int     `json:"levels_count"`
+	IsActive    *bool    `json:"is_active"`
+	WidthCm     *float64 `json:"width_cm"`
+	DepthCm     *float64 `json:"depth_cm"`
+	HeightCm    *float64 `json:"height_cm"`
 }
 
 type CreateRackLevelRequest struct {

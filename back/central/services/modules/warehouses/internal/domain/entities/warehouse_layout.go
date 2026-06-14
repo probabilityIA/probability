@@ -22,6 +22,7 @@ type WarehouseLayout struct {
 	CanvasWidth  float64
 	CanvasHeight float64
 	GridSize     float64
+	Scale        float64
 	Nodes        []LayoutNode
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

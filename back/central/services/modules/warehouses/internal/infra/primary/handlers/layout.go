@@ -77,6 +77,7 @@ func (h *Handlers) SaveLayout(c *gin.Context) {
 		CanvasWidth:  req.CanvasWidth,
 		CanvasHeight: req.CanvasHeight,
 		GridSize:     req.GridSize,
+		Scale:        req.Scale,
 		Nodes:        nodes,
 	})
 	if err != nil {

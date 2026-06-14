@@ -18,6 +18,9 @@ func (r *Repository) CreateRack(ctx context.Context, rack *entities.WarehouseRac
 		Name:        rack.Name,
 		LevelsCount: rack.LevelsCount,
 		IsActive:    rack.IsActive,
+		WidthCm:     rack.WidthCm,
+		DepthCm:     rack.DepthCm,
+		HeightCm:    rack.HeightCm,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -67,6 +70,9 @@ func (r *Repository) UpdateRack(ctx context.Context, rack *entities.WarehouseRac
 		"name":         rack.Name,
 		"levels_count": rack.LevelsCount,
 		"is_active":    rack.IsActive,
+		"width_cm":     rack.WidthCm,
+		"depth_cm":     rack.DepthCm,
+		"height_cm":    rack.HeightCm,
 	}
 	res := r.db.Conn(ctx).Model(&models.WarehouseRack{}).
 		Where("id = ? AND business_id = ?", rack.ID, rack.BusinessID).

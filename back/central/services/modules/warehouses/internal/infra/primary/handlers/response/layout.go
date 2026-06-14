@@ -24,6 +24,7 @@ type LayoutResponse struct {
 	CanvasWidth  float64              `json:"canvas_width"`
 	CanvasHeight float64              `json:"canvas_height"`
 	GridSize     float64              `json:"grid_size"`
+	Scale        float64              `json:"scale"`
 	Nodes        []LayoutNodeResponse `json:"nodes"`
 	UpdatedAt    time.Time            `json:"updated_at"`
 }
@@ -49,6 +50,7 @@ func LayoutFromEntity(l *entities.WarehouseLayout) LayoutResponse {
 		CanvasWidth:  l.CanvasWidth,
 		CanvasHeight: l.CanvasHeight,
 		GridSize:     l.GridSize,
+		Scale:        l.Scale,
 		Nodes:        nodes,
 		UpdatedAt:    l.UpdatedAt,
 	}

@@ -10,6 +10,9 @@ type WarehouseRack struct {
 	Name        string
 	LevelsCount int
 	IsActive    bool
+	WidthCm     float64
+	DepthCm     float64
+	HeightCm    float64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

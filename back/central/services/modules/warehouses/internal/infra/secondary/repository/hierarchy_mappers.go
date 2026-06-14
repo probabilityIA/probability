@@ -28,6 +28,7 @@ func aisleModelToEntity(m *models.WarehouseAisle) *entities.WarehouseAisle {
 		Code:       m.Code,
 		Name:       m.Name,
 		IsActive:   m.IsActive,
+		WidthCm:    m.WidthCm,
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
 	}
@@ -42,6 +43,9 @@ func rackModelToEntity(m *models.WarehouseRack) *entities.WarehouseRack {
 		Name:        m.Name,
 		LevelsCount: m.LevelsCount,
 		IsActive:    m.IsActive,
+		WidthCm:     m.WidthCm,
+		DepthCm:     m.DepthCm,
+		HeightCm:    m.HeightCm,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}

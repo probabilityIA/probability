@@ -27,6 +27,7 @@ type AisleResponse struct {
 	Code       string    `json:"code"`
 	Name       string    `json:"name"`
 	IsActive   bool      `json:"is_active"`
+	WidthCm    float64   `json:"width_cm"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -39,6 +40,9 @@ type RackResponse struct {
 	Name        string    `json:"name"`
 	LevelsCount int       `json:"levels_count"`
 	IsActive    bool      `json:"is_active"`
+	WidthCm     float64   `json:"width_cm"`
+	DepthCm     float64   `json:"depth_cm"`
+	HeightCm    float64   `json:"height_cm"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -143,6 +147,7 @@ func AisleFromEntity(e *entities.WarehouseAisle) AisleResponse {
 		Code:       e.Code,
 		Name:       e.Name,
 		IsActive:   e.IsActive,
+		WidthCm:    e.WidthCm,
 		CreatedAt:  e.CreatedAt,
 		UpdatedAt:  e.UpdatedAt,
 	}
@@ -157,6 +162,9 @@ func RackFromEntity(e *entities.WarehouseRack) RackResponse {
 		Name:        e.Name,
 		LevelsCount: e.LevelsCount,
 		IsActive:    e.IsActive,
+		WidthCm:     e.WidthCm,
+		DepthCm:     e.DepthCm,
+		HeightCm:    e.HeightCm,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,
 	}

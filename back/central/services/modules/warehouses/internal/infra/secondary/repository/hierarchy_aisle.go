@@ -17,6 +17,7 @@ func (r *Repository) CreateAisle(ctx context.Context, aisle *entities.WarehouseA
 		Code:       aisle.Code,
 		Name:       aisle.Name,
 		IsActive:   aisle.IsActive,
+		WidthCm:    aisle.WidthCm,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return nil, err
@@ -65,6 +66,7 @@ func (r *Repository) UpdateAisle(ctx context.Context, aisle *entities.WarehouseA
 		"code":      aisle.Code,
 		"name":      aisle.Name,
 		"is_active": aisle.IsActive,
+		"width_cm":  aisle.WidthCm,
 	}
 	res := r.db.Conn(ctx).Model(&models.WarehouseAisle{}).
 		Where("id = ? AND business_id = ?", aisle.ID, aisle.BusinessID).
