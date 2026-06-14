@@ -46,6 +46,9 @@ type IUseCase interface {
 	DeleteRackLevel(ctx context.Context, businessID, levelID uint) error
 
 	GetWarehouseTree(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
+
+	GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
+	SaveLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
 }
 
 type UseCase struct {

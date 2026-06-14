@@ -45,6 +45,22 @@ type MockUseCase struct {
 	DeleteRackLevelFn func(ctx context.Context, businessID, levelID uint) error
 
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
+	GetLayoutFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
+	SaveLayoutFn       func(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
+}
+
+func (m *MockUseCase) GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error) {
+	if m.GetLayoutFn != nil {
+		return m.GetLayoutFn(ctx, businessID, warehouseID)
+	}
+	return &entities.WarehouseLayout{WarehouseID: warehouseID, BusinessID: businessID, Nodes: []entities.LayoutNode{}}, nil
+}
+
+func (m *MockUseCase) SaveLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error) {
+	if m.SaveLayoutFn != nil {
+		return m.SaveLayoutFn(ctx, dto)
+	}
+	return &entities.WarehouseLayout{WarehouseID: dto.WarehouseID, BusinessID: dto.BusinessID, Nodes: dto.Nodes}, nil
 }
 
 func (m *MockUseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouseDTO) (*entities.Warehouse, error) {

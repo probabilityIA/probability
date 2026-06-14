@@ -98,6 +98,37 @@ export interface WarehouseTree {
     zones: TreeZone[];
 }
 
+export type LayoutRefType = 'zone' | 'aisle' | 'rack' | 'level' | 'location' | 'wall' | 'dock' | 'label';
+
+export interface LayoutNode {
+    node_id: string;
+    ref_type: LayoutRefType;
+    ref_id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+    color: string;
+    label: string;
+}
+
+export interface WarehouseLayout {
+    warehouse_id: number;
+    canvas_width: number;
+    canvas_height: number;
+    grid_size: number;
+    nodes: LayoutNode[];
+    updated_at?: string;
+}
+
+export interface SaveLayoutDTO {
+    canvas_width: number;
+    canvas_height: number;
+    grid_size: number;
+    nodes: LayoutNode[];
+}
+
 export interface CreateZoneDTO {
     warehouse_id: number;
     code: string;

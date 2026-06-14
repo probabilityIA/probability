@@ -62,8 +62,24 @@ type RepositoryMock struct {
 	RackLevelExistsByCodeFn func(ctx context.Context, rackID uint, code string, excludeID *uint) (bool, error)
 
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
+	GetLayoutFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
+	UpsertLayoutFn     func(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
 	HierarchyDepthFn   func(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error)
 	HierarchyCountsFn  func(ctx context.Context, warehouseIDs []uint) (map[uint]ports.HierarchyCounts, error)
+}
+
+func (m *RepositoryMock) GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error) {
+	if m.GetLayoutFn != nil {
+		return m.GetLayoutFn(ctx, businessID, warehouseID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) UpsertLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error) {
+	if m.UpsertLayoutFn != nil {
+		return m.UpsertLayoutFn(ctx, dto)
+	}
+	return &entities.WarehouseLayout{WarehouseID: dto.WarehouseID, BusinessID: dto.BusinessID, Nodes: dto.Nodes}, nil
 }
 
 func (m *RepositoryMock) HierarchyDepth(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error) {

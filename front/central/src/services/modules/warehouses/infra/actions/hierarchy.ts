@@ -13,6 +13,7 @@ import {
     UpdateRackLevelDTO,
     UpdateZoneDTO,
     ValidateCubingInput,
+    SaveLayoutDTO,
 } from '../../domain/hierarchy-types';
 
 async function getRepo() {
@@ -210,5 +211,25 @@ export const listRackLevelsAction = async (rackId: number, businessId?: number) 
         return await repo.listRackLevels(rackId, {}, businessId);
     } catch (error: any) {
         throw new Error(error.message);
+    }
+};
+
+export const getLayoutAction = async (warehouseId: number, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        return await repo.getLayout(warehouseId, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const saveLayoutAction = async (warehouseId: number, data: SaveLayoutDTO, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        const result = await repo.saveLayout(warehouseId, data, businessId);
+        revalidateTree(warehouseId);
+        return { success: true as const, data: result };
+    } catch (error: any) {
+        return { success: false as const, error: error.message || 'Error al guardar el plano' };
     }
 };
