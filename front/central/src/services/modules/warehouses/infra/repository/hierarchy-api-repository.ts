@@ -15,6 +15,8 @@ import {
     UpdateZoneDTO,
     ValidateCubingInput,
     WarehouseTree,
+    WarehouseLayout,
+    SaveLayoutDTO,
     Zone,
 } from '../../domain/hierarchy-types';
 
@@ -168,6 +170,17 @@ export class HierarchyApiRepository {
         return this.request<CubingCheckResult>(`/inventory/positions/validate-cubing${this.businessQuery(businessId)}`, {
             method: 'POST',
             body: JSON.stringify(input),
+        });
+    }
+
+    async getLayout(warehouseId: number, businessId?: number): Promise<WarehouseLayout> {
+        return this.request<WarehouseLayout>(`/warehouses/${warehouseId}/layout${this.businessQuery(businessId)}`);
+    }
+
+    async saveLayout(warehouseId: number, data: SaveLayoutDTO, businessId?: number): Promise<WarehouseLayout> {
+        return this.request<WarehouseLayout>(`/warehouses/${warehouseId}/layout${this.businessQuery(businessId)}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
         });
     }
 }

@@ -19,6 +19,8 @@ type IHandlers interface {
 	DeleteLocation(c *gin.Context)
 
 	GetWarehouseTree(c *gin.Context)
+	GetLayout(c *gin.Context)
+	SaveLayout(c *gin.Context)
 	CreateZone(c *gin.Context)
 	GetZone(c *gin.Context)
 	ListZones(c *gin.Context)

@@ -16,6 +16,7 @@ import {
 } from '@/services/modules/warehouses/infra/actions/hierarchy';
 import WarehouseHierarchyTree, { TreeNodeType } from '@/services/modules/warehouses/ui/components/WarehouseHierarchyTree';
 import HierarchyNodeModal, { NodeType } from '@/services/modules/warehouses/ui/components/HierarchyNodeModal';
+import WarehouseLayout2D from '@/services/modules/warehouses/ui/components/WarehouseLayout2D';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 
 type ModalState =
@@ -52,6 +53,7 @@ export default function WarehouseDetailPage() {
     const [loadingWh, setLoadingWh] = useState(true);
     const [modal, setModal] = useState<ModalState>(null);
     const [confirm, setConfirm] = useState<{ type: NodeType; id: number; label: string } | null>(null);
+    const [view, setView] = useState<'tree' | 'layout'>('tree');
 
     const { tree, loading, error, refresh } = useWarehouseTree({ warehouseId, businessId });
 
@@ -173,15 +175,34 @@ export default function WarehouseDetailPage() {
 
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Jerarquia fisica</h2>
-                    <WarehouseHierarchyTree
-                        zones={tree?.zones || []}
-                        onCreateChild={handleCreateChild}
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                    />
+                <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700">
+                    {([
+                        { key: 'tree', label: 'Jerarquia fisica' },
+                        { key: 'layout', label: 'Plano 2D' },
+                    ] as const).map((t) => (
+                        <button
+                            key={t.key}
+                            onClick={() => setView(t.key)}
+                            className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 ${view === t.key ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'}`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
                 </div>
+
+                {view === 'tree' ? (
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Jerarquia fisica</h2>
+                        <WarehouseHierarchyTree
+                            zones={tree?.zones || []}
+                            onCreateChild={handleCreateChild}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                        />
+                    </div>
+                ) : (
+                    <WarehouseLayout2D warehouseId={warehouseId} businessId={businessId} tree={tree} />
+                )}
             </div>
 
             {modal && (
