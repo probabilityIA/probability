@@ -41,6 +41,7 @@ type CreateRackRequest struct {
 	WidthCm     float64 `json:"width_cm"`
 	DepthCm     float64 `json:"depth_cm"`
 	HeightCm    float64 `json:"height_cm"`
+	Side        string  `json:"side"`
 }
 
 type UpdateRackRequest struct {
@@ -51,6 +52,7 @@ type UpdateRackRequest struct {
 	WidthCm     *float64 `json:"width_cm"`
 	DepthCm     *float64 `json:"depth_cm"`
 	HeightCm    *float64 `json:"height_cm"`
+	Side        *string  `json:"side"`
 }
 
 type CreateRackLevelRequest struct {

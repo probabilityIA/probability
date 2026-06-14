@@ -48,6 +48,7 @@ type CreateRackDTO struct {
 	WidthCm     float64
 	DepthCm     float64
 	HeightCm    float64
+	Side        string
 }
 
 type UpdateRackDTO struct {
@@ -60,6 +61,7 @@ type UpdateRackDTO struct {
 	WidthCm     *float64
 	DepthCm     *float64
 	HeightCm    *float64
+	Side        *string
 }
 
 type CreateRackLevelDTO struct {

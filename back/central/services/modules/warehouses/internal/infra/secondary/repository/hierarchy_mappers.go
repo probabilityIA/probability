@@ -46,6 +46,7 @@ func rackModelToEntity(m *models.WarehouseRack) *entities.WarehouseRack {
 		WidthCm:     m.WidthCm,
 		DepthCm:     m.DepthCm,
 		HeightCm:    m.HeightCm,
+		Side:        m.Side,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
