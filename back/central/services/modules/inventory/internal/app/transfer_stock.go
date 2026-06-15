@@ -49,6 +49,8 @@ func (uc *useCase) TransferStock(ctx context.Context, dto request.TransferStockD
 	}
 
 	uc.publishSync(ctx, dto.ProductID, dto.BusinessID, txResult.FromNewQty+txResult.ToNewQty, dto.FromWarehouseID, "transfer")
+	uc.publishLocationChanged(dto.BusinessID, dto.FromWarehouseID, dto.FromLocationID, dto.ProductID, txResult.FromNewQty)
+	uc.publishLocationChanged(dto.BusinessID, dto.ToWarehouseID, dto.ToLocationID, dto.ProductID, txResult.ToNewQty)
 
 	return nil
 }
