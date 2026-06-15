@@ -465,6 +465,20 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                             <pattern id="grid" width={grid} height={grid} patternUnits="userSpaceOnUse">
                                 <path d={`M ${grid} 0 L 0 0 0 ${grid}`} fill="none" stroke="#e5e7eb" strokeWidth="1" />
                             </pattern>
+                            <linearGradient id="rackRelief" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
+                                <stop offset="45%" stopColor="#ffffff" stopOpacity="0" />
+                                <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
+                            </linearGradient>
+                            <linearGradient id="aisleSunken" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#000000" stopOpacity="0.22" />
+                                <stop offset="20%" stopColor="#000000" stopOpacity="0" />
+                                <stop offset="80%" stopColor="#000000" stopOpacity="0" />
+                                <stop offset="100%" stopColor="#000000" stopOpacity="0.22" />
+                            </linearGradient>
+                            <filter id="rackShadow" x="-20%" y="-20%" width="140%" height="160%">
+                                <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodColor="#0f172a" floodOpacity="0.3" />
+                            </filter>
                         </defs>
                         <rect x={0} y={0} width={W} height={H} fill="url(#grid)" onPointerDown={() => setSelectedId(null)} />
 
@@ -478,16 +492,30 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                         {layout.nodes.map((n) => {
                             const isSel = n.node_id === selectedId;
                             const isLabel = n.ref_type === 'label';
+                            const isRack = n.ref_type === 'rack';
+                            const isAisle = n.ref_type === 'aisle';
+                            const isZone = n.ref_type === 'zone';
                             return (
-                                <g key={n.node_id} transform={`translate(${n.x} ${n.y}) rotate(${n.rotation} ${n.width / 2} ${n.height / 2})`}>
+                                <g key={n.node_id} transform={`translate(${n.x} ${n.y}) rotate(${n.rotation} ${n.width / 2} ${n.height / 2})`}
+                                    filter={isRack ? 'url(#rackShadow)' : undefined}>
                                     {!isLabel && (
                                         <rect
                                             width={n.width} height={n.height} rx={4}
-                                            fill={n.color} fillOpacity={n.ref_type === 'zone' ? 0.18 : 0.7}
+                                            fill={n.color} fillOpacity={isZone ? 0.18 : isAisle ? 0.55 : 0.85}
                                             stroke={n.color} strokeWidth={isSel ? 3 : 1.5}
                                             style={{ cursor: 'move' }}
                                             onPointerDown={(e) => onPointerDownNode(e, n.node_id, 'move')}
                                         />
+                                    )}
+                                    {(isRack || n.ref_type === 'dock') && (
+                                        <rect width={n.width} height={n.height} rx={4} fill="url(#rackRelief)" style={{ pointerEvents: 'none' }} />
+                                    )}
+                                    {isAisle && (
+                                        <>
+                                            <rect width={n.width} height={n.height} rx={4} fill="url(#aisleSunken)" style={{ pointerEvents: 'none' }} />
+                                            <line x1={6} y1={n.height / 2} x2={n.width - 6} y2={n.height / 2}
+                                                stroke="#ffffff" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="10 8" style={{ pointerEvents: 'none' }} />
+                                        </>
                                     )}
                                     <text
                                         x={isLabel ? 0 : n.width / 2} y={isLabel ? 14 : n.height / 2}
