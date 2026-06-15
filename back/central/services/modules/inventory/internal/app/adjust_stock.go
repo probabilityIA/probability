@@ -53,8 +53,29 @@ func (uc *useCase) AdjustStock(ctx context.Context, dto request.AdjustStockDTO) 
 
 	uc.updateProductTotalStock(ctx, dto.ProductID, dto.BusinessID)
 	uc.publishSync(ctx, dto.ProductID, dto.BusinessID, txResult.NewQuantity, dto.WarehouseID, "manual_adjustment")
+	uc.publishLocationChanged(dto.BusinessID, dto.WarehouseID, dto.LocationID, dto.ProductID, txResult.NewQuantity)
 
 	return txResult.Movement, nil
+}
+
+func (uc *useCase) publishLocationChanged(businessID, warehouseID uint, locationID *uint, productID string, newQuantity int) {
+	if uc.eventPublisher == nil || locationID == nil {
+		return
+	}
+	go func() {
+		_ = uc.eventPublisher.PublishInventoryEvent(context.Background(), ports.InventoryEvent{
+			EventType:   "inventory.location_changed",
+			BusinessID:  businessID,
+			WarehouseID: warehouseID,
+			Timestamp:   time.Now().UTC().Format(time.RFC3339),
+			Data: map[string]any{
+				"location_id":  *locationID,
+				"product_id":   productID,
+				"new_quantity": newQuantity,
+				"warehouse_id": warehouseID,
+			},
+		})
+	}()
 }
 
 func (uc *useCase) updateProductTotalStock(ctx context.Context, productID string, businessID uint) {

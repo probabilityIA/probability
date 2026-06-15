@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Spinner, Alert, Button } from '@/shared/ui';
 import { ArrowLeftIcon, PencilSquareIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { useSSE } from '@/shared/hooks/use-sse';
+import { TokenStorage } from '@/shared/utils/token-storage';
 import { getLayoutAction, getOccupancyAction } from '../../infra/actions/hierarchy';
 import { getWarehouseByIdAction } from '../../infra/actions';
 import { useWarehouseTree } from '../hooks/useWarehouseTree';
@@ -48,8 +50,41 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
     const [error, setError] = useState<string | null>(null);
     const [selectedRackId, setSelectedRackId] = useState<number | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [liveAt, setLiveAt] = useState<string | null>(null);
+    const [pulseLoc, setPulseLoc] = useState<number | null>(null);
+    const pulseTimer = useRef<any>(null);
 
     const { tree } = useWarehouseTree({ warehouseId, businessId });
+
+    const sseBusinessId = businessId ?? TokenStorage.getBusinessesData()?.[0]?.id ?? 0;
+
+    const handleSSE = useCallback((event: MessageEvent) => {
+        try {
+            const parsed = JSON.parse(event.data);
+            const type = parsed.type || parsed.metadata?.event_type;
+            if (type !== 'inventory.location_changed') return;
+            const data = parsed.data || {};
+            const whId = Number(data.warehouse_id ?? parsed.metadata?.warehouse_id);
+            if (whId !== warehouseId) return;
+            const locationId = Number(data.location_id);
+            const newQty = Number(data.new_quantity);
+            if (!locationId) return;
+            setOccupancy((prev) => ({ ...prev, [locationId]: { quantity: newQty, capacity: prev[locationId]?.capacity ?? null } }));
+            setLiveAt(new Date().toLocaleTimeString());
+            setPulseLoc(locationId);
+            if (pulseTimer.current) clearTimeout(pulseTimer.current);
+            pulseTimer.current = setTimeout(() => setPulseLoc(null), 1500);
+        } catch {
+            return;
+        }
+    }, [warehouseId]);
+
+    useSSE({
+        businessId: sseBusinessId,
+        eventTypes: ['inventory.location_changed'],
+        onMessage: handleSSE,
+        enabled: sseBusinessId > 0,
+    });
 
     const loadAll = useCallback(async () => {
         setLoading(true);
@@ -134,6 +169,10 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            <span className={`w-2 h-2 rounded-full ${sseBusinessId > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
+                            {liveAt ? `En vivo - ${liveAt}` : 'En vivo'}
+                        </span>
                         <button className="px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-sm flex items-center gap-1" onClick={loadAll}>
                             <ArrowPathIcon className="w-4 h-4" /> Actualizar
                         </button>
@@ -253,7 +292,7 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                                                         return (
                                                             <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/inventory?warehouse=${warehouseId}`)}>
                                                                 <title>{p.code}{o ? ` — ${qty}${cap ? '/' + cap : ''}` : ''}</title>
-                                                                <rect x={areaX + j * cellW + 1} y={y + 6} width={Math.max(cellW - 2, 4)} height={28} rx={2} fill={c.fill} fillOpacity={0.8} stroke={c.stroke} strokeWidth={0.8} />
+                                                                <rect x={areaX + j * cellW + 1} y={y + 6} width={Math.max(cellW - 2, 4)} height={28} rx={2} fill={c.fill} fillOpacity={0.8} stroke={pulseLoc === p.id ? '#2563eb' : c.stroke} strokeWidth={pulseLoc === p.id ? 2.5 : 0.8} />
                                                                 {cellW > 14 && <text x={areaX + j * cellW + cellW / 2} y={y + 17} fontSize={8} fontWeight={600} textAnchor="middle" fill="#1f2937">{qty}</text>}
                                                                 {cellW > 30 && cap ? <text x={areaX + j * cellW + cellW / 2} y={y + 27} fontSize={6} textAnchor="middle" fill="#4b5563">/{cap}</text> : null}
                                                             </g>
