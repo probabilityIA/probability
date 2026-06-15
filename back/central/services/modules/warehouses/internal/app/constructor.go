@@ -49,6 +49,8 @@ type IUseCase interface {
 
 	GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
 	SaveLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
+
+	GetOccupancy(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error)
 }
 
 type UseCase struct {

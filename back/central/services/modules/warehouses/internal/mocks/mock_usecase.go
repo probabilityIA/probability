@@ -47,6 +47,14 @@ type MockUseCase struct {
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
 	GetLayoutFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
 	SaveLayoutFn       func(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
+	GetOccupancyFn     func(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error)
+}
+
+func (m *MockUseCase) GetOccupancy(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error) {
+	if m.GetOccupancyFn != nil {
+		return m.GetOccupancyFn(ctx, businessID, warehouseID)
+	}
+	return []entities.OccupancyItem{}, nil
 }
 
 func (m *MockUseCase) GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error) {

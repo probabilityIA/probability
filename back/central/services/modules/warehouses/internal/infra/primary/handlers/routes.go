@@ -25,6 +25,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 
 		warehouses.GET("/:id/layout", h.GetLayout)
 		warehouses.PUT("/:id/layout", h.SaveLayout)
+		warehouses.GET("/:id/occupancy", h.GetOccupancy)
 	}
 
 	zones := router.Group("/zones")

@@ -17,6 +17,7 @@ import {
     WarehouseTree,
     WarehouseLayout,
     SaveLayoutDTO,
+    WarehouseOccupancy,
     Zone,
 } from '../../domain/hierarchy-types';
 
@@ -182,5 +183,9 @@ export class HierarchyApiRepository {
             method: 'PUT',
             body: JSON.stringify(data),
         });
+    }
+
+    async getOccupancy(warehouseId: number, businessId?: number): Promise<WarehouseOccupancy> {
+        return this.request<WarehouseOccupancy>(`/warehouses/${warehouseId}/occupancy${this.businessQuery(businessId)}`);
     }
 }

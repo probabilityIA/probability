@@ -223,6 +223,15 @@ export const getLayoutAction = async (warehouseId: number, businessId?: number) 
     }
 };
 
+export const getOccupancyAction = async (warehouseId: number, businessId?: number) => {
+    try {
+        const repo = await getRepo();
+        return await repo.getOccupancy(warehouseId, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
 export const saveLayoutAction = async (warehouseId: number, data: SaveLayoutDTO, businessId?: number) => {
     try {
         const repo = await getRepo();
