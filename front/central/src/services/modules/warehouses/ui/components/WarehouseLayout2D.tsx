@@ -403,6 +403,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                 <div className="flex items-center gap-2">
                     {dirty && <span className="text-xs text-amber-600">Cambios sin guardar</span>}
                     {saved && !dirty && <span className="text-xs text-emerald-600">Guardado</span>}
+                    <button className="px-3 py-1.5 rounded border border-emerald-500 text-emerald-600 text-sm" onClick={() => router.push(`/warehouses/${warehouseId}/operacion`)}>Vista operativa</button>
                     <Button onClick={handleSave} disabled={saving || !dirty}>{saving ? 'Guardando...' : 'Guardar plano'}</Button>
                 </div>
             </div>
