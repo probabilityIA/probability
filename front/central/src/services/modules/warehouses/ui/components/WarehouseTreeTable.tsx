@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     ChevronRightIcon,
     ChevronDownIcon,
@@ -8,6 +9,8 @@ import {
     PencilIcon,
     TrashIcon,
     MapIcon,
+    Squares2X2Icon,
+    SignalIcon,
 } from '@heroicons/react/24/outline';
 import { Alert, Spinner } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
@@ -39,6 +42,7 @@ type ModalState =
     | null;
 
 export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewWarehouse, refreshKey }: Props) {
+    const router = useRouter();
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -222,6 +226,8 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
                                                 </td>
                                                 <td>
                                                     <div className="flex justify-end gap-2">
+                                                        <button onClick={() => router.push(`/warehouses/${w.id}`)} className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md" title="Plano 2D / detalle"><Squares2X2Icon className="w-4 h-4" /></button>
+                                                        <button onClick={() => router.push(`/warehouses/${w.id}/operacion`)} className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md" title="Vista operativa"><SignalIcon className="w-4 h-4" /></button>
                                                         <button onClick={() => onEditWarehouse(w)} className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md" title="Editar bodega"><PencilIcon className="w-4 h-4" /></button>
                                                         <button onClick={() => setDeletingWh(w)} className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md" title="Eliminar"><TrashIcon className="w-4 h-4" /></button>
                                                     </div>

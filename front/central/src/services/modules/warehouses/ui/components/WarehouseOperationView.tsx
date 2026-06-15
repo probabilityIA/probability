@@ -222,6 +222,20 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                                 <pattern id="ogrid" width={grid} height={grid} patternUnits="userSpaceOnUse">
                                     <path d={`M ${grid} 0 L 0 0 0 ${grid}`} fill="none" stroke="#eef2f7" strokeWidth="1" />
                                 </pattern>
+                                <linearGradient id="oRackRelief" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
+                                    <stop offset="45%" stopColor="#ffffff" stopOpacity="0" />
+                                    <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
+                                </linearGradient>
+                                <linearGradient id="oAisleSunken" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#000000" stopOpacity="0.22" />
+                                    <stop offset="20%" stopColor="#000000" stopOpacity="0" />
+                                    <stop offset="80%" stopColor="#000000" stopOpacity="0" />
+                                    <stop offset="100%" stopColor="#000000" stopOpacity="0.22" />
+                                </linearGradient>
+                                <filter id="oRackShadow" x="-20%" y="-20%" width="140%" height="160%">
+                                    <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodColor="#0f172a" floodOpacity="0.3" />
+                                </filter>
                             </defs>
                             <rect x={0} y={0} width={W} height={H} fill="url(#ogrid)" />
 
@@ -241,12 +255,23 @@ export default function WarehouseOperationView({ warehouseId, businessId }: Prop
                                     fill = rc.fill; stroke = rc.stroke; op = rc.op;
                                 }
                                 const isSel = isRack && n.ref_id === selectedRackId;
+                                const isAisle = n.ref_type === 'aisle';
                                 return (
-                                    <g key={n.node_id} transform={`translate(${n.x} ${n.y}) rotate(${n.rotation} ${n.width / 2} ${n.height / 2})`}>
-                                        <rect width={n.width} height={n.height} rx={4} fill={fill} fillOpacity={op}
+                                    <g key={n.node_id} transform={`translate(${n.x} ${n.y}) rotate(${n.rotation} ${n.width / 2} ${n.height / 2})`}
+                                        filter={isRack ? 'url(#oRackShadow)' : undefined}>
+                                        <rect width={n.width} height={n.height} rx={4} fill={fill} fillOpacity={isAisle ? 0.55 : op}
                                             stroke={stroke} strokeWidth={isSel ? 3 : 1.2}
                                             style={{ cursor: isRack ? 'pointer' : 'default' }}
                                             onClick={isRack ? (e) => { e.stopPropagation(); setSelectedRackId(n.ref_id); } : undefined} />
+                                        {(isRack || n.ref_type === 'dock') && (
+                                            <rect width={n.width} height={n.height} rx={4} fill="url(#oRackRelief)" style={{ pointerEvents: 'none' }} />
+                                        )}
+                                        {isAisle && (
+                                            <>
+                                                <rect width={n.width} height={n.height} rx={4} fill="url(#oAisleSunken)" style={{ pointerEvents: 'none' }} />
+                                                <line x1={6} y1={n.height / 2} x2={n.width - 6} y2={n.height / 2} stroke="#ffffff" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="10 8" style={{ pointerEvents: 'none' }} />
+                                            </>
+                                        )}
                                         <text x={n.width / 2} y={n.height / 2} textAnchor="middle" dominantBaseline="middle"
                                             fontSize={n.ref_type === 'location' ? 9 : 11}
                                             fill={n.ref_type === 'zone' ? '#111827' : '#1f2937'}
