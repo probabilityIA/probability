@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button, Spinner, Alert } from '@/shared/ui';
 import { getLayoutAction, saveLayoutAction } from '../../infra/actions/hierarchy';
 import { LayoutNode, LayoutRefType, WarehouseLayout, WarehouseTree } from '../../domain/hierarchy-types';
@@ -90,6 +91,7 @@ function snap(value: number, grid: number): number {
 }
 
 export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Props) {
+    const router = useRouter();
     const [layout, setLayout] = useState<WarehouseLayout | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -529,20 +531,38 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                     {rackDetail.levels.length === 0 ? (
                                         <p className="text-[11px] text-gray-400">Este rack no tiene niveles</p>
                                     ) : (
-                                        <svg viewBox={`0 0 200 ${rackDetail.levels.length * 36 + 14}`} className="w-full bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                                        <svg viewBox={`0 0 200 ${rackDetail.levels.length * 44 + 14}`} className="w-full bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
                                             {[...rackDetail.levels]
                                                 .sort((a, b) => (b.ordinal || 0) - (a.ordinal || 0))
                                                 .map((lv, i) => {
-                                                    const y = i * 36 + 4;
+                                                    const y = i * 44 + 4;
+                                                    const positions = lv.positions || [];
+                                                    const areaX = 42;
+                                                    const areaW = 152;
+                                                    const shown = positions.slice(0, 12);
+                                                    const cellW = shown.length ? areaW / shown.length : areaW;
                                                     return (
                                                         <g key={lv.id}>
-                                                            <rect x={6} y={y} width={188} height={32} rx={3} fill="#fb923c" fillOpacity={0.25} stroke="#f97316" strokeWidth={1.5} />
-                                                            <text x={14} y={y + 20} fontSize={12} fontWeight={600} fill="#9a3412">{lv.code}</text>
-                                                            <text x={188} y={y + 20} fontSize={10} textAnchor="end" fill="#9a3412">{(lv.positions?.length || 0)} ubic</text>
+                                                            <rect x={6} y={y} width={188} height={40} rx={3} fill="#fb923c" fillOpacity={0.12} stroke="#f97316" strokeWidth={1.2} />
+                                                            <text x={12} y={y + 16} fontSize={11} fontWeight={600} fill="#9a3412">{lv.code}</text>
+                                                            <text x={12} y={y + 30} fontSize={8} fill="#9a3412">{positions.length} ubic</text>
+                                                            {shown.length === 0 ? (
+                                                                <text x={118} y={y + 24} fontSize={9} textAnchor="middle" fill="#9ca3af">vacio</text>
+                                                            ) : shown.map((p: any, j: number) => (
+                                                                <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/inventory?warehouse=${warehouseId}`)}>
+                                                                    <title>{p.code}</title>
+                                                                    <rect x={areaX + j * cellW + 1} y={y + 6} width={Math.max(cellW - 2, 4)} height={28} rx={2}
+                                                                        fill={p.is_active ? '#34d399' : '#e5e7eb'} fillOpacity={0.55} stroke="#059669" strokeWidth={0.8} />
+                                                                    {cellW > 16 && <text x={areaX + j * cellW + cellW / 2} y={y + 23} fontSize={7} textAnchor="middle" fill="#065f46">{p.code}</text>}
+                                                                </g>
+                                                            ))}
+                                                            {positions.length > shown.length && (
+                                                                <text x={192} y={y + 12} fontSize={7} textAnchor="end" fill="#9a3412">+{positions.length - shown.length}</text>
+                                                            )}
                                                         </g>
                                                     );
                                                 })}
-                                            <rect x={2} y={rackDetail.levels.length * 36 + 6} width={196} height={5} fill="#475569" />
+                                            <rect x={2} y={rackDetail.levels.length * 44 + 6} width={196} height={5} fill="#475569" />
                                         </svg>
                                     )}
                                     <p className="text-[10px] text-gray-400 mt-1">Vista de frente (nivel mas alto arriba)</p>
