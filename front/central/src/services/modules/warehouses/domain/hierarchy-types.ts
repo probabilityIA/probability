@@ -136,6 +136,18 @@ export interface SaveLayoutDTO {
     nodes: LayoutNode[];
 }
 
+export interface OccupancyLocation {
+    location_id: number;
+    quantity: number;
+    reserved: number;
+    capacity: number | null;
+}
+
+export interface WarehouseOccupancy {
+    warehouse_id: number;
+    locations: OccupancyLocation[];
+}
+
 export interface CreateZoneDTO {
     warehouse_id: number;
     code: string;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Spinner, Alert } from '@/shared/ui';
-import { getLayoutAction, saveLayoutAction } from '../../infra/actions/hierarchy';
+import { getLayoutAction, saveLayoutAction, getOccupancyAction } from '../../infra/actions/hierarchy';
 import { LayoutNode, LayoutRefType, WarehouseLayout, WarehouseTree } from '../../domain/hierarchy-types';
 
 interface Props {
@@ -90,6 +90,19 @@ function snap(value: number, grid: number): number {
     return Math.round(value / grid) * grid;
 }
 
+interface OccCell { quantity: number; capacity: number | null }
+
+function occColor(occ: OccCell | undefined): { fill: string; stroke: string } {
+    if (!occ || occ.quantity <= 0) return { fill: '#e5e7eb', stroke: '#9ca3af' };
+    if (occ.capacity && occ.capacity > 0) {
+        const ratio = occ.quantity / occ.capacity;
+        if (ratio >= 0.85) return { fill: '#f87171', stroke: '#dc2626' };
+        if (ratio >= 0.5) return { fill: '#fbbf24', stroke: '#d97706' };
+        return { fill: '#34d399', stroke: '#059669' };
+    }
+    return { fill: '#34d399', stroke: '#059669' };
+}
+
 export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Props) {
     const router = useRouter();
     const [layout, setLayout] = useState<WarehouseLayout | null>(null);
@@ -99,6 +112,7 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
     const [dirty, setDirty] = useState(false);
     const [saved, setSaved] = useState(false);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [occupancy, setOccupancy] = useState<Record<number, OccCell>>({});
     const [zoom, setZoom] = useState(0.7);
     const [paletteFilter, setPaletteFilter] = useState<LayoutRefType | 'all'>('all');
 
@@ -117,6 +131,24 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                 if (active) setError(e?.message || 'Error al cargar el plano');
             } finally {
                 if (active) setLoading(false);
+            }
+        })();
+        return () => { active = false; };
+    }, [warehouseId, businessId]);
+
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const res = await getOccupancyAction(warehouseId, businessId);
+                if (!active) return;
+                const map: Record<number, OccCell> = {};
+                for (const l of res.locations || []) {
+                    map[l.location_id] = { quantity: l.quantity, capacity: l.capacity };
+                }
+                setOccupancy(map);
+            } catch {
+                setOccupancy({});
             }
         })();
         return () => { active = false; };
@@ -548,14 +580,21 @@ export default function WarehouseLayout2D({ warehouseId, businessId, tree }: Pro
                                                             <text x={12} y={y + 30} fontSize={8} fill="#9a3412">{positions.length} ubic</text>
                                                             {shown.length === 0 ? (
                                                                 <text x={118} y={y + 24} fontSize={9} textAnchor="middle" fill="#9ca3af">vacio</text>
-                                                            ) : shown.map((p: any, j: number) => (
-                                                                <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/inventory?warehouse=${warehouseId}`)}>
-                                                                    <title>{p.code}</title>
-                                                                    <rect x={areaX + j * cellW + 1} y={y + 6} width={Math.max(cellW - 2, 4)} height={28} rx={2}
-                                                                        fill={p.is_active ? '#34d399' : '#e5e7eb'} fillOpacity={0.55} stroke="#059669" strokeWidth={0.8} />
-                                                                    {cellW > 16 && <text x={areaX + j * cellW + cellW / 2} y={y + 23} fontSize={7} textAnchor="middle" fill="#065f46">{p.code}</text>}
-                                                                </g>
-                                                            ))}
+                                                                            ) : shown.map((p: any, j: number) => {
+                                                                const occ = occupancy[p.id];
+                                                                const col = occColor(occ);
+                                                                const qty = occ?.quantity ?? 0;
+                                                                const cap = occ?.capacity;
+                                                                return (
+                                                                    <g key={p.id} style={{ cursor: 'pointer' }} onClick={() => router.push(`/inventory?warehouse=${warehouseId}`)}>
+                                                                        <title>{p.code}{occ ? ` — ${qty}${cap ? '/' + cap : ''}` : ''}</title>
+                                                                        <rect x={areaX + j * cellW + 1} y={y + 6} width={Math.max(cellW - 2, 4)} height={28} rx={2}
+                                                                            fill={col.fill} fillOpacity={0.75} stroke={col.stroke} strokeWidth={0.8} />
+                                                                        {cellW > 14 && <text x={areaX + j * cellW + cellW / 2} y={y + 17} fontSize={8} fontWeight={600} textAnchor="middle" fill="#1f2937">{qty}</text>}
+                                                                        {cellW > 30 && cap ? <text x={areaX + j * cellW + cellW / 2} y={y + 27} fontSize={6} textAnchor="middle" fill="#4b5563">/{cap}</text> : null}
+                                                                    </g>
+                                                                );
+                                                            })}
                                                             {positions.length > shown.length && (
                                                                 <text x={192} y={y + 12} fontSize={7} textAnchor="end" fill="#9a3412">+{positions.length - shown.length}</text>
                                                             )}

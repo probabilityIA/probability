@@ -57,6 +57,8 @@ type IRepository interface {
 	GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
 	UpsertLayout(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
 
+	GetWarehouseOccupancy(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error)
+
 	HierarchyDepth(ctx context.Context, warehouseID uint) (HierarchyDepth, error)
 	HierarchyCounts(ctx context.Context, warehouseIDs []uint) (map[uint]HierarchyCounts, error)
 }

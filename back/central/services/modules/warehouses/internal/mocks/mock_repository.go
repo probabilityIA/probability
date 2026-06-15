@@ -64,8 +64,16 @@ type RepositoryMock struct {
 	GetWarehouseTreeFn func(ctx context.Context, businessID, warehouseID uint) (*dtos.WarehouseTreeDTO, error)
 	GetLayoutFn        func(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error)
 	UpsertLayoutFn     func(ctx context.Context, dto dtos.SaveLayoutDTO) (*entities.WarehouseLayout, error)
+	GetOccupancyFn     func(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error)
 	HierarchyDepthFn   func(ctx context.Context, warehouseID uint) (ports.HierarchyDepth, error)
 	HierarchyCountsFn  func(ctx context.Context, warehouseIDs []uint) (map[uint]ports.HierarchyCounts, error)
+}
+
+func (m *RepositoryMock) GetWarehouseOccupancy(ctx context.Context, businessID, warehouseID uint) ([]entities.OccupancyItem, error) {
+	if m.GetOccupancyFn != nil {
+		return m.GetOccupancyFn(ctx, businessID, warehouseID)
+	}
+	return []entities.OccupancyItem{}, nil
 }
 
 func (m *RepositoryMock) GetLayout(ctx context.Context, businessID, warehouseID uint) (*entities.WarehouseLayout, error) {
