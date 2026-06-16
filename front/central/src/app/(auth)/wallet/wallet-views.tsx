@@ -1196,9 +1196,18 @@ function RequestsTableView({
 
                 return (
                     <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${badgeBg} ${badgeText}`}>
-                            {methodType}
-                        </span>
+                        {methodType === 'DÉBITO' ? (
+                            <img
+                                src="/logo.png"
+                                alt="Probability"
+                                className="w-6 h-6 object-contain rounded"
+                                title="Débito Manual - Probability"
+                            />
+                        ) : (
+                            <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${badgeBg} ${badgeText}`}>
+                                {methodType}
+                            </span>
+                        )}
                         <span className="text-gray-700 dark:text-gray-300 text-sm break-words">
                             {reference}
                         </span>
