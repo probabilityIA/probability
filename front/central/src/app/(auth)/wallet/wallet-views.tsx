@@ -44,7 +44,8 @@ export function AdminWalletView() {
             setLoading(true);
             const walletRes = await getWalletsAction();
             if (!walletRes.success) throw new Error(walletRes.error || 'Failed to fetch wallets');
-            setWallets(walletRes.data || []);
+            const fetchedWallets = walletRes.data || [];
+            setWallets(fetchedWallets);
 
             const { getBusinessesAction } = await import('@/services/auth/business/infra/actions');
             const businessesRes = await getBusinessesAction({ per_page: 10000 });
@@ -53,6 +54,13 @@ export function AdminWalletView() {
                 businessesRes.data.forEach((b: any) => {
                     businessMap[b.id] = b.name;
                 });
+
+                fetchedWallets.forEach((wallet: any) => {
+                    if (!businessMap[wallet.BusinessID]) {
+                        businessMap[wallet.BusinessID] = '';
+                    }
+                });
+
                 setBusinesses(businessMap);
                 console.log('Negocios cargados:', businessMap);
             }
