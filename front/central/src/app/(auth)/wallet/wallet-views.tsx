@@ -1068,6 +1068,7 @@ function RequestsTableView({
     const [dateFrom, setDateFrom] = useState<string>('');
     const [dateTo, setDateTo] = useState<string>('');
     const [typeFilter, setTypeFilter] = useState<'all' | 'RECHARGE' | 'USAGE'>('all');
+    const [businessFilter, setBusinessFilter] = useState<number | 'all'>('all');
 
     const fetchRequests = useCallback(async () => {
         try {
@@ -1094,6 +1095,9 @@ function RequestsTableView({
                 if (typeFilter !== 'all') {
                     data = data.filter(r => r.Type === typeFilter);
                 }
+                if (businessFilter !== 'all') {
+                    data = data.filter(r => r.BusinessID === businessFilter);
+                }
                 setRequests(data);
             }
         } catch (error) {
@@ -1101,7 +1105,7 @@ function RequestsTableView({
         } finally {
             setLoading(false);
         }
-    }, [fetchAction, filterStatus, dateFrom, dateTo, typeFilter]);
+    }, [fetchAction, filterStatus, dateFrom, dateTo, typeFilter, businessFilter]);
 
     useEffect(() => {
         fetchRequests();
@@ -1287,12 +1291,29 @@ function RequestsTableView({
                                 </button>
                             </div>
                         </div>
-                        {(dateFrom || dateTo || typeFilter !== 'all') && (
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Negocio</label>
+                            <select
+                                value={businessFilter}
+                                onChange={(e) => {
+                                    setBusinessFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="all">Todos los negocios</option>
+                                {Object.entries(businesses).map(([id, name]) => (
+                                    <option key={id} value={id}>{name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {(dateFrom || dateTo || typeFilter !== 'all' || businessFilter !== 'all') && (
                             <button
                                 onClick={() => {
                                     setDateFrom('');
                                     setDateTo('');
                                     setTypeFilter('all');
+                                    setBusinessFilter('all');
                                     setCurrentPage(1);
                                 }}
                                 className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
