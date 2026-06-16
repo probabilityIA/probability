@@ -445,12 +445,13 @@ func (r *Repository) GetWalletKPISelection(ctx context.Context) (*entities.Walle
 }
 
 func (r *Repository) UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error {
-	m := walletKPISelectionToModel(selection)
-	result := r.db.Conn(ctx).Model(&models.WalletKPISelection{}).Where("id = ?", m.ID).Updates(m)
+	jsonBytes, _ := json.Marshal(selection.SelectedBusinessIDs)
+	result := r.db.Conn(ctx).Model(&models.WalletKPISelection{}).Where("id = ?", 1).Update("selected_business_ids", datatypes.JSON(jsonBytes))
 	if result.Error != nil {
 		return fmt.Errorf("failed to update wallet kpi selection: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
+		m := walletKPISelectionToModel(selection)
 		if err := r.db.Conn(ctx).Create(m).Error; err != nil {
 			return fmt.Errorf("failed to create wallet kpi selection: %w", err)
 		}
