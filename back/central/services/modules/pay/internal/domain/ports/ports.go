@@ -53,6 +53,9 @@ type IRepository interface {
 	RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (created bool, err error)
 	MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error
 	LinkBoldWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error
+
+	GetWalletKPISelection(ctx context.Context) (*entities.WalletKPISelection, error)
+	UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error
 }
 
 // IRequestPublisher publica solicitudes de pago a la cola pay.requests
@@ -98,4 +101,7 @@ type IWalletUseCase interface {
 	GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error)
 	SyncBoldRecharge(ctx context.Context, businessID uint, orderID string) (*dtos.BoldStatusResponse, error)
 	BoldSimulatePayment(ctx context.Context, dto *dtos.BoldSimulateDTO) (*dtos.BoldSimulateResponse, error)
+
+	GetWalletKPISelection(ctx context.Context) (*dtos.WalletKPISelectionResponse, error)
+	UpdateWalletKPISelection(ctx context.Context, req *dtos.UpdateWalletKPISelectionRequest) (*dtos.WalletKPISelectionResponse, error)
 }
