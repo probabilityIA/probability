@@ -938,14 +938,18 @@ function RequestsTableView({
                 if (filterStatus) {
                     data = data.filter(r => r.Status === filterStatus);
                 }
-                if (dateFrom) {
-                    const fromDate = new Date(dateFrom).getTime();
-                    data = data.filter(r => new Date(r.CreatedAt).getTime() >= fromDate);
-                }
-                if (dateTo) {
-                    const toDate = new Date(dateTo);
-                    toDate.setHours(23, 59, 59, 999);
-                    data = data.filter(r => new Date(r.CreatedAt).getTime() <= toDate.getTime());
+                if (dateFrom || dateTo) {
+                    data = data.filter(r => {
+                        const createdDate = r.CreatedAt ? new Date(r.CreatedAt).toLocaleDateString('en-CA') : '';
+
+                        if (dateFrom && createdDate < dateFrom) {
+                            return false;
+                        }
+                        if (dateTo && createdDate > dateTo) {
+                            return false;
+                        }
+                        return true;
+                    });
                 }
                 setRequests(data);
             }
