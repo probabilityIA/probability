@@ -161,7 +161,7 @@ export function AdminWalletView() {
                         <span>vs. mes anterior</span>
                     </div>
                     {showBusinessSelector && (
-                        <div className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 p-4 border border-gray-200 dark:border-gray-700">
+                        <div className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 p-4 border border-gray-200 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
                             <div className="mb-3">
                                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Selecciona negocios</h3>
                                 <div className="max-h-64 overflow-y-auto space-y-2">
@@ -171,6 +171,7 @@ export function AdminWalletView() {
                                                 type="checkbox"
                                                 checked={selectedBusinessesForKPI.has(wallet.BusinessID)}
                                                 onChange={(e) => {
+                                                    e.stopPropagation();
                                                     const newSet = new Set(selectedBusinessesForKPI);
                                                     if (e.target.checked) {
                                                         newSet.add(wallet.BusinessID);
@@ -189,7 +190,10 @@ export function AdminWalletView() {
                                 </div>
                             </div>
                             <button
-                                onClick={() => setShowBusinessSelector(false)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowBusinessSelector(false);
+                                }}
                                 className="w-full px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 rounded"
                             >
                                 Cerrar
