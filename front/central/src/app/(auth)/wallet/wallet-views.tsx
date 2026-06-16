@@ -98,7 +98,10 @@ export function AdminWalletView() {
     const totalBalance = wallets
         .filter(w => selectedBusinessesForKPI.has(w.BusinessID))
         .reduce((sum, w) => sum + (typeof w.Balance === 'string' ? parseFloat(w.Balance) : w.Balance), 0);
-    const activeBusinesses = wallets.filter(w => (typeof w.Balance === 'string' ? parseFloat(w.Balance) : w.Balance) > 0).length;
+    const activeBusinesses = wallets
+        .filter(w => selectedBusinessesForKPI.has(w.BusinessID))
+        .filter(w => (typeof w.Balance === 'string' ? parseFloat(w.Balance) : w.Balance) > 0).length;
+    const selectedBusinessesCount = selectedBusinessesForKPI.size;
 
     const walletColumns: TableColumn<Wallet>[] = [
         {
@@ -204,14 +207,14 @@ export function AdminWalletView() {
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
                     <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Negocios Activos</div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{activeBusinesses} / {wallets.length}</div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{activeBusinesses} / {selectedBusinessesCount}</div>
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
                             className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full"
-                            style={{ width: `${wallets.length > 0 ? (activeBusinesses / wallets.length) * 100 : 0}%` }}
+                            style={{ width: `${selectedBusinessesCount > 0 ? (activeBusinesses / selectedBusinessesCount) * 100 : 0}%` }}
                         />
                     </div>
-                    <div className="text-xs text-gray-500 mt-2">{wallets.length > 0 ? Math.round((activeBusinesses / wallets.length) * 100) : 0}% con saldo</div>
+                    <div className="text-xs text-gray-500 mt-2">{selectedBusinessesCount > 0 ? Math.round((activeBusinesses / selectedBusinessesCount) * 100) : 0}% con saldo</div>
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
