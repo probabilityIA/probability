@@ -253,6 +253,7 @@ func walletTxToDomain(m *models.WalletTransaction) *entities.WalletTransaction {
 		GatewayRequest:       []byte(m.GatewayRequest),
 		GatewayResponse:      []byte(m.GatewayResponse),
 		CreatedAt:            m.CreatedAt,
+		BusinessID:           m.BusinessID,
 	}
 }
 

@@ -1076,7 +1076,6 @@ function RequestsTableView({
             const res = await fetchAction();
             if (res.success) {
                 let data = res.data as any[] || [];
-                console.log('Datos crudos:', data[0]);
                 if (filterStatus) {
                     data = data.filter(r => r.Status === filterStatus);
                 }
@@ -1097,7 +1096,6 @@ function RequestsTableView({
                     data = data.filter(r => r.Type === typeFilter);
                 }
                 if (businessFilter !== 'all') {
-                    console.log('BusinessFilter:', businessFilter, 'BusinessIDs en datos:', data.map(r => r.BusinessID));
                     data = data.filter(r => r.BusinessID === businessFilter);
                 }
                 setRequests(data);
