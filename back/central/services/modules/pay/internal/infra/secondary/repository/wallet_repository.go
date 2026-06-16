@@ -446,7 +446,7 @@ func (r *Repository) GetWalletKPISelection(ctx context.Context) (*entities.Walle
 
 func (r *Repository) UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error {
 	m := walletKPISelectionToModel(selection)
-	result := r.db.Conn(ctx).Model(&models.WalletKPISelection{}).Where("id = ?", m.ID).Update("selected_business_ids", m.SelectedBusinessIDs)
+	result := r.db.Conn(ctx).Model(&models.WalletKPISelection{}).Where("id = ?", m.ID).Updates(m)
 	if result.Error != nil {
 		return fmt.Errorf("failed to update wallet kpi selection: %w", result.Error)
 	}
