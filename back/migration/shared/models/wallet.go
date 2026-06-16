@@ -41,7 +41,7 @@ type WalletTransaction struct {
 	GatewayRequest       datatypes.JSON `gorm:"type:jsonb"`
 	GatewayResponse      datatypes.JSON `gorm:"type:jsonb"`
 	CreatedAt            time.Time
-	BusinessID           uint           `gorm:"-"`
+	BusinessID           uint           `gorm:"column:business_id"`
 
 	// Relaciones
 	Wallet Wallet `gorm:"foreignKey:WalletID"`

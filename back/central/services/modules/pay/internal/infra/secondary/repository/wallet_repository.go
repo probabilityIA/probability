@@ -157,7 +157,7 @@ func (r *Repository) GetTransactionsByWalletID(ctx context.Context, walletID uui
 func (r *Repository) GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error) {
 	var list []models.WalletTransaction
 	err := r.db.Conn(ctx).
-		Select("t.*, w.business_id").
+		Select("t.id, t.wallet_id, t.amount, t.type, t.status, t.reference, t.qr_code, t.payment_transaction_id, t.user_id, t.integration_type_id, t.integration_id, t.gateway_request, t.gateway_response, t.created_at, w.business_id").
 		Table("transaction t").
 		Joins("LEFT JOIN wallet w ON t.wallet_id = w.id").
 		Where("t.status = ? AND t.type = ?", entities.WalletTxStatusPending, entities.WalletTxTypeRecharge).
@@ -172,7 +172,7 @@ func (r *Repository) GetPendingRechargeTransactions(ctx context.Context) ([]*ent
 func (r *Repository) GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error) {
 	var list []models.WalletTransaction
 	err := r.db.Conn(ctx).
-		Select("t.*, w.business_id").
+		Select("t.id, t.wallet_id, t.amount, t.type, t.status, t.reference, t.qr_code, t.payment_transaction_id, t.user_id, t.integration_type_id, t.integration_id, t.gateway_request, t.gateway_response, t.created_at, w.business_id").
 		Table("transaction t").
 		Joins("LEFT JOIN wallet w ON t.wallet_id = w.id").
 		Where("t.status IN ?", []string{entities.WalletTxStatusCompleted, entities.WalletTxStatusFailed}).
