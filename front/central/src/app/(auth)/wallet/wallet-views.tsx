@@ -276,7 +276,8 @@ export function AdminWalletView() {
                             compact={false}
                             itemsPerPage={itemsPerPage}
                             onItemsPerPageChange={setItemsPerPage}
-                            hideTitle={true}
+                            hideTitle={false}
+                            showFiltersOnly={true}
                         />
                     )}
                     {activeTab === 'rejected' && (
@@ -292,7 +293,8 @@ export function AdminWalletView() {
                             compact={false}
                             itemsPerPage={itemsPerPage}
                             onItemsPerPageChange={setItemsPerPage}
-                            hideTitle={true}
+                            hideTitle={false}
+                            showFiltersOnly={true}
                         />
                     )}
                 </div>
@@ -1042,7 +1044,8 @@ function RequestsTableView({
     compact,
     itemsPerPage,
     onItemsPerPageChange,
-    hideTitle = false
+    hideTitle = false,
+    showFiltersOnly = false
 }: {
     title: string,
     businesses: Record<number, string>,
@@ -1055,7 +1058,8 @@ function RequestsTableView({
     compact?: boolean,
     itemsPerPage: number,
     onItemsPerPageChange: (total: number) => void,
-    hideTitle?: boolean
+    hideTitle?: boolean,
+    showFiltersOnly?: boolean
 }) {
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -1196,8 +1200,8 @@ function RequestsTableView({
         <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col ${compact ? 'p-2' : ''}`}>
             {!compact && !hideTitle && (
                 <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between gap-4">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
-                    <div className="flex gap-3 items-end">
+                    {!showFiltersOnly && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
+                    <div className="flex gap-3 items-end w-full" style={{justifyContent: showFiltersOnly ? 'flex-end' : 'flex-end'}}>
                         <div>
                             <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Desde</label>
                             <input
