@@ -47,13 +47,14 @@ export function AdminWalletView() {
             setWallets(walletRes.data || []);
 
             const { getBusinessesAction } = await import('@/services/auth/business/infra/actions');
-            const businessesRes = await getBusinessesAction({ per_page: 1000 });
+            const businessesRes = await getBusinessesAction({ per_page: 10000 });
             if (businessesRes.data) {
                 const businessMap: Record<number, string> = {};
                 businessesRes.data.forEach((b: any) => {
                     businessMap[b.id] = b.name;
                 });
                 setBusinesses(businessMap);
+                console.log('Negocios cargados:', businessMap);
             }
         } catch (err: any) {
             setError(getActionError(err));
