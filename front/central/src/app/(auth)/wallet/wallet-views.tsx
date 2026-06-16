@@ -1217,45 +1217,75 @@ function RequestsTableView({
                     <div className="flex items-center justify-between gap-4">
                         {!showFiltersOnly && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
                     </div>
-                    <div className="flex flex-wrap gap-4 items-end">
+                    <div className="flex flex-wrap gap-3 items-end">
                         <div>
-                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Desde</label>
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                onChange={(e) => {
-                                    setDateFrom(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Hasta</label>
-                            <input
-                                type="date"
-                                value={dateTo}
-                                onChange={(e) => {
-                                    setDateTo(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
+                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Fecha</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={(e) => {
+                                        setDateFrom(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="Desde"
+                                />
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={(e) => {
+                                        setDateTo(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    placeholder="Hasta"
+                                />
+                            </div>
                         </div>
                         <div>
                             <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Tipo</label>
-                            <select
-                                value={typeFilter}
-                                onChange={(e) => {
-                                    setTypeFilter(e.target.value as any);
-                                    setCurrentPage(1);
-                                }}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-40 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            >
-                                <option value="all">Todas las transacciones</option>
-                                <option value="RECHARGE">Ingresos</option>
-                                <option value="USAGE">Egresos</option>
-                            </select>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => {
+                                        setTypeFilter('all');
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                        typeFilter === 'all'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Todas
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setTypeFilter('RECHARGE');
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                        typeFilter === 'RECHARGE'
+                                            ? 'bg-green-600 text-white'
+                                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Ingresos
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setTypeFilter('USAGE');
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                        typeFilter === 'USAGE'
+                                            ? 'bg-red-600 text-white'
+                                            : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Egresos
+                                </button>
+                            </div>
                         </div>
                         {(dateFrom || dateTo || typeFilter !== 'all') && (
                             <button
@@ -1267,7 +1297,7 @@ function RequestsTableView({
                                 }}
                                 className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                             >
-                                Limpiar filtros
+                                Limpiar
                             </button>
                         )}
                     </div>
