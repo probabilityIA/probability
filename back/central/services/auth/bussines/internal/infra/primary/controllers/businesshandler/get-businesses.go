@@ -51,7 +51,7 @@ func (h *BusinessHandler) GetBusinesses(c *gin.Context) {
 	}
 
 	perPage, err := strconv.Atoi(perPageStr)
-	if err != nil || perPage < 1 || perPage > 100 {
+	if err != nil || perPage < 1 || perPage > 10000 {
 		perPage = 10
 	}
 
