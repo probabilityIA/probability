@@ -92,10 +92,19 @@ export function AdminWalletView() {
     useEffect(() => {
         const loadKPISelection = async () => {
             const res = await getWalletKPISelectionAction();
-            if (res.success && res.data?.selected_business_ids) {
-                setSelectedBusinessesForKPI(new Set(res.data.selected_business_ids));
+            if (res.success && Array.isArray(res.data?.selected_business_ids)) {
+                const ids = res.data.selected_business_ids;
+                if (ids.length > 0) {
+                    setSelectedBusinessesForKPI(new Set(ids));
+                } else if (wallets.length > 0) {
+                    const allIds = wallets.map(w => w.BusinessID);
+                    setSelectedBusinessesForKPI(new Set(allIds));
+                    await updateWalletKPISelectionAction(allIds);
+                }
             } else if (wallets.length > 0) {
-                setSelectedBusinessesForKPI(new Set(wallets.map(w => w.BusinessID)));
+                const allIds = wallets.map(w => w.BusinessID);
+                setSelectedBusinessesForKPI(new Set(allIds));
+                await updateWalletKPISelectionAction(allIds);
             }
         };
 
