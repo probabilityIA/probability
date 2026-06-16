@@ -926,6 +926,8 @@ function RequestsTableView({
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [dateFrom, setDateFrom] = useState<string>('');
+    const [dateTo, setDateTo] = useState<string>('');
 
     const fetchRequests = useCallback(async () => {
         try {
@@ -936,6 +938,15 @@ function RequestsTableView({
                 if (filterStatus) {
                     data = data.filter(r => r.Status === filterStatus);
                 }
+                if (dateFrom) {
+                    const fromDate = new Date(dateFrom).getTime();
+                    data = data.filter(r => new Date(r.CreatedAt).getTime() >= fromDate);
+                }
+                if (dateTo) {
+                    const toDate = new Date(dateTo);
+                    toDate.setHours(23, 59, 59, 999);
+                    data = data.filter(r => new Date(r.CreatedAt).getTime() <= toDate.getTime());
+                }
                 setRequests(data);
             }
         } catch (error) {
@@ -943,7 +954,7 @@ function RequestsTableView({
         } finally {
             setLoading(false);
         }
-    }, [fetchAction, filterStatus]);
+    }, [fetchAction, filterStatus, dateFrom, dateTo]);
 
     useEffect(() => {
         fetchRequests();
@@ -1050,6 +1061,50 @@ function RequestsTableView({
         <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-lg overflow-hidden flex flex-col ${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
             {!compact && !hideTitle && <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>}
             {compact && <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-600 font-bold text-gray-700 dark:text-gray-100 text-sm uppercase tracking-wider">{title}</div>}
+
+            {!compact && (
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex gap-3">
+                    <div className="flex-1">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">Desde</label>
+                        <input
+                            type="date"
+                            value={dateFrom}
+                            onChange={(e) => {
+                                setDateFrom(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">Hasta</label>
+                        <input
+                            type="date"
+                            value={dateTo}
+                            onChange={(e) => {
+                                setDateTo(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                        />
+                    </div>
+                    {(dateFrom || dateTo) && (
+                        <div className="flex items-end">
+                            <button
+                                onClick={() => {
+                                    setDateFrom('');
+                                    setDateTo('');
+                                    setCurrentPage(1);
+                                }}
+                                className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                            >
+                                Limpiar
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <Table
                 columns={requestColumns}
                 data={paginatedData}
