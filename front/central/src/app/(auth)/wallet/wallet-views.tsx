@@ -989,7 +989,7 @@ function RequestsTableView({
                     businessName = businesses[request.BusinessID] || '';
                 }
 
-                if (!businessName) {
+                if (!businessName && val) {
                     const wallet = allWallets.find(w => w.ID === val);
                     if (wallet) {
                         businessId = wallet.BusinessID;
@@ -997,21 +997,15 @@ function RequestsTableView({
                     }
                 }
 
-                if (!businessName && request.business_id) {
-                    businessId = request.business_id;
-                    businessName = businesses[request.business_id] || '';
-                }
-
-                if (!businessName && request.businessId) {
-                    businessId = request.businessId;
-                    businessName = businesses[request.businessId] || '';
-                }
-
                 if (businessName) {
                     return <span className="font-medium text-gray-900 dark:text-white">{businessName}</span>;
                 }
 
-                return <span className="text-gray-500 dark:text-gray-400">{businessId ? `ID: ${businessId}` : val}</span>;
+                if (businessId) {
+                    return <span className="font-medium text-gray-900 dark:text-white">{businessId}</span>;
+                }
+
+                return <span className="text-gray-500 dark:text-gray-400">...</span>;
             }
         },
         {
