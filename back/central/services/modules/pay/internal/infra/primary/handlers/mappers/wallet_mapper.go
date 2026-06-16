@@ -36,6 +36,7 @@ func WalletTxToResponse(tx *entities.WalletTransaction) *response.WalletTransact
 		GatewayRequest:       jsonOrNil(tx.GatewayRequest),
 		GatewayResponse:      jsonOrNil(tx.GatewayResponse),
 		CreatedAt:            tx.CreatedAt,
+		BusinessID:           tx.BusinessID,
 	}
 }
 

@@ -157,9 +157,12 @@ func (r *Repository) GetTransactionsByWalletID(ctx context.Context, walletID uui
 func (r *Repository) GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error) {
 	var list []models.WalletTransaction
 	err := r.db.Conn(ctx).
-		Where("status = ? AND type = ?", entities.WalletTxStatusPending, entities.WalletTxTypeRecharge).
-		Order("created_at ASC").
-		Find(&list).Error
+		Select("t.*, w.business_id").
+		Table("transaction t").
+		Joins("LEFT JOIN wallet w ON t.wallet_id = w.id").
+		Where("t.status = ? AND t.type = ?", entities.WalletTxStatusPending, entities.WalletTxTypeRecharge).
+		Order("t.created_at ASC").
+		Scan(&list).Error
 	if err != nil {
 		return nil, err
 	}
@@ -169,9 +172,12 @@ func (r *Repository) GetPendingRechargeTransactions(ctx context.Context) ([]*ent
 func (r *Repository) GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error) {
 	var list []models.WalletTransaction
 	err := r.db.Conn(ctx).
-		Where("status IN ?", []string{entities.WalletTxStatusCompleted, entities.WalletTxStatusFailed}).
-		Order("created_at DESC").
-		Find(&list).Error
+		Select("t.*, w.business_id").
+		Table("transaction t").
+		Joins("LEFT JOIN wallet w ON t.wallet_id = w.id").
+		Where("t.status IN ?", []string{entities.WalletTxStatusCompleted, entities.WalletTxStatusFailed}).
+		Order("t.created_at DESC").
+		Scan(&list).Error
 	if err != nil {
 		return nil, err
 	}

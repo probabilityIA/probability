@@ -45,4 +45,5 @@ type WalletTransaction struct {
 	GatewayResponse      []byte
 	IntegrationImageURL  string
 	CreatedAt            time.Time
+	BusinessID           uint
 }

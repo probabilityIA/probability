@@ -28,4 +28,5 @@ type WalletTransactionResponse struct {
 	GatewayRequest       any       `json:"gateway_request,omitempty"`
 	GatewayResponse      any       `json:"gateway_response,omitempty"`
 	CreatedAt            time.Time `json:"CreatedAt"`
+	BusinessID           uint      `json:"BusinessID"`
 }
