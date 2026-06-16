@@ -48,7 +48,7 @@ export function AdminWalletView() {
     const [businesses, setBusinesses] = useState<Record<number, string>>({});
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [searchBusiness, setSearchBusiness] = useState('');
-    const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('review');
+    const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('approved');
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -229,7 +229,7 @@ export function AdminWalletView() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <div className="flex">
-                        {['review', 'approved', 'rejected'].map((tab) => (
+                        {['approved', 'review', 'rejected'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab as any)}
@@ -248,21 +248,6 @@ export function AdminWalletView() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    {activeTab === 'review' && (
-                        <RequestsTableView
-                            title="En revisión"
-                            businesses={businesses}
-                            onRequestsChanged={fetchWalletsAndBusinesses}
-                            allWallets={wallets}
-                            fetchAction={getPendingRequestsAction}
-                            showActions={true}
-                            emptyMessage="¡Todo al día! No hay solicitudes pendientes"
-                            compact={false}
-                            itemsPerPage={itemsPerPage}
-                            onItemsPerPageChange={setItemsPerPage}
-                            hideTitle={true}
-                        />
-                    )}
                     {activeTab === 'approved' && (
                         <RequestsTableView
                             title="Aprobados"
@@ -278,6 +263,21 @@ export function AdminWalletView() {
                             onItemsPerPageChange={setItemsPerPage}
                             hideTitle={false}
                             showFiltersOnly={true}
+                        />
+                    )}
+                    {activeTab === 'review' && (
+                        <RequestsTableView
+                            title="En revisión"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getPendingRequestsAction}
+                            showActions={true}
+                            emptyMessage="¡Todo al día! No hay solicitudes pendientes"
+                            compact={false}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                            hideTitle={true}
                         />
                     )}
                     {activeTab === 'rejected' && (
