@@ -239,9 +239,9 @@ export function AdminWalletView() {
                                         : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
                                 }`}
                             >
-                                {tab === 'review' && '📋 En Revisión'}
-                                {tab === 'approved' && '✅ Aprobados'}
-                                {tab === 'rejected' && '❌ Rechazados'}
+                                {tab === 'review' && 'En Revisión'}
+                                {tab === 'approved' && 'Aprobados'}
+                                {tab === 'rejected' && 'Rechazados'}
                             </button>
                         ))}
                     </div>
@@ -1067,6 +1067,7 @@ function RequestsTableView({
     const [currentPage, setCurrentPage] = useState(1);
     const [dateFrom, setDateFrom] = useState<string>('');
     const [dateTo, setDateTo] = useState<string>('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'RECHARGE' | 'USAGE'>('all');
 
     const fetchRequests = useCallback(async () => {
         try {
@@ -1090,6 +1091,9 @@ function RequestsTableView({
                         return true;
                     });
                 }
+                if (typeFilter !== 'all') {
+                    data = data.filter(r => r.Type === typeFilter);
+                }
                 setRequests(data);
             }
         } catch (error) {
@@ -1097,7 +1101,7 @@ function RequestsTableView({
         } finally {
             setLoading(false);
         }
-    }, [fetchAction, filterStatus, dateFrom, dateTo]);
+    }, [fetchAction, filterStatus, dateFrom, dateTo, typeFilter]);
 
     useEffect(() => {
         fetchRequests();
@@ -1209,9 +1213,11 @@ function RequestsTableView({
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col ${compact ? 'p-2' : ''}`}>
             {!compact && !hideTitle && (
-                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between gap-4">
-                    {!showFiltersOnly && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
-                    <div className="flex gap-3 items-end w-full" style={{justifyContent: showFiltersOnly ? 'flex-end' : 'flex-end'}}>
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                        {!showFiltersOnly && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
+                    </div>
+                    <div className="flex flex-wrap gap-4 items-end">
                         <div>
                             <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Desde</label>
                             <input
@@ -1236,16 +1242,32 @@ function RequestsTableView({
                                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
-                        {(dateFrom || dateTo) && (
+                        <div>
+                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Tipo</label>
+                            <select
+                                value={typeFilter}
+                                onChange={(e) => {
+                                    setTypeFilter(e.target.value as any);
+                                    setCurrentPage(1);
+                                }}
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-40 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                                <option value="all">Todas las transacciones</option>
+                                <option value="RECHARGE">Ingresos</option>
+                                <option value="USAGE">Egresos</option>
+                            </select>
+                        </div>
+                        {(dateFrom || dateTo || typeFilter !== 'all') && (
                             <button
                                 onClick={() => {
                                     setDateFrom('');
                                     setDateTo('');
+                                    setTypeFilter('all');
                                     setCurrentPage(1);
                                 }}
                                 className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                             >
-                                Limpiar
+                                Limpiar filtros
                             </button>
                         )}
                     </div>
