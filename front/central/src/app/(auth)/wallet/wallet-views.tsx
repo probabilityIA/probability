@@ -1169,16 +1169,40 @@ function RequestsTableView({
         {
             key: 'Reference',
             label: 'Referencia',
-            width: '300px',
+            width: '350px',
             render: (val) => {
                 const reference = val as string;
                 if (!reference) {
                     return <span className="text-gray-400 dark:text-gray-500">-</span>;
                 }
+
+                let methodType = 'OTRO';
+                let badgeBg = 'bg-gray-200 dark:bg-gray-700';
+                let badgeText = 'text-gray-800 dark:text-gray-200';
+
+                if (reference.startsWith('WLT') || reference.startsWith('BOLD_SANDBOX_')) {
+                    methodType = 'BOLD';
+                    badgeBg = 'bg-orange-100 dark:bg-orange-900';
+                    badgeText = 'text-orange-800 dark:text-orange-200';
+                } else if (reference.startsWith('MANUAL_')) {
+                    methodType = 'NEQUI';
+                    badgeBg = 'bg-pink-100 dark:bg-pink-900';
+                    badgeText = 'text-pink-800 dark:text-pink-200';
+                } else if (reference.startsWith('MAN_DEB_')) {
+                    methodType = 'DÉBITO';
+                    badgeBg = 'bg-slate-100 dark:bg-slate-700';
+                    badgeText = 'text-slate-800 dark:text-slate-200';
+                }
+
                 return (
-                    <span className="text-gray-700 dark:text-gray-300 text-sm break-words">
-                        {reference}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${badgeBg} ${badgeText}`}>
+                            {methodType}
+                        </span>
+                        <span className="text-gray-700 dark:text-gray-300 text-sm break-words">
+                            {reference}
+                        </span>
+                    </div>
                 );
             }
         },
