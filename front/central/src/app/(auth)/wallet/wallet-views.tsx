@@ -50,9 +50,18 @@ export function AdminWalletView() {
     const [searchBusiness, setSearchBusiness] = useState('');
     const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('approved');
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);
-    const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(
-        new Set(wallets.map(w => w.BusinessID))
-    );
+    const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(() => {
+        if (typeof window === 'undefined') return new Set();
+        const saved = localStorage.getItem('selectedBusinessesForKPI');
+        if (saved) {
+            try {
+                return new Set(JSON.parse(saved));
+            } catch {
+                return new Set();
+            }
+        }
+        return new Set();
+    });
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -92,9 +101,16 @@ export function AdminWalletView() {
 
     useEffect(() => {
         if (wallets.length > 0 && selectedBusinessesForKPI.size === 0) {
-            setSelectedBusinessesForKPI(new Set(wallets.map(w => w.BusinessID)));
+            const saved = localStorage.getItem('selectedBusinessesForKPI');
+            if (!saved) {
+                setSelectedBusinessesForKPI(new Set(wallets.map(w => w.BusinessID)));
+            }
         }
     }, [wallets]);
+
+    useEffect(() => {
+        localStorage.setItem('selectedBusinessesForKPI', JSON.stringify(Array.from(selectedBusinessesForKPI)));
+    }, [selectedBusinessesForKPI]);
 
     const filteredWallets = wallets.filter(w => {
         const businessName = businesses[w.BusinessID] || '';
