@@ -138,35 +138,33 @@ export function AdminWalletView() {
                 onItemsPerPageChange={setItemsPerPage}
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RequestsTableView
-                    title="Aprobados"
-                    businesses={businesses}
-                    onRequestsChanged={fetchWalletsAndBusinesses}
-                    allWallets={wallets}
-                    fetchAction={getProcessedRequestsAction}
-                    filterStatus="COMPLETED"
-                    showActions={false}
-                    emptyMessage="Sin aprobados"
-                    compact={true}
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                />
+            <RequestsTableView
+                title="Aprobados"
+                businesses={businesses}
+                onRequestsChanged={fetchWalletsAndBusinesses}
+                allWallets={wallets}
+                fetchAction={getProcessedRequestsAction}
+                filterStatus="COMPLETED"
+                showActions={false}
+                emptyMessage="Sin aprobados"
+                compact={false}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={setItemsPerPage}
+            />
 
-                <RequestsTableView
-                    title="Rechazados"
-                    businesses={businesses}
-                    onRequestsChanged={fetchWalletsAndBusinesses}
-                    allWallets={wallets}
-                    fetchAction={getProcessedRequestsAction}
-                    filterStatus="FAILED"
-                    showActions={false}
-                    emptyMessage="Sin rechazados"
-                    compact={true}
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                />
-            </div>
+            <RequestsTableView
+                title="Rechazados"
+                businesses={businesses}
+                onRequestsChanged={fetchWalletsAndBusinesses}
+                allWallets={wallets}
+                fetchAction={getProcessedRequestsAction}
+                filterStatus="FAILED"
+                showActions={false}
+                emptyMessage="Sin rechazados"
+                compact={false}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={setItemsPerPage}
+            />
         </div>
     );
 }
