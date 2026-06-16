@@ -6,8 +6,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/dtos"
 )
 
-func (uc *UseCase) GetWalletKPISelection(ctx context.Context) (*dtos.WalletKPISelectionResponse, error) {
-	selection, err := uc.walletRepo.GetWalletKPISelection(ctx)
+func (uc *walletUseCase) GetWalletKPISelection(ctx context.Context) (*dtos.WalletKPISelectionResponse, error) {
+	selection, err := uc.repo.GetWalletKPISelection(ctx)
 	if err != nil {
 		return nil, err
 	}

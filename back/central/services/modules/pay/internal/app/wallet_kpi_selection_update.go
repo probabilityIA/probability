@@ -7,13 +7,13 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
 )
 
-func (uc *UseCase) UpdateWalletKPISelection(ctx context.Context, req *dtos.UpdateWalletKPISelectionRequest) (*dtos.WalletKPISelectionResponse, error) {
+func (uc *walletUseCase) UpdateWalletKPISelection(ctx context.Context, req *dtos.UpdateWalletKPISelectionRequest) (*dtos.WalletKPISelectionResponse, error) {
 	selection := &entities.WalletKPISelection{
 		ID:                  1,
 		SelectedBusinessIDs: req.SelectedBusinessIDs,
 	}
 
-	if err := uc.walletRepo.UpdateWalletKPISelection(ctx, selection); err != nil {
+	if err := uc.repo.UpdateWalletKPISelection(ctx, selection); err != nil {
 		return nil, err
 	}
 
