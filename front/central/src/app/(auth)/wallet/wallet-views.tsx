@@ -104,34 +104,40 @@ export function AdminWalletView() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Saldos de Negocios</h2>
-                <Table
-                    columns={[
-                        ...walletColumns,
-                        {
-                            key: 'actions',
-                            label: 'Acciones',
-                            render: (_, row) => (
-                                <div className="flex gap-2">
-                                    <RechargeWalletButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
-                                    <ClearHistoryButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
-                                </div>
-                            )
-                        }
-                    ]}
-                    data={wallets}
-                    loading={loading}
-                    emptyMessage="No hay billeteras registradas"
-                />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
+                        Saldos de Negocios
+                    </h1>
+                </div>
+                <div className="overflow-x-auto">
+                    <Table
+                        columns={[
+                            ...walletColumns,
+                            {
+                                key: 'actions',
+                                label: 'Acciones',
+                                render: (_, row) => (
+                                    <div className="flex gap-2">
+                                        <RechargeWalletButton
+                                            businessId={row.BusinessID}
+                                            businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                            onSuccess={fetchWalletsAndBusinesses}
+                                        />
+                                        <ClearHistoryButton
+                                            businessId={row.BusinessID}
+                                            businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                            onSuccess={fetchWalletsAndBusinesses}
+                                        />
+                                    </div>
+                                )
+                            }
+                        ]}
+                        data={wallets}
+                        loading={loading}
+                        emptyMessage="No hay billeteras registradas"
+                    />
+                </div>
             </div>
 
             <RequestsTableAccordion
@@ -621,7 +627,9 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
             <div className="mt-12 space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Historial de Transacciones</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
+                        Historial de Transacciones
+                    </h2>
                 </div>
 
                 <div className="space-y-8">
@@ -669,14 +677,14 @@ function RequestsTableAccordion({
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+        <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden bg-white dark:bg-gray-800 shadow-sm">
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors border-b border-gray-200 dark:border-gray-700"
+                className="w-full flex items-center justify-between px-6 py-4 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700"
             >
-                <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
+                <span className="font-semibold text-base text-gray-900 dark:text-white">{title}</span>
                 <svg
-                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -811,9 +819,13 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
 
     return (
         <>
-            <Button size="sm" variant="outline" onClick={() => setIsOpen(true)} style={{ color: '#dc2626', borderColor: '#fecaca' }}>
+            <button
+                onClick={() => setIsOpen(true)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-white dark:bg-gray-800 border-2 transition-colors"
+                style={{ color: '#dc2626', borderColor: '#dc2626' }}
+            >
                 Borrar Historial
-            </Button>
+            </button>
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmar Eliminación">
                 <div className="space-y-4 p-4">
                     <p className="text-gray-600 dark:text-gray-300">
@@ -868,7 +880,13 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
 
     return (
         <>
-            <Button size="sm" variant="primary" onClick={() => setIsOpen(true)}>Agregar Saldo</Button>
+            <button
+                onClick={() => setIsOpen(true)}
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-900 dark:bg-gray-800 text-white hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                style={{ backgroundColor: '#0f1729' }}
+            >
+                + Agregar Saldo
+            </button>
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Agregar saldo a ${businessName}`}>
                 <div className="space-y-4 p-4">
                     <Input
@@ -1031,27 +1049,23 @@ function RequestsTableView({
             key: 'actions',
             label: 'Acciones',
             render: (_, row) => (
-                <div className="flex gap-1.5">
-                    <Button
-                        size="sm"
-                        className="px-2 py-0.5 text-[10px] h-auto min-h-0"
-                        variant="success"
+                <div className="flex gap-2">
+                    <button
                         onClick={() => handleAction(row.ID, 'approve')}
-                        loading={processingId === row.ID}
                         disabled={!!processingId}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-white hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: '#16a34a' }}
                     >
-                        Aprobar
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="px-2 py-0.5 text-[10px] h-auto min-h-0"
-                        variant="danger"
+                        {processingId === row.ID ? '...' : 'Aprobar'}
+                    </button>
+                    <button
                         onClick={() => handleAction(row.ID, 'reject')}
-                        loading={processingId === row.ID}
                         disabled={!!processingId}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-white hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: '#dc2626' }}
                     >
-                        Rechazar
-                    </Button>
+                        {processingId === row.ID ? '...' : 'Rechazar'}
+                    </button>
                 </div>
             )
         });
@@ -1062,13 +1076,13 @@ function RequestsTableView({
     const paginatedData = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
-        <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-lg overflow-hidden flex flex-col ${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col ${compact ? 'p-2' : ''}`}>
             {!compact && !hideTitle && (
-                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-4">
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between gap-4">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>
                     <div className="flex gap-3 items-end">
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">Desde</label>
+                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Desde</label>
                             <input
                                 type="date"
                                 value={dateFrom}
@@ -1076,11 +1090,11 @@ function RequestsTableView({
                                     setDateFrom(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-40"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1">Hasta</label>
+                            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 block mb-2">Hasta</label>
                             <input
                                 type="date"
                                 value={dateTo}
@@ -1088,7 +1102,7 @@ function RequestsTableView({
                                     setDateTo(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-40"
+                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-36 focus:outline-none focus:ring-2 focus:ring-purple-500"
                             />
                         </div>
                         {(dateFrom || dateTo) && (
@@ -1098,7 +1112,7 @@ function RequestsTableView({
                                     setDateTo('');
                                     setCurrentPage(1);
                                 }}
-                                className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                                className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                             >
                                 Limpiar
                             </button>
@@ -1106,7 +1120,7 @@ function RequestsTableView({
                     </div>
                 </div>
             )}
-            {compact && <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-600 font-bold text-gray-700 dark:text-gray-100 text-sm uppercase tracking-wider">{title}</div>}
+            {compact && <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-100 text-sm">{title}</div>}
 
             <Table
                 columns={requestColumns}
@@ -1205,8 +1219,8 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
     const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="p-4 border-b border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                 <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
             </div>
             <Table

@@ -378,8 +378,10 @@
 
 .table th {
   @apply px-6 py-4 text-sm font-semibold text-left;
-  background: var(--color-primary, #7c3aed);
-  color: white;
+  background: #0f1729;
+  color: #cdd3e2;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .btn-business-primary {
@@ -477,34 +479,44 @@
 
 /* Paginación alternativa más visible */
 .pagination-alt {
-  @apply flex justify-between items-center mt-6 p-4 rounded-lg bg-white dark:bg-gray-700;
-  border: 1px solid var(--gray-200);
+  @apply flex justify-between items-center px-6 py-4 bg-white dark:bg-gray-800;
+  border-top: 1px solid var(--gray-200);
 }
 
 .dark .pagination-alt {
-  border-color: var(--gray-600);
+  border-color: var(--gray-700);
 }
 
 .pagination-alt .pagination-info {
-  @apply text-sm font-semibold;
-  color: var(--gray-800);
+  @apply text-sm font-medium;
+  color: var(--gray-700);
   background: transparent;
   border: none;
   padding: 0;
 }
 
+.dark .pagination-alt .pagination-info {
+  color: var(--gray-300);
+}
+
 .pagination-alt .pagination-button {
-  @apply px-6 py-2;
-  background: var(--color-primary);
+  @apply px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200;
+  background: #0f1729;
   color: white;
-  border: 2px solid var(--color-primary);
-  font-weight: 600;
+  border: none;
+  cursor: pointer;
 }
 
 .pagination-alt .pagination-button:hover:not(:disabled) {
-  background: white;
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  background: #1a2843;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.pagination-alt .pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @keyframes spin {
