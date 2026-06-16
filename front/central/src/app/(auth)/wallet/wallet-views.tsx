@@ -110,11 +110,6 @@ export function AdminWalletView() {
                                         businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
                                         onSuccess={fetchWalletsAndBusinesses}
                                     />
-                                    <ManualDebitButton
-                                        businessId={row.BusinessID}
-                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                        onSuccess={fetchWalletsAndBusinesses}
-                                    />
                                     <ClearHistoryButton
                                         businessId={row.BusinessID}
                                         businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
@@ -358,6 +353,20 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                     <p className="text-sm" style={{ color: 'var(--color-primary-900)' }}>
                         Vista de billetera de <strong>{displayName}</strong> (ID: {businessId}) — modo super admin
                     </p>
+                </div>
+            )}
+
+            {isSuperAdminView && (
+                <div className="mb-6">
+                    <ManualDebitAccordion
+                        businessId={businessId || 0}
+                        businessName={displayName}
+                        onSuccess={() => {
+                            fetchBalance();
+                            fetchHistory();
+                        }}
+                        isSuperAdmin={isSuperAdminView}
+                    />
                 </div>
             )}
 
@@ -638,11 +647,13 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     );
 }
 
-function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId: number, businessName: string, onSuccess: () => void }) {
-    const [isOpen, setIsOpen] = useState(false);
+function ManualDebitAccordion({ businessId, businessName, onSuccess, isSuperAdmin }: { businessId: number, businessName: string, onSuccess: () => void, isSuperAdmin: boolean }) {
+    const [isExpanded, setIsExpanded] = useState(false);
     const [amount, setAmount] = useState('');
     const [reference, setReference] = useState('');
     const [loading, setLoading] = useState(false);
+
+    if (!isSuperAdmin) return null;
 
     const handleDebit = async () => {
         if (!amount || isNaN(Number(amount))) return;
@@ -650,10 +661,11 @@ function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId
         try {
             const res = await manualDebitAction(businessId, Number(amount), reference);
             if (res.success) {
-                setIsOpen(false);
+                setIsExpanded(false);
                 setAmount('');
                 setReference('');
                 onSuccess();
+                alert('Saldo restado exitosamente');
             } else {
                 alert(res.error);
             }
@@ -665,10 +677,26 @@ function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId
     };
 
     return (
-        <>
-            <Button size="sm" variant="danger" onClick={() => setIsOpen(true)}>Restar Saldo</Button>
-            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Restar saldo a ${businessName}`}>
-                <div className="space-y-4 p-4">
+        <div className="border border-red-200 dark:border-red-900 rounded-lg overflow-hidden">
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full flex items-center justify-between p-4 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors"
+            >
+                <span className="font-semibold text-red-700 dark:text-red-400">⚠️ Restar Saldo (Manual)</span>
+                <svg
+                    className={`w-5 h-5 text-red-700 dark:text-red-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+            </button>
+            {isExpanded && (
+                <div className="p-4 bg-white dark:bg-gray-800 space-y-4 border-t border-red-200 dark:border-red-900">
+                    <Alert type="warning">
+                        Esta es una operación manual. Úsala solo si Bold está fuera de servicio.
+                    </Alert>
                     <Input
                         label="Monto a restar"
                         type="number"
@@ -683,12 +711,16 @@ function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId
                         placeholder="Ej: Ajuste de saldo"
                     />
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                        <Button variant="secondary" onClick={() => {
+                            setIsExpanded(false);
+                            setAmount('');
+                            setReference('');
+                        }}>Cancelar</Button>
                         <Button variant="danger" onClick={handleDebit} loading={loading}>Restar Saldo</Button>
                     </div>
                 </div>
-            </Modal>
-        </>
+            )}
+        </div>
     );
 }
 
