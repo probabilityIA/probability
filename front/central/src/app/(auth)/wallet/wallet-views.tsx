@@ -90,6 +90,12 @@ export function AdminWalletView() {
         fetchWalletsAndBusinesses();
     }, [fetchWalletsAndBusinesses]);
 
+    useEffect(() => {
+        if (wallets.length > 0 && selectedBusinessesForKPI.size === 0) {
+            setSelectedBusinessesForKPI(new Set(wallets.map(w => w.BusinessID)));
+        }
+    }, [wallets]);
+
     const filteredWallets = wallets.filter(w => {
         const businessName = businesses[w.BusinessID] || '';
         return businessName.toLowerCase().includes(searchBusiness.toLowerCase());
