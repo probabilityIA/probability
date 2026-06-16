@@ -363,19 +363,6 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                 </div>
             )}
 
-            {isSuperAdminView && (
-                <div className="mb-6">
-                    <ManualDebitAccordion
-                        businessId={businessId || 0}
-                        businessName={displayName}
-                        onSuccess={() => {
-                            fetchBalance();
-                            fetchHistory();
-                        }}
-                        isSuperAdmin={isSuperAdminView}
-                    />
-                </div>
-            )}
 
             <div className="grid gap-8 lg:grid-cols-2">
                 <div className="flex">
