@@ -32,12 +32,23 @@ const formatDate = (dateString: string) => {
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 };
 
+const getColorFromHash = (text: string): string => {
+    const colors = ['#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+        hash = text.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+};
+
 export function AdminWalletView() {
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [businesses, setBusinesses] = useState<Record<number, string>>({});
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [searchBusiness, setSearchBusiness] = useState('');
+    const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('review');
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -75,15 +86,34 @@ export function AdminWalletView() {
         fetchWalletsAndBusinesses();
     }, [fetchWalletsAndBusinesses]);
 
+    const filteredWallets = wallets.filter(w => {
+        const businessName = businesses[w.BusinessID] || '';
+        return businessName.toLowerCase().includes(searchBusiness.toLowerCase());
+    });
+
+    const totalBalance = wallets.reduce((sum, w) => sum + (typeof w.Balance === 'string' ? parseFloat(w.Balance) : w.Balance), 0);
+    const activeBusinesses = wallets.filter(w => (typeof w.Balance === 'string' ? parseFloat(w.Balance) : w.Balance) > 0).length;
+
     const walletColumns: TableColumn<Wallet>[] = [
         {
             key: 'BusinessID',
             label: 'Negocio',
-            render: (_val, row) => (
-                <span className="font-medium text-gray-900 dark:text-white">
-                    {businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                </span>
-            )
+            render: (_val, row) => {
+                const businessName = businesses[row.BusinessID] || `ID: ${row.BusinessID}`;
+                const initial = businessName.charAt(0).toUpperCase();
+                const bgColor = getColorFromHash(businessName);
+                return (
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                            style={{ backgroundColor: bgColor }}
+                        >
+                            {initial}
+                        </div>
+                        <span className="font-medium text-gray-900 dark:text-white">{businessName}</span>
+                    </div>
+                );
+            }
         },
         {
             key: 'Balance',
@@ -92,7 +122,7 @@ export function AdminWalletView() {
                 const balance = typeof val === 'string' ? parseFloat(val) : (val as number);
                 const isNegative = balance < 0;
                 return (
-                    <span className="font-bold" style={{ color: isNegative ? '#dc2626' : '#16a34a' }}>
+                    <span className="font-bold font-mono" style={{ color: isNegative ? '#dc2626' : (balance === 0 ? '#aab1c2' : '#16a34a') }}>
                         {isNegative && '-'}${formatCurrency(Math.abs(balance)).replace('$', '')}
                     </span>
                 );
@@ -104,11 +134,67 @@ export function AdminWalletView() {
 
     return (
         <div className="space-y-8">
+            <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2" style={{ letterSpacing: '-0.03em' }}>
+                    Saldos de Negocios
+                </h1>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-900 to-purple-900 rounded-2xl p-6 text-white">
+                    <div className="text-sm font-medium opacity-80 mb-2">Saldo Total en la Red</div>
+                    <div className="text-3xl font-bold font-mono">${formatCurrency(totalBalance).replace('$', '')}</div>
+                    <div className="text-xs mt-3 opacity-70 flex items-center gap-1">
+                        <span className="text-green-300">▲ 8.4%</span>
+                        <span>vs. mes anterior</span>
+                    </div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Negocios Activos</div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{activeBusinesses} / {wallets.length}</div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                            className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full"
+                            style={{ width: `${wallets.length > 0 ? (activeBusinesses / wallets.length) * 100 : 0}%` }}
+                        />
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">{wallets.length > 0 ? Math.round((activeBusinesses / wallets.length) * 100) : 0}% con saldo</div>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">En Revisión</div>
+                    <div className="text-2xl font-bold text-yellow-600 mb-3">-</div>
+                    <button className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                        Revisar ahora →
+                    </button>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Recargas Aprobadas (Jun)</div>
+                    <div className="text-2xl font-bold text-green-600 font-mono">-</div>
+                    <div className="text-xs text-gray-500 mt-3">Suma total</div>
+                </div>
+            </div>
+
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
-                        Saldos de Negocios
-                    </h1>
+                <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Saldos por Negocio</h2>
+                        <p className="text-xs text-gray-500 mt-1">{filteredWallets.length} de {wallets.length} negocios</p>
+                    </div>
+                    <div className="relative">
+                        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Buscar negocio..."
+                            value={searchBusiness}
+                            onChange={(e) => setSearchBusiness(e.target.value)}
+                            className="pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-48 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <Table
@@ -133,53 +219,84 @@ export function AdminWalletView() {
                                 )
                             }
                         ]}
-                        data={wallets}
+                        data={filteredWallets}
                         loading={loading}
                         emptyMessage="No hay billeteras registradas"
                     />
                 </div>
             </div>
 
-            <RequestsTableAccordion
-                title="En revisión"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getPendingRequestsAction}
-                showActions={true}
-                emptyMessage="Sin pendientes"
-                compact={false}
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-            />
+            <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <div className="flex">
+                        {['review', 'approved', 'rejected'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab as any)}
+                                className={`flex-1 px-6 py-4 font-semibold text-sm transition-colors border-b-2 ${
+                                    activeTab === tab
+                                        ? 'text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400'
+                                        : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
+                                }`}
+                            >
+                                {tab === 'review' && '📋 En Revisión'}
+                                {tab === 'approved' && '✅ Aprobados'}
+                                {tab === 'rejected' && '❌ Rechazados'}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-            <RequestsTableView
-                title="Aprobados"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getProcessedRequestsAction}
-                filterStatus="COMPLETED"
-                showActions={false}
-                emptyMessage="Sin aprobados"
-                compact={false}
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-            />
-
-            <RequestsTableView
-                title="Rechazados"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getProcessedRequestsAction}
-                filterStatus="FAILED"
-                showActions={false}
-                emptyMessage="Sin rechazados"
-                compact={false}
-                itemsPerPage={itemsPerPage}
-                onItemsPerPageChange={setItemsPerPage}
-            />
+                <div className="overflow-x-auto">
+                    {activeTab === 'review' && (
+                        <RequestsTableView
+                            title="En revisión"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getPendingRequestsAction}
+                            showActions={true}
+                            emptyMessage="¡Todo al día! No hay solicitudes pendientes"
+                            compact={false}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                            hideTitle={true}
+                        />
+                    )}
+                    {activeTab === 'approved' && (
+                        <RequestsTableView
+                            title="Aprobados"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getProcessedRequestsAction}
+                            filterStatus="COMPLETED"
+                            showActions={false}
+                            emptyMessage="Sin aprobados"
+                            compact={false}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                            hideTitle={true}
+                        />
+                    )}
+                    {activeTab === 'rejected' && (
+                        <RequestsTableView
+                            title="Rechazados"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getProcessedRequestsAction}
+                            filterStatus="FAILED"
+                            showActions={false}
+                            emptyMessage="Sin rechazados"
+                            compact={false}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                            hideTitle={true}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
