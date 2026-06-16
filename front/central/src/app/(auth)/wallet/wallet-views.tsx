@@ -52,6 +52,8 @@ export function AdminWalletView() {
     const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('approved');
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);
     const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(new Set());
+    const [savingKPI, setSavingKPI] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -113,21 +115,26 @@ export function AdminWalletView() {
         }
     }, [wallets]);
 
-    useEffect(() => {
-        const saveKPISelection = async () => {
-            if (selectedBusinessesForKPI.size > 0) {
-                await updateWalletKPISelectionAction(Array.from(selectedBusinessesForKPI));
+    const handleSaveKPISelection = async () => {
+        setSavingKPI(true);
+        setSaveMessage(null);
+        try {
+            const res = await updateWalletKPISelectionAction(Array.from(selectedBusinessesForKPI));
+            if (res.success && res.data?.selected_business_ids) {
+                setSaveMessage({ type: 'success', text: 'Selección guardada exitosamente ✓' });
+                setTimeout(() => {
+                    setShowBusinessSelector(false);
+                    setSaveMessage(null);
+                }, 1500);
+            } else {
+                setSaveMessage({ type: 'error', text: 'Error al guardar. Intenta de nuevo.' });
             }
-        };
-
-        const timer = setTimeout(() => {
-            if (selectedBusinessesForKPI.size > 0) {
-                saveKPISelection();
-            }
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [selectedBusinessesForKPI]);
+        } catch (err) {
+            setSaveMessage({ type: 'error', text: 'Error de conexión. Intenta de nuevo.' });
+        } finally {
+            setSavingKPI(false);
+        }
+    };
 
     const filteredWallets = wallets.filter(w => {
         const businessName = businesses[w.BusinessID] || '';
@@ -231,15 +238,32 @@ export function AdminWalletView() {
                                     ))}
                                 </div>
                             </div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowBusinessSelector(false);
-                                }}
-                                className="w-full px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 rounded"
-                            >
-                                Cerrar
-                            </button>
+                            {saveMessage && (
+                                <div className={`mb-3 p-2 rounded text-xs font-medium text-center ${saveMessage.type === 'success' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'}`}>
+                                    {saveMessage.text}
+                                </div>
+                            )}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowBusinessSelector(false);
+                                    }}
+                                    className="flex-1 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-700 rounded"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSaveKPISelection();
+                                    }}
+                                    disabled={savingKPI}
+                                    className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 rounded"
+                                >
+                                    {savingKPI ? 'Guardando...' : 'Guardar'}
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
