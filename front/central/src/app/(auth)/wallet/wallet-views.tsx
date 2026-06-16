@@ -981,26 +981,37 @@ function RequestsTableView({
             label: 'Negocio',
             render: (val, row) => {
                 const request = row as any;
-                const wallet = allWallets.find(w => w.ID === val);
-
                 let businessId: number | null = null;
                 let businessName: string = '';
 
-                if (wallet) {
-                    businessId = wallet.BusinessID;
-                    businessName = businesses[wallet.BusinessID] || '';
-                }
-
-                if (!businessName && request.BusinessID) {
+                if (request.BusinessID) {
                     businessId = request.BusinessID;
                     businessName = businesses[request.BusinessID] || '';
+                }
+
+                if (!businessName) {
+                    const wallet = allWallets.find(w => w.ID === val);
+                    if (wallet) {
+                        businessId = wallet.BusinessID;
+                        businessName = businesses[wallet.BusinessID] || '';
+                    }
+                }
+
+                if (!businessName && request.business_id) {
+                    businessId = request.business_id;
+                    businessName = businesses[request.business_id] || '';
+                }
+
+                if (!businessName && request.businessId) {
+                    businessId = request.businessId;
+                    businessName = businesses[request.businessId] || '';
                 }
 
                 if (businessName) {
                     return <span className="font-medium text-gray-900 dark:text-white">{businessName}</span>;
                 }
 
-                return <span className="text-gray-500 dark:text-gray-400">{businessId ? `ID: ${businessId}` : '...'}</span>;
+                return <span className="text-gray-500 dark:text-gray-400">{businessId ? `ID: ${businessId}` : val}</span>;
             }
         },
         {
