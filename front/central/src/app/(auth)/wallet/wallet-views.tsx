@@ -979,13 +979,28 @@ function RequestsTableView({
         {
             key: 'WalletID',
             label: 'Negocio',
-            render: (val) => {
+            render: (val, row) => {
+                const request = row as any;
                 const wallet = allWallets.find(w => w.ID === val);
+
+                let businessId: number | null = null;
+                let businessName: string = '';
+
                 if (wallet) {
-                    const name = businesses[wallet.BusinessID];
-                    return <span className="font-medium text-gray-900 dark:text-white">{name || `ID: ${wallet.BusinessID}`}</span>;
+                    businessId = wallet.BusinessID;
+                    businessName = businesses[wallet.BusinessID] || '';
                 }
-                return <span className="text-gray-500 dark:text-gray-400">...</span>;
+
+                if (!businessName && request.BusinessID) {
+                    businessId = request.BusinessID;
+                    businessName = businesses[request.BusinessID] || '';
+                }
+
+                if (businessName) {
+                    return <span className="font-medium text-gray-900 dark:text-white">{businessName}</span>;
+                }
+
+                return <span className="text-gray-500 dark:text-gray-400">{businessId ? `ID: ${businessId}` : '...'}</span>;
             }
         },
         {
