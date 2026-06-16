@@ -1167,6 +1167,21 @@ function RequestsTableView({
             }
         },
         {
+            key: 'Reference',
+            label: 'Referencia',
+            render: (val) => {
+                const reference = val as string;
+                if (!reference) {
+                    return <span className="text-gray-400 dark:text-gray-500">-</span>;
+                }
+                return (
+                    <span className="text-gray-700 dark:text-gray-300 text-sm max-w-xs truncate block" title={reference}>
+                        {reference}
+                    </span>
+                );
+            }
+        },
+        {
             key: 'Amount',
             label: 'Monto',
             render: (val, row) => {
