@@ -1161,7 +1161,17 @@ function RequestsTableView({
         {
             key: 'Amount',
             label: 'Monto',
-            render: (val) => <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(val as number)}</span>
+            render: (val, row) => {
+                const amount = val as number;
+                const isIncome = row.Type === 'RECHARGE' || row.Type === 'income';
+                const color = isIncome ? '#16a34a' : '#dc2626';
+                const sign = isIncome ? '+' : '-';
+                return (
+                    <span className="font-bold font-mono" style={{ color }}>
+                        {sign}${formatCurrency(Math.abs(amount)).replace('$', '')}
+                    </span>
+                );
+            }
         },
     ];
 
