@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -265,6 +266,28 @@ func walletTxListToDomain(list []models.WalletTransaction) []*entities.WalletTra
 	return result
 }
 
+func walletKPISelectionToModel(e *entities.WalletKPISelection) *models.WalletKPISelection {
+	jsonBytes, _ := json.Marshal(e.SelectedBusinessIDs)
+	return &models.WalletKPISelection{
+		ID:                  e.ID,
+		SelectedBusinessIDs: datatypes.JSON(jsonBytes),
+	}
+}
+
+func walletKPISelectionToDomain(m *models.WalletKPISelection) *entities.WalletKPISelection {
+	var ids []uint
+	if m.SelectedBusinessIDs != nil && len(m.SelectedBusinessIDs) > 0 {
+		_ = json.Unmarshal(m.SelectedBusinessIDs, &ids)
+	}
+	if ids == nil {
+		ids = []uint{}
+	}
+	return &entities.WalletKPISelection{
+		ID:                  m.ID,
+		SelectedBusinessIDs: ids,
+	}
+}
+
 // Financial Stats
 
 func (r *Repository) GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error) {
@@ -404,4 +427,33 @@ func (r *Repository) GetFinancialStats(ctx context.Context, dto *dtos.FinancialS
 		TotalIncome: totalIncome,
 		Businesses:  businessList,
 	}, nil
+}
+
+func (r *Repository) GetWalletKPISelection(ctx context.Context) (*entities.WalletKPISelection, error) {
+	var m models.WalletKPISelection
+	err := r.db.Conn(ctx).First(&m).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &entities.WalletKPISelection{
+				ID:                  1,
+				SelectedBusinessIDs: []uint{},
+			}, nil
+		}
+		return nil, err
+	}
+	return walletKPISelectionToDomain(&m), nil
+}
+
+func (r *Repository) UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error {
+	m := walletKPISelectionToModel(selection)
+	result := r.db.Conn(ctx).Model(&models.WalletKPISelection{}).Where("id = ?", m.ID).Update("selected_business_ids", m.SelectedBusinessIDs)
+	if result.Error != nil {
+		return fmt.Errorf("failed to update wallet kpi selection: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		if err := r.db.Conn(ctx).Create(m).Error; err != nil {
+			return fmt.Errorf("failed to create wallet kpi selection: %w", err)
+		}
+	}
+	return nil
 }
