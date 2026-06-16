@@ -1,15 +1,22 @@
 'use server';
 
-import { API_BASE_URL } from '@/shared/utils/constants';
-import { getToken } from '@/services/auth/infra/actions/auth-token';
+import { cookies } from 'next/headers';
+import { env } from '@/shared/config/env';
+
+async function getAuthHeader() {
+	const cookieStore = await cookies();
+	const token = cookieStore.get('session_token')?.value;
+	return {
+		'Authorization': `Bearer ${token}`,
+		'Content-Type': 'application/json',
+	};
+}
 
 export async function getWalletKPISelectionAction() {
 	try {
-		const token = await getToken();
-		const res = await fetch(`${API_BASE_URL}/pay/wallet/admin/kpi-selection`, {
-			headers: {
-				Authorization: `Bearer ${token}`,
-			},
+		const headers = await getAuthHeader();
+		const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/kpi-selection`, {
+			headers,
 		});
 
 		if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
@@ -21,13 +28,10 @@ export async function getWalletKPISelectionAction() {
 
 export async function updateWalletKPISelectionAction(selectedBusinessIDs: number[]) {
 	try {
-		const token = await getToken();
-		const res = await fetch(`${API_BASE_URL}/pay/wallet/admin/kpi-selection`, {
+		const headers = await getAuthHeader();
+		const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/kpi-selection`, {
 			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-			},
+			headers,
 			body: JSON.stringify({ selected_business_ids: selectedBusinessIDs }),
 		});
 
