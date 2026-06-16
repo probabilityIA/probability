@@ -16,6 +16,7 @@ import {
     adminAdjustBalanceAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
+import { getWalletKPISelectionAction, updateWalletKPISelectionAction } from '@/services/modules/wallet/infra/actions/wallet-kpi-selection';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { VirtualCard } from './virtual-card';
@@ -50,18 +51,7 @@ export function AdminWalletView() {
     const [searchBusiness, setSearchBusiness] = useState('');
     const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('approved');
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);
-    const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(() => {
-        if (typeof window === 'undefined') return new Set();
-        const saved = localStorage.getItem('selectedBusinessesForKPI');
-        if (saved) {
-            try {
-                return new Set(JSON.parse(saved));
-            } catch {
-                return new Set();
-            }
-        }
-        return new Set();
-    });
+    const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(new Set());
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -100,16 +90,34 @@ export function AdminWalletView() {
     }, [fetchWalletsAndBusinesses]);
 
     useEffect(() => {
-        if (wallets.length > 0 && selectedBusinessesForKPI.size === 0) {
-            const saved = localStorage.getItem('selectedBusinessesForKPI');
-            if (!saved) {
+        const loadKPISelection = async () => {
+            const res = await getWalletKPISelectionAction();
+            if (res.success && res.data?.selected_business_ids) {
+                setSelectedBusinessesForKPI(new Set(res.data.selected_business_ids));
+            } else if (wallets.length > 0) {
                 setSelectedBusinessesForKPI(new Set(wallets.map(w => w.BusinessID)));
             }
+        };
+
+        if (wallets.length > 0) {
+            loadKPISelection();
         }
     }, [wallets]);
 
     useEffect(() => {
-        localStorage.setItem('selectedBusinessesForKPI', JSON.stringify(Array.from(selectedBusinessesForKPI)));
+        const saveKPISelection = async () => {
+            if (selectedBusinessesForKPI.size > 0) {
+                await updateWalletKPISelectionAction(Array.from(selectedBusinessesForKPI));
+            }
+        };
+
+        const timer = setTimeout(() => {
+            if (selectedBusinessesForKPI.size > 0) {
+                saveKPISelection();
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
     }, [selectedBusinessesForKPI]);
 
     const filteredWallets = wallets.filter(w => {
