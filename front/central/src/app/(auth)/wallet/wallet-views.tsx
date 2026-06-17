@@ -433,17 +433,6 @@ interface BusinessWalletViewProps {
 
 export function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProps = {}) {
     const { permissions, isSuperAdmin } = usePermissions();
-    const [resolvedBusinessId, setResolvedBusinessId] = useState<number | undefined>(businessId);
-
-    useEffect(() => {
-        if (businessId) {
-            setResolvedBusinessId(businessId);
-        } else if (!isSuperAdmin) {
-            const user = CookieStorage.getUser();
-            setResolvedBusinessId(user?.business_id);
-        }
-    }, [businessId, isSuperAdmin]);
-
     const isSuperAdminView = !!businessId;
 
     const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -466,18 +455,18 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
     const fetchHistory = useCallback(async () => {
         try {
-            const res = await getWalletHistoryAction(resolvedBusinessId);
+            const res = await getWalletHistoryAction(businessId);
             if (res.success) {
                 setHistory(res.data || []);
             }
         } catch (e) {
             console.error(e);
         }
-    }, [resolvedBusinessId]);
+    }, [businessId]);
 
     const fetchBalance = useCallback(async () => {
         try {
-            const res = await getWalletBalanceAction(resolvedBusinessId);
+            const res = await getWalletBalanceAction(businessId);
             if (!res.success) throw new Error(res.error || 'Failed to fetch balance');
             setWallet(res.data || null);
         } catch (err: any) {
@@ -485,7 +474,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
         } finally {
             setLoading(false);
         }
-    }, [resolvedBusinessId]);
+    }, [businessId]);
 
     useEffect(() => {
         setLoading(true);
@@ -617,7 +606,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p className="text-sm" style={{ color: 'var(--color-primary-900)' }}>
-                        Vista de billetera de <strong>{displayName}</strong> (ID: {resolvedBusinessId}) — modo super admin
+                        Vista de billetera de <strong>{displayName}</strong> (ID: {businessId}) — modo super admin
                     </p>
                 </div>
             )}
@@ -791,7 +780,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                 open={boldProcessing !== null}
                 orderId={boldProcessing?.orderId || ''}
                 amount={boldProcessing?.amount || 0}
-                businessId={resolvedBusinessId}
+                businessId={businessId}
                 pollingEnabled={boldProcessing?.pollingEnabled ?? false}
                 onClose={() => {
                     setBoldProcessing(null);
