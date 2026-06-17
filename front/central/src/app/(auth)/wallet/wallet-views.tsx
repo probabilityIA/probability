@@ -951,20 +951,21 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                                             {dayTxns.map((tx, idx) => {
                                                 const isIncome = tx.Type === 'RECHARGE';
                                                 const statusColor = tx.Status === 'COMPLETED' ? '#16a34a' : tx.Status === 'FAILED' ? '#dc2626' : '#f59e0b';
-                                                const icon = isIncome ? '✓' : '−';
+                                                const icon = isIncome ? '✓' : '🛒';
                                                 const iconBg = isIncome ? '#dcfce7' : '#f5f5f5';
                                                 const time = new Date(tx.CreatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+                                                const concept = tx.Concept ? (CONCEPT_LABELS[tx.Concept] || tx.Concept) : '';
 
                                                 return (
                                                     <div key={idx} className="flex gap-4 items-center pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: iconBg, color: statusColor }}>
-                                                            <span className="font-bold">{icon}</span>
+                                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-base" style={{ backgroundColor: iconBg }}>
+                                                            <span>{icon}</span>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                                {isIncome ? 'Recarga' : 'Consumo de saldo'}
+                                                                {isIncome ? 'Recarga' : `Consumo de saldo${concept ? ` - ${concept}` : ''}`}
                                                             </p>
-                                                            <div className="flex gap-2 items-center mt-1">
+                                                            <div className="flex gap-2 items-center mt-1 flex-wrap">
                                                                 <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{time}</span>
                                                                 {tx.integration_name && (
                                                                     <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
