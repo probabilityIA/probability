@@ -434,8 +434,6 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     const { permissions, isSuperAdmin } = usePermissions();
     const isSuperAdminView = !!businessId;
 
-    console.log('BusinessWalletView render:', { businessId, isSuperAdmin, isSuperAdminView });
-
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [loading, setLoading] = useState(true);
     const [rechargeAmount, setRechargeAmount] = useState<string>('');
@@ -467,13 +465,11 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
     const fetchBalance = useCallback(async () => {
         try {
-            console.log('fetchBalance called with businessId:', businessId);
             const res = await getWalletBalanceAction(businessId);
-            console.log('getWalletBalanceAction response:', res);
             if (!res.success) throw new Error(res.error || 'Failed to fetch balance');
             setWallet(res.data || null);
         } catch (err: any) {
-            console.error('fetchBalance error:', err);
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -503,7 +499,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
         setMessage(null);
 
         try {
-            const targetBusinessId = resolvedBusinessId;
+            const targetBusinessId = businessId;
 
             console.log('Iniciando recarga:', { amount: rechargeAmount, businessId: targetBusinessId });
 
@@ -552,7 +548,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
         });
 
         try {
-            const targetBusinessId = resolvedBusinessId;
+            const targetBusinessId = businessId;
             const res = await getBoldSignatureAction(Number(rechargeAmount), targetBusinessId);
 
             if (!res?.success) {
