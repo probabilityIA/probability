@@ -81,7 +81,6 @@ export function AdminWalletView() {
                 });
 
                 setBusinesses(businessMap);
-                console.log('Negocios cargados:', businessMap);
             }
         } catch (err: any) {
             setError(getActionError(err));
@@ -92,7 +91,7 @@ export function AdminWalletView() {
 
     useEffect(() => {
         fetchWalletsAndBusinesses();
-    }, [fetchWalletsAndBusinesses]);
+    }, []);
 
     useEffect(() => {
         const loadKPISelection = async () => {
