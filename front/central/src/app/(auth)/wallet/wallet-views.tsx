@@ -1104,36 +1104,50 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
 
 function RechargeWalletButton({ businessId, businessName, onSuccess }: { businessId: number, businessName: string, onSuccess: () => void }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [mode, setMode] = useState<'add' | 'subtract'>('add');
     const [amount, setAmount] = useState('');
     const [reason, setReason] = useState('');
     const [concept, setConcept] = useState('RECHARGE');
     const [loading, setLoading] = useState(false);
 
-    const handleRecharge = async () => {
+    const isSubtract = mode === 'subtract';
+
+    const reset = () => {
+        setMode('add');
+        setAmount('');
+        setReason('');
+        setConcept('RECHARGE');
+    };
+
+    const changeMode = (next: 'add' | 'subtract') => {
+        setMode(next);
+        setConcept(next === 'add' ? 'RECHARGE' : '');
+    };
+
+    const handleSubmit = async () => {
         if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-            alert('Ingresa un monto válido');
+            alert('Ingresa un monto válido (mayor a 0)');
             return;
         }
         if (!reason.trim()) {
-            alert('Ingresa un motivo para la recarga');
+            alert('Ingresa un motivo');
             return;
         }
         if (!concept) {
             alert('Selecciona una categoria');
             return;
         }
+        const signedAmount = isSubtract ? -Number(amount) : Number(amount);
         setLoading(true);
         try {
-            const res = await adminAdjustBalanceAction(businessId, Number(amount), reason, concept);
+            const res = await adminAdjustBalanceAction(businessId, signedAmount, reason, concept);
             if (res.success) {
                 setIsOpen(false);
-                setAmount('');
-                setReason('');
-                setConcept('RECHARGE');
+                reset();
                 onSuccess();
-                alert('Saldo agregado exitosamente');
+                alert(isSubtract ? 'Saldo descontado exitosamente' : 'Saldo agregado exitosamente');
             } else {
-                alert(res.error || 'Error al recargar');
+                alert(res.error || 'Error al ajustar el saldo');
             }
         } catch (e: any) {
             alert(`Error al procesar: ${e.message || 'Error desconocido'}`);
@@ -1146,15 +1160,31 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-gray-900 dark:bg-gray-800 text-white hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 text-sm font-semibold rounded-lg text-white hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#0f1729' }}
             >
-                + Agregar Saldo
+                Ajustar saldo
             </button>
-            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Agregar saldo a ${businessName}`}>
+            <Modal isOpen={isOpen} onClose={() => { setIsOpen(false); reset(); }} title={`Ajustar saldo de ${businessName}`}>
                 <div className="space-y-4 p-4">
+                    <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-gray-100 dark:bg-gray-800">
+                        <button
+                            type="button"
+                            onClick={() => changeMode('add')}
+                            className={`py-2 text-sm font-semibold rounded-md transition-colors ${!isSubtract ? 'bg-emerald-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+                        >
+                            + Agregar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => changeMode('subtract')}
+                            className={`py-2 text-sm font-semibold rounded-md transition-colors ${isSubtract ? 'bg-red-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+                        >
+                            - Descontar
+                        </button>
+                    </div>
                     <Input
-                        label="Monto a agregar"
+                        label={isSubtract ? 'Monto a descontar' : 'Monto a agregar'}
                         type="number"
                         value={amount}
                         onChange={e => setAmount(e.target.value)}
@@ -1174,15 +1204,22 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
                         </select>
                     </div>
                     <Input
-                        label="Motivo de la recarga"
+                        label="Motivo"
                         type="text"
                         value={reason}
                         onChange={e => setReason(e.target.value)}
-                        placeholder="Ej: Ajuste por error, promoción, etc."
+                        placeholder={isSubtract ? 'Ej: Cobro de mensualidad, uso extra, etc.' : 'Ej: Ajuste por error, promoción, etc.'}
                     />
+                    <div className={`text-sm font-semibold ${isSubtract ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {amount && !isNaN(Number(amount)) && Number(amount) > 0
+                            ? `${isSubtract ? '-' : '+'} $${Number(amount).toLocaleString('es-CO')}`
+                            : ''}
+                    </div>
                     <div className="flex justify-end gap-2">
-                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleRecharge} loading={loading}>Agregar Saldo</Button>
+                        <Button variant="secondary" onClick={() => { setIsOpen(false); reset(); }}>Cancelar</Button>
+                        <Button variant={isSubtract ? 'danger' : 'primary'} onClick={handleSubmit} loading={loading}>
+                            {isSubtract ? 'Descontar saldo' : 'Agregar saldo'}
+                        </Button>
                     </div>
                 </div>
             </Modal>
