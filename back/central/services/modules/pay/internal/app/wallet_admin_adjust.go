@@ -30,15 +30,22 @@ func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.Admin
 		amount = -amount // Convertir a positivo para la transacción
 	}
 
+	concept := dto.Concept
+	if !entities.ValidWalletTxConcept(concept) {
+		concept = entities.WalletTxConceptOther
+	}
+
 	// Crear transacción
 	tx := &entities.WalletTransaction{
-		ID:        uuid.New(),
-		WalletID:  wallet.ID,
-		Amount:    amount,
-		Type:      txType,
-		Status:    entities.WalletTxStatusCompleted,
-		Reference: fmt.Sprintf("ADMIN_ADJ_%s: %s", uuid.New().String()[:8], dto.Reference),
-		CreatedAt: time.Now(),
+		ID:         uuid.New(),
+		WalletID:   wallet.ID,
+		Amount:     amount,
+		Type:       txType,
+		Status:     entities.WalletTxStatusCompleted,
+		Concept:    concept,
+		Reference:  fmt.Sprintf("ADMIN_ADJ_%s: %s", uuid.New().String()[:8], dto.Reference),
+		BusinessID: dto.BusinessID,
+		CreatedAt:  time.Now(),
 	}
 
 	if err := uc.repo.CreateWalletTransaction(ctx, tx); err != nil {

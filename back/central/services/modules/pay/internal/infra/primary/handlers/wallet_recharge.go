@@ -43,6 +43,7 @@ func (h *walletHandler) RechargeWallet(c *gin.Context) {
 		BusinessID: businessID,
 		Amount:     req.Amount,
 		Reference:  req.Reference,
+		Concept:    req.Concept,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

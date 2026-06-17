@@ -3,8 +3,6 @@
 import { cookies } from 'next/headers';
 import { env } from '@/shared/config/env';
 
-// Define types locally if not yet available in shared types, or import if they exist.
-// Based on the existing page.tsx:
 export interface Wallet {
     ID: string;
     BusinessID: number;
@@ -16,8 +14,28 @@ export interface WalletTransactionRequest {
     WalletID: string;
     Amount: number;
     CreatedAt: string;
-    // Add other fields as necessary from the backend response
+    Concept: string;
 }
+
+export const CONCEPT_LABELS: Record<string, string> = {
+    GUIDE: 'Guia',
+    SUBSCRIPTION: 'Mensualidad',
+    EXTRA_USAGE: 'Uso extra',
+    RECHARGE: 'Recarga',
+    REFUND: 'Reembolso',
+    ADJUSTMENT: 'Ajuste',
+    OTHER: 'Otro',
+};
+
+export const CONCEPT_OPTIONS: { value: string; label: string }[] = [
+    { value: 'GUIDE', label: 'Guia' },
+    { value: 'SUBSCRIPTION', label: 'Mensualidad' },
+    { value: 'EXTRA_USAGE', label: 'Uso extra' },
+    { value: 'RECHARGE', label: 'Recarga' },
+    { value: 'REFUND', label: 'Reembolso' },
+    { value: 'ADJUSTMENT', label: 'Ajuste' },
+    { value: 'OTHER', label: 'Otro' },
+];
 
 export interface BusinessFinancialStats {
     business_id: number;
@@ -177,12 +195,13 @@ export async function getWalletBalanceAction(businessId?: number) {
  * @param businessId Optional - super admin can recharge on behalf of a specific business
  * @param reason Optional - reason/note for the recharge
  */
-export async function rechargeWalletAction(amount: number, businessId?: number, reason?: string) {
+export async function rechargeWalletAction(amount: number, businessId?: number, reason?: string, concept?: string) {
     try {
         const headers = await getAuthHeader();
         const body: any = { amount };
         if (businessId) body.business_id = businessId;
         if (reason) body.reference = reason;
+        if (concept) body.concept = concept;
 
         const res = await fetch(`${env.API_BASE_URL}/pay/wallet/recharge`, {
             method: 'POST',
@@ -206,13 +225,13 @@ export async function rechargeWalletAction(amount: number, businessId?: number, 
 /**
  * Manual debit from a business wallet (Admin only)
  */
-export async function manualDebitAction(businessId: number, amount: number, reference: string) {
+export async function manualDebitAction(businessId: number, amount: number, reference: string, concept: string) {
     try {
         const headers = await getAuthHeader();
         const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/manual-debit`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ business_id: businessId, amount, reference })
+            body: JSON.stringify({ business_id: businessId, amount, reference, concept })
         });
 
         if (!res.ok) {
@@ -261,13 +280,13 @@ export async function getWalletHistoryAction(businessId?: number) {
  * @param amount - Amount to add (positive) or subtract (negative)
  * @param reference - Reason for adjustment
  */
-export async function adminAdjustBalanceAction(businessId: number, amount: number, reference: string) {
+export async function adminAdjustBalanceAction(businessId: number, amount: number, reference: string, concept: string) {
     try {
         const headers = await getAuthHeader();
         const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/adjust-balance`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ business_id: businessId, amount, reference })
+            body: JSON.stringify({ business_id: businessId, amount, reference, concept })
         });
 
         if (!res.ok) {

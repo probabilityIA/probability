@@ -226,6 +226,7 @@ func walletTxToModel(e *entities.WalletTransaction) *models.WalletTransaction {
 		Amount:               e.Amount,
 		Type:                 e.Type,
 		Status:               e.Status,
+		Concept:              e.Concept,
 		Reference:            e.Reference,
 		QrCode:               e.QrCode,
 		PaymentTransactionID: e.PaymentTransactionID,
@@ -235,6 +236,7 @@ func walletTxToModel(e *entities.WalletTransaction) *models.WalletTransaction {
 		GatewayRequest:       datatypes.JSON(e.GatewayRequest),
 		GatewayResponse:      datatypes.JSON(e.GatewayResponse),
 		CreatedAt:            e.CreatedAt,
+		BusinessID:           e.BusinessID,
 	}
 }
 
@@ -245,6 +247,7 @@ func walletTxToDomain(m *models.WalletTransaction) *entities.WalletTransaction {
 		Amount:               m.Amount,
 		Type:                 m.Type,
 		Status:               m.Status,
+		Concept:              m.Concept,
 		Reference:            m.Reference,
 		QrCode:               m.QrCode,
 		PaymentTransactionID: m.PaymentTransactionID,

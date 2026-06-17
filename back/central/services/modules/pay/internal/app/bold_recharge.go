@@ -78,10 +78,12 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 		Amount:            amount,
 		Type:              entities.WalletTxTypeRecharge,
 		Status:            entities.WalletTxStatusPending,
+		Concept:           entities.WalletTxConceptRecharge,
 		Reference:         orderID,
 		IntegrationTypeID: integrationTypeID,
 		IntegrationID:     integrationID,
 		GatewayRequest:    gatewayRequest,
+		BusinessID:        wallet.BusinessID,
 	}
 	if err := uc.repo.CreateWalletTransaction(ctx, pendingTx); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create pending Bold wallet transaction")

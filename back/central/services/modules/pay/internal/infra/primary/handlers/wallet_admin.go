@@ -104,6 +104,7 @@ func (h *walletHandler) ManualDebit(c *gin.Context) {
 		BusinessID: req.BusinessID,
 		Amount:     req.Amount,
 		Reference:  req.Reference,
+		Concept:    req.Concept,
 	}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -140,6 +141,7 @@ func (h *walletHandler) AdminAdjustBalance(c *gin.Context) {
 		BusinessID uint    `json:"business_id" binding:"required"`
 		Amount     float64 `json:"amount" binding:"required"`
 		Reference  string  `json:"reference" binding:"required,max=255"`
+		Concept    string  `json:"concept" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -151,6 +153,7 @@ func (h *walletHandler) AdminAdjustBalance(c *gin.Context) {
 		BusinessID: req.BusinessID,
 		Amount:     req.Amount,
 		Reference:  req.Reference,
+		Concept:    req.Concept,
 	}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

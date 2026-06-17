@@ -18,6 +18,7 @@ type WalletTransactionResponse struct {
 	Amount               float64   `json:"Amount"`
 	Type                 string    `json:"Type"`
 	Status               string    `json:"Status"`
+	Concept              string    `json:"Concept"`
 	Reference            string    `json:"Reference"`
 	QrCode               string    `json:"QrCode"`
 	PaymentTransactionID *uint     `json:"PaymentTransactionID,omitempty"`

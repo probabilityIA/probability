@@ -35,13 +35,20 @@ func (uc *walletUseCase) RechargeWallet(ctx context.Context, dto *dtos.RechargeW
 	// En producción, esta llave vendría de la API de Nequi
 	nequiKey := fmt.Sprintf("%010d", dto.BusinessID*1000000+uint(dto.Amount)%1000000)
 
+	concept := dto.Concept
+	if !entities.ValidWalletTxConcept(concept) {
+		concept = entities.WalletTxConceptRecharge
+	}
+
 	tx := &entities.WalletTransaction{
-		WalletID:  wallet.ID,
-		Amount:    dto.Amount,
-		Type:      entities.WalletTxTypeRecharge,
-		Status:    entities.WalletTxStatusPending,
-		Reference: reference,
-		QrCode:    nequiKey,
+		WalletID:   wallet.ID,
+		Amount:     dto.Amount,
+		Type:       entities.WalletTxTypeRecharge,
+		Status:     entities.WalletTxStatusPending,
+		Concept:    concept,
+		Reference:  reference,
+		QrCode:     nequiKey,
+		BusinessID: dto.BusinessID,
 	}
 
 	if err := uc.repo.CreateWalletTransaction(ctx, tx); err != nil {

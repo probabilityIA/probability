@@ -19,6 +19,28 @@ const (
 	WalletTxStatusFailed    = "FAILED"
 )
 
+// Wallet conceptos (categoría) de transacción
+const (
+	WalletTxConceptGuide        = "GUIDE"
+	WalletTxConceptSubscription = "SUBSCRIPTION"
+	WalletTxConceptExtraUsage   = "EXTRA_USAGE"
+	WalletTxConceptRecharge     = "RECHARGE"
+	WalletTxConceptRefund       = "REFUND"
+	WalletTxConceptAdjustment   = "ADJUSTMENT"
+	WalletTxConceptOther        = "OTHER"
+)
+
+// ValidWalletTxConcept indica si el concepto es uno de los permitidos
+func ValidWalletTxConcept(c string) bool {
+	switch c {
+	case WalletTxConceptGuide, WalletTxConceptSubscription, WalletTxConceptExtraUsage,
+		WalletTxConceptRecharge, WalletTxConceptRefund, WalletTxConceptAdjustment, WalletTxConceptOther:
+		return true
+	default:
+		return false
+	}
+}
+
 // Wallet es la billetera de un negocio
 type Wallet struct {
 	ID         uuid.UUID
@@ -35,6 +57,7 @@ type WalletTransaction struct {
 	Amount               float64
 	Type                 string // RECHARGE|USAGE
 	Status               string // PENDING|COMPLETED|FAILED
+	Concept              string // GUIDE|SUBSCRIPTION|EXTRA_USAGE|RECHARGE|REFUND|ADJUSTMENT|OTHER
 	Reference            string
 	QrCode               string
 	PaymentTransactionID *uint

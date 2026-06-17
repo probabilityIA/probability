@@ -26,6 +26,7 @@ func WalletTxToResponse(tx *entities.WalletTransaction) *response.WalletTransact
 		Amount:               tx.Amount,
 		Type:                 tx.Type,
 		Status:               tx.Status,
+		Concept:              tx.Concept,
 		Reference:            tx.Reference,
 		QrCode:               tx.QrCode,
 		PaymentTransactionID: tx.PaymentTransactionID,

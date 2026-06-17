@@ -5,4 +5,5 @@ type AdminAdjustBalanceDTO struct {
 	BusinessID uint
 	Amount     float64 // Positivo = agregar, Negativo = restar
 	Reference  string  // Motivo del ajuste
+	Concept    string
 }

@@ -22,14 +22,21 @@ func (uc *walletUseCase) ManualDebit(ctx context.Context, dto *dtos.ManualDebitD
 		return err
 	}
 
+	concept := dto.Concept
+	if !entities.ValidWalletTxConcept(concept) {
+		concept = entities.WalletTxConceptOther
+	}
+
 	tx := &entities.WalletTransaction{
-		WalletID:  wallet.ID,
-		Amount:    dto.Amount,
-		Type:      entities.WalletTxTypeUsage,
-		Status:    entities.WalletTxStatusCompleted,
-		Reference: "MAN_DEB_" + uuid.New().String()[:8] + ": " + dto.Reference,
-		UserID:    dto.UserID,
-		CreatedAt: time.Now(),
+		WalletID:   wallet.ID,
+		Amount:     dto.Amount,
+		Type:       entities.WalletTxTypeUsage,
+		Status:     entities.WalletTxStatusCompleted,
+		Concept:    concept,
+		Reference:  "MAN_DEB_" + uuid.New().String()[:8] + ": " + dto.Reference,
+		UserID:     dto.UserID,
+		BusinessID: dto.BusinessID,
+		CreatedAt:  time.Now(),
 	}
 
 	if err := uc.repo.CreateWalletTransaction(ctx, tx); err != nil {
@@ -60,6 +67,7 @@ func (uc *walletUseCase) DebitForGuide(ctx context.Context, dto *dtos.DebitForGu
 		BusinessID: dto.BusinessID,
 		Amount:     dto.Amount,
 		Reference:  fmt.Sprintf("Guide generation: %s", dto.TrackingNumber),
+		Concept:    entities.WalletTxConceptGuide,
 		UserID:     dto.UserID,
 	})
 }

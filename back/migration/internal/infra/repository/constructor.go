@@ -23,6 +23,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWalletTxBusinessID(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateWalletTxConcept(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateWalletKPISelection(ctx); err != nil {
 		return err
 	}

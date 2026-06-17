@@ -5,6 +5,7 @@ type RechargeWalletDTO struct {
 	BusinessID uint
 	Amount     float64
 	Reference  string // Motivo/razón de la recarga
+	Concept    string
 }
 
 // ManualDebitDTO datos para débito manual (admin)
@@ -12,6 +13,7 @@ type ManualDebitDTO struct {
 	BusinessID uint
 	Amount     float64
 	Reference  string
+	Concept    string
 	UserID     *uint
 }
 

@@ -5,6 +5,7 @@ type RechargeWalletRequest struct {
 	Amount     float64 `json:"amount" binding:"required"`
 	BusinessID *uint   `json:"business_id"` // Requerido para super admin
 	Reference  string  `json:"reference"`   // Motivo/razón de la recarga
+	Concept    string  `json:"concept"`
 }
 
 // ManualDebitRequest cuerpo de petición para débito manual (admin)
@@ -12,6 +13,7 @@ type ManualDebitRequest struct {
 	BusinessID uint    `json:"business_id" binding:"required"`
 	Amount     float64 `json:"amount" binding:"required"`
 	Reference  string  `json:"reference"`
+	Concept    string  `json:"concept" binding:"required"`
 }
 
 // DebitForGuideRequest cuerpo de petición para débito por guía

@@ -38,6 +38,7 @@ type WalletTransaction struct {
 	IntegrationTypeID    *uint          `gorm:"index"`
 	IntegrationID        *uint          `gorm:"index"`
 	ShipmentID           *uint          `gorm:"index"`
+	Concept              string         `gorm:"column:concept;type:varchar(50);index"`
 	GatewayRequest       datatypes.JSON `gorm:"type:jsonb"`
 	GatewayResponse      datatypes.JSON `gorm:"type:jsonb"`
 	CreatedAt            time.Time
