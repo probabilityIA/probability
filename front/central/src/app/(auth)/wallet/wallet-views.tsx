@@ -14,10 +14,9 @@ import {
     getWalletHistoryAction,
     clearRechargeHistoryAction,
     adminAdjustBalanceAction,
-    CONCEPT_LABELS,
-    CONCEPT_OPTIONS,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
+import { CONCEPT_LABELS, CONCEPT_OPTIONS } from '@/services/modules/wallet/domain/concept';
 import { getWalletKPISelectionAction, updateWalletKPISelectionAction } from '@/services/modules/wallet/infra/actions/wallet-kpi-selection';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { usePermissions } from '@/shared/contexts/permissions-context';
