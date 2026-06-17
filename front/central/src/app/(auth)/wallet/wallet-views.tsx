@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Spinner, Button, Input, Table, TableColumn, Alert, Modal } from '@/shared/ui';
-import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { PaymentMethodSelectorModal } from '@/services/modules/pay/ui';
 import {
     getWalletsAction,
