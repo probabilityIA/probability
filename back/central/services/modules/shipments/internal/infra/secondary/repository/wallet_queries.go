@@ -41,6 +41,7 @@ func (r *Repository) DebitWalletForGuide(ctx context.Context, businessID uint, a
 		Status:     "COMPLETED",
 		Reference:  fmt.Sprintf("MAN_DEB_%s: Guide generation: %s", uuid.New().String()[:8], trackingNumber),
 		ShipmentID: shipmentID,
+		BusinessID: businessID,
 		CreatedAt:  time.Now(),
 	}
 
