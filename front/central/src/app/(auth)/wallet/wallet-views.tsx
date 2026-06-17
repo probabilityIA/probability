@@ -864,22 +864,45 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
             </Modal>
 
             <div className="mt-12 space-y-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
                         Historial de Transacciones
                     </h2>
                 </div>
 
-                <div className="space-y-8">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+                        {(['all', 'completed', 'pending'] as const).map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setActiveTab(filter as any)}
+                                className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-4 ${
+                                    activeTab === filter
+                                        ? 'border-violet-600 text-violet-600'
+                                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                }`}
+                            >
+                                {filter === 'all' ? 'Todas' : filter === 'completed' ? 'Completadas' : 'Pendientes'}
+                            </button>
+                        ))}
+                    </div>
+
                     <HistoryTable
-                        title="Transacciones Recientes / Procesadas"
-                        data={history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')}
-                        emptyMessage="No hay transacciones procesadas"
-                    />
-                    <HistoryTable
-                        title="Transacciones Pendientes"
-                        data={history.filter(t => t.Status === 'PENDING')}
-                        emptyMessage="No hay transacciones pendientes"
+                        title=""
+                        data={
+                            activeTab === 'all'
+                                ? history
+                                : activeTab === 'completed'
+                                ? history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')
+                                : history.filter(t => t.Status === 'PENDING')
+                        }
+                        emptyMessage={
+                            activeTab === 'all'
+                                ? 'No hay transacciones'
+                                : activeTab === 'completed'
+                                ? 'No hay transacciones completadas'
+                                : 'No hay transacciones pendientes'
+                        }
                     />
                 </div>
             </div>
