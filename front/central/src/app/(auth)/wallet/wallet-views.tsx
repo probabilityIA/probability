@@ -451,6 +451,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
     const [history, setHistory] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'pending'>('all');
+    const [histView, setHistView] = useState<'timeline' | 'table'>('timeline');
 
     const fetchHistory = useCallback(async () => {
         try {
@@ -596,6 +597,37 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     if (loading && !wallet) return <div className="p-8 text-center"><Spinner /></div>;
 
     const displayName = businessName || permissions?.business_name || '....';
+
+    const groupTransactionsByDay = (txns: any[]) => {
+        const grouped: { [key: string]: any[] } = {};
+        txns.forEach(tx => {
+            const date = new Date(tx.CreatedAt);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let dayLabel = '';
+            if (date.toDateString() === today.toDateString()) {
+                dayLabel = 'Hoy';
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                dayLabel = 'Ayer';
+            } else {
+                dayLabel = date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+            }
+
+            if (!grouped[dayLabel]) grouped[dayLabel] = [];
+            grouped[dayLabel].push(tx);
+        });
+        return grouped;
+    };
+
+    const filteredHistory = activeTab === 'all'
+        ? history
+        : activeTab === 'completed'
+        ? history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')
+        : history.filter(t => t.Status === 'PENDING');
+
+    const groupedByDay = groupTransactionsByDay(filteredHistory);
 
     return (
         <>
@@ -874,39 +906,102 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                 </div>
 
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-                        {(['all', 'completed', 'pending'] as const).map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setActiveTab(filter as any)}
-                                className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-4 ${
-                                    activeTab === filter
-                                        ? 'border-violet-600 text-violet-600'
-                                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                }`}
-                            >
-                                {filter === 'all' ? 'Todas' : filter === 'completed' ? 'Completadas' : 'Pendientes'}
-                            </button>
-                        ))}
+                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 justify-between items-center flex-wrap">
+                        <div className="flex gap-3">
+                            {(['all', 'completed', 'pending'] as const).map((filter) => (
+                                <button
+                                    key={filter}
+                                    onClick={() => setActiveTab(filter as any)}
+                                    className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-4 ${
+                                        activeTab === filter
+                                            ? 'border-violet-600 text-violet-600'
+                                            : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {filter === 'all' ? 'Todas' : filter === 'completed' ? 'Completadas' : 'Pendientes'}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                            {(['timeline', 'table'] as const).map((view) => (
+                                <button
+                                    key={view}
+                                    onClick={() => setHistView(view)}
+                                    className={`px-3 py-1 text-xs font-medium rounded transition ${
+                                        histView === view
+                                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                                            : 'text-gray-600 dark:text-gray-400'
+                                    }`}
+                                >
+                                    {view === 'timeline' ? 'Timeline' : 'Tabla'}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <HistoryTable
-                        title=""
-                        data={
-                            activeTab === 'all'
-                                ? history
-                                : activeTab === 'completed'
-                                ? history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')
-                                : history.filter(t => t.Status === 'PENDING')
-                        }
-                        emptyMessage={
-                            activeTab === 'all'
-                                ? 'No hay transacciones'
-                                : activeTab === 'completed'
-                                ? 'No hay transacciones completadas'
-                                : 'No hay transacciones pendientes'
-                        }
-                    />
+                    {histView === 'timeline' ? (
+                        <div className="space-y-6">
+                            {Object.keys(groupedByDay).length === 0 ? (
+                                <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay transacciones</p>
+                            ) : (
+                                Object.entries(groupedByDay).map(([dayLabel, dayTxns]) => (
+                                    <div key={dayLabel}>
+                                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">{dayLabel}</h4>
+                                        <div className="space-y-3">
+                                            {dayTxns.map((tx, idx) => {
+                                                const isIncome = tx.Type === 'RECHARGE';
+                                                const statusColor = tx.Status === 'COMPLETED' ? '#16a34a' : tx.Status === 'FAILED' ? '#dc2626' : '#f59e0b';
+                                                const icon = isIncome ? '✓' : '−';
+                                                const iconBg = isIncome ? '#dcfce7' : '#f5f5f5';
+                                                const time = new Date(tx.CreatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+
+                                                return (
+                                                    <div key={idx} className="flex gap-4 items-center pb-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: iconBg, color: statusColor }}>
+                                                            <span className="font-bold">{icon}</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                                {isIncome ? 'Recarga' : 'Consumo de saldo'}
+                                                            </p>
+                                                            <div className="flex gap-2 items-center mt-1">
+                                                                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{time}</span>
+                                                                {tx.integration_name && (
+                                                                    <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                                        {tx.integration_name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex-shrink-0">
+                                                            <p className="text-sm font-bold font-mono" style={{ color: isIncome ? '#16a34a' : '#dc2626' }}>
+                                                                {isIncome ? '+' : '−'} {formatCurrency(Math.abs(tx.Amount))}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5" style={{ color: statusColor }}>
+                                                                {tx.Status === 'COMPLETED' ? 'Completado' : tx.Status === 'PENDING' ? 'Pendiente' : 'Fallido'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    ) : (
+                        <HistoryTable
+                            title=""
+                            data={filteredHistory}
+                            emptyMessage={
+                                activeTab === 'all'
+                                    ? 'No hay transacciones'
+                                    : activeTab === 'completed'
+                                    ? 'No hay transacciones completadas'
+                                    : 'No hay transacciones pendientes'
+                            }
+                        />
+                    )}
                 </div>
             </div>
         </>
