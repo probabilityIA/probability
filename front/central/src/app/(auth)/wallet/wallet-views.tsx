@@ -21,6 +21,7 @@ import { CONCEPT_LABELS, CONCEPT_OPTIONS } from '@/services/modules/wallet/domai
 import { getWalletKPISelectionAction, updateWalletKPISelectionAction } from '@/services/modules/wallet/infra/actions/wallet-kpi-selection';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useWalletBusiness } from '@/shared/contexts/wallet-business-context';
 import { VirtualCard } from './virtual-card';
 import { FinancialStatsView } from './financial-stats';
 import { BoldPaymentProcessingModal } from './bold-payment-processing-modal';
@@ -45,6 +46,7 @@ const getColorFromHash = (text: string): string => {
 };
 
 export function AdminWalletView() {
+    const { setSelectedBusinessId } = useWalletBusiness();
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -324,7 +326,7 @@ export function AdminWalletView() {
                                 key: 'actions',
                                 label: 'Acciones',
                                 render: (_, row) => (
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                                         <RechargeWalletButton
                                             businessId={row.BusinessID}
                                             businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
@@ -342,6 +344,7 @@ export function AdminWalletView() {
                         data={filteredWallets}
                         loading={loading}
                         emptyMessage="No hay billeteras registradas"
+                        onRowClick={(row) => setSelectedBusinessId(row.BusinessID)}
                     />
                 </div>
             </div>
