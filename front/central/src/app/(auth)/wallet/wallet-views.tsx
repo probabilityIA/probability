@@ -450,6 +450,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     const QUICK_AMOUNTS = [15000, 50000, 100000, 200000, 500000];
 
     const [history, setHistory] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'pending'>('all');
 
     const fetchHistory = useCallback(async () => {
         try {
