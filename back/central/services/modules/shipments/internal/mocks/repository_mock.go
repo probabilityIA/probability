@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
@@ -283,6 +284,10 @@ func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, busin
 
 func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string, shipmentID *uint) error {
 	return nil
+}
+
+func (m *RepositoryMock) FindUnchargedGuides(ctx context.Context, createdAfter, createdBefore time.Time, limit int) ([]domain.UnchargedGuide, error) {
+	return nil, nil
 }
 
 func (m *RepositoryMock) ListCODShipments(ctx context.Context, filter domain.CODFilter) ([]domain.Shipment, int64, error) {

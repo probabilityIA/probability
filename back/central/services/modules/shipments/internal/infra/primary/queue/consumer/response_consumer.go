@@ -190,6 +190,16 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			return
 		}
 		if shipment != nil {
+			if businessID == 0 && shipment.OrderID != nil && *shipment.OrderID != "" {
+				if bid, err := c.repo.GetOrderBusinessID(ctx, *shipment.OrderID); err == nil {
+					businessID = bid
+				} else {
+					c.log.Warn(ctx).Err(err).
+						Str("order_id", *shipment.OrderID).
+						Str("correlation_id", response.CorrelationID).
+						Msg("Could not resolve business_id from order for guide debit")
+				}
+			}
 			if trackingNumber != "" {
 				shipment.TrackingNumber = &trackingNumber
 			}
@@ -226,20 +236,30 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
 
-			if shipment.TotalCost != nil && *shipment.TotalCost > 0 && businessID != 0 {
-				shipmentIDRef := shipment.ID
-				if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber, &shipmentIDRef); err != nil {
-					c.log.Error(ctx).Err(err).
-						Uint("business_id", businessID).
+			if shipment.TotalCost != nil && *shipment.TotalCost > 0 {
+				if businessID == 0 {
+					c.log.Error(ctx).
+						Uint("shipment_id", shipment.ID).
 						Float64("amount", *shipment.TotalCost).
 						Str("tracking_number", trackingNumber).
-						Msg("Failed to debit wallet for guide")
+						Str("correlation_id", response.CorrelationID).
+						Msg("Guide generated but business_id unresolved: wallet NOT debited, needs reconciliation")
 				} else {
-					c.log.Info(ctx).
-						Uint("business_id", businessID).
-						Float64("amount", *shipment.TotalCost).
-						Str("tracking_number", trackingNumber).
-						Msg("Wallet debited for guide")
+					shipmentIDRef := shipment.ID
+					if err := c.repo.DebitWalletForGuide(ctx, businessID, *shipment.TotalCost, trackingNumber, &shipmentIDRef); err != nil {
+						c.log.Error(ctx).Err(err).
+							Uint("business_id", businessID).
+							Uint("shipment_id", shipment.ID).
+							Float64("amount", *shipment.TotalCost).
+							Str("tracking_number", trackingNumber).
+							Msg("Failed to debit wallet for guide: needs reconciliation")
+					} else {
+						c.log.Info(ctx).
+							Uint("business_id", businessID).
+							Float64("amount", *shipment.TotalCost).
+							Str("tracking_number", trackingNumber).
+							Msg("Wallet debited for guide")
+					}
 				}
 			}
 

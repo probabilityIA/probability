@@ -59,6 +59,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		}()
 	}
 
+	reconciliationWorker := queueconsumer.NewWalletReconciliationWorker(repo, logger)
+	go reconciliationWorker.Start(context.Background())
+
 	// 6. Init Handlers (repo satisfies ICarrierResolver via GetActiveShippingCarrier)
 	h := handlers.New(uc, transportPub, repo, redisClient)
 
