@@ -630,6 +630,19 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
     const groupedByDay = groupTransactionsByDay(filteredHistory);
 
+    // Mini-stats calculations
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const rechargedThisMonth = history
+        .filter(t => t.Type === 'RECHARGE' && new Date(t.CreatedAt) >= monthStart)
+        .reduce((sum, t) => sum + (t.Amount || 0), 0);
+
+    const movementsLast30Days = history.filter(t => new Date(t.CreatedAt) >= thirtyDaysAgo).length;
+
+    const lastMovement = history.length > 0 ? history[0] : null;
+
     return (
         <>
             {isSuperAdminView && (
@@ -900,6 +913,40 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
             </Modal>
 
             <div className="mt-12 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Recargado este mes</p>
+                        <div className="flex items-end justify-between">
+                            <h3 className="text-2xl font-bold text-green-600">{formatCurrency(rechargedThisMonth)}</h3>
+                            <svg className="w-12 h-8 text-green-400" viewBox="0 0 24 8" fill="none">
+                                <polyline points="1,7 5,4 9,6 13,2 17,5 21,1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Movimientos</p>
+                        <div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{movementsLast30Days}</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">en los últimos 30 días</p>
+                        </div>
+                    </div>
+
+                    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Último movimiento</p>
+                        <div>
+                            <h3 className="text-2xl font-bold" style={{ color: lastMovement?.Type === 'RECHARGE' ? '#16a34a' : '#dc2626' }}>
+                                {lastMovement ? `${lastMovement.Type === 'RECHARGE' ? '+' : '−'}${formatCurrency(lastMovement.Amount)}` : '---'}
+                            </h3>
+                            {lastMovement && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {lastMovement.integration_name || 'N/A'} {new Date(lastMovement.CreatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
                         Historial de Transacciones
