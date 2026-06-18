@@ -625,7 +625,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     const filteredHistory = activeTab === 'all'
         ? history
         : activeTab === 'completed'
-        ? history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')
+        ? history.filter(t => t.Status === 'COMPLETED')
         : history.filter(t => t.Status === 'PENDING');
 
     const groupedByDay = groupTransactionsByDay(filteredHistory);
@@ -966,12 +966,12 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                            <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
                                 {(['timeline', 'table'] as const).map((view) => (
                                     <button
                                         key={view}
                                         onClick={() => setHistView(view)}
-                                        className={`px-4 py-2 text-sm font-medium rounded transition ${
+                                        className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                                             histView === view
                                                 ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm border border-gray-400 dark:border-gray-500'
                                                 : 'text-gray-600 dark:text-gray-400'
