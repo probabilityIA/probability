@@ -12,8 +12,6 @@ import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
-import AddressAutocomplete, { AddressSuggestion } from './AddressAutocomplete';
-import MapComponent from '@/shared/ui/MapComponent';
 import '@/shared/ui/styles/shipment-modals.css';
 
 const normalizeLocationName = (str: string) => {
@@ -22,12 +20,6 @@ const normalizeLocationName = (str: string) => {
     s = s.replace(/,\s*D\.C\./g, "").replace(/\sD\.C\./g, "").replace(/\sDC\b/g, "").trim();
     return s;
 };
-
-const normalizeCity = (s: string) =>
-    s.normalize('NFD').replace(/[̀-ͯ]/g, '')
-        .toLowerCase()
-        .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
-        .trim();
 
 const findDaneCode = (city: string, state: string) => {
     const targetCity = normalizeLocationName(city);
@@ -548,33 +540,11 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                                                    Calle y Número *
-                                                </label>
-                                                <AddressAutocomplete
-                                                    value={form.watch("destAddress")}
-                                                    onChange={(val) => form.setValue("destAddress", val, { shouldValidate: true })}
-                                                    city={destSearch}
-                                                    onSelect={(s: AddressSuggestion) => {
-                                                        form.setValue("destAddress", s.display_name, { shouldValidate: true });
-                                                        if (s.city) {
-                                                            const cityKey = normalizeCity(s.city);
-                                                            const stateKey = s.state ? normalizeCity(s.state) : '';
-                                                            const match =
-                                                                daneOptions.find(opt =>
-                                                                    normalizeCity(opt.ciudad) === cityKey &&
-                                                                    (!stateKey || normalizeCity(opt.departamento) === stateKey)
-                                                                ) ||
-                                                                daneOptions.find(opt => normalizeCity(opt.ciudad) === cityKey) ||
-                                                                daneOptions.find(opt => normalizeCity(opt.label).includes(cityKey));
-                                                            if (match) {
-                                                                form.setValue("destDaneCode", match.value, { shouldValidate: true });
-                                                                setDestSearch(match.label);
-                                                                setShowDestResults(false);
-                                                            }
-                                                        }
-                                                    }}
+                                                <Input
+                                                    label="Calle y Número *"
+                                                    type="text"
                                                     placeholder="Carrera 46 # 93 - 45"
+                                                    {...form.register("destAddress")}
                                                 />
                                                 {form.formState.errors.destAddress && (
                                                     <p className="text-xs text-red-600 dark:text-red-400 mt-1">{form.formState.errors.destAddress.message}</p>
