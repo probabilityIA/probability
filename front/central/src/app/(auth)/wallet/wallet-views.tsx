@@ -57,6 +57,7 @@ export function AdminWalletView() {
     const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(new Set());
     const [savingKPI, setSavingKPI] = useState(false);
     const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [walletsPage, setWalletsPage] = useState(1);
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -317,33 +318,68 @@ export function AdminWalletView() {
                     </div>
                 </div>
                 <div className="overflow-x-auto">
-                    <Table
-                        columns={[
-                            ...walletColumns,
-                            {
-                                key: 'actions',
-                                label: 'Acciones',
-                                render: (_, row) => (
-                                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                        <RechargeWalletButton
-                                            businessId={row.BusinessID}
-                                            businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                            onSuccess={fetchWalletsAndBusinesses}
-                                        />
-                                        <ClearHistoryButton
-                                            businessId={row.BusinessID}
-                                            businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                            onSuccess={fetchWalletsAndBusinesses}
-                                        />
+                    {(() => {
+                        const itemsPerPageWallets = 10;
+                        const totalPages = Math.ceil(filteredWallets.length / itemsPerPageWallets);
+                        const startIdx = (walletsPage - 1) * itemsPerPageWallets;
+                        const endIdx = startIdx + itemsPerPageWallets;
+                        const paginatedWallets = filteredWallets.slice(startIdx, endIdx);
+
+                        return (
+                            <>
+                                <Table
+                                    columns={[
+                                        ...walletColumns,
+                                        {
+                                            key: 'actions',
+                                            label: 'Acciones',
+                                            render: (_, row) => (
+                                                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                                                    <RechargeWalletButton
+                                                        businessId={row.BusinessID}
+                                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                                        onSuccess={fetchWalletsAndBusinesses}
+                                                    />
+                                                    <ClearHistoryButton
+                                                        businessId={row.BusinessID}
+                                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                                        onSuccess={fetchWalletsAndBusinesses}
+                                                    />
+                                                </div>
+                                            )
+                                        }
+                                    ]}
+                                    data={paginatedWallets}
+                                    loading={loading}
+                                    emptyMessage="No hay billeteras registradas"
+                                    onRowClick={(row) => setSelectedBusinessId(row.BusinessID)}
+                                />
+                                {filteredWallets.length > 0 && (
+                                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                            Página {walletsPage} de {totalPages} ({filteredWallets.length} negocios)
+                                        </span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setWalletsPage(p => Math.max(1, p - 1))}
+                                                disabled={walletsPage === 1}
+                                                className="px-3 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                ← Anterior
+                                            </button>
+                                            <button
+                                                onClick={() => setWalletsPage(p => Math.min(totalPages, p + 1))}
+                                                disabled={walletsPage === totalPages}
+                                                className="px-3 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                Siguiente →
+                                            </button>
+                                        </div>
                                     </div>
-                                )
-                            }
-                        ]}
-                        data={filteredWallets}
-                        loading={loading}
-                        emptyMessage="No hay billeteras registradas"
-                        onRowClick={(row) => setSelectedBusinessId(row.BusinessID)}
-                    />
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
 
