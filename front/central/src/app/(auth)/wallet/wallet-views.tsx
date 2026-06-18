@@ -452,6 +452,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
     const [history, setHistory] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'pending'>('all');
     const [histView, setHistView] = useState<'timeline' | 'table'>('timeline');
+    const [historyPage, setHistoryPage] = useState(1);
 
     const fetchHistory = useCallback(async () => {
         try {
@@ -941,14 +942,43 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
 
                     {histView === 'timeline' ? (
                         <div className="space-y-6">
-                            {Object.keys(groupedByDay).length === 0 ? (
-                                <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay transacciones</p>
-                            ) : (
-                                Object.entries(groupedByDay).map(([dayLabel, dayTxns]) => (
-                                    <div key={dayLabel}>
-                                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">{dayLabel}</h4>
-                                        <div className="space-y-3">
-                                            {dayTxns.map((tx, idx) => {
+                            {(() => {
+                                const itemsPerPage = 10;
+                                const flatTxns = Object.entries(groupedByDay).flatMap(([, dayTxns]) => dayTxns);
+                                const totalPages = Math.ceil(flatTxns.length / itemsPerPage);
+                                const startIdx = (historyPage - 1) * itemsPerPage;
+                                const endIdx = startIdx + itemsPerPage;
+                                const paginatedTxns = flatTxns.slice(startIdx, endIdx);
+                                const paginatedGrouped: { [key: string]: any[] } = {};
+                                paginatedTxns.forEach(tx => {
+                                    const date = new Date(tx.CreatedAt);
+                                    const today = new Date();
+                                    const yesterday = new Date(today);
+                                    yesterday.setDate(yesterday.getDate() - 1);
+                                    let dayLabel = '';
+                                    if (date.toDateString() === today.toDateString()) {
+                                        dayLabel = 'Hoy';
+                                    } else if (date.toDateString() === yesterday.toDateString()) {
+                                        dayLabel = 'Ayer';
+                                    } else {
+                                        dayLabel = date.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' });
+                                    }
+                                    if (!paginatedGrouped[dayLabel]) paginatedGrouped[dayLabel] = [];
+                                    paginatedGrouped[dayLabel].push(tx);
+                                });
+
+                                if (flatTxns.length === 0) {
+                                    return <p className="text-center text-gray-500 dark:text-gray-400 py-8">No hay transacciones</p>;
+                                }
+
+                                return (
+                                    <>
+                                        <div className="space-y-6">
+                                            {Object.entries(paginatedGrouped).map(([dayLabel, dayTxns]) => (
+                                                <div key={dayLabel}>
+                                                    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">{dayLabel}</h4>
+                                                    <div className="space-y-3">
+                                                        {dayTxns.map((tx, idx) => {
                                                 const isIncome = tx.Type === 'RECHARGE';
                                                 const statusColor = tx.Status === 'COMPLETED' ? '#16a34a' : tx.Status === 'FAILED' ? '#dc2626' : '#f59e0b';
                                                 const icon = isIncome ? '✓' : '📦';
@@ -985,10 +1015,34 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                                                     </div>
                                                 );
                                             })}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    </div>
-                                ))
-                            )}
+                                        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                Página {historyPage} de {totalPages} ({flatTxns.length} transacciones)
+                                            </span>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                                                    disabled={historyPage === 1}
+                                                    className="px-3 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                >
+                                                    ← Anterior
+                                                </button>
+                                                <button
+                                                    onClick={() => setHistoryPage(p => Math.min(totalPages, p + 1))}
+                                                    disabled={historyPage === totalPages}
+                                                    className="px-3 py-1 text-xs font-medium rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                >
+                                                    Siguiente →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
                     ) : (
                         <HistoryTable
