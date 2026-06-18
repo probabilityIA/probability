@@ -951,7 +951,7 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                                             {dayTxns.map((tx, idx) => {
                                                 const isIncome = tx.Type === 'RECHARGE';
                                                 const statusColor = tx.Status === 'COMPLETED' ? '#16a34a' : tx.Status === 'FAILED' ? '#dc2626' : '#f59e0b';
-                                                const icon = isIncome ? '✓' : '🛒';
+                                                const icon = isIncome ? '✓' : '📦';
                                                 const iconBg = isIncome ? '#dcfce7' : '#f5f5f5';
                                                 const time = new Date(tx.CreatedAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
                                                 const concept = tx.Concept ? (CONCEPT_LABELS[tx.Concept] || tx.Concept) : '';
