@@ -947,43 +947,40 @@ export function BusinessWalletView({ businessId, businessName }: BusinessWalletV
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ letterSpacing: '-0.02em' }}>
-                        Historial de Transacciones
-                    </h2>
-                </div>
-
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 justify-between items-center flex-wrap">
-                        <div className="flex gap-3">
-                            {(['all', 'completed', 'pending'] as const).map((filter) => (
-                                <button
-                                    key={filter}
-                                    onClick={() => setActiveTab(filter as any)}
-                                    className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-4 ${
-                                        activeTab === filter
-                                            ? 'border-violet-600 text-violet-600'
-                                            : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    {filter === 'all' ? 'Todas' : filter === 'completed' ? 'Completadas' : 'Pendientes'}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-                            {(['timeline', 'table'] as const).map((view) => (
-                                <button
-                                    key={view}
-                                    onClick={() => setHistView(view)}
-                                    className={`px-3 py-1 text-xs font-medium rounded transition ${
-                                        histView === view
-                                            ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                                            : 'text-gray-600 dark:text-gray-400'
-                                    }`}
-                                >
-                                    {view === 'timeline' ? 'Timeline' : 'Tabla'}
-                                </button>
-                            ))}
+                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 justify-between items-center">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Historial de transacciones</h3>
+                        <div className="flex gap-4 items-center">
+                            <div className="flex gap-2">
+                                {(['all', 'completed', 'pending'] as const).map((filter) => (
+                                    <button
+                                        key={filter}
+                                        onClick={() => setActiveTab(filter as any)}
+                                        className={`px-4 py-2 text-sm font-medium rounded-full transition ${
+                                            activeTab === filter
+                                                ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 border border-violet-600'
+                                                : 'bg-transparent text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 hover:text-gray-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {filter === 'all' ? 'Todas' : filter === 'completed' ? 'Completadas' : 'Pendientes'}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                                {(['timeline', 'table'] as const).map((view) => (
+                                    <button
+                                        key={view}
+                                        onClick={() => setHistView(view)}
+                                        className={`px-4 py-2 text-sm font-medium rounded transition ${
+                                            histView === view
+                                                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm border border-gray-400 dark:border-gray-500'
+                                                : 'text-gray-600 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        {view === 'timeline' ? 'Timeline' : 'Tabla'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
