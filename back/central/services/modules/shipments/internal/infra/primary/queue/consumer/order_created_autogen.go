@@ -183,6 +183,15 @@ func (c *OrderCreatedConsumer) pollQuoteRates(ctx context.Context, correlationID
 func (c *OrderCreatedConsumer) createOrReusePendingShipment(ctx context.Context, payload map[string]interface{}, carrier *domain.CarrierInfo, orderUUID string) (uint, error) {
 	existing, _ := c.uc.Repo().GetShipmentsByOrderID(ctx, orderUUID)
 	for i := range existing {
+		s := &existing[i]
+		if s.Status == "cancelled" || s.Status == "failed" {
+			continue
+		}
+		if (s.TrackingNumber != nil && *s.TrackingNumber != "") || (s.GuideURL != nil && *s.GuideURL != "") {
+			return 0, fmt.Errorf("order %s already has an active guide (shipment %d)", orderUUID, s.ID)
+		}
+	}
+	for i := range existing {
 		s := existing[i]
 		if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
 			return s.ID, nil

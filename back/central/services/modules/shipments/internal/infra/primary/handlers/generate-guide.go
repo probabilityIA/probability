@@ -11,21 +11,18 @@ import (
 )
 
 func (h *Handlers) GenerateGuide(c *gin.Context) {
-	// 1. Resolve business_id (JWT for normal users, order DB lookup for super admin)
 	businessID, err := h.resolveBusinessIDFromOrder(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 2. Resolve active shipping carrier
 	carrier, err := h.resolveCarrier(c, businessID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// 3. Parse request body
 	var raw map[string]interface{}
 	if err := c.ShouldBindJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -50,7 +47,22 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	var shipmentID uint
 	if shipmentReq.OrderID != nil && *shipmentReq.OrderID != "" {
 		existing, _ := h.uc.Repo().GetShipmentsByOrderID(c.Request.Context(), *shipmentReq.OrderID)
-		for _, s := range existing {
+		for i := range existing {
+			if shipmentHasActiveGuide(&existing[i]) {
+				tracking := ""
+				if existing[i].TrackingNumber != nil {
+					tracking = *existing[i].TrackingNumber
+				}
+				c.JSON(http.StatusConflict, gin.H{
+					"error":           "La orden ya tiene una guia activa. Cancela la guia existente antes de generar una nueva.",
+					"shipment_id":     existing[i].ID,
+					"tracking_number": tracking,
+				})
+				return
+			}
+		}
+		for i := range existing {
+			s := &existing[i]
 			if s.Status == "pending" && (s.TrackingNumber == nil || *s.TrackingNumber == "") && (s.GuideURL == nil || *s.GuideURL == "") {
 				shipmentID = s.ID
 				break
@@ -61,23 +73,23 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	if shipmentID == 0 {
 		shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envío: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envio: " + err.Error()})
 			return
 		}
 		shipmentID = shipmentResp.ID
 	} else {
 		updateReq := &domain.UpdateShipmentRequest{
-			TotalCost:         shipmentReq.TotalCost,
+			TotalCost:     shipmentReq.TotalCost,
 			CodCarrierFee: shipmentReq.CodCarrierFee,
-			Carrier:           shipmentReq.Carrier,
-			CarrierCode:       shipmentReq.CarrierCode,
-			Weight:            shipmentReq.Weight,
-			Height:            shipmentReq.Height,
-			Width:             shipmentReq.Width,
-			Length:            shipmentReq.Length,
+			Carrier:       shipmentReq.Carrier,
+			CarrierCode:   shipmentReq.CarrierCode,
+			Weight:        shipmentReq.Weight,
+			Height:        shipmentReq.Height,
+			Width:         shipmentReq.Width,
+			Length:        shipmentReq.Length,
 		}
 		if _, err := h.uc.UpdateShipment(c.Request.Context(), shipmentID, updateReq); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar envío: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al actualizar envio: " + err.Error()})
 			return
 		}
 	}
@@ -105,48 +117,57 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 
 	if err := h.transportPub.PublishTransportRequest(c.Request.Context(), msg); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Error al enviar solicitud de generación de guía: " + err.Error(),
+			"error": "Error al enviar solicitud de generacion de guia: " + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"success":        true,
-		"message":        "Solicitud de generación de guía enviada. Será procesada en breve.",
+		"message":        "Solicitud de generacion de guia enviada. Sera procesada en breve.",
 		"correlation_id": correlationID,
 		"shipment_id":    shipmentID,
 	})
 }
 
-// buildShipmentRequest extracts fields from the raw generate payload to pre-create the DB record.
+func shipmentHasActiveGuide(s *domain.Shipment) bool {
+	if s == nil {
+		return false
+	}
+	if s.Status == "cancelled" || s.Status == "failed" {
+		return false
+	}
+	if s.TrackingNumber != nil && *s.TrackingNumber != "" {
+		return true
+	}
+	if s.GuideURL != nil && *s.GuideURL != "" {
+		return true
+	}
+	return false
+}
+
 func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInfo) *domain.CreateShipmentRequest {
 	req := &domain.CreateShipmentRequest{
 		Status:      "pending",
 		CarrierCode: strPtr(carrier.ProviderCode),
 	}
 
-	// carrier name (from frontend)
 	if v, ok := raw["carrier"].(string); ok && v != "" {
 		req.Carrier = strPtr(v)
 	}
 
-	// order_uuid
 	if v, ok := raw["order_uuid"].(string); ok && v != "" {
 		req.OrderID = strPtr(v)
 	}
 
-	// totalCost
 	if v, ok := raw["totalCost"].(float64); ok {
 		req.TotalCost = float64Ptr(v)
 	}
 
-	// codCarrierFee: lo que el carrier cobra por servicio COD (codCost de EnvioClick).
-	// El cliente final lo paga al recibir; nosotros lo persistimos para reportes.
 	if v, ok := raw["codCarrierFee"].(float64); ok && v > 0 {
 		req.CodCarrierFee = float64Ptr(v)
 	}
 
-	// destination -> ClientName, DestinationAddress
 	if dest, ok := raw["destination"].(map[string]interface{}); ok {
 		firstName, _ := dest["firstName"].(string)
 		lastName, _ := dest["lastName"].(string)
@@ -161,7 +182,6 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 		req.DestinationSuburb = suburb
 	}
 
-	// packages[0] -> dimensions
 	if pkgs, ok := raw["packages"].([]interface{}); ok && len(pkgs) > 0 {
 		if pkg, ok := pkgs[0].(map[string]interface{}); ok {
 			if v, ok := pkg["weight"].(float64); ok {
@@ -182,5 +202,5 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 	return req
 }
 
-func strPtr(s string) *string    { return &s }
+func strPtr(s string) *string       { return &s }
 func float64Ptr(f float64) *float64 { return &f }
