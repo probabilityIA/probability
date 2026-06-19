@@ -41,8 +41,7 @@ func (c *Consumer) handleMessage(msg []byte) error {
 		return nil // ACK: mensaje malformado, no reintentar
 	}
 
-	// Solo procesar order.created y order.updated
-	if event.EventType != "order.created" && event.EventType != "order.updated" {
+	if event.EventType != "order.created" && event.EventType != "order.updated" && event.EventType != "order.status_changed" {
 		return nil // ACK: evento no relevante
 	}
 
