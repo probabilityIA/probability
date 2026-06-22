@@ -13,7 +13,6 @@ import (
 // RequestComparison inicia una comparación asíncrona de facturas entre el sistema y el proveedor.
 // Retorna el correlationID que el frontend usará para correlacionar el evento SSE con el resultado.
 func (uc *useCase) RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error) {
-	// 1. Validar rango de fechas ≤ 7 días
 	dateFrom, err := time.Parse("2006-01-02", dto.DateFrom)
 	if err != nil {
 		return "", fmt.Errorf("invalid date_from format, expected YYYY-MM-DD: %w", err)
@@ -25,7 +24,7 @@ func (uc *useCase) RequestComparison(ctx context.Context, dto *dtos.CompareReque
 	if dateTo.Before(dateFrom) {
 		return "", fmt.Errorf("date_to must be after date_from")
 	}
-	if dateTo.Sub(dateFrom) > 7*24*time.Hour {
+	if dateTo.Sub(dateFrom) > 30*24*time.Hour {
 		return "", errors.ErrCompareDateRangeTooLarge
 	}
 
