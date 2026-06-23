@@ -4,31 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 )
 
-type flexString string
-
-func (fs *flexString) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch val := v.(type) {
-	case string:
-		*fs = flexString(val)
-	case float64:
-		*fs = flexString(strconv.FormatFloat(val, 'f', -1, 64))
-	case nil:
-		*fs = ""
-	default:
-		*fs = flexString(fmt.Sprint(val))
-	}
-	return nil
-}
-
+// Document representa un documento (factura/nota crédito) de Softpymes
+// Estructura basada en la documentación oficial:
+// https://api-integracion.softpymes.com.co/doc/#api-Documentos-GetSearchDocument
 type Document struct {
 	Annuled                bool              `json:"annuled"`
 	ElectronicDocument     bool              `json:"electronicDocument"`
@@ -47,24 +29,25 @@ type Document struct {
 	Seller                 DocumentSeller    `json:"seller"`
 	ShipInformation        ShipInformation   `json:"shipInformation"`
 	TermDays               int               `json:"termDays"`
-	Total                  flexString        `json:"total"`
-	TotalDiscount          flexString        `json:"totalDiscount"`
-	TotalIva               flexString        `json:"totalIva"`
-	TotalWithholdingTax    flexString        `json:"totalWithholdingTax"`
+	Total                  string            `json:"total"`           // Viene como string en la API
+	TotalDiscount          string            `json:"totalDiscount"`   // Viene como string en la API
+	TotalIva               string            `json:"totalIva"`        // Viene como string en la API
+	TotalWithholdingTax    string            `json:"totalWithholdingTax"` // Viene como string en la API
 }
 
+// DocumentDetail representa el detalle de un ítem en el documento
 type DocumentDetail struct {
-	Discount       flexString        `json:"discount"`
+	Discount       string            `json:"discount"`
 	ItemCode       string            `json:"itemCode"`
 	ItemName       string            `json:"itemName"`
 	Code           string            `json:"code"`
 	Service        string            `json:"service"`
-	Iva            flexString        `json:"iva"`
-	Ica            flexString        `json:"ica"`
-	Quantity       flexString        `json:"quantity"`
+	Iva            string            `json:"iva"`
+	Ica            string            `json:"ica"` // Solo para Facturas de Servicios Profesionales
+	Quantity       string            `json:"quantity"`
 	SizeColor      map[string]string `json:"sizeColor"`
-	Value          flexString        `json:"value"`
-	WithholdingTax flexString        `json:"withholdingTax"`
+	Value          string            `json:"value"`
+	WithholdingTax string            `json:"withholdingTax"`
 	Warehouse      DocumentWarehouse `json:"warehouse"`
 }
 
@@ -218,15 +201,15 @@ func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer s
 			details = append(details, ports.ListedDocumentDetail{
 				ItemCode: d.ItemCode,
 				ItemName: d.ItemName,
-				Quantity: string(d.Quantity),
-				Value:    string(d.Value),
-				IVA:      string(d.Iva),
+				Quantity: d.Quantity,
+				Value:    d.Value,
+				IVA:      d.Iva,
 			})
 		}
 		result = append(result, ports.ListedDocument{
 			DocumentNumber:     doc.DocumentNumber,
 			DocumentDate:       doc.DocumentDate,
-			Total:              string(doc.Total),
+			Total:              doc.Total,
 			CustomerNit:        doc.CustomerIdentification,
 			CustomerName:       doc.CustomerName,
 			Comment:            doc.Comment,
