@@ -22,7 +22,7 @@ func (uc *useCase) SyncCancellations(ctx context.Context, dto *dtos.CompareReque
 	if dateTo.Before(dateFrom) {
 		return "", fmt.Errorf("date_to must be after date_from")
 	}
-	if dateTo.Sub(dateFrom) > 30*24*time.Hour {
+	if dateTo.Sub(dateFrom) > 90*24*time.Hour {
 		return "", errors.ErrCompareDateRangeTooLarge
 	}
 
