@@ -53,8 +53,8 @@ export function SyncCancellationsModal({
       setValidationError('La fecha inicial debe ser anterior a la final');
       return;
     }
-    if (diffDays > 180) {
-      setValidationError('El rango máximo es de 6 meses (180 días)');
+    if (diffDays > 30) {
+      setValidationError('El rango máximo es de 30 días');
       return;
     }
     setPage(1);
@@ -107,7 +107,7 @@ export function SyncCancellationsModal({
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                   Rango de fechas{' '}
-                  <span className="text-gray-400 font-normal">(máximo 6 meses)</span>
+                  <span className="text-gray-400 font-normal">(máximo 30 días)</span>
                 </label>
                 <DateRangePicker
                   startDate={dateFrom}

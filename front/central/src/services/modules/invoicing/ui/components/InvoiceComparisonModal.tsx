@@ -112,8 +112,8 @@ export function InvoiceComparisonModal({
       setValidationError('La fecha inicial debe ser anterior a la final');
       return;
     }
-    if (diffDays > 30) {
-      setValidationError('El rango máximo es de 30 días');
+    if (diffDays > 7) {
+      setValidationError('El rango máximo es de 7 días');
       return;
     }
     onRequestComparison(dateFrom, dateTo);
@@ -159,7 +159,7 @@ export function InvoiceComparisonModal({
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                   Rango de fechas{' '}
-                  <span className="text-gray-400 font-normal">(máximo 30 días)</span>
+                  <span className="text-gray-400 font-normal">(máximo 7 días)</span>
                 </label>
                 <DateRangePicker
                   startDate={dateFrom}
