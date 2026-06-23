@@ -77,6 +77,13 @@ func (c *InvoiceRequestConsumer) processCompareRequest(
 		return publishErr("failed to decrypt api_secret")
 	}
 
+	c.log.Info(ctx).
+		Str("api_key", apiKey).
+		Str("api_secret", apiSecret).
+		Str("date_from", dateFrom).
+		Str("date_to", dateTo).
+		Msg("🔑 Softpymes credentials ready for compare request")
+
 	// 3. Combinar config de integración con config del mensaje
 	combinedConfig := make(map[string]interface{})
 	for k, v := range integration.Config {

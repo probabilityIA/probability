@@ -787,8 +787,17 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	results := make([]dtos.CompareResult, 0)
 	matched, systemOnly, providerOnly, annulledInProvider, released := 0, 0, 0, 0, 0
 
+	c.log.Info(ctx).
+		Int("total_provider_docs", len(providerMap)).
+		Msg("📋 Starting comparison of provider documents")
+
 	// 1. Recorrer documentos del proveedor
 	for docNum, doc := range providerMap {
+		c.log.Debug(ctx).
+			Str("doc_number", docNum).
+			Str("document_name", doc.DocumentName).
+			Bool("annuled", doc.Annuled).
+			Msg("Processing document from provider")
 		if sysInv, found := systemMap[docNum]; found {
 			total := sysInv.TotalAmount
 			orderID := sysInv.OrderID
