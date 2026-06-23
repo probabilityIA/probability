@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
@@ -62,6 +63,7 @@ const (
 type compareProviderDocument struct {
 	DocumentNumber     string              `json:"document_number"`
 	DocumentDate       string              `json:"document_date"`
+	DocumentName       string              `json:"document_name"`
 	Total              string              `json:"total"`
 	CustomerNit        string              `json:"customer_nit"`
 	CustomerName       string              `json:"customer_name"`
@@ -793,7 +795,8 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 			orderCreatedAt := formatOrderDate(orderDates, sysInv.OrderID)
 			status := dtos.CompareStatusMatched
 			wasReleased := false
-			if doc.Annuled && sysInv.Status != constants.InvoiceStatusCancelled {
+			isCreditNote := strings.Contains(strings.ToUpper(doc.DocumentName), "NOTA") && strings.Contains(strings.ToUpper(doc.DocumentName), "CREDITO")
+			if (doc.Annuled || isCreditNote) && sysInv.Status != constants.InvoiceStatusCancelled {
 				status = dtos.CompareStatusAnnulledInProvider
 				annulledInProvider++
 				if isSync {
