@@ -13,8 +13,6 @@ const title = 'ProbabilityIA - Predice y Reduce Devoluciones en Ecommerce';
 const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, optimiza envíos y automatiza tu operación logística en tiempo real.';
 ---
 
-<Layout title={title} description={description}>
-
 <style>
 	.whatsapp-float {
 		position: fixed;
@@ -64,9 +62,8 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 	}
 </style>
 
-<Layout>
+<Layout title={title} description={description}>
 	<Header />
-	<!-- WhatsApp Float Button -->
 	<div class="whatsapp-float">
 		<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20me%20interesa%20conocer%20más%20sobre%20tu%20plataforma" class="whatsapp-btn" title="Contactanos por WhatsApp">
 			<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-9 sm:w-12 h-9 sm:h-12"/>

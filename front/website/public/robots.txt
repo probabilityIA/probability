@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /website/
+Disallow: /website/admin
+Disallow: /website/api
+
+Sitemap: https://www.probabilityia.com.co/website/sitemap.xml

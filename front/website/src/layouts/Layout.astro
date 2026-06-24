@@ -27,11 +27,70 @@ const { title = 'probabilityIA - Predice y Reduce Devoluciones en Tiempo Real', 
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content="/website/logo-icon.png" />
 		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://www.probabilityia.com.co/website/" />
+		<meta property="og:locale" content="es_CO" />
 
 		<!-- Twitter Cards -->
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content={title} />
 		<meta name="twitter:description" content={description} />
+
+		<!-- Canonical Tag -->
+		<link rel="canonical" href="https://www.probabilityia.com.co/website/" />
+
+		<!-- JSON-LD Schema - Organization -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			"name": "ProbabilityIA",
+			"url": "https://www.probabilityia.com.co",
+			"logo": "https://www.probabilityia.com.co/website/logo.webp",
+			"description": "Solución de inteligencia artificial para reducir devoluciones en ecommerce y optimizar operaciones logísticas",
+			"sameAs": [
+				"https://www.linkedin.com/company/probabilityia",
+				"https://www.instagram.com/probabilityia",
+				"https://www.facebook.com/probabilityia"
+			],
+			"contactPoint": {
+				"@type": "ContactPoint",
+				"contactType": "Customer Service",
+				"email": "hola@probabilityia.com.co",
+				"telephone": "+573138241302",
+				"areaServed": "CO"
+			},
+			"address": {
+				"@type": "PostalAddress",
+				"addressCountry": "CO",
+				"addressLocality": "Bogotá"
+			}
+		}
+		</script>
+
+		<!-- JSON-LD Schema - SoftwareApplication -->
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "SoftwareApplication",
+			"name": "ProbabilityIA",
+			"applicationCategory": "BusinessApplication",
+			"description": "Plataforma IA para predicción y reducción de devoluciones en ecommerce",
+			"url": "https://www.probabilityia.com.co/website/",
+			"operatingSystem": "Web",
+			"offers": {
+				"@type": "Offer",
+				"price": "Contactar",
+				"priceCurrency": "COP",
+				"availability": "https://schema.org/InStock"
+			},
+			"aggregateRating": {
+				"@type": "AggregateRating",
+				"ratingValue": "4.8",
+				"ratingCount": "120",
+				"reviewCount": "120"
+			}
+		}
+		</script>
 	</head>
 	<body class="bg-white text-gray-900 antialiased">
 		<slot />
