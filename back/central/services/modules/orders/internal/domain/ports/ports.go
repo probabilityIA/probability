@@ -20,6 +20,7 @@ type IRepository interface {
 	CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error)
 	GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error)
 	GetBusinessOrderPrefix(ctx context.Context, businessID uint) (string, error)
+	GetBusinessNameByID(ctx context.Context, businessID uint) (string, error)
 	GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
 	GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
 	BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error)

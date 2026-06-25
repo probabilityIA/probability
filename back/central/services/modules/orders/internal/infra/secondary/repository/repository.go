@@ -1033,6 +1033,22 @@ func (r *Repository) GetBusinessOrderPrefix(ctx context.Context, businessID uint
 	return result.OrderPrefix, nil
 }
 
+func (r *Repository) GetBusinessNameByID(ctx context.Context, businessID uint) (string, error) {
+	var result struct {
+		Name string `gorm:"column:name"`
+	}
+	err := r.db.Conn(ctx).
+		Table("business").
+		Select("name").
+		Where("id = ? AND deleted_at IS NULL", businessID).
+		Limit(1).
+		Scan(&result).Error
+	if err != nil {
+		return "", err
+	}
+	return result.Name, nil
+}
+
 // CreateOrderError guarda un error ocurrido durante el procesamiento de una orden
 func (r *Repository) CreateOrderError(ctx context.Context, orderError *entities.OrderError) error {
 	if orderError == nil {
