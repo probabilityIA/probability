@@ -8,6 +8,7 @@ import HowItWorks from '../components/HowItWorks.astro';
 import AdvantagesSection from '../components/AdvantagesSection.astro';
 import FeaturesSection from '../components/FeaturesSection.astro';
 import Footer from '../components/Footer.astro';
+import QuizModal from '../components/QuizModal.astro';
 
 const title = 'ProbabilityIA - Predice y Reduce Devoluciones en Ecommerce';
 const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, optimiza envíos y automatiza tu operación logística en tiempo real.';
@@ -40,6 +41,64 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
 	}
 
+	.cta-section {
+		background: linear-gradient(135deg, #1e1b4b 0%, #0a0a0f 100%);
+		border-top: 1px solid rgba(139, 92, 246, 0.2);
+		padding: 4rem 1rem;
+	}
+
+	.cta-container {
+		max-width: 800px;
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	.cta-section h2 {
+		font-family: 'Plus Jakarta Sans', sans-serif;
+		font-size: clamp(1.875rem, 5vw, 2.5rem);
+		font-weight: 800;
+		color: #fff;
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+
+	.cta-section p {
+		color: #cbd5e1;
+		font-size: 1.0625rem;
+		line-height: 1.6;
+		margin-bottom: 2rem;
+		max-width: 600px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+		color: #fff;
+		border: none;
+		font-family: 'Inter', sans-serif;
+		font-weight: 600;
+		font-size: 1rem;
+		padding: 1rem 2.5rem;
+		border-radius: 12px;
+		cursor: pointer;
+		box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.cta-button:hover {
+		background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+		box-shadow: 0 6px 20px rgba(139, 92, 246, 0.42);
+		transform: translateY(-2px);
+	}
+
+	.cta-button:active {
+		transform: translateY(0);
+	}
+
 	@media (min-width: 640px) {
 		.whatsapp-float {
 			bottom: 2rem;
@@ -49,6 +108,10 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		.whatsapp-btn {
 			width: 80px;
 			height: 80px;
+		}
+
+		.cta-section {
+			padding: 5rem 2rem;
 		}
 	}
 
@@ -76,6 +139,22 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		<HowItWorks />
 		<AdvantagesSection />
 		<FeaturesSection />
+		<section class="cta-section">
+			<div class="cta-container">
+				<h2>¿A qué nivel llega tu operación?</h2>
+				<p>Realiza nuestro diagnóstico logístico y descubre el potencial real de tu negocio. Solo 6 preguntas, 2 minutos.</p>
+				<button class="cta-button open-quiz-modal">Iniciar diagnóstico gratuito</button>
+			</div>
+		</section>
 	</main>
+	<QuizModal />
 	<Footer />
+
+	<script>
+		document.querySelectorAll('.open-quiz-modal').forEach(btn => {
+			btn.addEventListener('click', () => {
+				window.openQuizModal?.();
+			});
+		});
+	</script>
 </Layout>

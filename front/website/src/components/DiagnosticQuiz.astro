@@ -1,0 +1,932 @@
+---
+---
+
+<div class="quiz-container">
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.35); }
+      50% { box-shadow: 0 0 0 9px rgba(139, 92, 246, 0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    @keyframes slide-in-right {
+      from { opacity: 0; transform: translateX(26px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .quiz-container {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .quiz-inner {
+      min-height: 100%;
+      background: #0A0A0F;
+      color: #E4E4E7;
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding: 2rem 1rem;
+      border-radius: 16px;
+      background-image: radial-gradient(60% 50% at 50% 0%, rgba(139, 92, 246, 0.1), transparent 70%);
+    }
+
+    .quiz-section {
+      text-align: center;
+      animation: slide-in-right 0.35s ease;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(139, 92, 246, 0.12);
+      color: #C4B5FD;
+      border: 1px solid rgba(139, 92, 246, 0.32);
+      padding: 7px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      animation: pulse-glow 2.8s ease-in-out infinite;
+      margin-bottom: 1.5rem;
+    }
+
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #8B5CF6;
+      display: inline-block;
+    }
+
+    .intro-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.125rem, 9vw, 3.125rem);
+      line-height: 1.06;
+      letter-spacing: -0.025em;
+      color: #fff;
+      margin: 1.75rem 0 0;
+    }
+
+    .intro-title span {
+      background: linear-gradient(120deg, #8B5CF6, #3B82F6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .intro-desc {
+      color: #94A3B8;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      max-width: 470px;
+      margin: 1.25rem auto 0;
+    }
+
+    .intro-time {
+      margin-top: 1.125rem;
+      color: #64748B;
+      font-size: 0.8125rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+      color: #fff;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 15px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 2.25rem;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.42);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      border: 1px solid #E5E7EB;
+      color: #1E1B4B;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      padding: 13px 22px;
+      flex: none;
+    }
+
+    .btn-secondary:hover {
+      border-color: #CBD5E1;
+      background: #F8FAFC;
+    }
+
+    .progress-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.625rem;
+    }
+
+    .progress-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #94A3B8;
+    }
+
+    .progress-pct {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #A78BFA;
+    }
+
+    .progress-track {
+      height: 8px;
+      background: #E5E7EB;
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #3B82F6;
+      border-radius: 100px;
+      transition: width 0.4s ease;
+    }
+
+    .quiz-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-top: 1.375rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .quiz-header {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+    }
+
+    .question-number {
+      flex: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #EDE9FE;
+      color: #7C3AED;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .question-text {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      line-height: 1.35;
+      color: #1E1B4B;
+      margin: 0;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 1.25rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 2px solid #E5E7EB;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .option:hover {
+      border-color: #8B5CF6;
+      background: #F5F3FF;
+    }
+
+    .option.selected {
+      border-color: #8B5CF6;
+      background: #F5F3FF;
+    }
+
+    .radio {
+      flex: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #CBD5E1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .option.selected .radio {
+      border-color: #8B5CF6;
+      background: #8B5CF6;
+    }
+
+    .radio-inner {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff;
+      display: none;
+    }
+
+    .option.selected .radio-inner {
+      display: block;
+    }
+
+    .option-label {
+      font-size: 0.9375rem;
+      color: #334155;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 1.375rem;
+    }
+
+    .results-hero {
+      border-radius: 16px;
+      padding: 2.125rem 1.75rem;
+      background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+      color: #fff;
+      text-align: center;
+    }
+
+    .results-hero.basic {
+      background: linear-gradient(135deg, #7F1D1D, #991B1B);
+    }
+
+    .results-hero.intermediate {
+      background: linear-gradient(135deg, #78350F, #92400E);
+    }
+
+    .results-hero.advanced {
+      background: linear-gradient(135deg, #2D2066, #3B2882);
+    }
+
+    .results-level-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.78;
+    }
+
+    .results-category {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 2.625rem;
+      margin: 0.625rem 0 0;
+      letter-spacing: -0.01em;
+    }
+
+    .results-score {
+      display: inline-block;
+      margin-top: 0.875rem;
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .results-desc {
+      margin: 1.125rem auto 0;
+      max-width: 430px;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      opacity: 0.92;
+    }
+
+    .metrics {
+      margin-top: 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.25rem 0.875rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    .metric-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .metric-value {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1.5625rem;
+      color: #1E1B4B;
+      margin-top: 0.5625rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: #64748B;
+      margin-top: 0.375rem;
+      line-height: 1.35;
+    }
+
+    .metrics-note {
+      text-align: center;
+      font-size: 0.6875rem;
+      color: #475569;
+      margin-top: 0.6875rem;
+    }
+
+    .recommendations-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #fff;
+      margin: 2.125rem 0 0;
+    }
+
+    .recommendations {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .recommendation {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.125rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .rec-icon {
+      flex: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+    }
+
+    .rec-icon.info {
+      background: #F5F3FF;
+      color: #8B5CF6;
+    }
+
+    .rec-icon.warning {
+      background: #FFFBEB;
+      color: #D97706;
+    }
+
+    .rec-icon.success {
+      background: #ECFDF5;
+      color: #16A34A;
+    }
+
+    .rec-icon.risk {
+      background: #FEF2F2;
+      color: #EF4444;
+    }
+
+    .rec-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rec-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1E1B4B;
+    }
+
+    .rec-desc {
+      font-size: 0.875rem;
+      color: #475569;
+      line-height: 1.5;
+      margin-top: 0.3125rem;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4375rem;
+      margin-top: 0.6875rem;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 7px;
+    }
+
+    .tag.info {
+      background: #F5F3FF;
+      color: #8B5CF6;
+    }
+
+    .tag.warning {
+      background: #FFFBEB;
+      color: #D97706;
+    }
+
+    .tag.success {
+      background: #ECFDF5;
+      color: #16A34A;
+    }
+
+    .tag.risk {
+      background: #FEF2F2;
+      color: #EF4444;
+    }
+
+    .result-footer {
+      text-align: center;
+      margin-top: 1.875rem;
+    }
+
+    .btn-restart {
+      background: transparent;
+      border: 1px solid rgba(228, 228, 231, 0.18);
+      color: #94A3B8;
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 12px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .btn-restart:hover {
+      border-color: #8B5CF6;
+      color: #C4B5FD;
+    }
+
+    @media (max-width: 640px) {
+      .intro-title {
+        font-size: 1.75rem;
+      }
+
+      .results-category {
+        font-size: 1.875rem;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <div class="quiz-inner">
+    <div id="quiz-root"></div>
+  </div>
+</div>
+
+<script>
+  interface Question {
+    text: string;
+    options: { label: string }[];
+  }
+
+  interface Recommendation {
+    title: string;
+    desc: string;
+    tags: string[];
+    type: 'info' | 'warning' | 'success' | 'risk';
+  }
+
+  class DiagnosticQuiz {
+    private state = {
+      screen: 'intro' as 'intro' | 'quiz' | 'results',
+      currentQ: 0,
+      answers: [null, null, null, null, null, null] as (number | null)[],
+    };
+
+    private questions: Question[] = [
+      {
+        text: '¿Cómo gestionas tu inventario actualmente?',
+        options: [
+          { label: 'Hojas de cálculo o papel' },
+          { label: 'Software básico con actualización manual' },
+          { label: 'Sistema con stock en tiempo real' },
+          { label: 'WMS integrado con sincronización automática multicanal' },
+        ],
+      },
+      {
+        text: '¿Cómo preparas los pedidos (picking y packing)?',
+        options: [
+          { label: 'Manual, sin rutas ni orden definido' },
+          { label: 'Listas impresas, un pedido cada vez' },
+          { label: 'Picking por lotes o por zonas' },
+          { label: 'Picking guiado con escáner y validación automática' },
+        ],
+      },
+      {
+        text: '¿Cómo gestionas los envíos y el transportista?',
+        options: [
+          { label: 'Un único transportista, etiquetas manuales' },
+          { label: 'Varios transportistas comparados a mano' },
+          { label: 'Plataforma multi-carrier con tarifas' },
+          { label: 'Asignación automática por reglas y coste óptimo' },
+        ],
+      },
+      {
+        text: '¿Cómo gestionas las devoluciones?',
+        options: [
+          { label: 'Sin un proceso definido' },
+          { label: 'Por email o manual, caso por caso' },
+          { label: 'Portal de devoluciones básico' },
+          { label: 'Portal automatizado con reembolso y reposición de stock' },
+        ],
+      },
+      {
+        text: '¿Qué visibilidad tienes del estado de los pedidos?',
+        options: [
+          { label: 'Ninguna hasta que se entrega' },
+          { label: 'Consulta manual en las webs de los transportistas' },
+          { label: 'Tracking centralizado interno' },
+          { label: 'Tracking en tiempo real con alertas proactivas al cliente' },
+        ],
+      },
+      {
+        text: '¿Qué nivel de integración tienen tus sistemas (tienda, ERP, WMS)?',
+        options: [
+          { label: 'Sistemas aislados, trasvase manual de datos' },
+          { label: 'Algunas exportaciones e importaciones manuales' },
+          { label: 'Integraciones parciales entre sistemas' },
+          { label: 'Ecosistema totalmente integrado y automatizado' },
+        ],
+      },
+    ];
+
+    private recDefs = [
+      {
+        title: 'Centraliza tu inventario',
+        desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.',
+        tags: ['Inventario', 'Stock'],
+      },
+      {
+        title: 'Optimiza el picking',
+        desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.',
+        tags: ['Picking', 'Almacén'],
+      },
+      {
+        title: 'Compara transportistas',
+        desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.',
+        tags: ['Envíos', 'Costes'],
+      },
+      {
+        title: 'Automatiza las devoluciones',
+        desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.',
+        tags: ['Devoluciones', 'Experiencia'],
+      },
+      {
+        title: 'Da visibilidad al cliente',
+        desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.',
+        tags: ['Tracking', 'Experiencia'],
+      },
+      {
+        title: 'Integra tus sistemas',
+        desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.',
+        tags: ['Integración', 'Automatización'],
+      },
+    ];
+
+    constructor() {
+      this.render();
+    }
+
+    private render() {
+      const root = document.getElementById('quiz-root');
+      if (!root) return;
+
+      switch (this.state.screen) {
+        case 'intro':
+          root.innerHTML = this.renderIntro();
+          break;
+        case 'quiz':
+          root.innerHTML = this.renderQuiz();
+          break;
+        case 'results':
+          root.innerHTML = this.renderResults();
+          break;
+      }
+
+      this.attachListeners();
+    }
+
+    private renderIntro(): string {
+      return `
+        <div class="quiz-section">
+          <div class="badge">
+            <span class="badge-dot"></span>
+            Diagnóstico logístico
+          </div>
+          <h1 class="intro-title">
+            Escanea tu <span>Logística</span>
+          </h1>
+          <p class="intro-desc">
+            Responde 6 preguntas y descubre el nivel de madurez de tu operación, cuánto tiempo puedes recuperar y dónde está tu mayor oportunidad de ahorro.
+          </p>
+          <button class="btn" data-action="start">Empezar diagnóstico →</button>
+          <div class="intro-time">6 preguntas · menos de 2 minutos</div>
+        </div>
+      `;
+    }
+
+    private renderQuiz(): string {
+      const q = this.questions[this.state.currentQ];
+      const answered = this.state.answers[this.state.currentQ] != null;
+      const pct = ((this.state.currentQ + 1) / this.questions.length) * 100;
+
+      let optionsHtml = q.options
+        .map(
+          (opt, i) =>
+            `
+          <div class="option ${this.state.answers[this.state.currentQ] === i ? 'selected' : ''}" data-option="${i}">
+            <div class="radio">
+              <div class="radio-inner"></div>
+            </div>
+            <span class="option-label">${opt.label}</span>
+          </div>
+        `
+        )
+        .join('');
+
+      return `
+        <div class="quiz-section">
+          <div class="progress-section">
+            <span class="progress-label">Pregunta ${this.state.currentQ + 1} de ${this.questions.length}</span>
+            <span class="progress-pct">${Math.round(pct)}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${pct}%"></div>
+          </div>
+
+          <div class="quiz-card">
+            <div class="quiz-header">
+              <div class="question-number">${this.state.currentQ + 1}</div>
+              <h2 class="question-text">${q.text}</h2>
+            </div>
+            <div class="options">
+              ${optionsHtml}
+            </div>
+          </div>
+
+          <div class="nav-buttons">
+            <button class="btn btn-secondary" data-action="back">
+              ${this.state.currentQ === 0 ? '← Inicio' : '← Atrás'}
+            </button>
+            <button class="btn" data-action="next" ${!answered ? 'disabled' : ''}>
+              ${this.state.currentQ === this.questions.length - 1 ? 'Ver resultados →' : 'Siguiente →'}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    private renderResults(): string {
+      const results = this.computeResults();
+      const recs = this.buildRecs(this.state.answers.map((a) => a ?? 0));
+
+      let metricsHtml = results.metrics
+        .map(
+          (m) => `
+        <div class="metric">
+          <div class="metric-icon">${m.icon}</div>
+          <div class="metric-value">${m.value}</div>
+          <div class="metric-label">${m.label}</div>
+        </div>
+      `
+        )
+        .join('');
+
+      let recsHtml = recs
+        .map((r) => {
+          let tagsHtml = r.tags
+            .map((tag) => `<span class="tag ${r.type}">${tag}</span>`)
+            .join('');
+          return `
+        <div class="recommendation">
+          <div class="rec-icon ${r.type}">💡</div>
+          <div class="rec-content">
+            <div class="rec-title">${r.title}</div>
+            <div class="rec-desc">${r.desc}</div>
+            <div class="tags">${tagsHtml}</div>
+          </div>
+        </div>
+      `;
+        })
+        .join('');
+
+      const heroClass = results.categoryLabel === 'Básica' ? 'basic' : results.categoryLabel === 'Intermedia' ? 'intermediate' : 'advanced';
+
+      return `
+        <div class="quiz-section">
+          <div class="results-hero ${heroClass}">
+            <div class="results-level-label">Nivel de madurez logística</div>
+            <div class="results-category">${results.categoryLabel}</div>
+            <div class="results-score">${results.scoreLabel}</div>
+            <p class="results-desc">${results.categoryDesc}</p>
+          </div>
+
+          <div class="metrics">
+            ${metricsHtml}
+          </div>
+          <div class="metrics-note">Estimaciones orientativas calculadas a partir de tus respuestas.</div>
+
+          <h3 class="recommendations-title">Recomendaciones para ti</h3>
+          <div class="recommendations">
+            ${recsHtml}
+          </div>
+
+          <div class="result-footer">
+            <button class="btn-restart" data-action="restart">↺ Repetir diagnóstico</button>
+          </div>
+        </div>
+      `;
+    }
+
+    private computeResults() {
+      const a = this.state.answers.map((x) => x ?? 0);
+      const score = a.reduce((p, c) => p + c, 0);
+
+      let categoryLabel: string;
+      let categoryDesc: string;
+
+      if (score <= 6) {
+        categoryLabel = 'Básica';
+        categoryDesc = 'Tu operación depende en gran parte de procesos manuales. Hay un margen amplio de mejora y de ahorro por delante.';
+      } else if (score <= 12) {
+        categoryLabel = 'Intermedia';
+        categoryDesc = 'Tienes bases sólidas, pero varios procesos clave todavía son manuales o están sin conectar entre sí.';
+      } else {
+        categoryLabel = 'Avanzada';
+        categoryDesc = 'Tu logística está muy optimizada. El foco ahora es afinar los últimos detalles y escalar apoyándote en los datos.';
+      }
+
+      const hours = Math.round((18 - score) * 1.3 + 2);
+      const returnRate = (4 + (18 - score) * 0.6).toFixed(1);
+      const savings = (18 - score) * 780;
+
+      return {
+        score,
+        categoryLabel,
+        categoryDesc,
+        scoreLabel: `${score} / 18 puntos`,
+        metrics: [
+          { icon: '⏱️', value: `${hours} h`, label: 'Horas/semana recuperables en tareas manuales' },
+          { icon: '↩️', value: `${returnRate} %`, label: 'Tasa de devolución estimada' },
+          { icon: '💶', value: `€ ${savings.toLocaleString()}`, label: 'Ahorro anual potencial estimado' },
+        ],
+      };
+    }
+
+    private buildRecs(a: number[]): Recommendation[] {
+      const recs: Recommendation[] = [];
+
+      a.forEach((v, i) => {
+        if (v <= 1) {
+          recs.push({
+            ...this.recDefs[i],
+            type: v === 0 ? 'risk' : 'warning',
+          });
+        }
+      });
+
+      recs.sort((x, y) => (x.type === 'risk' ? 0 : 1) - (y.type === 'risk' ? 0 : 1));
+
+      if (recs.length === 0) {
+        recs.push({
+          title: 'Mantén tu ventaja',
+          desc: 'Tu operación ya es madura. Revisa tus KPIs cada mes y automatiza los últimos procesos manuales para escalar sin fricción.',
+          tags: ['Optimización', 'Escalabilidad'],
+          type: 'success',
+        });
+      }
+
+      return recs;
+    }
+
+    private select(optionIndex: number) {
+      const newAnswers = [...this.state.answers];
+      newAnswers[this.state.currentQ] = optionIndex;
+      this.state.answers = newAnswers;
+      this.render();
+    }
+
+    private next() {
+      const answered = this.state.answers[this.state.currentQ] != null;
+      if (!answered) return;
+
+      if (this.state.currentQ < this.questions.length - 1) {
+        this.state.currentQ++;
+      } else {
+        this.state.screen = 'results';
+      }
+      this.render();
+    }
+
+    private back() {
+      if (this.state.currentQ === 0) {
+        this.state.screen = 'intro';
+      } else {
+        this.state.currentQ--;
+      }
+      this.render();
+    }
+
+    private restart() {
+      this.state = {
+        screen: 'intro',
+        currentQ: 0,
+        answers: [null, null, null, null, null, null],
+      };
+      this.render();
+    }
+
+    private attachListeners() {
+      document.querySelectorAll('[data-action]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          const action = (e.target as HTMLElement).getAttribute('data-action');
+          switch (action) {
+            case 'start':
+              this.state.screen = 'quiz';
+              this.render();
+              break;
+            case 'next':
+              this.next();
+              break;
+            case 'back':
+              this.back();
+              break;
+            case 'restart':
+              this.restart();
+              break;
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-option]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          const optionIndex = parseInt((e.currentTarget as HTMLElement).getAttribute('data-option') || '0');
+          this.select(optionIndex);
+        });
+      });
+    }
+  }
+
+  new DiagnosticQuiz();
+</script>
