@@ -2,7 +2,7 @@
 import DiagnosticQuiz from './DiagnosticQuiz.astro';
 ---
 
-<div id="quiz-modal-wrapper" style="display: none;">
+<div id="quiz-modal-wrapper">
   <div class="modal-overlay"></div>
   <div class="modal-content">
     <button class="modal-close" aria-label="Cerrar" title="Cerrar (ESC)">×</button>
@@ -18,7 +18,7 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
     right: 0;
     bottom: 0;
     z-index: 9999;
-    display: flex !important;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -134,31 +134,29 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
   }
 </style>
 
-<script>
+<script is:inline>
   function initializeQuizModal() {
     const modal = document.getElementById('quiz-modal-wrapper');
-    const overlay = modal?.querySelector('.modal-overlay');
-    const closeBtn = modal?.querySelector('.modal-close');
+    if (!modal) return;
+
+    const overlay = modal.querySelector('.modal-overlay');
+    const closeBtn = modal.querySelector('.modal-close');
 
     function openModal() {
-      if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
 
     function closeModal() {
-      if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
-      }
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
     }
 
-    closeBtn?.addEventListener('click', closeModal);
-    overlay?.addEventListener('click', closeModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
         closeModal();
       }
     });
@@ -167,5 +165,9 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
     window.closeQuizModal = closeModal;
   }
 
-  initializeQuizModal();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeQuizModal);
+  } else {
+    initializeQuizModal();
+  }
 </script>

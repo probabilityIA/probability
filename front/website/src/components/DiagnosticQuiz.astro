@@ -534,19 +534,7 @@
   </div>
 </div>
 
-<script>
-  interface Question {
-    text: string;
-    options: { label: string }[];
-  }
-
-  interface Recommendation {
-    title: string;
-    desc: string;
-    tags: string[];
-    type: 'info' | 'warning' | 'success' | 'risk';
-  }
-
+<script is:inline>
   class DiagnosticQuiz {
     private state = {
       screen: 'intro' as 'intro' | 'quiz' | 'results',
@@ -928,5 +916,11 @@
     }
   }
 
-  new DiagnosticQuiz();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      new DiagnosticQuiz();
+    });
+  } else {
+    new DiagnosticQuiz();
+  }
 </script>
