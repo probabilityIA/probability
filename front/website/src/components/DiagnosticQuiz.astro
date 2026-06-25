@@ -410,6 +410,11 @@
     line-height: 1.35;
   }
 
+  :global(.dq-peso-sign) {
+    color: #059669;
+    font-weight: 700;
+  }
+
   :global(.dq-metrics-note) {
     text-align: center;
     font-size: 11px;
@@ -792,7 +797,7 @@
           <div class="dq-metric-label">Tasa de devolución estimada</div>
         </div>
         <div class="dq-metric">
-          <div class="dq-metric-value">€${((18 - total) * 780).toLocaleString()}</div>
+          <div class="dq-metric-value dq-metric-price"><span class="dq-peso-sign">$</span>${((18 - total) * 3500000).toLocaleString('es-CO')}</div>
           <div class="dq-metric-label">Ahorro anual potencial</div>
         </div>
       `;
