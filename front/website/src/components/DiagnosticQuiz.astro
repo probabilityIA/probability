@@ -722,6 +722,47 @@
       `;
     }
 
+    buildRecs(a) {
+      const palette = {
+        info: { type: 'info' },
+        warning: { type: 'warning' },
+        success: { type: 'success' },
+        risk: { type: 'risk' },
+      };
+
+      const recDefs = [
+        { title: 'Centraliza tu inventario', desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.', tags: ['Inventario', 'Stock'] },
+        { title: 'Optimiza el picking', desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.', tags: ['Picking', 'Almacén'] },
+        { title: 'Compara transportistas', desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.', tags: ['Envíos', 'Costes'] },
+        { title: 'Automatiza las devoluciones', desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.', tags: ['Devoluciones', 'Experiencia'] },
+        { title: 'Da visibilidad al cliente', desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.', tags: ['Tracking', 'Experiencia'] },
+        { title: 'Integra tus sistemas', desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.', tags: ['Integración', 'Automatización'] },
+      ];
+
+      let recs = [];
+      a.forEach((v, i) => {
+        if (v <= 1) {
+          recs.push({
+            ...recDefs[i],
+            type: v === 0 ? 'risk' : 'warning',
+          });
+        }
+      });
+
+      recs.sort((x, y) => (x.type === 'risk' ? 0 : 1) - (y.type === 'risk' ? 0 : 1));
+
+      if (recs.length === 0) {
+        recs.push({
+          title: 'Mantén tu ventaja',
+          desc: 'Tu operación ya es madura. Revisa tus KPIs cada mes y automatiza los últimos procesos manuales para escalar sin fricción.',
+          tags: ['Optimización', 'Escalabilidad'],
+          type: 'success',
+        });
+      }
+
+      return recs;
+    }
+
     renderResults() {
       const scores = this.state.answers.map(a => a ?? 0);
       const total = scores.reduce((a, b) => a + b, 0);
