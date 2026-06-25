@@ -652,6 +652,7 @@
     }
 
     renderIntro() {
+      const self = this;
       return `
         <div class="quiz-section">
           <div class="badge">
@@ -664,7 +665,7 @@
           <p class="intro-desc">
             Responde 6 preguntas y descubre el nivel de madurez de tu operación, cuánto tiempo puedes recuperar y dónde está tu mayor oportunidad de ahorro.
           </p>
-          <button class="btn" data-action="start">Empezar diagnóstico →</button>
+          <button class="btn quiz-btn-start">Empezar diagnóstico →</button>
           <div class="intro-time">6 preguntas · menos de 2 minutos</div>
         </div>
       `;
@@ -679,7 +680,7 @@
         .map(
           (opt, i) =>
             `
-          <div class="option ${this.state.answers[this.state.currentQ] === i ? 'selected' : ''}" data-option="${i}">
+          <div class="option quiz-option ${this.state.answers[this.state.currentQ] === i ? 'selected' : ''}" data-option-index="${i}">
             <div class="radio">
               <div class="radio-inner"></div>
             </div>
@@ -710,10 +711,10 @@
           </div>
 
           <div class="nav-buttons">
-            <button class="btn btn-secondary" data-action="back">
+            <button class="btn btn-secondary quiz-btn-back">
               ${this.state.currentQ === 0 ? '← Inicio' : '← Atrás'}
             </button>
-            <button class="btn" data-action="next" ${!answered ? 'disabled' : ''}>
+            <button class="btn quiz-btn-next" ${!answered ? 'disabled' : ''}>
               ${this.state.currentQ === this.questions.length - 1 ? 'Ver resultados →' : 'Siguiente →'}
             </button>
           </div>
@@ -777,7 +778,7 @@
           </div>
 
           <div class="result-footer">
-            <button class="btn-restart" data-action="restart">↺ Repetir diagnóstico</button>
+            <button class="btn-restart quiz-btn-restart">↺ Repetir diagnóstico</button>
           </div>
         </div>
       `;
@@ -882,41 +883,42 @@
 
     attachListeners() {
       const self = this;
-      const root = document.getElementById('quiz-root');
-      if (!root) return;
 
-      root.addEventListener('click', (e) => {
-        const target = e.target.closest('[data-action], [data-option]');
-        if (!target) return;
+      const btnStart = document.querySelector('.quiz-btn-start');
+      if (btnStart) {
+        btnStart.addEventListener('click', () => {
+          self.state.screen = 'quiz';
+          self.render();
+        });
+      }
 
-        e.preventDefault();
-        e.stopPropagation();
+      const btnNext = document.querySelector('.quiz-btn-next');
+      if (btnNext) {
+        btnNext.addEventListener('click', () => {
+          self.next();
+        });
+      }
 
-        const action = target.getAttribute('data-action');
-        if (action) {
-          switch (action) {
-            case 'start':
-              self.state.screen = 'quiz';
-              self.render();
-              break;
-            case 'next':
-              self.next();
-              break;
-            case 'back':
-              self.back();
-              break;
-            case 'restart':
-              self.restart();
-              break;
-          }
-          return;
-        }
+      const btnBack = document.querySelector('.quiz-btn-back');
+      if (btnBack) {
+        btnBack.addEventListener('click', () => {
+          self.back();
+        });
+      }
 
-        const optionAttr = target.getAttribute('data-option');
-        if (optionAttr !== null) {
-          const optionIndex = parseInt(optionAttr);
-          self.select(optionIndex);
-        }
+      const btnRestart = document.querySelector('.quiz-btn-restart');
+      if (btnRestart) {
+        btnRestart.addEventListener('click', () => {
+          self.restart();
+        });
+      }
+
+      const options = document.querySelectorAll('.quiz-option');
+      options.forEach((opt) => {
+        opt.addEventListener('click', () => {
+          const idx = parseInt(opt.getAttribute('data-option-index'));
+          self.select(idx);
+        });
       });
     }
   }
