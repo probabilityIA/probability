@@ -756,6 +756,24 @@
         </div>
       `;
 
+      const recs = this.buildRecs(scores);
+      const recsHTML = recs
+        .map((r) => {
+          let tagsHtml = r.tags
+            .map((tag) => `<span class="tag ${r.type}">${tag}</span>`)
+            .join('');
+          return `
+            <div class="dq-rec">
+              <div class="dq-rec-content">
+                <div class="dq-rec-title">${r.title}</div>
+                <div class="dq-rec-desc">${r.desc}</div>
+                <div class="dq-tags">${tagsHtml}</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
       return `
         <div class="dq-wrapper">
           <div class="dq-container">
@@ -774,12 +792,7 @@
 
               <h3 class="dq-recs-title">Recomendaciones para ti</h3>
               <div class="dq-recs">
-                <div class="dq-rec">
-                  <div class="dq-rec-content">
-                    <div class="dq-rec-title">¡Diagnóstico completado!</div>
-                    <div class="dq-rec-desc">Tu operación logística ha sido evaluada. Usa estos insights para optimizar tus procesos y reducir costos.</div>
-                  </div>
-                </div>
+                ${recsHTML}
               </div>
 
               <div class="dq-footer">
