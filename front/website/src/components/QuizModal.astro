@@ -38,24 +38,38 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     animation: fadeIn 0.3s ease-out;
   }
 
   .modal-content {
     position: relative;
-    background: #0A0A0F;
+    background: linear-gradient(135deg, #FAFBFE 0%, #F5F3FF 100%);
     border-radius: 20px;
     max-width: 700px;
     width: 100%;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15);
     animation: slideUp 0.3s ease-out;
     z-index: 1;
     overflow: hidden;
+  }
+
+  .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px);
+    pointer-events: none;
+    border-radius: 20px;
   }
 
   .modal-header {
@@ -63,21 +77,25 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
     justify-content: flex-end;
     align-items: center;
     padding: 16px 20px;
-    background: #0A0A0F;
+    background: transparent;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
   }
 
   .modal-body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    background: #0A0A0F;
+    background: transparent;
+    position: relative;
+    z-index: 2;
   }
 
   .modal-close {
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
     border: none;
-    color: #E4E4E7;
+    color: #fff;
     font-size: 1.5rem;
     width: 36px;
     height: 36px;
@@ -88,11 +106,13 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
     align-items: center;
     justify-content: center;
     padding: 0;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
   }
 
   .modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
+    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+    transform: scale(1.05);
   }
 
   @keyframes fadeIn {
