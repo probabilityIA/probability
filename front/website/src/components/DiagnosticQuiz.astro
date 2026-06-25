@@ -536,126 +536,122 @@
 
 <script is:inline>
   class DiagnosticQuiz {
-    private state = {
-      screen: 'intro' as 'intro' | 'quiz' | 'results',
-      currentQ: 0,
-      answers: [null, null, null, null, null, null] as (number | null)[],
-    };
-
-    private questions: Question[] = [
-      {
-        text: '¿Cómo gestionas tu inventario actualmente?',
-        options: [
-          { label: 'Hojas de cálculo o papel' },
-          { label: 'Software básico con actualización manual' },
-          { label: 'Sistema con stock en tiempo real' },
-          { label: 'WMS integrado con sincronización automática multicanal' },
-        ],
-      },
-      {
-        text: '¿Cómo preparas los pedidos (picking y packing)?',
-        options: [
-          { label: 'Manual, sin rutas ni orden definido' },
-          { label: 'Listas impresas, un pedido cada vez' },
-          { label: 'Picking por lotes o por zonas' },
-          { label: 'Picking guiado con escáner y validación automática' },
-        ],
-      },
-      {
-        text: '¿Cómo gestionas los envíos y el transportista?',
-        options: [
-          { label: 'Un único transportista, etiquetas manuales' },
-          { label: 'Varios transportistas comparados a mano' },
-          { label: 'Plataforma multi-carrier con tarifas' },
-          { label: 'Asignación automática por reglas y coste óptimo' },
-        ],
-      },
-      {
-        text: '¿Cómo gestionas las devoluciones?',
-        options: [
-          { label: 'Sin un proceso definido' },
-          { label: 'Por email o manual, caso por caso' },
-          { label: 'Portal de devoluciones básico' },
-          { label: 'Portal automatizado con reembolso y reposición de stock' },
-        ],
-      },
-      {
-        text: '¿Qué visibilidad tienes del estado de los pedidos?',
-        options: [
-          { label: 'Ninguna hasta que se entrega' },
-          { label: 'Consulta manual en las webs de los transportistas' },
-          { label: 'Tracking centralizado interno' },
-          { label: 'Tracking en tiempo real con alertas proactivas al cliente' },
-        ],
-      },
-      {
-        text: '¿Qué nivel de integración tienen tus sistemas (tienda, ERP, WMS)?',
-        options: [
-          { label: 'Sistemas aislados, trasvase manual de datos' },
-          { label: 'Algunas exportaciones e importaciones manuales' },
-          { label: 'Integraciones parciales entre sistemas' },
-          { label: 'Ecosistema totalmente integrado y automatizado' },
-        ],
-      },
-    ];
-
-    private recDefs = [
-      {
-        title: 'Centraliza tu inventario',
-        desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.',
-        tags: ['Inventario', 'Stock'],
-      },
-      {
-        title: 'Optimiza el picking',
-        desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.',
-        tags: ['Picking', 'Almacén'],
-      },
-      {
-        title: 'Compara transportistas',
-        desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.',
-        tags: ['Envíos', 'Costes'],
-      },
-      {
-        title: 'Automatiza las devoluciones',
-        desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.',
-        tags: ['Devoluciones', 'Experiencia'],
-      },
-      {
-        title: 'Da visibilidad al cliente',
-        desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.',
-        tags: ['Tracking', 'Experiencia'],
-      },
-      {
-        title: 'Integra tus sistemas',
-        desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.',
-        tags: ['Integración', 'Automatización'],
-      },
-    ];
-
     constructor() {
+      this.state = {
+        screen: 'intro',
+        currentQ: 0,
+        answers: [null, null, null, null, null, null],
+      };
+
+      this.questions = [
+        {
+          text: '¿Cómo gestionas tu inventario actualmente?',
+          options: [
+            { label: 'Hojas de cálculo o papel' },
+            { label: 'Software básico con actualización manual' },
+            { label: 'Sistema con stock en tiempo real' },
+            { label: 'WMS integrado con sincronización automática multicanal' },
+          ],
+        },
+        {
+          text: '¿Cómo preparas los pedidos (picking y packing)?',
+          options: [
+            { label: 'Manual, sin rutas ni orden definido' },
+            { label: 'Listas impresas, un pedido cada vez' },
+            { label: 'Picking por lotes o por zonas' },
+            { label: 'Picking guiado con escáner y validación automática' },
+          ],
+        },
+        {
+          text: '¿Cómo gestionas los envíos y el transportista?',
+          options: [
+            { label: 'Un único transportista, etiquetas manuales' },
+            { label: 'Varios transportistas comparados a mano' },
+            { label: 'Plataforma multi-carrier con tarifas' },
+            { label: 'Asignación automática por reglas y coste óptimo' },
+          ],
+        },
+        {
+          text: '¿Cómo gestionas las devoluciones?',
+          options: [
+            { label: 'Sin un proceso definido' },
+            { label: 'Por email o manual, caso por caso' },
+            { label: 'Portal de devoluciones básico' },
+            { label: 'Portal automatizado con reembolso y reposición de stock' },
+          ],
+        },
+        {
+          text: '¿Qué visibilidad tienes del estado de los pedidos?',
+          options: [
+            { label: 'Ninguna hasta que se entrega' },
+            { label: 'Consulta manual en las webs de los transportistas' },
+            { label: 'Tracking centralizado interno' },
+            { label: 'Tracking en tiempo real con alertas proactivas al cliente' },
+          ],
+        },
+        {
+          text: '¿Qué nivel de integración tienen tus sistemas (tienda, ERP, WMS)?',
+          options: [
+            { label: 'Sistemas aislados, trasvase manual de datos' },
+            { label: 'Algunas exportaciones e importaciones manuales' },
+            { label: 'Integraciones parciales entre sistemas' },
+            { label: 'Ecosistema totalmente integrado y automatizado' },
+          ],
+        },
+      ];
+
+      this.recDefs = [
+        {
+          title: 'Centraliza tu inventario',
+          desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.',
+          tags: ['Inventario', 'Stock'],
+        },
+        {
+          title: 'Optimiza el picking',
+          desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.',
+          tags: ['Picking', 'Almacén'],
+        },
+        {
+          title: 'Compara transportistas',
+          desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.',
+          tags: ['Envíos', 'Costes'],
+        },
+        {
+          title: 'Automatiza las devoluciones',
+          desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.',
+          tags: ['Devoluciones', 'Experiencia'],
+        },
+        {
+          title: 'Da visibilidad al cliente',
+          desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.',
+          tags: ['Tracking', 'Experiencia'],
+        },
+        {
+          title: 'Integra tus sistemas',
+          desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.',
+          tags: ['Integración', 'Automatización'],
+        },
+      ];
+
       this.render();
     }
 
-    private render() {
+    render() {
       const root = document.getElementById('quiz-root');
       if (!root) return;
 
-      switch (this.state.screen) {
-        case 'intro':
-          root.innerHTML = this.renderIntro();
-          break;
-        case 'quiz':
-          root.innerHTML = this.renderQuiz();
-          break;
-        case 'results':
-          root.innerHTML = this.renderResults();
-          break;
+      if (this.state.screen === 'intro') {
+        root.innerHTML = this.renderIntro();
+      } else if (this.state.screen === 'quiz') {
+        root.innerHTML = this.renderQuiz();
+      } else if (this.state.screen === 'results') {
+        root.innerHTML = this.renderResults();
       }
 
       this.attachListeners();
     }
 
-    private renderIntro(): string {
+    renderIntro() {
       return `
         <div class="quiz-section">
           <div class="badge">
@@ -674,7 +670,7 @@
       `;
     }
 
-    private renderQuiz(): string {
+    renderQuiz() {
       const q = this.questions[this.state.currentQ];
       const answered = this.state.answers[this.state.currentQ] != null;
       const pct = ((this.state.currentQ + 1) / this.questions.length) * 100;
@@ -725,7 +721,7 @@
       `;
     }
 
-    private renderResults(): string {
+    renderResults() {
       const results = this.computeResults();
       const recs = this.buildRecs(this.state.answers.map((a) => a ?? 0));
 
@@ -787,12 +783,11 @@
       `;
     }
 
-    private computeResults() {
+    computeResults() {
       const a = this.state.answers.map((x) => x ?? 0);
       const score = a.reduce((p, c) => p + c, 0);
 
-      let categoryLabel: string;
-      let categoryDesc: string;
+      let categoryLabel, categoryDesc;
 
       if (score <= 6) {
         categoryLabel = 'Básica';
@@ -822,8 +817,8 @@
       };
     }
 
-    private buildRecs(a: number[]): Recommendation[] {
-      const recs: Recommendation[] = [];
+    buildRecs(a) {
+      const recs = [];
 
       a.forEach((v, i) => {
         if (v <= 1) {
@@ -848,14 +843,14 @@
       return recs;
     }
 
-    private select(optionIndex: number) {
+    select(optionIndex) {
       const newAnswers = [...this.state.answers];
       newAnswers[this.state.currentQ] = optionIndex;
       this.state.answers = newAnswers;
       this.render();
     }
 
-    private next() {
+    next() {
       const answered = this.state.answers[this.state.currentQ] != null;
       if (!answered) return;
 
@@ -867,7 +862,7 @@
       this.render();
     }
 
-    private back() {
+    back() {
       if (this.state.currentQ === 0) {
         this.state.screen = 'intro';
       } else {
@@ -876,7 +871,7 @@
       this.render();
     }
 
-    private restart() {
+    restart() {
       this.state = {
         screen: 'intro',
         currentQ: 0,
@@ -885,10 +880,10 @@
       this.render();
     }
 
-    private attachListeners() {
+    attachListeners() {
       document.querySelectorAll('[data-action]').forEach((el) => {
         el.addEventListener('click', (e) => {
-          const action = (e.target as HTMLElement).getAttribute('data-action');
+          const action = e.target.getAttribute('data-action');
           switch (action) {
             case 'start':
               this.state.screen = 'quiz';
@@ -909,7 +904,7 @@
 
       document.querySelectorAll('[data-option]').forEach((el) => {
         el.addEventListener('click', (e) => {
-          const optionIndex = parseInt((e.currentTarget as HTMLElement).getAttribute('data-option') || '0');
+          const optionIndex = parseInt(e.currentTarget.getAttribute('data-option') || '0');
           this.select(optionIndex);
         });
       });
