@@ -137,20 +137,21 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
 
   @media (max-width: 768px) {
     #quiz-modal-wrapper {
-      padding: 0;
-      align-items: flex-end;
+      padding: 1rem;
+      align-items: center;
+      justify-content: center;
     }
 
     .modal-content {
-      max-width: 100%;
+      max-width: 90vw;
       width: 100%;
-      max-height: 100vh;
-      border-radius: 20px 20px 0 0;
-      position: fixed;
-      bottom: 0;
+      max-height: 85vh;
+      border-radius: 20px;
+      position: relative;
+      bottom: auto;
       top: auto;
-      left: 0;
-      right: 0;
+      left: auto;
+      right: auto;
     }
 
     .modal-header {
@@ -165,17 +166,25 @@ import DiagnosticQuiz from './DiagnosticQuiz.astro';
 
     @keyframes slideUp {
       from {
-        transform: translateY(100%);
+        opacity: 0;
+        transform: scale(0.95);
       }
       to {
-        transform: translateY(0);
+        opacity: 1;
+        transform: scale(1);
       }
     }
   }
 
   @media (max-width: 480px) {
+    #quiz-modal-wrapper {
+      padding: 1rem;
+    }
+
     .modal-content {
-      border-radius: 20px 20px 0 0;
+      max-width: 95vw;
+      border-radius: 20px;
+      max-height: 88vh;
     }
 
     .modal-header {
