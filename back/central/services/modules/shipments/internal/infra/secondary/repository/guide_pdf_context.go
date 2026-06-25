@@ -9,6 +9,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
+var _ = strings.TrimSpace
+
 func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
 	var row struct {
 		ID                 uint
@@ -25,6 +27,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		DestinationState   string
 		DestinationSuburb string
 		CodTotal           *float64
+		CodCarrierFee      *float64
 		OrderNumber        *string
 		CustomerName       *string
 		CustomerPhone      *string
@@ -47,6 +50,13 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		Metadata           map[string]interface{}
 	}
 
+	var items []struct {
+		SKU         *string
+		ProductName *string
+		Quantity    *int
+		UnitPrice   *float64
+	}
+
 	err := r.db.Conn(ctx).Raw(`
 		SELECT
 			s.id,
@@ -56,7 +66,8 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			s.created_at,
 			s.estimated_delivery,
 			s.destination_address, s.destination_city, s.destination_state, s.destination_suburb,
-			s.cod_carrier_fee AS cod_total,
+			o.cod_total,
+			s.cod_carrier_fee,
 			o.order_number,
 			o.customer_name,
 			o.customer_phone,
@@ -83,6 +94,29 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		LEFT JOIN warehouses w ON w.id = s.warehouse_id
 		WHERE s.id = ? AND s.deleted_at IS NULL
 	`, shipmentID).Scan(&row).Error
+
+	if err == nil && row.ID != 0 {
+		itemsErr := r.db.Conn(ctx).Raw(`
+			SELECT
+				p.sku,
+				p.name AS product_name,
+				oi.quantity,
+				oi.unit_price
+			FROM order_items oi
+			LEFT JOIN products p ON p.id = oi.product_id
+			WHERE oi.order_id = ? AND oi.deleted_at IS NULL
+			ORDER BY oi.created_at ASC
+			LIMIT 5
+		`, row.OrderNumber).Scan(&items).Error
+		if itemsErr != nil {
+			items = []struct {
+				SKU         *string
+				ProductName *string
+				Quantity    *int
+				UnitPrice   *float64
+			}{}
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +154,32 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		return ""
 	}
 
+	orderItems := make([]domain.OrderItemContext, 0)
+	for _, item := range items {
+		sku := ""
+		if item.SKU != nil {
+			sku = strings.TrimSpace(*item.SKU)
+		}
+		pName := ""
+		if item.ProductName != nil {
+			pName = strings.TrimSpace(*item.ProductName)
+		}
+		qty := 1
+		if item.Quantity != nil && *item.Quantity > 0 {
+			qty = *item.Quantity
+		}
+		price := 0.0
+		if item.UnitPrice != nil {
+			price = *item.UnitPrice
+		}
+		orderItems = append(orderItems, domain.OrderItemContext{
+			SKU:         sku,
+			ProductName: pName,
+			Quantity:    qty,
+			UnitPrice:   price,
+		})
+	}
+
 	result := &domain.GuidePDFContext{
 		ShipmentID:         row.ID,
 		TrackingNumber:     val(row.TrackingNumber),
@@ -142,6 +202,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		DeclaredValue:      valF(row.TotalAmount),
 		Currency:           val(row.Currency),
 		CodTotal:           valF(row.CodTotal),
+		CodCarrierFee:      valF(row.CodCarrierFee),
 		BusinessName:       val(row.BusinessName),
 		BusinessAddress:    val(row.BusinessAddress),
 		WarehouseName:      val(row.WName),
@@ -162,10 +223,11 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		Ref:                metaStr("ref"),
 		Guia:               metaStr("guia"),
 		Observaciones:      metaStr("observaciones"),
+		OrderItems:         orderItems,
 	}
 
-	fmt.Printf("DEBUG [Shipment %d]: Warehouse=%s | Address=%s | City=%s | Phone=%s\n",
-		row.ID, val(row.WCompany), wAddr, val(row.WCity), val(row.WPhone))
+	fmt.Printf("DEBUG [Shipment %d]: Warehouse=%s | Address=%s | City=%s | Phone=%s | Items=%d\n",
+		row.ID, val(row.WCompany), wAddr, val(row.WCity), val(row.WPhone), len(orderItems))
 
 	return result, nil
 }

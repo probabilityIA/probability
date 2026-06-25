@@ -6,9 +6,6 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"io"
-	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -25,10 +22,6 @@ func buildProbabilityLabel(c *domain.GuidePDFContext, format *domain.GuideFormat
 
 	if carrier == "ENVIA" {
 		return buildEnviaLabel(c, format)
-	}
-
-	if carrier == "COORDINADORA" {
-		return buildCoordinadoraLabel(c, format)
 	}
 
 	return buildGenericCarrierLabel(c, format)
@@ -93,33 +86,344 @@ func buildGenericCarrierLabel(c *domain.GuidePDFContext, format *domain.GuideFor
 		hCm = 15
 	}
 
+	wMm := wCm * 10.0
+	hMm := hCm * 10.0
+
 	pdf := gofpdf.NewCustom(&gofpdf.InitType{
 		UnitStr:        "mm",
-		Size:           gofpdf.SizeType{Wd: wCm * 10, Ht: hCm * 10},
+		Size:           gofpdf.SizeType{Wd: wMm, Ht: hMm},
 		OrientationStr: "P",
 	})
-	pdf.SetMargins(3, 3, 3)
-	pdf.SetAutoPageBreak(false, 3)
+	pdf.SetMargins(0, 0, 0)
+	pdf.SetAutoPageBreak(false, 0)
 	pdf.AddPage()
 
 	tr := pdf.UnicodeTranslatorFromDescriptor("")
-	pageW := wCm*10 - 6
+
 	scale := 1.0
-	if wCm < 8 {
-		scale = 0.75
-	} else if wCm >= 20 {
-		scale = 1.5
+	if wMm < 80 {
+		scale = 0.65
+	} else if wMm >= 210 {
+		scale = 1.3
 	}
 
-	drawGenericCarrierHeader(pdf, tr, c, pageW, scale)
-	drawGenericSenderRecipient(pdf, tr, c, pageW, scale)
-	drawGenericQRAndBarcode(pdf, tr, c, pageW, scale)
+	margin := 4.0
+
+	drawProfessionalHeaderNewDesign(pdf, tr, c, wMm, hMm, scale)
+	drawThreeColumnsSection(pdf, tr, c, wMm, hMm, margin, scale)
+	drawTrackingSectionNewDesign(pdf, tr, c, wMm, hMm, margin, scale)
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func drawProfessionalHeaderNewDesign(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, scale float64) {
+	headerH := hMm * 0.25
+	darkBlue := color.RGBA{R: 22, G: 54, B: 92, A: 255}
+	darkerBlue := color.RGBA{R: 15, G: 39, B: 66, A: 255}
+	lightGray := color.RGBA{R: 159, G: 180, B: 206, A: 255}
+
+	pdf.SetFillColor(int(darkBlue.R), int(darkBlue.G), int(darkBlue.B))
+	pdf.Rect(0, 0, wMm, headerH, "F")
+
+	pdf.SetXY(0, 1.5)
+	pdf.SetFont("Helvetica", "B", 12*scale)
+	pdf.SetTextColor(255, 255, 255)
+	pdf.CellFormat(wMm, 3*scale, "PROBABILITY", "", 0, "C", false, 0, "")
+
+	pdf.SetXY(wMm-22, 1.5)
+	pdf.SetFont("Helvetica", "B", 6.5*scale)
+	pdf.SetTextColor(255, 255, 255)
+	createdDate := ""
+	if c.CreatedAt != nil {
+		createdDate = c.CreatedAt.Format("02/01/2006")
+	}
+	pdf.CellFormat(20, 3*scale, tr(createdDate), "", 0, "R", false, 0, "")
+
+	pdf.SetXY(0, 4.5*scale)
+	pdf.SetFont("Helvetica", "", 5.5*scale)
+	pdf.SetTextColor(int(lightGray.R), int(lightGray.G), int(lightGray.B))
+	pdf.CellFormat(wMm, 1.8*scale, "GESTION DE ENVIOS", "", 1, "C", false, 0, "")
+
+	pdf.SetFillColor(int(darkerBlue.R), int(darkerBlue.G), int(darkerBlue.B))
+	pdf.Rect(0, headerH*0.65, wMm, headerH*0.35, "F")
+
+	pdf.SetXY(0, headerH*0.68)
+	pdf.SetFont("Helvetica", "B", 15*scale)
+	pdf.SetTextColor(255, 255, 255)
+	carrier := strings.ToUpper(strings.TrimSpace(c.Carrier))
+	pdf.CellFormat(wMm, 4*scale, tr(carrier), "", 1, "C", false, 0, "")
+
+	pdf.SetDrawColor(int(lightGray.R), int(lightGray.G), int(lightGray.B))
+	pdf.SetLineWidth(0.5)
+	pdf.Line(0, headerH, wMm, headerH)
+}
+
+func drawThreeColumnsSection(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, margin, scale float64) {
+	headerH := hMm * 0.25
+	contentH := hMm * 0.50
+	usableW := wMm - (margin * 2)
+	colW := usableW / 3.0
+	startY := headerH
+
+	darkBlue := color.RGBA{R: 22, G: 54, B: 92, A: 255}
+	darkGray := color.RGBA{R: 17, G: 17, B: 17, A: 255}
+	lightBgGray := color.RGBA{R: 250, G: 251, B: 252, A: 255}
+	borderGray := color.RGBA{R: 184, G: 188, B: 194, A: 255}
+
+	pdf.SetDrawColor(int(borderGray.R), int(borderGray.G), int(borderGray.B))
+	pdf.SetLineWidth(0.4)
+
+	xCol1 := margin
+	xCol2 := margin + colW
+	xCol3 := margin + (colW * 2)
+
+	drawColumnRemite(pdf, tr, c, xCol1, startY, colW, contentH, darkBlue, darkGray, borderGray, scale)
+	pdf.Line(xCol2-0.5, startY, xCol2-0.5, startY+contentH)
+
+	drawColumnDestino(pdf, tr, c, xCol2, startY, colW, contentH, lightBgGray, darkBlue, darkGray, borderGray, scale)
+	pdf.Line(xCol3-0.5, startY, xCol3-0.5, startY+contentH)
+
+	drawColumnPaquete(pdf, tr, c, xCol3, startY, colW, contentH, darkBlue, darkGray, borderGray, scale)
+
+	pdf.SetDrawColor(int(darkBlue.R), int(darkBlue.G), int(darkBlue.B))
+	pdf.SetLineWidth(0.6)
+	pdf.Line(0, startY+contentH, wMm, startY+contentH)
+}
+
+func drawColumnRemite(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h float64, headerCol, textCol, borderCol color.RGBA, scale float64) {
+	margin := 2.5
+	currentY := y + 1.5
+
+	pdf.SetXY(x+margin, currentY)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetTextColor(int(headerCol.R), int(headerCol.G), int(headerCol.B))
+	pdf.CellFormat(w-margin*2, 2*scale, "REMITE", "", 1, "L", false, 0, "")
+	currentY += 3.5
+
+	pdf.SetXY(x+margin, currentY)
+	pdf.SetFont("Helvetica", "B", 6.5*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	sender := strings.ToUpper(strings.TrimSpace(c.WarehouseCompany))
+	if sender == "" {
+		sender = strings.ToUpper(strings.TrimSpace(c.BusinessName))
+	}
+	pdf.MultiCell(w-margin*2, 1.8*scale, tr(sender), "", "L", false)
+	currentY = pdf.GetY() + 0.5
+
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetXY(x+margin, currentY)
+	pdf.MultiCell(w-margin*2, 1.4*scale, tr(strings.TrimSpace(c.WarehouseAddress)), "", "L", false)
+	currentY = pdf.GetY() + 0.3
+
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
+	pdf.SetXY(x+margin, currentY)
+	city := strings.TrimSpace(c.WarehouseCity)
+	state := strings.TrimSpace(c.WarehouseState)
+	if state != "" {
+		city += ", " + state
+	}
+	pdf.CellFormat(w-margin*2, 1.6*scale, tr(city), "", 1, "L", false, 0, "")
+	currentY = pdf.GetY() + 0.3
+
+	pdf.SetFont("Helvetica", "", 4.5*scale)
+	pdf.SetTextColor(100, 100, 100)
+	if c.WarehousePhone != "" {
+		pdf.SetXY(x+margin, currentY)
+		pdf.CellFormat(w-margin*2, 1.3*scale, tr("Tel: "+c.WarehousePhone), "", 1, "L", false, 0, "")
+	}
+}
+
+func drawColumnDestino(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h float64, bgCol, headerCol, textCol, borderCol color.RGBA, scale float64) {
+	pdf.SetFillColor(int(bgCol.R), int(bgCol.G), int(bgCol.B))
+	pdf.Rect(x, y, w, h, "F")
+
+	margin := 2.5
+	currentY := y + 1.5
+
+	pdf.SetXY(x+margin, currentY)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetTextColor(int(headerCol.R), int(headerCol.G), int(headerCol.B))
+	pdf.CellFormat(w-margin*2, 2*scale, "DESTINO", "", 1, "L", false, 0, "")
+	currentY += 3.5
+
+	pdf.SetXY(x+margin, currentY)
+	pdf.SetFont("Helvetica", "B", 6.5*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	pdf.MultiCell(w-margin*2, 1.8*scale, tr(strings.ToUpper(strings.TrimSpace(c.CustomerName))), "", "L", false)
+	currentY = pdf.GetY() + 0.5
+
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetXY(x+margin, currentY)
+	pdf.MultiCell(w-margin*2, 1.4*scale, tr(strings.TrimSpace(c.DestinationAddress)), "", "L", false)
+	currentY = pdf.GetY() + 0.3
+
+	pdf.SetFont("Helvetica", "", 4.8*scale)
+	pdf.SetXY(x+margin, currentY)
+	suburb := strings.TrimSpace(c.DestinationSuburb)
+	if suburb != "" {
+		pdf.CellFormat(w-margin*2, 1.3*scale, tr(suburb), "", 1, "L", false, 0, "")
+		currentY = pdf.GetY() + 0.2
+	}
+
+	pdf.SetFont("Helvetica", "B", 5.5*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	pdf.SetXY(x+margin, currentY)
+	dest := strings.TrimSpace(c.DestinationCity)
+	state := strings.TrimSpace(c.DestinationState)
+	if state != "" {
+		dest += ", " + state
+	}
+	pdf.CellFormat(w-margin*2, 1.6*scale, tr(dest), "", 1, "L", false, 0, "")
+	currentY = pdf.GetY() + 0.3
+
+	pdf.SetFont("Helvetica", "", 4.5*scale)
+	pdf.SetTextColor(100, 100, 100)
+	if c.CustomerPhone != "" {
+		pdf.SetXY(x+margin, currentY)
+		pdf.CellFormat(w-margin*2, 1.3*scale, tr("Tel: "+c.CustomerPhone), "", 1, "L", false, 0, "")
+	}
+}
+
+func drawColumnPaquete(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h float64, headerCol, textCol, borderCol color.RGBA, scale float64) {
+	margin := 2.5
+	currentY := y + 1.5
+
+	pdf.SetXY(x+margin, currentY)
+	pdf.SetFont("Helvetica", "B", 7*scale)
+	pdf.SetTextColor(int(headerCol.R), int(headerCol.G), int(headerCol.B))
+	pdf.CellFormat(w-margin*2, 2*scale, "PAQUETE", "", 1, "L", false, 0, "")
+	currentY += 3.5
+
+	pdf.SetFont("Helvetica", "", 4.8*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	pdf.SetXY(x+margin, currentY)
+
+	if len(c.OrderItems) > 0 {
+		for i, item := range c.OrderItems {
+			if i >= 2 {
+				break
+			}
+			line := fmt.Sprintf("%dx %s", item.Quantity, item.ProductName)
+			if item.SKU != "" {
+				line = fmt.Sprintf("%dx SKU %s", item.Quantity, item.SKU)
+			}
+			pdf.MultiCell(w-margin*2, 1.3*scale, tr(line), "", "L", false)
+		}
+	} else {
+		pdf.CellFormat(w-margin*2, 1.3*scale, tr("Items no especificados"), "", 1, "L", false, 0, "")
+	}
+	currentY = pdf.GetY() + 2
+
+	pdf.SetFont("Helvetica", "B", 4.8*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.SetXY(x+margin, currentY)
+	pdf.CellFormat(w-margin*2, 1.5*scale, "Peso", "", 1, "L", false, 0, "")
+	currentY = pdf.GetY()
+
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	weightStr := "—"
+	if c.Weight > 0 {
+		weightStr = fmt.Sprintf("%.1f kg", c.Weight)
+	}
+	pdf.SetXY(x+margin, currentY)
+	pdf.CellFormat(w-margin*2, 1.8*scale, tr(weightStr), "", 1, "L", false, 0, "")
+	currentY = pdf.GetY() + 1
+
+	pdf.SetFont("Helvetica", "B", 4.8*scale)
+	pdf.SetTextColor(80, 80, 80)
+	pdf.SetXY(x+margin, currentY)
+	pdf.CellFormat(w-margin*2, 1.5*scale, "Dimensiones", "", 1, "L", false, 0, "")
+	currentY = pdf.GetY()
+
+	pdf.SetFont("Helvetica", "B", 6*scale)
+	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
+	dimsStr := "—"
+	if c.Width > 0 && c.Height > 0 && c.Length > 0 {
+		dimsStr = fmt.Sprintf("%.0fx%.0fx%.0f cm", c.Width, c.Height, c.Length)
+	}
+	pdf.SetXY(x+margin, currentY)
+	pdf.CellFormat(w-margin*2, 1.8*scale, tr(dimsStr), "", 1, "L", false, 0, "")
+
+	if c.CodTotal > 0 {
+		pdf.SetFillColor(200, 16, 46)
+		pdf.SetTextColor(255, 255, 255)
+		pdf.SetFont("Helvetica", "B", 5*scale)
+		currency := c.Currency
+		if currency == "" {
+			currency = "COP"
+		}
+		totalCliente := c.CodTotal + c.CodCarrierFee
+		codTxt := fmt.Sprintf("CONTRA ENTREGA: $%s", formatMoneyProb(totalCliente))
+		yPos := y + h - 8
+		pdf.Rect(x+margin, yPos, w-margin*2, 6.5*scale, "F")
+		pdf.SetXY(x+margin+0.5, yPos+0.8)
+		pdf.MultiCell(w-margin*2-1, 2*scale, tr(codTxt), "", "C", false)
+	}
+}
+
+func drawTrackingSectionNewDesign(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, margin, scale float64) {
+	headerH := hMm * 0.25
+	contentH := hMm * 0.50
+	trackingY := headerH + contentH
+	trackingH := hMm * 0.25
+
+	darkBlue := color.RGBA{R: 22, G: 54, B: 92, A: 255}
+	darkGray := color.RGBA{R: 17, G: 17, B: 17, A: 255}
+	lightGray := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+
+	usableW := wMm - (margin * 2)
+
+	pdf.SetXY(margin, trackingY+2)
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.SetTextColor(int(lightGray.R), int(lightGray.G), int(lightGray.B))
+	pdf.CellFormat(usableW*0.3, 1.8*scale, "TRACKING", "", 0, "L", false, 0, "")
+
+	pdf.SetXY(margin+usableW*0.5, trackingY+2)
+	pdf.SetFont("Helvetica", "", 5*scale)
+	pdf.CellFormat(usableW*0.5, 1.8*scale, "ORDEN", "", 1, "R", false, 0, "")
+
+	pdf.SetXY(margin, trackingY+4.5)
+	pdf.SetFont("Helvetica", "B", 12*scale)
+	pdf.SetTextColor(int(darkGray.R), int(darkGray.G), int(darkGray.B))
+	pdf.CellFormat(usableW*0.5, 4*scale, tr(strings.TrimSpace(c.TrackingNumber)), "", 0, "L", false, 0, "")
+
+	pdf.SetXY(margin+usableW*0.5, trackingY+4.5)
+	pdf.SetFont("Helvetica", "B", 9*scale)
+	pdf.CellFormat(usableW*0.5, 4*scale, tr(strings.TrimSpace(c.OrderNumber)), "", 1, "R", false, 0, "")
+
+	pdf.SetDrawColor(int(lightGray.R), int(lightGray.G), int(lightGray.B))
+	pdf.SetLineWidth(0.3)
+	pdf.Line(margin, trackingY+8.5, margin+usableW, trackingY+8.5)
+
+	barcodeH := trackingH - 9.5
+	barcodeY := trackingY + 9.0
+
+	barcodePNG := buildCode128PNGProb(strings.TrimSpace(c.TrackingNumber), int(usableW*7), int(barcodeH*2))
+	if barcodePNG != nil && len(barcodePNG) > 0 {
+		opts := gofpdf.ImageOptions{ImageType: "PNG"}
+		barcodeKey := fmt.Sprintf("barcode_%d", time.Now().UnixNano())
+		pdf.RegisterImageOptionsReader(barcodeKey, opts, bytes.NewReader(barcodePNG))
+
+		barcodeX := margin + (usableW - (usableW * 0.8)) / 2
+		pdf.ImageOptions(barcodeKey, barcodeX, barcodeY, usableW*0.8, barcodeH*0.8, false, opts, 0, "")
+	}
+
+	pdf.SetXY(margin, trackingY+trackingH-2)
+	pdf.SetFont("Helvetica", "", 4*scale)
+	pdf.SetTextColor(int(darkBlue.R), int(darkBlue.G), int(darkBlue.B))
+	barcodeTxt := fmt.Sprintf("CODE 128 · *%s*", strings.TrimSpace(c.TrackingNumber))
+	pdf.CellFormat(usableW*0.5, 1.5*scale, tr(barcodeTxt), "", 0, "L", false, 0, "")
+
+	pdf.SetXY(margin+usableW*0.5, trackingY+trackingH-2)
+	pdf.SetFont("Helvetica", "", 4*scale)
+	pdf.SetTextColor(int(lightGray.R), int(lightGray.G), int(lightGray.B))
+	guiaTxt := fmt.Sprintf("Guia: %s", strings.TrimSpace(c.Guia))
+	pdf.CellFormat(usableW*0.5, 1.5*scale, tr(guiaTxt), "", 1, "R", false, 0, "")
 }
 
 func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, wMm, hMm, scale float64) {
@@ -828,20 +1132,31 @@ func buildCode128PNGProb(data string, widthPx, heightPx int) []byte {
 	if err != nil {
 		return nil
 	}
+
 	b := scaled.Bounds()
-	gray := image.NewGray(b)
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			r, _, _, _ := scaled.At(x, y).RGBA()
-			if r>>8 > 200 {
-				gray.SetGray(x, y, color.Gray{Y: 255})
+	width := b.Dx()
+	height := b.Dy()
+
+	rgba := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			origX := b.Min.X + x
+			origY := b.Min.Y + y
+			r, _, _, a := scaled.At(origX, origY).RGBA()
+
+			if a == 0 {
+				rgba.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
+			} else if r>>8 > 127 {
+				rgba.SetRGBA(x, y, color.RGBA{R: 255, G: 255, B: 255, A: 255})
 			} else {
-				gray.SetGray(x, y, color.Gray{Y: 0})
+				rgba.SetRGBA(x, y, color.RGBA{R: 0, G: 0, B: 0, A: 255})
 			}
 		}
 	}
+
 	var buf bytes.Buffer
-	if err := png.Encode(&buf, gray); err != nil {
+	if err := png.Encode(&buf, rgba); err != nil {
 		return nil
 	}
 	return buf.Bytes()
@@ -897,402 +1212,4 @@ var _ = buildQRPNGProb
 func pageWidth(pdf *gofpdf.Fpdf) float64 {
 	w, _ := pdf.GetPageSize()
 	return w
-}
-
-func drawGenericCarrierHeader(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
-	y := 1.5
-	logoH := 7 * scale
-	carrierLogoW := logoH * 2.5
-	probLogoW := logoH * 4.2
-
-	carrier := strings.ToUpper(strings.TrimSpace(c.Carrier))
-
-	logoImg := getCarrierLogo(carrier)
-	if logoImg != nil && len(logoImg) > 0 {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("carrier_logo.png", opts, bytes.NewReader(logoImg))
-		pdf.ImageOptions("carrier_logo.png", 5, y, carrierLogoW, logoH, false, opts, 0, "")
-	}
-
-	probLogoImg := readLocalAsset("probability-logo.png")
-	if probLogoImg != nil && len(probLogoImg) > 0 {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("prob_logo.png", opts, bytes.NewReader(probLogoImg))
-		rightLogoX := 5 + pageW - probLogoW - 0.5
-		pdf.ImageOptions("prob_logo.png", rightLogoX, y, probLogoW, logoH, false, opts, 0, "")
-	}
-
-	y += logoH + 1.5
-
-	pdf.SetFont("Helvetica", "B", 7*scale)
-	if c.TrackingNumber != "" {
-		pdf.SetXY(5, y)
-		pdf.CellFormat(pageW, 3*scale, tr("Tracking: "+c.TrackingNumber), "1", 1, "C", false, 0, "")
-		y += 3.5*scale
-	}
-}
-
-func drawGenericSenderRecipient(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
-	y := pdf.GetY() + 2*scale
-	colW := (pageW - 2) / 2
-
-	pdf.SetFont("Helvetica", "B", 7*scale)
-	pdf.SetXY(5, y)
-	pdf.CellFormat(colW, 3*scale, tr("REMITE"), "1", 0, "C", false, 0, "")
-	pdf.SetX(5 + colW + 2)
-	pdf.CellFormat(colW, 3*scale, tr("DESTINATARIO"), "1", 0, "C", false, 0, "")
-
-	y += 3.5*scale
-	pdf.SetFont("Helvetica", "", 5.5*scale)
-
-	senderText := fmt.Sprintf("%s\n%s\n%s\n%s %s\nTel: %s",
-		c.WarehouseCompany,
-		c.WarehouseAddress,
-		c.WarehouseCity,
-		c.WarehouseContact,
-		c.WarehousePhone,
-		c.WarehousePhone,
-	)
-
-	recipientText := fmt.Sprintf("%s\n%s\n%s, %s\nTel: %s\nDNI: %s",
-		c.CustomerName,
-		c.DestinationAddress,
-		c.DestinationCity,
-		c.DestinationState,
-		c.CustomerPhone,
-		c.CustomerDNI,
-	)
-
-	pdf.SetXY(5, y)
-	pdf.MultiCell(colW, 2.2*scale, tr(senderText), "1", "L", false)
-
-	senderH := pdf.GetY() - y
-
-	pdf.SetXY(5+colW+2, y)
-	pdf.MultiCell(colW, 2.2*scale, tr(recipientText), "1", "L", false)
-
-	if pdf.GetY() < y+senderH {
-		pdf.SetY(y + senderH)
-	}
-
-	y = pdf.GetY() + 1.5*scale
-	pdf.SetFont("Helvetica", "B", 6*scale)
-	pdf.SetXY(5, y)
-
-	createdDate := ""
-	if c.CreatedAt != nil {
-		createdDate = c.CreatedAt.Format("02/01/2006")
-	}
-	currency := c.Currency
-	if currency == "" {
-		currency = "COP"
-	}
-
-	infoText := fmt.Sprintf("Orden: %s | Fecha: %s | Valor: %.0f %s", c.OrderNumber, createdDate, c.DeclaredValue, currency)
-	pdf.CellFormat(pageW, 3*scale, tr(infoText), "1", 1, "C", false, 0, "")
-}
-
-func drawGenericQRAndBarcode(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, pageW float64, scale float64) {
-	y := pdf.GetY() + 1*scale
-	boxMargin := 0.5 * scale
-
-	pdf.SetDrawColor(0, 0, 0)
-	pdf.SetLineWidth(0.3)
-
-	leftX := 5.0
-	bcHeight := 10.0 * scale
-
-	if c.TrackingNumber != "" {
-		barcodePNG := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(bcHeight*8))
-		if barcodePNG != nil {
-			pdf.Rect(leftX-boxMargin, y-boxMargin, pageW+2*boxMargin, bcHeight+2*boxMargin, "D")
-
-			opts := gofpdf.ImageOptions{ImageType: "PNG"}
-			pdf.RegisterImageOptionsReader("bc.png", opts, bytes.NewReader(barcodePNG))
-			pdf.ImageOptions("bc.png", leftX, y, pageW, bcHeight, false, opts, 0, "")
-		}
-	}
-
-	y += bcHeight + 1.5*scale
-
-	pdf.SetFont("Helvetica", "B", 7.5*scale)
-	pdf.SetXY(leftX, y)
-
-	dimText := fmt.Sprintf("Peso: %.1f kg | Dim: %.0f x %.0f x %.0f cm",
-		c.Weight, c.Length, c.Width, c.Height)
-	pdf.CellFormat(pageW, 3.5*scale, tr(dimText), "1", 1, "C", false, 0, "")
-
-	y = pdf.GetY() + 1*scale
-	colW := (pageW - 2) / 2
-	leftColW := colW
-	rightColW := colW
-	rightX := leftX + leftColW + 2
-	boxHeight := 35*scale
-
-	pdf.SetDrawColor(0, 0, 0)
-	pdf.SetLineWidth(0.2)
-	pdf.Rect(leftX-boxMargin, y-boxMargin, leftColW+2*boxMargin, boxHeight+2*boxMargin, "D")
-	pdf.Rect(rightX-boxMargin, y-boxMargin, rightColW+2*boxMargin, boxHeight+2*boxMargin, "D")
-
-	pdf.SetFont("Helvetica", "", 4.5*scale)
-
-	qrSize := rightColW * 0.65
-
-	if qrPNG := buildQRPNGProb(c.TrackingNumber); qrPNG != nil {
-		qrCenterX := rightX + (rightColW-qrSize)/2
-		qrCenterY := y + (boxHeight-qrSize)/2
-
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("qr.png", opts, bytes.NewReader(qrPNG))
-		pdf.ImageOptions("qr.png", qrCenterX, qrCenterY, qrSize, qrSize, false, opts, 0, "")
-	}
-
-	pdf.SetY(y + boxHeight)
-}
-
-func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideFormat) ([]byte, error) {
-	wCm := format.WidthCm
-	hCm := format.HeightCm
-	if wCm < 4 || hCm < 4 {
-		wCm = 10
-		hCm = 15
-	}
-
-	pdf := gofpdf.NewCustom(&gofpdf.InitType{
-		UnitStr:        "mm",
-		Size:           gofpdf.SizeType{Wd: wCm * 10, Ht: hCm * 10},
-		OrientationStr: "P",
-	})
-	pdf.SetMargins(3, 3, 3)
-	pdf.SetAutoPageBreak(false, 3)
-	pdf.AddPage()
-	pdf.SetCellMargin(1.0)
-
-	tr := pdf.UnicodeTranslatorFromDescriptor("")
-	scale := 1.0
-	pageW := wCm * 10 - 6
-	pdf.SetDrawColor(0, 0, 0)
-	pdf.SetLineWidth(0.3)
-	pdf.SetTextColor(0, 0, 0)
-
-	y := 3.0
-
-	logoH := 8.0 * scale
-
-	coordLogo := getCarrierLogo("COORDINADORA")
-	if len(coordLogo) > 0 {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("coord_logo_header.png", opts, bytes.NewReader(coordLogo))
-		coordLogoW := 16.0 * scale
-		pdf.ImageOptions("coord_logo_header.png", 3, y, coordLogoW, logoH, true, opts, 0, "")
-	}
-
-	y = y + logoH + 1.5
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 6.5*scale)
-	colW1 := pageW / 3
-	colW2 := pageW / 3
-	colW3 := pageW / 3
-
-	pdf.CellFormat(colW1, 7*scale, "Origin\n1\nBOG", "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colW1)
-	pdf.CellFormat(colW2, 7*scale, "AS\nPAQ\n1-2", "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colW1 + colW2)
-	pdf.CellFormat(colW3, 7*scale, tr("UNIDAD:\n1/1"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 2.0
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 5.5*scale)
-	pdf.SetFillColor(240, 240, 240)
-	colRef := pageW / 2
-	colObs := pageW / 2
-
-	pdf.CellFormat(colRef-0.2, 4*scale, tr("Ref:"), "1", 0, "L", true, 0, "")
-	pdf.SetX(3 + colRef + 0.2)
-	pdf.CellFormat(colObs-0.2, 4*scale, tr("Observaciones Cliente:"), "1", 1, "L", true, 0, "")
-
-	pdf.SetFont("Helvetica", "", 4.5*scale)
-	pdf.SetFillColor(255, 255, 255)
-	pdf.SetXY(3.5, pdf.GetY())
-	refText := "ORDEN\nORD-" + c.OrderNumber
-	pdf.MultiCell(colRef-0.5, 2.5*scale, tr(refText), "1", "L", false)
-
-	obsStartY := pdf.GetY()
-	pdf.SetXY(3+colRef+0.7, pdf.GetY()-5*scale)
-	obsText := tr("Email: " + c.CustomerEmail + "\nORDEN: " + c.OrderNumber)
-	pdf.MultiCell(colObs-0.5, 2.5*scale, obsText, "1", "L", false)
-
-	maxObsY := pdf.GetY()
-	if obsStartY > maxObsY {
-		maxObsY = obsStartY
-	}
-	pdf.SetY(maxObsY)
-	y = pdf.GetY() + 1.5
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 5.5*scale)
-	colDestino := pageW / 3
-	colZona := pageW / 3
-	colEquipo := pageW / 3
-
-	destinoVal := c.Destino
-	if destinoVal == "" {
-		destinoVal = "-"
-	}
-	zonaVal := c.ZonaHub
-	if zonaVal == "" {
-		zonaVal = "-"
-	}
-	equipoVal := c.EquipoReparto
-	if equipoVal == "" {
-		equipoVal = "-"
-	}
-
-	pdf.CellFormat(colDestino, 3.5*scale, "Destino\n"+destinoVal, "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colDestino)
-	pdf.CellFormat(colZona, 3.5*scale, "Zona Hub\n"+zonaVal, "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colDestino + colZona)
-	pdf.CellFormat(colEquipo, 3.5*scale, "Equipo\n"+equipoVal, "1", 1, "C", false, 0, "")
-	y = pdf.GetY()
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 9*scale)
-	pdf.CellFormat(pageW, 3.5*scale, time.Now().Format("2006-01-02"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 2.0
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 5.5*scale)
-	colRemDest := pageW / 2
-	pdf.CellFormat(colRemDest, 3*scale, tr("REMITENTE"), "1", 0, "C", false, 0, "")
-	pdf.SetX(3 + colRemDest)
-	pdf.CellFormat(colRemDest, 3*scale, tr("DESTINATARIO"), "1", 1, "C", false, 0, "")
-	y = pdf.GetY()
-
-	warehouse := c.WarehouseCompany
-	if warehouse == "" {
-		warehouse = c.BusinessName
-	}
-
-	pdf.SetXY(3.5, y)
-	pdf.SetFont("Helvetica", "", 3.6*scale)
-	remText := tr(warehouse + "\n" + c.WarehouseAddress + "\n" + c.WarehouseCity + "\nTel: " + c.WarehousePhone)
-	pdf.MultiCell(colRemDest-0.8, 1.8*scale, remText, "1", "L", false)
-	remEndY := pdf.GetY()
-
-	pdf.SetXY(3+colRemDest+0.7, y)
-	pdf.SetFont("Helvetica", "", 3.6*scale)
-	destText := tr(c.CustomerName + "\n" + c.DestinationAddress + "\n" + c.DestinationCity + "\nTel: " + c.CustomerPhone)
-	pdf.MultiCell(colRemDest-0.8, 1.8*scale, destText, "1", "L", false)
-	destEndY := pdf.GetY()
-
-	y = remEndY
-	if destEndY > y {
-		y = destEndY
-	}
-	y = y + 3.0
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 4.5*scale)
-	pdf.CellFormat(pageW, 2.5*scale, "CODIGO DE GUIA", "1", 1, "C", false, 0, "")
-	y = pdf.GetY()
-
-	bcImg := buildCode128PNGProb(c.TrackingNumber, int(pageW*8), int(9*scale*8))
-	if bcImg != nil {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("coord_bc.png", opts, bytes.NewReader(bcImg))
-		pdf.ImageOptions("coord_bc.png", 3, y, pageW, 9*scale, false, opts, 0, "")
-		pdf.SetY(y + 9*scale)
-	}
-	y = pdf.GetY()
-
-	pdf.SetFont("Courier", "B", 9*scale)
-	pdf.SetXY(3, y)
-	pdf.CellFormat(pageW, 3*scale, c.TrackingNumber, "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 1.5
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "", 4.5*scale)
-	dimText := fmt.Sprintf("Peso: %.1f kg | Dim: %.0f x %.0f x %.0f cm", c.Weight, c.Length, c.Width, c.Height)
-	pdf.CellFormat(pageW, 2.5*scale, dimText, "1", 1, "C", false, 0, "")
-	y = pdf.GetY()
-
-	pdf.SetXY(3, y)
-	pdf.SetFont("Helvetica", "B", 5*scale)
-	priceValue := c.CodTotal
-	if priceValue <= 0 {
-		priceValue = c.DeclaredValue
-	}
-	priceText := fmt.Sprintf("VALOR: %.2f %s", priceValue, c.Currency)
-	pdf.CellFormat(pageW, 2.5*scale, priceText, "1", 1, "C", false, 0, "")
-	y = pdf.GetY() + 1.5
-
-	pdf.SetDrawColor(0, 0, 0)
-	pdf.SetLineWidth(0.3)
-
-	qrBoxH := 26.0 * scale
-	qrSize := qrBoxH - 1.5
-
-	pdf.Rect(3, y, pageW, qrBoxH, "")
-
-	qrImg := buildQRPNGProb(c.TrackingNumber)
-	if qrImg != nil {
-		opts := gofpdf.ImageOptions{ImageType: "PNG"}
-		pdf.RegisterImageOptionsReader("qr_coord.png", opts, bytes.NewReader(qrImg))
-		qrX := 3 + (pageW-qrSize)/2
-		qrY := y + (qrBoxH-qrSize)/2
-		pdf.ImageOptions("qr_coord.png", qrX, qrY, qrSize, qrSize, false, opts, 0, "")
-	}
-
-	y = y + qrBoxH + 1.0
-
-	var buf bytes.Buffer
-	if err := pdf.Output(&buf); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func getCarrierLogo(carrier string) []byte {
-	switch carrier {
-	case "COORDINADORA":
-		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png")
-	case "INTERRAPIDISIMO":
-		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_inerapidisimo.png")
-	case "SERVIENTREGA":
-		return downloadLogoFromS3("https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png")
-	default:
-		return nil
-	}
-}
-
-func readLocalAsset(filename string) []byte {
-	paths := []string{
-		fmt.Sprintf("./services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
-		fmt.Sprintf("services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
-		fmt.Sprintf("back/central/services/modules/shipments/internal/app/usecaseshipment/assets/%s", filename),
-	}
-
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err == nil && len(data) > 0 {
-			return data
-		}
-	}
-	return nil
-}
-
-func downloadLogoFromS3(url string) []byte {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil
-	}
-
-	return data
 }
