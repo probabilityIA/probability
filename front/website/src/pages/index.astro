@@ -45,19 +45,36 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		background: #ffffff;
 		border-top: 1px solid rgba(139, 92, 246, 0.1);
 		padding: 4rem 1rem;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.cta-section::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-image:
+			repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px),
+			repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px);
+		pointer-events: none;
 	}
 
 	.cta-container {
 		max-width: 800px;
 		margin: 0 auto;
 		text-align: center;
+		position: relative;
+		z-index: 1;
 	}
 
 	.cta-section h2 {
 		font-family: 'Plus Jakarta Sans', sans-serif;
 		font-size: clamp(1.875rem, 5vw, 2.5rem);
 		font-weight: 800;
-		color: #1E1B4B;
+		color: #8B5CF6;
 		margin-bottom: 1rem;
 		letter-spacing: -0.02em;
 	}
