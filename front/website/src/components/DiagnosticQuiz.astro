@@ -882,10 +882,18 @@
 
     attachListeners() {
       const self = this;
-      document.querySelectorAll('[data-action]').forEach((el) => {
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          const action = e.currentTarget.getAttribute('data-action');
+      const root = document.getElementById('quiz-root');
+      if (!root) return;
+
+      root.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action], [data-option]');
+        if (!target) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const action = target.getAttribute('data-action');
+        if (action) {
           switch (action) {
             case 'start':
               self.state.screen = 'quiz';
@@ -901,15 +909,14 @@
               self.restart();
               break;
           }
-        });
-      });
+          return;
+        }
 
-      document.querySelectorAll('[data-option]').forEach((el) => {
-        el.addEventListener('click', (e) => {
-          e.preventDefault();
-          const optionIndex = parseInt(e.currentTarget.getAttribute('data-option') || '0');
+        const optionAttr = target.getAttribute('data-option');
+        if (optionAttr !== null) {
+          const optionIndex = parseInt(optionAttr);
           self.select(optionIndex);
-        });
+        }
       });
     }
   }
