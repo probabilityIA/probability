@@ -881,22 +881,24 @@
     }
 
     attachListeners() {
+      const self = this;
       document.querySelectorAll('[data-action]').forEach((el) => {
         el.addEventListener('click', (e) => {
-          const action = e.target.getAttribute('data-action');
+          e.preventDefault();
+          const action = e.currentTarget.getAttribute('data-action');
           switch (action) {
             case 'start':
-              this.state.screen = 'quiz';
-              this.render();
+              self.state.screen = 'quiz';
+              self.render();
               break;
             case 'next':
-              this.next();
+              self.next();
               break;
             case 'back':
-              this.back();
+              self.back();
               break;
             case 'restart':
-              this.restart();
+              self.restart();
               break;
           }
         });
@@ -904,8 +906,9 @@
 
       document.querySelectorAll('[data-option]').forEach((el) => {
         el.addEventListener('click', (e) => {
+          e.preventDefault();
           const optionIndex = parseInt(e.currentTarget.getAttribute('data-option') || '0');
-          this.select(optionIndex);
+          self.select(optionIndex);
         });
       });
     }
