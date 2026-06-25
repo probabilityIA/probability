@@ -98,6 +98,19 @@ func (m *RepositoryMock) GetBusinessOrderPrefix(ctx context.Context, businessID 
 	return "", nil
 }
 
+func (m *RepositoryMock) GetBusinessNameByID(ctx context.Context, businessID uint) (string, error) {
+	if m.ExpectedCalls == nil {
+		return "", nil
+	}
+	for _, c := range m.ExpectedCalls {
+		if c.Method == "GetBusinessNameByID" {
+			args := m.Called(ctx, businessID)
+			return args.String(0), args.Error(1)
+		}
+	}
+	return "", nil
+}
+
 func (m *RepositoryMock) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	args := m.Called(ctx, businessID)
 	return args.Get(0).(uint), args.Error(1)

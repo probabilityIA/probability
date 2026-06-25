@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
 func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error) {
@@ -54,6 +55,8 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 
 	order := uc.buildOrderEntity(dto, clientID, statusMapping)
 
+	uc.hydrateBusinessName(ctx, order)
+
 	uc.assignPaymentMethodID(order, dto)
 
 	uc.syncIsPaidFromPaymentStatus(ctx, order, statusMapping.PaymentStatusID)
@@ -79,4 +82,16 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 	uc.publishOrderEvents(ctx, order, dto.IsManualOrder)
 
 	return uc.mapOrderToResponse(order), nil
+}
+
+func (uc *UseCaseCreateOrder) hydrateBusinessName(ctx context.Context, order *entities.ProbabilityOrder) {
+	if order == nil || order.BusinessName != "" || order.BusinessID == nil || *order.BusinessID == 0 {
+		return
+	}
+	name, err := uc.repo.GetBusinessNameByID(ctx, *order.BusinessID)
+	if err != nil {
+		uc.logger.Warn(ctx).Err(err).Uint("business_id", *order.BusinessID).Str("order_id", order.ID).Msg("No se pudo resolver el nombre del negocio para la notificacion")
+		return
+	}
+	order.BusinessName = name
 }
