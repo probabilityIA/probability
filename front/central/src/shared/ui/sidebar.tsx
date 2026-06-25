@@ -31,6 +31,7 @@ export function Sidebar({ user }: SidebarProps) {
   const [showUserModal, setShowUserModal] = useState(false);
   const [invoicingOpen, setInvoicingOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+  const isDemo = permissions?.role_name === 'demo';
 
   const businessLogo = useMemo(() => {
     if (isSuperAdmin) return null;
@@ -105,7 +106,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
-  const canViewTickets = true;
+  const canViewTickets = !isDemo;
 
   // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
@@ -687,6 +688,7 @@ export function Sidebar({ user }: SidebarProps) {
               )}
 
               {/* Item Suscripción - Visible para todos */}
+              {!isDemo && (
               <li>
                 <Link
                   href="/subscription"
@@ -714,6 +716,7 @@ export function Sidebar({ user }: SidebarProps) {
                   )}
                 </Link>
               </li>
+              )}
 
               {/* Item IAM (Gestión de Identidad) - Link directo a Empresas */}
               {canAccessIAM && (

@@ -1216,10 +1216,8 @@ func (r *Repository) GetOrdersByWeek(ctx context.Context, businessID *uint, inte
 		return nil, err
 	}
 
-	// Invertir orden (queremos de más antigua a más reciente)
-	for i := len(results) / 2; i >= 0; i-- {
-		opp := len(results) - 1 - i
-		results[i], results[opp] = results[opp], results[i]
+	for i, j := 0, len(results)-1; i < j; i, j = i+1, j-1 {
+		results[i], results[j] = results[j], results[i]
 	}
 
 	// Mapear resultados

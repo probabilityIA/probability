@@ -7,6 +7,7 @@ import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-th
 import { useRouter } from 'next/navigation';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { getActionError } from '@/shared/utils/action-result';
+import { DemoRegisterModal } from './DemoRegisterModal';
 
 export const LoginForm = () => {
     const router = useRouter();
@@ -16,6 +17,7 @@ export const LoginForm = () => {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const [isDark, setIsDark] = useState(false);
+    const [showDemoModal, setShowDemoModal] = useState(false);
 
     useEffect(() => {
         const htmlElement = document.documentElement;
@@ -209,7 +211,20 @@ export const LoginForm = () => {
                 >
                     {isPending ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
                 </button>
+
+                <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    ¿No tienes cuenta?{' '}
+                    <button
+                        type="button"
+                        onClick={() => setShowDemoModal(true)}
+                        className="font-semibold text-indigo-600 hover:text-indigo-500"
+                    >
+                        Crea tu demo gratis
+                    </button>
+                </div>
             </form>
+
+            {showDemoModal && <DemoRegisterModal onClose={() => setShowDemoModal(false)} />}
 
             {/* Footer */}
             <div className={isDark ? 'login-footer-dark' : 'login-footer-light'} style={{ marginTop: '32px' }}>

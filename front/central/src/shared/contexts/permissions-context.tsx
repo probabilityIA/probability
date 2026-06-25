@@ -62,7 +62,12 @@ export const PermissionsProvider: React.FC<{ children: ReactNode }> = ({ childre
                 const { getRolesPermissionsAction } = await import('@/services/auth/login/infra/actions');
                 const res = await getRolesPermissionsAction();
                 if (res?.success && res.data) {
-                    const fresh = res.data as unknown as UserPermissions;
+                    const raw = res.data as any;
+                    const fresh = {
+                        ...raw,
+                        role_name: raw.role_name ?? raw.role?.name ?? '',
+                        role_id: raw.role_id ?? raw.role?.id ?? 0,
+                    } as UserPermissions;
                     TokenStorage.setPermissions(fresh);
                     setPermissions(fresh);
                 }

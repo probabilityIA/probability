@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/actions"
 	business "github.com/secamc93/probability/back/central/services/auth/bussines"
+	"github.com/secamc93/probability/back/central/services/auth/demo"
 	"github.com/secamc93/probability/back/central/services/auth/login"
 	"github.com/secamc93/probability/back/central/services/auth/permissions"
 	"github.com/secamc93/probability/back/central/services/auth/resources"
@@ -21,6 +22,9 @@ import (
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3Service storage.IS3Service) {
 	// Inicializar módulo de login
 	login.New(router, database, logger, environment)
+
+	// Inicializar módulo de demo (autoregistro publico)
+	demo.New(router, database, logger, environment)
 
 	// Inicializar módulo de permissions
 	permissions.New(router, database, logger)

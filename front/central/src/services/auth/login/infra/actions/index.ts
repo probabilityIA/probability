@@ -156,3 +156,41 @@ export async function loginServerAction(email: string, password: string) {
 }
 
 
+
+const DEMO_API_BASE = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
+
+export async function demoRegisterAction(payload: { full_name: string; business_name: string; email: string; password: string; }): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const res = await fetch(`${DEMO_API_BASE}/auth/demo-register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return { success: false, error: data.error || data.message || 'No se pudo crear la demo' };
+        }
+        return { success: true, message: data.message };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Error al conectar con el servidor' };
+    }
+}
+
+export async function verifyEmailAction(token: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const res = await fetch(`${DEMO_API_BASE}/auth/verify-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return { success: false, error: data.error || data.message || 'No se pudo verificar la cuenta' };
+        }
+        return { success: true, message: data.message };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Error al conectar con el servidor' };
+    }
+}
