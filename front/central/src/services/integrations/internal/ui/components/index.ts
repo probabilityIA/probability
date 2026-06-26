@@ -1,0 +1,1 @@
+export { ModuleActivateForm } from './ModuleActivateForm';

@@ -32,6 +32,7 @@ import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocomm
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
 import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
+import { ModuleActivateForm } from '@/services/integrations/internal/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 // IDs constantes de tipos de integración (tabla integration_types)
@@ -209,6 +210,13 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
 
     // Renderizar formulario específico según el ID del tipo de integración
     const renderSpecificForm = () => {
+        // Modulos internos de la plataforma (Inventario, Notificaciones, Clientes, etc.)
+        // se activan con un formulario generico sin credenciales externas
+        const categoryCode = integrationType.category?.code || integrationType.integration_category?.code;
+        if (categoryCode === 'internal') {
+            return <ModuleActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
+        }
+
         switch (integrationType.id) {
             case INTEGRATION_TYPE_IDS.SHOPIFY:
                 return (
