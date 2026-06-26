@@ -1,0 +1,417 @@
+---
+---
+
+<style>
+  .diagnostico-wrapper {
+    width: 100%;
+    font-family: 'Manrope', system-ui, sans-serif;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .diagnostico-card {
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .diagnostico-heading {
+    margin-bottom: 28px;
+    max-width: 560px;
+    animation: riseUp 0.6s cubic-bezier(.2,.7,.3,1) both;
+  }
+
+  .diagnostico-heading h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    color: #111827;
+    letter-spacing: -0.01em;
+  }
+
+  .diagnostico-heading p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #6B7280;
+  }
+
+  .diagnostico-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .chart-card {
+    flex: 1 1 340px;
+    max-width: 520px;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 18px;
+    padding: 22px 24px;
+    box-shadow: 0 1px 2px rgba(17,24,39,0.04);
+    animation: riseUp 0.6s cubic-bezier(.2,.7,.3,1) both;
+    animation-delay: 0.08s;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    letter-spacing: 0.01em;
+  }
+
+  .chart-subtitle {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 2px;
+  }
+
+  .trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #16A34A;
+    background: rgba(22,163,74,0.10);
+    padding: 5px 11px;
+    border-radius: 999px;
+  }
+
+  .trend-icon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .chart-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #9CA3AF;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  .stats-column {
+    flex: 1 1 230px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 18px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(17,24,39,0.04);
+    animation: riseUp 0.6s cubic-bezier(.2,.7,.3,1) both;
+  }
+
+  .stat-card:nth-child(2) {
+    animation-delay: 0.17s;
+  }
+
+  .stat-card:nth-child(3) {
+    animation-delay: 0.26s;
+  }
+
+  .stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    color: #8B5CF6;
+    letter-spacing: -0.02em;
+  }
+
+  .stat-card:nth-child(3) .stat-value {
+    color: #16A34A;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: #6B7280;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  svg {
+    display: block;
+    overflow: hidden;
+  }
+
+  .line-dot {
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+
+  .line-ping {
+    pointer-events: none;
+  }
+
+  @keyframes riseUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .diagnostico-heading h2 {
+      font-size: 22px;
+    }
+
+    .chart-card {
+      max-width: 100%;
+    }
+
+    .stat-value {
+      font-size: 28px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .diagnostico-heading h2 {
+      font-size: 20px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+    }
+
+    .chart-card {
+      flex: 1 1 100%;
+    }
+
+    .stats-column {
+      flex: 1 1 100%;
+    }
+  }
+</style>
+
+<div class="diagnostico-wrapper">
+  <div class="diagnostico-card">
+    <!-- Heading -->
+    <div class="diagnostico-heading">
+      <h2>¿A qué nivel llega tu operación?</h2>
+      <p>Menos devoluciones, mes a mes. Así se ve una logística que aprende.</p>
+    </div>
+
+    <!-- Chart + Stats -->
+    <div class="diagnostico-content">
+      <!-- Line Chart Card -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Devoluciones</div>
+            <div class="chart-subtitle">últimos 30 días</div>
+          </div>
+          <span class="trend-badge">
+            <svg class="trend-icon" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14"/>
+              <path d="m19 12-7 7-7-7"/>
+            </svg>
+            12%
+          </span>
+        </div>
+
+        <svg width="100%" height="184" viewBox="0 0 460 184" preserveAspectRatio="none" role="img" aria-label="Tendencia de devoluciones a la baja en los últimos 30 días">
+          <defs>
+            <linearGradient id="gd-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.20"/>
+              <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Grid lines -->
+          <line x1="0" y1="60" x2="460" y2="60" stroke="#F1F2F4" stroke-width="1" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="110" x2="460" y2="110" stroke="#F1F2F4" stroke-width="1" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="160" x2="460" y2="160" stroke="#F1F2F4" stroke-width="1" vector-effect="non-scaling-stroke"/>
+
+          <!-- Area under line -->
+          <path class="line-area" d="M12,74 C24.8,74 38.4,80 51.6,80 C64.8,80 78,77 91.2,77 C104.4,77 117.6,86 130.8,86 C144,86 157.2,89 170.4,89 C183.6,89 196.8,95 210,95 C223.2,95 236.4,92 249.6,92 C262.8,92 276,101 289.2,101 C302.4,101 315.6,104 328.8,104 C342,104 355.2,110 368.4,110 C381.6,110 394.8,113 408,113 C421.2,113 434.4,116 447.6,116 L447.6,176 L12,176 Z" fill="url(#gd-area)" style="opacity: 1;"/>
+
+          <!-- Line -->
+          <path class="line-path" d="M12,74 C24.8,74 38.4,80 51.6,80 C64.8,80 78,77 91.2,77 C104.4,77 117.6,86 130.8,86 C144,86 157.2,89 170.4,89 C183.6,89 196.8,95 210,95 C223.2,95 236.4,92 249.6,92 C262.8,92 276,101 289.2,101 C302.4,101 315.6,104 328.8,104 C342,104 355.2,110 368.4,110 C381.6,110 394.8,113 408,113 C421.2,113 434.4,116 447.6,116" fill="none" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" pathLength="100" stroke-dasharray="100"/>
+
+          <!-- End dot -->
+          <circle class="line-dot" cx="447.6" cy="116" r="5" fill="#16A34A" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" style="opacity: 0;"/>
+
+          <!-- Pulse dot -->
+          <circle class="line-ping" cx="447.6" cy="116" r="5" fill="#16A34A" style="opacity: 0;"/>
+        </svg>
+
+        <div class="chart-axis">
+          <span>hace 30 días</span>
+          <span>hoy</span>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stats-column">
+        <!-- Empresas -->
+        <div class="stat-card">
+          <div class="stat-value counter" data-target="20">0</div>
+          <div class="stat-label">empresas confían en Probability</div>
+        </div>
+
+        <!-- Ahorrados -->
+        <div class="stat-card">
+          <div class="stat-value counter" data-target="12" data-prefix="$" data-suffix="M">$0M</div>
+          <div class="stat-label">ahorrados en logística</div>
+        </div>
+
+        <!-- Satisfacción -->
+        <div class="stat-card">
+          <div class="stat-value counter" data-target="94" data-suffix="%">0%</div>
+          <div class="stat-label">satisfacción de clientes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReduced = reduce;
+
+  if (!prefersReduced) {
+    const linePath = document.querySelector('.line-path') as SVGPathElement;
+    const lineDot = document.querySelector('.line-dot') as SVGCircleElement;
+    const linePing = document.querySelector('.line-ping') as SVGCircleElement;
+
+    if (linePath) {
+      linePath.style.strokeDashoffset = '100';
+      linePath.animate(
+        [{ strokeDashoffset: '100' }, { strokeDashoffset: '0' }],
+        {
+          duration: 1500,
+          delay: 350,
+          easing: 'cubic-bezier(.4,0,.2,1)',
+          fill: 'forwards',
+        }
+      );
+    }
+
+    if (lineDot && linePath) {
+      lineDot.style.opacity = '0';
+      const pathLength = linePath.getTotalLength();
+      const startDelay = 350;
+      const duration = 1500;
+
+      lineDot.animate(
+        [
+          { opacity: '0', transform: 'scale(0)' },
+          { opacity: '1', transform: 'scale(1)' },
+        ],
+        {
+          duration: 600,
+          delay: startDelay + duration - 600,
+          easing: 'cubic-bezier(.2,.8,.3,1.5)',
+          fill: 'forwards',
+        }
+      );
+
+      const startTime = performance.now() + startDelay;
+      const animateDot = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const targetLength = progress * pathLength;
+        const point = linePath.getPointAtLength(targetLength);
+
+        lineDot.setAttribute('cx', point.x.toString());
+        lineDot.setAttribute('cy', point.y.toString());
+
+        if (progress < 1) {
+          requestAnimationFrame(animateDot);
+        }
+      };
+
+      requestAnimationFrame(animateDot);
+    }
+
+    if (linePing) {
+      linePing.style.opacity = '0';
+    }
+  }
+
+  // Counter animation
+  document.querySelectorAll('.counter').forEach((el) => {
+    const target = parseFloat((el as HTMLElement).dataset.target || '0');
+    const prefix = (el as HTMLElement).dataset.prefix || '';
+    const suffix = (el as HTMLElement).dataset.suffix || '';
+    const dur = prefersReduced ? 0 : 1300;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = dur ? Math.min(1, (now - start) / dur) : 1;
+      const value = Math.round(target * ease(t));
+      (el as HTMLElement).textContent = prefix + value + suffix;
+      if (t < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
+  });
+
+  // Interactive cursor tracking
+  const svg = document.querySelector('svg[role="img"]') as SVGSVGElement;
+  const linePath = document.querySelector('.line-path') as SVGPathElement;
+  const lineDot = document.querySelector('.line-dot') as SVGCircleElement;
+
+  if (svg && linePath && lineDot) {
+    const pathLength = linePath.getTotalLength();
+
+    svg.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const svgWidth = rect.width;
+      const svgViewBox = svg.viewBox.baseVal.width;
+
+      // Limitar a los bounds del gráfico (12 a 447.6)
+      const minX = 12;
+      const maxX = 447.6;
+      const graphWidth = maxX - minX;
+
+      // Calcular posición del cursor en coordenadas SVG
+      const normalizedX = (x / svgWidth) * svgViewBox;
+      const constrainedX = Math.max(minX, Math.min(maxX, normalizedX));
+
+      // Calcular progress a lo largo de la ruta
+      const progress = (constrainedX - minX) / graphWidth;
+      const targetLength = progress * pathLength;
+
+      // Obtener el punto exacto sobre la curva
+      const point = linePath.getPointAtLength(targetLength);
+
+      lineDot.setAttribute('cx', point.x.toString());
+      lineDot.setAttribute('cy', point.y.toString());
+    });
+
+    svg.addEventListener('mouseleave', () => {
+      lineDot.setAttribute('cx', '447.6');
+      lineDot.setAttribute('cy', '116');
+    });
+  }
+</script>
