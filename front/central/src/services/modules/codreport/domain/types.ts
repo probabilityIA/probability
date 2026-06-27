@@ -31,6 +31,7 @@ export interface CodOrder {
     order_id: string;
     order_number: string;
     shipment_id: number;
+    has_guide: boolean;
     customer_name: string;
     carrier: string;
     cod_total: number;
@@ -83,6 +84,7 @@ export interface CodOrdersParams extends ReportFilters {
     page?: number;
     page_size?: number;
     collected?: boolean;
+    has_guide?: boolean;
     search?: string;
 }
 

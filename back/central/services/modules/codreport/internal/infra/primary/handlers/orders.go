@@ -34,6 +34,11 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 			f.Collected = &v
 		}
 	}
+	if hasGuide := c.Query("has_guide"); hasGuide != "" {
+		if v, errParse := strconv.ParseBool(hasGuide); errParse == nil {
+			f.HasGuide = &v
+		}
+	}
 
 	orders, total, err := h.uc.ListOrders(c.Request.Context(), f)
 	if err != nil {

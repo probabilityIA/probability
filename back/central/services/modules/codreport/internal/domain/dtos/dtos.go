@@ -15,6 +15,7 @@ type OrdersFilter struct {
 	EndDate    time.Time
 	Carrier    string
 	Collected  *bool
+	HasGuide   *bool
 	Search     string
 	Page       int
 	PageSize   int

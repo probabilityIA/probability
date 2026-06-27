@@ -22,9 +22,12 @@ type codOrderRow struct {
 	Status        string
 	Collected     bool
 	ShipmentID    uint
+	HasGuide      bool
 	CreatedAt     time.Time
 	DeliveredAt   *time.Time
 }
+
+const hasGuideExpr = `(COALESCE(NULLIF(s.guide_id,''),'') <> '' OR COALESCE(NULLIF(s.guide_url,''),'') <> '' OR COALESCE(NULLIF(s.probability_guide_url,''),'') <> '')`
 
 func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
 	conds := []string{"o.deleted_at IS NULL", "o.cod_total > 0", "o.business_id = ?"}
@@ -49,6 +52,13 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 		conds = append(conds, "(o.order_number ILIKE ? OR o.customer_name ILIKE ?)")
 		like := "%" + strings.TrimSpace(f.Search) + "%"
 		args = append(args, like, like)
+	}
+	if f.HasGuide != nil {
+		if *f.HasGuide {
+			conds = append(conds, hasGuideExpr)
+		} else {
+			conds = append(conds, "NOT "+hasGuideExpr)
+		}
 	}
 
 	where := strings.Join(conds, " AND ")
@@ -79,7 +89,8 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	COALESCE(s.shipping_cost,0) AS shipping_cost,
 	COALESCE(s.cod_carrier_fee,0) AS cod_carrier_fee,
 	s.status, s.delivered_at,
-	(s.status = 'delivered') AS collected
+	(s.status = 'delivered') AS collected,
+	` + hasGuideExpr + ` AS has_guide
 FROM orders o %s
 WHERE %s
 ORDER BY COALESCE(s.delivered_at, o.created_at) DESC
@@ -97,6 +108,7 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 			OrderID:       rows[i].OrderID,
 			OrderNumber:   rows[i].OrderNumber,
 			ShipmentID:    rows[i].ShipmentID,
+			HasGuide:      rows[i].HasGuide,
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,

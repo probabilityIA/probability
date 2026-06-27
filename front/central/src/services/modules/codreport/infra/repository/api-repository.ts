@@ -57,6 +57,7 @@ export class CodReportApiRepository {
         if (p.page) sp.append('page', String(p.page));
         if (p.page_size) sp.append('page_size', String(p.page_size));
         if (p.collected !== undefined) sp.append('collected', String(p.collected));
+        if (p.has_guide !== undefined) sp.append('has_guide', String(p.has_guide));
         if (p.search) sp.append('search', p.search);
         return this.request<Paginated<CodOrder>>(`/cod-report/orders?${sp.toString()}`);
     }
