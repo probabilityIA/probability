@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroSection from '../components/HeroSection.astro';
+import SectionTransition from '../components/SectionTransition.astro';
 import BannerPromo from '../components/BannerPromo.astro';
 import DiagnosticoSection from '../components/DiagnosticoSection.astro';
 import IntegrationsSection from '../components/IntegrationsSection.astro';
@@ -337,6 +338,8 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 	</div>
 	<main>
 		<HeroSection />
+
+		<SectionTransition fromColor="#FBFAFE" toColor="#FBFAFE" />
 
 		<DiagnosticoSection />
 		<BannerPromo />

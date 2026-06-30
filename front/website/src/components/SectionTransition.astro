@@ -1,0 +1,75 @@
+---
+interface Props {
+  fromColor?: string;
+  toColor?: string;
+  fromOpacity?: number;
+  toOpacity?: number;
+}
+
+const {
+  fromColor = '#FBFAFE',
+  toColor = '#FBFAFE',
+  fromOpacity = 1,
+  toOpacity = 0.5,
+} = Astro.props;
+---
+
+<div class="relative w-full h-32 lg:h-48 overflow-hidden">
+  <svg
+    viewBox="0 0 1200 300"
+    width="100%"
+    height="100%"
+    preserveAspectRatio="none"
+    class="w-full h-full"
+  >
+    <defs>
+      <linearGradient
+        id="transitionGradient"
+        x1="0%"
+        y1="0%"
+        x2="0%"
+        y2="100%"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset="0%" style={`stop-color:${fromColor};stop-opacity:${fromOpacity}`} />
+        <stop offset="100%" style={`stop-color:${toColor};stop-opacity:${toOpacity}`} />
+      </linearGradient>
+    </defs>
+    <!-- Wave path for smooth transition -->
+    <path
+      d="M0,80 Q300,20 600,80 T1200,80 L1200,300 L0,300 Z"
+      fill="url(#transitionGradient)"
+      opacity="0.6"
+    />
+    <path
+      d="M0,100 Q400,40 800,100 T1600,100 L1600,300 L0,300 Z"
+      fill="url(#transitionGradient)"
+      opacity="0.4"
+    />
+    <path
+      d="M0,120 Q350,60 700,120 T1400,120 L1400,300 L0,300 Z"
+      fill="url(#transitionGradient)"
+      opacity="0.2"
+    />
+  </svg>
+
+  <!-- Fallback gradient for older browsers -->
+  <div
+    class="absolute inset-0 bg-gradient-to-b"
+    style={`from: ${fromColor} to: ${toColor};`}
+  ></div>
+</div>
+
+<style>
+  @keyframes waveAnimation {
+    0% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(25px);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+</style>
