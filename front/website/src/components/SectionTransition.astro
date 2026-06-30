@@ -1,22 +1,9 @@
 ---
-interface Props {
-  fromColor?: string;
-  toColor?: string;
-  fromOpacity?: number;
-  toOpacity?: number;
-}
-
-const {
-  fromColor = '#FBFAFE',
-  toColor = '#FBFAFE',
-  fromOpacity = 1,
-  toOpacity = 0.5,
-} = Astro.props;
 ---
 
-<div class="relative w-full h-32 lg:h-48 overflow-hidden">
+<div class="relative w-full h-16 lg:h-24 overflow-hidden bg-gradient-to-b from-[#FBFAFE] via-purple-50/30 to-[#FBFAFE]">
   <svg
-    viewBox="0 0 1200 300"
+    viewBox="0 0 1200 120"
     width="100%"
     height="100%"
     preserveAspectRatio="none"
@@ -24,52 +11,43 @@ const {
   >
     <defs>
       <linearGradient
-        id="transitionGradient"
+        id="waveGradient"
         x1="0%"
         y1="0%"
         x2="0%"
         y2="100%"
-        gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0%" style={`stop-color:${fromColor};stop-opacity:${fromOpacity}`} />
-        <stop offset="100%" style={`stop-color:${toColor};stop-opacity:${toOpacity}`} />
+        <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.08" />
+        <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:0.02" />
       </linearGradient>
     </defs>
-    <!-- Wave path for smooth transition -->
+    <!-- Subtle wave line -->
     <path
-      d="M0,80 Q300,20 600,80 T1200,80 L1200,300 L0,300 Z"
-      fill="url(#transitionGradient)"
-      opacity="0.6"
-    />
-    <path
-      d="M0,100 Q400,40 800,100 T1600,100 L1600,300 L0,300 Z"
-      fill="url(#transitionGradient)"
+      d="M0,40 Q300,20 600,40 T1200,40"
+      fill="none"
+      stroke="url(#waveGradient)"
+      stroke-width="1.5"
       opacity="0.4"
     />
     <path
-      d="M0,120 Q350,60 700,120 T1400,120 L1400,300 L0,300 Z"
-      fill="url(#transitionGradient)"
+      d="M0,50 Q300,35 600,50 T1200,50"
+      fill="none"
+      stroke="url(#waveGradient)"
+      stroke-width="1"
+      opacity="0.3"
+    />
+    <path
+      d="M0,60 Q300,45 600,60 T1200,60"
+      fill="none"
+      stroke="url(#waveGradient)"
+      stroke-width="1"
       opacity="0.2"
     />
+    <!-- Subtle filled area under waves -->
+    <path
+      d="M0,40 Q300,20 600,40 T1200,40 L1200,120 L0,120 Z"
+      fill="url(#waveGradient)"
+      opacity="0.05"
+    />
   </svg>
-
-  <!-- Fallback gradient for older browsers -->
-  <div
-    class="absolute inset-0 bg-gradient-to-b"
-    style={`from: ${fromColor} to: ${toColor};`}
-  ></div>
 </div>
-
-<style>
-  @keyframes waveAnimation {
-    0% {
-      transform: translateX(0);
-    }
-    50% {
-      transform: translateX(25px);
-    }
-    100% {
-      transform: translateX(0);
-    }
-  }
-</style>
