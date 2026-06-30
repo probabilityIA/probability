@@ -1,9 +1,9 @@
 ---
 ---
 
-<div class="relative w-full h-16 lg:h-24 overflow-hidden bg-gradient-to-b from-[#FBFAFE] via-purple-50/30 to-[#FBFAFE]">
+<div class="relative w-full h-32 lg:h-48 overflow-hidden bg-gradient-to-b from-white via-purple-100/60 to-purple-50">
   <svg
-    viewBox="0 0 1200 120"
+    viewBox="0 0 1200 200"
     width="100%"
     height="100%"
     preserveAspectRatio="none"
@@ -11,43 +11,31 @@
   >
     <defs>
       <linearGradient
-        id="waveGradient"
+        id="transitionWave"
         x1="0%"
         y1="0%"
         x2="0%"
         y2="100%"
       >
-        <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.08" />
-        <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:0.02" />
+        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+        <stop offset="100%" style="stop-color:#f3e8ff;stop-opacity:0.4" />
       </linearGradient>
     </defs>
-    <!-- Subtle wave line -->
+    <!-- Wave curves -->
     <path
-      d="M0,40 Q300,20 600,40 T1200,40"
-      fill="none"
-      stroke="url(#waveGradient)"
-      stroke-width="1.5"
+      d="M0,60 Q300,20 600,60 T1200,60 L1200,200 L0,200 Z"
+      fill="url(#transitionWave)"
+      opacity="0.6"
+    />
+    <path
+      d="M0,80 Q300,40 600,80 T1200,80 L1200,200 L0,200 Z"
+      fill="url(#transitionWave)"
       opacity="0.4"
     />
     <path
-      d="M0,50 Q300,35 600,50 T1200,50"
-      fill="none"
-      stroke="url(#waveGradient)"
-      stroke-width="1"
-      opacity="0.3"
-    />
-    <path
-      d="M0,60 Q300,45 600,60 T1200,60"
-      fill="none"
-      stroke="url(#waveGradient)"
-      stroke-width="1"
+      d="M0,100 Q300,60 600,100 T1200,100 L1200,200 L0,200 Z"
+      fill="url(#transitionWave)"
       opacity="0.2"
-    />
-    <!-- Subtle filled area under waves -->
-    <path
-      d="M0,40 Q300,20 600,40 T1200,40 L1200,120 L0,120 Z"
-      fill="url(#waveGradient)"
-      opacity="0.05"
     />
   </svg>
 </div>
