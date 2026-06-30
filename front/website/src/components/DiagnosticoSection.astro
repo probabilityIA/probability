@@ -1,0 +1,497 @@
+---
+---
+
+<section class="relative overflow-hidden bg-[#FBFAFE] px-8 py-24 lg:px-16">
+  <style>
+    @keyframes revealUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes drawLine {
+      from {
+        stroke-dashoffset: 600;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes donutFill {
+      from {
+        stroke-dashoffset: 264;
+      }
+      to {
+        stroke-dashoffset: 16;
+      }
+    }
+
+    @keyframes growBar {
+      from {
+        transform: scaleY(0);
+      }
+      to {
+        transform: scaleY(1);
+      }
+    }
+
+    @keyframes chipLight {
+      from {
+        opacity: 0.35;
+        filter: grayscale(1);
+      }
+      to {
+        opacity: 1;
+        filter: none;
+        box-shadow: 0 10px 26px -12px rgba(124, 58, 237, 0.45);
+      }
+    }
+
+    @keyframes ping {
+      0% {
+        transform: scale(1);
+        opacity: 0.65;
+      }
+      70% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+    }
+
+    @keyframes pulseDot {
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.45;
+        transform: scale(0.82);
+      }
+    }
+
+    @keyframes glowBreath {
+      0%,
+      100% {
+        opacity: 0.5;
+      }
+      50% {
+        opacity: 0.85;
+      }
+    }
+
+    .diagnostico-bg {
+      background-image: radial-gradient(
+        rgba(139, 92, 246, 0.08) 1px,
+        transparent 1px
+      );
+      background-size: 28px 28px;
+    }
+
+    /* Estado inicial: animaciones pausadas */
+    [data-block] .anim {
+      animation-play-state: paused;
+    }
+
+    /* Al revelarse (.in): corre la animación */
+    [data-block].in .anim {
+      animation-play-state: running;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    .gradient-text {
+      background: linear-gradient(115deg, #a855f7, #7c3aed);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+  </style>
+
+  <!-- Grid background -->
+  <div class="diagnostico-bg absolute inset-0 z-0"></div>
+
+  <!-- Warehouse background (parallax) -->
+  <div
+    id="whBg"
+    class="absolute top-[6%] left-1/2 -ml-[360px] w-[720px] opacity-[0.06] pointer-events-none"
+    style="will-change:transform"
+  >
+    <svg
+      viewBox="0 0 720 360"
+      width="720"
+      height="360"
+      fill="none"
+      stroke="#5B3F9E"
+      stroke-width="2"
+    >
+      <path d="M120,150 L260,90 L400,150 L260,210 Z" />
+      <path d="M120,150 L120,250 L260,310 L260,210" />
+      <path d="M400,150 L400,250 L260,310" />
+      <path d="M320,120 L460,60 L600,120 L460,180 Z" />
+      <path d="M320,120 L320,220 L460,280 L460,180" />
+      <path d="M600,120 L600,220 L460,280" />
+      <path d="M180,250 L320,190 L460,250 L320,310 Z" opacity=".7" />
+    </svg>
+  </div>
+
+  <!-- Glow blobs -->
+  <div
+    class="absolute -top-32 -right-16 w-[460px] h-[460px] rounded-full bg-gradient-to-br from-purple-400/18 to-transparent blur-2xl opacity-70 pointer-events-none"
+    style="animation: glowBreath 7s ease-in-out infinite"
+  ></div>
+  <div
+    class="absolute -bottom-36 -left-20 w-[420px] h-[420px] rounded-full bg-gradient-to-br from-emerald-400/14 to-transparent blur-2xl opacity-70 pointer-events-none"
+    style="animation: glowBreath 8s ease-in-out infinite 1s"
+  ></div>
+
+  <!-- Content -->
+  <div class="relative z-10 mx-auto max-w-5xl">
+    <!-- HEADER -->
+    <div data-block="header" class="text-center mx-auto max-w-2xl">
+      <div
+        class="anim inline-flex items-center gap-2 bg-white border border-[#E7E2F5] px-4 py-2 rounded-full shadow-[0_8px_24px_-14px_rgba(124,58,237,0.4)]"
+        style="animation: revealUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both"
+      >
+        <span
+          class="w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6]"
+          style="animation: pulseDot 2s ease-in-out infinite"
+        ></span>
+        <span class="text-xs font-bold tracking-widest text-[#5B5470] uppercase">
+          Diagnóstico logístico gratuito
+        </span>
+      </div>
+
+      <h2
+        class="anim font-space-grotesk font-bold text-4xl lg:text-[46px] leading-[1.08] -tracking-[0.02em] text-[#181225] mt-6"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both"
+      >
+        ¿A qué nivel llega tu
+        <span class="gradient-text">operación</span>?
+      </h2>
+
+      <p
+        class="anim text-lg leading-[1.55] text-[#5B5470] mt-5 max-w-2xl mx-auto"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.16s both"
+      >
+        Realiza nuestro diagnóstico en minutos y descubre dónde pierdes margen
+        por devoluciones — y cuánto podrías recuperar con IA.
+      </p>
+    </div>
+
+    <!-- CHART CARDS -->
+    <div data-block="charts" class="flex flex-wrap gap-6 mt-14 lg:gap-6">
+      <!-- Card 1: Línea -->
+      <div
+        class="anim flex-1 min-w-full lg:min-w-fit bg-white border border-[#ECE7F8] rounded-[20px] p-6 shadow-[0_28px_60px_-34px_rgba(124,58,237,0.42)]"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both"
+      >
+        <div class="text-sm font-bold text-[#6B6480]">Empresas optimizando</div>
+        <div class="font-space-grotesk font-bold text-4xl text-[#181225] mt-1.5">
+          <span data-count="20">20</span>+
+        </div>
+        <div class="relative overflow-hidden rounded-2xl mt-3">
+          <svg
+            viewBox="0 0 320 150"
+            width="100%"
+            height="120"
+            class="block overflow-visible"
+          >
+            <defs>
+              <linearGradient
+                id="ln1"
+                x1="0"
+                y1="0"
+                x2="320"
+                y2="0"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="#A855F7" />
+                <stop offset="1" stop-color="#7C3AED" />
+              </linearGradient>
+              <linearGradient
+                id="ar1"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="150"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="rgba(139,92,246,0.28)" />
+                <stop offset="1" stop-color="rgba(139,92,246,0)" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M10,124 L74,104 L138,112 L202,72 L266,58 L310,26 L310,150 L10,150 Z"
+              fill="url(#ar1)"
+            />
+            <path
+              class="anim"
+              d="M10,124 L74,104 L138,112 L202,72 L266,58 L310,26"
+              fill="none"
+              stroke="url(#ln1)"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="stroke-dasharray:600;stroke-dashoffset:0;animation:drawLine 1.6s 0.25s ease forwards;filter:drop-shadow(0 2px 7px rgba(139,92,246,0.5))"
+            />
+            <circle
+              class="anim"
+              cx="310"
+              cy="26"
+              r="9"
+              fill="none"
+              stroke="#8B5CF6"
+              stroke-width="2"
+              style="transform-box:fill-box;transform-origin:center;animation:ping 2.4s ease-out infinite"
+            />
+            <circle cx="310" cy="26" r="5.5" fill="#fff" stroke="url(#ln1)" stroke-width="3" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Card 2: Donut -->
+      <div
+        class="anim flex-1 min-w-full lg:min-w-fit bg-white border border-[#ECE7F8] rounded-[20px] p-6 shadow-[0_28px_60px_-34px_rgba(124,58,237,0.42)] flex flex-col items-center text-center"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both"
+      >
+        <div class="text-sm font-bold text-[#6B6480] self-start">
+          Precisión del modelo IA
+        </div>
+        <div class="relative w-40 h-40 mx-auto mt-3.5">
+          <svg
+            viewBox="0 0 120 120"
+            width="160"
+            height="160"
+            style="transform: rotate(-90deg)"
+          >
+            <defs>
+              <linearGradient id="dn2" x1="0" y1="0" x2="120" y2="120">
+                <stop offset="0" stop-color="#A855F7" />
+                <stop offset="1" stop-color="#7C3AED" />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              stroke="#EFEDF6"
+              stroke-width="12"
+            />
+            <circle
+              class="anim"
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              stroke="url(#dn2)"
+              stroke-width="12"
+              stroke-linecap="round"
+              style="stroke-dasharray:264;stroke-dashoffset:16;animation:donutFill 1.5s 0.3s ease forwards;filter:drop-shadow(0 0 6px rgba(139,92,246,0.55))"
+            />
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center font-space-grotesk font-bold text-[38px] text-[#181225]">
+            <span data-count="94">94</span>%
+          </div>
+        </div>
+        <div class="text-sm text-[#6B6480] mt-1">eficiencia operativa</div>
+      </div>
+
+      <!-- Card 3: Barras -->
+      <div
+        class="anim flex-1 min-w-full lg:min-w-fit bg-white border border-[#ECE7F8] rounded-[20px] p-6 shadow-[0_28px_60px_-34px_rgba(124,58,237,0.42)]"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.24s both"
+      >
+        <div class="text-sm font-bold text-[#6B6480]">Ahorro generado</div>
+        <div class="font-space-grotesk font-bold text-4xl text-[#059669] mt-1.5">
+          $<span data-count="45">45</span>M
+        </div>
+        <div class="flex items-end gap-3 h-32 mt-3.5 px-1">
+          <div class="flex-1 flex items-end h-12">
+            <div
+              class="anim w-full h-12 rounded-t-md bg-gradient-to-b from-[#D6C6FB] to-[#A78BFA]"
+              style="transform-origin:bottom;animation:growBar 0.8s 0.3s cubic-bezier(0.2,0.8,0.2,1) both"
+            ></div>
+          </div>
+          <div class="flex-1 flex items-end h-16">
+            <div
+              class="anim w-full h-16 rounded-t-md bg-gradient-to-b from-[#C4ACFA] to-[#9166F0]"
+              style="transform-origin:bottom;animation:growBar 0.8s 0.42s cubic-bezier(0.2,0.8,0.2,1) both"
+            ></div>
+          </div>
+          <div class="flex-1 flex items-end h-24">
+            <div
+              class="anim w-full h-24 rounded-t-md bg-gradient-to-b from-[#A98AF6] to-[#7C3AED]"
+              style="transform-origin:bottom;animation:growBar 0.8s 0.54s cubic-bezier(0.2,0.8,0.2,1) both"
+            ></div>
+          </div>
+          <div class="flex-1 flex items-end h-32">
+            <div
+              class="anim w-full h-32 rounded-t-md bg-gradient-to-b from-[#34D8A4] to-[#10B981] shadow-[0_0_18px_-4px_rgba(16,185,129,0.6)]"
+              style="transform-origin:bottom;animation:growBar 0.8s 0.66s cubic-bezier(0.2,0.8,0.2,1) both"
+            ></div>
+          </div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-[#9A93AE]">
+          <span>2022</span>
+          <span>2023</span>
+          <span>2024</span>
+          <span>2025</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTEGRACIONES -->
+    <div data-block="integr" class="mt-16 text-center">
+      <div
+        class="anim text-sm font-bold tracking-wider text-[#8B82A6] uppercase"
+        style="animation: revealUp 0.6s ease both"
+      >
+        Conecta tus canales de venta en minutos
+      </div>
+      <div class="flex flex-wrap justify-center gap-3.5 mt-5">
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.05s"
+        >
+          Shopify
+        </div>
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.18s"
+        >
+          WooCommerce
+        </div>
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.31s"
+        >
+          VTEX
+        </div>
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.44s"
+        >
+          Mercado Libre
+        </div>
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.57s"
+        >
+          Amazon
+        </div>
+        <div
+          class="anim font-space-grotesk font-semibold text-sm text-[#3A2E5C] bg-white border border-[#ECE7F8] px-6 py-3 rounded-2xl"
+          style="animation:chipLight 0.55s ease both;animation-delay:0.70s"
+        >
+          Falabella
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div data-block="cta" class="mt-16 text-center">
+      <a
+        href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos"
+        class="anim inline-flex items-center gap-2.5 px-9 py-4 rounded-2xl font-bold text-base text-white bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] shadow-[0_18px_40px_-14px_rgba(124,58,237,0.7)] hover:shadow-[0_20px_45px_-10px_rgba(124,58,237,0.8)] transition-all"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both"
+      >
+        Iniciar diagnóstico gratuito →
+      </a>
+      <div
+        class="anim text-sm text-[#8B82A6] mt-4"
+        style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both"
+      >
+        Sin tarjeta · 100% gratuito · Resultados al instante
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ dummy: true }}>
+  (function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce) {
+      document.querySelectorAll("[data-block]").forEach(function (b) {
+        b.classList.add("in");
+      });
+      document.querySelectorAll("[data-count]").forEach(function (el) {
+        el.textContent = el.getAttribute("data-count");
+      });
+      return;
+    }
+
+    document.querySelectorAll("[data-count]").forEach(function (el) {
+      el.textContent = "0";
+    });
+
+    var counted = false;
+    function startCount() {
+      if (counted) return;
+      counted = true;
+      var els = document.querySelectorAll("[data-count]");
+      var t0 = null,
+        dur = 1500;
+      function frame(now) {
+        if (t0 === null) t0 = now;
+        var k = Math.min(1, (now - t0) / dur);
+        var e = 1 - Math.pow(1 - k, 3);
+        els.forEach(function (el) {
+          el.textContent = Math.round(parseFloat(el.getAttribute("data-count")) * e);
+        });
+        if (k < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            if (e.target.getAttribute("data-block") === "charts") startCount();
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.25 }
+    );
+
+    document.querySelectorAll("[data-block]").forEach(function (b) {
+      io.observe(b);
+    });
+
+    var bg = document.getElementById("whBg");
+    var raf = null;
+    function onScroll() {
+      if (raf) return;
+      raf = requestAnimationFrame(function () {
+        raf = null;
+        if (!bg || !bg.parentElement) return;
+        var r = bg.parentElement.getBoundingClientRect();
+        var off = (window.innerHeight - r.top) * 0.05;
+        bg.style.transform = "translateY(" + -off + "px)";
+      });
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
