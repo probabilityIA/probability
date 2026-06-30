@@ -314,46 +314,38 @@
         <div class="text-sm text-[#6B6480] mt-1">eficiencia operativa</div>
       </div>
 
-      <!-- Card 3: Barras -->
+      <!-- Card 3: Barras Antes vs Con IA -->
       <div
         class="anim flex-1 min-w-full lg:min-w-fit bg-white border border-[#ECE7F8] rounded-[20px] p-6 shadow-[0_28px_60px_-34px_rgba(124,58,237,0.42)]"
         style="animation: revealUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.24s both"
       >
-        <div class="text-sm font-bold text-[#6B6480]">Ahorro generado</div>
-        <div class="font-space-grotesk font-bold text-4xl text-[#059669] mt-1.5">
-          $<span data-count="45">45</span>M
+        <div class="flex justify-between items-center mb-6">
+          <div class="text-sm font-bold text-[#6B6480]">Antes vs con Probability</div>
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">↓ 28%</span>
         </div>
-        <div class="flex items-end gap-3 h-32 mt-3.5 px-1">
-          <div class="flex-1 flex items-end h-12">
-            <div
-              class="anim w-full h-12 rounded-t-md bg-gradient-to-b from-[#D6C6FB] to-[#A78BFA]"
-              style="transform-origin:bottom;animation:growBar 0.8s 0.3s cubic-bezier(0.2,0.8,0.2,1) both"
-            ></div>
+        <div class="flex items-flex-end justify-center gap-8 h-40 py-2">
+          <!-- Antes Bar -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-space-grotesk font-bold text-sm text-[#7C3AED]">9.8%</div>
+            <div class="flex items-end h-32 w-14">
+              <div
+                class="anim w-full h-32 rounded-t-md bg-gradient-to-b from-[#D6C6FB] to-[#A78BFA]"
+                style="transform-origin:bottom;animation:growBar 0.8s 0.3s cubic-bezier(0.2,0.8,0.2,1) both"
+              ></div>
+            </div>
+            <div class="text-xs text-[#6B6480] font-medium">Antes</div>
           </div>
-          <div class="flex-1 flex items-end h-16">
-            <div
-              class="anim w-full h-16 rounded-t-md bg-gradient-to-b from-[#C4ACFA] to-[#9166F0]"
-              style="transform-origin:bottom;animation:growBar 0.8s 0.42s cubic-bezier(0.2,0.8,0.2,1) both"
-            ></div>
+          <!-- Con IA Bar -->
+          <div class="flex flex-col items-center gap-2">
+            <div class="font-space-grotesk font-bold text-sm text-emerald-600">7.1%</div>
+            <div class="flex items-end h-32 w-14">
+              <div
+                class="anim w-full h-20 rounded-t-md bg-gradient-to-b from-emerald-300 to-emerald-600 shadow-[0_0_18px_-4px_rgba(16,185,129,0.6)]"
+                style="transform-origin:bottom;animation:growBar 0.8s 0.55s cubic-bezier(0.2,0.8,0.2,1) both"
+              ></div>
+            </div>
+            <div class="text-xs text-[#6B6480] font-medium">Con IA</div>
           </div>
-          <div class="flex-1 flex items-end h-24">
-            <div
-              class="anim w-full h-24 rounded-t-md bg-gradient-to-b from-[#A98AF6] to-[#7C3AED]"
-              style="transform-origin:bottom;animation:growBar 0.8s 0.54s cubic-bezier(0.2,0.8,0.2,1) both"
-            ></div>
-          </div>
-          <div class="flex-1 flex items-end h-32">
-            <div
-              class="anim w-full h-32 rounded-t-md bg-gradient-to-b from-[#34D8A4] to-[#10B981] shadow-[0_0_18px_-4px_rgba(16,185,129,0.6)]"
-              style="transform-origin:bottom;animation:growBar 0.8s 0.66s cubic-bezier(0.2,0.8,0.2,1) both"
-            ></div>
-          </div>
-        </div>
-        <div class="flex justify-between mt-2 text-xs text-[#9A93AE]">
-          <span>2022</span>
-          <span>2023</span>
-          <span>2024</span>
-          <span>2025</span>
         </div>
       </div>
     </div>
