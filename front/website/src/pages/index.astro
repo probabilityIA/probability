@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroSection from '../components/HeroSection.astro';
 import BannerPromo from '../components/BannerPromo.astro';
-import DiagnosticoGrafica from '../components/DiagnosticoGrafica.astro';
+import DiagnosticoSection from '../components/DiagnosticoSection.astro';
 import IntegrationsSection from '../components/IntegrationsSection.astro';
 import HowItWorks from '../components/HowItWorks.astro';
 import AdvantagesSection from '../components/AdvantagesSection.astro';
@@ -338,19 +338,7 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 	<main>
 		<HeroSection />
 
-		<section style="background: white; background-image: repeating-linear-gradient(90deg, transparent, transparent 1px, rgba(139,92,246,0.08) 1px, rgba(139,92,246,0.08) 2px); position: relative; padding: 3rem 1.5rem;">
-			<div style="max-width: 1200px; margin: 0 auto;">
-				<DiagnosticoGrafica />
-
-				<div style="text-align: center; margin-top: 2.5rem;">
-					<button class="cta-button open-quiz-modal">
-						Iniciar diagnóstico gratuito
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-					</button>
-					<div class="cta-footer">Sin tarjeta · 100% gratuito · Resultados al instante</div>
-				</div>
-			</div>
-		</section>
+		<DiagnosticoSection />
 		<BannerPromo />
 		<IntegrationsSection />
 		<HowItWorks />
