@@ -10,38 +10,28 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
-// CreateWebhook crea un webhook en Shopify para la integración y actualiza el config con la información
-// Primero verifica si existen webhooks con la misma URL y los elimina antes de crear nuevos
 func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID string, baseURL string) (*domain.CreateWebhookResult, error) {
-	// Obtener la integración
 	integration, err := uc.integrationService.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
 		return nil, fmt.Errorf("error al obtener integración: %w", err)
 	}
 
-	// Obtener las credenciales
 	accessToken, err := uc.integrationService.DecryptCredential(ctx, integrationID, "access_token")
 	if err != nil {
 		return nil, fmt.Errorf("error al obtener access_token: %w", err)
 	}
 
-	// Obtener el store_name del config
 	storeName, ok := integration.Config["store_name"].(string)
 	if !ok || storeName == "" {
 		return nil, fmt.Errorf("store_name no encontrado en la configuración")
 	}
 
-	// En modo test, usar la URL de pruebas
 	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
 
-	// Construir nuestra URL del webhook
-	// Asegurar que usamos el prefijo /api/v1 ya que el router lo espera
-	// Si baseURL ya tiene /api/v1, lo manejamos (aunque asumimos que es el host base)
 	apiPath := "/api/v1/integrations/shopify/webhook"
 	if strings.HasSuffix(baseURL, "/") {
 		baseURL = strings.TrimSuffix(baseURL, "/")
 	}
-	// Si el usuario configuró baseURL con /api/v1, evitamos duplicarlo
 	if strings.HasSuffix(baseURL, "/api/v1") {
 		baseURL = strings.TrimSuffix(baseURL, "/api/v1")
 	}
@@ -55,7 +45,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		Bool("is_testing", integration.IsTesting).
 		Msg("Creando webhooks en Shopify")
 
-	// Validar si la URL es localhost (entorno de pruebas)
 	parsedURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error al parsear baseURL: %w", err)
@@ -77,7 +66,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		}, fmt.Errorf("Shopify requiere una URL de webhook HTTPS publica; la actual (%s) no lo es. Configura WEBHOOK_BASE_URL con un dominio HTTPS publico (en local, expon el backend con un tunel como cloudflared)", webhookURL)
 	}
 
-	// Verificar si existen webhooks con nuestra URL
 	existingWebhooks, err := uc.VerifyWebhooksByURL(ctx, integrationID, baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error al verificar webhooks existentes: %w", err)
@@ -90,7 +78,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		WebhookURL:       webhookURL,
 	}
 
-	// Eliminar solo los webhooks que coinciden con nuestra URL
 	for _, webhook := range existingWebhooks {
 		if err := uc.shopifyClient.DeleteWebhook(ctx, storeName, accessToken, webhook.ID); err != nil {
 			uc.log.Warn(ctx).Err(err).Str("webhook_id", webhook.ID).Str("topic", webhook.Topic).Msg("Error al eliminar webhook existente")
@@ -99,7 +86,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		result.DeletedWebhooks = append(result.DeletedWebhooks, webhook)
 	}
 
-	// Eventos que necesitamos registrar
 	events := []string{
 		"orders/create",
 		"orders/updated",
@@ -108,7 +94,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		"orders/fulfilled",
 	}
 
-	// Crear webhooks para todos los eventos
 	webhookConfigured := true
 	var lastErr error
 	for _, event := range events {
@@ -122,19 +107,16 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		result.CreatedWebhooks = append(result.CreatedWebhooks, webhookID)
 	}
 
-	// Si no se creó ningún webhook, retornar un error claro y accionable
 	if len(result.CreatedWebhooks) == 0 {
 		return result, webhookCreationError(lastErr)
 	}
 
-	// Actualizar el config con la información del webhook
 	configUpdate := map[string]interface{}{
 		"webhook_url":        webhookURL,
 		"webhook_configured": webhookConfigured,
 		"webhook_ids":        result.CreatedWebhooks,
 	}
 
-	// Hacer merge con el config existente
 	if err := uc.integrationService.UpdateIntegrationConfig(ctx, integrationID, configUpdate); err != nil {
 		return result, fmt.Errorf("error al actualizar config de la integración: %w", err)
 	}
@@ -142,9 +124,6 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	return result, nil
 }
 
-// webhookCreationError construye un mensaje claro y accionable cuando ningun
-// webhook pudo crearse, detectando las causas mas comunes (scope faltante en la
-// app de Shopify, token invalido) y explicando como resolverlas.
 func webhookCreationError(shopifyErr error) error {
 	detail := ""
 	if shopifyErr != nil {
@@ -153,6 +132,15 @@ func webhookCreationError(shopifyErr error) error {
 	low := strings.ToLower(detail)
 
 	switch {
+	case strings.Contains(low, "protected customer data") ||
+		strings.Contains(low, "permission to create or update webhooks"):
+		return fmt.Errorf("Shopify bloqueo la creacion de webhooks de ordenes porque la app no tiene aprobado el acceso a los datos protegidos del cliente ('Protected customer data'). " +
+			"Los eventos orders/* contienen datos del cliente y Shopify los rechaza (403) mientras la app no tenga ese acceso aprobado, aunque el token sea valido. " +
+			"Como habilitarlo: 1) Entra al Shopify Partner Dashboard, abre tu app y ve a 'API access' -> 'Protected customer data access'. " +
+			"2) Solicita/aprueba el acceso a 'Customer data' y a 'Orders', completando el cuestionario de proteccion de datos. " +
+			"3) Confirma que la app tenga los scopes 'read_orders' y 'write_orders'. " +
+			"4) Reinstala o re-autoriza la app para regenerar el Access Token (idealmente token offline 'shpat_', no online 'shpua_' que caduca) y actualiza el token en la integracion. " +
+			"Luego reconecta la integracion para volver a crear los webhooks.")
 	case strings.Contains(low, "access scope") || strings.Contains(low, "invalid topic"):
 		return fmt.Errorf("La app de Shopify no tiene permiso para suscribirse a los eventos de ordenes: le falta el scope 'read_orders', que Shopify trata como datos protegidos del cliente. " +
 			"Como habilitarlo: 1) En el admin de Shopify entra a Configuracion -> Apps y canales de venta -> Desarrollar apps y abre tu Custom App. " +
