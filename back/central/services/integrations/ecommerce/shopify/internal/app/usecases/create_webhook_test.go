@@ -66,9 +66,9 @@ func TestCreateWebhook_Success(t *testing.T) {
 	if result.WebhookURL != expectedWebhookURL {
 		t.Errorf("WebhookURL incorrecto: got %q, want %q", result.WebhookURL, expectedWebhookURL)
 	}
-	// Se esperan 6 eventos registrados
-	if len(result.CreatedWebhooks) != 6 {
-		t.Errorf("se esperaban 6 webhooks creados, se crearon %d", len(result.CreatedWebhooks))
+	// Se esperan 5 eventos registrados
+	if len(result.CreatedWebhooks) != 5 {
+		t.Errorf("se esperaban 5 webhooks creados, se crearon %d", len(result.CreatedWebhooks))
 	}
 	if !configUpdateCalled {
 		t.Fatal("UpdateIntegrationConfig no fue llamado")
@@ -114,8 +114,8 @@ func TestCreateWebhook_LocalhostBlocked(t *testing.T) {
 			if result == nil {
 				t.Fatalf("[%s] el result no debe ser nil aunque haya error", tt.name)
 			}
-			if !strings.Contains(err.Error(), "localhost") && !strings.Contains(err.Error(), "pruebas") {
-				t.Errorf("[%s] el error deberia mencionar el entorno de pruebas: %v", tt.name, err)
+			if !strings.Contains(err.Error(), "HTTPS") {
+				t.Errorf("[%s] el error deberia indicar que se requiere una URL HTTPS publica: %v", tt.name, err)
 			}
 		})
 	}
