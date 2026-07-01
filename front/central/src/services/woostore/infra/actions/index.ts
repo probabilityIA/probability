@@ -2,14 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { env } from '@/shared/config/env';
-
-export interface WooStoreState {
-    instance_id?: string;
-    state?: string;
-    public_ip?: string;
-    store_url?: string;
-    error?: string;
-}
+import { WooStoreState } from '@/services/woostore/domain/types';
 
 async function call(path: string, method: 'GET' | 'POST'): Promise<WooStoreState> {
     const token = (await cookies()).get('session_token')?.value;
@@ -32,6 +25,14 @@ async function call(path: string, method: 'GET' | 'POST'): Promise<WooStoreState
     }
 }
 
-export const getWooStoreStatusAction = () => call('/status', 'GET');
-export const startWooStoreAction = () => call('/start', 'POST');
-export const stopWooStoreAction = () => call('/stop', 'POST');
+export async function getWooStoreStatusAction(): Promise<WooStoreState> {
+    return call('/status', 'GET');
+}
+
+export async function startWooStoreAction(): Promise<WooStoreState> {
+    return call('/start', 'POST');
+}
+
+export async function stopWooStoreAction(): Promise<WooStoreState> {
+    return call('/stop', 'POST');
+}

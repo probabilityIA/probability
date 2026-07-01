@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { PlayIcon, StopIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { TokenStorage } from '@/shared/utils/token-storage';
-import { getWooStoreStatusAction, startWooStoreAction, stopWooStoreAction, WooStoreState } from '@/services/woostore/infra/actions';
+import { getWooStoreStatusAction, startWooStoreAction, stopWooStoreAction } from '@/services/woostore/infra/actions';
+import { WooStoreState } from '@/services/woostore/domain/types';
 
 const STATE_LABEL: Record<string, string> = {
     running: 'Encendida',
