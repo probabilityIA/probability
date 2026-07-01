@@ -67,9 +67,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	tokenSecret := environment.Get("JWT_SECRET")
 	pluginBaseURL := environment.Get("WEBHOOK_BASE_URL")
 	ratesLimiter := ratelimit.New(ratelimit.Config{
-		RatePerSec:  1,
-		Burst:       10,
-		Threshold:   8,
+		RatePerSec:  20,
+		Burst:       100,
+		Threshold:   20,
 		RedisPrefix: "shiprates",
 	}, redisClient, logger)
 	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter)
