@@ -62,13 +62,19 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	}
 
 	hostname := strings.ToLower(parsedURL.Hostname())
-	if strings.Contains(hostname, "localhost") || strings.Contains(hostname, "127.0.0.1") || strings.Contains(hostname, "::1") {
+	isPrivateHost := hostname == "localhost" ||
+		strings.HasPrefix(hostname, "127.") ||
+		hostname == "::1" ||
+		hostname == "host.docker.internal" ||
+		strings.HasSuffix(hostname, ".local")
+
+	if parsedURL.Scheme != "https" || isPrivateHost {
 		return &domain.CreateWebhookResult{
 			ExistingWebhooks: []domain.WebhookInfo{},
 			DeletedWebhooks:  []domain.WebhookInfo{},
 			CreatedWebhooks:  []string{},
 			WebhookURL:       webhookURL,
-		}, fmt.Errorf("no se pueden crear webhooks en entorno de pruebas (localhost). La URL del webhook sería: %s", webhookURL)
+		}, fmt.Errorf("Shopify requiere una URL de webhook HTTPS publica; la actual (%s) no lo es. Configura WEBHOOK_BASE_URL con un dominio HTTPS publico (en local, expon el backend con un tunel como cloudflared)", webhookURL)
 	}
 
 	// Verificar si existen webhooks con nuestra URL
@@ -100,24 +106,25 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 		"orders/paid",
 		"orders/cancelled",
 		"orders/fulfilled",
-		"orders/partially_fulfilled",
 	}
 
 	// Crear webhooks para todos los eventos
 	webhookConfigured := true
+	var lastErr error
 	for _, event := range events {
 		webhookID, err := uc.shopifyClient.CreateWebhook(ctx, storeName, accessToken, webhookURL, event)
 		if err != nil {
 			webhookConfigured = false
+			lastErr = err
 			uc.log.Error(ctx).Err(err).Str("event", event).Str("webhook_url", webhookURL).Str("store_name", storeName).Msg("Error al crear webhook en Shopify")
 			continue
 		}
 		result.CreatedWebhooks = append(result.CreatedWebhooks, webhookID)
 	}
 
-	// Si no se creó ningún webhook, retornar error
+	// Si no se creó ningún webhook, retornar un error claro y accionable
 	if len(result.CreatedWebhooks) == 0 {
-		return result, fmt.Errorf("no se pudo crear ningún webhook en Shopify")
+		return result, webhookCreationError(lastErr)
 	}
 
 	// Actualizar el config con la información del webhook
@@ -133,4 +140,33 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	}
 
 	return result, nil
+}
+
+// webhookCreationError construye un mensaje claro y accionable cuando ningun
+// webhook pudo crearse, detectando las causas mas comunes (scope faltante en la
+// app de Shopify, token invalido) y explicando como resolverlas.
+func webhookCreationError(shopifyErr error) error {
+	detail := ""
+	if shopifyErr != nil {
+		detail = shopifyErr.Error()
+	}
+	low := strings.ToLower(detail)
+
+	switch {
+	case strings.Contains(low, "access scope") || strings.Contains(low, "invalid topic"):
+		return fmt.Errorf("La app de Shopify no tiene permiso para suscribirse a los eventos de ordenes: le falta el scope 'read_orders', que Shopify trata como datos protegidos del cliente. " +
+			"Como habilitarlo: 1) En el admin de Shopify entra a Configuracion -> Apps y canales de venta -> Desarrollar apps y abre tu Custom App. " +
+			"2) En Configuration -> Admin API integration, activa los scopes 'read_orders' y 'write_orders' (y 'read_fulfillments' si registras eventos de fulfillment). " +
+			"3) Guarda y aprueba el acceso a 'Protected customer data'. " +
+			"4) Reinstala o re-autoriza la app para regenerar el Access Token con los nuevos permisos y actualiza el token en la integracion. " +
+			"Luego vuelve a crear los webhooks.")
+	case strings.Contains(low, "token de acceso") || strings.Contains(low, "unauthorized") || strings.Contains(low, "expir"):
+		return fmt.Errorf("El token de acceso de Shopify es invalido o expiro. Reconecta la integracion para regenerar el token y vuelve a crear los webhooks.")
+	case strings.Contains(low, "https") || strings.Contains(low, "protocol http"):
+		return fmt.Errorf("Shopify rechazo la URL del webhook porque no es HTTPS publica. Configura WEBHOOK_BASE_URL con un dominio HTTPS publico (en produccion ya lo es; en local usa un tunel como cloudflared).")
+	case detail != "":
+		return fmt.Errorf("no se pudo crear ningun webhook en Shopify. Detalle: %s", detail)
+	default:
+		return fmt.Errorf("no se pudo crear ningun webhook en Shopify")
+	}
 }
