@@ -16,7 +16,8 @@ import {
     CreateWebhookResponse,
     SyncOrdersParams,
     IntegrationCategoriesResponse,
-    CarrierServiceResponse
+    CarrierServiceResponse,
+    WooCommerceConnectionInfo
 } from './types';
 
 export interface IIntegrationRepository {
@@ -43,6 +44,9 @@ export interface IIntegrationRepository {
     enableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
     disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse>;
     setShopifyAutoGuide(id: number, enabled: boolean): Promise<CarrierServiceResponse>;
+    getWooCommerceConnectionInfo(id: number): Promise<WooCommerceConnectionInfo>;
+    rotateWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo>;
+    revokeWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo>;
 
     // Integration Types
     getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>>;

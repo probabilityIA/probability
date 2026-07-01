@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Select, Modal, Alert, SecretInput } from '@/shared/ui';
+import { Select, Modal, Alert, SecretInput, ConfirmModal } from '@/shared/ui';
 import { WooCommerceCredentials, WooCommerceConfig } from '../../domain/types';
-import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
+import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction, getWooCommerceConnectionInfoAction, rotateWooCommerceTokenAction, revokeWooCommerceTokenAction } from '@/services/integrations/core/infra/actions';
+import { WooCommerceConnectionInfo } from '@/services/integrations/core/domain/types';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
@@ -13,6 +14,12 @@ import {
     ShoppingBagIcon,
     InformationCircleIcon,
     BoltIcon,
+    TruckIcon,
+    ArrowDownTrayIcon,
+    ClipboardDocumentIcon,
+    ClipboardDocumentCheckIcon,
+    ArrowPathIcon,
+    NoSymbolIcon,
 } from '@heroicons/react/24/outline';
 
 interface WooCommerceConfigFormProps {
@@ -49,6 +56,14 @@ const GUIDE_STEPS = [
     'Copia el Consumer Key y Secret',
 ];
 
+const PLUGIN_STEPS = [
+    'Descarga el plugin con el boton de abajo',
+    'En WordPress: Plugins → Anadir nuevo → Subir plugin',
+    'Sube el .zip y activa el plugin',
+    'WooCommerce → Ajustes → Envio → tu zona → Anadir "Probability (Transportadoras)"',
+    'Pega la Clave de conexion y guarda',
+];
+
 export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: WooCommerceConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -60,6 +75,67 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
+    const [connInfo, setConnInfo] = useState<WooCommerceConnectionInfo | null>(null);
+    const [loadingConn, setLoadingConn] = useState(false);
+    const [copiedKey, setCopiedKey] = useState(false);
+
+    useEffect(() => {
+        if (!isEdit || !integrationId) return;
+        let active = true;
+        setLoadingConn(true);
+        getWooCommerceConnectionInfoAction(integrationId)
+            .then((res: any) => {
+                if (active && res && res.connection_key) {
+                    setConnInfo(res as WooCommerceConnectionInfo);
+                }
+            })
+            .catch(() => { })
+            .finally(() => { if (active) setLoadingConn(false); });
+        return () => { active = false; };
+    }, [isEdit, integrationId]);
+
+    const [rotating, setRotating] = useState(false);
+    const [revoking, setRevoking] = useState(false);
+    const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+
+    const handleCopyKey = async () => {
+        if (!connInfo?.connection_key) return;
+        await navigator.clipboard.writeText(connInfo.connection_key);
+        setCopiedKey(true);
+        setTimeout(() => setCopiedKey(false), 2000);
+    };
+
+    const handleRotateKey = async () => {
+        if (!integrationId || rotating) return;
+        setRotating(true);
+        try {
+            const res: any = await rotateWooCommerceTokenAction(integrationId);
+            if (res && res.connection_key) {
+                setConnInfo(res as WooCommerceConnectionInfo);
+                showToast('Clave rotada. La clave anterior dejo de funcionar.', 'success');
+            } else {
+                showToast(res?.message || 'No se pudo rotar la clave', 'error');
+            }
+        } finally {
+            setRotating(false);
+        }
+    };
+
+    const doRevokeKey = async () => {
+        if (!integrationId || revoking) return;
+        setRevoking(true);
+        try {
+            const res: any = await revokeWooCommerceTokenAction(integrationId);
+            if (res && res.revoked) {
+                setConnInfo(res as WooCommerceConnectionInfo);
+                showToast('Clave revocada.', 'success');
+            } else {
+                showToast(res?.message || 'No se pudo revocar la clave', 'error');
+            }
+        } finally {
+            setRevoking(false);
+        }
+    };
 
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
@@ -440,6 +516,158 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     ))}
                 </ol>
             </div>
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                            <TruckIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                            Plugin de cotizacion de envios en el checkout
+                        </h4>
+                        <span
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full self-start"
+                            style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                        >
+                            Opcional
+                        </span>
+                    </div>
+
+                    <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+                        Instala este plugin en tu WordPress para que tus clientes vean las tarifas reales de las
+                        transportadoras (EnvioClick y otras) directamente en el checkout, calculadas por Probability
+                        segun la direccion de envio. Requiere que tengas una transportadora y una direccion de origen
+                        configuradas en Probability.
+                    </p>
+
+                    <ol className="grid grid-cols-1 gap-y-2 mb-4 sm:grid-cols-2 sm:gap-x-4">
+                        {PLUGIN_STEPS.map((step, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                                <span
+                                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                                    style={{ backgroundColor: GREEN }}
+                                >
+                                    {i + 1}
+                                </span>
+                                <span className="text-[11px] text-gray-600 dark:text-gray-300 leading-snug">{step}</span>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <div className="flex flex-col gap-3">
+                        <a
+                            href="/api/woocommerce-plugin"
+                            download="probability-shipping.zip"
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-lg text-white transition-colors self-start"
+                            style={{ backgroundColor: GREEN }}
+                        >
+                            <ArrowDownTrayIcon className="w-4 h-4" />
+                            Descargar plugin (.zip)
+                        </a>
+
+                        <div>
+                            <label className={fieldLabel}>Clave de conexion</label>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">
+                                Copiala y pegala en los ajustes del metodo de envio "Probability" en tu WordPress.
+                            </p>
+                            {loadingConn ? (
+                                <div className="text-[12px] text-gray-400 py-2">Cargando clave de conexion...</div>
+                            ) : connInfo && connInfo.revoked ? (
+                                <div className="flex flex-col gap-2">
+                                    <div
+                                        className="text-[12px] rounded-lg px-3 py-2"
+                                        style={{ backgroundColor: '#fff4f4', color: '#b42318', border: '1px solid #f3c9c9' }}
+                                    >
+                                        La clave esta revocada. La tienda no cotizara hasta que generes una clave nueva.
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleRotateKey}
+                                        disabled={rotating}
+                                        className="px-3 py-2 text-[13px] font-semibold rounded-lg text-white flex items-center justify-center gap-1.5 self-start disabled:opacity-60"
+                                        style={{ backgroundColor: GREEN }}
+                                    >
+                                        <ArrowPathIcon className="w-4 h-4" />
+                                        {rotating ? 'Generando...' : 'Generar clave nueva'}
+                                    </button>
+                                </div>
+                            ) : connInfo ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                        <textarea
+                                            readOnly
+                                            value={connInfo.connection_key}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            className={`${inputCls} font-mono text-[11px] resize-none flex-1`}
+                                            rows={2}
+                                            style={{ borderColor: INPUT_BORDER }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyKey}
+                                            className="px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+                                            style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                                        >
+                                            {copiedKey ? (
+                                                <>
+                                                    <ClipboardDocumentCheckIcon className="w-4 h-4" />
+                                                    Copiado
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ClipboardDocumentIcon className="w-4 h-4" />
+                                                    Copiar
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={handleRotateKey}
+                                            disabled={rotating}
+                                            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-60"
+                                            style={{ backgroundColor: '#ffffff', color: '#374151', border: `1px solid ${INPUT_BORDER}` }}
+                                        >
+                                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                                            {rotating ? 'Rotando...' : 'Rotar clave'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRevokeConfirm(true)}
+                                            disabled={revoking}
+                                            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-60"
+                                            style={{ backgroundColor: '#ffffff', color: '#b42318', border: '1px solid #f3c9c9' }}
+                                        >
+                                            <NoSymbolIcon className="w-3.5 h-3.5" />
+                                            {revoking ? 'Revocando...' : 'Revocar'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400">
+                                        Rotar genera una clave nueva y desactiva la anterior. Revocar detiene la cotizacion hasta generar una nueva.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="text-[12px] text-gray-400 py-2">
+                                    No se pudo cargar la clave de conexion. Guarda la integracion e intenta de nuevo.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmModal
+                isOpen={showRevokeConfirm}
+                onClose={() => setShowRevokeConfirm(false)}
+                onConfirm={doRevokeKey}
+                title="Revocar clave de conexion"
+                message="Al revocar, la tienda dejara de cotizar envios hasta que generes una clave nueva. Esta accion invalida la clave actual. Deseas continuar?"
+                confirmText="Revocar"
+                type="danger"
+            />
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

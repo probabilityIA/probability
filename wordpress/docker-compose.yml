@@ -36,6 +36,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - wp_data:/var/www/html
+      - ../back/central/services/modules/shipments/internal/infra/primary/plugin/probability-shipping:/var/www/html/wp-content/plugins/probability-shipping
 
   wpcron:
     image: wordpress:cli-php8.3
@@ -55,6 +56,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - wp_data:/var/www/html
+      - ../back/central/services/modules/shipments/internal/infra/primary/plugin/probability-shipping:/var/www/html/wp-content/plugins/probability-shipping
     entrypoint: ["/bin/sh", "-c", "while true; do wp cron event run --due-now >/dev/null 2>&1; wp action-scheduler run >/dev/null 2>&1; sleep 20; done"]
 
   wpcli:
@@ -74,6 +76,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - wp_data:/var/www/html
+      - ../back/central/services/modules/shipments/internal/infra/primary/plugin/probability-shipping:/var/www/html/wp-content/plugins/probability-shipping
 
 volumes:
   db_data:

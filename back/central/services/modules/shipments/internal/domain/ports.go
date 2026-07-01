@@ -111,6 +111,10 @@ type IRepository interface {
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
+	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
+	EnsureWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, err error)
+	RotateWooShippingToken(ctx context.Context, integrationID uint) (salt string, err error)
+	RevokeWooShippingToken(ctx context.Context, integrationID uint) error
 	GetCityDaneByName(ctx context.Context, city, province string) (string, error)
 
 	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error

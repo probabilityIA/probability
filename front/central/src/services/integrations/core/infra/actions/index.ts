@@ -180,6 +180,18 @@ export const enableShopifyCarrierServiceAction = async (id: number, token?: stri
     return safeAction(() => getUseCases(token).then(uc => uc.enableShopifyCarrierService(id)));
 };
 
+export const getWooCommerceConnectionInfoAction = async (id: number, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.getWooCommerceConnectionInfo(id)));
+};
+
+export const rotateWooCommerceTokenAction = async (id: number, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.rotateWooCommerceToken(id)));
+};
+
+export const revokeWooCommerceTokenAction = async (id: number, token?: string | null) => {
+    return safeAction(() => getUseCases(token).then(uc => uc.revokeWooCommerceToken(id)));
+};
+
 export const disableShopifyCarrierServiceAction = async (id: number, token?: string | null) => {
     return safeAction(() => getUseCases(token).then(uc => uc.disableShopifyCarrierService(id)));
 };

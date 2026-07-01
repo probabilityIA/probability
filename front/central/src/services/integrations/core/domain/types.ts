@@ -106,6 +106,16 @@ export interface CarrierServiceResponse {
     carrier_service_id?: string;
 }
 
+export interface WooCommerceConnectionInfo {
+    integration_id: number;
+    backend_url: string;
+    token: string;
+    connection_key: string;
+    plugin_download_url: string;
+    plugin_version: string;
+    revoked: boolean;
+}
+
 export interface IntegrationType {
     id: number;
     name: string;
