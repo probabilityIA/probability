@@ -17,6 +17,7 @@ import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { WooStorePowerWidget } from '@/services/woostore/ui/components/WooStorePowerWidget';
 
 // Mapeo de código de categoría → nombre del recurso en BD
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
@@ -109,6 +110,9 @@ export default function IntegrationsPage() {
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="mb-4">
+                <WooStorePowerWidget />
+            </div>
             {!isTypesTab && activeCategoryCode !== null ? (
                 <IntegrationList
                     key={`cat-${activeCategoryCode}-${refreshKey}`}

@@ -129,6 +129,14 @@ services:
       BEDROCK_ACCESS_KEY: "${BEDROCK_ACCESS_KEY}"
       BEDROCK_SECRET_KEY: "${BEDROCK_SECRET_KEY}"
       BEDROCK_REGION:     "${BEDROCK_REGION}"
+      # Webhooks (URL publica del backend)
+      WEBHOOK_BASE_URL:   "${WEBHOOK_BASE_URL:-}"
+      # Woo store (EC2 temporal on/off por super admin)
+      WOO_STORE_AWS_REGION:  "${WOO_STORE_AWS_REGION:-us-east-1}"
+      WOO_STORE_AWS_KEY:     "${WOO_STORE_AWS_KEY:-}"
+      WOO_STORE_AWS_SECRET:  "${WOO_STORE_AWS_SECRET:-}"
+      WOO_STORE_INSTANCE_ID: "${WOO_STORE_INSTANCE_ID:-}"
+      WOO_STORE_URL:         "${WOO_STORE_URL:-}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
