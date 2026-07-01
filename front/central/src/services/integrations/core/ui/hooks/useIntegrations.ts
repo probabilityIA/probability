@@ -53,7 +53,12 @@ export const useIntegrations = (initialCategory: string = '') => {
     const deleteIntegration = async (id: number) => {
         try {
             const token = TokenStorage.getSessionToken();
-            await deleteIntegrationAction(id, token);
+            const result = await deleteIntegrationAction(id, token);
+            if (!result?.success) {
+                const message = (result as any)?.message || 'Error deleting integration';
+                setError(message);
+                return false;
+            }
             fetchIntegrations();
             return true;
         } catch (err: any) {
@@ -66,10 +71,13 @@ export const useIntegrations = (initialCategory: string = '') => {
     const toggleActive = async (id: number, isActive: boolean) => {
         try {
             const token = TokenStorage.getSessionToken();
-            if (isActive) {
-                await deactivateIntegrationAction(id, token);
-            } else {
-                await activateIntegrationAction(id, token);
+            const result = isActive
+                ? await deactivateIntegrationAction(id, token)
+                : await activateIntegrationAction(id, token);
+            if (!result?.success) {
+                const message = (result as any)?.message || 'Error updating status';
+                setError(message);
+                return false;
             }
             fetchIntegrations();
             return true;
@@ -83,7 +91,12 @@ export const useIntegrations = (initialCategory: string = '') => {
     const setAsDefault = async (id: number) => {
         try {
             const token = TokenStorage.getSessionToken();
-            await setAsDefaultAction(id, token);
+            const result = await setAsDefaultAction(id, token);
+            if (!result?.success) {
+                const message = (result as any)?.message || 'Error setting default';
+                setError(message);
+                return false;
+            }
             fetchIntegrations();
             return true;
         } catch (err: any) {

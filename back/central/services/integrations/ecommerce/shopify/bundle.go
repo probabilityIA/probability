@@ -55,8 +55,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 
 	if baseURL != "" {
 		coreIntegration.OnIntegrationCreated(core.IntegrationTypeShopify, func(obsCtx context.Context, integration *core.PublicIntegration) {
-			// Fire-and-forget: crear webhook en background.
-			// Usa context.Background() intencionalmente para no cancelar si el request HTTP del observer finaliza.
 			go func() {
 				bgCtx := context.Background()
 				integrationID := fmt.Sprintf("%d", integration.ID)
