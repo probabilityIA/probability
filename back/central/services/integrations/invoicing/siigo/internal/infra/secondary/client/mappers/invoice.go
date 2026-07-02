@@ -72,11 +72,12 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 			Identification: customerIdentification,
 			BranchOffice:   0,
 		},
-		Seller:   sellerID,
-		Items:    items,
-		Payments: payments,
-		Stamp:    &request.SiigoStamp{Send: stampSend},
-		Mail:     &request.SiigoMail{Send: mailSend},
+		Seller:       sellerID,
+		Items:        items,
+		Payments:     payments,
+		Stamp:        &request.SiigoStamp{Send: stampSend},
+		Mail:         &request.SiigoMail{Send: mailSend},
+		Observations: buildOrderObservation(req.OrderID, req.OrderNumber),
 	}
 
 	if costCenterID > 0 {
@@ -88,6 +89,17 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 	}
 
 	return invoice
+}
+
+func buildOrderObservation(orderID, orderNumber string) string {
+	if orderID == "" {
+		return ""
+	}
+	obs := "order:" + orderID
+	if orderNumber != "" {
+		obs += " | #" + orderNumber
+	}
+	return obs
 }
 
 func getServiceCode(config map[string]interface{}, service, defaultVal string) string {

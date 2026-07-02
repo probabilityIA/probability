@@ -297,6 +297,10 @@ type IUseCase interface {
 	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.compare_ready"
 	RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
 
+	RequestInventorySync(ctx context.Context, businessID, integrationID uint) (string, error)
+
+	RequestListSiigoWarehouses(ctx context.Context, businessID, integrationID uint) (string, error)
+
 	// SyncCancellations consulta el proveedor en un rango (<=30 dias) y libera las ordenes
 	// de las facturas que figuran anuladas en el proveedor. Retorna un correlationID;
 	// el resultado llega por SSE con evento "invoice.compare_ready".

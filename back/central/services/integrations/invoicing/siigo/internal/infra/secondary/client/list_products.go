@@ -25,6 +25,13 @@ type listProductsResponse struct {
 				Value    float64 `json:"value"`
 			} `json:"price_list"`
 		} `json:"prices"`
+		StockControl      bool    `json:"stock_control"`
+		AvailableQuantity float64 `json:"available_quantity"`
+		Warehouses        []struct {
+			ID       int     `json:"id"`
+			Name     string  `json:"name"`
+			Quantity float64 `json:"quantity"`
+		} `json:"warehouses"`
 	} `json:"results"`
 }
 
@@ -76,12 +83,23 @@ func (c *Client) ListProducts(ctx context.Context, credentials dtos.Credentials,
 		if len(r.Prices) > 0 && len(r.Prices[0].PriceList) > 0 {
 			price = r.Prices[0].PriceList[0].Value
 		}
+		warehouses := make([]dtos.ProductWarehouseStock, 0, len(r.Warehouses))
+		for _, w := range r.Warehouses {
+			warehouses = append(warehouses, dtos.ProductWarehouseStock{
+				ID:       w.ID,
+				Name:     w.Name,
+				Quantity: w.Quantity,
+			})
+		}
 		items = append(items, dtos.ProductItem{
-			ID:          r.ID,
-			Code:        r.Code,
-			Name:        r.Name,
-			Description: r.Description,
-			Price:       price,
+			ID:                r.ID,
+			Code:              r.Code,
+			Name:              r.Name,
+			Description:       r.Description,
+			Price:             price,
+			StockControl:      r.StockControl,
+			AvailableQuantity: r.AvailableQuantity,
+			Warehouses:        warehouses,
 		})
 	}
 

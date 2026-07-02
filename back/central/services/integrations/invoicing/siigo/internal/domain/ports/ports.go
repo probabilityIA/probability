@@ -26,6 +26,8 @@ type ISiigoClient interface {
 
 	ListProducts(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
 
+	ListWarehouses(ctx context.Context, credentials dtos.Credentials) ([]dtos.WarehouseItem, error)
+
 	ListPaymentTypes(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
 
 	CreateCashReceipt(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)

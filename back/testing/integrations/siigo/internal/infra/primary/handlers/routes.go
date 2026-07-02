@@ -19,6 +19,7 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/v1/invoices/:id/annul", h.handleAnnulInvoice)
 	router.GET("/v1/invoices/:id/stamp/errors", h.handleStampErrors)
 	router.GET("/v1/products", h.handleListProducts)
+	router.GET("/v1/warehouses", h.handleListWarehouses)
 	router.GET("/v1/payment-types", h.handleListPaymentTypes)
 	router.POST("/v1/vouchers", h.handleCreateVoucher)
 	router.POST("/v1/credit-notes", h.handleCreateCreditNote)
@@ -217,11 +218,22 @@ func (h *Handler) handleListProducts(c *gin.Context) {
 	products := h.apiSimulator.HandleListProducts()
 	results := make([]gin.H, 0, len(products))
 	for _, p := range products {
+		warehouses := make([]gin.H, 0, len(p.Warehouses))
+		for _, w := range p.Warehouses {
+			warehouses = append(warehouses, gin.H{
+				"id":       w.ID,
+				"name":     w.Name,
+				"quantity": w.Quantity,
+			})
+		}
 		results = append(results, gin.H{
-			"id":          p.ID,
-			"code":        p.Code,
-			"name":        p.Name,
-			"description": p.Description,
+			"id":                 p.ID,
+			"code":               p.Code,
+			"name":               p.Name,
+			"description":        p.Description,
+			"stock_control":      p.StockControl,
+			"available_quantity": p.AvailableQuantity,
+			"warehouses":         warehouses,
 			"prices": []gin.H{{
 				"price_list": []gin.H{{"position": 1, "value": p.Price}},
 			}},
@@ -236,6 +248,24 @@ func (h *Handler) handleListProducts(c *gin.Context) {
 			"total_results": len(results),
 		},
 	})
+}
+
+func (h *Handler) handleListWarehouses(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+
+	warehouses := h.apiSimulator.HandleListWarehouses()
+	results := make([]gin.H, 0, len(warehouses))
+	for _, w := range warehouses {
+		results = append(results, gin.H{
+			"id":     w.ID,
+			"name":   w.Name,
+			"active": true,
+		})
+	}
+
+	c.JSON(200, gin.H{"results": results})
 }
 
 func (h *Handler) handleListPaymentTypes(c *gin.Context) {

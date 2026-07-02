@@ -27,11 +27,25 @@ type AnnulInvoiceResult struct {
 }
 
 type ProductItem struct {
-	ID          string
-	Code        string
-	Name        string
-	Description string
-	Price       float64
+	ID                string
+	Code              string
+	Name              string
+	Description       string
+	Price             float64
+	StockControl      bool
+	AvailableQuantity float64
+	Warehouses        []ProductWarehouseStock
+}
+
+type ProductWarehouseStock struct {
+	ID       int
+	Name     string
+	Quantity float64
+}
+
+type WarehouseItem struct {
+	ID   int
+	Name string
 }
 
 type PaymentTypeItem struct {

@@ -54,11 +54,25 @@ type JournalEntry struct {
 }
 
 type Product struct {
-	ID          string
-	Code        string
-	Name        string
-	Description string
-	Price       float64
+	ID                string
+	Code              string
+	Name              string
+	Description       string
+	Price             float64
+	StockControl      bool
+	AvailableQuantity float64
+	Warehouses        []ProductWarehouseStock
+}
+
+type ProductWarehouseStock struct {
+	ID       int
+	Name     string
+	Quantity float64
+}
+
+type Warehouse struct {
+	ID   int
+	Name string
 }
 
 type PaymentType struct {

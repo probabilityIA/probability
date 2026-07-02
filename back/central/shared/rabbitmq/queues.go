@@ -136,6 +136,8 @@ const (
 	QueueInventoryBulkLoad = "inventory.bulk_load.requests"
 
 	QueueInventoryOrderFeedback = "inventory.orders.feedback"
+
+	QueueInventoryProviderSync = "inventory.provider_sync.requests"
 )
 
 const (

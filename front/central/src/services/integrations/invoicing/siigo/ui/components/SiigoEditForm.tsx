@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
+import { Alert, Modal, SecretInput } from '@/shared/ui';
 import { SiigoCredentials } from '../../domain/types';
-import { updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
+import { updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
@@ -12,9 +12,47 @@ import {
     Cog6ToothIcon,
     CheckBadgeIcon,
     InformationCircleIcon,
-    ArrowLeftIcon,
     BeakerIcon,
+    DocumentTextIcon,
 } from '@heroicons/react/24/outline';
+import {
+    GREEN,
+    GREEN_DARK,
+    GREEN_SOFT,
+    GREEN_BORDER,
+    INPUT_BORDER,
+    fieldLabel,
+    fieldHint,
+    inputCls,
+    SectionCard,
+    ToggleRow,
+    Spinner,
+} from './SiigoFormKit';
+import { SiigoInventorySection, InventorySyncConfig } from './SiigoInventorySection';
+import { SiigoInventorySyncModal } from './SiigoInventorySyncModal';
+
+function initialInventoryConfig(config: any): InventorySyncConfig {
+    const cfg = config || {};
+    const rawMappings = Array.isArray(cfg.inventory_warehouse_mappings) ? cfg.inventory_warehouse_mappings : [];
+    return {
+        enabled: cfg.inventory_sync_enabled === true,
+        mode: cfg.inventory_warehouse_mode === 'mapped' ? 'mapped' : 'single',
+        single_warehouse_id: Number(cfg.inventory_single_warehouse_id) || 0,
+        mappings: rawMappings.map((m: any) => ({
+            velocity_warehouse_id: Number(m.velocity_warehouse_id) || 0,
+            siigo_warehouse_id: Number(m.siigo_warehouse_id) || 0,
+        })),
+    };
+}
+
+function inventoryConfigToMap(inv: InventorySyncConfig) {
+    return {
+        inventory_sync_enabled: inv.enabled,
+        inventory_warehouse_mode: inv.mode,
+        inventory_single_warehouse_id: inv.single_warehouse_id,
+        inventory_warehouse_mappings: inv.mappings.filter((m) => m.velocity_warehouse_id > 0),
+    };
+}
 
 interface SiigoEditFormProps {
     integrationId: number;
@@ -37,11 +75,16 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [isTesting, setIsTesting] = useState(initialData.is_testing || false);
 
-    // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
     const [selectedBusinessId] = useState<number | null>(initialData.business_id || null);
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [logoFailed, setLogoFailed] = useState(false);
+
+    const [inventorySync, setInventorySync] = useState<InventorySyncConfig>(initialInventoryConfig(initialData.config));
+    const [showSyncModal, setShowSyncModal] = useState(false);
 
     const [formData, setFormData] = useState({
         name: initialData.name,
@@ -51,7 +94,22 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
         partner_id: initialData.credentials?.partner_id || '',
     });
 
-    // Check if user is super admin and load businesses
+    const connected = !!(formData.username && formData.access_key);
+    const canSyncNow = inventorySync.enabled;
+
+    useEffect(() => {
+        let cancelled = false;
+        getActiveIntegrationTypesAction()
+            .then((res: any) => {
+                if (cancelled) return;
+                const types = res?.data || [];
+                const siigo = types.find((t: any) => t.id === 8 || /siigo/i.test(t.code || ''));
+                if (siigo?.image_url) setLogoUrl(siigo.image_url);
+            })
+            .catch(() => { });
+        return () => { cancelled = true; };
+    }, []);
+
     useEffect(() => {
         const checkUserAndLoadBusinesses = async () => {
             const permissions = TokenStorage.getPermissions();
@@ -114,11 +172,13 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
         try {
             const updateData: any = {
                 name: formData.name,
-                config: {},
+                config: {
+                    ...(initialData.config || {}),
+                    ...inventoryConfigToMap(inventorySync),
+                },
                 is_testing: isTesting,
             };
 
-            // Only include credentials if they were filled in
             if (formData.username && formData.access_key) {
                 const credentials: SiigoCredentials = {
                     username: formData.username,
@@ -145,269 +205,249 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
-            {/* Header */}
-            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                        <CheckBadgeIcon className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Editar Siigo Facturacion
-                    </h2>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 ml-14">
-                    Actualiza la configuracion de tu integracion con Siigo.
-                </p>
-            </div>
-
-            {/* Configuracion General */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200 dark:text-gray-200" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Configuracion General
-                    </h3>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        Nombre de la Integracion <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Siigo Facturacion Principal"
-                        required
-                        className="bg-white dark:bg-gray-800"
-                    />
-                </div>
-
-                {/* Business info - Read only for super admins */}
-                {isSuperAdmin && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Negocio
-                        </label>
-                        {loadingBusinesses ? (
-                            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">Cargando negocios...</span>
-                            </div>
-                        ) : (
-                            <Select
-                                value={selectedBusinessId?.toString() || ''}
-                                onChange={() => {}}
-                                options={[
-                                    { value: '', label: '-- Sin negocio asignado --' },
-                                    ...businesses.map((business) => ({
-                                        value: business.id.toString(),
-                                        label: business.name,
-                                    })),
-                                ]}
-                                className="bg-white dark:bg-gray-800"
-                                disabled={true}
+        <>
+        <form onSubmit={handleSubmit} className="space-y-3 w-full" autoComplete="off">
+            <div
+                className="flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between dark:bg-gray-800/60"
+                style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}` }}
+            >
+                <div className="flex items-center gap-3">
+                    <span
+                        className="flex h-11 w-11 items-center justify-center rounded-xl overflow-hidden shrink-0 bg-white dark:bg-gray-900"
+                        style={{ border: `1px solid ${GREEN_BORDER}`, ...(logoUrl && !logoFailed ? {} : { backgroundColor: GREEN }) }}
+                    >
+                        {logoUrl && !logoFailed ? (
+                            <img
+                                src={logoUrl}
+                                alt="Siigo"
+                                className="h-8 w-8 object-contain"
+                                onError={() => setLogoFailed(true)}
                             />
+                        ) : (
+                            <DocumentTextIcon className="h-6 w-6 text-white" />
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                    </span>
+                    <div>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Siigo Facturacion Electronica</h2>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                            Datos de tu cuenta Siigo. Puedes modificar las credenciales si es necesario.
                         </p>
                     </div>
-                )}
+                </div>
+                <span
+                    className="inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-[11px] font-semibold shrink-0 bg-white dark:bg-gray-900"
+                    style={connected
+                        ? { border: `1px solid ${GREEN_BORDER}`, color: GREEN_DARK }
+                        : { border: '1px solid #e5e7eb', color: '#6b7280' }}
+                >
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: connected ? GREEN : '#9ca3af' }} />
+                    {connected ? 'Conectado' : 'Sin conectar'}
+                </span>
             </div>
 
-            {/* Credenciales */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 space-y-4 border border-blue-100">
-                <div className="flex items-center gap-2 mb-4">
-                    <KeyIcon className="w-5 h-5 text-blue-700" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Credenciales de Acceso
-                    </h3>
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+                <div className="space-y-3">
+                    <div>
+                        <label className={fieldLabel}>
+                            Nombre de la Integracion <span style={{ color: GREEN }}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            placeholder="Ej: Siigo Facturacion Principal"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className={inputCls}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                    </div>
+
+                    {isSuperAdmin && (
+                        <div>
+                            <label className={fieldLabel}>Negocio</label>
+                            {loadingBusinesses ? (
+                                <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-white dark:bg-gray-800" style={{ border: `1px solid ${INPUT_BORDER}` }}>
+                                    <Spinner className="animate-spin h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
+                                </div>
+                            ) : (
+                                <select
+                                    value={selectedBusinessId?.toString() || ''}
+                                    disabled
+                                    className={`${inputCls} opacity-70 cursor-not-allowed`}
+                                    style={{ borderColor: INPUT_BORDER }}
+                                >
+                                    <option value="">-- Sin negocio asignado --</option>
+                                    {businesses.map((business) => (
+                                        <option key={business.id} value={business.id.toString()}>{business.name}</option>
+                                    ))}
+                                </select>
+                            )}
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>El negocio no puede ser modificado despues de la creacion</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
-                <p className="text-sm text-blue-900 -mt-2 mb-4 flex items-start gap-2">
-                    <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>
-                        Aqui se muestran las credenciales actuales. Puedes modificarlas si necesitas actualizarlas.
-                        Todos los campos deben estar completos para actualizar las credenciales.
-                    </span>
+            </SectionCard>
+
+            <SectionCard icon={<KeyIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Credenciales de Acceso">
+                <p className={`${fieldHint} mb-3`}>
+                    <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Se muestran las credenciales actuales. Modificalas solo si necesitas actualizarlas; todos los campos deben quedar completos.</span>
                 </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Usuario API
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.username}
-                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            placeholder="usuario@empresa.com"
-                            autoComplete="off"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 text-sm"
-                        />
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Usuario API</label>
+                            <input
+                                type="text"
+                                placeholder="usuario@empresa.com"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                autoComplete="off"
+                                data-1p-ignore
+                                className={inputCls}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>Clave de Acceso (Access Key)</label>
+                            <SecretInput
+                                value={formData.access_key}
+                                onChange={(e) => setFormData({ ...formData, access_key: e.target.value })}
+                                placeholder="Clave de acceso API"
+                                className="w-full bg-white dark:bg-gray-800 font-mono text-sm rounded-lg"
+                            />
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Clave de Acceso (Access Key)
-                        </label>
-                        <SecretInput
-                            value={formData.access_key}
-                            onChange={(e) => setFormData({ ...formData, access_key: e.target.value })}
-                            placeholder="Clave de acceso API"
-                            className="bg-white dark:bg-gray-800 font-mono text-sm"
-                        />
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Account ID</label>
+                            <input
+                                type="text"
+                                placeholder="ID de cuenta/suscripcion"
+                                value={formData.account_id}
+                                onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
+                                autoComplete="off"
+                                data-1p-ignore
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>Partner ID</label>
+                            <input
+                                type="text"
+                                placeholder="Partner ID"
+                                value={formData.partner_id}
+                                onChange={(e) => setFormData({ ...formData, partner_id: e.target.value })}
+                                autoComplete="off"
+                                data-1p-ignore
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Account ID
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.account_id}
-                            onChange={(e) => setFormData({ ...formData, account_id: e.target.value })}
-                            placeholder="ID de cuenta/suscripcion"
-                            autoComplete="off"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Partner ID
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.partner_id}
-                            onChange={(e) => setFormData({ ...formData, partner_id: e.target.value })}
-                            placeholder="Partner ID"
-                            autoComplete="off"
-                            data-1p-ignore
-                            className="bg-white dark:bg-gray-800 font-mono text-sm"
-                        />
-                    </div>
-                </div>
-
-                {/* Test Connection Button */}
-                <div className="pt-2">
-                    <Button
+                    <button
                         type="button"
-                        variant="outline"
-                        className="w-full bg-white dark:bg-gray-800 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
                         onClick={handleTestConnection}
                         disabled={testingConnection || loading || !formData.username || !formData.access_key}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold bg-white dark:bg-gray-800 disabled:opacity-50"
+                        style={{ border: `1px solid ${GREEN_BORDER}`, color: GREEN_DARK }}
                     >
                         {testingConnection ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                                <Spinner className="animate-spin h-4 w-4" />
                                 Probando...
                             </>
                         ) : (
                             <>
-                                <CheckBadgeIcon className="w-4 h-4 mr-2" />
+                                <CheckBadgeIcon className="w-4 h-4" />
                                 Probar Conexion
                             </>
                         )}
-                    </Button>
-                </div>
-            </div>
-
-            {/* Modo de Pruebas */}
-            <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
-                <div className="flex items-center gap-2 mb-2">
-                    <BeakerIcon className="w-5 h-5 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Modo de Pruebas
-                    </h3>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200">
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Activar modo testing</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-0.5">
-                            Las facturas generadas quedaran marcadas como TEST y usaran la URL de pruebas de Siigo.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsTesting(!isTesting)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
-                    >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                 </div>
-                {isTesting && (
-                    <Alert type="warning">
-                        Modo de pruebas activado. Las facturas generadas con esta integracion quedaran marcadas como <strong>TEST</strong> y no seran enviadas a la DIAN.
-                        {initialData.base_url_test && (
-                            <p className="mt-2 text-xs font-mono text-orange-800 break-all">
-                                URL sandbox: {initialData.base_url_test}
-                            </p>
-                        )}
-                    </Alert>
-                )}
-            </div>
+            </SectionCard>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <SiigoInventorySection
+                value={inventorySync}
+                onChange={setInventorySync}
+                businessId={selectedBusinessId}
+                integrationId={integrationId}
+                onSyncNow={() => setShowSyncModal(true)}
+                canSyncNow={canSyncNow}
+            />
+
+            <SectionCard icon={<BeakerIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Modo de Pruebas">
+                <div className="rounded-lg bg-white dark:bg-gray-800" style={{ border: `1px solid ${INPUT_BORDER}` }}>
+                    <ToggleRow
+                        icon={<BeakerIcon className="w-4 h-4" style={{ color: GREEN }} />}
+                        title="Activar modo testing"
+                        subtitle="Las facturas quedaran marcadas como TEST y usaran la URL de pruebas de Siigo"
+                        checked={isTesting}
+                        onToggle={() => setIsTesting(!isTesting)}
+                    />
+                    {isTesting && initialData.base_url_test && (
+                        <p className="px-3 pb-2.5 -mt-1 text-[11px] font-mono text-orange-700 dark:text-orange-400 break-all">
+                            Sandbox: {initialData.base_url_test}
+                        </p>
+                    )}
+                </div>
+            </SectionCard>
+
+            <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (
-                    <Button
+                    <button
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
+                        className="px-5 py-2 text-[13px] font-semibold rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        style={{ border: `1px solid ${INPUT_BORDER}` }}
                     >
-                        <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar
-                    </Button>
+                    </button>
                 )}
-                <Button
+                <button
                     type="submit"
-                    variant="primary"
                     disabled={loading}
-                    className="min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="px-5 py-2 text-[13px] font-semibold rounded-lg text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    style={{ backgroundColor: GREEN }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
                 >
                     {loading ? (
                         <>
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <Spinner className="animate-spin h-4 w-4 text-white" />
                             Actualizando...
                         </>
                     ) : (
                         <>
-                            <CheckBadgeIcon className="w-5 h-5 mr-2" />
+                            <CheckBadgeIcon className="w-4 h-4" />
                             Actualizar Integracion
                         </>
                     )}
-                </Button>
+                </button>
             </div>
-            {/* Error Modal */}
+
             {errorModal && (
-                <Modal
-                    isOpen={!!errorModal}
-                    onClose={() => setErrorModal(null)}
-                    title="Error"
-                    size="sm"
-                >
+                <Modal isOpen={!!errorModal} onClose={() => setErrorModal(null)} title="Error" size="sm">
                     <div className="p-4">
                         <Alert type="error">{errorModal}</Alert>
                     </div>
                 </Modal>
             )}
         </form>
+        <SiigoInventorySyncModal
+            isOpen={showSyncModal}
+            onClose={() => setShowSyncModal(false)}
+            integrationId={integrationId}
+            businessId={selectedBusinessId}
+        />
+        </>
     );
 }

@@ -46,6 +46,7 @@ type invoiceData struct {
 	ShippingCost  float64                `json:"shipping_cost"`
 	Currency      string                 `json:"currency"`
 	OrderID       string                 `json:"order_id"`
+	OrderNumber   string                 `json:"order_number"`
 	Config        map[string]interface{} `json:"config"`
 }
 
@@ -144,6 +145,14 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		return c.processListBankAccountsRequest(ctx, &request)
 	}
 
+	if request.Operation == "inventory_sync" {
+		return c.processInventorySyncRequest(ctx, &request)
+	}
+
+	if request.Operation == "list_siigo_warehouses" {
+		return c.processListSiigoWarehousesRequest(ctx, &request)
+	}
+
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {
 	case "create", "retry":
@@ -208,7 +217,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	}
 
 	invoiceReq := &siigoDtos.CreateInvoiceRequest{
-		Customer: customer,
+		Customer:     customer,
 		Items:        mapItemsToClientDTOs(request.InvoiceData.Items),
 		Total:        request.InvoiceData.Total,
 		Subtotal:     request.InvoiceData.Subtotal,
@@ -217,6 +226,8 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ShippingCost: request.InvoiceData.ShippingCost,
 		Currency:     request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,
+		OrderNumber:  request.InvoiceData.OrderNumber,
+		IsRetry:      request.Operation == "retry",
 		Credentials:  ictx.Credentials,
 		Config:       ictx.Config,
 	}
