@@ -11,6 +11,15 @@ import (
 //
 
 // CreateProductRequest representa la solicitud para crear un producto
+type ProductProviderUpsertDTO struct {
+	BusinessID     uint
+	SKU            string
+	Name           string
+	TrackInventory bool
+	Price          float64
+	ExternalID     string
+}
+
 type CreateProductRequest struct {
 	// Identificadores
 	BusinessID uint    `json:"-"` // Set from JWT in handler, never from request body

@@ -76,6 +76,10 @@ func (c *InvoiceRequestConsumer) processInventorySyncRequest(
 		}
 	}
 
+	if enabled, _ := ictx.Config["product_sync_enabled"].(bool); enabled {
+		c.publishProductUpserts(ctx, businessID, request.InvoiceData.IntegrationID, products)
+	}
+
 	items := buildInventorySyncItems(products, mode, singleWarehouseID, mappings)
 
 	c.log.Info(ctx).
@@ -128,6 +132,49 @@ func buildInventorySyncItems(
 		})
 	}
 	return items
+}
+
+type productUpsertMessage struct {
+	BusinessID     uint    `json:"business_id"`
+	IntegrationID  uint    `json:"integration_id"`
+	SKU            string  `json:"sku"`
+	Name           string  `json:"name"`
+	TrackInventory bool    `json:"track_inventory"`
+	Price          float64 `json:"price"`
+	ExternalID     string  `json:"external_id"`
+}
+
+func (c *InvoiceRequestConsumer) publishProductUpserts(ctx context.Context, businessID, integrationID uint, products []siigoDtos.ProductItem) {
+	if err := c.rabbit.DeclareQueue(rabbitmq.QueueProductsProviderUpsert, true); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to declare products upsert queue")
+		return
+	}
+
+	published := 0
+	for _, p := range products {
+		if p.Code == "" {
+			continue
+		}
+		data, err := json.Marshal(productUpsertMessage{
+			BusinessID:     businessID,
+			IntegrationID:  integrationID,
+			SKU:            p.Code,
+			Name:           p.Name,
+			TrackInventory: p.StockControl,
+			Price:          p.Price,
+			ExternalID:     p.ID,
+		})
+		if err != nil {
+			continue
+		}
+		if err := c.rabbit.Publish(ctx, rabbitmq.QueueProductsProviderUpsert, data); err != nil {
+			c.log.Error(ctx).Err(err).Str("sku", p.Code).Msg("Failed to publish product upsert")
+			continue
+		}
+		published++
+	}
+
+	c.log.Info(ctx).Int("published", published).Uint("business_id", businessID).Msg("Siigo product upserts published")
 }
 
 func (c *InvoiceRequestConsumer) publishInventorySync(ctx context.Context, msg *providerStockSyncMessage) error {

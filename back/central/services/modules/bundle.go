@@ -60,7 +60,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderstatus.New(router, database, logger, environment)
 	ordersBundle := orders.New(router, database, logger, environment, rabbitMQ)
 	probability.New(database, logger, rabbitMQ)
-	products.New(router, database, logger, environment, s3)
+	products.New(router, database, logger, environment, rabbitMQ, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)

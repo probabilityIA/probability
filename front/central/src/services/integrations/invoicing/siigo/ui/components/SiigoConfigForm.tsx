@@ -56,6 +56,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
         mode: 'single',
         single_warehouse_id: 0,
         mappings: [],
+        product_sync_enabled: false,
     });
 
     const [formData, setFormData] = useState({
@@ -167,6 +168,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                     inventory_warehouse_mode: inventorySync.mode,
                     inventory_single_warehouse_id: inventorySync.single_warehouse_id,
                     inventory_warehouse_mappings: inventorySync.mappings.filter((m) => m.velocity_warehouse_id > 0),
+                    product_sync_enabled: inventorySync.product_sync_enabled,
                 } as any,
                 credentials: credentials as any,
                 is_active: true,

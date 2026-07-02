@@ -34,6 +34,7 @@ export interface InventorySyncConfig {
     mode: 'single' | 'mapped';
     single_warehouse_id: number;
     mappings: WarehousePair[];
+    product_sync_enabled: boolean;
 }
 
 interface NamedWarehouse {
@@ -150,6 +151,14 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                     subtitle="El stock de Probability se actualiza con el de Siigo. Solo lectura, en una sola direccion: Siigo -> Probability."
                     checked={value.enabled}
                     onToggle={() => set({ enabled: !value.enabled })}
+                />
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+                <ToggleRow
+                    icon={<CubeIcon className="w-4 h-4" style={{ color: GREEN }} />}
+                    title="Sincronizar productos de Siigo a Probability"
+                    subtitle="Cuando se crea o actualiza un producto en Siigo, se crea o actualiza tambien en Probability (aplicando la logica de bodegas configurada)."
+                    checked={value.product_sync_enabled}
+                    onToggle={() => set({ product_sync_enabled: !value.product_sync_enabled })}
                 />
             </div>
 
