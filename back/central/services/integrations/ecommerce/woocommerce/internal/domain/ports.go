@@ -22,6 +22,8 @@ type IWooCommerceClient interface {
 
 	// CreateWebhook registra un webhook en WooCommerce para un topic y retorna su ID.
 	CreateWebhook(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
+
+	UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
 }
 
 // IIntegrationService define las operaciones del core de integraciones

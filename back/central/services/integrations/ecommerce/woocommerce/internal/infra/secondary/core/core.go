@@ -35,6 +35,10 @@ func (w *WooCommerceCore) SyncOrdersByIntegrationIDWithParams(ctx context.Contex
 	return w.useCase.SyncOrdersWithParams(ctx, integrationID, params)
 }
 
+func (w *WooCommerceCore) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
+	return w.useCase.UpdateInventory(ctx, integrationID, productExternalID, quantity)
+}
+
 // GetWebhookURL retorna la URL para los webhooks de WooCommerce.
 func (w *WooCommerceCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
 	webhookURL := fmt.Sprintf("%s/integrations/woocommerce/webhook", baseURL)

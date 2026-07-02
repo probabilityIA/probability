@@ -48,6 +48,22 @@ type WarehouseItem struct {
 	Name string
 }
 
+type WebhookItem struct {
+	ID            string `json:"id"`
+	ApplicationID string `json:"application_id"`
+	URL           string `json:"url"`
+	Topic         string `json:"topic"`
+	CompanyKey    string `json:"company_key"`
+	Active        bool   `json:"active"`
+	CreatedAt     string `json:"created_at"`
+}
+
+type CreateWebhookInput struct {
+	ApplicationID string
+	URL           string
+	Topic         string
+}
+
 type PaymentTypeItem struct {
 	ID   int
 	Name string

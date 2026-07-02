@@ -184,6 +184,17 @@ type ProductIntegrationInfo struct {
 // ISyncPublisher publica mensajes de sync a RabbitMQ
 type ISyncPublisher interface {
 	PublishInventorySync(ctx context.Context, msg InventorySyncMessage) error
+	PublishEcommerceStockPush(ctx context.Context, msg EcommerceStockPushMessage) error
+}
+
+type EcommerceStockPushMessage struct {
+	ProductID           string `json:"product_id"`
+	ExternalProductID   string `json:"external_product_id"`
+	IntegrationID       uint   `json:"integration_id"`
+	IntegrationTypeCode string `json:"integration_type_code"`
+	BusinessID          uint   `json:"business_id"`
+	Quantity            int    `json:"quantity"`
+	Timestamp           string `json:"timestamp"`
 }
 
 // IInventoryEventPublisher publica eventos de inventario a Redis SSE

@@ -3,6 +3,9 @@ package domain
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -13,6 +16,7 @@ type Repository struct {
 	tokens       map[string]*AuthToken
 	vouchers     map[string]*Voucher
 	creditNotes  map[string]*CreditNote
+	webhooks     map[string]*Webhook
 	products     []*Product
 	paymentTypes []*PaymentType
 	warehouses   []*Warehouse
@@ -23,18 +27,55 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	r := &Repository{
-		customers:  make(map[string]*Customer),
-		invoices:   make(map[string]*Invoice),
-		journals:   make(map[string]*JournalEntry),
+		customers:   make(map[string]*Customer),
+		invoices:    make(map[string]*Invoice),
+		journals:    make(map[string]*JournalEntry),
 		tokens:      make(map[string]*AuthToken),
 		vouchers:    make(map[string]*Voucher),
 		creditNotes: make(map[string]*CreditNote),
+		webhooks:    make(map[string]*Webhook),
 		invoiceSeq:  1000,
 		voucherSeq:  500,
 		creditSeq:   700,
 	}
 	r.seedCatalogs()
 	return r
+}
+
+func (r *Repository) CreateWebhook(applicationID, url, topic string) *Webhook {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	w := &Webhook{
+		ID:            uuid.NewString(),
+		ApplicationID: applicationID,
+		URL:           url,
+		Topic:         topic,
+		CompanyKey:    "MOCKCOMPANYSAS",
+		Active:        true,
+		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
+	}
+	r.webhooks[w.ID] = w
+	return w
+}
+
+func (r *Repository) ListWebhooks() []*Webhook {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]*Webhook, 0, len(r.webhooks))
+	for _, w := range r.webhooks {
+		out = append(out, w)
+	}
+	return out
+}
+
+func (r *Repository) DeleteWebhook(id string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.webhooks[id]; !ok {
+		return false
+	}
+	delete(r.webhooks, id)
+	return true
 }
 
 func (r *Repository) seedCatalogs() {

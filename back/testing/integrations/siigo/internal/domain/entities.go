@@ -92,19 +92,29 @@ type Voucher struct {
 }
 
 type CreditNote struct {
-	ID            string
-	Name          string
-	Number        int
-	InvoiceRef    string
-	Amount        float64
-	Reason        string
-	CUFE          string
-	Date          string
-	CreatedAt     time.Time
+	ID         string
+	Name       string
+	Number     int
+	InvoiceRef string
+	Amount     float64
+	Reason     string
+	CUFE       string
+	Date       string
+	CreatedAt  time.Time
 }
 
 type AuthToken struct {
 	Token     string
 	ExpiresAt time.Time
 	Username  string
+}
+
+type Webhook struct {
+	ID            string
+	ApplicationID string
+	URL           string
+	Topic         string
+	CompanyKey    string
+	Active        bool
+	CreatedAt     string
 }

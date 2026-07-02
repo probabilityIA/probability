@@ -14,6 +14,7 @@ import {
     InformationCircleIcon,
     BeakerIcon,
     DocumentTextIcon,
+    BoltIcon,
 } from '@heroicons/react/24/outline';
 import {
     GREEN,
@@ -30,6 +31,7 @@ import {
 } from './SiigoFormKit';
 import { SiigoInventorySection, InventorySyncConfig } from './SiigoInventorySection';
 import { SiigoInventorySyncModal } from './SiigoInventorySyncModal';
+import { SiigoWebhookManager } from './SiigoWebhookManager';
 
 function initialInventoryConfig(config: any): InventorySyncConfig {
     const cfg = config || {};
@@ -382,6 +384,10 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 onSyncNow={() => setShowSyncModal(true)}
                 canSyncNow={canSyncNow}
             />
+
+            <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks de Siigo">
+                <SiigoWebhookManager integrationId={integrationId} />
+            </SectionCard>
 
             <SectionCard icon={<BeakerIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Modo de Pruebas">
                 <div className="rounded-lg bg-white dark:bg-gray-800" style={{ border: `1px solid ${INPUT_BORDER}` }}>

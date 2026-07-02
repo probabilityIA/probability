@@ -3,23 +3,36 @@ package siigo
 import (
 	"context"
 
+	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/app"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/primary/consumer"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/client"
 	siigocore "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/queue"
+	webhookrepo "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // New crea una nueva instancia del módulo Siigo
 func New(
+	router *gin.RouterGroup,
+	database db.IDatabase,
 	logger log.ILogger,
 	rabbit rabbitmq.IQueue,
 	coreIntegration core.IIntegrationService,
 ) *siigocore.SiigoCore {
 	logger = logger.WithModule("siigo")
+
+	if router != nil && database != nil {
+		webhookLogRepo := webhookrepo.New(database, logger)
+		webhookHandler := handlers.New(webhookLogRepo, coreIntegration, rabbit, logger)
+		webhookHandler.RegisterRoutes(router)
+		logger.Info(context.Background()).Msg("✅ Siigo webhook receiver registered")
+	}
 
 	// 1. Cliente HTTP de Siigo
 	httpClient := client.New(logger)

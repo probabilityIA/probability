@@ -65,3 +65,38 @@ func (p *SyncPublisher) PublishInventorySync(ctx context.Context, msg ports.Inve
 
 	return nil
 }
+
+func (p *SyncPublisher) PublishEcommerceStockPush(ctx context.Context, msg ports.EcommerceStockPushMessage) error {
+	if p.queue == nil {
+		return nil
+	}
+
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ecommerce stock push message: %w", err)
+	}
+
+	if err := p.queue.DeclareQueue(rabbitmq.QueueWooInventoryStockPush, true); err != nil {
+		p.logger.Error().Err(err).Msg("Failed to declare woocommerce stock push queue")
+		return err
+	}
+
+	if err := p.queue.Publish(ctx, rabbitmq.QueueWooInventoryStockPush, body); err != nil {
+		p.logger.Error().
+			Err(err).
+			Str("product_id", msg.ProductID).
+			Uint("integration_id", msg.IntegrationID).
+			Msg("Failed to publish ecommerce stock push message")
+		return err
+	}
+
+	p.logger.Info().
+		Str("product_id", msg.ProductID).
+		Uint("integration_id", msg.IntegrationID).
+		Str("external_product_id", msg.ExternalProductID).
+		Int("quantity", msg.Quantity).
+		Str("integration_type_code", msg.IntegrationTypeCode).
+		Msg("Ecommerce stock push message published")
+
+	return nil
+}

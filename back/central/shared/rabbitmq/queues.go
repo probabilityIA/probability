@@ -138,6 +138,8 @@ const (
 	QueueInventoryOrderFeedback = "inventory.orders.feedback"
 
 	QueueInventoryProviderSync = "inventory.provider_sync.requests"
+
+	QueueWooInventoryStockPush = "inventory.woocommerce.stock_push"
 )
 
 const (

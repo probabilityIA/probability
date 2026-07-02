@@ -16,3 +16,15 @@ func NewAPISimulator(logger log.ILogger) *APISimulator {
 		Repository: domain.NewRepository(),
 	}
 }
+
+func (s *APISimulator) HandleListWebhooks() []*domain.Webhook {
+	return s.Repository.ListWebhooks()
+}
+
+func (s *APISimulator) HandleCreateWebhook(applicationID, url, topic string) *domain.Webhook {
+	return s.Repository.CreateWebhook(applicationID, url, topic)
+}
+
+func (s *APISimulator) HandleDeleteWebhook(id string) bool {
+	return s.Repository.DeleteWebhook(id)
+}

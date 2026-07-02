@@ -8,6 +8,7 @@ import (
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/primary/handlers"
+	wooqueue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/client"
 	woocore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/queue"
@@ -46,6 +47,11 @@ func New(
 	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger)
 	handler.RegisterRoutes(router, logger)
+
+	if rabbitMQ != nil {
+		pushConsumer := wooqueue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
+		pushConsumer.Start(context.Background())
+	}
 
 	// 4. Auto-registro de webhooks al crear una integracion WooCommerce
 	baseURL := config.Get("WEBHOOK_BASE_URL")

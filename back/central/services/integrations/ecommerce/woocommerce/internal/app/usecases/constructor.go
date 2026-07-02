@@ -23,6 +23,8 @@ type IWooCommerceUseCase interface {
 
 	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
+
+	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 }
 
 type wooCommerceUseCase struct {

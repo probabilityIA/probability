@@ -1,6 +1,7 @@
 package invoicing
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/alegra"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
@@ -9,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
 	worldoffice "github.com/secamc93/probability/back/central/services/integrations/invoicing/world_office"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -18,6 +20,8 @@ import (
 // Registra cada provider en integrationCore bajo su type_id correspondiente.
 // Debe llamarse después de inicializar integrationCore y antes de que el servidor empiece a recibir tráfico.
 func New(
+	apiRouter *gin.RouterGroup,
+	database db.IDatabase,
 	config env.IConfig,
 	logger log.ILogger,
 	rabbitMQ rabbitmq.IQueue,
@@ -32,7 +36,7 @@ func New(
 	integrationCore.RegisterIntegration(core.IntegrationTypeFactus, factusBundle)
 
 	// Siigo (type_id=8)
-	siigoBundle := siigo.New(logger, rabbitMQ, integrationCore)
+	siigoBundle := siigo.New(apiRouter, database, logger, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeSiigo, siigoBundle)
 
 	// Alegra (type_id=9)

@@ -21,6 +21,30 @@ type SiigoClientMock struct {
 	CreateCashReceiptFn           func(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
 	CreateCreditNoteFn            func(ctx context.Context, req *dtos.CreateCreditNoteRequest) (*dtos.CreateCreditNoteResult, error)
 	CreateJournalFn               func(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
+	ListWebhooksFn                func(ctx context.Context, credentials dtos.Credentials) ([]dtos.WebhookItem, error)
+	CreateWebhookFn               func(ctx context.Context, credentials dtos.Credentials, input dtos.CreateWebhookInput) (*dtos.WebhookItem, error)
+	DeleteWebhookFn               func(ctx context.Context, credentials dtos.Credentials, webhookID string) error
+}
+
+func (m *SiigoClientMock) ListWebhooks(ctx context.Context, credentials dtos.Credentials) ([]dtos.WebhookItem, error) {
+	if m.ListWebhooksFn != nil {
+		return m.ListWebhooksFn(ctx, credentials)
+	}
+	return nil, nil
+}
+
+func (m *SiigoClientMock) CreateWebhook(ctx context.Context, credentials dtos.Credentials, input dtos.CreateWebhookInput) (*dtos.WebhookItem, error) {
+	if m.CreateWebhookFn != nil {
+		return m.CreateWebhookFn(ctx, credentials, input)
+	}
+	return &dtos.WebhookItem{}, nil
+}
+
+func (m *SiigoClientMock) DeleteWebhook(ctx context.Context, credentials dtos.Credentials, webhookID string) error {
+	if m.DeleteWebhookFn != nil {
+		return m.DeleteWebhookFn(ctx, credentials, webhookID)
+	}
+	return nil
 }
 
 func (m *SiigoClientMock) CreateCreditNote(

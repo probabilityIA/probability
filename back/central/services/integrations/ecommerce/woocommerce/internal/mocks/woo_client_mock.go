@@ -10,10 +10,11 @@ import (
 // Cada método de la interfaz tiene su correspondiente campo Fn que permite
 // inyectar el comportamiento deseado en cada test.
 type WooClientMock struct {
-	TestConnectionFn func(ctx context.Context, storeURL, consumerKey, consumerSecret string) error
-	GetOrdersFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret string, params *domain.GetOrdersParams) (*domain.GetOrdersResult, [][]byte, error)
-	GetOrderFn       func(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*domain.WooCommerceOrder, []byte, error)
-	CreateWebhookFn  func(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
+	TestConnectionFn     func(ctx context.Context, storeURL, consumerKey, consumerSecret string) error
+	GetOrdersFn          func(ctx context.Context, storeURL, consumerKey, consumerSecret string, params *domain.GetOrdersParams) (*domain.GetOrdersResult, [][]byte, error)
+	GetOrderFn           func(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*domain.WooCommerceOrder, []byte, error)
+	CreateWebhookFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
+	UpdateProductStockFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
 }
 
 // Verificar en tiempo de compilación que WooClientMock implementa la interfaz.
@@ -45,4 +46,11 @@ func (m *WooClientMock) CreateWebhook(ctx context.Context, storeURL, consumerKey
 		return m.CreateWebhookFn(ctx, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic)
 	}
 	return 0, nil
+}
+
+func (m *WooClientMock) UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error {
+	if m.UpdateProductStockFn != nil {
+		return m.UpdateProductStockFn(ctx, storeURL, consumerKey, consumerSecret, productExternalID, quantity)
+	}
+	return nil
 }

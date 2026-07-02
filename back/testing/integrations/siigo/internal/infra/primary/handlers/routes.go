@@ -24,6 +24,76 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.POST("/v1/vouchers", h.handleCreateVoucher)
 	router.POST("/v1/credit-notes", h.handleCreateCreditNote)
 	router.POST("/v1/journals", h.handleCreateJournal)
+	router.GET("/v1/webhooks", h.handleListWebhooks)
+	router.POST("/v1/webhooks", h.handleCreateWebhook)
+	router.DELETE("/v1/webhooks/:id", h.handleDeleteWebhook)
+}
+
+var validWebhookTopics = map[string]bool{
+	"public.siigoapi.products.stock.update": true,
+	"public.siigoapi.products.create":       true,
+	"public.siigoapi.products.update":       true,
+}
+
+func webhookPayload(w *domain.Webhook) gin.H {
+	return gin.H{
+		"id":             w.ID,
+		"application_id": w.ApplicationID,
+		"url":            w.URL,
+		"topic":          w.Topic,
+		"company_key":    w.CompanyKey,
+		"active":         w.Active,
+		"created_at":     w.CreatedAt,
+	}
+}
+
+func (h *Handler) handleListWebhooks(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+	webhooks := h.apiSimulator.HandleListWebhooks()
+	out := make([]gin.H, 0, len(webhooks))
+	for _, w := range webhooks {
+		out = append(out, webhookPayload(w))
+	}
+	c.JSON(200, out)
+}
+
+func (h *Handler) handleCreateWebhook(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+	var req struct {
+		ApplicationID string `json:"application_id"`
+		URL           string `json:"url"`
+		Topic         string `json:"topic"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_body", "Message": "invalid request body"}}})
+		return
+	}
+	if req.URL == "" || req.ApplicationID == "" {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_data", "Message": "application_id and url are required"}}})
+		return
+	}
+	if !validWebhookTopics[req.Topic] {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_topic", "Message": "The topic doesn't exist"}}})
+		return
+	}
+	w := h.apiSimulator.HandleCreateWebhook(req.ApplicationID, req.URL, req.Topic)
+	c.JSON(201, webhookPayload(w))
+}
+
+func (h *Handler) handleDeleteWebhook(c *gin.Context) {
+	if !h.requireAuth(c) {
+		return
+	}
+	id := c.Param("id")
+	if !h.apiSimulator.HandleDeleteWebhook(id) {
+		c.JSON(404, gin.H{"Status": 404, "Errors": []gin.H{{"Code": "not_found", "Message": "webhook not found"}}})
+		return
+	}
+	c.JSON(200, gin.H{"deleted": true})
 }
 
 func (h *Handler) handleHealth(c *gin.Context) {
