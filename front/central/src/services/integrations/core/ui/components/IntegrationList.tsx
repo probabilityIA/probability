@@ -77,6 +77,12 @@ const initialSyncFilters: SyncOrdersParams = {
     fulfillment_status: 'any'
 };
 
+const ECOMMERCE_TYPE_IDS = new Set<number>([1, 3, 4, 16, 17, 18, 19, 20, 21]);
+
+function isEcommerceIntegration(integration: { category?: string; integration_type_id?: number }): boolean {
+    return integration.category === 'ecommerce' || ECOMMERCE_TYPE_IDS.has(integration.integration_type_id ?? -1);
+}
+
 export default function IntegrationList({ onEdit, filterCategory: propFilterCategory }: IntegrationListProps) {
     const {
         integrations,
@@ -1049,7 +1055,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 >
                     <PlayIcon className="w-4 h-4" />
                 </button>
-                {integration.category === 'ecommerce' && (
+                {isEcommerceIntegration(integration) && (
                     <button
                         onClick={() => handleSyncClick(integration.id, integration.name)}
                         className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
