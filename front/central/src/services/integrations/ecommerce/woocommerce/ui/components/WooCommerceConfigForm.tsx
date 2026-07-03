@@ -9,6 +9,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { WooProductSyncModal } from './WooProductSyncModal';
+import { WooWebhookManager } from './WooWebhookManager';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -597,6 +598,15 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             Sincronizar productos
                         </button>
                     </div>
+                </div>
+            )}
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <WooWebhookManager integrationId={integrationId} />
                 </div>
             )}
 
