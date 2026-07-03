@@ -36,7 +36,7 @@ func TestTestConnection_Success(t *testing.T) {
 		},
 	}
 
-	uc := New(mockClient, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(mockClient, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -57,7 +57,7 @@ func TestTestConnection_MissingStoreURL(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -81,7 +81,7 @@ func TestTestConnection_EmptyStoreURL(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -102,7 +102,7 @@ func TestTestConnection_MissingConsumerKey(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -126,7 +126,7 @@ func TestTestConnection_EmptyConsumerKey(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -147,7 +147,7 @@ func TestTestConnection_MissingConsumerSecret(t *testing.T) {
 		// "consumer_secret" ausente
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -171,7 +171,7 @@ func TestTestConnection_EmptyConsumerSecret(t *testing.T) {
 		"consumer_secret": "",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -192,9 +192,9 @@ func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		configMod  func(map[string]interface{})
-		credsMod   func(map[string]interface{})
+		name      string
+		configMod func(map[string]interface{})
+		credsMod  func(map[string]interface{})
 	}{
 		{"falta store_url", func(c map[string]interface{}) { delete(c, "store_url") }, nil},
 		{"store_url vacío", func(c map[string]interface{}) { c["store_url"] = "" }, nil},
@@ -223,7 +223,7 @@ func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 				tt.credsMod(creds)
 			}
 
-			uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+			uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 			err := uc.TestConnection(context.Background(), config, creds)
 
@@ -254,7 +254,7 @@ func TestTestConnection_ClientFails(t *testing.T) {
 		},
 	}
 
-	uc := New(mockClient, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(mockClient, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -278,7 +278,7 @@ func TestTestConnection_NonStringStoreURL(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 
@@ -299,7 +299,7 @@ func TestTestConnection_NonStringConsumerKey(t *testing.T) {
 		"consumer_secret": "cs_test",
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.TestConnection(ctx, config, credentials)
 

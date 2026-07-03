@@ -17,7 +17,7 @@ func TestProcessWebhookOrder_Success_OrderCreated(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -54,7 +54,7 @@ func TestProcessWebhookOrder_Success_OrderUpdated(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -74,7 +74,7 @@ func TestProcessWebhookOrder_OrderDeletedSkipped(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -94,7 +94,7 @@ func TestProcessWebhookOrder_InvalidJSON(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "1", []byte("invalid json{"))
 
@@ -118,7 +118,7 @@ func TestProcessWebhookOrder_PublishError(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -138,7 +138,7 @@ func TestProcessWebhookOrder_OrderRestored(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -158,7 +158,7 @@ func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	rawBody := buildSampleOrderJSON(t)
 
@@ -223,22 +223,22 @@ func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 func buildSampleOrderJSON(t *testing.T) []byte {
 	t.Helper()
 	order := map[string]interface{}{
-		"id":             123,
-		"number":         "1001",
-		"status":         "processing",
-		"currency":       "COP",
-		"date_created":   "2026-02-20T10:00:00",
-		"date_modified":  "2026-02-20T10:05:00",
-		"total":          "150000.00",
-		"total_tax":      "0.00",
-		"discount_total": "0.00",
-		"discount_tax":   "0.00",
-		"shipping_total": "10000.00",
-		"shipping_tax":   "0.00",
-		"cart_tax":       "0.00",
-		"payment_method": "bacs",
+		"id":                   123,
+		"number":               "1001",
+		"status":               "processing",
+		"currency":             "COP",
+		"date_created":         "2026-02-20T10:00:00",
+		"date_modified":        "2026-02-20T10:05:00",
+		"total":                "150000.00",
+		"total_tax":            "0.00",
+		"discount_total":       "0.00",
+		"discount_tax":         "0.00",
+		"shipping_total":       "10000.00",
+		"shipping_tax":         "0.00",
+		"cart_tax":             "0.00",
+		"payment_method":       "bacs",
 		"payment_method_title": "Transferencia bancaria",
-		"customer_note":  "Entregar en portería",
+		"customer_note":        "Entregar en portería",
 		"billing": map[string]interface{}{
 			"first_name": "Juan",
 			"last_name":  "Pérez",
@@ -305,7 +305,7 @@ func TestProcessWebhookOrder_MissingIntegrationID(t *testing.T) {
 	ctx := context.Background()
 	publisher := &mocks.OrderPublisherMock{}
 
-	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, &mocks.IntegrationServiceMock{}, publisher, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.ProcessWebhookOrder(ctx, "order.created", "https://mitienda.com", "", buildSampleOrderJSON(t))
 
@@ -328,7 +328,7 @@ func TestProcessWebhookOrder_SetsIntegrationAndBusiness(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, service, publisher, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, service, publisher, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.ProcessWebhookOrder(ctx, "order.created", "http://localhost:8088/", "197", buildSampleOrderJSON(t))
 

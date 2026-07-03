@@ -8,6 +8,7 @@ import { WooCommerceConnectionInfo } from '@/services/integrations/core/domain/t
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { WooProductSyncModal } from './WooProductSyncModal';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -97,6 +98,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [rotating, setRotating] = useState(false);
     const [revoking, setRevoking] = useState(false);
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+    const [productSyncOpen, setProductSyncOpen] = useState(false);
 
     const handleCopyKey = async () => {
         if (!connInfo?.connection_key) return;
@@ -522,6 +524,36 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     className="rounded-xl p-4 dark:bg-gray-800/60"
                     style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
                 >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                                <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                                Sincronizar productos a WooCommerce
+                            </h4>
+                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                Publica los productos de Probability en tu tienda: crea los que no existen y actualiza el stock de los ya mapeados.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setProductSyncOpen(true)}
+                            className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors"
+                            style={{ backgroundColor: GREEN }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                        >
+                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                            Sincronizar productos
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
                     <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-center sm:justify-between">
                         <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                             <TruckIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
@@ -668,6 +700,15 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 confirmText="Revocar"
                 type="danger"
             />
+
+            {isEdit && integrationId && (
+                <WooProductSyncModal
+                    isOpen={productSyncOpen}
+                    onClose={() => setProductSyncOpen(false)}
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId}
+                />
+            )}
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

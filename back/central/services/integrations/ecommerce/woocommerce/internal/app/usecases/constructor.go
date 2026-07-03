@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // IWooCommerceUseCase define las operaciones de negocio de WooCommerce.
@@ -25,13 +26,18 @@ type IWooCommerceUseCase interface {
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
 
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
+
+	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
+	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
 type wooCommerceUseCase struct {
-	client    domain.IWooCommerceClient
-	service   domain.IIntegrationService
-	publisher domain.OrderPublisher
-	logger    log.ILogger
+	client      domain.IWooCommerceClient
+	service     domain.IIntegrationService
+	publisher   domain.OrderPublisher
+	productRepo domain.IProductRepository
+	rabbit      rabbitmq.IQueue
+	logger      log.ILogger
 }
 
 // New crea el use case de WooCommerce con todas sus dependencias.
@@ -39,12 +45,16 @@ func New(
 	client domain.IWooCommerceClient,
 	service domain.IIntegrationService,
 	publisher domain.OrderPublisher,
+	productRepo domain.IProductRepository,
+	rabbit rabbitmq.IQueue,
 	logger log.ILogger,
 ) IWooCommerceUseCase {
 	return &wooCommerceUseCase{
-		client:    client,
-		service:   service,
-		publisher: publisher,
-		logger:    logger.WithModule("woocommerce"),
+		client:      client,
+		service:     service,
+		publisher:   publisher,
+		productRepo: productRepo,
+		rabbit:      rabbit,
+		logger:      logger.WithModule("woocommerce"),
 	}
 }

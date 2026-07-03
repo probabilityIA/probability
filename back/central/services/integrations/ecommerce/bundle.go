@@ -36,7 +36,7 @@ func New(
 	integrationCore.RegisterIntegration(core.IntegrationTypeMercadoLibre, meliProvider)
 
 	// WooCommerce (type_id=4)
-	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, integrationCore)
+	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWoocommerce, wooProvider)
 
 	// VTEX (type_id=16)

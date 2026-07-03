@@ -15,6 +15,14 @@ type WooClientMock struct {
 	GetOrderFn           func(ctx context.Context, storeURL, consumerKey, consumerSecret string, orderID int64) (*domain.WooCommerceOrder, []byte, error)
 	CreateWebhookFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
 	UpdateProductStockFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
+	CreateProductFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error)
+}
+
+func (m *WooClientMock) CreateProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error) {
+	if m.CreateProductFn != nil {
+		return m.CreateProductFn(ctx, storeURL, consumerKey, consumerSecret, input)
+	}
+	return "0", nil
 }
 
 // Verificar en tiempo de compilación que WooClientMock implementa la interfaz.

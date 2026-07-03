@@ -27,7 +27,7 @@ func TestSyncOrdersWithParams_Success(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	params := map[string]interface{}{
 		"created_at_min": time.Now().AddDate(0, 0, -7).Format(time.RFC3339),
@@ -51,7 +51,7 @@ func TestSyncOrdersWithParams_IntegrationNotFound(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrdersWithParams(ctx, "nonexistent", map[string]interface{}{})
 
@@ -75,7 +75,7 @@ func TestSyncOrdersWithParams_GetIntegrationError(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrdersWithParams(ctx, "integration-1", map[string]interface{}{})
 
@@ -103,7 +103,7 @@ func TestSyncOrdersWithParams_MissingStoreURL(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrdersWithParams(ctx, "integration-1", map[string]interface{}{})
 
@@ -124,7 +124,7 @@ func TestSyncOrdersWithParams_DecryptConsumerKeyError(t *testing.T) {
 	serviceMock := &mocks.IntegrationServiceMock{
 		GetIntegrationByIDFn: func(_ context.Context, _ string) (*domain.Integration, error) {
 			return &domain.Integration{
-				ID:   1,
+				ID: 1,
 				Config: map[string]interface{}{
 					"store_url": "https://mitienda.com",
 				},
@@ -138,7 +138,7 @@ func TestSyncOrdersWithParams_DecryptConsumerKeyError(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrdersWithParams(ctx, "integration-1", map[string]interface{}{})
 
@@ -159,7 +159,7 @@ func TestSyncOrdersWithParams_DecryptConsumerSecretError(t *testing.T) {
 	serviceMock := &mocks.IntegrationServiceMock{
 		GetIntegrationByIDFn: func(_ context.Context, _ string) (*domain.Integration, error) {
 			return &domain.Integration{
-				ID:   1,
+				ID: 1,
 				Config: map[string]interface{}{
 					"store_url": "https://mitienda.com",
 				},
@@ -173,7 +173,7 @@ func TestSyncOrdersWithParams_DecryptConsumerSecretError(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrdersWithParams(ctx, "integration-1", map[string]interface{}{})
 
@@ -257,7 +257,7 @@ func TestSyncOrders_Uses30DaysDefault(t *testing.T) {
 	serviceMock := &mocks.IntegrationServiceMock{
 		GetIntegrationByIDFn: func(_ context.Context, _ string) (*domain.Integration, error) {
 			return &domain.Integration{
-				ID:   1,
+				ID: 1,
 				Config: map[string]interface{}{
 					"store_url": "https://mitienda.com",
 				},
@@ -265,7 +265,7 @@ func TestSyncOrders_Uses30DaysDefault(t *testing.T) {
 		},
 	}
 
-	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, mocks.NewLoggerMock())
+	uc := New(&mocks.WooClientMock{}, serviceMock, &mocks.OrderPublisherMock{}, nil, nil, mocks.NewLoggerMock())
 
 	err := uc.SyncOrders(ctx, "integration-1")
 

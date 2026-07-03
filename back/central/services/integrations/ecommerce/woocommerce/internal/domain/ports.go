@@ -24,6 +24,8 @@ type IWooCommerceClient interface {
 	CreateWebhook(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
 
 	UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
+
+	CreateProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input CreateProductInput) (string, error)
 }
 
 // IIntegrationService define las operaciones del core de integraciones

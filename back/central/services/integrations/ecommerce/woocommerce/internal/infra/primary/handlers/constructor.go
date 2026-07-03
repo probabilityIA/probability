@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -10,6 +11,8 @@ import (
 type IHandler interface {
 	// HandleWebhook recibe webhooks de WooCommerce.
 	HandleWebhook(c *gin.Context)
+	// SyncProducts dispara la sincronizacion de productos a WooCommerce.
+	SyncProducts(c *gin.Context)
 	// RegisterRoutes registra las rutas en el router.
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
@@ -32,5 +35,6 @@ func (h *wooCommerceHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 	woo := router.Group("/woocommerce")
 	{
 		woo.POST("/webhook", h.HandleWebhook)
+		woo.POST("/products/sync", middleware.JWT(), h.SyncProducts)
 	}
 }

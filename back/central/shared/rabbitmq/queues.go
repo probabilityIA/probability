@@ -142,6 +142,8 @@ const (
 	QueueWooInventoryStockPush = "inventory.woocommerce.stock_push"
 
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
+
+	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"
 )
 
 const (
