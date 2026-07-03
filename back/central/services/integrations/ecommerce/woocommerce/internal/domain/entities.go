@@ -2,6 +2,16 @@ package domain
 
 import "time"
 
+// WebhookItem representa un webhook registrado en WooCommerce.
+// Sin tags JSON: el core lo serializa en PascalCase para el mapper generico.
+type WebhookItem struct {
+	ID        string
+	Address   string
+	Topic     string
+	Format    string
+	CreatedAt string
+}
+
 // Integration representa los datos de una integración de WooCommerce
 // tal como se obtienen del core de integraciones.
 type Integration struct {
@@ -16,38 +26,38 @@ type Integration struct {
 // WooCommerceOrder representa una orden de WooCommerce (API v3).
 // Estructura de dominio pura — sin tags JSON.
 type WooCommerceOrder struct {
-	ID                  int64
-	ParentID            int64
-	Number              string
-	OrderKey            string
-	CreatedVia          string
-	Version             string
-	Status              string
-	Currency            string
-	DateCreated         time.Time
-	DateModified        time.Time
-	DiscountTotal       string
-	DiscountTax         string
-	ShippingTotal       string
-	ShippingTax         string
-	CartTax             string
-	Total               string
-	TotalTax            string
-	PricesIncludeTax    bool
-	CustomerID          int64
-	CustomerNote        string
-	Billing             WooCommerceBilling
-	Shipping            WooCommerceShipping
-	PaymentMethod       string
-	PaymentMethodTitle  string
-	TransactionID       string
-	DatePaid            *time.Time
-	DateCompleted       *time.Time
-	LineItems           []WooCommerceLineItem
-	ShippingLines       []WooCommerceShippingLine
-	FeeLines            []WooCommerceFeeLine
-	CouponLines         []WooCommerceCouponLine
-	MetaData            []WooCommerceMetaData
+	ID                 int64
+	ParentID           int64
+	Number             string
+	OrderKey           string
+	CreatedVia         string
+	Version            string
+	Status             string
+	Currency           string
+	DateCreated        time.Time
+	DateModified       time.Time
+	DiscountTotal      string
+	DiscountTax        string
+	ShippingTotal      string
+	ShippingTax        string
+	CartTax            string
+	Total              string
+	TotalTax           string
+	PricesIncludeTax   bool
+	CustomerID         int64
+	CustomerNote       string
+	Billing            WooCommerceBilling
+	Shipping           WooCommerceShipping
+	PaymentMethod      string
+	PaymentMethodTitle string
+	TransactionID      string
+	DatePaid           *time.Time
+	DateCompleted      *time.Time
+	LineItems          []WooCommerceLineItem
+	ShippingLines      []WooCommerceShippingLine
+	FeeLines           []WooCommerceFeeLine
+	CouponLines        []WooCommerceCouponLine
+	MetaData           []WooCommerceMetaData
 }
 
 // WooCommerceBilling representa la dirección de facturación.

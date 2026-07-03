@@ -25,6 +25,12 @@ type IWooCommerceUseCase interface {
 	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
 
+	// ListWebhooks lista los webhooks de Probability en la tienda WooCommerce.
+	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
+
+	// DeleteWebhook elimina un webhook de la tienda WooCommerce.
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 
 	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)

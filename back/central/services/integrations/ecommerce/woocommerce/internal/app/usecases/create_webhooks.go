@@ -4,7 +4,45 @@ import (
 	"context"
 	"fmt"
 	"strings"
+
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
+
+func (uc *wooCommerceUseCase) resolveStoreCreds(ctx context.Context, integrationID string) (storeURL, consumerKey, consumerSecret string, err error) {
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return "", "", "", fmt.Errorf("getting integration: %w", err)
+	}
+	storeURL, err = extractString(integration.Config, "store_url")
+	if err != nil || storeURL == "" {
+		return "", "", "", fmt.Errorf("store_url not found in config")
+	}
+	consumerKey, err = uc.service.DecryptCredential(ctx, integrationID, "consumer_key")
+	if err != nil {
+		return "", "", "", fmt.Errorf("decrypting consumer_key: %w", err)
+	}
+	consumerSecret, err = uc.service.DecryptCredential(ctx, integrationID, "consumer_secret")
+	if err != nil {
+		return "", "", "", fmt.Errorf("decrypting consumer_secret: %w", err)
+	}
+	return storeURL, consumerKey, consumerSecret, nil
+}
+
+func (uc *wooCommerceUseCase) ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error) {
+	storeURL, consumerKey, consumerSecret, err := uc.resolveStoreCreds(ctx, integrationID)
+	if err != nil {
+		return nil, err
+	}
+	return uc.client.ListWebhooks(ctx, storeURL, consumerKey, consumerSecret)
+}
+
+func (uc *wooCommerceUseCase) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
+	storeURL, consumerKey, consumerSecret, err := uc.resolveStoreCreds(ctx, integrationID)
+	if err != nil {
+		return err
+	}
+	return uc.client.DeleteWebhook(ctx, storeURL, consumerKey, consumerSecret, webhookID)
+}
 
 func (uc *wooCommerceUseCase) CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error {
 	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
