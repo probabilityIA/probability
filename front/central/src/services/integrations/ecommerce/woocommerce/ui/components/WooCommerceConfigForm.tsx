@@ -72,7 +72,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(initialData?.business_id ?? null);
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
