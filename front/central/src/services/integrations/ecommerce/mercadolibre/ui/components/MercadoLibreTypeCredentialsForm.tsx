@@ -40,22 +40,25 @@ export default function MercadoLibreTypeCredentialsForm({
     const set = (patch: Partial<MercadoLibrePlatformCredentials>) => onChange({ ...credentials, ...patch });
     const placeholderSecret = isEditing ? 'Dejar vacio para mantener actual' : 'Secret Key de la aplicacion';
 
-    const [redirectUri, setRedirectUri] = useState('');
-    const [copied, setCopied] = useState(false);
+    const [urls, setUrls] = useState({ redirect: '', notifications: '' });
+    const [copiedKey, setCopiedKey] = useState<'redirect' | 'notifications' | null>(null);
 
     useEffect(() => {
         const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1').replace(/\/$/, '');
-        const uri = apiBase.startsWith('http')
-            ? `${apiBase}/meli/callback`
-            : `${window.location.origin}${apiBase}/meli/callback`;
-        setRedirectUri(uri);
+        const build = (path: string) => apiBase.startsWith('http')
+            ? `${apiBase}${path}`
+            : `${window.location.origin}${apiBase}${path}`;
+        setUrls({
+            redirect: build('/meli/callback'),
+            notifications: build('/meli/notifications'),
+        });
     }, []);
 
-    const handleCopy = async () => {
-        if (!redirectUri) return;
-        await navigator.clipboard.writeText(redirectUri);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleCopy = async (key: 'redirect' | 'notifications', value: string) => {
+        if (!value) return;
+        await navigator.clipboard.writeText(value);
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey(null), 2000);
     };
 
     return (
@@ -73,43 +76,81 @@ export default function MercadoLibreTypeCredentialsForm({
                 </span>
             </p>
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 dark:border-blue-800 p-4">
-                <div className="flex items-center gap-2 mb-2">
+            <div className="rounded-xl border border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 dark:border-blue-800 p-4 space-y-3">
+                <div className="flex items-center gap-2">
                     <LinkIcon className="w-4 h-4 text-blue-700" />
-                    <span className="text-xs font-bold text-blue-900 dark:text-blue-200">Redirect URI (registrala en tu app de MercadoLibre)</span>
+                    <span className="text-xs font-bold text-blue-900 dark:text-blue-200">URLs para registrar en tu app de MercadoLibre</span>
                 </div>
-                <p className="text-[11px] text-gray-600 dark:text-gray-300 mb-2">
-                    El sistema genera esta URL automaticamente. Copiala y pegala en <strong>developers.mercadolibre.com &rarr; tu app &rarr; Redirect URIs</strong>. Es la misma para produccion y sandbox.
+                <p className="text-[11px] text-gray-600 dark:text-gray-300">
+                    El sistema genera estas URLs automaticamente. Copialas y pegalas en <strong>developers.mercadolibre.com</strong>. Son las mismas para produccion y sandbox.
                 </p>
-                <div className="flex items-stretch gap-2">
-                    <input
-                        type="text"
-                        readOnly
-                        value={redirectUri}
-                        onFocus={(e) => e.currentTarget.select()}
-                        className={`${inputCls} flex-1`}
-                        style={{ borderColor: INPUT_BORDER }}
-                    />
-                    <button
-                        type="button"
-                        onClick={handleCopy}
-                        className="px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center gap-1.5 shrink-0 text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 transition-colors"
-                    >
-                        {copied ? (
-                            <>
-                                <ClipboardDocumentCheckIcon className="w-4 h-4" />
-                                Copiado
-                            </>
-                        ) : (
-                            <>
-                                <ClipboardDocumentIcon className="w-4 h-4" />
-                                Copiar
-                            </>
-                        )}
-                    </button>
+
+                <div>
+                    <label className="text-[12px] font-semibold text-blue-900 dark:text-blue-200">Redirect URI</label>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuracion y scopes &rarr; Redirect URIs</p>
+                    <div className="flex items-stretch gap-2">
+                        <input
+                            type="text"
+                            readOnly
+                            value={urls.redirect}
+                            onFocus={(e) => e.currentTarget.select()}
+                            className={`${inputCls} flex-1`}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleCopy('redirect', urls.redirect)}
+                            className="px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center gap-1.5 shrink-0 text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 transition-colors"
+                        >
+                            {copiedKey === 'redirect' ? (
+                                <>
+                                    <ClipboardDocumentCheckIcon className="w-4 h-4" />
+                                    Copiado
+                                </>
+                            ) : (
+                                <>
+                                    <ClipboardDocumentIcon className="w-4 h-4" />
+                                    Copiar
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-2">
-                    MercadoLibre exige HTTPS. En local usa un tunel (ngrok) y registra esa URL.
+
+                <div>
+                    <label className="text-[12px] font-semibold text-blue-900 dark:text-blue-200">Notificaciones callback URL</label>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-1">Configuracion de notificaciones &rarr; Notificaciones callbacks URL</p>
+                    <div className="flex items-stretch gap-2">
+                        <input
+                            type="text"
+                            readOnly
+                            value={urls.notifications}
+                            onFocus={(e) => e.currentTarget.select()}
+                            className={`${inputCls} flex-1`}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => handleCopy('notifications', urls.notifications)}
+                            className="px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center gap-1.5 shrink-0 text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-800 hover:bg-blue-200 transition-colors"
+                        >
+                            {copiedKey === 'notifications' ? (
+                                <>
+                                    <ClipboardDocumentCheckIcon className="w-4 h-4" />
+                                    Copiado
+                                </>
+                            ) : (
+                                <>
+                                    <ClipboardDocumentIcon className="w-4 h-4" />
+                                    Copiar
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                    MercadoLibre exige HTTPS. En local usa un tunel (ngrok) y registra esas URLs.
                 </p>
             </div>
 
