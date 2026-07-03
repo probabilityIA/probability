@@ -68,10 +68,22 @@ func (uc *wooCommerceUseCase) CreateWebhooks(ctx context.Context, integrationID,
 	base = strings.TrimSuffix(base, "/api/v1")
 	deliveryURL := fmt.Sprintf("%s/api/v1/woocommerce/webhook?integration_id=%s", base, integrationID)
 
+	existingTopics := map[string]bool{}
+	if existing, listErr := uc.client.ListWebhooks(ctx, storeURL, consumerKey, consumerSecret); listErr == nil {
+		for _, w := range existing {
+			existingTopics[w.Topic] = true
+		}
+	}
+
 	topics := []string{"order.created", "order.updated"}
 	ids := make([]int64, 0, len(topics))
 	configured := true
+	skipped := 0
 	for _, topic := range topics {
+		if existingTopics[topic] {
+			skipped++
+			continue
+		}
 		id, err := uc.client.CreateWebhook(ctx, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic)
 		if err != nil {
 			configured = false
@@ -81,8 +93,12 @@ func (uc *wooCommerceUseCase) CreateWebhooks(ctx context.Context, integrationID,
 		ids = append(ids, id)
 	}
 
-	if len(ids) == 0 {
+	if len(ids) == 0 && skipped == 0 {
 		return fmt.Errorf("could not create any WooCommerce webhook")
+	}
+
+	if len(ids) == 0 {
+		return nil
 	}
 
 	configUpdate := map[string]interface{}{

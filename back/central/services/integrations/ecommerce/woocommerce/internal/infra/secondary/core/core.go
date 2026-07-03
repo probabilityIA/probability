@@ -79,11 +79,27 @@ func (w *WooCommerceCore) VerifyWebhooksByURL(ctx context.Context, integrationID
 	return w.ListWebhooks(ctx, integrationID)
 }
 
-// CreateWebhook crea los webhooks de ordenes en la tienda y retorna los configurados.
+// CreateWebhook crea los webhooks de ordenes en la tienda y retorna el resultado
+// con la forma que espera el handler generico del core (objeto, no lista).
 func (w *WooCommerceCore) CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error) {
 	secret := os.Getenv("WOOCOMMERCE_WEBHOOK_SECRET")
 	if err := w.useCase.CreateWebhooks(ctx, integrationID, baseURL, secret); err != nil {
 		return nil, err
 	}
-	return w.ListWebhooks(ctx, integrationID)
+	items, err := w.useCase.ListWebhooks(ctx, integrationID)
+	if err != nil {
+		return nil, err
+	}
+	created := make([]string, 0, len(items))
+	webhookURL := ""
+	for _, it := range items {
+		created = append(created, it.Topic)
+		webhookURL = it.Address
+	}
+	return map[string]interface{}{
+		"WebhookURL":       webhookURL,
+		"CreatedWebhooks":  created,
+		"ExistingWebhooks": []interface{}{},
+		"DeletedWebhooks":  []interface{}{},
+	}, nil
 }
