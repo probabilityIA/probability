@@ -67,7 +67,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
         client_secret: initialData?.credentials?.client_secret || '',
         access_token: initialData?.credentials?.access_token || '',
         refresh_token: initialData?.credentials?.refresh_token || '',
-        seller_id: initialData?.config?.seller_id || initialData?.store_id || '',
+        seller_id: String(initialData?.config?.seller_id ?? initialData?.store_id ?? ''),
     });
 
     useEffect(() => {
