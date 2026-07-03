@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -49,6 +51,31 @@ func (c *WooCommerceClient) TestConnection(ctx context.Context, storeURL, consum
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("la tienda respondio con estado inesperado %d", resp.StatusCode)
+	}
+
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+
+	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
+	if !strings.Contains(contentType, "application/json") {
+		return fmt.Errorf("la tienda respondio con una pagina web, no con la API REST: verifica que la REST API este habilitada y que la tienda NO este en modo 'Coming soon' o mantenimiento")
+	}
+
+	var apiError struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &apiError); err == nil && apiError.Code != "" {
+		if strings.Contains(apiError.Code, "authentication") || strings.Contains(apiError.Code, "cannot_view") || strings.Contains(apiError.Code, "unauthorized") {
+			return domain.ErrInvalidCredentials
+		}
+		return fmt.Errorf("la tienda respondio con un error: %s", apiError.Message)
+	}
+
+	var systemStatus struct {
+		Environment json.RawMessage `json:"environment"`
+	}
+	if err := json.Unmarshal(body, &systemStatus); err != nil || len(systemStatus.Environment) == 0 {
+		return domain.ErrInvalidCredentials
 	}
 
 	return nil
