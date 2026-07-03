@@ -32,6 +32,9 @@ type IWooCommerceClient interface {
 	UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
 
 	CreateProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input CreateProductInput) (string, error)
+
+	// GetProducts lista los productos de la tienda WooCommerce (paginado interno).
+	GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]WooProduct, error)
 }
 
 // IIntegrationService define las operaciones del core de integraciones

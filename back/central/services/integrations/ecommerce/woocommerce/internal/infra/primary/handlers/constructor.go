@@ -13,6 +13,10 @@ type IHandler interface {
 	HandleWebhook(c *gin.Context)
 	// SyncProducts dispara la sincronizacion de productos a WooCommerce.
 	SyncProducts(c *gin.Context)
+	// ReconcileProducts cruza los productos de ambos lados por SKU.
+	ReconcileProducts(c *gin.Context)
+	// ApplyProducts aplica la reconciliacion en la direccion elegida.
+	ApplyProducts(c *gin.Context)
 	// RegisterRoutes registra las rutas en el router.
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
@@ -36,5 +40,7 @@ func (h *wooCommerceHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 	{
 		woo.POST("/webhook", h.HandleWebhook)
 		woo.POST("/products/sync", middleware.JWT(), h.SyncProducts)
+		woo.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
+		woo.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
 	}
 }

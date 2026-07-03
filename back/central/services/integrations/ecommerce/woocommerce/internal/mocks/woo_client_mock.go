@@ -18,6 +18,14 @@ type WooClientMock struct {
 	DeleteWebhookFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret, webhookID string) error
 	UpdateProductStockFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
 	CreateProductFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error)
+	GetProductsFn        func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error)
+}
+
+func (m *WooClientMock) GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error) {
+	if m.GetProductsFn != nil {
+		return m.GetProductsFn(ctx, storeURL, consumerKey, consumerSecret)
+	}
+	return nil, nil
 }
 
 func (m *WooClientMock) ListWebhooks(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WebhookItem, error) {

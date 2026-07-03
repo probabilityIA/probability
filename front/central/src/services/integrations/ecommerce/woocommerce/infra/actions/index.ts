@@ -39,6 +39,18 @@ export async function syncWooProductsAction(integrationId: number, businessId?: 
     return postWithAuth('/woocommerce/products/sync', body);
 }
 
+export async function reconcileWooProductsAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/woocommerce/products/reconcile', body);
+}
+
+export async function applyWooProductsAction(integrationId: number, direction: 'to_woo' | 'to_probability', businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId, direction };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/woocommerce/products/apply', body);
+}
+
 export async function getWooPluginZipAction(): Promise<{ success: boolean; data?: string; message?: string }> {
     try {
         const response = await fetch(`${API_BASE_URL}/woocommerce/plugin-download`, { cache: 'no-store' });

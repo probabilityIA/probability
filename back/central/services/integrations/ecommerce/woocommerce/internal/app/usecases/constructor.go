@@ -35,6 +35,13 @@ type IWooCommerceUseCase interface {
 
 	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+
+	// ReconcileProducts cruza los productos de ambos lados por SKU.
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	// ApplyProductsToWoo crea en WooCommerce los productos que solo existen en Probability.
+	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	// ApplyProductsToProbability crea en Probability los productos que solo existen en WooCommerce.
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
 type wooCommerceUseCase struct {

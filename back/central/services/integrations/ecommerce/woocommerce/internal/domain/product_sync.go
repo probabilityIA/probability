@@ -9,6 +9,7 @@ type CreateProductInput struct {
 	Description   string
 	StockQuantity int
 	ManageStock   bool
+	ImageURL      string
 }
 
 type ProductForSync struct {
@@ -19,6 +20,28 @@ type ProductForSync struct {
 	Price          float64
 	StockQuantity  int
 	TrackInventory bool
+	ImageURL       string
+}
+
+type WooProduct struct {
+	ID            string
+	SKU           string
+	Name          string
+	Price         float64
+	StockQuantity int
+}
+
+type ProductBrief struct {
+	SKU  string
+	Name string
+}
+
+type ReconcileResult struct {
+	Matched           int
+	OnlyInProbability []ProductBrief
+	OnlyInWoo         []ProductBrief
+	ProbabilityNoSKU  int
+	WooNoSKU          int
 }
 
 type IProductRepository interface {

@@ -33,11 +33,12 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 		Price          float64
 		StockQuantity  int
 		TrackInventory bool
+		ImageURL       string
 	}
 
 	err := r.db.Conn(ctx).
 		Table("products").
-		Select("id, sku, name, description, price, stock_quantity, track_inventory").
+		Select("id, sku, name, description, price, stock_quantity, track_inventory, image_url").
 		Where("business_id = ? AND deleted_at IS NULL AND is_active = ?", businessID, true).
 		Order("created_at ASC").
 		Scan(&rows).Error
@@ -55,6 +56,7 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 			Price:          row.Price,
 			StockQuantity:  row.StockQuantity,
 			TrackInventory: row.TrackInventory,
+			ImageURL:       row.ImageURL,
 		})
 	}
 	return products, nil

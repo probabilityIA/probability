@@ -651,10 +651,10 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         <div>
                             <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                                 <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
-                                Sincronizar productos a WooCommerce
+                                Sincronizar productos
                             </h4>
                             <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-                                Publica los productos de Probability en tu tienda: crea los que no existen y actualiza el stock de los ya mapeados.
+                                Cruza los productos por SKU y te muestra que falta en cada lado; eliges crear en WooCommerce lo que solo esta en Probability, o al reves.
                             </p>
                         </div>
                         <button

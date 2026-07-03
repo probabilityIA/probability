@@ -28,6 +28,12 @@ func (c *WooCommerceClient) CreateProduct(ctx context.Context, storeURL, consume
 		"status":         "publish",
 	}
 
+	if input.ImageURL != "" {
+		payload["images"] = []map[string]interface{}{
+			{"src": input.ImageURL},
+		}
+	}
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("woocommerce client: marshaling product payload: %w", err)
