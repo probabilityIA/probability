@@ -27,6 +27,29 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.GET("/v1/webhooks", h.handleListWebhooks)
 	router.POST("/v1/webhooks", h.handleCreateWebhook)
 	router.DELETE("/v1/webhooks/:id", h.handleDeleteWebhook)
+	router.POST("/simulate/webhook", h.handleFireWebhook)
+}
+
+func (h *Handler) handleFireWebhook(c *gin.Context) {
+	var req struct {
+		Topic string `json:"topic"`
+		Code  string `json:"code"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if req.Topic == "" {
+		req.Topic = "public.siigoapi.products.stock.update"
+	}
+	if !validWebhookTopics[req.Topic] {
+		c.JSON(400, gin.H{"Status": 400, "Errors": []gin.H{{"Code": "invalid_topic", "Message": "The topic doesn't exist"}}})
+		return
+	}
+
+	fired, errs := h.apiSimulator.FireWebhooks(req.Topic, req.Code)
+	c.JSON(200, gin.H{
+		"fired":  fired,
+		"topic":  req.Topic,
+		"errors": errs,
+	})
 }
 
 var validWebhookTopics = map[string]bool{
