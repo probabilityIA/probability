@@ -29,6 +29,7 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+import { MercadoLibreOAuthForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
 import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
@@ -125,8 +126,9 @@ export function CreateIntegrationModal({
                 return '4xl';
             case 2: // Provider selection
                 return '4xl';
-            case 3: // Form
+            case 3:
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE) return '4xl';
+                if (selectedProvider?.id === INTEGRATION_TYPE_IDS.MERCADO_LIBRE) return '4xl';
                 return 'full';
             default:
                 return '4xl';
@@ -184,8 +186,7 @@ interface FormWrapperProps {
 }
 
 function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapperProps) {
-    // Si la integración está en desarrollo, mostrar mensaje
-    if (integrationType.in_development) {
+    if (integrationType.in_development && integrationType.id !== INTEGRATION_TYPE_IDS.MERCADO_LIBRE) {
         return (
             <div className="p-6">
                 <button
@@ -379,6 +380,13 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
+            case INTEGRATION_TYPE_IDS.MERCADO_LIBRE:
+                return (
+                    <MercadoLibreOAuthForm
+                        onCancel={onBack}
+                    />
+                );
+
             case INTEGRATION_TYPE_IDS.TIENDA:
                 return <TiendaActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
 
@@ -403,7 +411,8 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
         }
     };
 
-    const hideBackLink = integrationType.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE;
+    const hideBackLink = integrationType.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE
+        || integrationType.id === INTEGRATION_TYPE_IDS.MERCADO_LIBRE;
 
     return (
         <div className={hideBackLink ? 'p-4' : 'p-6'}>

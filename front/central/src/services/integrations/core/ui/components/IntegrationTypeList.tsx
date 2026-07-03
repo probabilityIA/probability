@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
 import { useCategories } from '../hooks/useCategories';
 import { IntegrationType } from '../../domain/types';
-import { Button, Badge, Spinner, Table, Alert, ConfirmModal } from '@/shared/ui';
+import { Badge, Spinner, Table, Alert, ConfirmModal } from '@/shared/ui';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface IntegrationTypeListProps {
     onEdit?: (integrationType: IntegrationType) => void;
@@ -131,21 +132,23 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         actions: (
             <div className="flex gap-2">
                 {onEdit && (
-                    <Button
-                        variant="outline"
-                        size="sm"
+                    <button
                         onClick={() => onEdit(type)}
+                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                        title="Editar tipo de integracion"
+                        aria-label="Editar tipo de integracion"
                     >
-                        Editar
-                    </Button>
+                        <PencilIcon className="w-4 h-4" />
+                    </button>
                 )}
-                <Button
-                    variant="outline"
-                    size="sm"
+                <button
                     onClick={() => handleDeleteClick(type.id)}
+                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    title="Eliminar tipo de integracion"
+                    aria-label="Eliminar tipo de integracion"
                 >
-                    Eliminar
-                </Button>
+                    <TrashIcon className="w-4 h-4" />
+                </button>
             </div>
         )
     });

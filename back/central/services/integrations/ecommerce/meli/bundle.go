@@ -43,7 +43,7 @@ func New(
 	uc := usecases.New(httpClient, integrationService, orderPublisher, logger)
 
 	// 3. Handlers HTTP
-	handler := handlers.New(uc, logger)
+	handler := handlers.New(uc, logger, config, coreIntegration)
 	handler.RegisterRoutes(router, logger)
 
 	// 4. Retornar provider para que el bundle padre lo registre en el core

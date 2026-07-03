@@ -15,6 +15,7 @@ import { getIntegrationByIdAction } from '@/services/integrations/core/infra/act
 
 import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
+import { MercadoLibreOAuthCallback } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { WooStorePowerWidget } from '@/services/woostore/ui/components/WooStorePowerWidget';
@@ -32,6 +33,7 @@ const CATEGORY_RESOURCE_MAP: Record<string, string> = {
 export default function IntegrationsPage() {
     const searchParams = useSearchParams();
     const isOAuthCallback = searchParams.get('shopify_oauth');
+    const isMeliOAuthCallback = searchParams.get('meli_oauth');
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -84,6 +86,10 @@ export default function IntegrationsPage() {
 
     if (isOAuthCallback) {
         return <ShopifyOAuthCallback />;
+    }
+
+    if (isMeliOAuthCallback) {
+        return <MercadoLibreOAuthCallback />;
     }
 
     const handleSuccess = () => {
@@ -185,11 +191,11 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 4].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
                 <div
                     style={
-                        selectedIntegration && [1, 4].includes(Number(selectedIntegration.integration_type_id))
+                        selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id))
                             ? { width: 'min(768px, 92vw)' }
                             : undefined
                     }

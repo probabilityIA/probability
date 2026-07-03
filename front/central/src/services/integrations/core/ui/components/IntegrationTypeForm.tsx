@@ -20,10 +20,22 @@ import { WhatsAppTypeCredentialsForm } from '@/services/integrations/messages/wh
 import type { WhatsAppPlatformCredentials } from '@/services/integrations/messages/whatsapp/ui/components';
 import { BoldTypeCredentialsForm } from '@/services/integrations/pay/bold/ui/components';
 import type { BoldPlatformCredentials } from '@/services/integrations/pay/bold/ui/components';
+import { MercadoLibreTypeCredentialsForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
+import type { MercadoLibrePlatformCredentials } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 const WHATSAPP_TYPE_ID = 2;
 const BOLD_TYPE_ID = 23;
+const MERCADO_LIBRE_TYPE_ID = 3;
+
+const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
+    client_id: '',
+    client_secret: '',
+    auth_domain: '',
+    test_client_id: '',
+    test_client_secret: '',
+    test_auth_domain: '',
+};
 
 const ACCENT = 'var(--color-primary)';
 const ACCENT_DARK = 'color-mix(in srgb, var(--color-primary) 85%, black)';
@@ -117,6 +129,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         test_link_secret_key: '',
     });
     const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
+    const [meliCredentials, setMeliCredentials] = useState<MercadoLibrePlatformCredentials>(EMPTY_MELI_CREDENTIALS);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -187,6 +200,16 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                         sandbox: res.webhook_urls.sandbox,
                                     });
                                 }
+                            } else if (integrationType.id === MERCADO_LIBRE_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setMeliCredentials({
+                                    client_id: String(d.client_id || ''),
+                                    client_secret: String(d.client_secret || ''),
+                                    auth_domain: String(d.auth_domain || ''),
+                                    test_client_id: String(d.test_client_id || ''),
+                                    test_client_secret: String(d.test_client_secret || ''),
+                                    test_auth_domain: String(d.test_auth_domain || ''),
+                                });
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -248,6 +271,15 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (boldCredentials.test_link_api_key.trim()) bold.test_link_api_key = boldCredentials.test_link_api_key.trim();
                 if (boldCredentials.test_link_secret_key.trim()) bold.test_link_secret_key = boldCredentials.test_link_secret_key.trim();
                 if (Object.keys(bold).length > 0) platformCredentials = bold;
+            } else if (integrationType?.id === MERCADO_LIBRE_TYPE_ID) {
+                const meli: Record<string, unknown> = {};
+                if (meliCredentials.client_id.trim()) meli.client_id = meliCredentials.client_id.trim();
+                if (meliCredentials.client_secret.trim()) meli.client_secret = meliCredentials.client_secret.trim();
+                if (meliCredentials.auth_domain.trim()) meli.auth_domain = meliCredentials.auth_domain.trim();
+                if (meliCredentials.test_client_id.trim()) meli.test_client_id = meliCredentials.test_client_id.trim();
+                if (meliCredentials.test_client_secret.trim()) meli.test_client_secret = meliCredentials.test_client_secret.trim();
+                if (meliCredentials.test_auth_domain.trim()) meli.test_auth_domain = meliCredentials.test_auth_domain.trim();
+                if (Object.keys(meli).length > 0) platformCredentials = meli;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -408,76 +440,80 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </div>
             </SectionCard>
 
-            <SectionCard icon={CodeBracketIcon} title="Esquemas de datos">
-                <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
-                    <div>
-                        <label className={fieldLabel}>Config Schema (JSON)</label>
-                        <textarea
-                            value={formData.config_schema}
-                            onChange={(e) => setFormData({ ...formData, config_schema: e.target.value })}
-                            rows={12}
-                            className={jsonCls}
-                            placeholder='{"type": "object", "properties": {...}}'
-                            spellCheck={false}
-                        />
-                        <p className={fieldHint}>
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Campos de configuracion (no sensibles)</span>
-                        </p>
-                    </div>
+            {integrationType?.id !== MERCADO_LIBRE_TYPE_ID && (
+                <SectionCard icon={CodeBracketIcon} title="Esquemas de datos">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Config Schema (JSON)</label>
+                            <textarea
+                                value={formData.config_schema}
+                                onChange={(e) => setFormData({ ...formData, config_schema: e.target.value })}
+                                rows={12}
+                                className={jsonCls}
+                                placeholder='{"type": "object", "properties": {...}}'
+                                spellCheck={false}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Campos de configuracion (no sensibles)</span>
+                            </p>
+                        </div>
 
-                    <div>
-                        <label className={fieldLabel}>Credentials Schema (JSON)</label>
-                        <textarea
-                            value={formData.credentials_schema}
-                            onChange={(e) => setFormData({ ...formData, credentials_schema: e.target.value })}
-                            rows={12}
-                            className={jsonCls}
-                            placeholder='{"type": "object", "properties": {...}}'
-                            spellCheck={false}
-                        />
-                        <p className={fieldHint}>
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>Campos de credenciales (tokens, keys, etc.)</span>
-                        </p>
+                        <div>
+                            <label className={fieldLabel}>Credentials Schema (JSON)</label>
+                            <textarea
+                                value={formData.credentials_schema}
+                                onChange={(e) => setFormData({ ...formData, credentials_schema: e.target.value })}
+                                rows={12}
+                                className={jsonCls}
+                                placeholder='{"type": "object", "properties": {...}}'
+                                spellCheck={false}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Campos de credenciales (tokens, keys, etc.)</span>
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </SectionCard>
+                </SectionCard>
+            )}
 
-            <SectionCard icon={GlobeAltIcon} title="URLs del API">
-                <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
-                    <div>
-                        <label className={fieldLabel}>URL de Produccion</label>
-                        <input
-                            type="url"
-                            value={formData.base_url}
-                            onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
-                            placeholder="https://api.ejemplo.com/v1"
-                            className={`${inputCls} font-mono`}
-                            style={{ borderColor: INPUT_BORDER }}
-                        />
-                        <p className={fieldHint}>
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>URL base del API en produccion</span>
-                        </p>
+            {integrationType?.id !== MERCADO_LIBRE_TYPE_ID && (
+                <SectionCard icon={GlobeAltIcon} title="URLs del API">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>URL de Produccion</label>
+                            <input
+                                type="url"
+                                value={formData.base_url}
+                                onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
+                                placeholder="https://api.ejemplo.com/v1"
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>URL base del API en produccion</span>
+                            </p>
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>URL de Pruebas (Sandbox)</label>
+                            <input
+                                type="url"
+                                value={formData.base_url_test}
+                                onChange={(e) => setFormData({ ...formData, base_url_test: e.target.value })}
+                                placeholder="https://sandbox.ejemplo.com/v1"
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>URL del entorno sandbox para modo de pruebas</span>
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <label className={fieldLabel}>URL de Pruebas (Sandbox)</label>
-                        <input
-                            type="url"
-                            value={formData.base_url_test}
-                            onChange={(e) => setFormData({ ...formData, base_url_test: e.target.value })}
-                            placeholder="https://sandbox.ejemplo.com/v1"
-                            className={`${inputCls} font-mono`}
-                            style={{ borderColor: INPUT_BORDER }}
-                        />
-                        <p className={fieldHint}>
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>URL del entorno sandbox para modo de pruebas</span>
-                        </p>
-                    </div>
-                </div>
-            </SectionCard>
+                </SectionCard>
+            )}
 
             <SectionCard icon={DocumentTextIcon} title="Instrucciones de Configuracion" bg="#ffffff">
                 <textarea
@@ -508,6 +544,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     webhookUrlProd={boldWebhookUrls.production}
                     webhookUrlTest={boldWebhookUrls.sandbox}
                 />
+            ) : integrationType?.id === MERCADO_LIBRE_TYPE_ID ? (
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <MercadoLibreTypeCredentialsForm
+                        credentials={meliCredentials}
+                        onChange={setMeliCredentials}
+                        isEditing={!!integrationType}
+                    />
+                </SectionCard>
             ) : (
                 <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
                     <div className="flex items-center justify-end mb-2">
