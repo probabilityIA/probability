@@ -176,7 +176,6 @@ export default function IntegrationsPage() {
                 />
             </Modal>
 
-            {/* Edit Modal for Integrations */}
             <Modal
                 isOpen={showEditIntegrationModal}
                 onClose={handleModalClose}
@@ -186,13 +185,21 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 4].includes(selectedIntegration.integration_type_id) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 4].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
-                <IntegrationForm
-                    integration={selectedIntegration}
-                    onSuccess={handleSuccess}
-                    onCancel={handleModalClose}
-                />
+                <div
+                    style={
+                        selectedIntegration && [1, 4].includes(Number(selectedIntegration.integration_type_id))
+                            ? { width: 'min(768px, 92vw)' }
+                            : undefined
+                    }
+                >
+                    <IntegrationForm
+                        integration={selectedIntegration}
+                        onSuccess={handleSuccess}
+                        onCancel={handleModalClose}
+                    />
+                </div>
             </Modal>
         </div>
     );
