@@ -323,6 +323,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         config: parsedConfig as any,
                         credentials: integration.credentials as any,
                         business_id: integration.business_id,
+                        is_testing: integration.is_testing,
                     }}
                     onSuccess={onSuccess}
                     onCancel={onCancel}

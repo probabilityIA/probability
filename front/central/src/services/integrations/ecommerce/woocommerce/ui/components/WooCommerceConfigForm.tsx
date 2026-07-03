@@ -24,6 +24,7 @@ import {
     NoSymbolIcon,
     ChevronDownIcon,
     PhotoIcon,
+    BeakerIcon,
 } from '@heroicons/react/24/outline';
 
 const HELP_IMAGES = [
@@ -48,6 +49,7 @@ interface WooCommerceConfigFormProps {
         config?: any;
         credentials?: any;
         business_id?: number | null;
+        is_testing?: boolean;
     };
 }
 
@@ -114,6 +116,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [showHelpImages, setShowHelpImages] = useState(false);
+    const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
 
     const handleCopyKey = async () => {
         if (!connInfo?.connection_key) return;
@@ -256,6 +259,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     store_id: formData.store_url,
                     config: config as any,
                     credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
+                    is_testing: isSuperAdmin ? isTesting : undefined,
                 });
 
                 if (!response || response.success === false) {
@@ -287,6 +291,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 credentials: credentials as any,
                 is_active: true,
                 is_default: false,
+                is_testing: isSuperAdmin ? isTesting : false,
             });
 
             if (response.success) {
@@ -493,6 +498,45 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     )}
                 </button>
             </div>
+
+            {(isSuperAdmin || isTesting) && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-start gap-2">
+                            <BeakerIcon className="w-4 h-4 mt-0.5" style={{ color: '#d97706' }} />
+                            <div>
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    Modo de pruebas
+                                    {isTesting && (
+                                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+                                            Activo
+                                        </span>
+                                    )}
+                                </h4>
+                                <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                    {isSuperAdmin
+                                        ? 'Redirige las peticiones a la tienda de pruebas (mock) configurada en el tipo de integracion, sin tocar tu tienda real.'
+                                        : 'Esta integracion esta en modo de pruebas. Solo un super admin puede cambiarlo.'}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isTesting}
+                            disabled={!isSuperAdmin}
+                            onClick={() => { if (isSuperAdmin) setIsTesting((v) => !v); }}
+                            title={isSuperAdmin ? undefined : 'Solo un super admin puede cambiar el modo de pruebas'}
+                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${isTesting ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'} ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isTesting ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div
                 className="rounded-xl p-4 dark:bg-gray-800/60"
