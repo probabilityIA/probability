@@ -3,11 +3,30 @@ package handlerintegrations
 import (
 	"errors"
 	"net/http"
+	"strings"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
 )
+
+func humanizeTestError(err error) string {
+	msg := err.Error()
+	if errors.Is(err, domain.ErrIntegrationTestFailed) {
+		msg = strings.TrimPrefix(msg, domain.ErrIntegrationTestFailed.Error()+": ")
+	}
+	if errors.Is(err, domain.ErrIntegrationAccessTokenNotFound) {
+		return "Falta el token de acceso"
+	}
+	msg = strings.TrimSpace(msg)
+	if msg == "" {
+		return "No pudimos probar la conexion. Verifica los datos e intenta de nuevo"
+	}
+	r := []rune(msg)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
+}
 
 type TestConnectionRequest struct {
 	TypeCode    string                 `json:"type_code" binding:"required"`
@@ -48,11 +67,7 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 
 	if err := h.usecase.TestConnectionRaw(c.Request.Context(), req.TypeCode, req.Config, req.Credentials); err != nil {
 		statusCode := http.StatusBadRequest
-		errorMsg := err.Error()
-
-		if errors.Is(err, domain.ErrIntegrationAccessTokenNotFound) {
-			errorMsg = "Falta el token de acceso"
-		}
+		errorMsg := humanizeTestError(err)
 
 		h.logger.Error().
 			Err(err).
