@@ -1,6 +1,7 @@
 package handlerintegrations
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -46,14 +47,10 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 		Msg("📥 TestConnectionRaw - Request received")
 
 	if err := h.usecase.TestConnectionRaw(c.Request.Context(), req.TypeCode, req.Config, req.Credentials); err != nil {
-		statusCode := http.StatusInternalServerError
-		errorMsg := "Error al probar conexión"
+		statusCode := http.StatusBadRequest
+		errorMsg := err.Error()
 
-		if err == domain.ErrIntegrationTestFailed {
-			statusCode = http.StatusBadRequest
-			errorMsg = "La prueba de conexión falló"
-		} else if err == domain.ErrIntegrationAccessTokenNotFound {
-			statusCode = http.StatusBadRequest
+		if errors.Is(err, domain.ErrIntegrationAccessTokenNotFound) {
 			errorMsg = "Falta el token de acceso"
 		}
 
