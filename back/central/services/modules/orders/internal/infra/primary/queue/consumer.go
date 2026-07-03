@@ -112,7 +112,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order already exists, skipping")
-			c.publishRejected(ctx, &orderDTO, "Orden duplicada")
+			c.publishSkipped(ctx, &orderDTO, "Ya existe en Probability")
 			return nil
 		}
 
@@ -142,7 +142,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("external_id", orderDTO.ExternalID).
 				Uint("integration_id", orderDTO.IntegrationID).
 				Msg("Order already exists (race condition detected), skipping duplicate message")
-			c.publishRejected(ctx, &orderDTO, "Orden duplicada")
+			c.publishSkipped(ctx, &orderDTO, "Ya existe en Probability")
 			return nil
 		}
 
@@ -272,6 +272,20 @@ func (c *OrderConsumer) publishRejected(ctx context.Context, dto *dtos.Probabili
 		"order_number": dto.OrderNumber,
 		"external_id":  dto.ExternalID,
 		"reason":       reason,
+		"rejected_at":  time.Now().Format(time.RFC3339),
+	})
+}
+
+func (c *OrderConsumer) publishSkipped(ctx context.Context, dto *dtos.ProbabilityOrderDTO, reason string) {
+	if c.eventPublisher == nil || dto == nil {
+		return
+	}
+
+	c.eventPublisher.PublishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, map[string]interface{}{
+		"order_number": dto.OrderNumber,
+		"external_id":  dto.ExternalID,
+		"reason":       reason,
+		"skipped":      true,
 		"rejected_at":  time.Now().Format(time.RFC3339),
 	})
 }
