@@ -21,6 +21,8 @@ type Integration struct {
 	StoreID         string
 	IntegrationType int
 	Config          map[string]interface{}
+	IsTesting       bool
+	BaseURLTest     string
 }
 
 // WooCommerceOrder representa una orden de WooCommerce (API v3).

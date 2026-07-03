@@ -20,6 +20,7 @@ func (uc *wooCommerceUseCase) UpdateInventory(ctx context.Context, integrationID
 	if err != nil {
 		return domain.ErrMissingStoreURL
 	}
+	storeURL = resolveEffectiveStoreURL(integration, storeURL)
 
 	consumerKey, err := uc.service.DecryptCredential(ctx, integrationID, "consumer_key")
 	if err != nil {

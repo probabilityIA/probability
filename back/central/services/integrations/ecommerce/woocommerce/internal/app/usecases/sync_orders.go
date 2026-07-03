@@ -35,6 +35,7 @@ func (uc *wooCommerceUseCase) SyncOrdersWithParams(ctx context.Context, integrat
 	if err != nil {
 		return domain.ErrMissingStoreURL
 	}
+	storeURL = resolveEffectiveStoreURL(integration, storeURL)
 
 	// 3. Descifrar credenciales
 	consumerKey, err := uc.service.DecryptCredential(ctx, integrationID, "consumer_key")

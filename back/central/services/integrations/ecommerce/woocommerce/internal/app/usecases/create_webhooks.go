@@ -17,6 +17,7 @@ func (uc *wooCommerceUseCase) resolveStoreCreds(ctx context.Context, integration
 	if err != nil || storeURL == "" {
 		return "", "", "", fmt.Errorf("store_url not found in config")
 	}
+	storeURL = resolveEffectiveStoreURL(integration, storeURL)
 	consumerKey, err = uc.service.DecryptCredential(ctx, integrationID, "consumer_key")
 	if err != nil {
 		return "", "", "", fmt.Errorf("decrypting consumer_key: %w", err)
@@ -54,6 +55,7 @@ func (uc *wooCommerceUseCase) CreateWebhooks(ctx context.Context, integrationID,
 	if err != nil || storeURL == "" {
 		return fmt.Errorf("store_url not found in config")
 	}
+	storeURL = resolveEffectiveStoreURL(integration, storeURL)
 
 	consumerKey, err := uc.service.DecryptCredential(ctx, integrationID, "consumer_key")
 	if err != nil {
