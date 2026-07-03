@@ -16,6 +16,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
+	"github.com/secamc93/probability/back/testing/integrations/woocommerce"
 	"github.com/secamc93/probability/back/testing/modules/orders"
 	"github.com/secamc93/probability/back/testing/shared/db"
 	"github.com/secamc93/probability/back/testing/shared/env"
@@ -83,6 +84,16 @@ func main() {
 		}
 	}()
 
+	woocommercePort := getEnv("WOOCOMMERCE_MOCK_PORT", "9096")
+	woocommerceServer := woocommerce.New(logger, woocommercePort)
+
+	go func() {
+		if err := woocommerceServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting WooCommerce mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
@@ -116,6 +127,7 @@ func main() {
 	fmt.Printf("EnvioClick HTTP:   http://localhost:%s\n", envioclickPort)
 	fmt.Printf("Bold HTTP:         http://localhost:%s\n", boldPort)
 	fmt.Printf("Siigo HTTP:        http://localhost:%s\n", siigoPort)
+	fmt.Printf("WooCommerce HTTP:  http://localhost:%s\n", woocommercePort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")
