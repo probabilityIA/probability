@@ -21,7 +21,20 @@ import {
     ClipboardDocumentCheckIcon,
     ArrowPathIcon,
     NoSymbolIcon,
+    ChevronDownIcon,
+    PhotoIcon,
 } from '@heroicons/react/24/outline';
+
+const HELP_IMAGES = [
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/step-1-rest-api-keys.png',
+        caption: 'Paso 1: en WordPress ve a WooCommerce -> Ajustes -> Avanzado -> REST API y haz clic en "Agregar clave".',
+    },
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/step-2-crear-key.png',
+        caption: 'Paso 2: escribe una descripcion, elige permisos "Lectura/Escritura" y genera la clave. Copia el Consumer Key y el Consumer Secret.',
+    },
+];
 
 interface WooCommerceConfigFormProps {
     onSuccess?: () => void;
@@ -99,6 +112,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [revoking, setRevoking] = useState(false);
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [showHelpImages, setShowHelpImages] = useState(false);
 
     const handleCopyKey = async () => {
         if (!connInfo?.connection_key) return;
@@ -517,6 +531,43 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         </li>
                     ))}
                 </ol>
+
+                <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${INPUT_BORDER}` }}>
+                    <button
+                        type="button"
+                        onClick={() => setShowHelpImages((v) => !v)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[12px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-1.5">
+                            <PhotoIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                            Ver imagenes de ayuda paso a paso
+                        </span>
+                        <ChevronDownIcon
+                            className={`w-4 h-4 text-gray-400 transition-transform ${showHelpImages ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+
+                    {showHelpImages && (
+                        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            {HELP_IMAGES.map((img, i) => (
+                                <figure key={i} className="flex flex-col">
+                                    <a href={img.src} target="_blank" rel="noopener noreferrer" className="block">
+                                        <img
+                                            src={img.src}
+                                            alt={img.caption}
+                                            loading="lazy"
+                                            className="w-full rounded-lg border object-contain hover:opacity-95 transition-opacity"
+                                            style={{ borderColor: INPUT_BORDER, backgroundColor: '#fff' }}
+                                        />
+                                    </a>
+                                    <figcaption className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                                        {img.caption}
+                                    </figcaption>
+                                </figure>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {isEdit && integrationId && (
