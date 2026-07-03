@@ -38,3 +38,16 @@ export async function syncWooProductsAction(integrationId: number, businessId?: 
     if (businessId) body.business_id = businessId;
     return postWithAuth('/woocommerce/products/sync', body);
 }
+
+export async function getWooPluginZipAction(): Promise<{ success: boolean; data?: string; message?: string }> {
+    try {
+        const response = await fetch(`${API_BASE_URL}/woocommerce/plugin-download`, { cache: 'no-store' });
+        if (!response.ok) {
+            return { success: false, message: `No se pudo descargar el plugin (Error ${response.status})` };
+        }
+        const buf = await response.arrayBuffer();
+        return { success: true, data: Buffer.from(buf).toString('base64') };
+    } catch {
+        return { success: false, message: 'No se pudo conectar con el servidor para descargar el plugin' };
+    }
+}

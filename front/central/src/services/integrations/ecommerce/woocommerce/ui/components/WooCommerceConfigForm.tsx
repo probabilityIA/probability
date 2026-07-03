@@ -10,6 +10,7 @@ import { getBusinessesSimpleAction } from '@/services/auth/business/infra/action
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { WooProductSyncModal } from './WooProductSyncModal';
 import { WooWebhookManager } from './WooWebhookManager';
+import { getWooPluginZipAction } from '../../infra/actions';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -117,6 +118,32 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [showHelpImages, setShowHelpImages] = useState(false);
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
+    const [downloadingPlugin, setDownloadingPlugin] = useState(false);
+
+    const handleDownloadPlugin = async () => {
+        setDownloadingPlugin(true);
+        try {
+            const res = await getWooPluginZipAction();
+            if (!res?.success || !res?.data) {
+                setErrorModal(res?.message || 'No se pudo descargar el plugin');
+                return;
+            }
+            const bytes = Uint8Array.from(atob(res.data), (c) => c.charCodeAt(0));
+            const blob = new Blob([bytes], { type: 'application/zip' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'probability-shipping.zip';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch {
+            setErrorModal('No se pudo descargar el plugin');
+        } finally {
+            setDownloadingPlugin(false);
+        }
+    };
 
     const handleCopyKey = async () => {
         if (!connInfo?.connection_key) return;
@@ -694,15 +721,16 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     </ol>
 
                     <div className="flex flex-col gap-3">
-                        <a
-                            href="/api/woocommerce-plugin"
-                            download="probability-shipping.zip"
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-lg text-white transition-colors self-start"
+                        <button
+                            type="button"
+                            onClick={handleDownloadPlugin}
+                            disabled={downloadingPlugin}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-lg text-white transition-colors self-start disabled:opacity-60"
                             style={{ backgroundColor: GREEN }}
                         >
                             <ArrowDownTrayIcon className="w-4 h-4" />
-                            Descargar plugin (.zip)
-                        </a>
+                            {downloadingPlugin ? 'Descargando...' : 'Descargar plugin (.zip)'}
+                        </button>
 
                         <div>
                             <label className={fieldLabel}>Clave de conexion</label>
