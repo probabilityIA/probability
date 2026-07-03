@@ -65,7 +65,13 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateRackSide(ctx); err != nil {
 		return err
 	}
+	if err := r.migratePasswordResetTokens(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateWooShippingTokens(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateWooCommerceTestURL(ctx); err != nil {
 		return err
 	}
 	if err := r.backfillGeocodePendingOrders(ctx); err != nil {
