@@ -7,7 +7,25 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases/mapper"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
+
+func (uc *wooCommerceUseCase) emitOrderSyncEvent(ctx context.Context, integration *domain.Integration, eventType string, data map[string]interface{}) {
+	if uc.rabbit == nil {
+		return
+	}
+	var bID uint
+	if integration.BusinessID != nil {
+		bID = *integration.BusinessID
+	}
+	_ = rabbitmq.PublishEvent(ctx, uc.rabbit, rabbitmq.EventEnvelope{
+		Type:          eventType,
+		Category:      "integration",
+		BusinessID:    bID,
+		IntegrationID: integration.ID,
+		Data:          data,
+	})
+}
 
 // SyncOrders sincroniza órdenes de WooCommerce de los últimos 30 días.
 func (uc *wooCommerceUseCase) SyncOrders(ctx context.Context, integrationID string) error {
@@ -62,6 +80,9 @@ func (uc *wooCommerceUseCase) SyncOrdersWithParams(ctx context.Context, integrat
 }
 
 func (uc *wooCommerceUseCase) syncOrdersAsync(ctx context.Context, integration *domain.Integration, storeURL, consumerKey, consumerSecret string, params *domain.GetOrdersParams) {
+	start := time.Now()
+	uc.emitOrderSyncEvent(ctx, integration, "integration.sync.started", map[string]interface{}{})
+
 	totalSynced := 0
 	page := 1
 	if params.PerPage == 0 {
@@ -76,7 +97,10 @@ func (uc *wooCommerceUseCase) syncOrdersAsync(ctx context.Context, integration *
 			uc.logger.Error(ctx).Err(err).
 				Int("page", page).
 				Msg("Error fetching WooCommerce orders page")
-			break
+			uc.emitOrderSyncEvent(ctx, integration, "integration.sync.failed", map[string]interface{}{
+				"error": err.Error(),
+			})
+			return
 		}
 
 		if len(result.Orders) == 0 {
@@ -121,6 +145,11 @@ func (uc *wooCommerceUseCase) syncOrdersAsync(ctx context.Context, integration *
 		Int("total_synced", totalSynced).
 		Uint("integration_id", integration.ID).
 		Msg("WooCommerce order sync completed")
+
+	uc.emitOrderSyncEvent(ctx, integration, "integration.sync.completed", map[string]interface{}{
+		"total_fetched": totalSynced,
+		"duration":      time.Since(start).Round(time.Millisecond).String(),
+	})
 }
 
 // buildQueryParams construye los parámetros de consulta a partir de un mapa genérico.
