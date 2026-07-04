@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // IMeliUseCase define las operaciones de negocio de MercadoLibre.
@@ -25,13 +26,22 @@ type IMeliUseCase interface {
 	// EnsureValidToken verifica si el token actual está vigente, y si no, lo renueva.
 	// Retorna un access_token listo para usar.
 	EnsureValidToken(ctx context.Context, integrationID string) (string, error)
+
+	// ReconcileProducts cruza los productos de ambos lados por SKU.
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	// ApplyProductsToMeli crea en MercadoLibre los productos que solo existen en Probability.
+	ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	// ApplyProductsToProbability crea en Probability los productos que solo existen en MercadoLibre.
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
 type meliUseCase struct {
-	client    domain.IMeliClient
-	service   domain.IIntegrationService
-	publisher domain.OrderPublisher
-	logger    log.ILogger
+	client      domain.IMeliClient
+	service     domain.IIntegrationService
+	publisher   domain.OrderPublisher
+	productRepo domain.IProductRepository
+	rabbit      rabbitmq.IQueue
+	logger      log.ILogger
 }
 
 // New crea el use case de MercadoLibre con todas sus dependencias.
@@ -39,12 +49,16 @@ func New(
 	client domain.IMeliClient,
 	service domain.IIntegrationService,
 	publisher domain.OrderPublisher,
+	productRepo domain.IProductRepository,
+	rabbit rabbitmq.IQueue,
 	logger log.ILogger,
 ) IMeliUseCase {
 	return &meliUseCase{
-		client:    client,
-		service:   service,
-		publisher: publisher,
-		logger:    logger.WithModule("meli"),
+		client:      client,
+		service:     service,
+		publisher:   publisher,
+		productRepo: productRepo,
+		rabbit:      rabbit,
+		logger:      logger.WithModule("meli"),
 	}
 }

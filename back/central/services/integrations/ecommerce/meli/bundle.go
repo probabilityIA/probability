@@ -10,6 +10,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/client"
 	melicore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -22,6 +24,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
+	database db.IDatabase,
 	coreIntegration integrationcore.IIntegrationCore,
 ) integrationcore.IIntegrationContract {
 	logger = logger.WithModule("meli")
@@ -29,6 +32,7 @@ func New(
 	// 1. Infraestructura secundaria
 	httpClient := client.New()
 	integrationService := melicore.NewIntegrationService(coreIntegration)
+	productRepo := repository.New(database, logger)
 
 	// Publisher de órdenes a RabbitMQ (con fallback no-op si no hay conexión)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
@@ -40,7 +44,7 @@ func New(
 	}
 
 	// 2. Casos de uso
-	uc := usecases.New(httpClient, integrationService, orderPublisher, logger)
+	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
 	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger, config, coreIntegration)

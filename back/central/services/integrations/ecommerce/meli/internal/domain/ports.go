@@ -29,6 +29,12 @@ type IMeliClient interface {
 
 	// GetUserMe obtiene los datos del usuario autenticado (para extraer seller_id).
 	GetUserMe(ctx context.Context, accessToken string) (*MeliSeller, error)
+
+	// GetProducts lista las publicaciones del vendedor con su SKU (SELLER_SKU/seller_custom_field).
+	GetProducts(ctx context.Context, accessToken string, sellerID int64) ([]MeliProduct, error)
+
+	// CreateProduct crea una publicacion en MercadoLibre (predice categoria por titulo).
+	CreateProduct(ctx context.Context, accessToken string, input CreateProductInput) (string, error)
 }
 
 // IIntegrationService define las operaciones del core de integraciones

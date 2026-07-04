@@ -32,7 +32,7 @@ func New(
 	shopify.New(router, logger, config, integrationCore, rabbitMQ, database)
 
 	// MercadoLibre (type_id=3)
-	meliProvider := meli.New(router, logger, config, rabbitMQ, integrationCore)
+	meliProvider := meli.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeMercadoLibre, meliProvider)
 
 	// WooCommerce (type_id=4)

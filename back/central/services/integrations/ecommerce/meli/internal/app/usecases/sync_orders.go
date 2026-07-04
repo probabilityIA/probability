@@ -7,7 +7,25 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/app/usecases/mapper"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
+
+func (uc *meliUseCase) emitOrderSyncEvent(ctx context.Context, integration *domain.Integration, eventType string, data map[string]interface{}) {
+	if uc.rabbit == nil {
+		return
+	}
+	var bID uint
+	if integration.BusinessID != nil {
+		bID = *integration.BusinessID
+	}
+	_ = rabbitmq.PublishEvent(ctx, uc.rabbit, rabbitmq.EventEnvelope{
+		Type:          eventType,
+		Category:      "integration",
+		BusinessID:    bID,
+		IntegrationID: integration.ID,
+		Data:          data,
+	})
+}
 
 // SyncOrders sincroniza órdenes de MercadoLibre de los últimos 30 días.
 func (uc *meliUseCase) SyncOrders(ctx context.Context, integrationID string) error {
@@ -57,6 +75,9 @@ func (uc *meliUseCase) SyncOrdersWithParams(ctx context.Context, integrationID s
 }
 
 func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.Integration, accessToken string, sellerID int64, params *domain.GetOrdersParams) {
+	start := time.Now()
+	uc.emitOrderSyncEvent(ctx, integration, "integration.sync.started", map[string]interface{}{})
+
 	totalSynced := 0
 	offset := 0
 	if params.Limit == 0 {
@@ -85,7 +106,10 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			uc.logger.Error(ctx).Err(err).
 				Int("offset", offset).
 				Msg("Error fetching MeLi orders page")
-			break
+			uc.emitOrderSyncEvent(ctx, integration, "integration.sync.failed", map[string]interface{}{
+				"error": err.Error(),
+			})
+			return
 		}
 
 		if len(result.Orders) == 0 {
@@ -144,6 +168,11 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 		Int("total_synced", totalSynced).
 		Uint("integration_id", integration.ID).
 		Msg("MercadoLibre order sync completed")
+
+	uc.emitOrderSyncEvent(ctx, integration, "integration.sync.completed", map[string]interface{}{
+		"total_fetched": totalSynced,
+		"duration":      time.Since(start).Round(time.Millisecond).String(),
+	})
 }
 
 // extractSellerID obtiene el seller_id de una integración.

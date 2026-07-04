@@ -13,7 +13,9 @@ import {
     ShoppingBagIcon,
     InformationCircleIcon,
     BoltIcon,
+    ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { MercadoLibreProductSyncModal } from './MercadoLibreProductSyncModal';
 
 interface MercadoLibreConfigFormProps {
     onSuccess?: () => void;
@@ -60,6 +62,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
+    const [productSyncOpen, setProductSyncOpen] = useState(false);
 
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
@@ -468,6 +471,36 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 </ol>
             </div>
 
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                                <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                                Sincronizar productos
+                            </h4>
+                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                Cruza los productos por SKU y te muestra que falta en cada lado; eliges crear en MercadoLibre lo que solo esta en Probability, o al reves.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setProductSyncOpen(true)}
+                            className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors"
+                            style={{ backgroundColor: GREEN }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                        >
+                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                            Sincronizar productos
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (
                     <button
@@ -501,6 +534,15 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                     )}
                 </button>
             </div>
+
+            {isEdit && integrationId && (
+                <MercadoLibreProductSyncModal
+                    isOpen={productSyncOpen}
+                    onClose={() => setProductSyncOpen(false)}
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId}
+                />
+            )}
 
             {errorModal && (
                 <Modal

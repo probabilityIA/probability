@@ -14,6 +14,8 @@ type IHandler interface {
 	InitiateOAuthHandler(c *gin.Context)
 	OAuthCallbackHandler(c *gin.Context)
 	GetOAuthTokenHandler(c *gin.Context)
+	ReconcileProducts(c *gin.Context)
+	ApplyProducts(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 
@@ -43,6 +45,8 @@ func (h *meliHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger
 	{
 		oauthGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
 		oauthGroup.GET("/oauth/token", h.GetOAuthTokenHandler)
+		oauthGroup.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
+		oauthGroup.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
 	}
 
 	router.GET("/meli/callback", h.OAuthCallbackHandler)
