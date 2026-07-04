@@ -44,3 +44,9 @@ export async function applyMeliProductsAction(integrationId: number, direction: 
     if (businessId) body.business_id = businessId;
     return postWithAuth('/integrations/meli/products/apply', body);
 }
+
+export async function syncMeliInventoryAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/integrations/meli/inventory/sync', body);
+}

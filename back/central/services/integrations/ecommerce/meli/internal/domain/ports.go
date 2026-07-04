@@ -35,6 +35,9 @@ type IMeliClient interface {
 
 	// CreateProduct crea una publicacion en MercadoLibre (predice categoria por titulo).
 	CreateProduct(ctx context.Context, accessToken string, input CreateProductInput) (string, error)
+
+	// UpdateStock actualiza el available_quantity de una publicacion en MercadoLibre.
+	UpdateStock(ctx context.Context, accessToken, itemID string, quantity int) error
 }
 
 // IIntegrationService define las operaciones del core de integraciones

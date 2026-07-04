@@ -33,6 +33,7 @@ func New(
 	httpClient := client.New()
 	integrationService := melicore.NewIntegrationService(coreIntegration)
 	productRepo := repository.New(database, logger)
+	inventoryRepo := repository.NewInventory(database, logger)
 
 	// Publisher de órdenes a RabbitMQ (con fallback no-op si no hay conexión)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
@@ -44,7 +45,7 @@ func New(
 	}
 
 	// 2. Casos de uso
-	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
+	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, inventoryRepo, rabbitMQ, logger)
 
 	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger, config, coreIntegration)

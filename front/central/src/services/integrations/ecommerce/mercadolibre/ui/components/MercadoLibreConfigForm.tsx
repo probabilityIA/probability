@@ -16,6 +16,8 @@ import {
     ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { MercadoLibreProductSyncModal } from './MercadoLibreProductSyncModal';
+import { MercadoLibreInventorySection, MeliInventoryConfig } from './MercadoLibreInventorySection';
+import { MercadoLibreInventorySyncModal } from './MercadoLibreInventorySyncModal';
 
 interface MercadoLibreConfigFormProps {
     onSuccess?: () => void;
@@ -63,6 +65,16 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [inventorySync, setInventorySync] = useState<MeliInventoryConfig>(() => {
+        const c: any = initialData?.config || {};
+        return {
+            enabled: !!c.inventory_sync_enabled,
+            mode: c.inventory_warehouse_mode === 'single' ? 'single' : 'sum',
+            single_warehouse_id: Number(c.inventory_single_warehouse_id) || 0,
+            warehouse_ids: Array.isArray(c.inventory_warehouse_ids) ? c.inventory_warehouse_ids.map(Number) : [],
+        };
+    });
 
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
@@ -153,8 +165,13 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
         setLoading(true);
 
         try {
-            const config: MercadoLibreConfig = {
+            const config: any = {
+                ...(initialData?.config || {}),
                 seller_id: formData.seller_id || undefined,
+                inventory_sync_enabled: inventorySync.enabled,
+                inventory_warehouse_mode: inventorySync.mode,
+                inventory_single_warehouse_id: inventorySync.single_warehouse_id,
+                inventory_warehouse_ids: inventorySync.warehouse_ids,
             };
 
             if (isEdit && integrationId) {
@@ -501,6 +518,15 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 </div>
             )}
 
+            <MercadoLibreInventorySection
+                value={inventorySync}
+                onChange={setInventorySync}
+                businessId={selectedBusinessId}
+                integrationId={isEdit ? integrationId : undefined}
+                onSyncNow={isEdit && integrationId ? () => setInventorySyncOpen(true) : undefined}
+                canSyncNow={inventorySync.enabled}
+            />
+
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (
                     <button
@@ -539,6 +565,15 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 <MercadoLibreProductSyncModal
                     isOpen={productSyncOpen}
                     onClose={() => setProductSyncOpen(false)}
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId}
+                />
+            )}
+
+            {isEdit && integrationId && (
+                <MercadoLibreInventorySyncModal
+                    isOpen={inventorySyncOpen}
+                    onClose={() => setInventorySyncOpen(false)}
                     integrationId={integrationId}
                     businessId={selectedBusinessId}
                 />

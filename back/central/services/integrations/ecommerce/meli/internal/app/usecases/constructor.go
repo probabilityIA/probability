@@ -33,15 +33,19 @@ type IMeliUseCase interface {
 	ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 	// ApplyProductsToProbability crea en Probability los productos que solo existen en MercadoLibre.
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+
+	// SyncInventory empuja el stock de Probability a las publicaciones de MercadoLibre.
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
 type meliUseCase struct {
-	client      domain.IMeliClient
-	service     domain.IIntegrationService
-	publisher   domain.OrderPublisher
-	productRepo domain.IProductRepository
-	rabbit      rabbitmq.IQueue
-	logger      log.ILogger
+	client        domain.IMeliClient
+	service       domain.IIntegrationService
+	publisher     domain.OrderPublisher
+	productRepo   domain.IProductRepository
+	inventoryRepo domain.IInventoryRepository
+	rabbit        rabbitmq.IQueue
+	logger        log.ILogger
 }
 
 // New crea el use case de MercadoLibre con todas sus dependencias.
@@ -50,15 +54,17 @@ func New(
 	service domain.IIntegrationService,
 	publisher domain.OrderPublisher,
 	productRepo domain.IProductRepository,
+	inventoryRepo domain.IInventoryRepository,
 	rabbit rabbitmq.IQueue,
 	logger log.ILogger,
 ) IMeliUseCase {
 	return &meliUseCase{
-		client:      client,
-		service:     service,
-		publisher:   publisher,
-		productRepo: productRepo,
-		rabbit:      rabbit,
-		logger:      logger.WithModule("meli"),
+		client:        client,
+		service:       service,
+		publisher:     publisher,
+		productRepo:   productRepo,
+		inventoryRepo: inventoryRepo,
+		rabbit:        rabbit,
+		logger:        logger.WithModule("meli"),
 	}
 }
