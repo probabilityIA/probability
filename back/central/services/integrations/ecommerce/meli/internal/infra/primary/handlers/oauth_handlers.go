@@ -23,12 +23,15 @@ const meliTokenURL = "https://api.mercadolibre.com/oauth/token"
 
 const defaultMeliAuthDomain = "auth.mercadolibre.com.co"
 
+const defaultMeliScopes = "offline_access read write"
+
 var meliConfigEnvFallback = map[string]string{
 	"client_id":     "MELI_CLIENT_ID",
 	"client_secret": "MELI_CLIENT_SECRET",
 	"redirect_uri":  "MELI_REDIRECT_URI",
 	"frontend_url":  "FRONTEND_URL",
 	"auth_domain":   "MELI_AUTH_DOMAIN",
+	"scopes":        "MELI_SCOPES",
 }
 
 func (h *meliHandler) platformCred(ctx context.Context, field string) string {
@@ -129,6 +132,11 @@ func (h *meliHandler) InitiateOAuthHandler(c *gin.Context) {
 		authDomain = defaultMeliAuthDomain
 	}
 
+	scopes := h.getMeliConfig(c.Request.Context(), "scopes", testMode)
+	if scopes == "" {
+		scopes = defaultMeliScopes
+	}
+
 	state, err := generateState()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
@@ -159,10 +167,11 @@ func (h *meliHandler) InitiateOAuthHandler(c *gin.Context) {
 	})
 
 	authURL := fmt.Sprintf(
-		"https://%s/authorization?response_type=code&client_id=%s&redirect_uri=%s&code_challenge=%s&code_challenge_method=S256&state=%s",
+		"https://%s/authorization?response_type=code&client_id=%s&redirect_uri=%s&scope=%s&code_challenge=%s&code_challenge_method=S256&state=%s",
 		authDomain,
 		url.QueryEscape(clientID),
 		url.QueryEscape(redirectURI),
+		url.QueryEscape(scopes),
 		url.QueryEscape(challenge),
 		url.QueryEscape(state),
 	)
