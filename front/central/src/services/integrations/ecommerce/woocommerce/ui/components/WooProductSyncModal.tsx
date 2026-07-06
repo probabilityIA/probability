@@ -29,8 +29,16 @@ interface Diff {
 const PRODUCT_EVENT_TYPES = [
     'woocommerce.product.sync.started',
     'woocommerce.product.sync.progress',
+    'woocommerce.product.sync.item',
     'woocommerce.product.sync.completed',
 ];
+
+interface SyncItem {
+    sku: string;
+    name: string;
+    quantity: number;
+    action: 'created' | 'updated' | 'failed';
+}
 
 type Phase = 'analyzing' | 'diff' | 'running' | 'done' | 'error';
 type Direction = 'to_woo' | 'to_probability';
@@ -45,6 +53,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     const [updated, setUpdated] = useState(0);
     const [failed, setFailed] = useState(0);
     const [isFullSync, setIsFullSync] = useState(false);
+    const [items, setItems] = useState<SyncItem[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const correlationRef = useRef<string | null>(null);
@@ -79,6 +88,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setUpdated(0);
             setFailed(0);
             setIsFullSync(false);
+            setItems([]);
             setErrorMessage(null);
             correlationRef.current = null;
             return;
@@ -95,6 +105,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         setCreated(0);
         setUpdated(0);
         setFailed(0);
+        setItems([]);
         correlationRef.current = null;
         const res: any = await applyWooProductsAction(integrationId, dir, businessId ?? undefined);
         if (!res?.success || !res?.correlation_id) {
@@ -114,6 +125,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
         setCreated(0);
         setUpdated(0);
         setFailed(0);
+        setItems([]);
         correlationRef.current = null;
         const res: any = await syncWooProductsAction(integrationId, businessId ?? undefined);
         if (!res?.success || !res?.correlation_id) {
@@ -135,6 +147,13 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
 
             if (eventType === 'woocommerce.product.sync.started') {
                 setTotal(Number(data.total) || 0);
+            } else if (eventType === 'woocommerce.product.sync.item') {
+                setItems((prev) => [...prev, {
+                    sku: String(data.sku || ''),
+                    name: String(data.name || ''),
+                    quantity: Number(data.quantity) || 0,
+                    action: (data.action === 'created' || data.action === 'failed') ? data.action : 'updated',
+                }]);
             } else if (eventType === 'woocommerce.product.sync.progress') {
                 setProcessed(Number(data.processed) || 0);
                 setCreated(Number(data.created) || 0);
@@ -291,6 +310,26 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                 </div>
                             </div>
 
+                            {items.length > 0 && (
+                                <div className="mt-4">
+                                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Detalle por producto</p>
+                                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+                                        {[...items].reverse().map((it, i) => (
+                                            <div key={i} className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px]">
+                                                <div className="min-w-0">
+                                                    <p className="text-gray-700 dark:text-gray-200 truncate">{it.name || '(sin nombre)'}</p>
+                                                    <p className="text-gray-400 font-mono">{it.sku || '(sin sku)'}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <span className="tabular-nums text-gray-600 dark:text-gray-300">{it.quantity} u</span>
+                                                    <ActionBadge action={it.action} />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {phase === 'done' && (
                                 <div className="flex justify-between mt-5">
                                     <button onClick={analyze} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5">
@@ -307,6 +346,16 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             </div>
         </div>
     );
+}
+
+function ActionBadge({ action }: { action: SyncItem['action'] }) {
+    const map = {
+        created: { label: 'Creado', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+        updated: { label: 'Actualizado', cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+        failed: { label: 'Fallido', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+    };
+    const { label, cls } = map[action];
+    return <span className={`px-1.5 py-0.5 rounded font-semibold ${cls}`}>{label}</span>;
 }
 
 function ProductList({ items }: { items: Brief[] }) {

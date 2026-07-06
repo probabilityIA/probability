@@ -104,6 +104,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 	for i, p := range products {
 		if p.SKU == "" {
 			failed++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
 		}
@@ -111,6 +112,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		externalID, mapped, gerr := uc.productRepo.GetExternalProductID(ctx, p.ID, uint(integIDUint))
 		if gerr != nil {
 			failed++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
 		}
@@ -120,6 +122,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 				if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), wooID); merr != nil {
 					uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
 					failed++
+					uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 					uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 					continue
 				}
@@ -132,8 +135,10 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 			if perr := uc.client.UpdateProductStock(ctx, storeURL, consumerKey, consumerSecret, externalID, p.StockQuantity); perr != nil {
 				uc.logger.Error(ctx).Err(perr).Str("sku", p.SKU).Msg("Error al actualizar producto en WooCommerce")
 				failed++
+				uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 			} else {
 				updated++
+				uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "updated")
 			}
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
@@ -150,6 +155,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en WooCommerce")
 			failed++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
 		}
@@ -157,10 +163,12 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
 			failed++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
 		}
 		created++
+		uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "created")
 		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 	}
 
@@ -193,6 +201,16 @@ func (uc *wooCommerceUseCase) maybeProgress(ctx context.Context, businessID, int
 		"created":        created,
 		"updated":        updated,
 		"failed":         failed,
+	})
+}
+
+func (uc *wooCommerceUseCase) emitProductItem(ctx context.Context, businessID, integrationID uint, correlationID, sku, name string, quantity int, action string) {
+	uc.emitSyncEvent(ctx, businessID, integrationID, "woocommerce.product.sync.item", map[string]interface{}{
+		"correlation_id": correlationID,
+		"sku":            sku,
+		"name":           name,
+		"quantity":       quantity,
+		"action":         action,
 	})
 }
 
