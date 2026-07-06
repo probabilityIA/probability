@@ -69,8 +69,8 @@ func (c *consumerAuthOTP) handleMessage(body []byte) error {
 		c.log.Error().
 			Err(err).
 			Str("phone", event.Phone).
-			Msg("[AuthOTPConsumer] Error enviando codigo OTP por WhatsApp")
-		return err
+			Msg("[AuthOTPConsumer] Error enviando codigo OTP por WhatsApp - se descarta el mensaje (el usuario puede reenviar)")
+		return nil
 	}
 
 	c.log.Info().
@@ -100,7 +100,7 @@ func buildOTPTemplateMessage(phoneNumber, code string) entities.TemplateMessage 
 				{
 					Type:    "button",
 					SubType: "url",
-					Index:   0,
+					Index:   "0",
 					Parameters: []entities.TemplateParameter{
 						{Type: "text", Text: code},
 					},
