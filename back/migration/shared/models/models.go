@@ -68,6 +68,7 @@ type Business struct {
 	NavbarImageURL  string  `gorm:"size:255"`                 // Imagen de fondo para la barra de navegación
 	CustomDomain    *string `gorm:"size:100;unique"`          // dominio personalizado
 	IsActive        bool    `gorm:"default:true"`
+	IsDemo          bool    `gorm:"default:false;index"`
 
 	OrderPrefix string `gorm:"size:8;index"`
 

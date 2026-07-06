@@ -69,6 +69,7 @@ func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoA
 			BusinessTypeID:     1,
 			OrderPrefix:        p.OrderPrefix,
 			IsActive:           true,
+			IsDemo:             true,
 			SubscriptionStatus: "active",
 		}
 		if err := tx.Create(business).Error; err != nil {

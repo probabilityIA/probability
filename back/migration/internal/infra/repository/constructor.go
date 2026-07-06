@@ -68,6 +68,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateDemoAutoregistro(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateBusinessIsDemo(ctx); err != nil {
+		return err
+	}
 	if err := r.migratePasswordResetTokens(ctx); err != nil {
 		return err
 	}
