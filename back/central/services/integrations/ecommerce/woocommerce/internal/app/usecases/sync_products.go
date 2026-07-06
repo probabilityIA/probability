@@ -80,6 +80,17 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		return fmt.Errorf("listing products: %w", err)
 	}
 
+	wooBySKU := make(map[string]string)
+	if wooProducts, werr := uc.client.GetProducts(ctx, storeURL, consumerKey, consumerSecret); werr != nil {
+		uc.logger.Warn(ctx).Err(werr).Msg("No se pudo listar productos de WooCommerce para conciliar por SKU")
+	} else {
+		for _, w := range wooProducts {
+			if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
+				wooBySKU[key] = w.ID
+			}
+		}
+	}
+
 	total := len(products)
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.started", map[string]interface{}{
 		"correlation_id": correlationID,
@@ -102,6 +113,19 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 			failed++
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 			continue
+		}
+
+		if !mapped || externalID == "" {
+			if wooID, ok := wooBySKU[normalizeSKU(p.SKU)]; ok && wooID != "" {
+				if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), wooID); merr != nil {
+					uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
+					failed++
+					uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+					continue
+				}
+				externalID = wooID
+				mapped = true
+			}
 		}
 
 		if mapped && externalID != "" {
@@ -132,6 +156,9 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 
 		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
+			failed++
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			continue
 		}
 		created++
 		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)

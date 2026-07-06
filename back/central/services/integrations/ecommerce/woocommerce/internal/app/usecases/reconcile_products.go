@@ -105,31 +105,41 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		return err
 	}
 
-	wooSKUs := make(map[string]bool)
+	wooBySKU := make(map[string]string)
 	for _, w := range wooProducts {
-		if key := normalizeSKU(w.SKU); key != "" {
-			wooSKUs[key] = true
+		if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
+			wooBySKU[key] = w.ID
 		}
 	}
 
-	missing := make([]domain.ProductForSync, 0)
+	targets := make([]domain.ProductForSync, 0)
 	for _, p := range probProducts {
-		key := normalizeSKU(p.SKU)
-		if key == "" || wooSKUs[key] {
+		if normalizeSKU(p.SKU) == "" {
 			continue
 		}
-		missing = append(missing, p)
+		targets = append(targets, p)
 	}
 
-	total := len(missing)
+	total := len(targets)
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.started", map[string]interface{}{
 		"correlation_id": correlationID,
 		"direction":      "to_woo",
 		"total":          total,
 	})
 
-	created, failed := 0, 0
-	for i, p := range missing {
+	created, updated, failed := 0, 0, 0
+	for i, p := range targets {
+		if wooID, ok := wooBySKU[normalizeSKU(p.SKU)]; ok && wooID != "" {
+			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), wooID); merr != nil {
+				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
+				failed++
+			} else {
+				updated++
+			}
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			continue
+		}
+
 		newID, cerr := uc.client.CreateProduct(ctx, storeURL, ck, cs, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
@@ -142,13 +152,17 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en WooCommerce")
 			failed++
-		} else {
-			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
-				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
-			}
-			created++
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			continue
 		}
-		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, 0, failed)
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
+			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
+			failed++
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			continue
+		}
+		created++
+		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 	}
 
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.completed", map[string]interface{}{
@@ -156,7 +170,7 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		"direction":      "to_woo",
 		"total":          total,
 		"created":        created,
-		"updated":        0,
+		"updated":        updated,
 		"failed":         failed,
 	})
 	return nil
