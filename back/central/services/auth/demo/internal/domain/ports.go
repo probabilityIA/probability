@@ -16,3 +16,7 @@ type IDemoRepository interface {
 type IEmailSender interface {
 	SendHTML(ctx context.Context, to, subject, html string) error
 }
+
+type IDemoOTPPublisher interface {
+	PublishDemoOTP(ctx context.Context, event DemoOTPEvent) error
+}

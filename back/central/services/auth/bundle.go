@@ -25,7 +25,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	login.New(router, database, logger, environment, queue)
 
 	// Inicializar módulo de demo (autoregistro publico)
-	demo.New(router, database, logger, environment)
+	demo.New(router, database, logger, environment, queue)
 
 	// Inicializar módulo de permissions
 	permissions.New(router, database, logger)

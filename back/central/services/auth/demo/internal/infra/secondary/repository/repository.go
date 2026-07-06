@@ -79,6 +79,7 @@ func (r *Repository) CreateDemoAccount(ctx context.Context, p domain.CreateDemoA
 		user := &models.User{
 			Name:     p.FullName,
 			Email:    p.Email,
+			Phone:    p.Phone,
 			Password: p.PasswordHash,
 			IsActive: false,
 			ScopeID:  &scopeBusiness,

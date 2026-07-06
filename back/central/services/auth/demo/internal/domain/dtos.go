@@ -7,6 +7,8 @@ type DemoRegisterRequest struct {
 	BusinessName string
 	Email        string
 	Password     string
+	Phone        string
+	Channel      string
 }
 
 type DemoRegisterResponse struct {
@@ -23,16 +25,34 @@ type VerifyEmailResponse struct {
 	Message string
 }
 
+type DemoVerifyOTPRequest struct {
+	Email string
+	Code  string
+}
+
+type DemoVerifyOTPResponse struct {
+	Success bool
+	Message string
+}
+
 type CreateDemoAccountParams struct {
 	FullName     string
 	BusinessName string
 	BusinessCode string
 	OrderPrefix  string
 	Email        string
+	Phone        string
 	PasswordHash string
 	RoleID       uint
 	TokenHash    string
 	ExpiresAt    time.Time
+}
+
+type DemoOTPEvent struct {
+	Phone          string
+	Code           string
+	UserName       string
+	ExpiresMinutes int
 }
 
 type EmailVerificationTokenInfo struct {

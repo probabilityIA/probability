@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 	"unicode"
@@ -15,6 +16,7 @@ import (
 )
 
 const emailVerificationTTL = 24 * time.Hour
+const otpVerificationTTL = 15 * time.Minute
 
 func (uc *UseCase) DemoRegister(ctx context.Context, request domain.DemoRegisterRequest) (*domain.DemoRegisterResponse, error) {
 	fullName := strings.TrimSpace(request.FullName)
@@ -55,9 +57,29 @@ func (uc *UseCase) DemoRegister(ctx context.Context, request domain.DemoRegister
 		return nil, fmt.Errorf("error interno del servidor")
 	}
 
-	rawToken, tokenHash, err := generateToken()
-	if err != nil {
-		return nil, fmt.Errorf("error interno del servidor")
+	channel := strings.ToLower(strings.TrimSpace(request.Channel))
+	if channel == "" {
+		channel = "email"
+	}
+	phone := strings.TrimSpace(request.Phone)
+	if channel == "whatsapp" && phone == "" {
+		return nil, fmt.Errorf("el telefono es obligatorio para verificar por WhatsApp")
+	}
+
+	var rawToken, tokenHash, code string
+	ttl := emailVerificationTTL
+	if channel == "whatsapp" {
+		code, err = generateOTPCode()
+		if err != nil {
+			return nil, fmt.Errorf("error interno del servidor")
+		}
+		tokenHash = hashOTP(email, code)
+		ttl = otpVerificationTTL
+	} else {
+		rawToken, tokenHash, err = generateToken()
+		if err != nil {
+			return nil, fmt.Errorf("error interno del servidor")
+		}
 	}
 
 	params := domain.CreateDemoAccountParams{
@@ -66,15 +88,33 @@ func (uc *UseCase) DemoRegister(ctx context.Context, request domain.DemoRegister
 		BusinessCode: businessCode,
 		OrderPrefix:  derivePrefix(businessName),
 		Email:        email,
+		Phone:        phone,
 		PasswordHash: string(hashed),
 		RoleID:       roleID,
 		TokenHash:    tokenHash,
-		ExpiresAt:    time.Now().Add(emailVerificationTTL),
+		ExpiresAt:    time.Now().Add(ttl),
 	}
 
 	if _, err := uc.repository.CreateDemoAccount(ctx, params); err != nil {
 		uc.log.Error().Err(err).Str("email", email).Msg("Error creando cuenta demo")
 		return nil, fmt.Errorf("no se pudo crear la cuenta demo")
+	}
+
+	if channel == "whatsapp" {
+		event := domain.DemoOTPEvent{
+			Phone:          phone,
+			Code:           code,
+			UserName:       fullName,
+			ExpiresMinutes: int(ttl.Minutes()),
+		}
+		if err := uc.otpPublisher.PublishDemoOTP(ctx, event); err != nil {
+			uc.log.Error().Err(err).Str("email", email).Msg("Error publicando codigo OTP demo por WhatsApp")
+		}
+		uc.log.Info().Str("email", email).Str("business", businessName).Msg("Cuenta demo creada, codigo de verificacion enviado por WhatsApp")
+		return &domain.DemoRegisterResponse{
+			Success: true,
+			Message: "Cuenta creada. Te enviamos un codigo por WhatsApp para verificar tu cuenta.",
+		}, nil
 	}
 
 	verifyURL := fmt.Sprintf("%s/verify-email?token=%s", uc.frontendBaseURL(), rawToken)
@@ -135,6 +175,19 @@ func generateToken() (string, string, error) {
 
 func hashToken(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(sum[:])
+}
+
+func generateOTPCode() (string, error) {
+	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
+func hashOTP(email, code string) string {
+	sum := sha256.Sum256([]byte(strings.ToLower(strings.TrimSpace(email)) + ":" + code))
 	return hex.EncodeToString(sum[:])
 }
 

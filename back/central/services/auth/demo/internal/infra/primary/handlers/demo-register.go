@@ -23,13 +23,15 @@ func (h *Handler) DemoRegisterHandler(c *gin.Context) {
 		BusinessName: req.BusinessName,
 		Email:        req.Email,
 		Password:     req.Password,
+		Phone:        req.Phone,
+		Channel:      req.Channel,
 	})
 	if err != nil {
 		status := http.StatusInternalServerError
 		switch err.Error() {
 		case "el correo ya esta registrado":
 			status = http.StatusConflict
-		case "la contrasena debe tener al menos 6 caracteres", "nombre, negocio y correo son obligatorios":
+		case "la contrasena debe tener al menos 6 caracteres", "nombre, negocio y correo son obligatorios", "el telefono es obligatorio para verificar por WhatsApp":
 			status = http.StatusBadRequest
 		}
 		c.JSON(status, gin.H{"error": err.Error()})

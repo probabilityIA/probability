@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { demoRegisterAction } from '../../infra/actions';
 
 interface DemoRegisterModalProps {
@@ -8,10 +9,13 @@ interface DemoRegisterModalProps {
 }
 
 export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
+  const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [channel, setChannel] = useState<'email' | 'whatsapp'>('email');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [message, setMessage] = useState('');
@@ -24,6 +28,10 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
       setError('La contrasena debe tener al menos 6 caracteres');
       return;
     }
+    if (channel === 'whatsapp' && phone.trim().length < 7) {
+      setError('Ingresa un telefono valido para verificar por WhatsApp');
+      return;
+    }
     setLoading(true);
     try {
       const result = await demoRegisterAction({
@@ -31,8 +39,14 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
         business_name: businessName.trim(),
         email: email.trim(),
         password,
+        phone: channel === 'whatsapp' ? phone.trim() : undefined,
+        channel,
       });
       if (result.success) {
+        if (channel === 'whatsapp') {
+          router.push(`/verify-demo?email=${encodeURIComponent(email.trim())}`);
+          return;
+        }
         setDone(true);
         setMessage(result.message || 'Cuenta creada. Revisa tu correo para verificar tu cuenta.');
       } else {
@@ -44,6 +58,21 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
       setLoading(false);
     }
   };
+
+  const channelBtn = (value: 'email' | 'whatsapp', label: string, hint: string) => (
+    <button
+      type="button"
+      onClick={() => setChannel(value)}
+      className={`flex-1 rounded-lg border px-3 py-2 text-left ${
+        channel === value
+          ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+          : 'border-gray-300 dark:border-gray-600'
+      }`}
+    >
+      <span className="block text-sm font-semibold text-gray-900 dark:text-white">{label}</span>
+      <span className="block text-xs text-gray-500 dark:text-gray-400">{hint}</span>
+    </button>
+  );
 
   return (
     <div
@@ -127,6 +156,28 @@ export const DemoRegisterModal = ({ onClose }: DemoRegisterModalProps) => {
                 className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Como quieres verificar tu cuenta</label>
+              <div className="flex gap-2">
+                {channelBtn('email', 'Correo', 'Enlace por email')}
+                {channelBtn('whatsapp', 'WhatsApp', 'Codigo al celular')}
+              </div>
+            </div>
+
+            {channel === 'whatsapp' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telefono (WhatsApp)</label>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="3001234567"
+                  className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-gray-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+            )}
 
             {error && (
               <div className="rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-300">

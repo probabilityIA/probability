@@ -31,7 +31,7 @@ export default function AuthLayout({
 
   // Páginas que NO deben tener sidebar (login, registro storefront)
   const isLoginPage = pathname === '/login';
-  const isPublicPage = isLoginPage || pathname === '/storefront/registro' || pathname === '/verify-email' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-code';
+  const isPublicPage = isLoginPage || pathname === '/storefront/registro' || pathname === '/verify-email' || pathname === '/verify-demo' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname === '/verify-code';
 
   useEffect(() => {
     // Esperar a que Shopify Auth termine de cargar si estamos en iframe
