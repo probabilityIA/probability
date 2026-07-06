@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
-import { reconcileWooProductsAction, applyWooProductsAction } from '../../infra/actions';
+import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction } from '../../infra/actions';
 
 interface WooProductSyncModalProps {
     isOpen: boolean;
@@ -42,7 +42,9 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     const [total, setTotal] = useState(0);
     const [processed, setProcessed] = useState(0);
     const [created, setCreated] = useState(0);
+    const [updated, setUpdated] = useState(0);
     const [failed, setFailed] = useState(0);
+    const [isFullSync, setIsFullSync] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const correlationRef = useRef<string | null>(null);
@@ -74,7 +76,9 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setTotal(0);
             setProcessed(0);
             setCreated(0);
+            setUpdated(0);
             setFailed(0);
+            setIsFullSync(false);
             setErrorMessage(null);
             correlationRef.current = null;
             return;
@@ -84,15 +88,36 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
 
     const handleApply = async (dir: Direction) => {
         setDirection(dir);
+        setIsFullSync(false);
         setPhase('running');
         setTotal(dir === 'to_woo' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInWoo.length || 0));
         setProcessed(0);
         setCreated(0);
+        setUpdated(0);
         setFailed(0);
         correlationRef.current = null;
         const res: any = await applyWooProductsAction(integrationId, dir, businessId ?? undefined);
         if (!res?.success || !res?.correlation_id) {
             setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
+            setPhase('error');
+            return;
+        }
+        correlationRef.current = res.correlation_id;
+    };
+
+    const handleFullSync = async () => {
+        setDirection('to_woo');
+        setIsFullSync(true);
+        setPhase('running');
+        setTotal(diff?.matched || 0);
+        setProcessed(0);
+        setCreated(0);
+        setUpdated(0);
+        setFailed(0);
+        correlationRef.current = null;
+        const res: any = await syncWooProductsAction(integrationId, businessId ?? undefined);
+        if (!res?.success || !res?.correlation_id) {
+            setErrorMessage(res?.message || 'No se pudo iniciar la sincronizacion');
             setPhase('error');
             return;
         }
@@ -113,11 +138,13 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             } else if (eventType === 'woocommerce.product.sync.progress') {
                 setProcessed(Number(data.processed) || 0);
                 setCreated(Number(data.created) || 0);
+                setUpdated(Number(data.updated) || 0);
                 setFailed(Number(data.failed) || 0);
             } else if (eventType === 'woocommerce.product.sync.completed') {
                 setProcessed(Number(data.total) || 0);
                 setTotal(Number(data.total) || 0);
                 setCreated(Number(data.created) || 0);
+                setUpdated(Number(data.updated) || 0);
                 setFailed(Number(data.failed) || 0);
                 setPhase('done');
                 onCompleted?.();
@@ -180,6 +207,16 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                 <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden en ambos lados</span>
                             </div>
 
+                            <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10 p-3 flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Sincronizar stock a WooCommerce</p>
+                                    <p className="text-[11px] text-gray-400 mt-0.5">Vincula por SKU los productos que ya existen y actualiza su stock en WooCommerce.</p>
+                                </div>
+                                <button onClick={handleFullSync} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                    <RefreshCw size={14} /> Sincronizar stock
+                                </button>
+                            </div>
+
                             {inSync ? (
                                 <div className="text-center py-6 text-gray-600 dark:text-gray-300">
                                     <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-2" />
@@ -232,7 +269,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                         <div>
                             <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">
                                 {direction === 'to_woo' ? <ArrowUpFromLine size={16} className="text-violet-600" /> : <ArrowDownToLine size={16} className="text-blue-600" />}
-                                {direction === 'to_woo' ? 'Creando en WooCommerce' : 'Creando en Probability'}
+                                {isFullSync ? 'Sincronizando stock con WooCommerce' : direction === 'to_woo' ? 'Creando en WooCommerce' : 'Creando en Probability'}
                                 {phase === 'running' && <Loader2 size={14} className="animate-spin text-gray-400" />}
                             </div>
                             <div className="flex items-center justify-between mb-2">
@@ -242,9 +279,12 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                             <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                                 <div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-300" style={{ width: `${progressPct}%` }} />
                             </div>
-                            <div className="grid grid-cols-2 gap-2 mt-4">
+                            <div className="grid grid-cols-3 gap-2 mt-4">
                                 <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                                     <span>Creados</span><span className="tabular-nums">{created}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                    <span>Mapeados</span><span className="tabular-nums">{updated}</span>
                                 </div>
                                 <div className="flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
                                     <span>Fallidos</span><span className="tabular-nums">{failed}</span>
