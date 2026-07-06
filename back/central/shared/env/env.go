@@ -165,6 +165,7 @@ type Config struct {
 	// Email (Amazon SES)
 	ResendAPIKey       string `env:"RESEND_API_KEY"`
 	FromEmail          string `env:"FROM_EMAIL"`
+	FrontendBaseURL    string `env:"FRONTEND_BASE_URL"`
 	UrlBaseDomainS3    string `env:"URL_BASE_DOMAIN_S3"`
 	WhatsAppURL        string `env:"WHATSAPP_URL,required"`
 	WhatsAppToken      string `env:"WHATSAPP_TOKEN,required"`

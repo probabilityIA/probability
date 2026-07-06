@@ -93,6 +93,7 @@ services:
       SMTP_PASS:           "${SMTP_PASS}"
       FROM_EMAIL:          "${FROM_EMAIL:-}"
       RESEND_API_KEY:      "${RESEND_API_KEY}"
+      FRONTEND_BASE_URL:   "${FRONTEND_BASE_URL:-}"
       SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
       SMTP_USE_TLS:        "${SMTP_USE_TLS}"
       # S3 y media
