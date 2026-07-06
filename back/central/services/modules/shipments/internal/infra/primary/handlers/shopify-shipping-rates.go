@@ -83,7 +83,10 @@ func (h *Handlers) ShopifyShippingRates(c *gin.Context) {
 		return
 	}
 
-	origin, err := h.uc.Repo().GetDefaultOriginAddress(ctx, businessID)
+	origin, err := h.uc.Repo().GetDefaultWarehouseOrigin(ctx, businessID)
+	if err != nil || origin == nil {
+		origin, err = h.uc.Repo().GetDefaultOriginAddress(ctx, businessID)
+	}
 	if err != nil || origin == nil {
 		c.JSON(http.StatusOK, emptyRates)
 		return

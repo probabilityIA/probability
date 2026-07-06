@@ -39,6 +39,7 @@ type RepositoryMock struct {
 	GetOriginAddressByIDFn            func(ctx context.Context, id uint) (*domain.OriginAddress, error)
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
 	GetDefaultOriginAddressFn         func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
+	GetDefaultWarehouseOriginFn       func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
 	UpdateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	DeleteOriginAddressFn             func(ctx context.Context, id uint) error
 	SetDefaultOriginAddressFn         func(ctx context.Context, businessID, addressID uint) error
@@ -273,6 +274,13 @@ func (m *RepositoryMock) ListOriginAddressesByBusiness(ctx context.Context, busi
 func (m *RepositoryMock) GetDefaultOriginAddress(ctx context.Context, businessID uint) (*domain.OriginAddress, error) {
 	if m.GetDefaultOriginAddressFn != nil {
 		return m.GetDefaultOriginAddressFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetDefaultWarehouseOrigin(ctx context.Context, businessID uint) (*domain.OriginAddress, error) {
+	if m.GetDefaultWarehouseOriginFn != nil {
+		return m.GetDefaultWarehouseOriginFn(ctx, businessID)
 	}
 	return nil, nil
 }

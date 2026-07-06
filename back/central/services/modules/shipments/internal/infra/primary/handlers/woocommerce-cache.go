@@ -49,7 +49,9 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 		if carrier, cerr := h.carrierResolver.GetActiveShippingCarrier(ctx, bid); cerr == nil {
 			r.Carrier = carrier
 		}
-		if origin, oerr := h.uc.Repo().GetDefaultOriginAddress(ctx, bid); oerr == nil {
+		if origin, oerr := h.uc.Repo().GetDefaultWarehouseOrigin(ctx, bid); oerr == nil && origin != nil {
+			r.Origin = origin
+		} else if origin, oerr := h.uc.Repo().GetDefaultOriginAddress(ctx, bid); oerr == nil {
 			r.Origin = origin
 		}
 	}

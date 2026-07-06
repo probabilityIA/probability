@@ -136,6 +136,7 @@ type IRepository interface {
 	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)
 	ListOriginAddressesByBusiness(ctx context.Context, businessID uint) ([]OriginAddress, error)
 	GetDefaultOriginAddress(ctx context.Context, businessID uint) (*OriginAddress, error)
+	GetDefaultWarehouseOrigin(ctx context.Context, businessID uint) (*OriginAddress, error)
 	UpdateOriginAddress(ctx context.Context, address *OriginAddress) error
 	DeleteOriginAddress(ctx context.Context, id uint) error
 	SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error
