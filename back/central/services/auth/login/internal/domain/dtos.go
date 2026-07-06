@@ -203,6 +203,57 @@ type ChangePasswordResponse struct {
 	Success bool
 	Message string
 }
+type ForgotPasswordRequest struct {
+	Email   string
+	Channel string
+}
+type ForgotPasswordResponse struct {
+	Success bool
+	Message string
+}
+type RecoveryChannelsRequest struct {
+	Email string
+}
+type WhatsAppChannelInfo struct {
+	Available   bool
+	MaskedPhone string
+}
+type RecoveryChannelsResponse struct {
+	Email    bool
+	WhatsApp WhatsAppChannelInfo
+}
+type VerifyOTPRequest struct {
+	Email string
+	Code  string
+}
+type VerifyOTPResponse struct {
+	Success bool
+	Message string
+	Token   string
+}
+type ResetPasswordRequest struct {
+	Token       string
+	NewPassword string
+}
+type ResetPasswordResponse struct {
+	Success bool
+	Message string
+}
+type PasswordResetTokenInfo struct {
+	ID        uint
+	UserID    uint
+	TokenHash string
+	Channel   string
+	Attempts  int
+	ExpiresAt time.Time
+	UsedAt    *time.Time
+}
+type PasswordResetOTPEvent struct {
+	Phone          string
+	Code           string
+	UserName       string
+	ExpiresMinutes int
+}
 type GeneratePasswordRequest struct {
 	UserID uint
 }

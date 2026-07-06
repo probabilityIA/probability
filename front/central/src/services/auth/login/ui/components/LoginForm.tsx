@@ -168,7 +168,7 @@ export const LoginForm = () => {
                     ) : (
                         <div className="login-label-row-light">
                             <label className="login-label-light">Contraseña</label>
-                            <a href="#" className="login-forgot-light">¿Olvidó su contraseña?</a>
+                            <a href="/forgot-password" className="login-forgot-light">¿Olvidó su contraseña?</a>
                         </div>
                     )}
                     <div className={isDark ? 'login-input-wrapper-dark' : 'login-input-wrapper-light'}>

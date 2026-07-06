@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { env } from '@/shared/config/env';
 import { LoginRepository } from '../repository';
 import { LoginUseCase } from '../../app';
 import {
@@ -156,3 +157,75 @@ export async function loginServerAction(email: string, password: string) {
 }
 
 
+
+export async function recoveryChannelsAction(email: string): Promise<{ email: boolean; whatsapp: { available: boolean; masked_phone: string }; error?: string }> {
+    try {
+        const res = await fetch(`${env.API_BASE_URL}/auth/recovery-channels`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return { email: true, whatsapp: { available: false, masked_phone: '' }, error: data.error || data.message };
+        }
+        return { email: data.email, whatsapp: data.whatsapp };
+    } catch (error: any) {
+        return { email: true, whatsapp: { available: false, masked_phone: '' }, error: error.message || 'Error al conectar con el servidor' };
+    }
+}
+
+export async function forgotPasswordAction(email: string, channel: 'email' | 'whatsapp' = 'email'): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const res = await fetch(`${env.API_BASE_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, channel }),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return { success: false, error: data.error || data.message || 'No se pudo procesar la solicitud' };
+        }
+        return { success: true, message: data.message };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Error al conectar con el servidor' };
+    }
+}
+
+export async function verifyOtpAction(email: string, code: string): Promise<{ success: boolean; token?: string; message?: string; error?: string }> {
+    try {
+        const res = await fetch(`${env.API_BASE_URL}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, code }),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            return { success: false, error: data.message || data.error || 'Codigo invalido o expirado' };
+        }
+        return { success: true, token: data.token, message: data.message };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Error al conectar con el servidor' };
+    }
+}
+
+export async function resetPasswordAction(token: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+        const res = await fetch(`${env.API_BASE_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, new_password: newPassword }),
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            return { success: false, error: data.error || data.message || 'No se pudo restablecer la contrasena' };
+        }
+        return { success: true, message: data.message };
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Error al conectar con el servidor' };
+    }
+}

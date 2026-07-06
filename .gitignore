@@ -97,3 +97,6 @@ probability.pem
 .gh-token
 .claude/scheduled_tasks.lock
 .claude/worktrees/
+
+# Go build artifacts / scratch
+.gotmp/

@@ -146,6 +146,16 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{},
 		Description:  "Alerta de monitoreo del servidor para el administrador",
 	},
+	"recuperacion_codigo": {
+		Name:     "recuperacion_codigo",
+		Language: "es",
+		Variables: []string{
+			"codigo",
+		},
+		HasButtons:   true,
+		ButtonLabels: []string{"Copiar codigo"},
+		Description:  "Codigo OTP para recuperacion de contrasena (authentication)",
+	},
 	"guia_envio_generada": {
 		Name:     "guia_envio_generada",
 		Language: "es",

@@ -163,9 +163,7 @@ type Config struct {
 	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 
 	// Email (Amazon SES)
-	SESRegion          string `env:"SES_REGION"`
-	SESAccessKey       string `env:"SES_ACCESS_KEY"`
-	SESSecretKey       string `env:"SES_SECRET_KEY"`
+	ResendAPIKey       string `env:"RESEND_API_KEY"`
 	FromEmail          string `env:"FROM_EMAIL"`
 	UrlBaseDomainS3    string `env:"URL_BASE_DOMAIN_S3"`
 	WhatsAppURL        string `env:"WHATSAPP_URL,required"`

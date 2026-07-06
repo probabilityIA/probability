@@ -115,6 +115,10 @@ const (
 )
 
 const (
+	QueueAuthPasswordResetOTP = "auth.password_reset.otp"
+)
+
+const (
 	QueueShipmentsWhatsAppGuideNotification = "shipments.whatsapp.guide_notification"
 )
 
