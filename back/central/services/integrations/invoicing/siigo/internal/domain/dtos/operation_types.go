@@ -27,11 +27,41 @@ type AnnulInvoiceResult struct {
 }
 
 type ProductItem struct {
-	ID          string
-	Code        string
-	Name        string
-	Description string
-	Price       float64
+	ID                string
+	Code              string
+	Name              string
+	Description       string
+	Price             float64
+	StockControl      bool
+	AvailableQuantity float64
+	Warehouses        []ProductWarehouseStock
+}
+
+type ProductWarehouseStock struct {
+	ID       int
+	Name     string
+	Quantity float64
+}
+
+type WarehouseItem struct {
+	ID   int
+	Name string
+}
+
+type WebhookItem struct {
+	ID            string `json:"id"`
+	ApplicationID string `json:"application_id"`
+	URL           string `json:"url"`
+	Topic         string `json:"topic"`
+	CompanyKey    string `json:"company_key"`
+	Active        bool   `json:"active"`
+	CreatedAt     string `json:"created_at"`
+}
+
+type CreateWebhookInput struct {
+	ApplicationID string
+	URL           string
+	Topic         string
 }
 
 type PaymentTypeItem struct {

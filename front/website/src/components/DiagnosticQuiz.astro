@@ -1,0 +1,1039 @@
+---
+---
+
+<div id="diagnostic-quiz"></div>
+
+<style>
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.35); }
+    50% { box-shadow: 0 0 0 9px rgba(139, 92, 246, 0); }
+  }
+
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(26px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  :global(#diagnostic-quiz) {
+    width: 100%;
+    min-height: 100%;
+  }
+
+  :global(.dq-wrapper) {
+    background: transparent;
+    color: #1E293B;
+    font-family: 'Inter', -apple-system, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 20px;
+    box-sizing: border-box;
+  }
+
+  :global(.dq-container) {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  :global(.dq-intro) {
+    text-align: center;
+    padding-top: 0px;
+    animation: none;
+  }
+
+  :global(.dq-badge) {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(139, 92, 246, 0.1);
+    color: #8B5CF6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    padding: 7px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    animation: pulse-glow 2.8s ease-in-out infinite;
+    margin-bottom: 1.75rem;
+  }
+
+  :global(.dq-badge-dot) {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8B5CF6;
+    display: inline-block;
+  }
+
+  :global(.dq-title) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.125rem, 9vw, 3.125rem);
+    line-height: 1.06;
+    margin: 28px 0 0;
+    letter-spacing: -0.025em;
+    color: #1E1B4B;
+  }
+
+  :global(.dq-title-gradient) {
+    background: linear-gradient(120deg, #8B5CF6, #3B82F6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  :global(.dq-subtitle) {
+    color: #64748B;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    max-width: 470px;
+    margin: 20px auto 0;
+  }
+
+  :global(.dq-btn-start) {
+    margin-top: 36px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    color: #fff;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 15px 32px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(.dq-btn-start:hover) {
+    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.42);
+    transform: translateY(-1px);
+  }
+
+  :global(.dq-time) {
+    margin-top: 18px;
+    color: #94A3B8;
+    font-size: 13px;
+  }
+
+  :global(.dq-quiz) {
+    animation: none;
+  }
+
+  :global(.dq-progress-top) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  :global(.dq-progress-label) {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8B5CF6;
+  }
+
+  :global(.dq-progress-pct) {
+    font-size: 13px;
+    font-weight: 700;
+    color: #8B5CF6;
+  }
+
+  :global(.dq-progress-track) {
+    height: 8px;
+    background: #E0E7FF;
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+
+  :global(.dq-progress-fill) {
+    height: 100%;
+    background: #3B82F6;
+    border-radius: 100px;
+    transition: width 0.4s ease;
+  }
+
+  :global(.dq-card) {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  :global(.dq-question-header) {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  :global(.dq-question-num) {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #EDE9FE;
+    color: #7C3AED;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  :global(.dq-question-text) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 1.35;
+    color: #1E1B4B;
+    margin: 6px 0 0;
+  }
+
+  :global(.dq-options) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  :global(.dq-option) {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-radius: 10px;
+    border: 2px solid #E0E7FF;
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  :global(.dq-option:hover) {
+    border-color: #8B5CF6;
+    background: #F5F3FF;
+  }
+
+  :global(.dq-option.selected) {
+    border-color: #8B5CF6;
+    background: #F5F3FF;
+  }
+
+  :global(.dq-radio) {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #CBD5E1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  :global(.dq-option.selected .dq-radio) {
+    border-color: #8B5CF6;
+    background: #8B5CF6;
+  }
+
+  :global(.dq-radio-inner) {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    display: none;
+  }
+
+  :global(.dq-option.selected .dq-radio-inner) {
+    display: block;
+  }
+
+  :global(.dq-option-label) {
+    font-size: 15px;
+    color: #334155;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  :global(.dq-buttons) {
+    display: flex;
+    gap: 12px;
+  }
+
+  :global(.dq-btn-back) {
+    flex: none;
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    color: #1E1B4B;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 13px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  :global(.dq-btn-back:hover) {
+    border-color: #CBD5E1;
+    background: #F8FAFC;
+  }
+
+  :global(.dq-btn-next) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 13px 22px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(.dq-btn-next:hover:not(:disabled)) {
+    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.42);
+  }
+
+  :global(.dq-btn-next:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  :global(.dq-results) {
+    animation: none;
+  }
+
+  :global(.dq-hero) {
+    border-radius: 16px;
+    padding: 34px 28px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    color: #fff;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  :global(.dq-hero.basic) {
+    background: linear-gradient(135deg, #7F1D1D, #991B1B);
+  }
+
+  :global(.dq-hero.intermediate) {
+    background: linear-gradient(135deg, #78350F, #92400E);
+  }
+
+  :global(.dq-hero.advanced) {
+    background: linear-gradient(135deg, #2D2066, #3B2882);
+  }
+
+  :global(.dq-hero-label) {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+
+  :global(.dq-hero-title) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 42px;
+    margin: 10px 0 0;
+    letter-spacing: -0.01em;
+  }
+
+  :global(.dq-hero-score) {
+    display: inline-block;
+    margin-top: 14px;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  :global(.dq-hero-desc) {
+    margin: 18px auto 0;
+    max-width: 430px;
+    font-size: 15px;
+    line-height: 1.6;
+    opacity: 0.92;
+  }
+
+  :global(.dq-metrics) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 11px;
+  }
+
+  :global(.dq-metric) {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    text-align: center;
+  }
+
+  :global(.dq-metric-icon) {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  :global(.dq-metric-value) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 25px;
+    color: #1E1B4B;
+    margin-top: 9px;
+  }
+
+  :global(.dq-metric-label) {
+    font-size: 12px;
+    color: #64748B;
+    margin-top: 6px;
+    line-height: 1.35;
+  }
+
+  :global(.dq-peso-sign) {
+    color: #1E1B4B;
+    font-weight: 700;
+  }
+
+  :global(.dq-metrics-note) {
+    text-align: center;
+    font-size: 11px;
+    color: #475569;
+    margin-top: 11px;
+    margin-bottom: 34px;
+  }
+
+  :global(.dq-recs-title) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: #8B5CF6;
+    margin: 0 0 16px 0;
+  }
+
+  :global(.dq-recs) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  :global(.dq-rec) {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  :global(.dq-rec-icon) {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  :global(.dq-rec-icon.info) {
+    background: #F5F3FF;
+    color: #8B5CF6;
+  }
+
+  :global(.dq-rec-icon.warning) {
+    background: #FFFBEB;
+    color: #D97706;
+  }
+
+  :global(.dq-rec-icon.success) {
+    background: #ECFDF5;
+    color: #16A34A;
+  }
+
+  :global(.dq-rec-icon.risk) {
+    background: #FEF2F2;
+    color: #EF4444;
+  }
+
+  :global(.dq-rec-content) {
+    flex: 1;
+  }
+
+  :global(.dq-rec-title) {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #1E1B4B;
+  }
+
+  :global(.dq-checkmark) {
+    color: #059669;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  :global(.dq-rec-desc) {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+
+  :global(.dq-tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 11px;
+  }
+
+  :global(.dq-tag) {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 7px;
+  }
+
+  :global(.dq-tag.info) {
+    background: #F5F3FF;
+    color: #8B5CF6;
+  }
+
+  :global(.dq-tag.warning) {
+    background: #FFFBEB;
+    color: #D97706;
+  }
+
+  :global(.dq-tag.success) {
+    background: #ECFDF5;
+    color: #16A34A;
+  }
+
+  :global(.dq-tag.risk) {
+    background: #FEF2F2;
+    color: #EF4444;
+  }
+
+  :global(.dq-footer) {
+    text-align: center;
+  }
+
+  :global(.dq-btn-restart) {
+    background: transparent;
+    border: 1px solid rgba(228, 228, 231, 0.18);
+    color: #94A3B8;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+
+  :global(.dq-btn-restart:hover) {
+    border-color: #8B5CF6;
+    color: #C4B5FD;
+  }
+
+  @media (max-width: 640px) {
+    :global(.dq-wrapper) {
+      padding: 10px 10px;
+    }
+
+    :global(.dq-intro) {
+      padding-top: 0;
+    }
+
+    :global(.dq-title) {
+      font-size: 1.5rem;
+      margin: 16px 0 0;
+    }
+
+    :global(.dq-subtitle) {
+      font-size: 0.9375rem;
+      margin: 12px auto 0;
+    }
+
+    :global(.dq-btn-start) {
+      padding: 12px 24px;
+      font-size: 0.9375rem;
+      margin-top: 20px;
+    }
+
+    :global(.dq-time) {
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    :global(.dq-progress-label) {
+      font-size: 12px;
+    }
+
+    :global(.dq-progress-pct) {
+      font-size: 12px;
+    }
+
+    :global(.dq-question-text) {
+      font-size: 1rem;
+    }
+
+    :global(.dq-option) {
+      padding: 14px 16px;
+      gap: 10px;
+    }
+
+    :global(.dq-option-label) {
+      font-size: 14px;
+    }
+
+    :global(.dq-buttons) {
+      gap: 8px;
+    }
+
+    :global(.dq-btn-back) {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    :global(.dq-btn-next) {
+      padding: 10px 16px;
+      font-size: 13px;
+    }
+
+    :global(.dq-hero-title) {
+      font-size: 1.75rem;
+    }
+
+    :global(.dq-hero-score) {
+      padding: 4px 12px;
+      font-size: 12px;
+    }
+
+    :global(.dq-hero-desc) {
+      font-size: 14px;
+      margin: 12px auto 0;
+    }
+
+    :global(.dq-metrics) {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    :global(.dq-metric) {
+      padding: 14px 10px;
+    }
+
+    :global(.dq-metric-value) {
+      font-size: 1.25rem;
+    }
+
+    :global(.dq-metric-label) {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    :global(.dq-metrics-note) {
+      font-size: 10px;
+      margin-top: 8px;
+      margin-bottom: 20px;
+    }
+
+    :global(.dq-recs-title) {
+      font-size: 16px;
+      margin: 0 0 12px 0;
+    }
+
+    :global(.dq-rec) {
+      padding: 12px;
+      gap: 10px;
+    }
+
+    :global(.dq-rec-title) {
+      font-size: 14px;
+    }
+
+    :global(.dq-rec-desc) {
+      font-size: 13px;
+    }
+
+    :global(.dq-tag) {
+      font-size: 11px;
+      padding: 2px 8px;
+    }
+
+    :global(.dq-btn-restart) {
+      padding: 10px 20px;
+      font-size: 12px;
+    }
+  }
+</style>
+
+<script is:inline>
+  class DiagnosticQuiz {
+    constructor() {
+      this.state = {
+        screen: 'intro',
+        currentQ: 0,
+        answers: [null, null, null, null, null, null],
+      };
+
+      this.questions = [
+        {
+          text: '¿Cómo gestionas tu inventario actualmente?',
+          options: [
+            'Hojas de cálculo o papel',
+            'Software básico con actualización manual',
+            'Sistema con stock en tiempo real',
+            'WMS integrado con sincronización automática multicanal',
+          ],
+        },
+        {
+          text: '¿Cómo preparas los pedidos (picking y packing)?',
+          options: [
+            'Manual, sin rutas ni orden definido',
+            'Listas impresas, un pedido cada vez',
+            'Picking por lotes o por zonas',
+            'Picking guiado con escáner y validación automática',
+          ],
+        },
+        {
+          text: '¿Cómo gestionas los envíos y el transportista?',
+          options: [
+            'Un único transportista, etiquetas manuales',
+            'Varios transportistas comparados a mano',
+            'Plataforma multi-carrier con tarifas',
+            'Asignación automática por reglas y coste óptimo',
+          ],
+        },
+        {
+          text: '¿Cómo gestionas las devoluciones?',
+          options: [
+            'Sin un proceso definido',
+            'Por email o manual, caso por caso',
+            'Portal de devoluciones básico',
+            'Portal automatizado con reembolso y reposición de stock',
+          ],
+        },
+        {
+          text: '¿Qué visibilidad tienes del estado de los pedidos?',
+          options: [
+            'Ninguna hasta que se entrega',
+            'Consulta manual en las webs de los transportistas',
+            'Tracking centralizado interno',
+            'Tracking en tiempo real con alertas proactivas al cliente',
+          ],
+        },
+        {
+          text: '¿Qué nivel de integración tienen tus sistemas (tienda, ERP, WMS)?',
+          options: [
+            'Sistemas aislados, trasvase manual de datos',
+            'Algunas exportaciones e importaciones manuales',
+            'Integraciones parciales entre sistemas',
+            'Ecosistema totalmente integrado y automatizado',
+          ],
+        },
+      ];
+
+      this.renderAll();
+    }
+
+    renderAll() {
+      const root = document.getElementById('diagnostic-quiz');
+      if (!root) return;
+      root.innerHTML = this.getHTML();
+      this.attachListeners();
+    }
+
+    getHTML() {
+      if (this.state.screen === 'intro') return this.renderIntro();
+      if (this.state.screen === 'quiz') return this.renderQuiz();
+      if (this.state.screen === 'results') return this.renderResults();
+    }
+
+    renderIntro() {
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-intro">
+              <div class="dq-badge">
+                <span class="dq-badge-dot"></span>
+                Diagnóstico logístico
+              </div>
+              <h1 class="dq-title">
+                Escanea tu <span class="dq-title-gradient">Logística</span>
+              </h1>
+              <p class="dq-subtitle">
+                Responde 6 preguntas y descubre el nivel de madurez de tu operación, cuánto tiempo puedes recuperar y dónde está tu mayor oportunidad de ahorro.
+              </p>
+              <button class="dq-btn-start">Empezar diagnóstico →</button>
+              <div class="dq-time">6 preguntas · menos de 2 minutos</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    renderQuiz() {
+      const q = this.questions[this.state.currentQ];
+      const answered = this.state.answers[this.state.currentQ] != null;
+      const pct = ((this.state.currentQ + 1) / this.questions.length) * 100;
+
+      const optionsHTML = q.options
+        .map(
+          (opt, i) => `
+        <div class="dq-option ${this.state.answers[this.state.currentQ] === i ? 'selected' : ''}" data-option="${i}">
+          <div class="dq-radio">
+            <div class="dq-radio-inner"></div>
+          </div>
+          <span class="dq-option-label">${opt}</span>
+        </div>
+      `
+        )
+        .join('');
+
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-quiz">
+              <div class="dq-progress-top">
+                <span class="dq-progress-label">Pregunta ${this.state.currentQ + 1} de ${this.questions.length}</span>
+                <span class="dq-progress-pct">${Math.round(pct)}%</span>
+              </div>
+              <div class="dq-progress-track">
+                <div class="dq-progress-fill" style="width: ${pct}%"></div>
+              </div>
+
+              <div class="dq-card">
+                <div class="dq-question-header">
+                  <div class="dq-question-num">${this.state.currentQ + 1}</div>
+                  <h2 class="dq-question-text">${q.text}</h2>
+                </div>
+                <div class="dq-options">
+                  ${optionsHTML}
+                </div>
+              </div>
+
+              <div class="dq-buttons">
+                <button class="dq-btn-back">
+                  ${this.state.currentQ === 0 ? '← Inicio' : '← Atrás'}
+                </button>
+                <button class="dq-btn-next" ${!answered ? 'disabled' : ''}>
+                  ${this.state.currentQ === this.questions.length - 1 ? 'Ver resultados →' : 'Siguiente →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    buildRecs(a) {
+      const palette = {
+        info: { type: 'info' },
+        warning: { type: 'warning' },
+        success: { type: 'success' },
+        risk: { type: 'risk' },
+      };
+
+      const recDefs = [
+        { title: 'Centraliza tu inventario', desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.', tags: ['Inventario', 'Stock'] },
+        { title: 'Optimiza el picking', desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.', tags: ['Picking', 'Almacén'] },
+        { title: 'Compara transportistas', desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.', tags: ['Envíos', 'Costes'] },
+        { title: 'Automatiza las devoluciones', desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.', tags: ['Devoluciones', 'Experiencia'] },
+        { title: 'Da visibilidad al cliente', desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.', tags: ['Tracking', 'Experiencia'] },
+        { title: 'Integra tus sistemas', desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.', tags: ['Integración', 'Automatización'] },
+      ];
+
+      let recs = [];
+      a.forEach((v, i) => {
+        if (v <= 1) {
+          recs.push({
+            ...recDefs[i],
+            type: v === 0 ? 'risk' : 'warning',
+          });
+        }
+      });
+
+      recs.sort((x, y) => (x.type === 'risk' ? 0 : 1) - (y.type === 'risk' ? 0 : 1));
+
+      if (recs.length === 0) {
+        recs.push({
+          title: 'Mantén tu ventaja',
+          desc: 'Tu operación ya es madura. Revisa tus KPIs cada mes y automatiza los últimos procesos manuales para escalar sin fricción.',
+          tags: ['Optimización', 'Escalabilidad'],
+          type: 'success',
+        });
+      }
+
+      return recs;
+    }
+
+    renderResults() {
+      const scores = this.state.answers.map(a => a ?? 0);
+      const total = scores.reduce((a, b) => a + b, 0);
+
+      let level, heroClass, desc;
+      if (total <= 6) {
+        level = 'Básica';
+        heroClass = 'basic';
+        desc = 'Tu operación depende en gran parte de procesos manuales. Hay un margen amplio de mejora y de ahorro por delante.';
+      } else if (total <= 12) {
+        level = 'Intermedia';
+        heroClass = 'intermediate';
+        desc = 'Tienes bases sólidas, pero varios procesos clave todavía son manuales o están sin conectar entre sí.';
+      } else {
+        level = 'Avanzada';
+        heroClass = 'advanced';
+        desc = 'Tu logística está muy optimizada. El foco ahora es afinar los últimos detalles y escalar apoyándote en los datos.';
+      }
+
+      const metricsHTML = `
+        <div class="dq-metric">
+          <div class="dq-metric-value">${Math.round((18 - total) * 1.3 + 2)}h</div>
+          <div class="dq-metric-label">Horas/semana recuperables</div>
+        </div>
+        <div class="dq-metric">
+          <div class="dq-metric-value">${(4 + (18 - total) * 0.6).toFixed(1)}%</div>
+          <div class="dq-metric-label">Tasa de devolución estimada</div>
+        </div>
+        <div class="dq-metric">
+          <div class="dq-metric-value dq-metric-price"><span class="dq-peso-sign">$</span>${((18 - total) * 3500000).toLocaleString('es-CO')}</div>
+          <div class="dq-metric-label">Ahorro anual potencial</div>
+        </div>
+      `;
+
+      const recs = this.buildRecs(scores);
+      const recsHTML = recs
+        .map((r) => {
+          let tagsHtml = r.tags
+            .map((tag) => `<span class="tag ${r.type}">${tag}</span>`)
+            .join('');
+          return `
+            <div class="dq-rec">
+              <div class="dq-rec-content">
+                <div class="dq-rec-title"><span class="dq-checkmark">✓</span> ${r.title}</div>
+                <div class="dq-rec-desc">${r.desc}</div>
+                <div class="dq-tags">${tagsHtml}</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-results">
+              <div class="dq-hero ${heroClass}">
+                <div class="dq-hero-label">Nivel de madurez logística</div>
+                <div class="dq-hero-title">${level}</div>
+                <div class="dq-hero-score">${total} / 18 puntos</div>
+                <p class="dq-hero-desc">${desc}</p>
+              </div>
+
+              <div class="dq-metrics">
+                ${metricsHTML}
+              </div>
+              <div class="dq-metrics-note">Estimaciones orientativas calculadas a partir de tus respuestas.</div>
+
+              <h3 class="dq-recs-title">Recomendaciones para ti</h3>
+              <div class="dq-recs">
+                ${recsHTML}
+              </div>
+
+              <div class="dq-footer">
+                <button class="dq-btn-restart">↺ Repetir diagnóstico</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    attachListeners() {
+      const startBtn = document.querySelector('.dq-btn-start');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          this.state.screen = 'quiz';
+          this.state.currentQ = 0;
+          this.renderAll();
+        });
+      }
+
+      const options = document.querySelectorAll('[data-option]');
+      options.forEach(opt => {
+        opt.addEventListener('click', () => {
+          const idx = parseInt(opt.getAttribute('data-option'));
+          this.state.answers[this.state.currentQ] = idx;
+          this.renderAll();
+        });
+      });
+
+      const nextBtn = document.querySelector('.dq-btn-next');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          if (this.state.currentQ < this.questions.length - 1) {
+            this.state.currentQ++;
+          } else {
+            this.state.screen = 'results';
+          }
+          this.renderAll();
+        });
+      }
+
+      const backBtn = document.querySelector('.dq-btn-back');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          if (this.state.currentQ === 0) {
+            this.state.screen = 'intro';
+          } else {
+            this.state.currentQ--;
+          }
+          this.renderAll();
+        });
+      }
+
+      const restartBtn = document.querySelector('.dq-btn-restart');
+      if (restartBtn) {
+        restartBtn.addEventListener('click', () => {
+          this.state.screen = 'intro';
+          this.state.currentQ = 0;
+          this.state.answers = [null, null, null, null, null, null];
+          this.renderAll();
+        });
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      new DiagnosticQuiz();
+    });
+  } else {
+    new DiagnosticQuiz();
+  }
+</script>

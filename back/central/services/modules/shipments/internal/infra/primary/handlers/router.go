@@ -3,13 +3,31 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	"github.com/secamc93/probability/back/central/shared/ratelimit"
 )
 
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	router.GET("/tracking/search", h.PublicSearchTracking)
 	router.GET("/tracking/:tracking_number/history", h.PublicGetTrackingHistory)
 
-	router.POST("/shopify/shipping-rates/:integration_id", h.ShopifyShippingRates)
+	router.POST("/shopify/shipping-rates/:integration_id",
+		ratelimit.Gin(h.ratesLimiter, ratelimit.FirstNonEmpty(
+			ratelimit.ByParam("integration_id", "shopint"),
+			ratelimit.ByClientIP("shopip"),
+		)),
+		h.ShopifyShippingRates)
+	router.POST("/woocommerce/shipping-rates/:integration_id",
+		ratelimit.Gin(h.ratesLimiter, ratelimit.FirstNonEmpty(
+			ratelimit.ByHeader("X-Probability-Token", "wootok"),
+			ratelimit.ByClientIP("wooip"),
+		)),
+		h.WooCommerceShippingRates)
+	router.GET("/woocommerce/plugin-download", h.WooCommercePluginDownload)
+
+	wooAuth := router.Group("/woocommerce", middleware.JWT())
+	wooAuth.GET("/connection-info/:integration_id", h.WooCommerceConnectionInfo)
+	wooAuth.POST("/connection-info/:integration_id/rotate", h.WooCommerceRotateToken)
+	wooAuth.POST("/connection-info/:integration_id/revoke", h.WooCommerceRevokeToken)
 
 	shipments := router.Group("/shipments", middleware.JWT())
 	{

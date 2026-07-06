@@ -1,0 +1,238 @@
+---
+import DiagnosticQuiz from './DiagnosticQuiz.astro';
+---
+
+<div id="quiz-modal-wrapper">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <button class="modal-close" aria-label="Cerrar" title="Cerrar (ESC)">×</button>
+    </div>
+    <div class="modal-body">
+      <DiagnosticQuiz />
+    </div>
+  </div>
+</div>
+
+<style>
+  #quiz-modal-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  #quiz-modal-wrapper.active {
+    display: flex !important;
+  }
+
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .modal-content {
+    position: relative;
+    background: linear-gradient(135deg, #FAFBFE 0%, #F5F3FF 100%);
+    border-radius: 20px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(139, 92, 246, 0.15);
+    animation: slideUp 0.3s ease-out;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 92, 246, 0.03) 2px, rgba(139, 92, 246, 0.03) 4px);
+    pointer-events: none;
+    border-radius: 20px;
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 12px 16px;
+    background: transparent;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: transparent;
+    position: relative;
+    z-index: 2;
+  }
+
+  .modal-close {
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+
+  .modal-close:hover {
+    background: linear-gradient(135deg, #7C3AED, #8B5CF6);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+    transform: scale(1.05);
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    #quiz-modal-wrapper {
+      padding: 1rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      max-width: 90vw;
+      width: 100%;
+      max-height: 85vh;
+      border-radius: 20px;
+      position: relative;
+      bottom: auto;
+      top: auto;
+      left: auto;
+      right: auto;
+    }
+
+    .modal-header {
+      padding: 10px 14px;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      font-size: 1.25rem;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    #quiz-modal-wrapper {
+      padding: 1rem;
+    }
+
+    .modal-content {
+      max-width: 95vw;
+      border-radius: 20px;
+      max-height: 88vh;
+    }
+
+    .modal-header {
+      padding: 8px 12px;
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      font-size: 1.1rem;
+    }
+  }
+</style>
+
+<script is:inline>
+  function initializeQuizModal() {
+    const modal = document.getElementById('quiz-modal-wrapper');
+    if (!modal) return;
+
+    const overlay = modal.querySelector('.modal-overlay');
+    const closeBtn = modal.querySelector('.modal-close');
+
+    function openModal() {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (overlay) overlay.addEventListener('click', closeModal);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    window.openQuizModal = openModal;
+    window.closeQuizModal = closeModal;
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeQuizModal);
+  } else {
+    initializeQuizModal();
+  }
+</script>

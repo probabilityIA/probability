@@ -19,7 +19,8 @@ import {
     SyncOrdersParams,
     IntegrationCategory,
     IntegrationCategoriesResponse,
-    CarrierServiceResponse
+    CarrierServiceResponse,
+    WooCommerceConnectionInfo
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -307,6 +308,24 @@ export class IntegrationApiRepository implements IIntegrationRepository {
 
     async disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
         return this.fetch<CarrierServiceResponse>(`/integrations/shopify/carrier-service/${id}/disable`, {
+            method: 'POST',
+        });
+    }
+
+    async getWooCommerceConnectionInfo(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.fetch<WooCommerceConnectionInfo>(`/woocommerce/connection-info/${id}`, {
+            method: 'GET',
+        });
+    }
+
+    async rotateWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.fetch<WooCommerceConnectionInfo>(`/woocommerce/connection-info/${id}/rotate`, {
+            method: 'POST',
+        });
+    }
+
+    async revokeWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.fetch<WooCommerceConnectionInfo>(`/woocommerce/connection-info/${id}/revoke`, {
             method: 'POST',
         });
     }

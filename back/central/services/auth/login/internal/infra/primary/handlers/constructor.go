@@ -14,9 +14,11 @@ type IAuthHandler interface {
 	GetUserRolesPermissionsHandler(c *gin.Context)
 	ChangePasswordHandler(c *gin.Context)
 	GeneratePasswordHandler(c *gin.Context)
+	RecoveryChannelsHandler(c *gin.Context)
+	ForgotPasswordHandler(c *gin.Context)
+	VerifyOTPHandler(c *gin.Context)
+	ResetPasswordHandler(c *gin.Context)
 	RegisterRoutes(v1Group *gin.RouterGroup, handler IAuthHandler, logger log.ILogger)
-	// GenerateAPIKeyHandler(c *gin.Context)
-	// ValidateAPIKeyHandler(c *gin.Context)
 }
 
 type AuthHandler struct {

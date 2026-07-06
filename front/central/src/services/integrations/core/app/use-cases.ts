@@ -17,7 +17,8 @@ import {
     CreateWebhookResponse,
     SyncOrdersParams,
     IntegrationCategoriesResponse,
-    CarrierServiceResponse
+    CarrierServiceResponse,
+    WooCommerceConnectionInfo
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -138,6 +139,18 @@ export class IntegrationUseCases {
 
     async disableShopifyCarrierService(id: number): Promise<CarrierServiceResponse> {
         return this.repository.disableShopifyCarrierService(id);
+    }
+
+    async getWooCommerceConnectionInfo(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.repository.getWooCommerceConnectionInfo(id);
+    }
+
+    async rotateWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.repository.rotateWooCommerceToken(id);
+    }
+
+    async revokeWooCommerceToken(id: number): Promise<WooCommerceConnectionInfo> {
+        return this.repository.revokeWooCommerceToken(id);
     }
 
     async setShopifyAutoGuide(id: number, enabled: boolean): Promise<CarrierServiceResponse> {

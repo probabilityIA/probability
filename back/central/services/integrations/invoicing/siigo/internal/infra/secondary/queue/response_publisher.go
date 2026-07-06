@@ -93,6 +93,20 @@ type ListBankAccountsResponseMessage struct {
 	Timestamp     time.Time         `json:"timestamp"`
 }
 
+type SiigoWarehouseItem struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type ListSiigoWarehousesResponseMessage struct {
+	Operation     string               `json:"operation"`
+	CorrelationID string               `json:"correlation_id"`
+	BusinessID    uint                 `json:"business_id"`
+	Items         []SiigoWarehouseItem `json:"items"`
+	Error         string               `json:"error,omitempty"`
+	Timestamp     time.Time            `json:"timestamp"`
+}
+
 type ListItemsItem struct {
 	ItemCode      string  `json:"item_code"`
 	ItemName      string  `json:"item_name"`
@@ -184,4 +198,11 @@ func (p *ResponsePublisher) PublishListBankAccountsResponse(ctx context.Context,
 		response.Timestamp = time.Now()
 	}
 	return p.publish(ctx, response.CorrelationID, response, "list_bank_accounts")
+}
+
+func (p *ResponsePublisher) PublishListSiigoWarehousesResponse(ctx context.Context, response *ListSiigoWarehousesResponseMessage) error {
+	if response.Timestamp.IsZero() {
+		response.Timestamp = time.Now()
+	}
+	return p.publish(ctx, response.CorrelationID, response, "list_siigo_warehouses")
 }

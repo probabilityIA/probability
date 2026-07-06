@@ -93,6 +93,42 @@ func (uc *useCase) updateProductTotalStock(ctx context.Context, productID string
 	}
 
 	_ = uc.repo.UpdateProductStockQuantity(ctx, productID, total)
+
+	uc.pushEcommerceStock(ctx, productID, businessID, total)
+}
+
+func (uc *useCase) pushEcommerceStock(ctx context.Context, productID string, businessID uint, total int) {
+	if uc.publisher == nil {
+		return
+	}
+
+	integrations, err := uc.repo.GetProductIntegrations(ctx, productID, businessID)
+	if err != nil || len(integrations) == 0 {
+		return
+	}
+
+	quantity := total
+	if quantity < 0 {
+		quantity = 0
+	}
+
+	for _, integ := range integrations {
+		if integ.IntegrationTypeCode != "woocommerce" {
+			continue
+		}
+		if integ.ExternalProductID == "" {
+			continue
+		}
+		_ = uc.publisher.PublishEcommerceStockPush(ctx, ports.EcommerceStockPushMessage{
+			ProductID:           productID,
+			ExternalProductID:   integ.ExternalProductID,
+			IntegrationID:       integ.IntegrationID,
+			IntegrationTypeCode: integ.IntegrationTypeCode,
+			BusinessID:          businessID,
+			Quantity:            quantity,
+			Timestamp:           time.Now().UTC().Format(time.RFC3339),
+		})
+	}
 }
 
 func (uc *useCase) publishSync(ctx context.Context, productID string, businessID uint, newQuantity int, warehouseID uint, source string) {

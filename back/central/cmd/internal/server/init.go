@@ -70,7 +70,7 @@ func Init(ctx context.Context) error {
 	v1Group := r.Group("/api/v1")
 
 	// Initialize Auth Modules
-	auth.New(v1Group, database, logger, environment, s3Service)
+	auth.New(v1Group, database, logger, environment, s3Service, rabbitMQ)
 
 	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
 	events.New(v1Group, logger, rabbitMQ, redisClient)

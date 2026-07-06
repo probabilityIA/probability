@@ -54,11 +54,25 @@ type JournalEntry struct {
 }
 
 type Product struct {
-	ID          string
-	Code        string
-	Name        string
-	Description string
-	Price       float64
+	ID                string
+	Code              string
+	Name              string
+	Description       string
+	Price             float64
+	StockControl      bool
+	AvailableQuantity float64
+	Warehouses        []ProductWarehouseStock
+}
+
+type ProductWarehouseStock struct {
+	ID       int
+	Name     string
+	Quantity float64
+}
+
+type Warehouse struct {
+	ID   int
+	Name string
 }
 
 type PaymentType struct {
@@ -78,19 +92,29 @@ type Voucher struct {
 }
 
 type CreditNote struct {
-	ID            string
-	Name          string
-	Number        int
-	InvoiceRef    string
-	Amount        float64
-	Reason        string
-	CUFE          string
-	Date          string
-	CreatedAt     time.Time
+	ID         string
+	Name       string
+	Number     int
+	InvoiceRef string
+	Amount     float64
+	Reason     string
+	CUFE       string
+	Date       string
+	CreatedAt  time.Time
 }
 
 type AuthToken struct {
 	Token     string
 	ExpiresAt time.Time
 	Username  string
+}
+
+type Webhook struct {
+	ID            string
+	ApplicationID string
+	URL           string
+	Topic         string
+	CompanyKey    string
+	Active        bool
+	CreatedAt     string
 }

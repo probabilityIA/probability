@@ -35,6 +35,23 @@ func (uc *UseCaseUpdateOrder) publishUpdateEvents(ctx context.Context, order *en
 //	INTEGRATION SYNC EVENTS
 //
 
+// publishSyncOrderSkipped notifica que la orden ya existe y no tuvo cambios (omitida en el sync)
+func (uc *UseCaseUpdateOrder) publishSyncOrderSkipped(ctx context.Context, order *entities.ProbabilityOrder) {
+	if uc.integrationEventPublisher == nil || order.IntegrationID == 0 {
+		return
+	}
+	uc.integrationEventPublisher.PublishSyncOrderRejected(ctx, order.IntegrationID, order.BusinessID, map[string]interface{}{
+		"order_id":     order.ID,
+		"order_number": order.OrderNumber,
+		"external_id":  order.ExternalID,
+		"platform":     order.Platform,
+		"status":       order.Status,
+		"reason":       "Ya existe (sin cambios)",
+		"skipped":      true,
+		"rejected_at":  time.Now().Format(time.RFC3339),
+	})
+}
+
 // publishSyncOrderUpdated notifica al módulo de integraciones que la orden se actualizó
 func (uc *UseCaseUpdateOrder) publishSyncOrderUpdated(ctx context.Context, order *entities.ProbabilityOrder) {
 	if uc.integrationEventPublisher == nil {

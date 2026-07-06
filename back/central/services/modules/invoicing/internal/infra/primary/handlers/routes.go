@@ -43,6 +43,10 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		// Journals (comprobantes contables Siigo)
 		invoicing.POST("/journals", middleware.JWT(), h.CreateJournal)
 
+		// Sincronizacion de inventario Siigo -> Probability (una via)
+		invoicing.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
+		invoicing.POST("/inventory/siigo-warehouses", middleware.JWT(), h.ListSiigoWarehouses)
+
 		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)
 		// NOTA: Estas rutas están deprecadas y serán eliminadas en una futura versión
 		// Usar endpoints de integrations/core para gestión de proveedores de facturación

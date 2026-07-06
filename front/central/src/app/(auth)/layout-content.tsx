@@ -13,7 +13,6 @@ import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-co
 import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-business-context';
 import { WalletBusinessProvider } from '@/shared/contexts/wallet-business-context';
 import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
-import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
 import AnnouncementModal from '@/services/modules/announcements/ui/components/AnnouncementModal';
 import AnnouncementTicker from '@/services/modules/announcements/ui/components/AnnouncementTicker';
@@ -134,11 +133,6 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         `}</style>
       </main>
 
-      {/* Lina -- Asistente Virtual (solo para roles business / super admin) */}
-      <LinaChatbot
-        userScope={user?.scope}
-        isSuperAdmin={user?.is_super_admin}
-      />
 
       <AnnouncementModal />
     </div>

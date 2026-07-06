@@ -115,6 +115,10 @@ const (
 )
 
 const (
+	QueueAuthPasswordResetOTP = "auth.password_reset.otp"
+)
+
+const (
 	QueueShipmentsWhatsAppGuideNotification = "shipments.whatsapp.guide_notification"
 )
 
@@ -136,6 +140,14 @@ const (
 	QueueInventoryBulkLoad = "inventory.bulk_load.requests"
 
 	QueueInventoryOrderFeedback = "inventory.orders.feedback"
+
+	QueueInventoryProviderSync = "inventory.provider_sync.requests"
+
+	QueueWooInventoryStockPush = "inventory.woocommerce.stock_push"
+
+	QueueProductsProviderUpsert = "products.provider_upsert.requests"
+
+	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"
 )
 
 const (

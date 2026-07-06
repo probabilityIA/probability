@@ -216,6 +216,10 @@ func (s *APISimulator) HandleListProducts() []*domain.Product {
 	return s.Repository.ListProducts()
 }
 
+func (s *APISimulator) HandleListWarehouses() []*domain.Warehouse {
+	return s.Repository.ListWarehouses()
+}
+
 func (s *APISimulator) HandleListPaymentTypes() []*domain.PaymentType {
 	return s.Repository.ListPaymentTypes()
 }

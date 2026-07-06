@@ -20,6 +20,7 @@ type UseCaseMock struct {
 	UpdateMovementTypeFn     func(ctx context.Context, dto request.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error)
 	DeleteMovementTypeFn     func(ctx context.Context, id uint) error
 	BulkLoadInventoryFn      func(ctx context.Context, dto request.BulkLoadDTO) (*response.BulkLoadResult, error)
+	SyncProviderStockFn      func(ctx context.Context, dto request.ProviderStockSyncDTO) (*response.ProviderSyncResult, error)
 	ReserveStockForOrderFn   func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
 	ConfirmSaleForOrderFn    func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
 	ReleaseStockForOrderFn   func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error)
@@ -181,6 +182,13 @@ func (m *UseCaseMock) BulkLoadInventory(ctx context.Context, dto request.BulkLoa
 		return m.BulkLoadInventoryFn(ctx, dto)
 	}
 	return &response.BulkLoadResult{}, nil
+}
+
+func (m *UseCaseMock) SyncProviderStock(ctx context.Context, dto request.ProviderStockSyncDTO) (*response.ProviderSyncResult, error) {
+	if m.SyncProviderStockFn != nil {
+		return m.SyncProviderStockFn(ctx, dto)
+	}
+	return &response.ProviderSyncResult{}, nil
 }
 
 func (m *UseCaseMock) ReserveStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*response.OrderStockResult, error) {

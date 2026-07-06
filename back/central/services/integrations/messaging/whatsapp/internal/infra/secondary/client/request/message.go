@@ -16,7 +16,7 @@ type Parameter struct {
 type Component struct {
 	Type       string      `json:"type"`
 	SubType    string      `json:"sub_type,omitempty"` // Para botones: "quick_reply", "url", "phone_number"
-	Index      int         `json:"index,omitempty"`    // Para botones: índice del botón (0-based)
+	Index      string      `json:"index,omitempty"`    // Para botones: índice del botón (0-based) como string
 	Parameters []Parameter `json:"parameters,omitempty"`
 }
 

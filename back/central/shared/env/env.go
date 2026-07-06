@@ -163,10 +163,9 @@ type Config struct {
 	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 
 	// Email (Amazon SES)
-	SESRegion    string `env:"SES_REGION"`
-	SESAccessKey string `env:"SES_ACCESS_KEY"`
-	SESSecretKey string `env:"SES_SECRET_KEY"`
-	FromEmail    string `env:"FROM_EMAIL"`
+	ResendAPIKey       string `env:"RESEND_API_KEY"`
+	FromEmail          string `env:"FROM_EMAIL"`
+	FrontendBaseURL    string `env:"FRONTEND_BASE_URL"`
 	UrlBaseDomainS3    string `env:"URL_BASE_DOMAIN_S3"`
 	WhatsAppURL        string `env:"WHATSAPP_URL,required"`
 	WhatsAppToken      string `env:"WHATSAPP_TOKEN,required"`
@@ -196,6 +195,13 @@ type Config struct {
 
 	// Webhooks
 	WebhookBaseURL string `env:"WEBHOOK_BASE_URL"`
+
+	// Woo store (EC2 temporal on/off por super admin)
+	WooStoreAWSRegion  string `env:"WOO_STORE_AWS_REGION"`
+	WooStoreAWSKey     string `env:"WOO_STORE_AWS_KEY"`
+	WooStoreAWSSecret  string `env:"WOO_STORE_AWS_SECRET"`
+	WooStoreInstanceID string `env:"WOO_STORE_INSTANCE_ID"`
+	WooStoreURL        string `env:"WOO_STORE_URL"`
 
 	// Softpymes (Facturación Electrónica)
 	SoftpymesAPIURL string `env:"SOFTPYMES_API_URL"`

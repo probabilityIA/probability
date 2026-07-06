@@ -1,15 +1,13 @@
 package dtos
 
-// Credentials contiene las credenciales de autenticación de Siigo
 type Credentials struct {
 	Username  string
 	AccessKey string
-	AccountID string // Subscription key / Siigo account ID (header Authorization en auth)
-	PartnerID string // Header Partner-Id (en todos los requests)
-	BaseURL   string // URL base de la API (opcional, usa el default del cliente si está vacío)
+	AccountID string
+	PartnerID string
+	BaseURL   string
 }
 
-// CustomerData datos del cliente para la API de Siigo
 type CustomerData struct {
 	Name    string
 	Email   string
@@ -18,7 +16,6 @@ type CustomerData struct {
 	Address string
 }
 
-// ItemData datos de un item para la API de Siigo
 type ItemData struct {
 	ProductID   *string
 	SKU         string
@@ -32,7 +29,6 @@ type ItemData struct {
 	Discount    float64
 }
 
-// CreateInvoiceRequest datos tipados para crear una factura en Siigo
 type CreateInvoiceRequest struct {
 	Customer     CustomerData
 	Items        []ItemData
@@ -43,11 +39,12 @@ type CreateInvoiceRequest struct {
 	ShippingCost float64
 	Currency     string
 	OrderID      string
+	OrderNumber  string
+	IsRetry      bool
 	Credentials  Credentials
 	Config       map[string]interface{}
 }
 
-// AuditData captura el request/response HTTP para logging y debugging
 type AuditData struct {
 	RequestURL     string
 	RequestPayload interface{}
@@ -55,15 +52,14 @@ type AuditData struct {
 	ResponseBody   string
 }
 
-// CreateInvoiceResult resultado de crear una factura en Siigo
-// Se retorna siempre (incluso en error) para incluir audit data
 type CreateInvoiceResult struct {
-	InvoiceNumber string
-	ExternalID    string
-	CUFE          string
-	QRCode        string
-	Total         string
-	IssuedAt      string
-	ProviderInfo  map[string]interface{}
-	AuditData     *AuditData
+	InvoiceNumber  string
+	ExternalID     string
+	CUFE           string
+	QRCode         string
+	Total          string
+	IssuedAt       string
+	AlreadyExisted bool
+	ProviderInfo   map[string]interface{}
+	AuditData      *AuditData
 }

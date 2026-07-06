@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // IWooCommerceUseCase define las operaciones de negocio de WooCommerce.
@@ -23,13 +24,33 @@ type IWooCommerceUseCase interface {
 
 	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
+
+	// ListWebhooks lista los webhooks de Probability en la tienda WooCommerce.
+	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
+
+	// DeleteWebhook elimina un webhook de la tienda WooCommerce.
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+
+	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
+
+	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
+	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+
+	// ReconcileProducts cruza los productos de ambos lados por SKU.
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	// ApplyProductsToWoo crea en WooCommerce los productos que solo existen en Probability.
+	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	// ApplyProductsToProbability crea en Probability los productos que solo existen en WooCommerce.
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
 type wooCommerceUseCase struct {
-	client    domain.IWooCommerceClient
-	service   domain.IIntegrationService
-	publisher domain.OrderPublisher
-	logger    log.ILogger
+	client      domain.IWooCommerceClient
+	service     domain.IIntegrationService
+	publisher   domain.OrderPublisher
+	productRepo domain.IProductRepository
+	rabbit      rabbitmq.IQueue
+	logger      log.ILogger
 }
 
 // New crea el use case de WooCommerce con todas sus dependencias.
@@ -37,12 +58,16 @@ func New(
 	client domain.IWooCommerceClient,
 	service domain.IIntegrationService,
 	publisher domain.OrderPublisher,
+	productRepo domain.IProductRepository,
+	rabbit rabbitmq.IQueue,
 	logger log.ILogger,
 ) IWooCommerceUseCase {
 	return &wooCommerceUseCase{
-		client:    client,
-		service:   service,
-		publisher: publisher,
-		logger:    logger.WithModule("woocommerce"),
+		client:      client,
+		service:     service,
+		publisher:   publisher,
+		productRepo: productRepo,
+		rabbit:      rabbit,
+		logger:      logger.WithModule("woocommerce"),
 	}
 }

@@ -13,15 +13,16 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa todos los módulos de autenticación y autorización
 // Este bundle coordina la inicialización de todos los submódulos de auth
 // (login, permissions, roles, users, business, actions, resources)
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3Service storage.IS3Service) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3Service storage.IS3Service, queue rabbitmq.IQueue) {
 	// Inicializar módulo de login
-	login.New(router, database, logger, environment)
+	login.New(router, database, logger, environment, queue)
 
 	// Inicializar módulo de demo (autoregistro publico)
 	demo.New(router, database, logger, environment)

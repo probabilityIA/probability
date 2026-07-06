@@ -14,6 +14,13 @@ type IPDFUploader interface {
 	UploadPDF(ctx context.Context, key string, content []byte) (string, error)
 }
 
+type OrderItemContext struct {
+	SKU         string
+	ProductName string
+	Quantity    int
+	UnitPrice   float64
+}
+
 type GuidePDFContext struct {
 	ShipmentID         uint
 	TrackingNumber     string
@@ -36,6 +43,7 @@ type GuidePDFContext struct {
 	DeclaredValue      float64
 	Currency           string
 	CodTotal           float64
+	CodCarrierFee      float64
 	BusinessName       string
 	BusinessAddress    string
 	WarehouseName      string
@@ -56,6 +64,7 @@ type GuidePDFContext struct {
 	Ref                string
 	Guia               string
 	Observaciones      string
+	OrderItems         []OrderItemContext
 }
 
 type IRepository interface {
@@ -102,6 +111,10 @@ type IRepository interface {
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
+	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
+	EnsureWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, err error)
+	RotateWooShippingToken(ctx context.Context, integrationID uint) (salt string, err error)
+	RevokeWooShippingToken(ctx context.Context, integrationID uint) error
 	GetCityDaneByName(ctx context.Context, city, province string) (string, error)
 
 	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error

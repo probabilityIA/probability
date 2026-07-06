@@ -77,6 +77,12 @@ const initialSyncFilters: SyncOrdersParams = {
     fulfillment_status: 'any'
 };
 
+const ECOMMERCE_TYPE_IDS = new Set<number>([1, 3, 4, 16, 17, 18, 19, 20, 21]);
+
+function isEcommerceIntegration(integration: { category?: string; integration_type_id?: number }): boolean {
+    return integration.category === 'ecommerce' || ECOMMERCE_TYPE_IDS.has(integration.integration_type_id ?? -1);
+}
+
 export default function IntegrationList({ onEdit, filterCategory: propFilterCategory }: IntegrationListProps) {
     const {
         integrations,
@@ -156,11 +162,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         created: number;
         rejected: number;
         updated: number;
+        skipped: number;
         totalFetched: number | null; // Total de órdenes publicadas a cola (set by integration.sync.completed)
         fetchDuration: string | null; // Duración de la fase de fetch
         orders: Array<{
             orderNumber: string;
-            status: 'created' | 'rejected' | 'updated';
+            status: 'created' | 'rejected' | 'updated' | 'skipped';
             reason?: string;
             createdAt?: string;
             orderStatus?: string;
@@ -177,6 +184,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     // Timers para completar lotes: se inician con batch.completed y se reinician con cada orden
     const batchCompletionTimers = useRef<Map<number, NodeJS.Timeout>>(new Map());
     const batchCompletedFlags = useRef<Set<number>>(new Set());
+    const syncCompletionTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Completar un lote y avanzar al siguiente
     const completeBatch = useCallback((batchIndex: number) => {
@@ -301,9 +309,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
-                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, totalFetched: null, fetchDuration: null, orders: [] };
                             const updated = { ...base, created: base.created + 1, total: base.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
-                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected + updated.skipped >= updated.totalFetched) {
                                 setSyncing(false);
                             }
                             return updated;
@@ -320,9 +328,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
-                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, totalFetched: null, fetchDuration: null, orders: [] };
                             const updated = { ...base, updated: base.updated + 1, total: base.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
-                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected + updated.skipped >= updated.totalFetched) {
                                 setSyncing(false);
                             }
                             return updated;
@@ -336,14 +344,17 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
                         const reason = eventData.reason || event.metadata?.reason || 'Error desconocido';
                         const error = eventData.error || event.metadata?.error || '';
+                        const isSkipped = eventData.skipped === true || event.metadata?.skipped === true;
                         const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
                         const orderStatus = eventData.status || event.metadata?.status || null;
                         const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
-                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
-                            const updated = { ...base, rejected: base.rejected + 1, total: base.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
-                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const updated = isSkipped
+                                ? { ...base, skipped: base.skipped + 1, total: base.total + 1, orders: [{ orderNumber, status: 'skipped' as const, reason, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] }
+                                : { ...base, rejected: base.rejected + 1, total: base.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected + updated.skipped >= updated.totalFetched) {
                                 setSyncing(false);
                             }
                             return updated;
@@ -361,7 +372,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const integration = integrations.find(i => i.id === integrationId);
                         const integrationName = integration?.name || `Integración ${integrationId}`;
 
-                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] });
+                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, totalFetched: null, fetchDuration: null, orders: [] });
                         showToast(`Sincronización iniciada: ${integrationName}`, 'info');
                         break;
                     }
@@ -395,7 +406,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         // Si no se obtuvieron órdenes, la sincronización terminó inmediatamente
                         if (totalFetched === 0) {
                             setSyncProgress(prev => ({
-                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, orders: [] }),
+                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, orders: [] }),
                                 totalFetched: 0,
                                 fetchDuration: duration,
                             }));
@@ -409,12 +420,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         // Los contadores se actualizan con eventos individuales (order.created/updated/rejected)
                         setSyncProgress(prev => {
                             const updated = {
-                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, orders: [] }),
+                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, orders: [] }),
                                 totalFetched,
                                 fetchDuration: duration,
                             };
                             // Si ya se procesaron todas las órdenes, marcar como terminado
-                            if (updated.created + updated.updated + updated.rejected >= totalFetched) {
+                            if (updated.created + updated.updated + updated.rejected + updated.skipped >= totalFetched) {
                                 setSyncing(false);
                             }
                             return updated;
@@ -422,6 +433,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
                         playNotificationSound();
                         showToast(`Fetch completado: ${integrationName} - ${totalFetched} órdenes obtenidas, procesando...`, 'info');
+
+                        // Fallback: si tras el fetch no llegan todos los eventos por-orden
+                        // (evento perdido, timing SSE), no dejar el modal colgado.
+                        if (syncCompletionTimerRef.current) clearTimeout(syncCompletionTimerRef.current);
+                        syncCompletionTimerRef.current = setTimeout(() => {
+                            setSyncing(false);
+                        }, 15000);
                         break;
                     }
                     case 'integration.sync.failed': {
@@ -489,7 +507,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         setBatchSync(newBatchState);
 
                         // Initialize order progress
-                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] });
+                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, skipped: 0, totalFetched: null, fetchDuration: null, orders: [] });
                         showToast(`Sincronización por lotes iniciada: ${totalBatches} lotes`, 'info');
                         break;
                     }
@@ -876,6 +894,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     created: 0,
                     rejected: 0,
                     updated: 0,
+                    skipped: 0,
                     totalFetched: null,
                     fetchDuration: null,
                     orders: []
@@ -907,6 +926,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 created: 0,
                 rejected: 0,
                 updated: 0,
+                skipped: 0,
                 totalFetched: null,
                 fetchDuration: null,
                 orders: []
@@ -1049,7 +1069,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 >
                     <PlayIcon className="w-4 h-4" />
                 </button>
-                {integration.category === 'ecommerce' && (
+                {isEcommerceIntegration(integration) && (
                     <button
                         onClick={() => handleSyncClick(integration.id, integration.name)}
                         className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -1371,6 +1391,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                             <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
                                                             <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
                                                         </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Omitidas: <strong>{syncProgress.skipped}</strong></span>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {/* Orders feed */}
@@ -1386,6 +1410,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                     className={`px-3 py-2 text-xs ${
                                                                         order.status === 'created' ? 'bg-green-50' :
                                                                         order.status === 'updated' ? 'bg-blue-50' :
+                                                                        order.status === 'skipped' ? 'bg-amber-50' :
                                                                         'bg-red-50'
                                                                     }`}
                                                                 >
@@ -1394,8 +1419,14 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                                                                                 order.status === 'created' ? 'bg-green-500' :
                                                                                 order.status === 'updated' ? 'bg-blue-500' :
+                                                                                order.status === 'skipped' ? 'bg-amber-500' :
                                                                                 'bg-red-500'
                                                                             }`} />
+                                                                            {order.status === 'skipped' && (
+                                                                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] flex-shrink-0 font-medium">
+                                                                                    Omitida
+                                                                                </span>
+                                                                            )}
                                                                             <span className="font-medium text-gray-800 dark:text-gray-100 truncate">#{order.orderNumber}</span>
                                                                             {order.batchIndex !== undefined && (
                                                                                 <span className="px-1 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[10px] flex-shrink-0 font-medium">
@@ -1412,8 +1443,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                             {order.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                                                         </span>
                                                                     </div>
-                                                                    {order.status === 'rejected' && order.reason && (
-                                                                        <div className="text-red-600 text-[10px] mt-0.5 ml-3 truncate" title={order.reason}>
+                                                                    {(order.status === 'rejected' || order.status === 'skipped') && order.reason && (
+                                                                        <div className={`text-[10px] mt-0.5 ml-3 truncate ${order.status === 'skipped' ? 'text-amber-600' : 'text-red-600'}`} title={order.reason}>
                                                                             {order.reason}
                                                                         </div>
                                                                     )}
@@ -1511,6 +1542,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                             <div className="w-3 h-3 rounded-full bg-red-500" />
                                                             <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
                                                         </div>
+                                                        {syncProgress.skipped > 0 && (
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                                                <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Omitidas: <strong>{syncProgress.skipped}</strong></span>
+                                                            </div>
+                                                        )}
                                                         {syncProgress.updated > 0 && (
                                                             <div className="flex items-center gap-1">
                                                                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
@@ -1530,13 +1567,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                         {syncProgress.orders.slice(0, 50).map((order, index) => (
                                                             <div
                                                                 key={index}
-                                                                className={`p-3 text-xs ${order.status === 'created' ? 'bg-green-50 hover:bg-green-100' : order.status === 'updated' ? 'bg-blue-50 hover:bg-blue-100' : 'bg-red-50 hover:bg-red-100'} transition-colors`}
+                                                                className={`p-3 text-xs ${order.status === 'created' ? 'bg-green-50 hover:bg-green-100' : order.status === 'updated' ? 'bg-blue-50 hover:bg-blue-100' : order.status === 'skipped' ? 'bg-amber-50 hover:bg-amber-100' : 'bg-red-50 hover:bg-red-100'} transition-colors`}
                                                             >
                                                                 <div className="flex items-start justify-between gap-2">
                                                                     <div className="flex-1 min-w-0">
                                                                         <div className="flex items-center gap-2 mb-1">
-                                                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500' : order.status === 'updated' ? 'bg-blue-500' : 'bg-red-500'}`} />
+                                                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500' : order.status === 'updated' ? 'bg-blue-500' : order.status === 'skipped' ? 'bg-amber-500' : 'bg-red-500'}`} />
                                                                             <span className="font-medium text-gray-800 dark:text-gray-100">#{order.orderNumber}</span>
+                                                                            {order.status === 'skipped' && (
+                                                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs font-medium">Omitida</span>
+                                                                            )}
                                                                             {order.orderStatus && (
                                                                                 <span className="px-2 py-0.5 bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 rounded text-xs font-medium">{order.orderStatus}</span>
                                                                             )}
@@ -1551,8 +1591,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                                 })()}
                                                                             </div>
                                                                         )}
-                                                                        {order.status === 'rejected' && order.reason && (
-                                                                            <div className="text-red-600 text-xs ml-4 mt-1">{order.reason}</div>
+                                                                        {(order.status === 'rejected' || order.status === 'skipped') && order.reason && (
+                                                                            <div className={`text-xs ml-4 mt-1 ${order.status === 'skipped' ? 'text-amber-600' : 'text-red-600'}`}>{order.reason}</div>
                                                                         )}
                                                                     </div>
                                                                     <span className="text-gray-400 text-xs flex-shrink-0">{order.timestamp.toLocaleTimeString()}</span>

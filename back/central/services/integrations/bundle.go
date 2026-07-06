@@ -10,8 +10,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
 	storefrontprovider "github.com/secamc93/probability/back/central/services/integrations/storefront"
-	websiteprovider "github.com/secamc93/probability/back/central/services/integrations/website"
 	"github.com/secamc93/probability/back/central/services/integrations/transport"
+	websiteprovider "github.com/secamc93/probability/back/central/services/integrations/website"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -40,7 +40,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)
 
 	// Invoicing: todos los proveedores de facturación electrónica + router de colas
-	invoicing.New(config, logger, rabbitMQ, integrationCore)
+	invoicing.New(router, db, config, logger, rabbitMQ, integrationCore)
 
 	// Transport: todos los proveedores de transporte + router de colas
 	transport.New(router, db, logger, rabbitMQ, integrationCore)

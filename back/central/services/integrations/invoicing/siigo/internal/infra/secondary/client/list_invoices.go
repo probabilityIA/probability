@@ -30,9 +30,10 @@ type listInvoicesResponse struct {
 			Identification string `json:"identification"`
 			BranchOffice   int    `json:"branch_office"`
 		} `json:"customer"`
-		Total   float64 `json:"total"`
-		Balance float64 `json:"balance"`
-		Stamp   struct {
+		Total        float64 `json:"total"`
+		Balance      float64 `json:"balance"`
+		Observations string  `json:"observations"`
+		Stamp        struct {
 			Status string `json:"status"`
 		} `json:"stamp"`
 	} `json:"results"`
@@ -116,6 +117,7 @@ func (c *Client) ListInvoices(ctx context.Context, credentials dtos.Credentials,
 			Total:        r.Total,
 			Status:       r.Status,
 			StampStatus:  r.Stamp.Status,
+			Observations: r.Observations,
 			Annulled:     isAnnulledStatus(r.Status),
 		})
 	}

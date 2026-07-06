@@ -2,36 +2,54 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	core "github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IHandler define los endpoints HTTP de MercadoLibre.
 type IHandler interface {
-	// HandleNotification recibe notificaciones IPN de MercadoLibre.
 	HandleNotification(c *gin.Context)
-	// RegisterRoutes registra las rutas en el router.
+	InitiateOAuthHandler(c *gin.Context)
+	OAuthCallbackHandler(c *gin.Context)
+	GetOAuthTokenHandler(c *gin.Context)
+	ReconcileProducts(c *gin.Context)
+	ApplyProducts(c *gin.Context)
+	SyncInventory(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 
 type meliHandler struct {
-	useCase usecases.IMeliUseCase
-	logger  log.ILogger
+	useCase         usecases.IMeliUseCase
+	logger          log.ILogger
+	config          env.IConfig
+	coreIntegration core.IIntegrationCore
 }
 
-// New crea el handler HTTP de MercadoLibre.
-func New(useCase usecases.IMeliUseCase, logger log.ILogger) IHandler {
+func New(useCase usecases.IMeliUseCase, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore) IHandler {
 	return &meliHandler{
-		useCase: useCase,
-		logger:  logger.WithModule("meli"),
+		useCase:         useCase,
+		logger:          logger.WithModule("meli"),
+		config:          config,
+		coreIntegration: coreIntegration,
 	}
 }
 
-// RegisterRoutes registra las rutas de MercadoLibre en el router.
 func (h *meliHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
 	meli := router.Group("/meli")
 	{
-		// IPN — notificaciones de MercadoLibre
 		meli.POST("/notifications", h.HandleNotification)
 	}
+
+	oauthGroup := router.Group("/integrations/meli")
+	{
+		oauthGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
+		oauthGroup.GET("/oauth/token", h.GetOAuthTokenHandler)
+		oauthGroup.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
+		oauthGroup.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
+		oauthGroup.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
+	}
+
+	router.GET("/meli/callback", h.OAuthCallbackHandler)
 }

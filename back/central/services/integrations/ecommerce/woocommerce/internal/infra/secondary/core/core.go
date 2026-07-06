@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"os"
 
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
@@ -35,20 +36,70 @@ func (w *WooCommerceCore) SyncOrdersByIntegrationIDWithParams(ctx context.Contex
 	return w.useCase.SyncOrdersWithParams(ctx, integrationID, params)
 }
 
+func (w *WooCommerceCore) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
+	return w.useCase.UpdateInventory(ctx, integrationID, productExternalID, quantity)
+}
+
 // GetWebhookURL retorna la URL para los webhooks de WooCommerce.
 func (w *WooCommerceCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
-	webhookURL := fmt.Sprintf("%s/integrations/woocommerce/webhook", baseURL)
+	webhookURL := fmt.Sprintf("%s/api/v1/woocommerce/webhook?integration_id=%d", baseURL, integrationID)
 
 	return &integrationcore.WebhookInfo{
 		URL:    webhookURL,
 		Method: "POST",
-		Description: "Configura este webhook en WooCommerce > Ajustes > Avanzado > Webhooks. " +
-			"Suscríbete a los eventos de órdenes para recibir notificaciones en tiempo real.",
+		Description: "Probability crea estos webhooks automaticamente en tu tienda WooCommerce. " +
+			"Recibiras las ordenes en tiempo real cuando se creen o actualicen.",
 		Events: []string{
 			"order.created",
 			"order.updated",
-			"order.deleted",
-			"order.restored",
 		},
+	}, nil
+}
+
+// ListWebhooks lista los webhooks de Probability registrados en la tienda.
+func (w *WooCommerceCore) ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error) {
+	items, err := w.useCase.ListWebhooks(ctx, integrationID)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]interface{}, 0, len(items))
+	for _, item := range items {
+		result = append(result, item)
+	}
+	return result, nil
+}
+
+// DeleteWebhook elimina un webhook de la tienda WooCommerce.
+func (w *WooCommerceCore) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
+	return w.useCase.DeleteWebhook(ctx, integrationID, webhookID)
+}
+
+// VerifyWebhooksByURL retorna los webhooks de Probability ya configurados en la tienda.
+func (w *WooCommerceCore) VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]interface{}, error) {
+	return w.ListWebhooks(ctx, integrationID)
+}
+
+// CreateWebhook crea los webhooks de ordenes en la tienda y retorna el resultado
+// con la forma que espera el handler generico del core (objeto, no lista).
+func (w *WooCommerceCore) CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error) {
+	secret := os.Getenv("WOOCOMMERCE_WEBHOOK_SECRET")
+	if err := w.useCase.CreateWebhooks(ctx, integrationID, baseURL, secret); err != nil {
+		return nil, err
+	}
+	items, err := w.useCase.ListWebhooks(ctx, integrationID)
+	if err != nil {
+		return nil, err
+	}
+	created := make([]string, 0, len(items))
+	webhookURL := ""
+	for _, it := range items {
+		created = append(created, it.Topic)
+		webhookURL = it.Address
+	}
+	return map[string]interface{}{
+		"WebhookURL":       webhookURL,
+		"CreatedWebhooks":  created,
+		"ExistingWebhooks": []interface{}{},
+		"DeletedWebhooks":  []interface{}{},
 	}, nil
 }

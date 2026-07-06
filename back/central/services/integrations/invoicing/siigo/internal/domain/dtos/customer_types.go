@@ -50,5 +50,6 @@ type InvoiceSummary struct {
 	Total        float64
 	Status       string
 	StampStatus  string
+	Observations string
 	Annulled     bool
 }

@@ -15,8 +15,10 @@ import { getIntegrationByIdAction } from '@/services/integrations/core/infra/act
 
 import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
+import { MercadoLibreOAuthCallback } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { WooStorePowerWidget } from '@/services/woostore/ui/components/WooStorePowerWidget';
 
 // Mapeo de código de categoría → nombre del recurso en BD
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
@@ -31,6 +33,7 @@ const CATEGORY_RESOURCE_MAP: Record<string, string> = {
 export default function IntegrationsPage() {
     const searchParams = useSearchParams();
     const isOAuthCallback = searchParams.get('shopify_oauth');
+    const isMeliOAuthCallback = searchParams.get('meli_oauth');
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -85,6 +88,10 @@ export default function IntegrationsPage() {
         return <ShopifyOAuthCallback />;
     }
 
+    if (isMeliOAuthCallback) {
+        return <MercadoLibreOAuthCallback />;
+    }
+
     const handleSuccess = () => {
         setShowCreateModal(false);
         setShowEditModal(false);
@@ -109,6 +116,9 @@ export default function IntegrationsPage() {
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="mb-4">
+                <WooStorePowerWidget />
+            </div>
             {!isTypesTab && activeCategoryCode !== null ? (
                 <IntegrationList
                     key={`cat-${activeCategoryCode}-${refreshKey}`}
@@ -172,7 +182,6 @@ export default function IntegrationsPage() {
                 />
             </Modal>
 
-            {/* Edit Modal for Integrations */}
             <Modal
                 isOpen={showEditIntegrationModal}
                 onClose={handleModalClose}
@@ -182,13 +191,21 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 4].includes(selectedIntegration.integration_type_id) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
-                <IntegrationForm
-                    integration={selectedIntegration}
-                    onSuccess={handleSuccess}
-                    onCancel={handleModalClose}
-                />
+                <div
+                    style={
+                        selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id))
+                            ? { width: 'min(768px, 92vw)' }
+                            : undefined
+                    }
+                >
+                    <IntegrationForm
+                        integration={selectedIntegration}
+                        onSuccess={handleSuccess}
+                        onCancel={handleModalClose}
+                    />
+                </div>
             </Modal>
         </div>
     );

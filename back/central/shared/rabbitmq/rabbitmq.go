@@ -253,6 +253,9 @@ func (r *rabbitMQ) reregisterConsumers() {
 
 // startConsumer crea un channel dedicado e inicia la goroutine de consumo.
 // NO adquiere mutex — el caller debe tener al menos RLock.
+// consumerPrefetchCount limita los mensajes sin-ack por consumer (evita OOM ante backlogs grandes).
+const consumerPrefetchCount = 50
+
 func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler func([]byte) error) error {
 	consumerChannel, err := r.conn.Channel()
 	if err != nil {
@@ -261,6 +264,19 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 			Str("queue", queueName).
 			Msg("Failed to create channel for consumer")
 		return fmt.Errorf("failed to create consumer channel: %w", err)
+	}
+
+	// Prefetch (QoS): limita cuantos mensajes sin-ack entrega RabbitMQ a este consumer a
+	// la vez. Evita que un backlog grande (ej. un sync masivo) se cargue entero en memoria
+	// y tumbe el backend por OOM. La cola puede acumular sin problema; solo se procesan de
+	// a lotes de este tamano.
+	if err := consumerChannel.Qos(consumerPrefetchCount, 0, false); err != nil {
+		consumerChannel.Close()
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Msg("Failed to set consumer QoS/prefetch")
+		return fmt.Errorf("failed to set consumer QoS: %w", err)
 	}
 
 	msgs, err := consumerChannel.Consume(

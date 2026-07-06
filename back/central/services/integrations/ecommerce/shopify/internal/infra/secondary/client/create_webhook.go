@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
-// CreateWebhookResponse representa la respuesta de Shopify al crear un webhook
 type CreateWebhookResponse struct {
 	Webhook struct {
 		ID        int64  `json:"id"`
@@ -18,11 +18,9 @@ type CreateWebhookResponse struct {
 	} `json:"webhook"`
 }
 
-// CreateWebhook crea un webhook en Shopify para un evento específico
 func (c *shopifyClient) CreateWebhook(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error) {
 	url := buildURL(storeName, "/admin/api/2024-10/webhooks.json")
 
-	// Construir el payload para crear el webhook
 	payload := map[string]interface{}{
 		"webhook": map[string]interface{}{
 			"topic":   event,
@@ -32,9 +30,6 @@ func (c *shopifyClient) CreateWebhook(ctx context.Context, storeName, accessToke
 	}
 
 	var result CreateWebhookResponse
-	var errorResponse struct {
-		Errors map[string]interface{} `json:"errors"`
-	}
 
 	resp, err := c.client.R().
 		SetContext(ctx).
@@ -42,7 +37,6 @@ func (c *shopifyClient) CreateWebhook(ctx context.Context, storeName, accessToke
 		SetHeader("Content-Type", "application/json").
 		SetBody(payload).
 		SetResult(&result).
-		SetError(&errorResponse).
 		Post(url)
 
 	if err != nil {
@@ -54,26 +48,22 @@ func (c *shopifyClient) CreateWebhook(ctx context.Context, storeName, accessToke
 		return webhookID, nil
 	}
 
-	// Si hay errores en la respuesta
-	if len(errorResponse.Errors) > 0 {
-		return "", fmt.Errorf("error al crear webhook en Shopify: %v", errorResponse.Errors)
-	}
+	body := strings.TrimSpace(resp.String())
 
-	// Mensajes de error descriptivos según el código de estado
 	switch resp.StatusCode() {
-	case http.StatusUnauthorized: // 401
-		return "", fmt.Errorf("token de acceso inválido o expirado")
-	case http.StatusForbidden: // 403
-		return "", fmt.Errorf("acceso denegado. Verifica que la app tenga permisos para crear webhooks")
-	case http.StatusNotFound: // 404
+	case http.StatusUnauthorized:
+		return "", fmt.Errorf("token de acceso inválido o expirado: %s", body)
+	case http.StatusForbidden:
+		return "", fmt.Errorf("acceso denegado al crear el webhook: %s", body)
+	case http.StatusNotFound:
 		return "", fmt.Errorf("tienda no encontrada: %s", storeName)
-	case http.StatusConflict: // 409
-		return "", fmt.Errorf("el webhook ya existe para este evento y URL")
-	case http.StatusUnprocessableEntity: // 422
-		return "", fmt.Errorf("datos inválidos para crear el webhook: %s", resp.String())
-	case http.StatusTooManyRequests: // 429
+	case http.StatusConflict:
+		return "", fmt.Errorf("el webhook ya existe para este evento y URL: %s", body)
+	case http.StatusUnprocessableEntity:
+		return "", fmt.Errorf("datos inválidos para crear el webhook: %s", body)
+	case http.StatusTooManyRequests:
 		return "", fmt.Errorf("demasiadas solicitudes a Shopify. Intenta nuevamente en unos minutos")
 	default:
-		return "", fmt.Errorf("error al crear webhook en Shopify (código %d): %s", resp.StatusCode(), resp.String())
+		return "", fmt.Errorf("error al crear webhook en Shopify (código %d): %s", resp.StatusCode(), body)
 	}
 }

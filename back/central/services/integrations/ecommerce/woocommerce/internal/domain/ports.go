@@ -22,6 +22,19 @@ type IWooCommerceClient interface {
 
 	// CreateWebhook registra un webhook en WooCommerce para un topic y retorna su ID.
 	CreateWebhook(ctx context.Context, storeURL, consumerKey, consumerSecret, deliveryURL, secret, topic string) (int64, error)
+
+	// ListWebhooks lista los webhooks registrados en la tienda WooCommerce.
+	ListWebhooks(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]WebhookItem, error)
+
+	// DeleteWebhook elimina un webhook de la tienda WooCommerce por su ID.
+	DeleteWebhook(ctx context.Context, storeURL, consumerKey, consumerSecret, webhookID string) error
+
+	UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
+
+	CreateProduct(ctx context.Context, storeURL, consumerKey, consumerSecret string, input CreateProductInput) (string, error)
+
+	// GetProducts lista los productos de la tienda WooCommerce (paginado interno).
+	GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]WooProduct, error)
 }
 
 // IIntegrationService define las operaciones del core de integraciones

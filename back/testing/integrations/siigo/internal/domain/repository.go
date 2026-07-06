@@ -3,6 +3,9 @@ package domain
 import (
 	"fmt"
 	"sync"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -13,8 +16,10 @@ type Repository struct {
 	tokens       map[string]*AuthToken
 	vouchers     map[string]*Voucher
 	creditNotes  map[string]*CreditNote
+	webhooks     map[string]*Webhook
 	products     []*Product
 	paymentTypes []*PaymentType
+	warehouses   []*Warehouse
 	invoiceSeq   int
 	voucherSeq   int
 	creditSeq    int
@@ -22,12 +27,13 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	r := &Repository{
-		customers:  make(map[string]*Customer),
-		invoices:   make(map[string]*Invoice),
-		journals:   make(map[string]*JournalEntry),
+		customers:   make(map[string]*Customer),
+		invoices:    make(map[string]*Invoice),
+		journals:    make(map[string]*JournalEntry),
 		tokens:      make(map[string]*AuthToken),
 		vouchers:    make(map[string]*Voucher),
 		creditNotes: make(map[string]*CreditNote),
+		webhooks:    make(map[string]*Webhook),
 		invoiceSeq:  1000,
 		voucherSeq:  500,
 		creditSeq:   700,
@@ -36,17 +42,64 @@ func NewRepository() *Repository {
 	return r
 }
 
+func (r *Repository) CreateWebhook(applicationID, url, topic string) *Webhook {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	w := &Webhook{
+		ID:            uuid.NewString(),
+		ApplicationID: applicationID,
+		URL:           url,
+		Topic:         topic,
+		CompanyKey:    "MOCKCOMPANYSAS",
+		Active:        true,
+		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
+	}
+	r.webhooks[w.ID] = w
+	return w
+}
+
+func (r *Repository) ListWebhooks() []*Webhook {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	out := make([]*Webhook, 0, len(r.webhooks))
+	for _, w := range r.webhooks {
+		out = append(out, w)
+	}
+	return out
+}
+
+func (r *Repository) DeleteWebhook(id string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.webhooks[id]; !ok {
+		return false
+	}
+	delete(r.webhooks, id)
+	return true
+}
+
 func (r *Repository) seedCatalogs() {
+	r.warehouses = []*Warehouse{
+		{ID: 1, Name: "Bodega Principal"},
+		{ID: 2, Name: "Bodega Secundaria"},
+	}
 	r.products = []*Product{
-		{ID: "prod-1", Code: "ITEM-1", Name: "Producto demo 1", Description: "Producto de prueba 1", Price: 50000},
-		{ID: "prod-2", Code: "ITEM-2", Name: "Producto demo 2", Description: "Producto de prueba 2", Price: 75000},
-		{ID: "prod-3", Code: "SERV-1", Name: "Servicio demo", Description: "Servicio de prueba", Price: 120000},
+		{ID: "prod-1", Code: "PW-VAR-001", Name: "Creatina 500g Fresa", Description: "Producto de prueba 1", Price: 50000, StockControl: true, AvailableQuantity: 130, Warehouses: []ProductWarehouseStock{{ID: 1, Name: "Bodega Principal", Quantity: 100}, {ID: 2, Name: "Bodega Secundaria", Quantity: 30}}},
+		{ID: "prod-2", Code: "PW-VAR-002", Name: "Creatina 500g Limon", Description: "Producto de prueba 2", Price: 75000, StockControl: true, AvailableQuantity: 75, Warehouses: []ProductWarehouseStock{{ID: 1, Name: "Bodega Principal", Quantity: 60}, {ID: 2, Name: "Bodega Secundaria", Quantity: 15}}},
+		{ID: "prod-3", Code: "PW-VAR-003", Name: "Creatina 500g Mango", Description: "Producto de prueba 3", Price: 75000, StockControl: true, AvailableQuantity: 40, Warehouses: []ProductWarehouseStock{{ID: 1, Name: "Bodega Principal", Quantity: 40}, {ID: 2, Name: "Bodega Secundaria", Quantity: 0}}},
+		{ID: "prod-4", Code: "SERV-1", Name: "Servicio demo", Description: "Servicio de prueba", Price: 120000, StockControl: false, AvailableQuantity: 0, Warehouses: []ProductWarehouseStock{}},
 	}
 	r.paymentTypes = []*PaymentType{
 		{ID: 5636, Name: "Efectivo", Type: "Cash"},
 		{ID: 5637, Name: "Transferencia", Type: "Transfer"},
 		{ID: 5638, Name: "Tarjeta de credito", Type: "CreditCard"},
 	}
+}
+
+func (r *Repository) ListWarehouses() []*Warehouse {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.warehouses
 }
 
 func (r *Repository) SaveCustomer(c *Customer) {

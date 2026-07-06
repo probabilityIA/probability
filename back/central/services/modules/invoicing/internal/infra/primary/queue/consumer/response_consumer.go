@@ -140,6 +140,11 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		return c.handleListBankAccountsResponse(ctx, message)
 	}
 
+	// Route list_siigo_warehouses responses to dedicated handler
+	if disc.Operation == dtos.OperationListSiigoWarehouses {
+		return c.handleListSiigoWarehousesResponse(ctx, message)
+	}
+
 	// Deserializar response normal de factura
 	var response dtos.InvoiceResponseMessage
 	if err := json.Unmarshal(message, &response); err != nil {
@@ -1346,6 +1351,56 @@ func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, m
 		Str("correlation_id", msg.CorrelationID).
 		Int("accounts", len(results)).
 		Msg("🏦 Bank accounts response processed successfully")
+
+	return nil
+}
+
+type listSiigoWarehousesResponseMessage struct {
+	Operation     string `json:"operation"`
+	CorrelationID string `json:"correlation_id"`
+	BusinessID    uint   `json:"business_id"`
+	Items         []struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"items"`
+	Error     string    `json:"error,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+func (c *ResponseConsumer) handleListSiigoWarehousesResponse(ctx context.Context, message []byte) error {
+	var msg listSiigoWarehousesResponseMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to unmarshal list_siigo_warehouses response")
+		return fmt.Errorf("failed to unmarshal list_siigo_warehouses response: %w", err)
+	}
+
+	results := make([]map[string]interface{}, 0, len(msg.Items))
+	for _, item := range msg.Items {
+		results = append(results, map[string]interface{}{
+			"id":   item.ID,
+			"name": item.Name,
+		})
+	}
+
+	data := map[string]interface{}{
+		"correlation_id": msg.CorrelationID,
+		"results":        results,
+	}
+	if msg.Error != "" {
+		data["error"] = msg.Error
+	}
+
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.siigo_warehouses_ready",
+		Category:   "invoice",
+		BusinessID: msg.BusinessID,
+		Data:       data,
+	})
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Int("warehouses", len(results)).
+		Msg("Siigo warehouses response processed")
 
 	return nil
 }

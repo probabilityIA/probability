@@ -176,6 +176,22 @@ func (m *RepositoryMock) GetIntegrationBusinessID(ctx context.Context, integrati
 	return 0, nil
 }
 
+func (m *RepositoryMock) GetWooShippingToken(ctx context.Context, integrationID uint) (string, bool, bool, error) {
+	return "", false, false, nil
+}
+
+func (m *RepositoryMock) EnsureWooShippingToken(ctx context.Context, integrationID uint) (string, bool, error) {
+	return "", false, nil
+}
+
+func (m *RepositoryMock) RotateWooShippingToken(ctx context.Context, integrationID uint) (string, error) {
+	return "", nil
+}
+
+func (m *RepositoryMock) RevokeWooShippingToken(ctx context.Context, integrationID uint) error {
+	return nil
+}
+
 func (m *RepositoryMock) GetCityDaneByName(ctx context.Context, city, province string) (string, error) {
 	if m.GetCityDaneByNameFn != nil {
 		return m.GetCityDaneByNameFn(ctx, city, province)

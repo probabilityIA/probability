@@ -50,4 +50,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 9. Start Bulk Load Consumer (RabbitMQ)
 	bulkConsumer := orderqueue.NewBulkLoadConsumer(rabbitMQ, uc, eventPublisher, logger)
 	bulkConsumer.Start(context.Background())
+
+	// 10. Start Provider Inventory Sync Consumer (Siigo -> Probability, una via)
+	providerSyncConsumer := orderqueue.NewInventorySyncConsumer(rabbitMQ, uc, logger)
+	providerSyncConsumer.Start(context.Background())
 }

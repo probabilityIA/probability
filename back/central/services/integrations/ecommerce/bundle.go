@@ -32,11 +32,11 @@ func New(
 	shopify.New(router, logger, config, integrationCore, rabbitMQ, database)
 
 	// MercadoLibre (type_id=3)
-	meliProvider := meli.New(router, logger, config, rabbitMQ, integrationCore)
+	meliProvider := meli.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeMercadoLibre, meliProvider)
 
 	// WooCommerce (type_id=4)
-	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, integrationCore)
+	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWoocommerce, wooProvider)
 
 	// VTEX (type_id=16)

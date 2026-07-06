@@ -1,24 +1,83 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import {
+    EyeIcon,
+    EyeSlashIcon,
+    Cog6ToothIcon,
+    PhotoIcon,
+    CodeBracketIcon,
+    GlobeAltIcon,
+    DocumentTextIcon,
+    KeyIcon,
+    InformationCircleIcon,
+} from '@heroicons/react/24/outline';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO, IntegrationCategory } from '../../domain/types';
-import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
+import { Select, Button, Alert, FileInput } from '@/shared/ui';
 import { getIntegrationCategoriesAction, getIntegrationTypePlatformCredentialsAction } from '../../infra/actions';
 import { WhatsAppTypeCredentialsForm } from '@/services/integrations/messages/whatsapp/ui/components';
 import type { WhatsAppPlatformCredentials } from '@/services/integrations/messages/whatsapp/ui/components';
 import { BoldTypeCredentialsForm } from '@/services/integrations/pay/bold/ui/components';
 import type { BoldPlatformCredentials } from '@/services/integrations/pay/bold/ui/components';
+import { MercadoLibreTypeCredentialsForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
+import type { MercadoLibrePlatformCredentials } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 const WHATSAPP_TYPE_ID = 2;
 const BOLD_TYPE_ID = 23;
+const MERCADO_LIBRE_TYPE_ID = 3;
+
+const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
+    client_id: '',
+    client_secret: '',
+    auth_domain: '',
+    test_client_id: '',
+    test_client_secret: '',
+    test_auth_domain: '',
+};
+
+const ACCENT = 'var(--color-primary)';
+const ACCENT_DARK = 'color-mix(in srgb, var(--color-primary) 85%, black)';
+const ACCENT_SOFT = 'color-mix(in srgb, var(--color-primary) 10%, white)';
+const ACCENT_BORDER = 'color-mix(in srgb, var(--color-primary) 25%, white)';
+const CARD_BG = '#fafafd';
+const CARD_BORDER = '#eceaf3';
+const INPUT_BORDER = '#e9e9f0';
+
+const fieldLabel = 'block text-[13px] font-semibold text-gray-900 dark:text-gray-100 mb-1';
+const fieldHint = 'text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-start gap-1';
+const inputCls = 'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30 focus:border-[var(--color-primary)]';
+const jsonCls = 'w-full px-3 py-2 bg-gray-900 text-green-400 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/40 focus:border-[var(--color-primary)] font-mono text-xs';
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
     onSuccess?: () => void;
     onCancel?: () => void;
+}
+
+function SectionCard({
+    icon: Icon,
+    title,
+    bg = CARD_BG,
+    children,
+}: {
+    icon: React.ComponentType<{ style?: React.CSSProperties }>;
+    title: string;
+    bg?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="rounded-xl p-4 dark:bg-gray-800/60" style={{ backgroundColor: bg, border: `1px solid ${CARD_BORDER}` }}>
+            <div className="flex items-center gap-2 mb-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: ACCENT_SOFT }}>
+                    <Icon style={{ color: ACCENT, width: 16, height: 16 }} />
+                </span>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+            </div>
+            {children}
+        </div>
+    );
 }
 
 export default function IntegrationTypeForm({ integrationType, onSuccess, onCancel }: IntegrationTypeFormProps) {
@@ -45,7 +104,6 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [removeImage, setRemoveImage] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showPlatformCredentials, setShowPlatformCredentials] = useState(false);
-    // Campos estructurados para WhatsApp
     const [whatsappCredentials, setWhatsappCredentials] = useState<WhatsAppPlatformCredentials>({
         whatsapp_url: '',
         webhook_callback_url: '',
@@ -71,13 +129,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         test_link_secret_key: '',
     });
     const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
+    const [meliCredentials, setMeliCredentials] = useState<MercadoLibrePlatformCredentials>(EMPTY_MELI_CREDENTIALS);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
             .then((res) => {
                 if (res.success && res.data.length > 0) {
                     setCategories(res.data);
-                    // Si no hay tipo existente, usar la primera categoría como default
                     if (!integrationType) {
                         setFormData((prev) => ({ ...prev, category_id: res.data[0].id }));
                     }
@@ -101,11 +159,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 base_url_test: integrationType.base_url_test || '',
                 platform_credentials: '{}',
             });
-            // Cargar preview de imagen existente si hay
             if (integrationType.image_url) {
                 setImagePreview(integrationType.image_url);
             }
-            // Cargar credenciales de plataforma desencriptadas si existen
             if (integrationType.has_platform_credentials) {
                 getIntegrationTypePlatformCredentialsAction(integrationType.id)
                     .then((res) => {
@@ -144,6 +200,16 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                         sandbox: res.webhook_urls.sandbox,
                                     });
                                 }
+                            } else if (integrationType.id === MERCADO_LIBRE_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setMeliCredentials({
+                                    client_id: String(d.client_id || ''),
+                                    client_secret: String(d.client_secret || ''),
+                                    auth_domain: String(d.auth_domain || ''),
+                                    test_client_id: String(d.test_client_id || ''),
+                                    test_client_secret: String(d.test_client_secret || ''),
+                                    test_auth_domain: String(d.test_auth_domain || ''),
+                                });
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -161,14 +227,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         setImageFile(file);
         setRemoveImage(false);
         if (file) {
-            // Crear preview de la nueva imagen
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result as string);
             };
             reader.readAsDataURL(file);
         } else {
-            // Si se elimina el archivo seleccionado, volver a la imagen original
             setImagePreview(integrationType?.image_url || null);
         }
     };
@@ -180,10 +244,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
         try {
             let success = false;
-            // Parse platform_credentials — only send if non-empty
             let platformCredentials: Record<string, unknown> | undefined;
             if (integrationType?.id === WHATSAPP_TYPE_ID) {
-                // Para WhatsApp, construir desde campos estructurados
                 const wa: Record<string, unknown> = {};
                 if (whatsappCredentials.whatsapp_url.trim()) wa.whatsapp_url = whatsappCredentials.whatsapp_url.trim();
                 if (whatsappCredentials.webhook_callback_url.trim()) wa.webhook_callback_url = whatsappCredentials.webhook_callback_url.trim();
@@ -209,6 +271,15 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (boldCredentials.test_link_api_key.trim()) bold.test_link_api_key = boldCredentials.test_link_api_key.trim();
                 if (boldCredentials.test_link_secret_key.trim()) bold.test_link_secret_key = boldCredentials.test_link_secret_key.trim();
                 if (Object.keys(bold).length > 0) platformCredentials = bold;
+            } else if (integrationType?.id === MERCADO_LIBRE_TYPE_ID) {
+                const meli: Record<string, unknown> = {};
+                if (meliCredentials.client_id.trim()) meli.client_id = meliCredentials.client_id.trim();
+                if (meliCredentials.client_secret.trim()) meli.client_secret = meliCredentials.client_secret.trim();
+                if (meliCredentials.auth_domain.trim()) meli.auth_domain = meliCredentials.auth_domain.trim();
+                if (meliCredentials.test_client_id.trim()) meli.test_client_id = meliCredentials.test_client_id.trim();
+                if (meliCredentials.test_client_secret.trim()) meli.test_client_secret = meliCredentials.test_client_secret.trim();
+                if (meliCredentials.test_auth_domain.trim()) meli.test_auth_domain = meliCredentials.test_auth_domain.trim();
+                if (Object.keys(meli).length > 0) platformCredentials = meli;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -216,12 +287,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         platformCredentials = parsed;
                     }
                 } catch {
-                    throw new Error('Las credenciales de plataforma no son un JSON válido');
+                    throw new Error('Las credenciales de plataforma no son un JSON valido');
                 }
             }
 
             if (integrationType) {
-                // Update
                 const updateData: UpdateIntegrationTypeDTO = {
                     name: formData.name,
                     code: formData.code,
@@ -239,7 +309,6 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 };
                 success = await updateIntegrationType(integrationType.id, updateData);
             } else {
-                // Create
                 const createData: CreateIntegrationTypeDTO = {
                     name: formData.name,
                     code: formData.code,
@@ -262,89 +331,83 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             }
         } catch (err: any) {
             console.error('Error saving integration type:', err);
-            setError(getActionError(err, 'Error al guardar el tipo de integración'));
+            setError(getActionError(err, 'Error al guardar el tipo de integracion'));
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            {/* Basic Info - 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        Nombre *
-                    </label>
-                    <Input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => {
-                            const name = e.target.value;
-                            setFormData({
-                                ...formData,
-                                name,
-                                // Auto-generate code from name if creating new
-                                code: integrationType ? formData.code : name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
-                            });
-                        }}
-                    />
-                </div>
+            <SectionCard icon={Cog6ToothIcon} title="Informacion basica">
+                <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                    <div>
+                        <label className={fieldLabel}>
+                            Nombre <span style={{ color: ACCENT }}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.name}
+                            onChange={(e) => {
+                                const name = e.target.value;
+                                setFormData({
+                                    ...formData,
+                                    name,
+                                    code: integrationType ? formData.code : name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''),
+                                });
+                            }}
+                            placeholder="Ej: WooCommerce"
+                            className={inputCls}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        Categoría *
-                    </label>
-                    <Select
-                        required
-                        value={String(formData.category_id)}
-                        onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
-                        options={categories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
-                    />
-                </div>
-            </div>
+                    <div>
+                        <label className={fieldLabel}>
+                            Categoria <span style={{ color: ACCENT }}>*</span>
+                        </label>
+                        <Select
+                            required
+                            value={String(formData.category_id)}
+                            onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
+                            options={categories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
+                            className="bg-white dark:bg-gray-800"
+                        />
+                    </div>
 
-            {/* Image Upload Section */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                    Logo del Tipo de Integración
-                </label>
-                <div className="space-y-4">
-                    {/* Image Preview */}
-                    {imagePreview && (
-                        <div className="flex items-center gap-4">
+                    <div className="md:col-span-2">
+                        <label className={fieldLabel}>Logo del Tipo de Integracion</label>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                             <img
-                                src={imagePreview}
-                                alt="Preview"
-                                className="w-24 h-24 object-contain border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700"
+                                src={imagePreview || ''}
+                                alt="Logo"
+                                className={`h-20 w-20 flex-shrink-0 rounded-xl object-contain p-2 ${imagePreview ? '' : 'hidden'}`}
+                                style={{ border: `1px solid ${INPUT_BORDER}`, backgroundColor: '#ffffff' }}
                             />
                             <div className="flex-1">
-                                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">
-                                    {imageFile ? 'Nueva imagen seleccionada' : 'Imagen actual'}
-                                </p>
+                                <FileInput
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    buttonText="Seleccionar imagen"
+                                    helperText="Formatos soportados: JPG, PNG, GIF, WEBP. Tamano maximo: 10MB"
+                                />
+                                {imagePreview && (
+                                    <p className={fieldHint}>
+                                        <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <span>{imageFile ? 'Nueva imagen seleccionada' : 'Imagen actual'}</span>
+                                    </p>
+                                )}
                             </div>
                         </div>
-                    )}
-
-                    {/* File Input */}
-                    <FileInput
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        buttonText="Seleccionar imagen"
-                        helperText="Formatos soportados: JPG, PNG, GIF, WEBP. Tamaño máximo: 10MB"
-                    />
-
-                    {/* Remove Image Option (only when editing and has existing image) */}
-                    {integrationType && integrationType.image_url && (
-                        <div className="flex items-center">
-                            <label className="flex items-center">
+                        {integrationType && integrationType.image_url && (
+                            <label className="mt-3 flex items-center gap-2">
                                 <input
                                     type="checkbox"
                                     checked={removeImage}
@@ -357,117 +420,115 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                             setImagePreview(integrationType.image_url || null);
                                         }
                                     }}
-                                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+                                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 accent-[var(--color-primary)]"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">Eliminar imagen actual</span>
+                                <span className="text-[13px] text-gray-700 dark:text-gray-200">Eliminar imagen actual</span>
                             </label>
+                        )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className={fieldLabel}>Descripcion</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={2}
+                            className={inputCls}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                    </div>
+                </div>
+            </SectionCard>
+
+            {integrationType?.id !== MERCADO_LIBRE_TYPE_ID && (
+                <SectionCard icon={CodeBracketIcon} title="Esquemas de datos">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Config Schema (JSON)</label>
+                            <textarea
+                                value={formData.config_schema}
+                                onChange={(e) => setFormData({ ...formData, config_schema: e.target.value })}
+                                rows={12}
+                                className={jsonCls}
+                                placeholder='{"type": "object", "properties": {...}}'
+                                spellCheck={false}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Campos de configuracion (no sensibles)</span>
+                            </p>
                         </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Description - Full width */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                    Descripción
-                </label>
-                <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
-                />
-            </div>
+                        <div>
+                            <label className={fieldLabel}>Credentials Schema (JSON)</label>
+                            <textarea
+                                value={formData.credentials_schema}
+                                onChange={(e) => setFormData({ ...formData, credentials_schema: e.target.value })}
+                                rows={12}
+                                className={jsonCls}
+                                placeholder='{"type": "object", "properties": {...}}'
+                                spellCheck={false}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Campos de credenciales (tokens, keys, etc.)</span>
+                            </p>
+                        </div>
+                    </div>
+                </SectionCard>
+            )}
 
-            {/* JSON Editors - 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Config Schema JSON Editor */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        Config Schema (JSON)
-                    </label>
-                    <textarea
-                        value={formData.config_schema}
-                        onChange={(e) => setFormData({ ...formData, config_schema: e.target.value })}
-                        rows={12}
-                        className="w-full px-3 py-2 bg-gray-900 text-green-400 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs"
-                        placeholder='{"type": "object", "properties": {...}}'
-                        spellCheck={false}
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                        Campos de configuración (no sensibles)
-                    </p>
-                </div>
+            {integrationType?.id !== MERCADO_LIBRE_TYPE_ID && (
+                <SectionCard icon={GlobeAltIcon} title="URLs del API">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 md:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>URL de Produccion</label>
+                            <input
+                                type="url"
+                                value={formData.base_url}
+                                onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
+                                placeholder="https://api.ejemplo.com/v1"
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>URL base del API en produccion</span>
+                            </p>
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>URL de Pruebas (Sandbox)</label>
+                            <input
+                                type="url"
+                                value={formData.base_url_test}
+                                onChange={(e) => setFormData({ ...formData, base_url_test: e.target.value })}
+                                placeholder="https://sandbox.ejemplo.com/v1"
+                                className={`${inputCls} font-mono`}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>URL del entorno sandbox para modo de pruebas</span>
+                            </p>
+                        </div>
+                    </div>
+                </SectionCard>
+            )}
 
-                {/* Credentials Schema JSON Editor */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        Credentials Schema (JSON)
-                    </label>
-                    <textarea
-                        value={formData.credentials_schema}
-                        onChange={(e) => setFormData({ ...formData, credentials_schema: e.target.value })}
-                        rows={12}
-                        className="w-full px-3 py-2 bg-gray-900 text-green-400 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs"
-                        placeholder='{"type": "object", "properties": {...}}'
-                        spellCheck={false}
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                        Campos de credenciales (tokens, keys, etc.)
-                    </p>
-                </div>
-            </div>
-
-            {/* URLs de la API - 2 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        URL de Producción
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.base_url}
-                        onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
-                        placeholder="https://api.ejemplo.com/v1"
-                        className="font-mono text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                        URL base del API en producción
-                    </p>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                        URL de Pruebas (Sandbox)
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.base_url_test}
-                        onChange={(e) => setFormData({ ...formData, base_url_test: e.target.value })}
-                        placeholder="https://sandbox.ejemplo.com/v1"
-                        className="font-mono text-sm"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                        URL del entorno sandbox para modo de pruebas
-                    </p>
-                </div>
-            </div>
-
-            {/* Setup Instructions - Full width */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
-                    Instrucciones de Configuración
-                </label>
+            <SectionCard icon={DocumentTextIcon} title="Instrucciones de Configuracion" bg="#ffffff">
                 <textarea
                     value={formData.setup_instructions}
                     onChange={(e) => setFormData({ ...formData, setup_instructions: e.target.value })}
                     rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
-                    placeholder="Pasos para configurar esta integración:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
+                    className={inputCls}
+                    style={{ borderColor: INPUT_BORDER }}
+                    placeholder="Pasos para configurar esta integracion:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                    Instrucciones paso a paso para el usuario
+                <p className={fieldHint}>
+                    <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Instrucciones paso a paso para el usuario</span>
                 </p>
-            </div>
+            </SectionCard>
 
             {integrationType?.id === WHATSAPP_TYPE_ID ? (
                 <WhatsAppTypeCredentialsForm
@@ -483,17 +544,21 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     webhookUrlProd={boldWebhookUrls.production}
                     webhookUrlTest={boldWebhookUrls.sandbox}
                 />
+            ) : integrationType?.id === MERCADO_LIBRE_TYPE_ID ? (
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <MercadoLibreTypeCredentialsForm
+                        credentials={meliCredentials}
+                        onChange={setMeliCredentials}
+                        isEditing={!!integrationType}
+                    />
+                </SectionCard>
             ) : (
-                /* Editor JSON genérico para otros tipos */
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
-                            Credenciales de Plataforma (JSON)
-                        </label>
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <div className="flex items-center justify-end mb-2">
                         <button
                             type="button"
                             onClick={() => setShowPlatformCredentials((v) => !v)}
-                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200"
+                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                         >
                             {showPlatformCredentials ? (
                                 <>
@@ -511,7 +576,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     <textarea
                         value={showPlatformCredentials
                             ? formData.platform_credentials
-                            : formData.platform_credentials.replace(/:\s*"([^"]*)"/g, ': "••••••••"')
+                            : formData.platform_credentials.replace(/:\s*"([^"]*)"/g, ': "********"')
                         }
                         onChange={(e) => {
                             if (showPlatformCredentials) {
@@ -520,25 +585,28 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         }}
                         readOnly={!showPlatformCredentials}
                         rows={6}
-                        className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 dark:text-gray-400 dark:text-gray-400 cursor-default'}`}
+                        className={`${jsonCls} ${showPlatformCredentials ? '' : 'text-gray-500 cursor-default'}`}
                         placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                        Credenciales globales del proveedor (se encriptarán). Deja <code>{'{}'}</code> para no cambiarlas.
+                    <p className={fieldHint}>
+                        <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span>Credenciales globales del proveedor (se encriptaran). Deja <code>{'{}'}</code> para no cambiarlas.</span>
                     </p>
-                </div>
+                </SectionCard>
             )}
 
-            <div className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600">
+            <div
+                className="flex items-start gap-4 rounded-xl p-4 dark:bg-gray-800/60"
+                style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+            >
                 <button
                     type="button"
                     role="switch"
                     aria-checked={formData.is_active}
                     onClick={() => setFormData({ ...formData, is_active: !formData.is_active })}
-                    className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 mt-0.5 ${
-                        formData.is_active ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-500'
-                    }`}
+                    className="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 mt-0.5"
+                    style={{ backgroundColor: formData.is_active ? ACCENT : '#d1d5db' }}
                 >
                     <span
                         className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
@@ -547,7 +615,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     />
                 </button>
                 <div className="flex-1">
-                    <span className={`block text-base font-semibold ${formData.is_active ? 'text-green-700 dark:text-green-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <span className="block text-base font-semibold" style={{ color: formData.is_active ? ACCENT_DARK : '#6b7280' }}>
                         {formData.is_active ? 'Activo' : 'Desactivado'}
                     </span>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
@@ -556,22 +624,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </div>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 {onCancel && (
-                    <Button
-                        type="button"
-                        onClick={onCancel}
-                        variant="outline"
-                    >
+                    <Button type="button" onClick={onCancel} variant="outline">
                         Cancelar
                     </Button>
                 )}
-                <Button
-                    type="submit"
-                    disabled={loading}
-                    loading={loading}
-                    variant="primary"
-                >
+                <Button type="submit" disabled={loading} loading={loading} variant="primary">
                     {integrationType ? 'Actualizar' : 'Crear'}
                 </Button>
             </div>

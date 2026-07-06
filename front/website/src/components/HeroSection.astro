@@ -1,284 +1,494 @@
 ---
 ---
 
-<style>
-	@keyframes float {
-		0%, 100% {
-			transform: translateY(0px);
-		}
-		50% {
-			transform: translateY(-20px);
-		}
-	}
+<section class="relative w-full min-h-screen lg:min-h-[660px] overflow-hidden bg-[#FBFAFE] pt-12 sm:pt-16 md:pt-20 lg:pt-0 pb-12 lg:pb-0 flex lg:flex-none items-center lg:items-start">
+  <style>
+    @keyframes drawLine {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
 
-	.blob {
-		position: absolute;
-		border-radius: 50%;
-		filter: blur(60px);
-		opacity: 0.12;
-		animation: float 6s ease-in-out infinite;
-	}
+    @keyframes donutFill {
+      from {
+        stroke-dashoffset: 264;
+      }
+      to {
+        stroke-dashoffset: 18;
+      }
+    }
 
-	.blob-1 {
-		width: 400px;
-		height: 400px;
-		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
-		top: -100px;
-		right: -100px;
-		animation-delay: 0s;
-	}
+    @keyframes growBar {
+      from {
+        transform: scaleY(0);
+      }
+      to {
+        transform: scaleY(1);
+      }
+    }
 
-	.blob-2 {
-		width: 350px;
-		height: 350px;
-		background: linear-gradient(135deg, #EC4899 0%, #F43F5E 100%);
-		bottom: -50px;
-		left: -50px;
-		animation-delay: 2s;
-	}
+    @keyframes ping {
+      0% {
+        transform: scale(1);
+        opacity: 0.65;
+      }
+      70% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(2.8);
+        opacity: 0;
+      }
+    }
 
-	.blob-3 {
-		width: 300px;
-		height: 300px;
-		background: #8B5CF6;
-		top: 50%;
-		left: -150px;
-		animation-delay: 4s;
-	}
+    @keyframes sweep {
+      0% {
+        transform: translateX(-130%);
+      }
+      60% {
+        transform: translateX(230%);
+      }
+      100% {
+        transform: translateX(230%);
+      }
+    }
 
-	.gradient-text {
-		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
+    @keyframes floatY {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-12px);
+      }
+    }
 
-	.particle {
-		position: absolute;
-		width: 2px;
-		height: 2px;
-		background: #8B5CF6;
-		border-radius: 50%;
-		opacity: 0.3;
-	}
+    @keyframes pulseDot {
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.45;
+        transform: scale(0.82);
+      }
+    }
 
-	@keyframes float-box {
-		0%, 100% {
-			transform: translateY(0px) rotate(0deg);
-		}
-		50% {
-			transform: translateY(-30px) rotate(1deg);
-		}
-	}
+    @keyframes glowBreath {
+      0%,
+      100% {
+        opacity: 0.5;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
 
-	.box-float {
-		animation: float-box 5s ease-in-out infinite;
-	}
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+      }
+    }
 
-	#carbon-fiber-canvas {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		z-index: 1;
-		pointer-events: none;
-	}
-</style>
+    .hero-grid {
+      background-image: radial-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
 
-<section class="relative bg-white py-12 sm:py-16 md:py-20 lg:py-20 px-4 sm:px-6 md:px-20 overflow-hidden" id="hero-section">
-	<!-- Carbon Fiber Canvas Background -->
-	<canvas id="carbon-fiber-canvas"></canvas>
+    .glow-blob-purple {
+      animation: glowBreath 6s ease-in-out infinite;
+    }
 
-	<!-- Decorative Blobs -->
-	<div class="blob blob-1"></div>
-	<div class="blob blob-2"></div>
-	<div class="blob blob-3"></div>
+    .glow-blob-green {
+      animation: glowBreath 7s ease-in-out infinite 1s;
+    }
 
-	<!-- Decorative Particles -->
-	<div class="particle" style="top: 10%; left: 5%; animation: float 8s ease-in-out infinite;"></div>
-	<div class="particle" style="top: 20%; right: 10%; animation: float 7s ease-in-out infinite; animation-delay: 1s;"></div>
-	<div class="particle" style="top: 40%; left: 15%; animation: float 9s ease-in-out infinite; animation-delay: 2s;"></div>
-	<div class="particle" style="bottom: 30%; right: 15%; animation: float 10s ease-in-out infinite; animation-delay: 3s;"></div>
-	<div class="particle" style="bottom: 15%; left: 25%; animation: float 8s ease-in-out infinite; animation-delay: 1.5s;"></div>
+    .card-trend {
+      animation: floatY 6s ease-in-out infinite;
+    }
 
-	<!-- Box Image - Absolute positioned with lazy loading -->
-	<img
-		src="https://images-cam93.s3.us-east-1.amazonaws.com/probability-box.png"
-		alt="Caja de Probabilidad - Predice devoluciones"
-		class="hidden lg:block absolute right-0 top-0 h-full w-[1200px] object-contain drop-shadow-2xl -mr-[400px] box-float"
-		style="z-index: 2;"
-		loading="lazy"
-		decoding="async"
-	/>
+    .card-donut {
+      animation: floatY 7s ease-in-out infinite 0.6s;
+    }
 
-	<div class="max-w-7xl mx-auto relative z-10">
-		<!-- Left Content -->
-		<div class="max-w-2xl">
-			<!-- Badge -->
-			<div class="flex justify-start mb-6 sm:mb-8">
-				<div class="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-3 sm:px-4 py-2 hover:bg-purple-100 transition-colors">
-					<svg class="w-3 sm:w-4 h-3 sm:h-4 text-[#8B5CF6]" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M12 2a1 1 0 011 1v1.5a1 1 0 11-2 0V3a1 1 0 011-1m0 12a1 1 0 011 1v1.5a1 1 0 11-2 0V16a1 1 0 011-1m7.07-5.07a1 1 0 00-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414l-1.06-1.06M6.34 6.34a1 1 0 10-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414L6.34 6.34m10.32 10.32a1 1 0 10-1.414 1.414l1.06 1.06a1 1 0 001.414-1.414l-1.06-1.06"></path>
-					</svg>
-					<span class="text-gray-700 font-medium text-xs sm:text-sm">Potenciado por IA</span>
-				</div>
-			</div>
+    .card-bars {
+      animation: floatY 6.5s ease-in-out infinite 0.3s;
+    }
 
-			<!-- Main Title -->
-			<h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-left mb-6 sm:mb-8 text-gray-900 leading-tight">
-				Predice y elimina<br /><span class="gradient-text">devoluciones</span> antes de que sucedan
-			</h1>
+    .pulse-dot {
+      animation: pulseDot 2s ease-in-out infinite;
+    }
 
-			<!-- Description -->
-			<p class="text-base sm:text-lg md:text-xl text-gray-500 text-left mb-8 sm:mb-12">
-				Utiliza inteligencia artificial para analizar comportamientos, optimizar envíos y aumentar tu rentabilidad automáticamente.
-			</p>
+    .line-path {
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: drawLine 2s 0.2s ease forwards;
+      filter: drop-shadow(0 2px 7px rgba(139, 92, 246, 0.5));
+    }
 
-			<!-- CTA Buttons -->
-			<div class="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-				<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" class="w-full sm:w-auto bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:shadow-purple-500/40 hover:scale-105 text-sm sm:text-base">
-				Solicitar Demo Gratis
-				<svg class="w-3 sm:w-4 h-3 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M5 12h14M12 5l7 7-7 7"/>
-				</svg>
-			</a>
-			<a href="./contacto" class="w-full sm:w-auto border border-gray-300 text-gray-900 px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all text-sm sm:text-base">
-				Contáctanos
-			</a>
-			</div>
-		</div>
-	</div>
+    .ping-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: ping 2.4s ease-out infinite;
+    }
+
+    .sweep-shimmer {
+      animation: sweep 3.8s ease-in-out infinite;
+    }
+
+    .donut-path {
+      stroke-dasharray: 264;
+      stroke-dashoffset: 18;
+      animation: donutFill 1.6s 0.3s ease forwards;
+      filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.55));
+    }
+
+    .bar-before {
+      animation: growBar 0.9s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .bar-after {
+      animation: growBar 0.9s 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .gradient-text {
+      background: linear-gradient(115deg, #a855f7, #7c3aed);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+  </style>
+
+  <script define:vars={{ dummy: true }}>
+    (function () {
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+
+      const duration = 1300;
+      const startTime = performance.now();
+      const els = document.querySelectorAll('[data-count]');
+
+      const frame = (now) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+
+        els.forEach((el) => {
+          const target = parseFloat(el.getAttribute('data-count'));
+          el.textContent = Math.round(target * easeOut);
+        });
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        }
+      };
+
+      els.forEach((el) => {
+        el.textContent = '0';
+      });
+      requestAnimationFrame(frame);
+    })();
+  </script>
+
+  <!-- Grid background -->
+  <div class="hero-grid absolute inset-0 z-0"></div>
+
+  <!-- Glow Blobs -->
+  <div
+    class="glow-blob-purple absolute -top-[120px] -right-[80px] w-[520px] h-[520px] rounded-full bg-gradient-to-br from-purple-400/30 to-transparent blur-[20px] -z-10"
+  ></div>
+  <div
+    class="glow-blob-green absolute -bottom-[160px] -left-[100px] w-[480px] h-[480px] rounded-full bg-gradient-to-br from-emerald-400/20 to-transparent blur-[20px] -z-10"
+  ></div>
+
+  <!-- Ambient Background Area Chart -->
+  <svg
+    viewBox="0 0 1200 300"
+    width="1200"
+    height="300"
+    preserveAspectRatio="none"
+    class="absolute bottom-0 left-0 opacity-[0.16] w-full h-[300px]"
+  >
+    <defs>
+      <linearGradient
+        id="ambA"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="300"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset="0" stop-color="rgba(139,92,246,0.55)" />
+        <stop offset="100%" stop-color="rgba(139,92,246,0)" />
+      </linearGradient>
+    </defs>
+    <path
+      d="M0,120 L120,90 L240,150 L360,110 L480,180 L600,150 L720,210 L840,190 L960,240 L1080,220 L1200,260 L1200,300 L0,300 Z"
+      fill="url(#ambA)"
+    />
+    <path
+      d="M0,120 L120,90 L240,150 L360,110 L480,180 L600,150 L720,210 L840,190 L960,240 L1080,220 L1200,260"
+      fill="none"
+      stroke="#8B5CF6"
+      stroke-width="2"
+    />
+  </svg>
+
+  <!-- Main Content Container -->
+  <div
+    class="relative z-10 w-full px-4 sm:px-6 lg:px-12 h-full lg:h-[660px] flex lg:flex-none items-center lg:items-start lg:pt-[80px]"
+  >
+    <!-- Left Content -->
+    <div class="w-full lg:w-[540px] lg:absolute lg:left-[60px] lg:top-[50%] lg:-translate-y-1/2">
+      <!-- Badge -->
+      <div
+        class="inline-flex items-center gap-2 bg-white border border-[#E7E2F5] rounded-full px-3 sm:px-4 py-2 mb-6 sm:mb-8 shadow-[0_8px_24px_-12px_rgba(124,58,237,0.4)]"
+      >
+        <span
+          class="pulse-dot w-2 h-2 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6]"
+        ></span>
+        <span
+          class="text-[12.5px] font-bold tracking-[0.06em] text-[#5B5470] uppercase"
+        >
+          Potenciado por IA
+        </span>
+      </div>
+
+      <!-- H1 Title -->
+      <h1
+        class="font-space-grotesk font-bold text-4xl sm:text-5xl md:text-6xl lg:text-[54px] leading-[1.05] -tracking-[0.02em] text-[#181225] mb-5 sm:mb-6"
+      >
+        Predice y elimina
+        <span class="gradient-text">devoluciones</span>
+        antes de que sucedan
+      </h1>
+
+      <!-- Description -->
+      <p
+        class="text-base sm:text-lg md:text-xl text-[#5B5470] leading-[1.55] mb-8 sm:mb-[30px] max-w-[480px]"
+      >
+        Probability IA analiza cada pedido en tiempo real para anticipar el
+        riesgo de devolución y optimizar tus envíos. Menos pérdidas, más
+        margen.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-[14px] mb-8 sm:mb-[36px]">
+        <a
+          href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos"
+          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-white rounded-[13px] bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] shadow-[0_16px_34px_-12px_rgba(124,58,237,0.7)] hover:shadow-[0_20px_40px_-8px_rgba(124,58,237,0.8)] hover:-translate-y-0.5 transition-all"
+        >
+          Solicitar demo gratis
+        </a>
+        <a
+          href="/contacto"
+          class="inline-flex items-center justify-center px-6 sm:px-[26px] py-3 sm:py-[15px] font-bold text-sm sm:text-[15.5px] text-[#3A2E5C] rounded-[13px] bg-white border border-[#E2DCF1] hover:border-[#8B5CF6] hover:text-[#7C3AED] transition-all"
+        >
+          Contáctanos
+        </a>
+      </div>
+
+      <!-- Stat Strip -->
+      <div
+        class="flex gap-[30px] items-end flex-wrap lg:flex-nowrap"
+      >
+        <div>
+          <div
+            class="font-space-grotesk font-bold text-[30px] leading-[1] text-emerald-600"
+          >
+            ↓<span data-count="28">28</span>%
+          </div>
+          <div class="text-[13px] text-[#6B6480] mt-1">menos devoluciones</div>
+        </div>
+        <div class="w-px h-[38px] bg-[#E4DFF0]"></div>
+        <div>
+          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-[#181225]">
+            <span data-count="93">93</span>%
+          </div>
+          <div class="text-[13px] text-[#6B6480] mt-1">precisión del modelo</div>
+        </div>
+        <div class="w-px h-[38px] bg-[#E4DFF0]"></div>
+        <div>
+          <div class="font-space-grotesk font-bold text-[30px] leading-[1] text-[#181225]">
+            1.2M
+          </div>
+          <div class="text-[13px] text-[#6B6480] mt-1">pedidos/mes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Content - Floating Cards (Desktop only) -->
+    <!-- TREND CARD -->
+      <div
+        class="hidden lg:block card-trend absolute top-[74px] right-[54px] w-[430px] bg-white/82 backdrop-blur-[10px] border border-[#EDE9F8] rounded-[18px] p-[18px] shadow-[0_30px_60px_-28px_rgba(124,58,237,0.5)] z-20 pointer-events-auto"
+      >
+        <div class="flex justify-between items-center mb-[6px]">
+          <div class="text-[12.5px] font-bold text-[#3A2E5C]">
+            Tasa de devolución · 6 meses
+          </div>
+          <span
+            class="text-[12px] font-bold text-emerald-600 bg-emerald-50 px-[9px] py-[3px] rounded-full"
+          >
+            ↓ 28%
+          </span>
+        </div>
+        <div class="relative overflow-hidden rounded-[10px]">
+          <svg
+            viewBox="0 0 560 200"
+            width="100%"
+            height="150"
+            class="block overflow-visible"
+          >
+            <defs>
+              <linearGradient
+                id="lineA"
+                x1="0"
+                y1="0"
+                x2="560"
+                y2="0"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="#A855F7" />
+                <stop offset="1" stop-color="#7C3AED" />
+              </linearGradient>
+              <linearGradient
+                id="areaA"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="200"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stop-color="rgba(139,92,246,0.30)" />
+                <stop offset="1" stop-color="rgba(139,92,246,0)" />
+              </linearGradient>
+            </defs>
+            <g stroke="#EFEDF6" stroke-width="1">
+              <line x1="0" y1="60" x2="560" y2="60" />
+              <line x1="0" y1="120" x2="560" y2="120" />
+            </g>
+            <path
+              d="M8,36 L66,66 L124,52 L182,92 L240,80 L298,118 L356,106 L414,146 L472,158 L530,172 L530,200 L8,200 Z"
+              fill="url(#areaA)"
+            />
+            <path
+              class="line-path"
+              d="M8,36 L66,66 L124,52 L182,92 L240,80 L298,118 L356,106 L414,146 L472,158 L530,172"
+              fill="none"
+              stroke="url(#lineA)"
+              stroke-width="3.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle
+              class="ping-ring"
+              cx="530"
+              cy="172"
+              r="9"
+              fill="none"
+              stroke="#8B5CF6"
+              stroke-width="2"
+            />
+            <circle
+              cx="530"
+              cy="172"
+              r="5.5"
+              fill="white"
+              stroke="url(#lineA)"
+              stroke-width="3"
+            />
+          </svg>
+          <div
+            class="sweep-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-purple-200/20 to-transparent pointer-events-none"
+          ></div>
+        </div>
+      </div>
+
+    <!-- DONUT CARD -->
+      <div
+        class="hidden lg:block card-donut absolute top-[330px] right-[340px] w-[188px] bg-white border border-[#EDE9F8] rounded-[18px] p-4 shadow-[0_30px_60px_-30px_rgba(124,58,237,0.5)] z-20 pointer-events-auto"
+      >
+        <div class="text-[12px] font-bold text-[#3A2E5C] mb-[6px]">
+          Precisión IA
+        </div>
+        <div class="relative w-[120px] h-[120px] mx-auto">
+          <svg
+            viewBox="0 0 120 120"
+            width="120"
+            height="120"
+            style="transform: rotate(-90deg)"
+          >
+            <defs>
+              <linearGradient
+                id="donA"
+                x1="0"
+                y1="0"
+                x2="120"
+                y2="120"
+              >
+                <stop offset="0" stop-color="#A855F7" />
+                <stop offset="1" stop-color="#7C3AED" />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              stroke="#EFEDF6"
+              stroke-width="11"
+            />
+            <circle
+              class="donut-path"
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              stroke="url(#donA)"
+              stroke-width="11"
+              stroke-linecap="round"
+            />
+          </svg>
+          <div
+            class="absolute inset-0 flex items-center justify-center font-space-grotesk font-bold text-[28px] text-[#181225]"
+          >
+            <span data-count="93">93</span>%
+          </div>
+        </div>
+      </div>
+
+    <!-- BARS CARD -->
+      <div
+        class="hidden lg:block card-bars absolute top-[362px] right-[62px] w-[258px] bg-white border border-[#EDE9F8] rounded-[18px] p-[16px_18px] shadow-[0_30px_60px_-30px_rgba(124,58,237,0.5)] z-20 pointer-events-auto"
+      >
+        <div class="text-[12px] font-bold text-[#3A2E5C] mb-[18px]">
+          Antes vs. con Probability
+        </div>
+        <div class="flex gap-[26px] h-[120px] items-end px-2">
+          <!-- Before Bar -->
+          <div class="flex flex-col items-center gap-2 flex-1">
+            <div class="text-[13px] font-bold text-[#7C3AED]">9.8%</div>
+            <div class="relative w-[46px] h-[96px] flex items-end overflow-hidden">
+              <div
+                class="bar-before w-full h-[96px] rounded-[8px_8px_4px_4px] bg-gradient-to-b from-purple-300 to-purple-500"
+              ></div>
+            </div>
+            <div class="text-[11.5px] text-[#6B6480]">Antes</div>
+          </div>
+          <!-- After Bar -->
+          <div class="flex flex-col items-center gap-2 flex-1">
+            <div class="text-[13px] font-bold text-emerald-600">7.1%</div>
+            <div class="relative w-[46px] h-[96px] flex items-end overflow-hidden">
+              <div
+                class="bar-after w-full h-[64px] rounded-[8px_8px_4px_4px] bg-gradient-to-b from-emerald-300 to-emerald-600 shadow-[0_0_18px_-4px_rgba(16,185,129,0.6)]"
+              ></div>
+            </div>
+            <div class="text-[11.5px] text-[#6B6480]">Con IA</div>
+          </div>
+        </div>
+      </div>
+  </div>
 </section>
-
-<script>
-	interface Particle {
-		x: number;
-		y: number;
-		baseX: number;
-		baseY: number;
-		vx: number;
-		vy: number;
-		opacity: number;
-	}
-
-	const canvas = document.getElementById('carbon-fiber-canvas') as HTMLCanvasElement;
-	const ctx = canvas?.getContext('2d');
-
-	if (!canvas || !ctx) {
-		throw new Error('Canvas or context not found');
-	}
-
-	let particles: Particle[] = [];
-	let mouseX = 0;
-	let mouseY = 0;
-	let mousePresent = false;
-
-	// Configurar canvas
-	function resizeCanvas() {
-		const section = document.getElementById('hero-section');
-		if (section) {
-			canvas.width = section.offsetWidth;
-			canvas.height = section.offsetHeight;
-		}
-	}
-
-	// Crear partículas
-	function initParticles() {
-		particles = [];
-		const particleCount = Math.floor((canvas.width * canvas.height) / 2000);
-
-		for (let i = 0; i < particleCount; i++) {
-			const x = Math.random() * canvas.width;
-			const y = Math.random() * canvas.height;
-
-			particles.push({
-				x,
-				y,
-				baseX: x,
-				baseY: y,
-				vx: 0,
-				vy: 0,
-				opacity: Math.random() * 0.6 + 0.2,
-			});
-		}
-	}
-
-	// Dibujar partículas
-	function draw() {
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-		particles.forEach((particle) => {
-			// Distancia al mouse
-			const dx = particle.x - mouseX;
-			const dy = particle.y - mouseY;
-			const distance = Math.sqrt(dx * dx + dy * dy);
-			const repelDistance = 150;
-
-			if (mousePresent && distance < repelDistance) {
-				// Repulsión del mouse
-				const angle = Math.atan2(dy, dx);
-				const force = (1 - distance / repelDistance) * 3;
-				particle.vx += Math.cos(angle) * force;
-				particle.vy += Math.sin(angle) * force;
-			}
-
-			// Volver a la posición original
-			particle.vx += (particle.baseX - particle.x) * 0.02;
-			particle.vy += (particle.baseY - particle.y) * 0.02;
-
-			// Fricción
-			particle.vx *= 0.95;
-			particle.vy *= 0.95;
-
-			// Actualizar posición
-			particle.x += particle.vx;
-			particle.y += particle.vy;
-
-			// Dibujar partícula
-			ctx.fillStyle = `rgba(139, 92, 246, ${particle.opacity})`;
-			ctx.beginPath();
-			ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 2);
-			ctx.fill();
-
-			// Dibujar líneas conectoras cercanas
-			particles.forEach((otherParticle) => {
-				const lineDx = otherParticle.x - particle.x;
-				const lineDy = otherParticle.y - particle.y;
-				const lineDistance = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
-
-				if (lineDistance < 80) {
-					ctx.strokeStyle = `rgba(139, 92, 246, ${(1 - lineDistance / 80) * particle.opacity * 0.3})`;
-					ctx.lineWidth = 0.5;
-					ctx.beginPath();
-					ctx.moveTo(particle.x, particle.y);
-					ctx.lineTo(otherParticle.x, otherParticle.y);
-					ctx.stroke();
-				}
-			});
-		});
-
-		requestAnimationFrame(draw);
-	}
-
-	// Event listeners
-	document.addEventListener('mousemove', (e) => {
-		mouseX = e.clientX;
-		mouseY = e.clientY;
-		mousePresent = true;
-	});
-
-	document.addEventListener('mouseleave', () => {
-		mousePresent = false;
-	});
-
-	window.addEventListener('resize', () => {
-		resizeCanvas();
-		initParticles();
-	});
-
-	// Inicializar
-	resizeCanvas();
-	initParticles();
-	draw();
-</script>

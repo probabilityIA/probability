@@ -38,7 +38,7 @@ func (m *MeliCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, inte
 // GetWebhookURL retorna la URL base para los webhooks de MercadoLibre.
 // MercadoLibre usa notificaciones (IPN) en lugar de webhooks clásicos.
 func (m *MeliCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
-	webhookURL := fmt.Sprintf("%s/integrations/meli/notifications", baseURL)
+	webhookURL := fmt.Sprintf("%s/meli/notifications", baseURL)
 
 	return &integrationcore.WebhookInfo{
 		URL:    webhookURL,

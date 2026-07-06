@@ -14,15 +14,17 @@ type InvoiceRequestMessage struct {
 
 // Operations
 const (
-	OperationCreate        = "create"
-	OperationRetry         = "retry"
-	OperationCancel        = "cancel"
-	OperationCompare       = "compare"
-	OperationCheckStatus   = "check_status"
-	OperationListItems        = "list_items"
-	OperationListBankAccounts = "list_bank_accounts"
-	OperationCreateJournal    = "create_journal"
-	OperationCashReceipt      = "cash_receipt"
+	OperationCreate              = "create"
+	OperationRetry               = "retry"
+	OperationCancel              = "cancel"
+	OperationCompare             = "compare"
+	OperationCheckStatus         = "check_status"
+	OperationListItems           = "list_items"
+	OperationListBankAccounts    = "list_bank_accounts"
+	OperationCreateJournal       = "create_journal"
+	OperationCashReceipt         = "cash_receipt"
+	OperationInventorySync       = "inventory_sync"
+	OperationListSiigoWarehouses = "list_siigo_warehouses"
 )
 
 // Providers

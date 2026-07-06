@@ -1,19 +1,43 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Select, Modal, Alert, SecretInput } from '@/shared/ui';
+import { Select, Modal, Alert, SecretInput, ConfirmModal } from '@/shared/ui';
 import { WooCommerceCredentials, WooCommerceConfig } from '../../domain/types';
-import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
+import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction, getWooCommerceConnectionInfoAction, rotateWooCommerceTokenAction, revokeWooCommerceTokenAction } from '@/services/integrations/core/infra/actions';
+import { WooCommerceConnectionInfo } from '@/services/integrations/core/domain/types';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { WooProductSyncModal } from './WooProductSyncModal';
+import { WooWebhookManager } from './WooWebhookManager';
+import { getWooPluginZipAction } from '../../infra/actions';
 import {
     KeyIcon,
     Cog6ToothIcon,
     ShoppingBagIcon,
     InformationCircleIcon,
     BoltIcon,
+    TruckIcon,
+    ArrowDownTrayIcon,
+    ClipboardDocumentIcon,
+    ClipboardDocumentCheckIcon,
+    ArrowPathIcon,
+    NoSymbolIcon,
+    ChevronDownIcon,
+    PhotoIcon,
+    BeakerIcon,
 } from '@heroicons/react/24/outline';
+
+const HELP_IMAGES = [
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/step-1-rest-api-keys.png',
+        caption: 'Paso 1: en WordPress ve a WooCommerce -> Ajustes -> Avanzado -> REST API y haz clic en "Agregar clave".',
+    },
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/step-2-crear-key.png',
+        caption: 'Paso 2: escribe una descripcion, elige permisos "Lectura/Escritura" y genera la clave. Copia el Consumer Key y el Consumer Secret.',
+    },
+];
 
 interface WooCommerceConfigFormProps {
     onSuccess?: () => void;
@@ -26,6 +50,7 @@ interface WooCommerceConfigFormProps {
         config?: any;
         credentials?: any;
         business_id?: number | null;
+        is_testing?: boolean;
     };
 }
 
@@ -49,6 +74,14 @@ const GUIDE_STEPS = [
     'Copia el Consumer Key y Secret',
 ];
 
+const PLUGIN_STEPS = [
+    'Descarga el plugin con el boton de abajo',
+    'En WordPress: Plugins → Anadir nuevo → Subir plugin',
+    'Sube el .zip y activa el plugin',
+    'WooCommerce → Ajustes → Envio → tu zona → Anadir "Probability (Transportadoras)"',
+    'Pega la Clave de conexion y guarda',
+];
+
 export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: WooCommerceConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -56,10 +89,100 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(initialData?.business_id ?? null);
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
+    const [connInfo, setConnInfo] = useState<WooCommerceConnectionInfo | null>(null);
+    const [loadingConn, setLoadingConn] = useState(false);
+    const [copiedKey, setCopiedKey] = useState(false);
+
+    useEffect(() => {
+        if (!isEdit || !integrationId) return;
+        let active = true;
+        setLoadingConn(true);
+        getWooCommerceConnectionInfoAction(integrationId)
+            .then((res: any) => {
+                if (active && res && res.connection_key) {
+                    setConnInfo(res as WooCommerceConnectionInfo);
+                }
+            })
+            .catch(() => { })
+            .finally(() => { if (active) setLoadingConn(false); });
+        return () => { active = false; };
+    }, [isEdit, integrationId]);
+
+    const [rotating, setRotating] = useState(false);
+    const [revoking, setRevoking] = useState(false);
+    const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+    const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [showHelpImages, setShowHelpImages] = useState(false);
+    const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
+    const [downloadingPlugin, setDownloadingPlugin] = useState(false);
+
+    const handleDownloadPlugin = async () => {
+        setDownloadingPlugin(true);
+        try {
+            const res = await getWooPluginZipAction();
+            if (!res?.success || !res?.data) {
+                setErrorModal(res?.message || 'No se pudo descargar el plugin');
+                return;
+            }
+            const bytes = Uint8Array.from(atob(res.data), (c) => c.charCodeAt(0));
+            const blob = new Blob([bytes], { type: 'application/zip' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'probability-shipping.zip';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch {
+            setErrorModal('No se pudo descargar el plugin');
+        } finally {
+            setDownloadingPlugin(false);
+        }
+    };
+
+    const handleCopyKey = async () => {
+        if (!connInfo?.connection_key) return;
+        await navigator.clipboard.writeText(connInfo.connection_key);
+        setCopiedKey(true);
+        setTimeout(() => setCopiedKey(false), 2000);
+    };
+
+    const handleRotateKey = async () => {
+        if (!integrationId || rotating) return;
+        setRotating(true);
+        try {
+            const res: any = await rotateWooCommerceTokenAction(integrationId);
+            if (res && res.connection_key) {
+                setConnInfo(res as WooCommerceConnectionInfo);
+                showToast('Clave rotada. La clave anterior dejo de funcionar.', 'success');
+            } else {
+                showToast(res?.message || 'No se pudo rotar la clave', 'error');
+            }
+        } finally {
+            setRotating(false);
+        }
+    };
+
+    const doRevokeKey = async () => {
+        if (!integrationId || revoking) return;
+        setRevoking(true);
+        try {
+            const res: any = await revokeWooCommerceTokenAction(integrationId);
+            if (res && res.revoked) {
+                setConnInfo(res as WooCommerceConnectionInfo);
+                showToast('Clave revocada.', 'success');
+            } else {
+                showToast(res?.message || 'No se pudo revocar la clave', 'error');
+            }
+        } finally {
+            setRevoking(false);
+        }
+    };
 
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
@@ -163,6 +286,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     store_id: formData.store_url,
                     config: config as any,
                     credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
+                    is_testing: isSuperAdmin ? isTesting : undefined,
                 });
 
                 if (!response || response.success === false) {
@@ -194,6 +318,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 credentials: credentials as any,
                 is_active: true,
                 is_default: false,
+                is_testing: isSuperAdmin ? isTesting : false,
             });
 
             if (response.success) {
@@ -401,6 +526,45 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 </button>
             </div>
 
+            {(isSuperAdmin || isTesting) && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-start gap-2">
+                            <BeakerIcon className="w-4 h-4 mt-0.5" style={{ color: '#d97706' }} />
+                            <div>
+                                <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                    Modo de pruebas
+                                    {isTesting && (
+                                        <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+                                            Activo
+                                        </span>
+                                    )}
+                                </h4>
+                                <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                    {isSuperAdmin
+                                        ? 'Redirige las peticiones a la tienda de pruebas (mock) configurada en el tipo de integracion, sin tocar tu tienda real.'
+                                        : 'Esta integracion esta en modo de pruebas. Solo un super admin puede cambiarlo.'}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isTesting}
+                            disabled={!isSuperAdmin}
+                            onClick={() => { if (isSuperAdmin) setIsTesting((v) => !v); }}
+                            title={isSuperAdmin ? undefined : 'Solo un super admin puede cambiar el modo de pruebas'}
+                            className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${isTesting ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'} ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        >
+                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isTesting ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div
                 className="rounded-xl p-4 dark:bg-gray-800/60"
                 style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
@@ -439,7 +603,245 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         </li>
                     ))}
                 </ol>
+
+                <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${INPUT_BORDER}` }}>
+                    <button
+                        type="button"
+                        onClick={() => setShowHelpImages((v) => !v)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-[12px] font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+                    >
+                        <span className="flex items-center gap-1.5">
+                            <PhotoIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                            Ver imagenes de ayuda paso a paso
+                        </span>
+                        <ChevronDownIcon
+                            className={`w-4 h-4 text-gray-400 transition-transform ${showHelpImages ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+
+                    {showHelpImages && (
+                        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            {HELP_IMAGES.map((img, i) => (
+                                <figure key={i} className="flex flex-col">
+                                    <a href={img.src} target="_blank" rel="noopener noreferrer" className="block">
+                                        <img
+                                            src={img.src}
+                                            alt={img.caption}
+                                            loading="lazy"
+                                            className="w-full rounded-lg border object-contain hover:opacity-95 transition-opacity"
+                                            style={{ borderColor: INPUT_BORDER, backgroundColor: '#fff' }}
+                                        />
+                                    </a>
+                                    <figcaption className="mt-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                                        {img.caption}
+                                    </figcaption>
+                                </figure>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                                <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                                Sincronizar productos
+                            </h4>
+                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                Cruza los productos por SKU y te muestra que falta en cada lado; eliges crear en WooCommerce lo que solo esta en Probability, o al reves.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setProductSyncOpen(true)}
+                            className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors"
+                            style={{ backgroundColor: GREEN }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                        >
+                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                            Sincronizar productos
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <WooWebhookManager integrationId={integrationId} />
+                </div>
+            )}
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex flex-col gap-1 mb-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                            <TruckIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                            Plugin de cotizacion de envios en el checkout
+                        </h4>
+                        <span
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full self-start"
+                            style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                        >
+                            Opcional
+                        </span>
+                    </div>
+
+                    <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+                        Instala este plugin en tu WordPress para que tus clientes vean las tarifas reales de las
+                        transportadoras (EnvioClick y otras) directamente en el checkout, calculadas por Probability
+                        segun la direccion de envio. Requiere que tengas una transportadora y una direccion de origen
+                        configuradas en Probability.
+                    </p>
+
+                    <ol className="grid grid-cols-1 gap-y-2 mb-4 sm:grid-cols-2 sm:gap-x-4">
+                        {PLUGIN_STEPS.map((step, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                                <span
+                                    className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                                    style={{ backgroundColor: GREEN }}
+                                >
+                                    {i + 1}
+                                </span>
+                                <span className="text-[11px] text-gray-600 dark:text-gray-300 leading-snug">{step}</span>
+                            </li>
+                        ))}
+                    </ol>
+
+                    <div className="flex flex-col gap-3">
+                        <button
+                            type="button"
+                            onClick={handleDownloadPlugin}
+                            disabled={downloadingPlugin}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-[13px] font-semibold rounded-lg text-white transition-colors self-start disabled:opacity-60"
+                            style={{ backgroundColor: GREEN }}
+                        >
+                            <ArrowDownTrayIcon className="w-4 h-4" />
+                            {downloadingPlugin ? 'Descargando...' : 'Descargar plugin (.zip)'}
+                        </button>
+
+                        <div>
+                            <label className={fieldLabel}>Clave de conexion</label>
+                            <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-1.5">
+                                Copiala y pegala en los ajustes del metodo de envio "Probability" en tu WordPress.
+                            </p>
+                            {loadingConn ? (
+                                <div className="text-[12px] text-gray-400 py-2">Cargando clave de conexion...</div>
+                            ) : connInfo && connInfo.revoked ? (
+                                <div className="flex flex-col gap-2">
+                                    <div
+                                        className="text-[12px] rounded-lg px-3 py-2"
+                                        style={{ backgroundColor: '#fff4f4', color: '#b42318', border: '1px solid #f3c9c9' }}
+                                    >
+                                        La clave esta revocada. La tienda no cotizara hasta que generes una clave nueva.
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleRotateKey}
+                                        disabled={rotating}
+                                        className="px-3 py-2 text-[13px] font-semibold rounded-lg text-white flex items-center justify-center gap-1.5 self-start disabled:opacity-60"
+                                        style={{ backgroundColor: GREEN }}
+                                    >
+                                        <ArrowPathIcon className="w-4 h-4" />
+                                        {rotating ? 'Generando...' : 'Generar clave nueva'}
+                                    </button>
+                                </div>
+                            ) : connInfo ? (
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                                        <textarea
+                                            readOnly
+                                            value={connInfo.connection_key}
+                                            onFocus={(e) => e.currentTarget.select()}
+                                            className={`${inputCls} font-mono text-[11px] resize-none flex-1`}
+                                            rows={2}
+                                            style={{ borderColor: INPUT_BORDER }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyKey}
+                                            className="px-3 py-2 text-[13px] font-semibold rounded-lg flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+                                            style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                                        >
+                                            {copiedKey ? (
+                                                <>
+                                                    <ClipboardDocumentCheckIcon className="w-4 h-4" />
+                                                    Copiado
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ClipboardDocumentIcon className="w-4 h-4" />
+                                                    Copiar
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <button
+                                            type="button"
+                                            onClick={handleRotateKey}
+                                            disabled={rotating}
+                                            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-60"
+                                            style={{ backgroundColor: '#ffffff', color: '#374151', border: `1px solid ${INPUT_BORDER}` }}
+                                        >
+                                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                                            {rotating ? 'Rotando...' : 'Rotar clave'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRevokeConfirm(true)}
+                                            disabled={revoking}
+                                            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-60"
+                                            style={{ backgroundColor: '#ffffff', color: '#b42318', border: '1px solid #f3c9c9' }}
+                                        >
+                                            <NoSymbolIcon className="w-3.5 h-3.5" />
+                                            {revoking ? 'Revocando...' : 'Revocar'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400">
+                                        Rotar genera una clave nueva y desactiva la anterior. Revocar detiene la cotizacion hasta generar una nueva.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="text-[12px] text-gray-400 py-2">
+                                    No se pudo cargar la clave de conexion. Guarda la integracion e intenta de nuevo.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmModal
+                isOpen={showRevokeConfirm}
+                onClose={() => setShowRevokeConfirm(false)}
+                onConfirm={doRevokeKey}
+                title="Revocar clave de conexion"
+                message="Al revocar, la tienda dejara de cotizar envios hasta que generes una clave nueva. Esta accion invalida la clave actual. Deseas continuar?"
+                confirmText="Revocar"
+                type="danger"
+            />
+
+            {isEdit && integrationId && (
+                <WooProductSyncModal
+                    isOpen={productSyncOpen}
+                    onClose={() => setProductSyncOpen(false)}
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId}
+                />
+            )}
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

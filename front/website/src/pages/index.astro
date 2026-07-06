@@ -3,11 +3,13 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroSection from '../components/HeroSection.astro';
 import BannerPromo from '../components/BannerPromo.astro';
+import DiagnosticoSection from '../components/DiagnosticoSection.astro';
 import IntegrationsSection from '../components/IntegrationsSection.astro';
 import HowItWorks from '../components/HowItWorks.astro';
 import AdvantagesSection from '../components/AdvantagesSection.astro';
 import FeaturesSection from '../components/FeaturesSection.astro';
 import Footer from '../components/Footer.astro';
+import QuizModal from '../components/QuizModal.astro';
 
 const title = 'ProbabilityIA - Predice y Reduce Devoluciones en Ecommerce';
 const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, optimiza envíos y automatiza tu operación logística en tiempo real.';
@@ -40,6 +42,266 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
 	}
 
+	@keyframes ctaFloat {
+		0%, 100% { transform: translateY(0); }
+		50% { transform: translateY(-20px); }
+	}
+
+	@keyframes ctaPulseRing {
+		0% { transform: scale(0.92); opacity: 0.55; }
+		70% { transform: scale(1.18); opacity: 0; }
+		100% { transform: scale(1.18); opacity: 0; }
+	}
+
+	@keyframes ctaDash {
+		to { stroke-dashoffset: -32; }
+	}
+
+	@keyframes ctaBox {
+		0%, 100% { transform: translateY(0); }
+		50% { transform: translateY(-6px); }
+	}
+
+	.cta-section {
+		background: #ffffff;
+		border-top: 1px solid rgba(139, 92, 246, 0.1);
+		padding: 2rem 1.25rem;
+		position: relative;
+		overflow: hidden;
+		font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+	}
+
+	.cta-section::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image:
+			repeating-linear-gradient(45deg, rgba(139, 92, 246, 0.03) 0, rgba(139, 92, 246, 0.03) 1px, transparent 1px, transparent 11px),
+			repeating-linear-gradient(-45deg, rgba(139, 92, 246, 0.03) 0, rgba(139, 92, 246, 0.03) 1px, transparent 1px, transparent 11px);
+		pointer-events: none;
+	}
+
+	.cta-section::after {
+		content: '';
+		position: absolute;
+		top: -120px;
+		right: -80px;
+		width: 380px;
+		height: 380px;
+		border-radius: 50%;
+		background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+		pointer-events: none;
+	}
+
+	.cta-bg-circle {
+		position: absolute;
+		bottom: -140px;
+		left: -90px;
+		width: 340px;
+		height: 340px;
+		border-radius: 50%;
+		background: radial-gradient(circle, rgba(139, 92, 246, 0.07) 0%, transparent 70%);
+		pointer-events: none;
+	}
+
+	.cta-container {
+		max-width: 1080px;
+		margin: 0 auto;
+		position: relative;
+		z-index: 1;
+	}
+
+	.cta-header {
+		text-align: center;
+		max-width: 680px;
+		margin: 0 auto 0.8rem;
+	}
+
+	.cta-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.3rem 0.7rem;
+		border: 1px solid rgba(139, 92, 246, 0.2);
+		border-radius: 999px;
+		background: rgba(139, 92, 246, 0.05);
+		color: #8B5CF6;
+		font-size: 0.7rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		margin-bottom: 0.5rem;
+	}
+
+	.cta-badge-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #8B5CF6;
+		box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+	}
+
+	.cta-section h2 {
+		color: #8B5CF6;
+		font-size: clamp(1.375rem, 3vw, 2rem);
+		font-weight: 800;
+		line-height: 1.05;
+		margin: 0 0 0.4rem;
+		letter-spacing: -0.02em;
+	}
+
+	.cta-section p {
+		color: #64748B;
+		font-size: 0.875rem;
+		line-height: 1.4;
+		margin: 0;
+	}
+
+	.cta-grid {
+		display: grid;
+		grid-template-columns: 1.05fr 1fr;
+		gap: 1.5rem;
+		align-items: center;
+		margin-bottom: -0.5rem;
+	}
+
+	.cta-illu-col {
+		display: flex;
+		justify-content: center;
+	}
+
+	.cta-illu-wrapper {
+		position: relative;
+		width: 100%;
+		max-width: 340px;
+		aspect-ratio: 1 / 1;
+		margin: 0 auto;
+	}
+
+	.cta-illu-pulse {
+		position: absolute;
+		inset: 8%;
+		border-radius: 50%;
+		border: 1.5px dashed rgba(139, 92, 246, 0.22);
+		animation: ctaPulseRing 3.2s ease-out infinite;
+	}
+
+	.cta-illu-inner {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: translateY(-30px);
+	}
+
+	.cta-stats-col {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.cta-stat-card {
+		background: #ffffff;
+		border: 1px solid rgba(139, 92, 246, 0.2);
+		border-radius: 12px;
+		padding: 0.85rem 1rem;
+		box-shadow: 0 4px 14px rgba(139, 92, 246, 0.07);
+		transform: scale(1);
+		transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+		cursor: default;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.cta-stat-card:hover {
+		border-color: rgba(139, 92, 246, 0.55);
+		box-shadow: 0 12px 28px rgba(139, 92, 246, 0.18);
+		transform: scale(1.03);
+	}
+
+	.cta-stat-icon {
+		flex-shrink: 0;
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		background: rgba(139, 92, 246, 0.08);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #8B5CF6;
+	}
+
+	.cta-stat-value {
+		font-size: 1.375rem;
+		font-weight: 800;
+		color: #8B5CF6;
+		line-height: 1;
+		letter-spacing: -0.02em;
+	}
+
+	.cta-stat-label {
+		font-size: 0.75rem;
+		color: #64748B;
+		font-weight: 500;
+		margin-top: 0.15rem;
+	}
+
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: #ffffff;
+		border: none;
+		cursor: pointer;
+		padding: 0.75rem 1.6rem;
+		border-radius: 11px;
+		background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 55%, #7C3AED 100%);
+		box-shadow: 0 10px 26px rgba(139, 92, 246, 0.32);
+		transform: translateY(0);
+		transition: transform 0.25s ease, box-shadow 0.25s ease;
+	}
+
+	.cta-button:hover {
+		box-shadow: 0 16px 36px rgba(139, 92, 246, 0.42);
+		transform: translateY(-3px);
+	}
+
+	.cta-button svg {
+		width: 14px;
+		height: 14px;
+		transition: transform 0.25s ease;
+	}
+
+	.cta-button:hover svg {
+		transform: translateX(4px);
+	}
+
+	.cta-footer {
+		text-align: center;
+		color: #94A3B8;
+		font-size: 0.7rem;
+		margin-top: 0.5rem;
+		font-weight: 500;
+	}
+
+	@media (max-width: 860px) {
+		.cta-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.cta-illu-col {
+			order: 2;
+		}
+
+		.cta-stats-col {
+			order: 1;
+		}
+	}
+
 	@media (min-width: 640px) {
 		.whatsapp-float {
 			bottom: 2rem;
@@ -49,6 +311,10 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 		.whatsapp-btn {
 			width: 80px;
 			height: 80px;
+		}
+
+		.cta-section {
+			padding: 5rem 2rem;
 		}
 	}
 
@@ -71,11 +337,22 @@ const description = 'Solución IA para reducir devoluciones. Aumenta ganancias, 
 	</div>
 	<main>
 		<HeroSection />
+
+		<DiagnosticoSection />
 		<BannerPromo />
 		<IntegrationsSection />
 		<HowItWorks />
 		<AdvantagesSection />
 		<FeaturesSection />
 	</main>
+	<QuizModal />
 	<Footer />
+
+	<script>
+		document.querySelectorAll('.open-quiz-modal').forEach(btn => {
+			btn.addEventListener('click', () => {
+				window.openQuizModal?.();
+			});
+		});
+	</script>
 </Layout>

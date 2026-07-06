@@ -8,9 +8,12 @@ import (
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/primary/handlers"
+	wooqueue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/client"
 	woocore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/queue"
+	wooproductrepo "github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -23,6 +26,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
+	database db.IDatabase,
 	coreIntegration integrationcore.IIntegrationCore,
 ) integrationcore.IIntegrationContract {
 	logger = logger.WithModule("woocommerce")
@@ -30,6 +34,7 @@ func New(
 	// 1. Infraestructura secundaria
 	httpClient := client.New()
 	integrationService := woocore.NewIntegrationService(coreIntegration)
+	productRepo := wooproductrepo.New(database, logger)
 
 	// Publisher de órdenes a RabbitMQ (con fallback no-op si no hay conexión)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
@@ -41,11 +46,19 @@ func New(
 	}
 
 	// 2. Casos de uso
-	uc := usecases.New(httpClient, integrationService, orderPublisher, logger)
+	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
 	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger)
 	handler.RegisterRoutes(router, logger)
+
+	if rabbitMQ != nil {
+		pushConsumer := wooqueue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
+		pushConsumer.Start(context.Background())
+
+		productSyncConsumer := wooqueue.NewProductSyncConsumer(rabbitMQ, uc, logger)
+		productSyncConsumer.Start(context.Background())
+	}
 
 	// 4. Auto-registro de webhooks al crear una integracion WooCommerce
 	baseURL := config.Get("WEBHOOK_BASE_URL")

@@ -8,10 +8,23 @@ list_bank_accounts) compilan y pasan tests, pero quedan pendientes criticos.
 
 ## Urgente (riesgo o bloqueante de uso)
 
-1. **Idempotencia en `retry` de Siigo**: el retry hace POST directo a /v1/invoices.
-   Un mensaje RabbitMQ re-entregado puede facturar DOS VECES. Softpymes ya lo
-   resuelve buscando la factura existente antes de crear (ListDocuments por fecha).
-   Replicar ese patron en el consumer de Siigo usando ListInvoices.
+1. **Idempotencia en `retry` de Siigo**: RESUELTO EN CODIGO (2026-07-01, pendiente
+   validar E2E con escritura real, ver punto 3). Se replico el patron de Softpymes:
+   - Al crear se guarda el marcador "order:<orderID> | #<orderNumber>" en el campo
+     "observations" de la factura Siigo (mapper).
+   - Antes de todo POST /v1/invoices (create y retry), el cliente busca en Siigo una
+     factura VIGENTE (no anulada) para esa orden via GET /v1/invoices filtrando por
+     customer_identification + created_start/created_end y matcheando observations.
+     Si existe, no re-factura (short-circuit devolviendo la existente + su CUFE).
+   - Respeta la regla "cancelada libera la orden": las facturas anuladas se ignoran
+     en el match, asi que una orden con su factura cancelada puede volver a facturarse
+     (la regla "una sola vigente" ya la enforcea el modulo en InvoiceExistsForOrder,
+     que excluye status failed/cancelled; es provider-agnostica).
+   - Config opcional en la integracion: idempotency_check (bool, default true para
+     desactivar el chequeo) e idempotency_lookback_days (int, default 30).
+   Archivos: client/find_existing_invoice.go (nuevo), client/create_invoice.go,
+   client/list_invoices.go, client/mappers/invoice.go, consumer/invoice_request_consumer.go,
+   domain/dtos/invoice_types.go, domain/dtos/customer_types.go.
 2. **Config de Siigo no capturable desde la UI**: el form solo pide credenciales.
    Faltan campos para document_id, tax_id, seller_id, cash_receipt_document_id,
    cash_receipt_payment_id. Sin esto cash_receipt y la creacion bien configurada

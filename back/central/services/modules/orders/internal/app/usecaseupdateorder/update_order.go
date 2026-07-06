@@ -16,8 +16,11 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 	// 1. Validar y actualizar todos los campos de la orden
 	hasChanges := uc.updateOrderFields(ctx, existingOrder, dto)
 
-	// 2. Si no hay cambios, retornar sin actualizar
+	// 2. Si no hay cambios, notificar como omitida (para el sync) y retornar sin actualizar
 	if !hasChanges {
+		if !dto.IsManualOrder {
+			uc.publishSyncOrderSkipped(ctx, existingOrder)
+		}
 		return uc.mapOrderToResponse(existingOrder), nil
 	}
 

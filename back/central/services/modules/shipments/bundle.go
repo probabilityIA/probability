@@ -16,6 +16,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/ratelimit"
 	"github.com/secamc93/probability/back/central/shared/redis"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
@@ -63,7 +64,15 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	go reconciliationWorker.Start(context.Background())
 
 	// 6. Init Handlers (repo satisfies ICarrierResolver via GetActiveShippingCarrier)
-	h := handlers.New(uc, transportPub, repo, redisClient)
+	tokenSecret := environment.Get("JWT_SECRET")
+	pluginBaseURL := environment.Get("WEBHOOK_BASE_URL")
+	ratesLimiter := ratelimit.New(ratelimit.Config{
+		RatePerSec:  20,
+		Burst:       100,
+		Threshold:   20,
+		RedisPrefix: "shiprates",
+	}, redisClient, logger)
+	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)

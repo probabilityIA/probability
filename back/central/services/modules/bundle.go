@@ -35,6 +35,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
+	"github.com/secamc93/probability/back/central/services/modules/woostore"
 	"github.com/secamc93/probability/back/central/shared/bedrock"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -59,11 +60,12 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderstatus.New(router, database, logger, environment)
 	ordersBundle := orders.New(router, database, logger, environment, rabbitMQ)
 	probability.New(database, logger, rabbitMQ)
-	products.New(router, database, logger, environment, s3)
+	products.New(router, database, logger, environment, rabbitMQ, s3)
 	customers.New(router, database, logger, rabbitMQ)
 	pricing.New(router, database, logger)
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient, s3)
 	codreport.New(router, database, logger)
+	woostore.New(router, environment, logger)
 	shippingMarginsBundle := shipping_margins.New(router, database, logger, redisClient)
 
 	transportTypes := []int{12, 13, 14, 15}

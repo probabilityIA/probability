@@ -26,6 +26,8 @@ type ISiigoClient interface {
 
 	ListProducts(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
 
+	ListWarehouses(ctx context.Context, credentials dtos.Credentials) ([]dtos.WarehouseItem, error)
+
 	ListPaymentTypes(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
 
 	CreateCashReceipt(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
@@ -33,12 +35,43 @@ type ISiigoClient interface {
 	CreateCreditNote(ctx context.Context, req *dtos.CreateCreditNoteRequest) (*dtos.CreateCreditNoteResult, error)
 
 	CreateJournal(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
+
+	ListWebhooks(ctx context.Context, credentials dtos.Credentials) ([]dtos.WebhookItem, error)
+	CreateWebhook(ctx context.Context, credentials dtos.Credentials, input dtos.CreateWebhookInput) (*dtos.WebhookItem, error)
+	DeleteWebhook(ctx context.Context, credentials dtos.Credentials, webhookID string) error
 }
 
 type IInvoiceUseCase interface {
 	ProcessOrderForInvoicing(ctx context.Context, event *OrderEventMessage) error
 
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
+
+	ListWebhooks(ctx context.Context, integrationID string) ([]dtos.WebhookItem, error)
+	CreateWebhooks(ctx context.Context, integrationID string, baseURL string) (*WebhookCreateResult, error)
+	DeleteWebhook(ctx context.Context, integrationID string, webhookID string) error
+	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]dtos.WebhookItem, error)
+}
+
+type WebhookCreateResult struct {
+	WebhookURL       string             `json:"webhook_url"`
+	CreatedWebhooks  []dtos.WebhookItem `json:"created_webhooks"`
+	ExistingWebhooks []dtos.WebhookItem `json:"existing_webhooks"`
+	Errors           []string           `json:"errors"`
+}
+
+type WebhookLogEntry struct {
+	Source              string
+	EventType           string
+	URL                 string
+	Body                []byte
+	RemoteIP            string
+	IntegrationID       *uint
+	IntegrationTypeCode string
+}
+
+type IWebhookLogRepository interface {
+	LogIncoming(ctx context.Context, entry WebhookLogEntry) (string, error)
+	UpdateResult(ctx context.Context, id string, status string, httpStatus int, errMessage string) error
 }
 
 type OrderEventMessage struct {
