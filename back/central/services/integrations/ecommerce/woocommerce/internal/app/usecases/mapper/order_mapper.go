@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -9,6 +10,27 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
+
+func metaValue(meta []domain.WooCommerceMetaData, key string) string {
+	for _, m := range meta {
+		if m.Key != key {
+			continue
+		}
+		switch v := m.Value.(type) {
+		case string:
+			return v
+		case float64:
+			return strconv.FormatInt(int64(v), 10)
+		case int:
+			return strconv.Itoa(v)
+		case int64:
+			return strconv.FormatInt(v, 10)
+		default:
+			return fmt.Sprintf("%v", v)
+		}
+	}
+	return ""
+}
 
 // MapWooOrderToProbability convierte una orden WooCommerce a el DTO canónico de Probability.
 func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *canonical.ProbabilityOrderDTO {
@@ -159,6 +181,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	}
 
 	// Shipments from shipping lines
+	shippingLineDetails := make([]map[string]interface{}, 0, len(order.ShippingLines))
 	for _, sl := range order.ShippingLines {
 		carrier := sl.MethodTitle
 		carrierCode := sl.MethodID
@@ -170,6 +193,26 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 			Status:       mapShipmentStatus(order.Status),
 			ShippingCost: &shCost,
 		})
+
+		source := sl.MethodID
+		code := ""
+		if quoteID := metaValue(sl.MetaData, "quote_id"); quoteID != "" {
+			source = "probability"
+			code = "pq-" + quoteID + "-" + metaValue(sl.MetaData, "rate_index")
+		}
+
+		shippingLineDetails = append(shippingLineDetails, map[string]interface{}{
+			"title":  sl.MethodTitle,
+			"price":  sl.Total,
+			"source": source,
+			"code":   code,
+		})
+	}
+
+	if len(shippingLineDetails) > 0 {
+		if sd, err := json.Marshal(map[string]interface{}{"shipping_lines": shippingLineDetails}); err == nil {
+			dto.ShippingDetails = sd
+		}
 	}
 
 	// Channel metadata with raw data

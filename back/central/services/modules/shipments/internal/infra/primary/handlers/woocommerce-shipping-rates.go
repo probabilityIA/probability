@@ -255,6 +255,7 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			Currency: currency,
 			MetaData: map[string]interface{}{
 				"quote_id":     quoteID,
+				"rate_index":   i,
 				"carrier":      carrierName,
 				"product":      product,
 				"service_code": toStr(rate["serviceCode"]),
