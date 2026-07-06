@@ -76,6 +76,31 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		return
 	}
 
+	if resolved.FreeShippingEnabled && resolved.FreeShippingMin > 0 {
+		var subtotal float64
+		for _, it := range req.Contents {
+			qty := it.Quantity
+			if qty <= 0 {
+				qty = 1
+			}
+			subtotal += it.Price * float64(qty)
+		}
+		if subtotal >= resolved.FreeShippingMin {
+			currency := req.Currency
+			if currency == "" {
+				currency = "COP"
+			}
+			c.JSON(http.StatusOK, gin.H{"rates": []wooRate{{
+				ID:       "probability_free_shipping",
+				Label:    "Envio gratis",
+				Cost:     "0",
+				Currency: currency,
+				MetaData: map[string]interface{}{"free_shipping": true, "threshold": resolved.FreeShippingMin},
+			}}})
+			return
+		}
+	}
+
 	if resolved.BusinessID == 0 || resolved.Carrier == nil || resolved.Origin == nil {
 		c.JSON(http.StatusOK, emptyRates)
 		return

@@ -4,18 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
 type wooResolved struct {
-	Found      bool                  `json:"found"`
-	Salt       string                `json:"salt"`
-	Revoked    bool                  `json:"revoked"`
-	BusinessID uint                  `json:"business_id"`
-	Carrier    *domain.CarrierInfo   `json:"carrier"`
-	Origin     *domain.OriginAddress `json:"origin"`
+	Found               bool                  `json:"found"`
+	Salt                string                `json:"salt"`
+	Revoked             bool                  `json:"revoked"`
+	BusinessID          uint                  `json:"business_id"`
+	Carrier             *domain.CarrierInfo   `json:"carrier"`
+	Origin              *domain.OriginAddress `json:"origin"`
+	FreeShippingEnabled bool                  `json:"free_shipping_enabled"`
+	FreeShippingMin     float64               `json:"free_shipping_min"`
 }
 
 func wooResKey(integrationID uint) string {
@@ -48,6 +51,17 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 		}
 		if origin, oerr := h.uc.Repo().GetDefaultOriginAddress(ctx, bid); oerr == nil {
 			r.Origin = origin
+		}
+	}
+
+	if enabled, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "free_shipping_enabled"); ferr == nil {
+		r.FreeShippingEnabled = enabled
+	}
+	if r.FreeShippingEnabled {
+		if minStr, verr := h.uc.Repo().GetIntegrationConfigValue(ctx, integrationID, "free_shipping_min"); verr == nil && minStr != "" {
+			if minVal, perr := strconv.ParseFloat(minStr, 64); perr == nil {
+				r.FreeShippingMin = minVal
+			}
 		}
 	}
 

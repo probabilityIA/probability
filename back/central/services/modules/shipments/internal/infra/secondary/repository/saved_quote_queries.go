@@ -194,6 +194,20 @@ func (r *Repository) GetIntegrationConfigFlag(ctx context.Context, integrationID
 	return strings.EqualFold(strings.TrimSpace(val), "true"), nil
 }
 
+func (r *Repository) GetIntegrationConfigValue(ctx context.Context, integrationID uint, key string) (string, error) {
+	var val string
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("COALESCE(config->>?, '')", key).
+		Where("id = ? AND deleted_at IS NULL", integrationID).
+		Limit(1).
+		Scan(&val).Error
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(val), nil
+}
+
 func savedQuoteModelToDomain(m *models.ShippingQuote) *domain.SavedQuote {
 	d := &domain.SavedQuote{
 		ID:                  m.ID,

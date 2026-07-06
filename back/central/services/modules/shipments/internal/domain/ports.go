@@ -123,6 +123,7 @@ type IRepository interface {
 	UpdateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetOrderSelectedShipping(ctx context.Context, orderUUID string) (*OrderSelectedShipping, error)
 	GetIntegrationConfigFlag(ctx context.Context, integrationID uint, key string) (bool, error)
+	GetIntegrationConfigValue(ctx context.Context, integrationID uint, key string) (string, error)
 
 	ListShipmentsForSync(ctx context.Context, filter SyncShipmentsFilter) ([]SyncShipmentRow, error)
 	GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error)

@@ -119,6 +119,10 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [showHelpImages, setShowHelpImages] = useState(false);
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
     const [downloadingPlugin, setDownloadingPlugin] = useState(false);
+    const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
+    const [freeShippingMin, setFreeShippingMin] = useState<string>(
+        initialData?.config?.free_shipping_min != null ? String(initialData.config.free_shipping_min) : ''
+    );
 
     const handleDownloadPlugin = async () => {
         setDownloadingPlugin(true);
@@ -274,6 +278,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
         try {
             const config: WooCommerceConfig = {
                 store_url: formData.store_url,
+                free_shipping_enabled: freeShippingEnabled,
+                free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
             };
 
             if (isEdit && integrationId) {
@@ -705,6 +711,39 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         segun la direccion de envio. Requiere que tengas una transportadora y una direccion de origen
                         configuradas en Probability.
                     </p>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">Envio gratis por monto minimo</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el total de la orden alcanza el monto, el envio se muestra en $0 en el checkout.</span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={freeShippingEnabled}
+                                onClick={() => setFreeShippingEnabled((v) => !v)}
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${freeShippingEnabled ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${freeShippingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                        {freeShippingEnabled && (
+                            <div className="mt-3">
+                                <label className={fieldLabel}>Monto minimo de la orden</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    step="1000"
+                                    value={freeShippingMin}
+                                    onChange={(e) => setFreeShippingMin(e.target.value)}
+                                    placeholder="Ej: 100000"
+                                    className={inputCls}
+                                />
+                                <span className="mt-1 block text-[11px] text-gray-400">En la moneda de la tienda (ej. 100000 = $100.000).</span>
+                            </div>
+                        )}
+                    </div>
 
                     <ol className="grid grid-cols-1 gap-y-2 mb-4 sm:grid-cols-2 sm:gap-x-4">
                         {PLUGIN_STEPS.map((step, i) => (
