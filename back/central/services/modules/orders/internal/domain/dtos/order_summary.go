@@ -31,6 +31,7 @@ type OrderSummary struct {
 	ShippingStreet         string
 	ShippingCity           string
 	ShippingState          string
+	ShippingGeoConfidence  string
 	Weight                 *float64
 	Height                 *float64
 	Width                  *float64

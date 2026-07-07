@@ -62,8 +62,9 @@ type Order struct {
 	ShippingState      string   `json:"shipping_state"`
 	ShippingCountry    string   `json:"shipping_country"`
 	ShippingPostalCode string   `json:"shipping_postal_code"`
-	ShippingLat        *float64 `json:"shipping_lat,omitempty"`
-	ShippingLng        *float64 `json:"shipping_lng,omitempty"`
+	ShippingLat           *float64 `json:"shipping_lat,omitempty"`
+	ShippingLng           *float64 `json:"shipping_lng,omitempty"`
+	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
 
 	// Información de pago
 	PaymentMethodID uint       `json:"payment_method_id"`

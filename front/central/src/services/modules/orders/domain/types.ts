@@ -82,6 +82,7 @@ export interface Order {
     shipping_barrio?: string;
     shipping_lat?: number;
     shipping_lng?: number;
+    shipping_geo_confidence?: 'high' | 'medium' | 'low';
 
     // Información de pago
     payment_method_id: number;

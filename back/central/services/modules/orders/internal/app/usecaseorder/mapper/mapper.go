@@ -65,8 +65,9 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		ShippingState:      order.ShippingState,
 		ShippingCountry:    order.ShippingCountry,
 		ShippingPostalCode: order.ShippingPostalCode,
-		ShippingLat:        order.ShippingLat,
-		ShippingLng:        order.ShippingLng,
+		ShippingLat:           order.ShippingLat,
+		ShippingLng:           order.ShippingLng,
+		ShippingGeoConfidence: order.ShippingGeoConfidence,
 
 		// Información de pago
 		PaymentMethodID: order.PaymentMethodID,
@@ -222,6 +223,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		ShippingStreet:         order.ShippingStreet,
 		ShippingCity:           order.ShippingCity,
 		ShippingState:          order.ShippingState,
+		ShippingGeoConfidence:  order.ShippingGeoConfidence,
 		Weight:                 order.Weight,
 		Height:                 order.Height,
 		Width:                  order.Width,

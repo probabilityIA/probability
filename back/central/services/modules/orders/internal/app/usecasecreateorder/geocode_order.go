@@ -20,19 +20,32 @@ func (uc *UseCaseCreateOrder) geocodeOrderIfNeeded(ctx context.Context, order *e
 		return
 	}
 
-	lat, lng, found := uc.geocoder.Geocode(ctx, query)
-	if !found {
+	res := uc.geocoder.GeocodeDetailed(ctx, query)
+	if !res.Found {
+		order.ShippingGeoConfidence = "low"
 		return
 	}
 
-	order.ShippingLat = &lat
-	order.ShippingLng = &lng
+	order.ShippingLat = &res.Lat
+	order.ShippingLng = &res.Lng
+	order.ShippingGeoConfidence = geoConfidence(res.LocationType, res.PartialMatch)
 
 	uc.logger.Info(ctx).
 		Str("order_id", order.ID).
-		Float64("lat", lat).
-		Float64("lng", lng).
+		Float64("lat", res.Lat).
+		Float64("lng", res.Lng).
+		Str("confidence", order.ShippingGeoConfidence).
 		Msg("Order address geocoded")
+}
+
+func geoConfidence(locationType string, partialMatch bool) string {
+	if partialMatch {
+		return "low"
+	}
+	if locationType == "ROOFTOP" {
+		return "high"
+	}
+	return "medium"
 }
 
 func buildGeocodeQuery(street, city, state string) string {

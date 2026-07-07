@@ -83,6 +83,8 @@ type Order struct {
 	ShippingLat        *float64
 	ShippingLng        *float64
 
+	ShippingGeoConfidence string `gorm:"size:16;index"` // high/medium/low - confianza del geocode de la direccion
+
 	DestinationGeozoneID   *uint          `gorm:"index"`
 	DestinationGeozonePath datatypes.JSON `gorm:"type:jsonb"`
 	GeozoneCountryID       *uint          `gorm:"index"`

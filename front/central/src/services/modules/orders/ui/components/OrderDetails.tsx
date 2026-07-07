@@ -745,6 +745,25 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     <p className="text-xs text-gray-700 dark:text-gray-200">
                                                         {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
                                                     </p>
+                                                    {order.shipping_geo_confidence && (
+                                                        <span
+                                                            className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                            style={
+                                                                order.shipping_geo_confidence === 'high'
+                                                                    ? { backgroundColor: '#dcfce7', color: '#166534' }
+                                                                    : order.shipping_geo_confidence === 'medium'
+                                                                        ? { backgroundColor: '#fef9c3', color: '#854d0e' }
+                                                                        : { backgroundColor: '#fee2e2', color: '#991b1b' }
+                                                            }
+                                                            title="Confianza del geocode de la direccion"
+                                                        >
+                                                            {order.shipping_geo_confidence === 'high'
+                                                                ? 'Direccion confiable'
+                                                                : order.shipping_geo_confidence === 'medium'
+                                                                    ? 'Verificar direccion'
+                                                                    : 'Direccion dudosa'}
+                                                        </span>
+                                                    )}
                                                     {order.business_id && order.business_id > 0 && order.id && (
                                                         <>
                                                             <div className="pt-2">

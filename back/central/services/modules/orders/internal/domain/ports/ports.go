@@ -118,6 +118,15 @@ type IInvoiceQueryPort interface {
 	GetInvoiceByOrderID(ctx context.Context, orderID string) (*dtos.InvoiceData, error)
 }
 
+type GeoResult struct {
+	Lat          float64
+	Lng          float64
+	LocationType string
+	PartialMatch bool
+	Found        bool
+}
+
 type IGeocoder interface {
 	Geocode(ctx context.Context, query string) (lat float64, lng float64, found bool)
+	GeocodeDetailed(ctx context.Context, query string) GeoResult
 }
