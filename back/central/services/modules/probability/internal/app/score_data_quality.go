@@ -8,6 +8,16 @@ func (uc *UseCaseScore) scoreDataQuality(order *entities.ScoreOrder) (float64, [
 	factors := uc.GetStaticNegativeFactors(order)
 	pointsPerFactor := 100.0 / 6.0
 	score := 100.0 - (float64(len(factors)) * pointsPerFactor)
+
+	switch order.ShippingGeoConfidence {
+	case "low":
+		score -= 30
+		factors = append(factors, "Direccion no verificada (dudosa)")
+	case "medium":
+		score -= 10
+		factors = append(factors, "Direccion aproximada, verificar")
+	}
+
 	if score < 0 {
 		score = 0
 	}

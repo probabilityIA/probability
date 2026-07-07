@@ -9,9 +9,10 @@ type ScoreOrder struct {
 	CustomerEmail      string
 	CustomerName       string
 	Platform           string
-	CustomerPhone      string
-	ShippingStreet     string
-	Address2           string
+	CustomerPhone         string
+	ShippingStreet        string
+	ShippingGeoConfidence string
+	Address2              string
 	CustomerOrderCount int
 	OrderNumber        string
 	CodTotal           *float64

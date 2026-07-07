@@ -230,7 +230,27 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
-                    <div className="flex items-center gap-2 min-w-[120px]">
+                    <div className="flex flex-col gap-1 min-w-[120px]">
+                        {order.shipping_geo_confidence && (
+                            <span
+                                className="self-start inline-flex items-center text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={
+                                    order.shipping_geo_confidence === 'high'
+                                        ? { backgroundColor: '#dcfce7', color: '#166534' }
+                                        : order.shipping_geo_confidence === 'medium'
+                                            ? { backgroundColor: '#fef9c3', color: '#854d0e' }
+                                            : { backgroundColor: '#fee2e2', color: '#991b1b' }
+                                }
+                                title="Confianza del geocode de la direccion (afecta la probabilidad)"
+                            >
+                                {order.shipping_geo_confidence === 'high'
+                                    ? 'Dir. confiable'
+                                    : order.shipping_geo_confidence === 'medium'
+                                        ? 'Dir. verificar'
+                                        : 'Dir. dudosa'}
+                            </span>
+                        )}
+                        <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                             <div
                                 className={`h-full rounded-full transition-all duration-300 ${getProbabilityColor(order.delivery_probability)}`}
@@ -277,6 +297,7 @@ const OrderRow = memo(({
                                 )}
                             </ProbabilityTooltip>
                         )}
+                        </div>
                     </div>
                 ) : (
                     <span className="text-xs text-gray-400">N/A</span>
