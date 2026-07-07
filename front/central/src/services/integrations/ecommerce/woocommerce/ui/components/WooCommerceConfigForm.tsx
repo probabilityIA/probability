@@ -969,9 +969,9 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     isOpen={showPluginInfo}
                     onClose={() => setShowPluginInfo(false)}
                     title="Que agrega el plugin en tu checkout"
-                    size="lg"
+                    size="md"
                 >
-                    <div className="p-4 space-y-5 max-h-[70vh] overflow-y-auto">
+                    <div className="space-y-5">
                         <div>
                             <h5 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 mb-2">
                                 Lo que veran tus clientes al pagar
@@ -1006,7 +1006,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             <h5 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 mb-2">
                                 Asi se ve en una tienda de ejemplo
                             </h5>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-4">
                                 {PLUGIN_INFO_IMAGES.map((img, i) => (
                                     brokenInfoImages[i] ? null : (
                                         <figure key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
