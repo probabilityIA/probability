@@ -9,6 +9,47 @@
     var validateTimer = null;
     var lastValidated = '';
     var lastDept = {};
+    var pmap = null;
+    var pmarker = null;
+
+    function showMap(prefix, lat, lng) {
+        if (!window.L || !lat || !lng) return;
+        var note = document.getElementById('probability-note-' + prefix);
+        var container = document.getElementById('probability-map');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'probability-map';
+            var caption = document.createElement('div');
+            caption.style.fontSize = '12px';
+            caption.style.color = '#555';
+            caption.style.margin = '8px 0 4px';
+            caption.textContent = 'Confirma en el mapa que el punto de entrega es correcto';
+            var mapEl = document.createElement('div');
+            mapEl.id = 'probability-map-canvas';
+            mapEl.style.height = '200px';
+            mapEl.style.borderRadius = '8px';
+            mapEl.style.overflow = 'hidden';
+            container.appendChild(caption);
+            container.appendChild(mapEl);
+            var host = note && note.parentNode ? note.parentNode : (cityField(prefix) ? cityField(prefix).parentNode : null);
+            if (!host) return;
+            if (note && note.nextSibling) host.insertBefore(container, note.nextSibling);
+            else host.appendChild(container);
+        }
+        var canvas = document.getElementById('probability-map-canvas');
+        if (!pmap) {
+            pmap = window.L.map(canvas).setView([lat, lng], 16);
+            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(pmap);
+            pmarker = window.L.marker([lat, lng]).addTo(pmap);
+        } else {
+            pmap.setView([lat, lng], 16);
+            pmarker.setLatLng([lat, lng]);
+        }
+        setTimeout(function () { if (pmap) pmap.invalidateSize(); }, 150);
+    }
 
     function prefixes() {
         var out = [];
@@ -182,6 +223,10 @@
                 } else {
                     note.style.color = '#b35900';
                     note.textContent = 'No pudimos validar la direccion, revisa ciudad y direccion';
+                }
+
+                if (res.found && res.lat && res.lng) {
+                    showMap(prefix, res.lat, res.lng);
                 }
             })
             .catch(function () {});
