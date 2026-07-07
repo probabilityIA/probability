@@ -40,6 +40,8 @@ type RepositoryMock struct {
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
 	GetDefaultOriginAddressFn         func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
 	GetDefaultWarehouseOriginFn       func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
+	ListDaneStatesFn                  func(ctx context.Context) ([]domain.DaneItem, error)
+	ListDaneCitiesByStateFn           func(ctx context.Context, stateCode string) ([]domain.DaneItem, error)
 	UpdateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	DeleteOriginAddressFn             func(ctx context.Context, id uint) error
 	SetDefaultOriginAddressFn         func(ctx context.Context, businessID, addressID uint) error
@@ -281,6 +283,20 @@ func (m *RepositoryMock) GetDefaultOriginAddress(ctx context.Context, businessID
 func (m *RepositoryMock) GetDefaultWarehouseOrigin(ctx context.Context, businessID uint) (*domain.OriginAddress, error) {
 	if m.GetDefaultWarehouseOriginFn != nil {
 		return m.GetDefaultWarehouseOriginFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListDaneStates(ctx context.Context) ([]domain.DaneItem, error) {
+	if m.ListDaneStatesFn != nil {
+		return m.ListDaneStatesFn(ctx)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) ListDaneCitiesByState(ctx context.Context, stateCode string) ([]domain.DaneItem, error) {
+	if m.ListDaneCitiesByStateFn != nil {
+		return m.ListDaneCitiesByStateFn(ctx, stateCode)
 	}
 	return nil, nil
 }

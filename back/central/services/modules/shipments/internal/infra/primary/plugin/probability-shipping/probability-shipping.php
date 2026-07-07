@@ -2,13 +2,101 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Probability
  * Requires Plugins: woocommerce
  */
 
 if (!defined('ABSPATH')) {
     exit;
+}
+
+add_filter('woocommerce_cart_shipping_method_full_label', function ($label, $method) {
+    if (strpos($method->get_id(), 'probability_shipping') !== 0) {
+        return $label;
+    }
+    $logo = '';
+    foreach ($method->get_meta_data() as $key => $value) {
+        if ($key === 'logo_url' && !empty($value)) {
+            $logo = $value;
+            break;
+        }
+    }
+    if ($logo === '' && method_exists($method, 'get_meta')) {
+        $logo = $method->get_meta('logo_url');
+    }
+    if (!empty($logo)) {
+        $img = '<img src="' . esc_url($logo) . '" alt="" style="height:20px;width:auto;vertical-align:middle;margin-right:8px;" />';
+        return $img . $label;
+    }
+    return $label;
+}, 10, 2);
+
+add_action('wp_enqueue_scripts', function () {
+    if (!function_exists('is_checkout') || !is_checkout()) {
+        return;
+    }
+    $cfg = probability_shipping_public_config();
+    if (empty($cfg['url']) || empty($cfg['integration_id']) || empty($cfg['token'])) {
+        return;
+    }
+    wp_enqueue_script(
+        'probability-checkout',
+        plugins_url('probability-checkout.js', __FILE__),
+        array('jquery'),
+        '1.2.0',
+        true
+    );
+    wp_localize_script('probability-checkout', 'ProbabilityCheckout', array(
+        'backendUrl'    => rtrim($cfg['url'], '/'),
+        'integrationId' => (string) $cfg['integration_id'],
+        'token'         => $cfg['token'],
+    ));
+});
+
+function probability_shipping_public_config() {
+    $cfg = array('url' => '', 'integration_id' => '', 'token' => '');
+
+    global $wpdb;
+    $rows = $wpdb->get_col(
+        "SELECT instance_id FROM {$wpdb->prefix}woocommerce_shipping_zone_methods WHERE method_id = 'probability_shipping' AND is_enabled = 1"
+    );
+    foreach ((array) $rows as $instance_id) {
+        $opt = get_option('woocommerce_probability_shipping_' . $instance_id . '_settings');
+        if (!is_array($opt)) {
+            continue;
+        }
+        $key = isset($opt['connection_key']) ? trim($opt['connection_key']) : '';
+        if ($key !== '') {
+            $decoded = json_decode(probability_shipping_b64url_decode($key), true);
+            if (is_array($decoded)) {
+                $cfg['url']            = isset($decoded['url']) ? $decoded['url'] : '';
+                $cfg['integration_id'] = isset($decoded['integration_id']) ? (string) $decoded['integration_id'] : '';
+                $cfg['token']          = isset($decoded['token']) ? $decoded['token'] : '';
+            }
+        }
+        if ($cfg['url'] === '' && !empty($opt['backend_url'])) {
+            $cfg['url'] = trim($opt['backend_url']);
+        }
+        if ($cfg['integration_id'] === '' && !empty($opt['integration_id'])) {
+            $cfg['integration_id'] = trim($opt['integration_id']);
+        }
+        if ($cfg['token'] === '' && !empty($opt['token'])) {
+            $cfg['token'] = trim($opt['token']);
+        }
+        if ($cfg['url'] !== '' && $cfg['integration_id'] !== '' && $cfg['token'] !== '') {
+            break;
+        }
+    }
+    return $cfg;
+}
+
+function probability_shipping_b64url_decode($data) {
+    $pad = strlen($data) % 4;
+    if ($pad > 0) {
+        $data .= str_repeat('=', 4 - $pad);
+    }
+    return base64_decode(strtr($data, '-_', '+/'));
 }
 
 add_action('woocommerce_shipping_init', function () {

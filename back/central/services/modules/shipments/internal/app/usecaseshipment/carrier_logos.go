@@ -34,6 +34,10 @@ var (
 	carrierLogoClient  = &http.Client{Timeout: 6 * time.Second}
 )
 
+func CarrierLogoBytes(carrier string) []byte {
+	return getCarrierLogoBytes(carrier)
+}
+
 func carrierLogoKey(carrier string) string {
 	k := strings.ToUpper(carrier)
 	repl := strings.NewReplacer(" ", "", "-", "", "_", "")

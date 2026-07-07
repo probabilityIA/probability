@@ -116,6 +116,8 @@ type IRepository interface {
 	RotateWooShippingToken(ctx context.Context, integrationID uint) (salt string, err error)
 	RevokeWooShippingToken(ctx context.Context, integrationID uint) error
 	GetCityDaneByName(ctx context.Context, city, province string) (string, error)
+	ListDaneStates(ctx context.Context) ([]DaneItem, error)
+	ListDaneCitiesByState(ctx context.Context, stateCode string) ([]DaneItem, error)
 
 	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetSavedQuoteByID(ctx context.Context, id uint) (*SavedQuote, error)

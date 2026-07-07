@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -147,7 +148,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		}
 	}
 
-	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID)
+	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL)
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
 }
 
@@ -221,7 +222,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 	}
 }
 
-func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint) []wooRate {
+func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string) []wooRate {
 	out := make([]wooRate, 0)
 
 	for i, rate := range ratesList {
@@ -230,6 +231,11 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 		flete := toFloat(rate["flete"])
 		if carrierName == "" || flete <= 0 {
 			continue
+		}
+
+		logoURL := ""
+		if logoBaseURL != "" {
+			logoURL = strings.TrimRight(logoBaseURL, "/") + "/api/v1/woocommerce/carrier-logo/" + url.PathEscape(carrierName)
 		}
 
 		label := carrierName
@@ -260,6 +266,7 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 				"product":      product,
 				"service_code": toStr(rate["serviceCode"]),
 				"id_rate":      rate["idRate"],
+				"logo_url":     logoURL,
 			},
 		}
 

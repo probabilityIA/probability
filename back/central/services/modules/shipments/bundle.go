@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/handlers"
 	queueconsumer "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/queue/consumer"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/cache"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/geocoder"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository"
 	pdfstorage "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/storage"
@@ -72,7 +73,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		Threshold:   20,
 		RedisPrefix: "shiprates",
 	}, redisClient, logger)
-	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter)
+	geo := geocoder.New(environment.Get("GOOGLE_MAPS_API_KEY"))
+	h := handlers.New(uc, transportPub, repo, redisClient, tokenSecret, pluginBaseURL, ratesLimiter, geo)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)

@@ -23,6 +23,16 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		)),
 		h.WooCommerceShippingRates)
 	router.GET("/woocommerce/plugin-download", h.WooCommercePluginDownload)
+	router.GET("/woocommerce/carrier-logo/:carrier", h.WooCommerceCarrierLogo)
+
+	wooPublic := router.Group("/woocommerce",
+		ratelimit.Gin(h.ratesLimiter, ratelimit.FirstNonEmpty(
+			ratelimit.ByHeader("X-Probability-Token", "wootok"),
+			ratelimit.ByClientIP("wooip"),
+		)))
+	wooPublic.GET("/dane/:integration_id/states", h.WooCommerceDaneStates)
+	wooPublic.GET("/dane/:integration_id/cities", h.WooCommerceDaneCities)
+	wooPublic.POST("/validate-address/:integration_id", h.WooCommerceValidateAddress)
 
 	wooAuth := router.Group("/woocommerce", middleware.JWT())
 	wooAuth.GET("/connection-info/:integration_id", h.WooCommerceConnectionInfo)
