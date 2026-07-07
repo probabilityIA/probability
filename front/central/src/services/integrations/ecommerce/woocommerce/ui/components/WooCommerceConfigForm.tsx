@@ -82,6 +82,28 @@ const PLUGIN_STEPS = [
     'Pega la Clave de conexion y guarda',
 ];
 
+const PLUGIN_INFO_FEATURES = [
+    'Tarifas reales de las transportadoras (Coordinadora, Servientrega, Interrapidisimo, Envia y otras) con su precio y dias de entrega, calculadas por Probability segun el destino.',
+    'Logo de cada transportadora junto a la opcion de envio en el checkout.',
+    'Sugerencia de municipios validos (codigo DANE) segun el departamento que elige el cliente.',
+    'Validacion de la direccion de destino: le avisa al cliente si la direccion fue reconocida, para evitar guias con datos incorrectos.',
+];
+
+const PLUGIN_INFO_IMAGES = [
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-tarifas-logos.png',
+        caption: 'Opciones de envio con las tarifas reales y el logo de cada transportadora.',
+    },
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-municipios-dane.png',
+        caption: 'Sugerencia de municipios segun el departamento elegido.',
+    },
+    {
+        src: 'https://probability-media-assets.s3.us-east-1.amazonaws.com/manuals/woocommerce/checkout-validacion-direccion.png',
+        caption: 'Validacion de la direccion de destino con mensaje de confianza.',
+    },
+];
+
 export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: WooCommerceConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -117,6 +139,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [showHelpImages, setShowHelpImages] = useState(false);
+    const [showPluginInfo, setShowPluginInfo] = useState(false);
+    const [brokenInfoImages, setBrokenInfoImages] = useState<Record<number, boolean>>({});
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
     const [downloadingPlugin, setDownloadingPlugin] = useState(false);
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
@@ -697,12 +721,23 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             <TruckIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
                             Plugin de cotizacion de envios en el checkout
                         </h4>
-                        <span
-                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full self-start"
-                            style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
-                        >
-                            Opcional
-                        </span>
+                        <div className="flex items-center gap-2 self-start">
+                            <button
+                                type="button"
+                                onClick={() => setShowPluginInfo(true)}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 transition-colors"
+                                style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                            >
+                                <InformationCircleIcon className="w-3.5 h-3.5" />
+                                Que agrega y requisitos
+                            </button>
+                            <span
+                                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                style={{ backgroundColor: GREEN_SOFT, color: GREEN_DARK, border: `1px solid ${GREEN_BORDER}` }}
+                            >
+                                Opcional
+                            </span>
+                        </div>
                     </div>
 
                     <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
@@ -925,6 +960,75 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 >
                     <div className="p-4">
                         <Alert type="error">{errorModal}</Alert>
+                    </div>
+                </Modal>
+            )}
+
+            {showPluginInfo && (
+                <Modal
+                    isOpen={showPluginInfo}
+                    onClose={() => setShowPluginInfo(false)}
+                    title="Que agrega el plugin en tu checkout"
+                    size="lg"
+                >
+                    <div className="p-4 space-y-5 max-h-[70vh] overflow-y-auto">
+                        <div>
+                            <h5 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                Lo que veran tus clientes al pagar
+                            </h5>
+                            <ul className="space-y-2">
+                                {PLUGIN_INFO_FEATURES.map((f, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-[12px] text-gray-600 dark:text-gray-300 leading-snug">
+                                        <span
+                                            className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white"
+                                            style={{ backgroundColor: GREEN }}
+                                        >
+                                            ✓
+                                        </span>
+                                        {f}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <Alert type="warning">
+                            <span className="block text-[12px] leading-relaxed">
+                                <strong>Importante sobre tu plantilla.</strong> El calculo de las tarifas funciona en
+                                cualquier tienda. Pero los detalles visuales (logos, sugerencia de municipios y
+                                validacion de la direccion) dependen de que tu checkout respete los estandares de
+                                WooCommerce. Si usas un checkout personalizado o de bloques (page builder), es posible
+                                que tu equipo tenga que adaptar la plantilla para que estos extras se muestren
+                                correctamente. Ante la duda, escribenos y te ayudamos a validarlo.
+                            </span>
+                        </Alert>
+
+                        <div>
+                            <h5 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                Asi se ve en una tienda de ejemplo
+                            </h5>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                {PLUGIN_INFO_IMAGES.map((img, i) => (
+                                    brokenInfoImages[i] ? null : (
+                                        <figure key={i} className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                            <img
+                                                src={img.src}
+                                                alt={img.caption}
+                                                className="w-full h-auto object-contain bg-gray-50 dark:bg-gray-800"
+                                                onError={() => setBrokenInfoImages((prev) => ({ ...prev, [i]: true }))}
+                                            />
+                                            <figcaption className="px-2 py-1.5 text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                                                {img.caption}
+                                            </figcaption>
+                                        </figure>
+                                    )
+                                ))}
+                            </div>
+                            {PLUGIN_INFO_IMAGES.every((_, i) => brokenInfoImages[i]) && (
+                                <p className="text-[12px] text-gray-400 dark:text-gray-500">
+                                    Las imagenes de ejemplo estaran disponibles pronto.
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </Modal>
             )}
