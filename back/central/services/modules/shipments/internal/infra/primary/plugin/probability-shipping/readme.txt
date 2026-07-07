@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -21,6 +21,10 @@ de envio con su precio antes de pagar.
 5. Listo: en el checkout apareceran las tarifas reales de las transportadoras.
 
 == Changelog ==
+
+= 1.4.0 =
+* Ciudad como desplegable con buscador (select2) restringido a los municipios
+  del departamento, igual que el campo Departamento (solo checkout clasico).
 
 = 1.3.0 =
 * Soporte para el checkout de bloques (WooCommerce Blocks): logos de

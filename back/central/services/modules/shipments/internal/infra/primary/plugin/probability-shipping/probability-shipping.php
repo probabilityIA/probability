@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -50,7 +50,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery'),
-        '1.3.0',
+        '1.4.0',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -59,7 +59,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data'),
-        '1.3.0',
+        '1.4.0',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
