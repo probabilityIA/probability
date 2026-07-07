@@ -238,9 +238,14 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			logoURL = strings.TrimRight(logoBaseURL, "/") + "/api/v1/woocommerce/carrier-logo/" + url.PathEscape(carrierName)
 		}
 
-		label := carrierName
+		displayCarrier := accentEsWords(carrierName)
+		displayProduct := accentEsWords(product)
+		label := displayCarrier
 		if product != "" {
-			label = carrierName + " - " + product
+			label = displayCarrier + " - " + displayProduct
+		}
+		if days := int(toFloat(rate["deliveryDays"])); days > 0 {
+			label += " (" + strconv.Itoa(days) + " d\u00edas h\u00e1biles)"
 		}
 
 		var id string
@@ -270,12 +275,35 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			},
 		}
 
-		if days := int(toFloat(rate["deliveryDays"])); days > 0 {
-			wr.DeliveryDays = days
-		}
-
 		out = append(out, wr)
 	}
 
 	return out
+}
+
+var esAccentMap = map[string]string{
+	"envia":           "Env\u00eda",
+	"interrapidisimo": "Interrapid\u00edsimo",
+	"mercancia":       "Mercanc\u00eda",
+	"estandar":        "Est\u00e1ndar",
+	"paqueteria":      "Paqueter\u00eda",
+	"dia":             "D\u00eda",
+	"economico":       "Econ\u00f3mico",
+	"logistica":       "Log\u00edstica",
+	"mensajeria":      "Mensajer\u00eda",
+	"rapido":          "R\u00e1pido",
+	"aereo":           "A\u00e9reo",
+}
+
+func accentEsWords(s string) string {
+	if s == "" {
+		return s
+	}
+	words := strings.Fields(s)
+	for i, w := range words {
+		if v, ok := esAccentMap[strings.ToLower(w)]; ok {
+			words[i] = v
+		}
+	}
+	return strings.Join(words, " ")
 }
