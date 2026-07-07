@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
@@ -27,7 +28,31 @@ func (r *Repository) ListDaneStates(ctx context.Context) ([]domain.DaneItem, err
 	return out, nil
 }
 
+var daneStateAliases = map[string]string{
+	"capital district": "11",
+	"distrito capital": "11",
+	"bogota":           "11",
+	"bogota d.c.":      "11",
+	"bogota, d.c.":     "11",
+	"bogota dc":        "11",
+	"santafe de bogota": "11",
+	"san andres y providencia": "88",
+	"valle":            "76",
+	"norte de santander (n. de santander)": "54",
+}
+
+func normalizeStateAlias(state string) string {
+	key := strings.ToLower(strings.TrimSpace(state))
+	repl := strings.NewReplacer("\u00e1", "a", "\u00e9", "e", "\u00ed", "i", "\u00f3", "o", "\u00fa", "u", "\u00f1", "n")
+	key = repl.Replace(key)
+	if code, ok := daneStateAliases[key]; ok {
+		return code
+	}
+	return state
+}
+
 func (r *Repository) ListDaneCitiesByState(ctx context.Context, state string) ([]domain.DaneItem, error) {
+	state = normalizeStateAlias(state)
 	var rows []struct {
 		Code string
 		Name string
