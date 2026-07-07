@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -21,6 +21,11 @@ de envio con su precio antes de pagar.
 5. Listo: en el checkout apareceran las tarifas reales de las transportadoras.
 
 == Changelog ==
+
+= 1.3.0 =
+* Soporte para el checkout de bloques (WooCommerce Blocks): logos de
+  transportadoras en las opciones de envio y validacion de la direccion de
+  destino. El checkout clasico sigue funcionando igual.
 
 = 1.2.0 =
 * Logos de transportadoras en las opciones de envio del checkout.
