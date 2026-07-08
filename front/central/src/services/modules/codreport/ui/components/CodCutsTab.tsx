@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Calendar, CheckCircle2, ChevronDown, ChevronUp, RefreshCw, AlertCircle, ShieldCheck, Clock,
+    Calendar, CheckCircle2, ChevronDown, ChevronUp, RefreshCw, AlertCircle, ShieldCheck, Clock, Plus,
 } from 'lucide-react';
 import { getCodCutsAction, confirmCodCutAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
@@ -17,6 +17,21 @@ function periodLabel(start: string, end: string): string {
     return `${formatDateOnly(start)} - ${formatDateOnly(end)}`;
 }
 
+function weekBounds(dateStr: string): { start: string; end: string } {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    const diff = (dt.getUTCDay() + 6) % 7;
+    const mon = new Date(dt);
+    mon.setUTCDate(dt.getUTCDate() - diff);
+    const sun = new Date(mon);
+    sun.setUTCDate(mon.getUTCDate() + 6);
+    return { start: mon.toISOString().slice(0, 10), end: sun.toISOString().slice(0, 10) };
+}
+
+function todayStr(): string {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+}
+
 export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [cuts, setCuts] = useState<PaymentCut[]>([]);
     const [canConfirm, setCanConfirm] = useState(false);
@@ -26,6 +41,9 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [confirmTarget, setConfirmTarget] = useState<PaymentCut | null>(null);
     const [confirming, setConfirming] = useState(false);
     const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
+    const [createOpen, setCreateOpen] = useState(false);
+    const [createDate, setCreateDate] = useState('');
+    const [creating, setCreating] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -63,6 +81,23 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
         setTimeout(() => setFeedback(null), 3500);
     };
 
+    const doCreate = async () => {
+        if (!createDate) return;
+        const { start, end } = weekBounds(createDate);
+        setCreating(true);
+        setFeedback(null);
+        const res = await confirmCodCutAction(start, end, businessId || undefined);
+        if (res.success) {
+            setFeedback({ ok: true, msg: 'Corte de pago creado exitosamente' });
+            setCreateOpen(false);
+            await load();
+        } else {
+            setFeedback({ ok: false, msg: (res as any).message || 'Error al crear el corte' });
+        }
+        setCreating(false);
+        setTimeout(() => setFeedback(null), 3500);
+    };
+
     return (
         <div className="space-y-3">
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700">
@@ -73,6 +108,14 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                     {!isAdmin && ' Solo ves las semanas ya confirmadas.'}
                 </span>
                 <div className="flex-1" />
+                {canConfirm && (
+                    <button
+                        onClick={() => { setCreateDate(todayStr()); setCreateOpen(true); }}
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md inline-flex items-center gap-1 shrink-0"
+                    >
+                        <Plus size={13} /> Marcar corte de pago
+                    </button>
+                )}
                 <button
                     onClick={load}
                     disabled={loading}
@@ -225,6 +268,54 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             >
                                 {confirming ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
                                 Confirmar corte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {createOpen && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-5">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+                            <Plus size={18} className="text-emerald-600" /> Marcar corte de pago
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                            Selecciona cualquier dia de la semana que quieres cerrar. El corte agrupa el recaudo
+                            entregado de esa semana (lunes a domingo).
+                        </p>
+                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                            Dia de la semana
+                        </label>
+                        <input
+                            type="date"
+                            value={createDate}
+                            onChange={e => setCreateDate(e.target.value)}
+                            className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-3"
+                        />
+                        {createDate && (
+                            <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3 text-sm mb-4 flex items-center gap-2">
+                                <Calendar size={14} className="text-purple-600 shrink-0" />
+                                <span className="text-gray-700 dark:text-gray-200">
+                                    Semana: <strong>{periodLabel(weekBounds(createDate).start, weekBounds(createDate).end)}</strong>
+                                </span>
+                            </div>
+                        )}
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setCreateOpen(false)}
+                                disabled={creating}
+                                className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={doCreate}
+                                disabled={creating || !createDate}
+                                className="px-3 py-2 text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                                {creating ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                                Crear corte
                             </button>
                         </div>
                     </div>
