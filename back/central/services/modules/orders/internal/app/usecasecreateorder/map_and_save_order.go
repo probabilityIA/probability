@@ -7,6 +7,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 )
 
 func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error) {
@@ -66,6 +67,13 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 	uc.geocodeOrderIfNeeded(ctx, order)
 
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
+		if errors.Is(err, domainerrors.ErrOrderAlreadyExists) {
+			existingOrder, gerr := uc.repo.GetOrderByExternalID(ctx, dto.ExternalID, dto.IntegrationID)
+			if gerr != nil {
+				return nil, fmt.Errorf("error getting existing order after create conflict: %w", gerr)
+			}
+			return uc.updateUseCase.UpdateOrder(ctx, existingOrder, dto)
+		}
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
