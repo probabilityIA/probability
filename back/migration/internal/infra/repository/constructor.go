@@ -83,6 +83,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateOrderGeoConfidence(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateOrderIntegrationExternalUnique(ctx); err != nil {
+		return err
+	}
 	if err := r.backfillGeocodePendingOrders(ctx); err != nil {
 		return err
 	}
