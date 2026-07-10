@@ -11,6 +11,17 @@ import (
 	"gorm.io/gorm"
 )
 
+func (r *Repository) HasPendingEmailVerification(ctx context.Context, userID uint) (bool, error) {
+	var count int64
+	err := r.database.Conn(ctx).Table("email_verification_tokens").
+		Where("user_id = ? AND used_at IS NULL AND deleted_at IS NULL", userID).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *Repository) GetUserByEmailForAuth(ctx context.Context, email string) (*domain.UserAuthInfo, error) {
 	var userAuth domain.UserAuthInfo
 	if err := r.database.Conn(ctx).
@@ -60,10 +71,7 @@ func (r *Repository) GetUserRoles(ctx context.Context, userID uint) ([]domain.Ro
 	return roles, nil
 }
 
-// GetUserRoleByBusiness obtiene el rol de un usuario para un business específico desde user_roles
-// Valida que el rol coincida con el tipo de business
 func (r *Repository) GetUserRoleByBusiness(ctx context.Context, userID uint, businessID uint) (*domain.Role, error) {
-	// Obtener el business para conocer su tipo
 	var business models.Business
 	if err := r.database.Conn(ctx).
 		Preload("BusinessType").
@@ -76,7 +84,6 @@ func (r *Repository) GetUserRoleByBusiness(ctx context.Context, userID uint, bus
 		return nil, err
 	}
 
-	// Buscar roles del usuario que coincidan con el tipo de business usando business_staff
 	var staffEntries []models.BusinessStaff
 	if err := r.database.Conn(ctx).
 		Preload("Role.Scope").
@@ -92,7 +99,7 @@ func (r *Repository) GetUserRoleByBusiness(ctx context.Context, userID uint, bus
 	}
 
 	if len(staffEntries) == 0 {
-		return nil, nil // No tiene asociación en business_staff
+		return nil, nil
 	}
 
 	var selectedRole *models.Role
@@ -174,7 +181,7 @@ func (r *Repository) GetRolePermissions(ctx context.Context, roleID uint) ([]dom
 			ActionID:         permission.ActionID,
 			ScopeID:          permission.ScopeID,
 			BusinessTypeID:   businessTypeID,
-			BusinessTypeName: "", // Se puede agregar si se necesita
+			BusinessTypeName: "",
 		})
 	}
 
@@ -225,7 +232,6 @@ func (r *Repository) ChangePassword(ctx context.Context, userID uint, newPasswor
 }
 
 func (r *Repository) GetUserBusinesses(ctx context.Context, userID uint) ([]domain.BusinessInfoEntity, error) {
-	// Obtener relaciones business_staff con preload de Business y Role
 	var businessStaffList []models.BusinessStaff
 
 	if err := r.database.Conn(ctx).
@@ -240,7 +246,7 @@ func (r *Repository) GetUserBusinesses(ctx context.Context, userID uint) ([]doma
 	result := make([]domain.BusinessInfoEntity, 0, len(businessStaffList))
 	for _, bs := range businessStaffList {
 		if bs.BusinessID == nil || bs.Business.ID == 0 {
-			continue // Saltar si no hay business
+			continue
 		}
 
 		businessInfo := domain.BusinessInfoEntity{
@@ -281,10 +287,6 @@ func (r *Repository) GetUserBusinesses(ctx context.Context, userID uint) ([]doma
 	return result, nil
 }
 
-// AssignBusinessStaffRelationships asigna relaciones usuario-negocio-rol usando la tabla business_staff
-
-// GetBusinessStaffRelationships obtiene todas las relaciones business_staff de un usuario con información completa
-
 func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.UserAuthInfo, error) {
 	var user domain.UserAuthInfo
 	if err := r.database.Conn(ctx).
@@ -315,11 +317,9 @@ func (r *Repository) GetUserByID(ctx context.Context, id uint) (*domain.UserAuth
 	return &user, nil
 }
 
-// GetBusinessConfiguredResourcesIDs obtiene los IDs de recursos ACTIVOS configurados para un business específico
 func (r *Repository) GetBusinessConfiguredResourcesIDs(ctx context.Context, businessID uint) ([]uint, error) {
 	var resourcesIDs []uint
 
-	// Obtener solo los resource_ids que están activos (active = true) en business_resource_configured
 	err := r.database.Conn(ctx).
 		Model(&models.BusinessResourceConfigured{}).
 		Where("business_id = ? AND active = ? AND deleted_at IS NULL", businessID, true).
@@ -335,16 +335,6 @@ func (r *Repository) GetBusinessConfiguredResourcesIDs(ctx context.Context, busi
 	return resourcesIDs, nil
 }
 
-// AssignPermissionsToRole asigna permisos a un rol
-
-// RemovePermissionFromRole elimina un permiso específico de un rol
-
-// GetRolePermissionsIDs obtiene los IDs de los permisos asignados a un rol
-
-// GetUserRoleIDFromBusinessStaff retorna el role_id de business_staff para un usuario y business dado
-// Si businessID es nil, busca filas con business_id NULL (caso super)
-
-// GetBusinessStaffRelation obtiene la relación completa user-business-role desde business_staff
 func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, businessID *uint) (*domain.BusinessStaffRelation, error) {
 	db := r.database.Conn(ctx)
 	var bs models.BusinessStaff
@@ -357,7 +347,6 @@ func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, 
 		r.logger.Info().Uint("user_id", userID).Uint("business_id", *businessID).Msg("Buscando relación con business_id específico")
 	}
 
-	// Preload de Business (si existe) y Role (si existe)
 	if err := q.Preload("Business.BusinessType").Preload("Role").First(&bs).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			r.logger.Warn().Uint("user_id", userID).Any("business_id", businessID).Msg("Relación no encontrada en business_staff")
@@ -381,7 +370,6 @@ func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, 
 		RoleID:     bs.RoleID,
 	}
 
-	// Si hay business, mapear la información
 	if bs.BusinessID != nil && bs.Business.ID != 0 {
 		businessInfo := domain.BusinessInfoEntity{
 			ID:              bs.Business.ID,
@@ -417,9 +405,6 @@ func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, 
 
 	return rel, nil
 }
-
-// AssignRoleToUserBusiness asigna o actualiza roles de un usuario en múltiples businesses
-// Valida que el usuario esté asociado a cada business y que cada rol sea del mismo tipo de business
 
 func (r *Repository) GetBusinessByID(ctx context.Context, businessID uint) (*domain.BusinessInfo, error) {
 	var business models.Business

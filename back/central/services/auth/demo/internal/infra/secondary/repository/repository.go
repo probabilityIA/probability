@@ -21,13 +21,73 @@ func New(database db.IDatabase, logger log.ILogger, encryptionKey string) domain
 	return &Repository{database: database, logger: logger, encKey: parseEncryptionKey(encryptionKey)}
 }
 
-func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
-	var count int64
-	if err := r.database.Conn(ctx).Model(&models.User{}).
-		Where("email = ? AND deleted_at IS NULL", email).Count(&count).Error; err != nil {
-		return false, err
+func (r *Repository) GetDemoUserByEmail(ctx context.Context, email string) (*domain.PendingDemoUser, error) {
+	var row struct {
+		ID       uint
+		Name     string
+		Phone    string
+		IsActive bool
 	}
-	return count > 0, nil
+	err := r.database.Conn(ctx).Model(&models.User{}).
+		Select("id", "name", "phone", "is_active").
+		Where("email = ? AND deleted_at IS NULL", email).
+		Limit(1).Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.ID == 0 {
+		return nil, nil
+	}
+
+	var businessName string
+	if err := r.database.Conn(ctx).Table("business_staff").
+		Select("business.name").
+		Joins("JOIN business ON business.id = business_staff.business_id").
+		Where("business_staff.user_id = ? AND business_staff.deleted_at IS NULL", row.ID).
+		Order("business_staff.id ASC").Limit(1).Scan(&businessName).Error; err != nil {
+		return nil, err
+	}
+
+	var lastToken *time.Time
+	var token models.EmailVerificationToken
+	err = r.database.Conn(ctx).Where("user_id = ?", row.ID).
+		Order("created_at DESC").Limit(1).First(&token).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+	if err == nil {
+		created := token.CreatedAt
+		lastToken = &created
+	}
+
+	return &domain.PendingDemoUser{
+		UserID:             row.ID,
+		FullName:           row.Name,
+		BusinessName:       businessName,
+		Phone:              row.Phone,
+		IsActive:           row.IsActive,
+		LastTokenCreatedAt: lastToken,
+	}, nil
+}
+
+func (r *Repository) InvalidateEmailVerificationTokens(ctx context.Context, userID uint) error {
+	return r.database.Conn(ctx).Unscoped().
+		Where("user_id = ? AND used_at IS NULL", userID).
+		Delete(&models.EmailVerificationToken{}).Error
+}
+
+func (r *Repository) CreateEmailVerificationToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error {
+	token := &models.EmailVerificationToken{
+		UserID:    userID,
+		TokenHash: tokenHash,
+		ExpiresAt: expiresAt,
+	}
+	return r.database.Conn(ctx).Create(token).Error
+}
+
+func (r *Repository) UpdateUserPhone(ctx context.Context, userID uint, phone string) error {
+	return r.database.Conn(ctx).Model(&models.User{}).
+		Where("id = ?", userID).Update("phone", phone).Error
 }
 
 func (r *Repository) BusinessCodeExists(ctx context.Context, code string) (bool, error) {

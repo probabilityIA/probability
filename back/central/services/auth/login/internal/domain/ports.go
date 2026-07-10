@@ -7,6 +7,7 @@ import (
 
 type IAuthRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*UserAuthInfo, error)
+	HasPendingEmailVerification(ctx context.Context, userID uint) (bool, error)
 	GetUserByID(ctx context.Context, userID uint) (*UserAuthInfo, error)
 	CreatePasswordResetToken(ctx context.Context, userID uint, tokenHash string, channel string, expiresAt time.Time) error
 	InvalidateUserPasswordResetTokens(ctx context.Context, userID uint) error

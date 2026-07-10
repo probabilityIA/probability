@@ -13,26 +13,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// LoginHandler maneja la solicitud de login
-//
-//	@Summary		Autenticar usuario
-//	@Description	Autentica un usuario con email y contraseña, retornando información del usuario y token de acceso
-//	@Tags			Auth
-//	@Accept			json
-//	@Produce		json
-//	@Param			request	body		request.LoginRequest				true	"Credenciales de login"
-//	@Success		200		{object}	response.LoginSuccessResponse		"Login exitoso"
-//	@Failure		400		{object}	response.LoginBadRequestResponse	"Datos de entrada inválidos"
-//	@Failure		401		{object}	response.LoginErrorResponse			"Credenciales inválidas"
-//	@Failure		403		{object}	response.LoginErrorResponse			"Usuario inactivo"
-//	@Failure		500		{object}	response.LoginErrorResponse			"Error interno del servidor"
-//	@Router			/auth/login [post]
 func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	ctx := log.WithFunctionCtx(c.Request.Context(), "LoginHandler")
 
 	var loginRequest request.LoginRequest
 
-	// Validar y bindear el request
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		h.logger.Error(ctx).Err(err).Msg("Error al validar request de login")
 		c.JSON(http.StatusBadRequest, response.LoginBadRequestResponse{
@@ -42,20 +27,26 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// Convertir request a dominio
 	domainRequest := domain.LoginRequest{
 		Email:    loginRequest.Email,
 		Password: loginRequest.Password,
 	}
 
-	// Ejecutar caso de uso
 	domainResponse, err := h.usecase.Login(ctx, domainRequest)
 	if err != nil {
 		h.logger.Error(ctx).Err(err).Str("email", loginRequest.Email).Msg("Error en proceso de login")
 
-		// Determinar el código de estado HTTP apropiado
 		statusCode := http.StatusInternalServerError
 		errorMessage := "Error interno del servidor"
+
+		if errors.Is(err, domain.ErrUserPendingVerification) {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": domain.ErrUserPendingVerification.Error(),
+				"code":  "USER_PENDING_VERIFICATION",
+				"email": loginRequest.Email,
+			})
+			return
+		}
 
 		switch {
 		case errors.Is(err, domain.ErrInvalidCredentials):
@@ -63,7 +54,7 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 			errorMessage = domain.ErrInvalidCredentials.Error()
 		case errors.Is(err, domain.ErrUserNotFound):
 			statusCode = http.StatusUnauthorized
-			errorMessage = domain.ErrInvalidCredentials.Error() // Generic message for security
+			errorMessage = domain.ErrInvalidCredentials.Error()
 		case errors.Is(err, domain.ErrUserInactive):
 			statusCode = http.StatusForbidden
 			errorMessage = domain.ErrUserInactive.Error()
@@ -78,17 +69,12 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 		return
 	}
 
-	// Convertir respuesta de dominio a response
 	loginResponse := mapper.ToLoginResponse(domainResponse)
 
-	// Determinar si el cliente es mobile/API (necesita token en body)
-	// o web (usa cookie HttpOnly)
 	clientType := c.GetHeader("X-Client-Type")
 	isMobileClient := clientType == "mobile" || clientType == "api"
 
 	if !isMobileClient {
-		// Setear cookie HttpOnly con Partitioned para soporte de iframes
-		// Partitioned permite cookies third-party en iframes (Shopify, etc.)
 		cookieValue := fmt.Sprintf(
 			"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
 			"session_token",
@@ -99,7 +85,6 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 		)
 		c.Header("Set-Cookie", cookieValue)
 
-		// No retornar token en JSON por seguridad (solo en cookie HttpOnly)
 		loginResponse.Token = ""
 	}
 

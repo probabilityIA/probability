@@ -35,6 +35,26 @@ type DemoVerifyOTPResponse struct {
 	Message string
 }
 
+type DemoResendRequest struct {
+	Email   string
+	Channel string
+	Phone   string
+}
+
+type DemoResendResponse struct {
+	Success bool
+	Message string
+}
+
+type PendingDemoUser struct {
+	UserID             uint
+	FullName           string
+	BusinessName       string
+	Phone              string
+	IsActive           bool
+	LastTokenCreatedAt *time.Time
+}
+
 type CreateDemoAccountParams struct {
 	FullName     string
 	BusinessName string

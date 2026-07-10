@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,15 @@ func (h *Handler) DemoRegisterHandler(c *gin.Context) {
 		Channel:      req.Channel,
 	})
 	if err != nil {
+		if errors.Is(err, domain.ErrEmailPendingVerification) {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": err.Error(),
+				"code":  "EMAIL_PENDING_VERIFICATION",
+				"email": req.Email,
+			})
+			return
+		}
+
 		status := http.StatusInternalServerError
 		switch err.Error() {
 		case "el correo ya esta registrado":

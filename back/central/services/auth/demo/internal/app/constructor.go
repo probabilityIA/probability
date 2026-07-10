@@ -12,6 +12,7 @@ type IUseCase interface {
 	DemoRegister(ctx context.Context, request domain.DemoRegisterRequest) (*domain.DemoRegisterResponse, error)
 	VerifyEmail(ctx context.Context, request domain.VerifyEmailRequest) (*domain.VerifyEmailResponse, error)
 	DemoVerifyOTP(ctx context.Context, request domain.DemoVerifyOTPRequest) (*domain.DemoVerifyOTPResponse, error)
+	DemoResend(ctx context.Context, request domain.DemoResendRequest) (*domain.DemoResendResponse, error)
 }
 
 type UseCase struct {

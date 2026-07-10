@@ -1,9 +1,15 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type IDemoRepository interface {
-	EmailExists(ctx context.Context, email string) (bool, error)
+	GetDemoUserByEmail(ctx context.Context, email string) (*PendingDemoUser, error)
+	InvalidateEmailVerificationTokens(ctx context.Context, userID uint) error
+	CreateEmailVerificationToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error
+	UpdateUserPhone(ctx context.Context, userID uint, phone string) error
 	BusinessCodeExists(ctx context.Context, code string) (bool, error)
 	GetDemoRoleID(ctx context.Context) (uint, error)
 	CreateDemoAccount(ctx context.Context, params CreateDemoAccountParams) (uint, error)

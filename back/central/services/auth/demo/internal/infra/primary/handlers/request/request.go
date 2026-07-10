@@ -13,6 +13,12 @@ type VerifyEmailRequest struct {
 	Token string `json:"token" binding:"required"`
 }
 
+type DemoResendRequest struct {
+	Email   string `json:"email" binding:"required,email"`
+	Channel string `json:"channel" binding:"omitempty,oneof=email whatsapp"`
+	Phone   string `json:"phone" binding:"required_if=Channel whatsapp,omitempty,min=7,max=20"`
+}
+
 type DemoVerifyOTPRequest struct {
 	Email string `json:"email" binding:"required,email"`
 	Code  string `json:"code" binding:"required,len=6,numeric"`

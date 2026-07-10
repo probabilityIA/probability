@@ -31,13 +31,16 @@ func (uc *UseCase) DemoRegister(ctx context.Context, request domain.DemoRegister
 		return nil, fmt.Errorf("la contrasena debe tener al menos 6 caracteres")
 	}
 
-	exists, err := uc.repository.EmailExists(ctx, email)
+	existing, err := uc.repository.GetDemoUserByEmail(ctx, email)
 	if err != nil {
 		uc.log.Error().Err(err).Msg("Error verificando email en registro demo")
 		return nil, fmt.Errorf("error interno del servidor")
 	}
-	if exists {
-		return nil, fmt.Errorf("el correo ya esta registrado")
+	if existing != nil {
+		if existing.IsActive {
+			return nil, domain.ErrEmailAlreadyRegistered
+		}
+		return nil, domain.ErrEmailPendingVerification
 	}
 
 	roleID, err := uc.repository.GetDemoRoleID(ctx)
