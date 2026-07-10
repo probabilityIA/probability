@@ -621,7 +621,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
                 ? 'bg-purple-100 text-purple-800'
                 : 'bg-blue-100 text-blue-800'
           }`}>
-            {invoice.currency || 'COP'}
+            {(invoice.currency || 'COP') === 'COP' ? '$' : (invoice.currency || 'COP')}
           </span>
           <span className="font-semibold">
             {new Intl.NumberFormat('es-CO', {

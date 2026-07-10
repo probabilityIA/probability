@@ -170,10 +170,10 @@ const OrderRow = memo(({
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${(order.currency_presentment || order.currency) === 'COP'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
                             : (order.currency_presentment || order.currency) === 'EUR'
                                 ? 'bg-purple-100 text-purple-800'
-                                : 'bg-blue-100 text-blue-800'
+                                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
                         }`}>
                         {order.currency_presentment || order.currency || 'USD'}
                     </span>
@@ -190,27 +190,27 @@ const OrderRow = memo(({
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                 <div className="flex flex-col items-center gap-1">
                     {(order.cod_total || 0) > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700">
                             Contra Entrega
                         </span>
                     )}
                     {order.payment_status?.name ? (
                         getStatusBadge(order.payment_status.name, order.payment_status.color)
                     ) : order.is_paid ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
                             Pagado
                         </span>
                     ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
                             No pagado
                         </span>
                     )}
                     {order.invoice_status === 'issued' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700 dark:text-green-200">
                             Facturado
                         </span>
                     ) : order.invoice_status === 'pending' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-700">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-700 dark:text-yellow-200">
                             Factura pendiente
                         </span>
                     ) : order.invoice_status === 'failed' ? (
@@ -306,15 +306,15 @@ const OrderRow = memo(({
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
                 <div className="flex flex-col items-center gap-1">
                     {order.is_confirmed === true ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
                             Sí
                         </span>
                     ) : order.is_confirmed === false ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
                             No
                         </span>
                     ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200">
                             Pendiente
                         </span>
                     )}
@@ -1307,7 +1307,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const getStatusBadge = useCallback((status: string | undefined | null, color?: string) => {
         // Si no hay status o no es un string válido, retornar null
-        if (!status || typeof status !== 'string' || status.trim() === '') {
+        const cleanStatus = status && typeof status === 'string' ? status.trim() : '';
+        if (!cleanStatus) {
             return null;
         }
 
@@ -1330,25 +1331,25 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         color: textColor
                     }}
                 >
-                    {status}
+                    {cleanStatus}
                 </span>
             );
         }
 
         // Fallback a colores por defecto si no hay color configurado
         const statusColors: Record<string, string> = {
-            pending: 'bg-yellow-100 text-yellow-800',
-            processing: 'bg-blue-100 text-blue-800',
-            shipped: 'bg-purple-100 text-purple-800',
-            delivered: 'bg-green-100 text-green-800',
-            cancelled: 'bg-red-100 text-red-800',
+            pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
+            processing: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
+            shipped: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200',
+            delivered: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
+            cancelled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
         };
 
-        const colorClass = statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800 dark:text-gray-100';
+        const colorClass = statusColors[cleanStatus.toLowerCase()] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
 
         return (
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
-                {status}
+                {cleanStatus}
             </span>
         );
     }, []);

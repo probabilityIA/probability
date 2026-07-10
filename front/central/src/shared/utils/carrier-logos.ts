@@ -17,6 +17,7 @@ export const CARRIER_LOGOS: Record<string, string> = {
     'ENVIOCLICK': 'https://www.envioclickpro.com.co/assets/images/envioclick-logo.png',
     'ENVIAME': 'https://enviame.io/wp-content/uploads/2021/01/logo-enviame.svg',
     'MIPAQUETE': 'https://mipaquete.com/wp-content/uploads/2021/03/mipaquete-logo.png',
+    'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
 };
 
 export function getCarrierLogo(carrier?: string | null): string | null {

@@ -169,11 +169,7 @@ export function DynamicFilters({
 
     return (
         <div
-          className={`p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 ${className}`}
-          style={{
-            backgroundColor: 'var(--color-primary-50)',
-            borderColor: 'var(--color-primary-200)',
-          }}
+          className={`p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 bg-primary-50 dark:bg-gray-900 border-primary-200 dark:border-gray-800 ${className}`}
         >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Botón Añadir Filtro y Chips */}

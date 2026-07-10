@@ -73,6 +73,7 @@ const getCarrierLogo = (carrierName: string): string => {
         'MENSAJERIA URBANA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJEROS_URBANOS_EXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
         'MENSAJERIAURBANOSEXPRESS': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_mensajerosUrbanos.png',
+        'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
     };
     const normalizedName = carrierName.trim().toUpperCase().replace(/\s+/g, '');
     if (carrierLogos[normalizedName]) return carrierLogos[normalizedName];
@@ -399,8 +400,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         <div className="shipment-section-origin">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={{ backgroundColor: businessColors.tertiary + '30' }}>A</div>
-                                                    <h3 className="font-semibold">Origen</h3>
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-gray-900 dark:text-gray-100" style={{ backgroundColor: businessColors.tertiary + '30' }}>A</div>
+                                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Origen</h3>
                                                 </div>
                                                 {originWarehouses.length > 0 && (
                                                     <select
@@ -452,7 +453,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     setOriginSearch(opt.label);
                                                                     setShowOriginResults(false);
                                                                 }}
-                                                                className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                                                                className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-900 dark:text-gray-100"
                                                             >
                                                                 {opt.label}
                                                             </div>
@@ -478,8 +479,8 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         <div className="shipment-section-destination">
                                             <div className="flex items-center justify-between mb-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold" style={{ backgroundColor: businessColors.secondary + '30' }}>B</div>
-                                                    <h3 className="font-semibold">Destino</h3>
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-gray-900 dark:text-gray-100" style={{ backgroundColor: businessColors.secondary + '30' }}>B</div>
+                                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Destino</h3>
                                                 </div>
                                                 <div className="flex gap-4">
                                                     <label className="flex items-center gap-2 cursor-pointer">
@@ -530,7 +531,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     setDestSearch(opt.label);
                                                                     setShowDestResults(false);
                                                                 }}
-                                                                className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm"
+                                                                className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-900 dark:text-gray-100"
                                                             >
                                                                 {opt.label}
                                                             </div>
@@ -554,7 +555,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                     </div>
 
                                     <div className="bg-gray-50/80 dark:bg-gray-700/30 border border-gray-200 dark:border-gray-600/30 rounded-xl p-4">
-                                        <h3 className="font-semibold text-base mb-3">Paquete</h3>
+                                        <h3 className="font-semibold text-base mb-3 text-gray-900 dark:text-gray-100">Paquete</h3>
                                         <div className="grid grid-cols-4 gap-2">
                                             <Input
                                                 compact
