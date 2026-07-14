@@ -25,7 +25,7 @@ import {
 } from './SiigoFormKit';
 
 export interface WarehousePair {
-    velocity_warehouse_id: number;
+    warehouse_id: number;
     siigo_warehouse_id: number;
 }
 
@@ -121,10 +121,10 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
         set({ mappings });
     };
 
-    const addMapping = () => set({ mappings: [...value.mappings, { velocity_warehouse_id: 0, siigo_warehouse_id: 0 }] });
+    const addMapping = () => set({ mappings: [...value.mappings, { warehouse_id: 0, siigo_warehouse_id: 0 }] });
     const removeMapping = (idx: number) => set({ mappings: value.mappings.filter((_, i) => i !== idx) });
 
-    const velocityOptions = (
+    const warehouseOptions = (
         <>
             <option value="0">-- Selecciona una bodega --</option>
             {warehouses.map((w) => (
@@ -206,7 +206,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                                 style={{ borderColor: INPUT_BORDER }}
                                 disabled={loading}
                             >
-                                {velocityOptions}
+                                {warehouseOptions}
                             </select>
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -251,13 +251,13 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                                 <div key={idx} className="grid grid-cols-[1fr_auto] gap-x-2 items-center">
                                     <div className="grid grid-cols-2 gap-2 min-w-0">
                                         <select
-                                            value={String(m.velocity_warehouse_id || 0)}
-                                            onChange={(e) => updateMapping(idx, { velocity_warehouse_id: Number(e.target.value) })}
+                                            value={String(m.warehouse_id || 0)}
+                                            onChange={(e) => updateMapping(idx, { warehouse_id: Number(e.target.value) })}
                                             className={`${inputCls} min-w-0`}
                                             style={{ borderColor: INPUT_BORDER }}
                                             disabled={loading}
                                         >
-                                            {velocityOptions}
+                                            {warehouseOptions}
                                         </select>
                                         <select
                                             value={String(m.siigo_warehouse_id || 0)}

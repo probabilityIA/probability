@@ -167,7 +167,7 @@ export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTes
                     inventory_sync_enabled: inventorySync.enabled,
                     inventory_warehouse_mode: inventorySync.mode,
                     inventory_single_warehouse_id: inventorySync.single_warehouse_id,
-                    inventory_warehouse_mappings: inventorySync.mappings.filter((m) => m.velocity_warehouse_id > 0),
+                    inventory_warehouse_mappings: inventorySync.mappings.filter((m) => m.warehouse_id > 0),
                     product_sync_enabled: inventorySync.product_sync_enabled,
                 } as any,
                 credentials: credentials as any,

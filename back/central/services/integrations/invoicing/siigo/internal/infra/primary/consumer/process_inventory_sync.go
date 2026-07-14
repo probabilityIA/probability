@@ -23,7 +23,7 @@ type providerStockSyncItem struct {
 }
 
 type warehouseMapping struct {
-	velocityWarehouseID uint
+	warehouseID uint
 	siigoWarehouseID    int
 }
 
@@ -119,7 +119,7 @@ func buildInventorySyncItems(
 				}
 				items = append(items, providerStockSyncItem{
 					SKU:         p.Code,
-					WarehouseID: m.velocityWarehouseID,
+					WarehouseID: m.warehouseID,
 					Quantity:    int(qty),
 				})
 			}
@@ -219,7 +219,10 @@ func parseWarehouseMappings(raw interface{}) []warehouseMapping {
 		if !ok {
 			continue
 		}
-		velocityID := uintFromConfig(m, "velocity_warehouse_id")
+		warehouseIDValue := uintFromConfig(m, "warehouse_id")
+		if warehouseIDValue == 0 {
+			warehouseIDValue = uintFromConfig(m, "velocity_warehouse_id")
+		}
 		siigoID := 0
 		switch v := m["siigo_warehouse_id"].(type) {
 		case float64:
@@ -227,10 +230,10 @@ func parseWarehouseMappings(raw interface{}) []warehouseMapping {
 		case int:
 			siigoID = v
 		}
-		if velocityID == 0 {
+		if warehouseIDValue == 0 {
 			continue
 		}
-		mappings = append(mappings, warehouseMapping{velocityWarehouseID: velocityID, siigoWarehouseID: siigoID})
+		mappings = append(mappings, warehouseMapping{warehouseID: warehouseIDValue, siigoWarehouseID: siigoID})
 	}
 	return mappings
 }

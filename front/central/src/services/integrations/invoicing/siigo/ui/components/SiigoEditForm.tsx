@@ -41,7 +41,7 @@ function initialInventoryConfig(config: any): InventorySyncConfig {
         mode: cfg.inventory_warehouse_mode === 'mapped' ? 'mapped' : 'single',
         single_warehouse_id: Number(cfg.inventory_single_warehouse_id) || 0,
         mappings: rawMappings.map((m: any) => ({
-            velocity_warehouse_id: Number(m.velocity_warehouse_id) || 0,
+            warehouse_id: Number(m.warehouse_id) || Number(m.velocity_warehouse_id) || 0,
             siigo_warehouse_id: Number(m.siigo_warehouse_id) || 0,
         })),
         product_sync_enabled: cfg.product_sync_enabled === true,
@@ -53,7 +53,7 @@ function inventoryConfigToMap(inv: InventorySyncConfig) {
         inventory_sync_enabled: inv.enabled,
         inventory_warehouse_mode: inv.mode,
         inventory_single_warehouse_id: inv.single_warehouse_id,
-        inventory_warehouse_mappings: inv.mappings.filter((m) => m.velocity_warehouse_id > 0),
+        inventory_warehouse_mappings: inv.mappings.filter((m) => m.warehouse_id > 0),
         product_sync_enabled: inv.product_sync_enabled,
     };
 }
