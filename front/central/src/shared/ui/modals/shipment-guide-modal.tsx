@@ -1228,7 +1228,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 type="number"
                                                 {...step1Form.register("codValue", { valueAsNumber: true })}
                                                 error={step1Form.formState.errors.codValue?.message}
-                                                readOnly={orderIsCOD}
                                             />
                                         </div>
 
