@@ -88,19 +88,11 @@ func (h *IntegrationHandler) CreateWebhookHandler(c *gin.Context) {
 	})
 }
 
-// mapRawWebhooksToResponse convierte []interface{} de un json.Unmarshal a []WebhookInfoResponse
 func mapRawWebhooksToResponse(raw []interface{}) []response.WebhookInfoResponse {
 	result := make([]response.WebhookInfoResponse, 0, len(raw))
 	for _, item := range raw {
 		if m, ok := item.(map[string]interface{}); ok {
-			result = append(result, response.WebhookInfoResponse{
-				ID:        getStringField(m, "ID"),
-				Address:   getStringField(m, "Address"),
-				Topic:     getStringField(m, "Topic"),
-				Format:    getStringField(m, "Format"),
-				CreatedAt: getStringField(m, "CreatedAt"),
-				UpdatedAt: getStringField(m, "UpdatedAt"),
-			})
+			result = append(result, mapRawWebhookToResponse(m))
 		}
 	}
 	return result

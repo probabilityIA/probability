@@ -109,8 +109,10 @@ type WebhookURLResponse struct {
 type WebhookInfoResponse struct {
 	ID        string `json:"id" example:"123456789"`
 	Address   string `json:"address" example:"https://api.example.com/webhook"`
+	URL       string `json:"url" example:"https://api.example.com/webhook"`
 	Topic     string `json:"topic" example:"orders/create"`
 	Format    string `json:"format" example:"json"`
+	Active    bool   `json:"active" example:"true"`
 	CreatedAt string `json:"created_at" example:"2024-01-15T10:30:00Z"`
 	UpdatedAt string `json:"updated_at" example:"2024-01-15T10:30:00Z"`
 }
