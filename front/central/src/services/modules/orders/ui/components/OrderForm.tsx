@@ -1059,6 +1059,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         </div>
                     </div>
 
+
+                </div>
+                <div className="col-span-3">
                     <div className="bg-white dark:bg-gray-800 rounded-[14px] p-5" style={{ boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: primaryColor + '30' }}>
                             <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
@@ -1069,7 +1072,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <h3 className="text-sm font-bold" style={{ color: primaryColor }}>Pago y Estado</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Medio de pago *
@@ -1083,30 +1086,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     hasError={paymentMethodError}
                                 />
                                 <p className="mt-1 text-[11px] text-gray-400">
-                                    Con que paga el cliente (efectivo, debito, credito...). Es independiente de si la orden es contra entrega:
-                                    {' '}contra entrega define <strong>cuando</strong> se cobra, el medio de pago define <strong>con que</strong> se paga.
+                                    Con que paga el cliente. Contra entrega define <strong>cuando</strong> se cobra; el medio de pago, <strong>con que</strong> se paga.
                                 </p>
                                 {paymentMethodError && (
                                     <p className="mt-1 text-xs text-red-600">Selecciona el medio de pago</p>
                                 )}
-                            </div>
-                            <div>
-                                <label className="flex items-center">
-                                    <div className="relative flex items-center justify-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.is_paid}
-                                            onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
-                                        />
-                                        {formData.is_paid && (
-                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Orden Pagada</span>
-                                </label>
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
@@ -1125,6 +1109,39 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </select>
                             </div>
                             <div>
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                    Confirmacion
+                                </label>
+                                <select
+                                    value={formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending'}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
+                                    }}
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+                                >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="yes">Confirmado</option>
+                                    <option value="no">No confirmado</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2 flex flex-wrap items-center gap-6 md:pt-7">
+                                <label className="flex items-center">
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_paid}
+                                            onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
+                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
+                                        />
+                                        {formData.is_paid && (
+                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Orden Pagada</span>
+                                </label>
                                 <label className="flex items-center">
                                     <div className="relative flex items-center justify-center">
                                         <input
@@ -1142,27 +1159,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Facturable</span>
                                 </label>
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Confirmacion
-                                </label>
-                                <select
-                                    value={formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending'}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
-                                    }}
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-                                >
-                                    <option value="pending">Pendiente</option>
-                                    <option value="yes">Confirmado</option>
-                                    <option value="no">No confirmado</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
-
                 </div>
+
 
                 <div className="lg:col-span-2">
                     <div className="bg-white dark:bg-gray-800 rounded-[14px] p-5" style={{ boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
