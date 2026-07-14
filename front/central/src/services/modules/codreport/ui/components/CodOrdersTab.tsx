@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Search, RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileCheck2, FileX2,
+    Search, RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileCheck2, FileX2, Truck, Ban,
 } from 'lucide-react';
 import { getCodOrdersAction } from '../../infra/actions';
-import { CodOrder, ReportFilters } from '../../domain/types';
+import { CodOrder, CodState, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 
@@ -24,6 +24,38 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
     returned: { label: 'Devuelto', cls: 'bg-red-100 text-red-700' },
     cancelled: { label: 'Cancelado', cls: 'bg-gray-100 text-gray-500' },
 };
+
+function CodStateBadge({ state }: { state: CodState }) {
+    if (state === 'collected') {
+        return (
+            <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
+                <CheckCircle2 size={13} /> Recaudada
+            </span>
+        );
+    }
+    if (state === 'in_progress') {
+        return (
+            <span
+                className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs font-semibold"
+                title="En curso: no se cuenta como recaudada hasta que se entregue"
+            >
+                <Truck size={13} /> En progreso
+            </span>
+        );
+    }
+    if (state === 'pending') {
+        return (
+            <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-semibold">
+                <Clock size={13} /> Pendiente
+            </span>
+        );
+    }
+    return (
+        <span className="inline-flex items-center gap-1 text-gray-400 text-xs font-semibold" title="No recaudable">
+            <Ban size={13} /> No recaudable
+        </span>
+    );
+}
 
 export default function CodOrdersTab({ filters }: Props) {
     const [orders, setOrders] = useState<CodOrder[]>([]);
@@ -193,15 +225,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                     <td className="px-3 py-2 text-right text-amber-700 dark:text-amber-400">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
                                     <td className="px-3 py-2 text-right font-semibold text-blue-700 dark:text-blue-300">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
                                     <td className="px-3 py-2 text-center">
-                                        {o.collected ? (
-                                            <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
-                                                <CheckCircle2 size={13} /> Recaudada
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-semibold">
-                                                <Clock size={13} /> Pendiente
-                                            </span>
-                                        )}
+                                        <CodStateBadge state={o.cod_state} />
                                     </td>
                                     <td className="px-3 py-2 text-center">
                                         {o.cut_status === 'confirmed' ? (

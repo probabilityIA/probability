@@ -45,15 +45,16 @@ type codOrderResponse struct {
 	CodTotal      float64    `json:"cod_total"`
 	CodCarrierFee float64    `json:"cod_carrier_fee"`
 	ShippingCost  float64    `json:"shipping_cost"`
-	DiscountPct  float64    `json:"discount_pct"`
-	Discount     float64    `json:"discount"`
-	Net          float64    `json:"net"`
-	Currency     string     `json:"currency"`
-	Status       string     `json:"status"`
-	Collected    bool       `json:"collected"`
-	CutStatus    string     `json:"cut_status"`
-	CreatedAt    time.Time  `json:"created_at"`
-	DeliveredAt  *time.Time `json:"delivered_at"`
+	DiscountPct   float64    `json:"discount_pct"`
+	Discount      float64    `json:"discount"`
+	Net           float64    `json:"net"`
+	Currency      string     `json:"currency"`
+	Status        string     `json:"status"`
+	Collected     bool       `json:"collected"`
+	CodState      string     `json:"cod_state"`
+	CutStatus     string     `json:"cut_status"`
+	CreatedAt     time.Time  `json:"created_at"`
+	DeliveredAt   *time.Time `json:"delivered_at"`
 }
 
 type paymentCutResponse struct {
@@ -130,15 +131,16 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 			CodTotal:      in[i].CodTotal,
 			CodCarrierFee: in[i].CodCarrierFee,
 			ShippingCost:  in[i].ShippingCost,
-			DiscountPct:  in[i].DiscountPct,
-			Discount:     in[i].Discount,
-			Net:          in[i].Net,
-			Currency:     in[i].Currency,
-			Status:       in[i].Status,
-			Collected:    in[i].Collected,
-			CutStatus:    in[i].CutStatus,
-			CreatedAt:    in[i].CreatedAt,
-			DeliveredAt:  in[i].DeliveredAt,
+			DiscountPct:   in[i].DiscountPct,
+			Discount:      in[i].Discount,
+			Net:           in[i].Net,
+			Currency:      in[i].Currency,
+			Status:        in[i].Status,
+			Collected:     in[i].Collected,
+			CodState:      in[i].CodState,
+			CutStatus:     in[i].CutStatus,
+			CreatedAt:     in[i].CreatedAt,
+			DeliveredAt:   in[i].DeliveredAt,
 		}
 	}
 	return out

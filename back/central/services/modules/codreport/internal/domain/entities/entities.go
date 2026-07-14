@@ -26,6 +26,7 @@ type CodOrder struct {
 	Currency      string
 	Status        string
 	Collected     bool
+	CodState      string
 	CreatedAt     time.Time
 	DeliveredAt   *time.Time
 	CutStatus     string

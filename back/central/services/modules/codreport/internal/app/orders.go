@@ -31,6 +31,8 @@ func (uc *UseCase) ListOrders(ctx context.Context, f dtos.OrdersFilter) ([]entit
 		orders[i].DiscountPct = pct
 		orders[i].Discount = d
 		orders[i].Net = n
+		orders[i].CodState = domain.CollectionState(orders[i].Status)
+		orders[i].Collected = domain.IsCollected(orders[i].Status)
 		if orders[i].Collected {
 			orders[i].CutStatus = "pending"
 			if orders[i].DeliveredAt != nil {
