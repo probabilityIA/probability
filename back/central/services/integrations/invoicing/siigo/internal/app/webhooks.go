@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/ports"
 )
 
@@ -36,9 +37,9 @@ func (uc *invoicingUseCase) resolveWebhookCredentials(ctx context.Context, integ
 	}
 	apiURL, _ := uc.integrationCore.DecryptCredential(ctx, integrationID, "api_url")
 
-	effectiveURL := apiURL
-	if integration.IsTesting && integration.BaseURLTest != "" {
-		effectiveURL = integration.BaseURLTest
+	effectiveURL := entities.ResolveSiigoBaseURL(integration.IsTesting, integration.BaseURLTest, apiURL, integration.BaseURL)
+	if effectiveURL == "" {
+		return dtos.Credentials{}, fmt.Errorf("URL de Siigo no configurada en el tipo de integracion (base_url o base_url_test)")
 	}
 
 	return dtos.Credentials{

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/infra/secondary/queue"
 )
 
@@ -58,10 +59,11 @@ func (c *InvoiceRequestConsumer) processCreateJournal(
 	// api_url es opcional
 	apiURL, _ := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_url")
 
-	// Resolver URL efectiva: si is_testing, usar base_url_test del integration_type
-	effectiveURL := apiURL
-	if integration.IsTesting && integration.BaseURLTest != "" {
-		effectiveURL = integration.BaseURLTest
+	// Resolver URL efectiva: base_url_test (si testing) -> api_url -> base_url del integration_type
+	effectiveURL := entities.ResolveSiigoBaseURL(integration.IsTesting, integration.BaseURLTest, apiURL, integration.BaseURL)
+	if effectiveURL == "" {
+		c.log.Error(ctx).Msg("Siigo base URL not configured")
+		return c.createErrorResponse(request, "missing_base_url", "URL de Siigo no configurada en el tipo de integracion (base_url o base_url_test)", startTime, nil)
 	}
 
 	c.log.Info(ctx).
@@ -82,19 +84,19 @@ func (c *InvoiceRequestConsumer) processCreateJournal(
 	journalItems := make([]siigoDtos.JournalItemData, 0, len(request.InvoiceData.Items))
 	for _, item := range request.InvoiceData.Items {
 		journalItems = append(journalItems, siigoDtos.JournalItemData{
-			SKU:        item.SKU,
-			Name:       item.Name,
-			Quantity:   float64(item.Quantity),
-			TotalPrice: item.TotalPrice,
+			SKU:         item.SKU,
+			Name:        item.Name,
+			Quantity:    float64(item.Quantity),
+			TotalPrice:  item.TotalPrice,
 			CustomerDNI: request.InvoiceData.Customer.DNI,
 		})
 	}
 
 	// 6. Construir request tipado para el cliente Siigo
 	journalReq := &siigoDtos.CreateJournalRequest{
-		Items:       journalItems,
-		Currency:    request.InvoiceData.Currency,
-		OrderID:     request.InvoiceData.OrderID,
+		Items:    journalItems,
+		Currency: request.InvoiceData.Currency,
+		OrderID:  request.InvoiceData.OrderID,
 		Credentials: siigoDtos.Credentials{
 			Username:  username,
 			AccessKey: accessKey,

@@ -126,7 +126,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
 
     const velocityOptions = (
         <>
-            <option value="0">-- Bodega Velocity --</option>
+            <option value="0">-- Selecciona una bodega --</option>
             {warehouses.map((w) => (
                 <option key={w.id} value={w.id}>{w.name}{w.code ? ` (${w.code})` : ''}</option>
             ))}
@@ -180,7 +180,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                             }}
                         >
                             <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Una sola bodega</p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400">Todo el stock de Siigo entra a una bodega de Velocity.</p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">Todo el stock de Siigo entra a una sola bodega.</p>
                         </button>
                         <button
                             type="button"
@@ -192,13 +192,13 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                             }}
                         >
                             <p className="text-[13px] font-semibold text-gray-900 dark:text-white">Mapear bodegas</p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400">Relaciona cada bodega Velocity con su bodega Siigo.</p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400">Relaciona cada bodega con su bodega de Siigo.</p>
                         </button>
                     </div>
 
                     {value.mode === 'single' ? (
                         <div>
-                            <label className={fieldLabel}>Bodega de Velocity destino</label>
+                            <label className={fieldLabel}>Bodega destino</label>
                             <select
                                 value={String(value.single_warehouse_id || 0)}
                                 onChange={(e) => set({ single_warehouse_id: Number(e.target.value) })}
@@ -216,7 +216,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                     ) : (
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <label className={`${fieldLabel} mb-0`}>Parejas de bodegas (Velocity y Siigo)</label>
+                                <label className={`${fieldLabel} mb-0`}>Parejas de bodegas</label>
                                 {integrationId && (
                                     <button
                                         type="button"
@@ -237,7 +237,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
 
                             <div className="grid grid-cols-[1fr_auto] gap-x-2 items-center px-0.5">
                                 <div className="grid grid-cols-2 gap-2">
-                                    <span className="text-[11px] font-semibold text-gray-400">Velocity</span>
+                                    <span className="text-[11px] font-semibold text-gray-400">Bodega</span>
                                     <span className="text-[11px] font-semibold text-gray-400">Siigo</span>
                                 </div>
                                 <span />
@@ -289,7 +289,7 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                             </button>
                             <p className={fieldHint}>
                                 <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>Cada pareja: una bodega Velocity y su bodega Siigo. El stock de esa bodega Siigo se refleja en la Velocity elegida.</span>
+                                <span>Cada pareja: una bodega propia y su bodega de Siigo. El stock de esa bodega Siigo se refleja en la bodega elegida.</span>
                             </p>
                         </div>
                     )}

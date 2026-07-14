@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/entities"
 )
 
 func (uc *invoicingUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
@@ -47,26 +49,16 @@ func (uc *invoicingUseCase) TestConnection(ctx context.Context, config map[strin
 }
 
 func resolveBaseURL(config map[string]interface{}, credentials map[string]interface{}) string {
+	var isTesting bool
+	var baseURLTest, baseURL string
 	if config != nil {
-		isTesting, _ := config["is_testing"].(bool)
-		if isTesting {
-			if testURL, _ := config["base_url_test"].(string); testURL != "" {
-				return testURL
-			}
-		}
+		isTesting, _ = config["is_testing"].(bool)
+		baseURLTest, _ = config["base_url_test"].(string)
+		baseURL, _ = config["base_url"].(string)
 	}
-
+	var apiURL string
 	if credentials != nil {
-		if override, _ := credentials["api_url"].(string); override != "" {
-			return override
-		}
+		apiURL, _ = credentials["api_url"].(string)
 	}
-
-	if config != nil {
-		if prodURL, _ := config["base_url"].(string); prodURL != "" {
-			return prodURL
-		}
-	}
-
-	return ""
+	return entities.ResolveSiigoBaseURL(isTesting, baseURLTest, apiURL, baseURL)
 }
