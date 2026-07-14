@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { DollarSign, BarChart3, Package, CalendarCheck } from 'lucide-react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { ReportFilters, RangeKey } from '../../domain/types';
-import { RANGE_OPTIONS, carrierLabel } from './helpers';
+import { RANGE_OPTIONS, carrierLabel, resolveRangeDates } from './helpers';
 import CodSummaryTab from './CodSummaryTab';
 import CodOrdersTab from './CodOrdersTab';
 import CodCutsTab from './CodCutsTab';
@@ -32,13 +32,16 @@ export default function CodReportView({ selectedBusinessId }: Props) {
     const [carrier, setCarrier] = useState('');
     const carriers: string[] = [];
 
-    const filters: ReportFilters = useMemo(() => ({
-        range,
-        start_date: range === 'custom' ? customStart : undefined,
-        end_date: range === 'custom' ? customEnd : undefined,
-        carrier: carrier || undefined,
-        business_id: selectedBusinessId || undefined,
-    }), [range, customStart, customEnd, carrier, selectedBusinessId]);
+    const filters: ReportFilters = useMemo(() => {
+        const { start_date, end_date } = resolveRangeDates(range, customStart, customEnd);
+        return {
+            range,
+            start_date,
+            end_date,
+            carrier: carrier || undefined,
+            business_id: selectedBusinessId || undefined,
+        };
+    }, [range, customStart, customEnd, carrier, selectedBusinessId]);
 
     return (
         <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">

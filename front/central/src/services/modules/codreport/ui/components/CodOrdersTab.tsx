@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { getCodOrdersAction } from '../../infra/actions';
 import { CodOrder, ReportFilters } from '../../domain/types';
-import { formatMoney, formatDate, carrierLabel } from './helpers';
+import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 
 interface Props {
@@ -37,6 +37,9 @@ export default function CodOrdersTab({ filters }: Props) {
     const [hasGuide, setHasGuide] = useState<'' | 'true' | 'false'>('');
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
+    const [tz, setTz] = useState('');
+
+    useEffect(() => { setTz(browserTimeZone()); }, []);
 
     useEffect(() => {
         const t = setTimeout(() => setDebounced(search.trim()), 400);
@@ -126,6 +129,9 @@ export default function CodOrdersTab({ filters }: Props) {
                     <thead>
                         <tr className="text-[11px] uppercase text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
                             <th className="text-left px-3 py-2 font-semibold">Orden</th>
+                            <th className="text-left px-3 py-2 font-semibold" title={tz ? `Zona horaria: ${tz}` : undefined}>
+                                Fecha creacion
+                            </th>
                             <th className="text-left px-3 py-2 font-semibold">Cliente</th>
                             <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
                             <th className="text-center px-3 py-2 font-semibold">Guia</th>
@@ -135,17 +141,19 @@ export default function CodOrdersTab({ filters }: Props) {
                             <th className="text-right px-3 py-2 font-semibold">Total cliente</th>
                             <th className="text-center px-3 py-2 font-semibold">Recaudo</th>
                             <th className="text-center px-3 py-2 font-semibold">Corte</th>
-                            <th className="text-left px-3 py-2 font-semibold">Entregado</th>
+                            <th className="text-left px-3 py-2 font-semibold" title={tz ? `Zona horaria: ${tz}` : undefined}>
+                                Entregado
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading && (
-                            <tr><td colSpan={11} className="text-center py-10 text-gray-400">
+                            <tr><td colSpan={12} className="text-center py-10 text-gray-400">
                                 <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
                             </td></tr>
                         )}
                         {!loading && orders.length === 0 && !error && (
-                            <tr><td colSpan={11} className="text-center py-10 text-gray-400 text-sm">
+                            <tr><td colSpan={12} className="text-center py-10 text-gray-400 text-sm">
                                 <Package size={28} className="mx-auto mb-2 opacity-50" />
                                 No hay ordenes contra entrega en el periodo.
                             </td></tr>
@@ -155,6 +163,7 @@ export default function CodOrdersTab({ filters }: Props) {
                             return (
                                 <tr key={o.order_id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td className="px-3 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">#{o.order_number || o.order_id.slice(0, 8)}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDateTime(o.created_at)}</td>
                                     <td className="px-3 py-2 text-gray-900 dark:text-white truncate max-w-[160px]">{o.customer_name || '-'}</td>
                                     <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{carrierLabel(o.carrier)}</td>
                                     <td className="px-3 py-2 text-center">
@@ -205,7 +214,7 @@ export default function CodOrdersTab({ filters }: Props) {
                                             <span className="text-gray-300 text-xs">-</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-2 text-xs text-gray-500">{o.delivered_at ? formatDate(o.delivered_at) : '-'}</td>
+                                    <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '-'}</td>
                                 </tr>
                             );
                         })}

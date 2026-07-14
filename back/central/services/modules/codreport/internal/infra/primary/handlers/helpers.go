@@ -54,10 +54,9 @@ func parseDateRange(c *gin.Context) (time.Time, time.Time) {
 	sd := strings.TrimSpace(c.Query("start_date"))
 	ed := strings.TrimSpace(c.Query("end_date"))
 	if sd != "" && ed != "" {
-		s, err1 := time.Parse("2006-01-02", sd)
-		e, err2 := time.Parse("2006-01-02", ed)
-		if err1 == nil && err2 == nil {
-			e = time.Date(e.Year(), e.Month(), e.Day(), 23, 59, 59, 0, loc)
+		s, ok1 := parseBoundary(sd, false, loc)
+		e, ok2 := parseBoundary(ed, true, loc)
+		if ok1 && ok2 {
 			return s, e
 		}
 	}
@@ -74,6 +73,19 @@ func parseDateRange(c *gin.Context) (time.Time, time.Time) {
 	default:
 		return startOfToday.AddDate(0, 0, -29), endOfToday
 	}
+}
+
+func parseBoundary(v string, endOfDay bool, loc *time.Location) (time.Time, bool) {
+	if t, err := time.Parse(time.RFC3339, v); err == nil {
+		return t.UTC(), true
+	}
+	if t, err := time.Parse("2006-01-02", v); err == nil {
+		if endOfDay {
+			return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, loc), true
+		}
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc), true
+	}
+	return time.Time{}, false
 }
 
 func parsePagination(c *gin.Context) (int, int) {
