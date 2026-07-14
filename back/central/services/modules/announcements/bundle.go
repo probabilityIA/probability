@@ -12,7 +12,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, s3 storage.IS3Service) {
+type Bundle struct {
+	UseCase app.IUseCase
+}
+
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, s3 storage.IS3Service) *Bundle {
 	logger = logger.WithModule("announcements")
 
 	repo := repository.New(database)
@@ -20,4 +24,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, s3 
 	useCase := app.New(repo, storageService, logger)
 	handler := handlers.New(useCase, logger)
 	handler.RegisterRoutes(router)
+
+	return &Bundle{UseCase: useCase}
 }

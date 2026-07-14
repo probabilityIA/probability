@@ -7,7 +7,18 @@ import {
     getMySubscriptionAction,
     registerSubscriptionPaymentAction,
     disableSubscriptionAction,
+    listSubscriptionTypesAction,
+    createSubscriptionTypeAction,
+    updateSubscriptionTypeAction,
+    deleteSubscriptionTypeAction,
+    getModuleCodesAction,
+    purchaseSubscriptionAction,
+    listOverridesAction,
+    grantOverrideAction,
+    revokeOverrideAction,
     BusinessSubscription,
+    SubscriptionType,
+    BusinessModuleOverride,
 } from '@/services/modules/wallet/infra/subscription-actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
@@ -21,7 +32,6 @@ const formatDate = (dateStr?: string) => {
     });
 };
 
-// Badge de estado de suscripción con color dinámico
 function StatusBadge({ status }: { status?: string }) {
     const map: Record<string, { label: string; cls: string }> = {
         active: { label: 'Activo', cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' },
@@ -30,7 +40,7 @@ function StatusBadge({ status }: { status?: string }) {
         cancelled: { label: 'Suspendido', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' },
         pending: { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' },
     };
-    const entry = map[status ?? ''] ?? { label: 'Sin suscripción', cls: 'bg-gray-100 text-gray-500 dark:text-gray-400 dark:bg-gray-700 dark:text-gray-400' };
+    const entry = map[status ?? ''] ?? { label: 'Sin suscripción', cls: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' };
     return (
         <span className={`text-xs px-2 py-1 rounded-full font-medium ${entry.cls}`}>
             {entry.label}
@@ -42,6 +52,7 @@ export default function SubscriptionPage() {
     const { isSuperAdmin } = usePermissions();
     const { businesses } = useBusinessesSimple();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const [adminTab, setAdminTab] = useState<'businesses' | 'types'>('businesses');
 
     const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
 
@@ -83,13 +94,34 @@ export default function SubscriptionPage() {
                 <div className="p-6">
                     {isSuperAdmin ? (
                         selectedBusinessId ? (
-                            <BusinessSubscriptionView
-                                businessId={selectedBusinessId}
-                                businessName={selectedBusiness?.name}
-                                isSuperAdminView
-                            />
+                            <div className="space-y-8">
+                                <BusinessSubscriptionView
+                                    businessId={selectedBusinessId}
+                                    businessName={selectedBusiness?.name}
+                                    isSuperAdminView
+                                />
+                                <OverridesPanel businessId={selectedBusinessId} businessName={selectedBusiness?.name} />
+                            </div>
                         ) : (
-                            <AdminSubscriptionsView businesses={businesses} />
+                            <div className="space-y-6">
+                                <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+                                    <button
+                                        onClick={() => setAdminTab('businesses')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 ${adminTab === 'businesses' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+                                    >
+                                        Negocios
+                                    </button>
+                                    <button
+                                        onClick={() => setAdminTab('types')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 ${adminTab === 'types' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+                                    >
+                                        Tipos de Suscripción
+                                    </button>
+                                </div>
+                                {adminTab === 'businesses'
+                                    ? <AdminSubscriptionsView businesses={businesses} />
+                                    : <SubscriptionTypesAdminPanel />}
+                            </div>
                         )
                     ) : (
                         <BusinessSubscriptionView />
@@ -100,13 +132,11 @@ export default function SubscriptionPage() {
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Admin View: Lista todos los negocios con estado REAL de suscripción
-// ─────────────────────────────────────────────────────────────────────────────
 function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
     const [filter, setFilter] = useState('all');
     const [registerModal, setRegisterModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
-    const [amount, setAmount] = useState('');
+    const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
+    const [selectedTypeId, setSelectedTypeId] = useState('');
     const [months, setMonths] = useState('1');
     const [payRef, setPayRef] = useState('');
     const [notes, setNotes] = useState('');
@@ -114,8 +144,13 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [disablingId, setDisablingId] = useState<number | null>(null);
 
-    // Estado real de suscripción por negocio
-    const [subStatuses, setSubStatuses] = useState<Record<number, { status: string; endDate?: string }>>({});
+    const [subStatuses, setSubStatuses] = useState<Record<number, { status: string; endDate?: string; typeName?: string }>>({});
+
+    useEffect(() => {
+        listSubscriptionTypesAction(true).then((res) => {
+            if (res.success && res.data) setSubscriptionTypes(res.data);
+        });
+    }, []);
 
     useEffect(() => {
         if (!businesses.length) return;
@@ -126,7 +161,8 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                     ...prev,
                     [biz.id]: {
                         status: res.data?.status ?? 'pending',
-                        endDate: res.data?.endDate,
+                        endDate: res.data?.end_date,
+                        typeName: res.data?.subscription_type_name,
                     },
                 }));
             }
@@ -134,12 +170,11 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
     }, [businesses]);
 
     const handleRegisterPayment = async () => {
-        if (!registerModal.business) return;
-        if (!amount || isNaN(Number(amount))) return;
+        if (!registerModal.business || !selectedTypeId) return;
         setLoading(true);
         const res = await registerSubscriptionPaymentAction({
             businessId: registerModal.business.id,
-            amount: Number(amount),
+            subscriptionTypeId: Number(selectedTypeId),
             monthsToAdd: Number(months),
             paymentReference: payRef || undefined,
             notes: notes || undefined,
@@ -148,7 +183,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
         if (res.success) {
             setMessage({ type: 'success', text: `Pago registrado para ${registerModal.business.name}. Ahora puede usar la plataforma.` });
             setRegisterModal({ open: false });
-            setAmount(''); setMonths('1'); setPayRef(''); setNotes('');
+            setSelectedTypeId(''); setMonths('1'); setPayRef(''); setNotes('');
             setSubStatuses((prev) => ({
                 ...prev,
                 [registerModal.business!.id]: { status: 'paid' },
@@ -165,7 +200,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
         setDisablingId(null);
         if (res.success) {
             setMessage({ type: 'success', text: `Cuenta de ${biz.name} suspendida.` });
-            setSubStatuses((prev) => ({ ...prev, [biz.id]: { status: 'expired' } }));
+            setSubStatuses((prev) => ({ ...prev, [biz.id]: { status: 'cancelled' } }));
         } else {
             setMessage({ type: 'error', text: res.error || 'Error al suspender' });
         }
@@ -199,16 +234,6 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                 </Alert>
             )}
 
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
-                <div className="flex gap-3">
-                    <span className="text-2xl">💡</span>
-                    <div className="text-sm text-amber-800 dark:text-amber-300">
-                        <p className="font-semibold mb-1">Panel de control de suscripciones</p>
-                        <p>Registra el pago mensual de cada cliente para habilitarles el acceso. Si un cliente no paga, suspéndelo.</p>
-                    </div>
-                </div>
-            </div>
-
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredBusinesses.map((biz) => {
                     const subInfo = subStatuses[biz.id];
@@ -218,6 +243,9 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-white">{biz.name}</h3>
                                     <span className="text-xs text-gray-400">ID: {biz.id}</span>
+                                    {subInfo?.typeName && (
+                                        <p className="text-xs text-gray-400 mt-0.5">Plan: {subInfo.typeName}</p>
+                                    )}
                                     {subInfo?.endDate && (
                                         <p className="text-xs text-gray-400 mt-0.5">Vence: {formatDate(subInfo.endDate)}</p>
                                     )}
@@ -229,10 +257,10 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                             </div>
                             <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
                                 <Button size="sm" variant="success" onClick={() => setRegisterModal({ open: true, business: biz })} className="flex-1 text-xs">
-                                    💳 Registrar Pago
+                                    Registrar Pago
                                 </Button>
                                 <Button size="sm" variant="danger" onClick={() => handleDisable(biz)} loading={disablingId === biz.id} className="flex-1 text-xs">
-                                    🔒 Suspender
+                                    Suspender
                                 </Button>
                             </div>
                         </div>
@@ -242,15 +270,19 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
 
             <Modal isOpen={registerModal.open} onClose={() => setRegisterModal({ open: false })} title={`Registrar Pago — ${registerModal.business?.name}`} size="md">
                 <div className="space-y-4 p-4">
-                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-300">
-                        Al registrar el pago, el cliente quedará activo y podrá usar todas las funciones.
-                    </div>
-                    <Input label="Monto pagado (COP)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Ej: 150000" />
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Meses a habilitar</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de suscripción</label>
+                        <select value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="">Selecciona un tipo</option>
+                            {subscriptionTypes.map((t) => (
+                                <option key={t.id} value={t.id}>{t.name} — {formatCurrency(t.price)}/{t.billing_period === 'monthly' ? 'mes' : 'año'}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses a habilitar</label>
                         <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
                             <option value="1">1 mes</option>
-                            <option value="2">2 meses</option>
                             <option value="3">3 meses</option>
                             <option value="6">6 meses</option>
                             <option value="12">12 meses (anual)</option>
@@ -260,7 +292,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                     <Input label="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones internas..." />
                     <div className="flex justify-end gap-2 pt-2">
                         <Button variant="secondary" onClick={() => setRegisterModal({ open: false })}>Cancelar</Button>
-                        <Button variant="success" onClick={handleRegisterPayment} loading={loading}>✅ Confirmar Pago</Button>
+                        <Button variant="success" onClick={handleRegisterPayment} loading={loading} disabled={!selectedTypeId}>Confirmar Pago</Button>
                     </div>
                 </div>
             </Modal>
@@ -268,9 +300,243 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
     );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Business View: El negocio ve su estado y el QR/info para pagar
-// ─────────────────────────────────────────────────────────────────────────────
+function SubscriptionTypesAdminPanel() {
+    const [types, setTypes] = useState<SubscriptionType[]>([]);
+    const [moduleCodes, setModuleCodes] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [editModal, setEditModal] = useState<{ open: boolean; type?: SubscriptionType }>({ open: false });
+
+    const [form, setForm] = useState({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] as string[] });
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        const [typesRes, codesRes] = await Promise.all([listSubscriptionTypesAction(false), getModuleCodesAction()]);
+        if (typesRes.success && typesRes.data) setTypes(typesRes.data);
+        if (codesRes.success && codesRes.data) setModuleCodes(codesRes.data);
+        setLoading(false);
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
+
+    const openCreate = () => {
+        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] });
+        setEditModal({ open: true });
+    };
+
+    const openEdit = (t: SubscriptionType) => {
+        setForm({ name: t.name, code: t.code, description: t.description, price: String(t.price), billing_period: t.billing_period, active: t.active, module_codes: t.module_codes ?? [] });
+        setEditModal({ open: true, type: t });
+    };
+
+    const toggleModule = (code: string) => {
+        setForm((prev) => ({
+            ...prev,
+            module_codes: prev.module_codes.includes(code)
+                ? prev.module_codes.filter((c) => c !== code)
+                : [...prev.module_codes, code],
+        }));
+    };
+
+    const handleSave = async () => {
+        if (!form.name || !form.price) return;
+        const res = editModal.type
+            ? await updateSubscriptionTypeAction(editModal.type.id, {
+                name: form.name,
+                description: form.description,
+                price: Number(form.price),
+                billing_period: form.billing_period,
+                active: form.active,
+                module_codes: form.module_codes,
+            })
+            : await createSubscriptionTypeAction({
+                name: form.name,
+                code: form.code,
+                description: form.description,
+                price: Number(form.price),
+                billing_period: form.billing_period,
+                module_codes: form.module_codes,
+            });
+
+        if (res.success) {
+            setMessage({ type: 'success', text: 'Tipo de suscripción guardado' });
+            setEditModal({ open: false });
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al guardar' });
+        }
+    };
+
+    const handleDelete = async (t: SubscriptionType) => {
+        if (!confirm(`¿Eliminar el tipo de suscripción "${t.name}"?`)) return;
+        const res = await deleteSubscriptionTypeAction(t.id);
+        if (res.success) {
+            setMessage({ type: 'success', text: 'Tipo de suscripción eliminado' });
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al eliminar' });
+        }
+    };
+
+    if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
+
+    return (
+        <div className="space-y-4">
+            {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
+
+            <div className="flex justify-end">
+                <Button variant="primary" onClick={openCreate}>+ Nuevo tipo de suscripción</Button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {types.map((t) => (
+                    <div key={t.id} className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-5 space-y-3">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">{t.name}</h3>
+                                <span className="text-xs text-gray-400">{t.code}</span>
+                            </div>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${t.active ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                                {t.active ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(t.price)}<span className="text-xs font-normal text-gray-400">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span></p>
+                        {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
+                        <div className="flex flex-wrap gap-1">
+                            {(t.module_codes ?? []).map((m) => (
+                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{m}</span>
+                            ))}
+                        </div>
+                        <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                            <Button size="sm" variant="secondary" onClick={() => openEdit(t)} className="flex-1 text-xs">Editar</Button>
+                            <Button size="sm" variant="danger" onClick={() => handleDelete(t)} className="flex-1 text-xs">Eliminar</Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <Modal isOpen={editModal.open} onClose={() => setEditModal({ open: false })} title={editModal.type ? `Editar ${editModal.type.name}` : 'Nuevo tipo de suscripción'} size="md">
+                <div className="space-y-4 p-4">
+                    <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                    {!editModal.type && (
+                        <Input label="Código (unico)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: basico" />
+                    )}
+                    <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                    <Input label="Precio" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo de facturación</label>
+                        <select value={form.billing_period} onChange={(e) => setForm({ ...form, billing_period: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="monthly">Mensual</option>
+                            <option value="annual">Anual</option>
+                        </select>
+                    </div>
+                    {editModal.type && (
+                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+                            Activo
+                        </label>
+                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Módulos incluidos</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {moduleCodes.map((code) => (
+                                <label key={code} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" checked={form.module_codes.includes(code)} onChange={() => toggleModule(code)} />
+                                    {code}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="secondary" onClick={() => setEditModal({ open: false })}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleSave}>Guardar</Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+function OverridesPanel({ businessId, businessName }: { businessId: number; businessName?: string }) {
+    const [overrides, setOverrides] = useState<BusinessModuleOverride[]>([]);
+    const [moduleCodes, setModuleCodes] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedCode, setSelectedCode] = useState('');
+    const [notes, setNotes] = useState('');
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        const [overridesRes, codesRes] = await Promise.all([listOverridesAction(businessId), getModuleCodesAction()]);
+        if (overridesRes.success && overridesRes.data) setOverrides(overridesRes.data);
+        if (codesRes.success && codesRes.data) setModuleCodes(codesRes.data);
+        setLoading(false);
+    }, [businessId]);
+
+    useEffect(() => { load(); }, [load]);
+
+    const handleGrant = async () => {
+        if (!selectedCode) return;
+        const res = await grantOverrideAction({ businessId, moduleCode: selectedCode, notes: notes || undefined });
+        if (res.success) {
+            setMessage({ type: 'success', text: `Módulo "${selectedCode}" habilitado para ${businessName}` });
+            setSelectedCode(''); setNotes('');
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al otorgar el módulo' });
+        }
+    };
+
+    const handleRevoke = async (moduleCode: string) => {
+        const res = await revokeOverrideAction(businessId, moduleCode);
+        if (res.success) {
+            setMessage({ type: 'success', text: `Módulo "${moduleCode}" revocado` });
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al revocar el módulo' });
+        }
+    };
+
+    if (loading) return <div className="flex justify-center py-6"><Spinner /></div>;
+
+    return (
+        <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Módulos adicionales — {businessName}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+                Otorga acceso a un módulo puntual para este negocio, independiente de su plan actual.
+            </p>
+
+            {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
+
+            <div className="flex flex-wrap gap-2">
+                {overrides.length === 0 && <span className="text-sm text-gray-400">Sin módulos adicionales otorgados</span>}
+                {overrides.map((o) => (
+                    <span key={o.id} className="inline-flex items-center gap-2 text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-3 py-1.5 rounded-full">
+                        {o.module_code}
+                        <button onClick={() => handleRevoke(o.module_code)} className="text-violet-400 hover:text-violet-700">×</button>
+                    </span>
+                ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-end pt-3 border-t border-gray-100 dark:border-gray-600">
+                <div className="flex-1 w-full">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Módulo</label>
+                    <select value={selectedCode} onChange={(e) => setSelectedCode(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                        <option value="">Selecciona un módulo</option>
+                        {moduleCodes.filter((c) => !overrides.some((o) => o.module_code === c)).map((code) => (
+                            <option key={code} value={code}>{code}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex-1 w-full">
+                    <Input label="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                </div>
+                <Button variant="primary" onClick={handleGrant} disabled={!selectedCode}>Otorgar</Button>
+            </div>
+        </div>
+    );
+}
+
 interface BusinessSubscriptionViewProps {
     businessId?: number;
     businessName?: string;
@@ -304,14 +570,15 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                 </div>
             )}
 
-            {/* Status Card */}
             <div className={`rounded-2xl p-6 text-white ${isExpired ? 'bg-gradient-to-br from-red-500 to-red-700' : 'bg-gradient-to-br from-violet-600 to-purple-800'} shadow-lg`}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <p className="text-white/70 text-sm font-medium uppercase tracking-wider">Estado de Suscripción</p>
-                        <h2 className="text-2xl font-bold mt-1">{isExpired ? '⚠️ Suspendida' : '✅ Activa'}</h2>
+                        <h2 className="text-2xl font-bold mt-1">{isExpired ? 'Suspendida' : 'Activa'}</h2>
+                        {subscription?.subscription_type_name && (
+                            <p className="text-white/80 text-sm mt-1">Plan: {subscription.subscription_type_name}</p>
+                        )}
                     </div>
-                    <div className="text-5xl opacity-30">{isExpired ? '🔒' : '🚀'}</div>
                 </div>
                 {subscription && (
                     <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/20">
@@ -321,67 +588,97 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         </div>
                         <div>
                             <p className="text-white/60 text-xs">Válida hasta</p>
-                            <p className="font-semibold">{formatDate(subscription.endDate)}</p>
+                            <p className="font-semibold">{formatDate(subscription.end_date)}</p>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Payment instructions + QR */}
-            <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📋 Información de Pago</h3>
-                <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300 text-sm mb-4">
-                    Para renovar tu suscripción, escanea el QR con tu app Nequi o realiza una transferencia
-                    con los datos indicados y notifica a tu asesor con el comprobante.
-                </p>
+            <PlanCatalog businessId={businessId} onPurchased={fetchSub} />
+        </div>
+    );
+}
 
-                <div className="flex flex-col sm:flex-row gap-6 items-start">
-                    {/* QR de pago */}
-                    <div className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <div className="w-48 h-48 rounded-xl border-2 border-violet-200 dark:border-violet-700 overflow-hidden bg-white p-1 shadow-sm">
-                            { }
-                            <img src="/QR.png" alt="QR de pago Nequi" className="w-full h-full object-contain" />
+function PlanCatalog({ businessId, onPurchased }: { businessId?: number; onPurchased: () => void }) {
+    const [types, setTypes] = useState<SubscriptionType[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [purchaseModal, setPurchaseModal] = useState<{ open: boolean; type?: SubscriptionType }>({ open: false });
+    const [months, setMonths] = useState('1');
+    const [buying, setBuying] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    useEffect(() => {
+        listSubscriptionTypesAction(true).then((res) => {
+            if (res.success && res.data) setTypes(res.data);
+            setLoading(false);
+        });
+    }, []);
+
+    const handleBuy = async () => {
+        if (!purchaseModal.type) return;
+        setBuying(true);
+        const res = await purchaseSubscriptionAction({ subscriptionTypeId: purchaseModal.type.id, months: Number(months) }, businessId);
+        setBuying(false);
+        if (res.success) {
+            setMessage({ type: 'success', text: `Suscripción "${purchaseModal.type.name}" activada correctamente.` });
+            setPurchaseModal({ open: false });
+            onPurchased();
+        } else {
+            setMessage({ type: 'error', text: res.error?.includes('insufficient') ? 'Saldo insuficiente en tu billetera. Recárgala e intenta de nuevo.' : (res.error || 'Error al procesar la compra') });
+        }
+    };
+
+    if (loading) return <div className="flex justify-center py-6"><Spinner /></div>;
+
+    return (
+        <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6 space-y-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Planes disponibles</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+                Compra o renueva tu suscripción pagando con el saldo de tu billetera.
+            </p>
+
+            {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {types.map((t) => (
+                    <div key={t.id} className="rounded-xl border border-gray-200 dark:border-gray-600 p-5 space-y-3">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{t.name}</h4>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(t.price)}<span className="text-xs font-normal text-gray-400">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span></p>
+                        {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
+                        <div className="flex flex-wrap gap-1">
+                            {(t.module_codes ?? []).map((m) => (
+                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{m}</span>
+                            ))}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Escanear con Nequi</p>
+                        <Button variant="primary" className="w-full" onClick={() => { setMonths('1'); setPurchaseModal({ open: true, type: t }); }}>
+                            Comprar
+                        </Button>
                     </div>
-
-                    {/* Datos bancarios */}
-                    <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3 border border-gray-100 dark:border-gray-600">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center text-xl">🏦</div>
-                            <div>
-                                <p className="font-semibold text-gray-900 dark:text-white text-sm">Bancolombia / Nequi</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Cuenta de Ahorros</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
-                                <p className="text-gray-400 text-xs uppercase tracking-wider">Titular</p>
-                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">ProbabilityIA SAS</p>
-                            </div>
-                            <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
-                                <p className="text-gray-400 text-xs uppercase tracking-wider">Número de cuenta</p>
-                                <p className="font-semibold text-gray-900 dark:text-white font-mono mt-0.5">*** *** **** ****</p>
-                            </div>
-                            <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
-                                <p className="text-gray-400 text-xs uppercase tracking-wider">NIT</p>
-                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">***.***.***-*</p>
-                            </div>
-                            <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
-                                <p className="text-gray-400 text-xs uppercase tracking-wider">Celular (Nequi)</p>
-                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">+57 *** *** ****</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-4 flex items-start gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
-                    <span className="text-lg">⚠️</span>
-                    <p className="text-sm text-amber-800 dark:text-amber-300">
-                        Una vez realices el pago, envía el comprobante a tu asesor. Activaremos tu cuenta en un máximo de <strong>2 horas hábiles</strong>.
-                    </p>
-                </div>
+                ))}
             </div>
+
+            <Modal isOpen={purchaseModal.open} onClose={() => setPurchaseModal({ open: false })} title={`Comprar ${purchaseModal.type?.name}`} size="sm">
+                <div className="space-y-4 p-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses</label>
+                        <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="1">1 mes</option>
+                            <option value="3">3 meses</option>
+                            <option value="6">6 meses</option>
+                            <option value="12">12 meses (anual)</option>
+                        </select>
+                    </div>
+                    {purchaseModal.type && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                            Total a debitar de tu billetera: <strong>{formatCurrency(purchaseModal.type.price * Number(months))}</strong>
+                        </p>
+                    )}
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="secondary" onClick={() => setPurchaseModal({ open: false })}>Cancelar</Button>
+                        <Button variant="success" onClick={handleBuy} loading={buying}>Confirmar Compra</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

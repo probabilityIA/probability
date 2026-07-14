@@ -55,7 +55,7 @@ type ModuleBundles struct {
 }
 
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore) *ModuleBundles {
-	announcements.New(router, database, logger, s3)
+	announcementsBundle := announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
 	ordersBundle := orders.New(router, database, logger, environment, rabbitMQ)
@@ -83,7 +83,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	notification_backfill.New(database, rabbitMQ, logger, environment, ordersBundle.SendGuideNotificationUC, ordersBundle.RequestConfirmationUC).RegisterRoutes(router)
 	ai.New(router, logger)
 	dashboard.New(router, database, logger)
-	pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
+	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
 	warehouses.New(router, database)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
@@ -96,8 +96,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
 
-	subModule := subscriptions.Setup(database)
-	subModule.RegisterRoutes(router)
+	subscriptions.New(router, database, logger, payBundle, announcementsBundle)
 
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)

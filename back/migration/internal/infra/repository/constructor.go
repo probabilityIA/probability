@@ -92,5 +92,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.backfillOrdersGeozoneByPoint(ctx); err != nil {
 		return err
 	}
-	return r.backfillOrdersGeozone(ctx)
+	if err := r.backfillOrdersGeozone(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateSubscriptionPlans(ctx); err != nil {
+		return err
+	}
+	return r.migrateBackfillBusinessSubscriptions(ctx)
 }

@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/app"
+	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/queue/consumer"
 	payqueue "github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/queue"
@@ -15,8 +17,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
-	"github.com/secamc93/probability/back/central/services/integrations/core"
 )
+
+type Bundle struct {
+	WalletUseCase ports.IWalletUseCase
+}
 
 func New(
 	router *gin.RouterGroup,
@@ -26,7 +31,7 @@ func New(
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redis.IRedis,
 	integrationCore core.IIntegrationCore,
-) {
+) *Bundle {
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("pay")
 
@@ -41,12 +46,8 @@ func New(
 		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE de pagos deshabilitado")
 	}
 
-	// 2. CAPA DE APLICACIÓN
-
 	useCase := app.New(repo, requestPublisher, ssePublisher, rabbitMQ, config, moduleLogger)
 	walletUC := app.NewWalletUseCase(repo, useCase, config, moduleLogger)
-
-	// 3. INFRAESTRUCTURA PRIMARIA
 
 	handler := handlers.New(useCase, moduleLogger)
 	handler.RegisterRoutes(router)
@@ -75,4 +76,6 @@ func New(
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de pagos deshabilitados")
 	}
+
+	return &Bundle{WalletUseCase: walletUC}
 }
