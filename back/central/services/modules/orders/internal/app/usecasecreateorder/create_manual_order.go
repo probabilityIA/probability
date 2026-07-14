@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
@@ -102,7 +103,14 @@ func (uc *UseCaseCreateOrder) applyManualDefaults(ctx context.Context, req *dtos
 		req.OrderNumber = fmt.Sprintf("%s-%04d", prefix, lastNum+1)
 	}
 
-	// Defaults
+	cod, amount, method, err := domain.NormalizeCod(req.IsCod, req.CodTotal, req.PaymentMethodID)
+	if err != nil {
+		return err
+	}
+	req.IsCod = &cod
+	req.CodTotal = amount
+	req.PaymentMethodID = method
+
 	if req.PaymentMethodID == 0 {
 		req.PaymentMethodID = 1
 	}
@@ -142,6 +150,7 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		ShippingCost: req.ShippingCost,
 		TotalAmount:  req.TotalAmount,
 		Currency:     req.Currency,
+		IsCod:        req.IsCod != nil && *req.IsCod,
 		CodTotal:     req.CodTotal,
 
 		// Información del cliente

@@ -29,6 +29,7 @@ type MapOrder struct {
 	ShippingDiscountPresentment float64  `json:"shipping_discount_presentment,omitempty"`
 	TotalAmount                 float64  `json:"total_amount" binding:"required,min=0"`
 	Currency                    string   `json:"currency" binding:"max=10"`
+	IsCod                       bool     `json:"is_cod"`
 	CodTotal                    *float64 `json:"cod_total"`
 
 	// Precios en moneda presentment (presentment_money - moneda local)

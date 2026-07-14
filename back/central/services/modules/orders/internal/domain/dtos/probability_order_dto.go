@@ -27,6 +27,7 @@ type ProbabilityOrderDTO struct {
 	ShippingCost float64  `json:"shipping_cost"`
 	TotalAmount  float64  `json:"total_amount"`
 	Currency     string   `json:"currency"`
+	IsCod        bool     `json:"is_cod"`
 	CodTotal     *float64 `json:"cod_total,omitempty"`
 
 	// Precios en moneda presentment (presentment_money - moneda local)

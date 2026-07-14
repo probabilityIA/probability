@@ -16,6 +16,7 @@ type UpdateOrder struct {
 	ShippingCost *float64 `json:"shipping_cost" binding:"omitempty,min=0"`
 	TotalAmount  *float64 `json:"total_amount" binding:"omitempty,min=0"`
 	Currency     *string  `json:"currency" binding:"omitempty,max=10"`
+	IsCod        *bool    `json:"is_cod"`
 	CodTotal     *float64 `json:"cod_total"`
 
 	// Información del cliente

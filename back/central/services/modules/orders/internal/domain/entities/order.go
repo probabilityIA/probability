@@ -31,33 +31,34 @@ type ProbabilityOrder struct {
 	ShippingCost float64
 	TotalAmount  float64
 	Currency     string
+	IsCod        bool
 	CodTotal     *float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
-	SubtotalPresentment     float64
-	TaxPresentment          float64
-	DiscountPresentment     float64
+	SubtotalPresentment         float64
+	TaxPresentment              float64
+	DiscountPresentment         float64
 	ShippingCostPresentment     float64
 	ShippingDiscount            float64
 	ShippingDiscountPresentment float64
-	TotalAmountPresentment  float64
-	CurrencyPresentment     string
+	TotalAmountPresentment      float64
+	CurrencyPresentment         string
 
 	// Información del cliente
-	CustomerID    *uint
-	CustomerName  string
+	CustomerID        *uint
+	CustomerName      string
 	CustomerFirstName string
 	CustomerLastName  string
-	CustomerEmail string
-	CustomerPhone string
-	CustomerDNI   string
+	CustomerEmail     string
+	CustomerPhone     string
+	CustomerDNI       string
 
 	// Dirección de envío
-	ShippingStreet     string
-	ShippingCity       string
-	ShippingState      string
-	ShippingCountry    string
-	ShippingPostalCode string
+	ShippingStreet        string
+	ShippingCity          string
+	ShippingState         string
+	ShippingCountry       string
+	ShippingPostalCode    string
 	ShippingLat           *float64
 	ShippingLng           *float64
 	ShippingGeoConfidence string

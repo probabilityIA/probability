@@ -31,20 +31,17 @@ export interface Order {
     updated_at: string;
     deleted_at?: string;
 
-    // Identificadores de integración
     business_id?: number;
     integration_id: number;
     integration_type: string;
     integration_logo_url?: string;
     integration_name?: string;
 
-    // Identificadores de la orden
     platform: string;
     external_id: string;
     order_number: string;
     internal_number: string;
 
-    // Información financiera
     subtotal: number;
     tax: number;
     discount: number;
@@ -54,8 +51,8 @@ export interface Order {
     total_amount: number;
     currency: string;
     cod_total?: number;
+    is_cod?: boolean;
 
-    // Precios en moneda presentment (presentment_money - moneda local)
     subtotal_presentment?: number;
     tax_presentment?: number;
     discount_presentment?: number;
@@ -63,7 +60,6 @@ export interface Order {
     total_amount_presentment?: number;
     currency_presentment?: string;
 
-    // Información del cliente
     customer_id?: number;
     customer_name: string;
     customer_first_name?: string;
@@ -72,7 +68,6 @@ export interface Order {
     customer_phone: string;
     customer_dni: string;
 
-    // Dirección de envío
     shipping_street: string;
     shipping_city: string;
     shipping_state: string;
@@ -84,12 +79,10 @@ export interface Order {
     shipping_lng?: number;
     shipping_geo_confidence?: 'high' | 'medium' | 'low';
 
-    // Información de pago
     payment_method_id: number;
     is_paid: boolean;
     paid_at?: string;
 
-    // Información de envío/logística
     tracking_number?: string;
     tracking_link?: string;
     guide_id?: string;
@@ -98,7 +91,6 @@ export interface Order {
     delivered_at?: string;
     delivery_probability?: number;
 
-    // Información del envío (relación con shipments)
     shipment?: {
         id: number;
         carrier?: string;
@@ -108,21 +100,18 @@ export interface Order {
         total_cost?: number;
     };
 
-    // Información de fulfillment
     warehouse_id?: number;
     warehouse_name: string;
     driver_id?: number;
     driver_name: string;
     is_last_mile: boolean;
 
-    // Dimensiones y peso
     weight?: number;
     height?: number;
     width?: number;
     length?: number;
     boxes?: string;
 
-    // Tipo y estado
     order_type_id?: number;
     order_type_name: string;
     status: string;
@@ -130,37 +119,30 @@ export interface Order {
     status_id?: number;
     order_status?: OrderStatusInfo;
 
-    // Estados independientes
     payment_status_id?: number;
     fulfillment_status_id?: number;
     payment_status?: PaymentStatusInfo;
     fulfillment_status?: FulfillmentStatusInfo;
 
-    // Información adicional
     notes?: string;
     coupon?: string;
     approved?: boolean;
     user_id?: number;
     user_name: string;
 
-    // Novedades
     is_confirmed?: boolean | null;
     novelty?: string;
 
-    // Testing
     is_test?: boolean;
 
-    // Facturación
     invoiceable: boolean;
     invoice_url?: string;
     invoice_id?: string;
     invoice_provider?: string;
-    invoice_status?: string; // "", "pending", "issued", "failed", "cancelled"
+    invoice_status?: string;
 
-    // Enlaces externos
     order_status_url?: string;
 
-    // Datos estructurados (JSONB)
     items?: any;
     order_items?: any;
     metadata?: any;
@@ -169,7 +151,6 @@ export interface Order {
     payment_details?: any;
     fulfillment_details?: any;
 
-    // Información de factura asociada (si existe y está emitida)
     invoice?: {
         id: number;
         invoice_number: string;
@@ -178,11 +159,9 @@ export interface Order {
         retention_amount: number;
     };
 
-    // Timestamps
     occurred_at: string;
     imported_at: string;
 
-    // Calculated Fields
     negative_factors?: string[];
     score_breakdown?: {
         final_score: number;
@@ -258,18 +237,15 @@ export interface GetOrdersParams {
 }
 
 export interface CreateOrderDTO {
-    // Identificadores de integración
     business_id?: number;
     integration_id: number;
     integration_type: string;
 
-    // Identificadores de la orden
     platform: string;
     external_id: string;
     order_number?: string;
     internal_number?: string;
 
-    // Información financiera
     subtotal: number;
     tax?: number;
     discount?: number;
@@ -277,8 +253,8 @@ export interface CreateOrderDTO {
     total_amount: number;
     currency?: string;
     cod_total?: number;
+    is_cod?: boolean;
 
-    // Información del cliente
     customer_id?: number;
     customer_name?: string;
     customer_first_name?: string;
@@ -288,7 +264,6 @@ export interface CreateOrderDTO {
     customer_dni?: string;
     client_group_id?: number;
 
-    // Dirección de envío
     shipping_street?: string;
     shipping_city?: string;
     shipping_state?: string;
@@ -299,12 +274,10 @@ export interface CreateOrderDTO {
     shipping_lat?: number;
     shipping_lng?: number;
 
-    // Información de pago
     payment_method_id: number;
     is_paid?: boolean;
     paid_at?: string;
 
-    // Información de envío/logística
     tracking_number?: string;
     tracking_link?: string;
     guide_id?: string;
@@ -312,40 +285,34 @@ export interface CreateOrderDTO {
     delivery_date?: string;
     delivered_at?: string;
 
-    // Información de fulfillment
     warehouse_id?: number;
     warehouse_name?: string;
     driver_id?: number;
     driver_name?: string;
     is_last_mile?: boolean;
 
-    // Dimensiones y peso
     weight?: number;
     height?: number;
     width?: number;
     length?: number;
     boxes?: string;
 
-    // Tipo y estado
     order_type_id?: number;
     order_type_name?: string;
     status?: string;
     original_status?: string;
 
-    // Información adicional
     notes?: string;
     coupon?: string;
     approved?: boolean;
     user_id?: number;
     user_name?: string;
 
-    // Facturación
     invoiceable?: boolean;
     invoice_url?: string;
     invoice_id?: string;
     invoice_provider?: string;
 
-    // Datos estructurados (JSONB)
     items?: any;
     metadata?: any;
     financial_details?: any;
@@ -353,7 +320,6 @@ export interface CreateOrderDTO {
     payment_details?: any;
     fulfillment_details?: any;
 
-    // Timestamps
     occurred_at?: string;
     imported_at?: string;
 }
@@ -366,7 +332,6 @@ export interface SimulateShopifyResult {
 }
 
 export interface UpdateOrderDTO {
-    // Información financiera
     subtotal?: number;
     tax?: number;
     discount?: number;
@@ -374,8 +339,8 @@ export interface UpdateOrderDTO {
     total_amount?: number;
     currency?: string;
     cod_total?: number;
+    is_cod?: boolean;
 
-    // Información del cliente
     customer_name?: string;
     customer_first_name?: string;
     customer_last_name?: string;
@@ -383,7 +348,6 @@ export interface UpdateOrderDTO {
     customer_phone?: string;
     customer_dni?: string;
 
-    // Dirección de envío
     shipping_street?: string;
     shipping_city?: string;
     shipping_state?: string;
@@ -394,12 +358,10 @@ export interface UpdateOrderDTO {
     shipping_lat?: number;
     shipping_lng?: number;
 
-    // Información de pago
     payment_method_id?: number;
     is_paid?: boolean;
     paid_at?: string;
 
-    // Información de envío/logística
     tracking_number?: string;
     tracking_link?: string;
     guide_id?: string;
@@ -407,21 +369,18 @@ export interface UpdateOrderDTO {
     delivery_date?: string;
     delivered_at?: string;
 
-    // Información de fulfillment
     warehouse_id?: number;
     warehouse_name?: string;
     driver_id?: number;
     driver_name?: string;
     is_last_mile?: boolean;
 
-    // Dimensiones y peso
     weight?: number;
     height?: number;
     width?: number;
     length?: number;
     boxes?: string;
 
-    // Tipo y estado
     order_type_id?: number;
     order_type_name?: string;
     status?: string;
@@ -430,28 +389,23 @@ export interface UpdateOrderDTO {
     payment_status_id?: number;
     fulfillment_status_id?: number;
 
-    // Información adicional
     notes?: string;
     coupon?: string;
     approved?: boolean;
     user_id?: number;
     user_name?: string;
 
-    // Novedades
     is_confirmed?: boolean | null;
     confirmation_status?: 'yes' | 'no' | 'pending';
     novelty?: string;
 
-    // Testing
     is_test?: boolean;
 
-    // Facturación
     invoiceable?: boolean;
     invoice_url?: string;
     invoice_id?: string;
     invoice_provider?: string;
 
-    // Datos estructurados (JSONB)
     items?: any;
     metadata?: any;
     financial_details?: any;
@@ -460,7 +414,6 @@ export interface UpdateOrderDTO {
     fulfillment_details?: any;
 }
 
-// ChangeOrderStatusDTO — request para PUT /orders/:id/status
 export interface ChangeOrderStatusDTO {
     status: string;
     metadata?: Record<string, unknown>;

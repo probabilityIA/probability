@@ -26,21 +26,22 @@ func (uc *UseCaseUpdateOrder) mapOrderToResponse(order *entities.ProbabilityOrde
 		InternalNumber: order.InternalNumber,
 
 		// Información financiera
-		Subtotal:                order.Subtotal,
-		Tax:                     order.Tax,
-		Discount:                order.Discount,
+		Subtotal:                    order.Subtotal,
+		Tax:                         order.Tax,
+		Discount:                    order.Discount,
 		ShippingCost:                order.ShippingCost,
 		ShippingDiscount:            order.ShippingDiscount,
 		ShippingDiscountPresentment: order.ShippingDiscountPresentment,
 		TotalAmount:                 order.TotalAmount,
 		Currency:                    order.Currency,
+		IsCod:                       order.IsCod,
 		CodTotal:                    order.CodTotal,
 		SubtotalPresentment:         order.SubtotalPresentment,
 		TaxPresentment:              order.TaxPresentment,
 		DiscountPresentment:         order.DiscountPresentment,
 		ShippingCostPresentment:     order.ShippingCostPresentment,
-		TotalAmountPresentment:  order.TotalAmountPresentment,
-		CurrencyPresentment:     order.CurrencyPresentment,
+		TotalAmountPresentment:      order.TotalAmountPresentment,
+		CurrencyPresentment:         order.CurrencyPresentment,
 
 		// Información del cliente
 		CustomerID:    order.CustomerID,

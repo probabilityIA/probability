@@ -47,6 +47,7 @@ type OrderSummary struct {
 	OrderStatusURL         string
 	GuideLink              *string
 	IsPaid                 bool
+	IsCod                  bool
 	CodTotal               *float64
 	IsConfirmed            *bool
 	Novelty                *string

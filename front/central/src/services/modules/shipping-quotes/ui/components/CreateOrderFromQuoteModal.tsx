@@ -11,6 +11,7 @@ import { lookupGeozoneAction, getDeliveryProbabilityAction } from '@/services/mo
 import type { Geozone, ProbabilityResult } from '@/services/modules/geozones/domain/types';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { associateQuoteAction, SavedQuote, SavedQuoteRate } from '../../infra/actions';
+import PaymentMethodSelect from '@/services/modules/paymentmethods/ui/components/PaymentMethodSelect';
 
 const GeozoneMiniMap = dynamic(
     () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
@@ -94,6 +95,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     const [city, setCity] = useState(String(destination.city || destDane?.city || ''));
     const [state, setState] = useState(String(destination.state || destDane?.state || ''));
     const [productValue, setProductValue] = useState<number>(Number(payload.contentValue || 0));
+    const [paymentMethodId, setPaymentMethodId] = useState<number>(0);
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -215,6 +217,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
         if (!city.trim()) errs.city = 'Escribe la ciudad de entrega';
         if (!state.trim()) errs.state = 'Escribe el departamento';
         if (!productValue || productValue <= 0) errs.productValue = 'El valor de los productos debe ser mayor a 0';
+        if (!paymentMethodId || paymentMethodId <= 0) errs.paymentMethod = 'Selecciona el medio de pago del cliente';
         if (autoGuide && !selectedRate) errs.rate = 'Selecciona una tarifa para generar la guia';
         return errs;
     };
@@ -243,6 +246,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                 shipping_cost: fleteEstimate,
                 total_amount: productValue,
                 currency: 'COP',
+                is_cod: isCOD,
                 cod_total: isCOD ? productValue + fleteEstimate : 0,
                 customer_name: `${firstName} ${lastName}`.trim(),
                 customer_first_name: firstName.trim(),
@@ -254,7 +258,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                 shipping_city: city.trim(),
                 shipping_state: state.trim(),
                 shipping_country: 'Colombia',
-                payment_method_id: isCOD ? 6 : 1,
+                payment_method_id: paymentMethodId,
                 is_paid: false,
                 items: [],
             } as any);
@@ -509,9 +513,25 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                             </div>
                         </div>
 
+                        <div className="mt-3">
+                            <label className="block text-[11px] uppercase text-gray-400 mb-1">Medio de pago *</label>
+                            <PaymentMethodSelect
+                                value={paymentMethodId}
+                                onChange={(id) => { setPaymentMethodId(id); clearFieldError('paymentMethod'); }}
+                                defaultCode={isCOD ? 'cash' : undefined}
+                                hasError={!!fieldErrors.paymentMethod}
+                                className="text-sm"
+                            />
+                            <p className="mt-1 text-[11px] text-gray-400">
+                                Con que paga el cliente. Es independiente de la contra entrega, que solo define cuando se cobra.
+                            </p>
+                            {fieldError('paymentMethod')}
+                        </div>
+
                         <div className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5">
                             <div>
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Contra entrega</p>
+                                <p className="text-[11px] text-gray-400">Cuando se cobra: el dinero se recauda al entregar.</p>
                                 {isCOD && (
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         Se cobrara al cliente: <strong className="text-emerald-600">{money(codToCollect)}</strong> (producto + envio{codFee > 0 ? ' + cargo COD' : ''})
@@ -589,7 +609,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 <ul className="space-y-1">
                                     {missingModal.map((m, i) => (
                                         <li key={i} className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
-                                            <span className="mt-0.5 shrink-0">•</span> {m}
+                                            <span className="mt-0.5 shrink-0">-</span> {m}
                                         </li>
                                     ))}
                                 </ul>
