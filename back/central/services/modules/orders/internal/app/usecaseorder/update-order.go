@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
@@ -44,8 +45,27 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	if req.Currency != nil {
 		order.Currency = *req.Currency
 	}
-	if req.CodTotal != nil {
-		order.CodTotal = req.CodTotal
+	if req.IsCod != nil || req.CodTotal != nil || req.PaymentMethodID != nil {
+		isCod := req.IsCod
+		if isCod == nil {
+			isCod = &order.IsCod
+		}
+		codTotal := req.CodTotal
+		if codTotal == nil {
+			codTotal = order.CodTotal
+		}
+		paymentMethodID := order.PaymentMethodID
+		if req.PaymentMethodID != nil {
+			paymentMethodID = *req.PaymentMethodID
+		}
+
+		cod, amount, method, err := domain.NormalizeCod(isCod, codTotal, paymentMethodID)
+		if err != nil {
+			return nil, err
+		}
+		order.IsCod = cod
+		order.CodTotal = amount
+		order.PaymentMethodID = method
 	}
 
 	// Información del cliente
@@ -86,9 +106,6 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	}
 
 	// Información de pago
-	if req.PaymentMethodID != nil {
-		order.PaymentMethodID = *req.PaymentMethodID
-	}
 	if req.IsPaid != nil {
 		order.IsPaid = *req.IsPaid
 	}

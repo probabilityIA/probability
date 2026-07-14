@@ -252,31 +252,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	}
 
 	if isCOD, ok := filters["is_cod"].(bool); ok {
-		if isCOD {
-			query = query.Where(`
-				cod_total > 0 OR 
-				payment_details->>'gateway' ILIKE '%cod%' OR 
-				payment_details->>'gateway' ILIKE '%cash%' OR 
-				payment_details->>'gateway' ILIKE '%contra%' OR
-				EXISTS (
-					SELECT 1 FROM json_array_elements_text(CAST(payment_details->'payment_gateway_names' AS json)) as gateway
-					WHERE gateway ILIKE '%cod%' OR gateway ILIKE '%cash%' OR gateway ILIKE '%contra%'
-				)
-			`)
-		} else {
-			query = query.Where(`
-				(cod_total IS NULL OR cod_total = 0) AND 
-				(payment_details->>'gateway' IS NULL OR (
-					payment_details->>'gateway' NOT ILIKE '%cod%' AND 
-					payment_details->>'gateway' NOT ILIKE '%cash%' AND 
-					payment_details->>'gateway' NOT ILIKE '%contra%'
-				)) AND
-				NOT EXISTS (
-					SELECT 1 FROM json_array_elements_text(CAST(payment_details->'payment_gateway_names' AS json)) as gateway
-					WHERE gateway ILIKE '%cod%' OR gateway ILIKE '%cash%' OR gateway ILIKE '%contra%'
-				)
-			`)
-		}
+		query = query.Where("is_cod = ?", isCOD)
 	}
 
 	if paymentStatusID, ok := filters["payment_status_id"].(uint); ok && paymentStatusID > 0 {
@@ -1148,28 +1124,28 @@ func (r *Repository) SaveOrderItems(ctx context.Context, orderID string, items [
 		fmt.Printf("  [Item %d] sku=%s, qty=%d, price=%.2f, productID=%s, productName=%s\n",
 			i+1, item.ProductSKU, item.Quantity, item.UnitPrice, productID, item.ProductName)
 		dbItems[i] = models.OrderItem{
-			OrderID:               orderID,
-			ProductID:             item.ProductID,
-			ProductSKU:            item.ProductSKU,
-			ProductName:           item.ProductName,
-			VariantID:             item.VariantID,
-			VariantLabel:          item.VariantLabel,
-			Quantity:              item.Quantity,
-			UnitPrice:             item.UnitPrice,
-			TotalPrice:            item.TotalPrice,
-			Currency:              item.Currency,
-			Discount:              item.Discount,
-			DiscountPercent:       item.DiscountPercent,
-			Tax:                   item.Tax,
-			TaxRate:               item.TaxRate,
-			UnitPriceBase:         item.UnitPriceBase,
+			OrderID:                  orderID,
+			ProductID:                item.ProductID,
+			ProductSKU:               item.ProductSKU,
+			ProductName:              item.ProductName,
+			VariantID:                item.VariantID,
+			VariantLabel:             item.VariantLabel,
+			Quantity:                 item.Quantity,
+			UnitPrice:                item.UnitPrice,
+			TotalPrice:               item.TotalPrice,
+			Currency:                 item.Currency,
+			Discount:                 item.Discount,
+			DiscountPercent:          item.DiscountPercent,
+			Tax:                      item.Tax,
+			TaxRate:                  item.TaxRate,
+			UnitPriceBase:            item.UnitPriceBase,
 			UnitPriceBasePresentment: item.UnitPriceBasePresentment,
-			UnitPricePresentment:  item.UnitPricePresentment,
-			TotalPricePresentment: item.TotalPricePresentment,
-			DiscountPresentment:   item.DiscountPresentment,
-			TaxPresentment:        item.TaxPresentment,
-			FulfillmentStatus:     item.FulfillmentStatus,
-			Metadata:              datatypes.JSON(item.Metadata),
+			UnitPricePresentment:     item.UnitPricePresentment,
+			TotalPricePresentment:    item.TotalPricePresentment,
+			DiscountPresentment:      item.DiscountPresentment,
+			TaxPresentment:           item.TaxPresentment,
+			FulfillmentStatus:        item.FulfillmentStatus,
+			Metadata:                 datatypes.JSON(item.Metadata),
 		}
 	}
 

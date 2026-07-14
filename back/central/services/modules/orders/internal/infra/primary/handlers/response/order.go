@@ -29,15 +29,16 @@ type Order struct {
 	InternalNumber string `json:"internal_number"`
 
 	// Información financiera
-	Subtotal     float64  `json:"subtotal"`
-	Tax          float64  `json:"tax"`
-	Discount     float64  `json:"discount"`
+	Subtotal                    float64  `json:"subtotal"`
+	Tax                         float64  `json:"tax"`
+	Discount                    float64  `json:"discount"`
 	ShippingCost                float64  `json:"shipping_cost"`
 	ShippingDiscount            float64  `json:"shipping_discount"`
 	ShippingDiscountPresentment float64  `json:"shipping_discount_presentment,omitempty"`
 	TotalAmount                 float64  `json:"total_amount"`
-	Currency     string   `json:"currency"`
-	CodTotal     *float64 `json:"cod_total,omitempty"`
+	Currency                    string   `json:"currency"`
+	IsCod                       bool     `json:"is_cod"`
+	CodTotal                    *float64 `json:"cod_total,omitempty"`
 
 	// Precios en moneda presentment
 	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
@@ -57,11 +58,11 @@ type Order struct {
 	CustomerDNI       string `json:"customer_dni"`
 
 	// Dirección de envío
-	ShippingStreet     string   `json:"shipping_street"`
-	ShippingCity       string   `json:"shipping_city"`
-	ShippingState      string   `json:"shipping_state"`
-	ShippingCountry    string   `json:"shipping_country"`
-	ShippingPostalCode string   `json:"shipping_postal_code"`
+	ShippingStreet        string   `json:"shipping_street"`
+	ShippingCity          string   `json:"shipping_city"`
+	ShippingState         string   `json:"shipping_state"`
+	ShippingCountry       string   `json:"shipping_country"`
+	ShippingPostalCode    string   `json:"shipping_postal_code"`
 	ShippingLat           *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng           *float64 `json:"shipping_lng,omitempty"`
 	ShippingGeoConfidence string   `json:"shipping_geo_confidence,omitempty"`
@@ -138,11 +139,11 @@ type Order struct {
 	Shipment *ShipmentSummary `json:"shipment,omitempty"`
 
 	// Datos estructurados (JSONB) - usando datatypes.JSON
-	Metadata           datatypes.JSON `json:"metadata,omitempty"`
-	FinancialDetails   datatypes.JSON `json:"financial_details,omitempty"`
-	ShippingDetails    datatypes.JSON `json:"shipping_details,omitempty"`
-	PaymentDetails     datatypes.JSON `json:"payment_details,omitempty"`
-	FulfillmentDetails datatypes.JSON `json:"fulfillment_details,omitempty"`
+	Metadata           datatypes.JSON  `json:"metadata,omitempty"`
+	FinancialDetails   datatypes.JSON  `json:"financial_details,omitempty"`
+	ShippingDetails    datatypes.JSON  `json:"shipping_details,omitempty"`
+	PaymentDetails     datatypes.JSON  `json:"payment_details,omitempty"`
+	FulfillmentDetails datatypes.JSON  `json:"fulfillment_details,omitempty"`
 	NegativeFactors    []string        `json:"negative_factors,omitempty"`
 	ScoreBreakdown     json.RawMessage `json:"score_breakdown,omitempty"`
 

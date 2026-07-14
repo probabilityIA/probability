@@ -12,6 +12,7 @@ type UpdateOrderRequest struct {
 	ShippingCost *float64
 	TotalAmount  *float64
 	Currency     *string
+	IsCod        *bool
 	CodTotal     *float64
 
 	// Información del cliente

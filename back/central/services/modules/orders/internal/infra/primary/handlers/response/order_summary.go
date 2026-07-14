@@ -43,6 +43,7 @@ type OrderSummary struct {
 	OrderStatusURL         string                 `json:"order_status_url,omitempty"`
 	GuideLink              *string                `json:"guide_link,omitempty"`
 	IsPaid                 bool                   `json:"is_paid"`
+	IsCod                  bool                   `json:"is_cod"`
 	CodTotal               *float64               `json:"cod_total,omitempty"`
 	IsConfirmed            *bool                  `json:"is_confirmed"`
 	Novelty                *string                `json:"novelty"`

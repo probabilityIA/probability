@@ -90,7 +90,7 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	COALESCE(s.cod_carrier_fee,0) AS cod_carrier_fee,
 	s.status, s.delivered_at,
 	(s.status = 'delivered') AS collected,
-	` + hasGuideExpr + ` AS has_guide
+	`+hasGuideExpr+` AS has_guide
 FROM orders o %s
 WHERE %s
 ORDER BY COALESCE(s.delivered_at, o.created_at) DESC

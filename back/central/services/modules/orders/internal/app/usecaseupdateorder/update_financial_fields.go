@@ -44,5 +44,10 @@ func (uc *UseCaseUpdateOrder) updateFinancialFields(order *entities.ProbabilityO
 		changed = true
 	}
 
+	if order.IsCod != dto.IsCod {
+		order.IsCod = dto.IsCod
+		changed = true
+	}
+
 	return changed
 }

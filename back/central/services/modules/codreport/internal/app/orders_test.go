@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -90,5 +91,44 @@ func TestListOrders_PreservesHasGuide(t *testing.T) {
 	}
 	if orders[1].HasGuide {
 		t.Errorf("orden 1: esperado HasGuide false")
+	}
+}
+
+func TestListOrders_EnCursoNoCuentaComoRecaudada(t *testing.T) {
+	repo := &repoMock{
+		listCodOrdersFn: func(_ context.Context, _ dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
+			return []entities.CodOrder{
+				{OrderID: "a", Status: "in_transit", Collected: true},
+				{OrderID: "b", Status: "picked_up"},
+				{OrderID: "c", Status: "pending"},
+				{OrderID: "d", Status: "delivered"},
+				{OrderID: "e", Status: "cancelled", Collected: true},
+			}, 5, nil
+		},
+	}
+	uc := New(repo, log.New())
+
+	orders, _, err := uc.ListOrders(context.Background(), dtos.OrdersFilter{BusinessID: 10})
+	if err != nil {
+		t.Fatalf("se esperaba nil error, se obtuvo: %v", err)
+	}
+
+	want := []struct {
+		state     string
+		collected bool
+	}{
+		{domain.CodStateInProgress, false},
+		{domain.CodStateInProgress, false},
+		{domain.CodStatePending, false},
+		{domain.CodStateCollected, true},
+		{domain.CodStateNotCollectable, false},
+	}
+	for i := range want {
+		if orders[i].CodState != want[i].state {
+			t.Errorf("orden %d: CodState esperado %s, obtenido %s", i, want[i].state, orders[i].CodState)
+		}
+		if orders[i].Collected != want[i].collected {
+			t.Errorf("orden %d (%s): Collected esperado %v, obtenido %v", i, orders[i].Status, want[i].collected, orders[i].Collected)
+		}
 	}
 }

@@ -29,14 +29,15 @@ type OrderResponse struct {
 	InternalNumber string
 
 	// Información financiera
-	Subtotal     float64
-	Tax          float64
-	Discount     float64
+	Subtotal                    float64
+	Tax                         float64
+	Discount                    float64
 	ShippingCost                float64
 	ShippingDiscount            float64
 	ShippingDiscountPresentment float64
 	TotalAmount                 float64
 	Currency                    string
+	IsCod                       bool
 	CodTotal                    *float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
@@ -57,11 +58,11 @@ type OrderResponse struct {
 	CustomerDNI       string
 
 	// Dirección de envío
-	ShippingStreet     string
-	ShippingCity       string
-	ShippingState      string
-	ShippingCountry    string
-	ShippingPostalCode string
+	ShippingStreet        string
+	ShippingCity          string
+	ShippingState         string
+	ShippingCountry       string
+	ShippingPostalCode    string
 	ShippingLat           *float64
 	ShippingLng           *float64
 	ShippingGeoConfidence string

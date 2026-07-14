@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { getCodCutsAction, confirmCodCutAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
-import { formatMoney, formatDate, formatDateOnly, carrierLabel } from './helpers';
+import { formatMoney, formatDateTime, formatDateOnly, carrierLabel } from './helpers';
 
 interface Props {
     businessId?: number | null;
@@ -29,7 +29,7 @@ function weekBounds(dateStr: string): { start: string; end: string } {
 }
 
 function todayStr(): string {
-    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    return new Date().toLocaleDateString('en-CA');
 }
 
 export default function CodCutsTab({ businessId, isAdmin }: Props) {
@@ -205,7 +205,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                         {isConfirmed && cut.confirmed_by_name && (
                             <div className="px-4 pb-2 text-[11px] text-gray-500 dark:text-gray-400">
                                 Confirmado por {cut.confirmed_by_name}
-                                {cut.confirmed_at ? ` el ${formatDate(cut.confirmed_at)}` : ''}
+                                {cut.confirmed_at ? ` el ${formatDateTime(cut.confirmed_at)}` : ''}
                             </div>
                         )}
 

@@ -6,6 +6,37 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/entities"
 )
 
+const (
+	CodStateCollected      = "collected"
+	CodStateInProgress     = "in_progress"
+	CodStatePending        = "pending"
+	CodStateNotCollectable = "not_collectable"
+)
+
+var inProgressStatuses = map[string]bool{
+	"picked_up":        true,
+	"in_transit":       true,
+	"out_for_delivery": true,
+	"on_hold":          true,
+}
+
+func CollectionState(shipmentStatus string) string {
+	switch {
+	case shipmentStatus == "delivered":
+		return CodStateCollected
+	case inProgressStatuses[shipmentStatus]:
+		return CodStateInProgress
+	case shipmentStatus == "pending":
+		return CodStatePending
+	default:
+		return CodStateNotCollectable
+	}
+}
+
+func IsCollected(shipmentStatus string) bool {
+	return CollectionState(shipmentStatus) == CodStateCollected
+}
+
 func ApplyDiscount(collected, pct float64) (discount, net float64) {
 	if pct < 0 {
 		pct = 0

@@ -27,6 +27,8 @@ export interface CodSummary {
     monthly: MonthlyPoint[];
 }
 
+export type CodState = 'collected' | 'in_progress' | 'pending' | 'not_collectable';
+
 export interface CodOrder {
     order_id: string;
     order_number: string;
@@ -43,6 +45,7 @@ export interface CodOrder {
     currency: string;
     status: string;
     collected: boolean;
+    cod_state: CodState;
     cut_status: string;
     created_at: string;
     delivered_at: string | null;

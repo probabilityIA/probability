@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
@@ -133,5 +134,53 @@ func TestListOrders_ResponseIncludesHasGuide(t *testing.T) {
 	}
 	if resp.Data[1].HasGuide {
 		t.Errorf("fila 1: esperado has_guide false")
+	}
+}
+
+func TestListOrders_DateRangeFromBrowserInstants(t *testing.T) {
+	cases := []struct {
+		name      string
+		query     string
+		wantStart string
+		wantEnd   string
+	}{
+		{
+			name:      "instantes RFC3339 del navegador",
+			query:     "?start_date=2026-06-15T05:00:00.000Z&end_date=2026-07-15T04:59:59.999Z",
+			wantStart: "2026-06-15T05:00:00Z",
+			wantEnd:   "2026-07-15T04:59:59Z",
+		},
+		{
+			name:      "fechas simples legacy",
+			query:     "?start_date=2026-06-15&end_date=2026-07-14",
+			wantStart: "2026-06-15T00:00:00Z",
+			wantEnd:   "2026-07-14T23:59:59Z",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var captured dtos.OrdersFilter
+			uc := &ucMock{
+				listOrdersFn: func(_ context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
+					captured = f
+					return []entities.CodOrder{}, 0, nil
+				},
+			}
+
+			w := newOrdersRequest(uc, tc.query)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("status: esperado 200, obtenido %d", w.Code)
+			}
+			gotStart := captured.StartDate.UTC().Truncate(time.Second).Format(time.RFC3339)
+			gotEnd := captured.EndDate.UTC().Truncate(time.Second).Format(time.RFC3339)
+			if gotStart != tc.wantStart {
+				t.Errorf("StartDate: esperado %s, obtenido %s", tc.wantStart, gotStart)
+			}
+			if gotEnd != tc.wantEnd {
+				t.Errorf("EndDate: esperado %s, obtenido %s", tc.wantEnd, gotEnd)
+			}
+		})
 	}
 }

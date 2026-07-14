@@ -15,6 +15,7 @@ import { useWarehouses } from '../hooks/useWarehouses';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import ClientAutocomplete from './ClientAutocomplete';
 import AddressAutocomplete, { AddressSuggestion } from './AddressAutocomplete';
+import PaymentMethodSelect from '../../../paymentmethods/ui/components/PaymentMethodSelect';
 import dynamic from 'next/dynamic';
 
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
@@ -46,37 +47,28 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const tertiaryColor = businessColors?.tertiary_color || '#c4b5fd';
     const quaternaryColor = businessColors?.quaternary_color || '#ede9fe';
 
-    // Load cached guide data from sessionStorage on mount
     useEffect(() => {
-        console.log('📋 OrderForm mounted. isEdit:', isEdit, 'order_number:', order?.order_number);
         if (isEdit && order?.order_number) {
             const key = `guide_${order.order_number}`;
             const cached = sessionStorage.getItem(key);
-            console.log('🔍 Looking for cache key:', key, 'Found:', cached);
             if (cached) {
                 try {
                     const guideData = JSON.parse(cached);
-                    console.log('✅ Parsed cache data:', guideData);
                     if (guideData.carrier) {
                         setCachedGuideCarrier(guideData.carrier);
-                        console.log('🚚 Set carrier from cache:', guideData.carrier);
                     }
-                } catch (e) {
-                    console.error('❌ Error parsing cache:', e);
+                } catch {
+                    setCachedGuideCarrier(null);
                 }
-            } else {
-                console.log('⚠️ No cache found for this order');
             }
         }
     }, [isEdit, order?.order_number]);
 
     const [formData, setFormData] = useState({
-        // Integration
         integration_id: order?.integration_id || 0,
         platform: order?.platform || 'manual',
         business_id: order?.business_id || defaultBusinessId,
 
-        // Customer — fallback: split customer_name if first/last aren't set separately
         customer_name: order?.customer_name || '',
         customer_first_name: order?.customer_first_name || (order?.customer_name ? order.customer_name.split(' ')[0] : ''),
         customer_last_name: order?.customer_last_name || (order?.customer_name ? order.customer_name.split(' ').slice(1).join(' ') : ''),
@@ -97,15 +89,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         total_amount: order?.total_amount || 0,
         currency: order?.currency || 'COP',
         cod_total: order?.cod_total || 0,
+        is_cod: order?.is_cod ?? ((order?.cod_total || 0) > 0),
 
-        // Payment
-        payment_method_id: order?.payment_method_id || 1,
+        payment_method_id: order?.payment_method_id || 0,
         is_paid: order?.is_paid || false,
 
-        // Status
         status: order?.status || 'pending',
 
-        // Logistics (preserved on update)
         tracking_number: order?.tracking_number || '',
         tracking_link: order?.tracking_link || '',
         guide_id: order?.guide_id || '',
@@ -114,28 +104,23 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         driver_name: order?.driver_name || '',
         is_last_mile: order?.is_last_mile || false,
 
-        // Additional
         notes: order?.notes || '',
         invoiceable: order?.invoiceable ?? false,
         is_confirmed: order?.is_confirmed ?? null,
         novelty: order?.novelty || '',
 
-        // Items
         items: order?.order_items || order?.items || [],
 
-        // Extra
         integration_type: order?.integration_type || '',
         external_id: order?.external_id || '',
     });
 
     const [selectedProducts, setSelectedProducts] = useState<Product[]>(() => {
-        // Try order_items first (structured items from backend), then fallback to items
         const items = order?.order_items ?? order?.items;
         if (!items || !Array.isArray(items)) return [];
         return (items as any[])
             .map((item: any) => ({
                 ...item,
-                // Map order_item fields to Product interface
                 id: item.id?.toString() || item.product_id || '',
                 sku: item.sku || item.product_sku || '',
                 name: item.name || item.product_name || item.product_title || '',
@@ -152,7 +137,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [shippingComplement, setShippingComplement] = useState('');
     const [showProductModal, setShowProductModal] = useState(false);
     const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
-    const [isCOD, setIsCOD] = useState(() => (order?.cod_total || 0) > 0);
+    const [isCOD, setIsCOD] = useState(() => order?.is_cod ?? ((order?.cod_total || 0) > 0));
+    const [paymentMethodError, setPaymentMethodError] = useState(false);
     const [groups, setGroups] = useState<ClientGroup[]>([]);
     const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
     const [clientGroupName, setClientGroupName] = useState('');
@@ -227,7 +213,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         return { groupName, anyCustom };
     })();
 
-    // Reinitialize selectedProducts when order changes
     useEffect(() => {
         if (order?.order_items && Array.isArray(order.order_items)) {
             const mapped = (order.order_items as any[])
@@ -251,7 +236,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // DANE search states
     const [citySearch, setCitySearch] = useState('');
     const [showCityResults, setShowCityResults] = useState(false);
     const [citySelected, setCitySelected] = useState(false);
@@ -259,7 +243,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const cityRef = useRef<HTMLDivElement>(null);
 
     const normalizeCity = (s: string) =>
-        s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .replace(/\s*[,(]?\s*d\.?\s*c\.?\s*\)?\s*$/g, '')
             .trim();
@@ -278,8 +262,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
     const [addressAutofilled, setAddressAutofilled] = useState(false);
 
-
-    // Client autocomplete (triggered from DNI, name, or email fields)
     const { results: clientResults, loading: clientLoading, searched: clientSearched, search: searchClients, clear: clearClients } = useClientSearch({
         businessId: formData.business_id,
         minChars: 3,
@@ -379,11 +361,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 setAddressAutofilled(true);
             }
         } catch {
-            // silently ignore - address autocomplete is best-effort
         }
     }, [clearClients, formData.business_id, selectedProducts, showToast]);
 
-    // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
         value: code,
         label: `${data.ciudad} (${data.departamento})`,
@@ -395,7 +375,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         opt.label.toLowerCase().includes(citySearch.toLowerCase())
     );
 
-    // Auto-select warehouse: if editing use existing, else pick default or single warehouse
     useEffect(() => {
         if (warehouses.length === 0 || formData.warehouse_id) return;
         const defaultW = warehouses.find(w => w.is_default) || (warehouses.length === 1 ? warehouses[0] : null);
@@ -404,7 +383,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         }
     }, [warehouses]);
 
-    // Load client groups of the business
     useEffect(() => {
         if (!formData.business_id) return;
         (async () => {
@@ -413,7 +391,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         })();
     }, [formData.business_id]);
 
-    // Edit mode: resolve the order client's group to show the informational banner
     useEffect(() => {
         if (!isEdit || !formData.business_id) return;
         const term = order?.customer_dni || order?.customer_email || '';
@@ -430,7 +407,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         })();
     }, [isEdit, formData.business_id]);
 
-    // Initialize citySearch when order is loaded
     useEffect(() => {
         if (order?.shipping_city && order?.shipping_state) {
             setCitySearch(`${order.shipping_city} (${order.shipping_state})`);
@@ -438,7 +414,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         }
     }, [order]);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
@@ -484,10 +459,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setPaymentMethodError(false);
 
         try {
             if ((!formData.customer_name && !formData.customer_first_name) || !formData.total_amount) {
                 throw new Error('Por favor completa los campos requeridos');
+            }
+            if (!formData.payment_method_id || formData.payment_method_id <= 0) {
+                setPaymentMethodError(true);
+                throw new Error('Selecciona el medio de pago (con que paga el cliente)');
             }
             if (!formData.shipping_street?.trim() || !formData.shipping_city?.trim() || !formData.shipping_state?.trim()) {
                 setCityError(!formData.shipping_city?.trim());
@@ -501,14 +481,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
             const itemsToSend = selectedProducts.length > 0 ? selectedProducts : formData.items;
 
-            console.log('🔍 DEBUG - Items a enviar:', {
-                selectedProducts_count: selectedProducts.length,
-                itemsToSend_count: itemsToSend.length,
-                first_item: itemsToSend[0]
-            });
-
             const baseData = {
                 ...formData,
+                is_cod: isCOD,
+                cod_total: isCOD ? formData.total_amount + formData.shipping_cost : 0,
+                payment_method_id: formData.payment_method_id,
                 shipping_street: fullShippingStreet,
                 shipping_lat: addressCoords?.lat,
                 shipping_lng: addressCoords?.lon,
@@ -517,13 +494,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 client_group_id: !isEdit && selectedGroupId ? selectedGroupId : undefined,
             };
 
-            console.log('📤 DEBUG - Enviando baseData.items:', baseData.items?.length);
-
             let response;
             if (isEdit && order) {
                 const updateData: UpdateOrderDTO = {
                     ...baseData,
-                    // Map is_confirmed → confirmation_status so clearing to null works
                     confirmation_status: formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending',
                     is_confirmed: undefined,
                 };
@@ -577,7 +551,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col h-full" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", backgroundColor: quaternaryColor + '40' }}>
-            {/* HEADER */}
             {isEdit && order && (
                 <div className="flex items-center justify-between px-7 py-3.5 h-14 flex-shrink-0" style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}>
                     <div className="flex items-center gap-2">
@@ -607,19 +580,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 </div>
             )}
 
-            {/* STATUS BAR */}
             {isEdit && order && (
                 <div className="flex items-center gap-3 px-7 py-2 h-9 flex-shrink-0" style={{ background: `linear-gradient(to right, ${primaryColor}dd, ${secondaryColor}dd)` }}>
                     <div className="px-3 py-1 rounded-full font-bold text-xs text-white" style={{ background: 'rgba(255, 255, 255, 0.12)', border: '1px solid rgba(255, 255, 255, 0.25)', textTransform: 'uppercase' }}>
                         {businessName}
                     </div>
                     <span className="text-xs font-bold text-white">
-                        • #{order.order_number || order.internal_number || order.id}
+                        #{order.order_number || order.internal_number || order.id}
                     </span>
                 </div>
             )}
 
-            {/* BODY */}
             <div className="flex-1 overflow-y-auto px-6 py-5">
                 {error && (
                     <Alert type="error" onClose={() => setError(null)}>
@@ -640,20 +611,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             <h3 className="text-sm font-bold" style={{ color: primaryColor }}>Cliente</h3>
                         </div>
 
-                        {/* Warning banner */}
                         {!formData.customer_email && (formData.customer_first_name || formData.customer_name) && (
                             <div className="mb-4 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
                                 <p className="text-xs text-amber-700">
-                                    Completar el email del cliente mejora la analítica, seguimiento y facturación de tus órdenes.
+                                    Completar el email del cliente mejora la analitica, seguimiento y facturacion de tus ordenes.
                                 </p>
                             </div>
                         )}
 
                         <div className="space-y-4">
-                            {/* DNI — with autocomplete */}
                             <div className="relative">
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    DNI / Cédula
+                                    DNI / Cedula
                                 </label>
                                 <div className="relative">
                                     <Input
@@ -666,7 +635,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                                 setActiveSearchField('dni');
                                             }
                                         }}
-                                        placeholder="Buscar cliente por cédula..."
+                                        placeholder="Buscar cliente por cedula..."
                                         autoComplete="off"
                                         className={`${clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}`}
                                         style={{ borderColor: '#e8e0f5', height: '38px' }}
@@ -689,7 +658,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     />
                                 )}
                             </div>
-                            {/* Nombre + Apellido — same row */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="relative">
                                     <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
@@ -768,7 +736,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     )}
                                 </div>
                             </div>
-                            {/* Email — with autocomplete */}
                             <div className="relative">
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Email
@@ -808,7 +775,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Teléfono *
+                                    Telefono *
                                 </label>
                                 <div className="flex items-center w-full">
                                     <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
@@ -858,7 +825,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Dirección
+                                    Direccion
                                 </label>
                                 <AddressAutocomplete
                                     value={formData.shipping_street}
@@ -887,7 +854,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
 
-                            {/* City with autocomplete */}
                             <div ref={cityRef} className="relative md:col-span-2">
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
                                     Ciudad y Departamento
@@ -935,7 +901,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     type="text"
                                     value={house}
                                     onChange={(e) => setHouse(e.target.value)}
-                                    placeholder="Número de casa"
+                                    placeholder="Numero de casa"
                                 />
                             </div>
 
@@ -953,7 +919,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    País
+                                    Pais
                                 </label>
                                 <Input
                                     type="text"
@@ -964,19 +930,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Código Postal
+                                    Codigo Postal
                                 </label>
                                 <Input
                                     type="text"
                                     value={formData.shipping_postal_code}
                                     onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-                                    placeholder="Código postal"
+                                    placeholder="Codigo postal"
                                 />
                             </div>
 
                         </div>
 
-                        {/* Mini map preview */}
                         {addressCoords && (
                             <div className="mt-4">
                                 <MapComponent
@@ -1027,7 +992,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Costo de Envío
+                                    Costo de Envio
                                 </label>
                                 <div className="flex items-center w-full">
                                     <span className="px-3 py-2.5 text-white font-semibold rounded-l-lg border border-r-0" style={{ backgroundColor: primaryColor, borderColor: primaryColor }}>
@@ -1061,7 +1026,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-600/30">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contra Entrega</span>
+                                    <div>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contra Entrega</span>
+                                        <p className="text-[11px] text-gray-400">Cuando se cobra: el dinero se recauda al entregar.</p>
+                                    </div>
                                     <button
                                         type="button"
                                         role="switch"
@@ -1069,7 +1037,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         onClick={() => {
                                             const next = !isCOD;
                                             setIsCOD(next);
-                                            setFormData(prev => ({ ...prev, cod_total: next ? prev.total_amount + prev.shipping_cost : 0 }));
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                is_cod: next,
+                                                cod_total: next ? prev.total_amount + prev.shipping_cost : 0,
+                                            }));
                                         }}
                                         className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                                         style={{ backgroundColor: isCOD ? primaryColor : '#d1d5db' }}
@@ -1087,6 +1059,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         </div>
                     </div>
 
+
+                </div>
+                <div className="col-span-3">
                     <div className="bg-white dark:bg-gray-800 rounded-[14px] p-5" style={{ boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b" style={{ borderColor: primaryColor + '30' }}>
                             <div className="w-9 h-9 rounded-[7px] flex items-center justify-center text-white text-sm flex-shrink-0" style={{ background: `linear-gradient(135deg, ${secondaryColor}, ${primaryColor})` }}>
@@ -1097,24 +1072,25 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <h3 className="text-sm font-bold" style={{ color: primaryColor }}>Pago y Estado</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="flex items-center">
-                                    <div className="relative flex items-center justify-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.is_paid}
-                                            onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
-                                        />
-                                        {formData.is_paid && (
-                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Orden Pagada</span>
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                    Medio de pago *
                                 </label>
+                                <PaymentMethodSelect
+                                    value={formData.payment_method_id}
+                                    onChange={(id) => {
+                                        setFormData(prev => ({ ...prev, payment_method_id: id }));
+                                        setPaymentMethodError(false);
+                                    }}
+                                    hasError={paymentMethodError}
+                                />
+                                <p className="mt-1 text-[11px] text-gray-400">
+                                    Con que paga el cliente. Contra entrega define <strong>cuando</strong> se cobra; el medio de pago, <strong>con que</strong> se paga.
+                                </p>
+                                {paymentMethodError && (
+                                    <p className="mt-1 text-xs text-red-600">Selecciona el medio de pago</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
@@ -1133,6 +1109,39 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </select>
                             </div>
                             <div>
+                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
+                                    Confirmacion
+                                </label>
+                                <select
+                                    value={formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending'}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
+                                    }}
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+                                >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="yes">Confirmado</option>
+                                    <option value="no">No confirmado</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-2 flex flex-wrap items-center gap-6 md:pt-7">
+                                <label className="flex items-center">
+                                    <div className="relative flex items-center justify-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.is_paid}
+                                            onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
+                                            className="appearance-none w-5 h-5 border-2 rounded cursor-pointer checked:bg-[var(--primary-color)] checked:border-[var(--primary-color)]" style={{ borderColor: tertiaryColor, '--primary-color': primaryColor } as any}
+                                        />
+                                        {formData.is_paid && (
+                                            <svg className="absolute w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Orden Pagada</span>
+                                </label>
                                 <label className="flex items-center">
                                     <div className="relative flex items-center justify-center">
                                         <input
@@ -1150,27 +1159,10 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     <span className="text-sm font-medium text-gray-700 dark:text-gray-200 ml-2">Facturable</span>
                                 </label>
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Confirmación
-                                </label>
-                                <select
-                                    value={formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending'}
-                                    onChange={(e) => {
-                                        const v = e.target.value;
-                                        setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
-                                    }}
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
-                                >
-                                    <option value="pending">Pendiente</option>
-                                    <option value="yes">Confirmado</option>
-                                    <option value="no">No confirmado</option>
-                                </select>
-                            </div>
                         </div>
                     </div>
-
                 </div>
+
 
                 <div className="lg:col-span-2">
                     <div className="bg-white dark:bg-gray-800 rounded-[14px] p-5" style={{ boxShadow: '0 2px 12px rgba(124, 58, 237, 0.06)' }}>
@@ -1286,18 +1278,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             <h3 className="text-sm font-bold" style={{ color: primaryColor }}>Logistica</h3>
                         </div>
 
-                        {/* 24-hour processing notice */}
                         <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
                             <p className="text-[11px] leading-tight text-blue-800">
                                 <span className="font-bold uppercase tracking-wider block mb-1">Aviso de Procesamiento</span>
-                                Recuerda que las transportadoras pueden demorar hasta <span className="font-bold">24 horas hábiles</span> en procesar y recolectar los pedidos después de generada la guía.
+                                Recuerda que las transportadoras pueden demorar hasta <span className="font-bold">24 horas habiles</span> en procesar y recolectar los pedidos despues de generada la guia.
                             </p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    Número de Guía
+                                    Numero de Guia
                                 </label>
                                 <Input
                                     type="text"
@@ -1308,7 +1299,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <div>
                                 <label className="block text-xs font-semibold uppercase mb-1" style={{ letterSpacing: '0.06em', color: '#8b7fa8' }}>
-                                    ID Guía
+                                    ID Guia
                                 </label>
                                 <Input
                                     type="text"
@@ -1364,7 +1355,6 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
             </div>
 
-            {/* FOOTER */}
             <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t" style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`, borderColor: secondaryColor, height: '66px', flexShrink: 0 }}>
                 {onCancel && (
                     <button

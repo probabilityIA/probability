@@ -18,6 +18,10 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		return nil, errors.New("business_id is required")
 	}
 
+	if err := normalizeCodOnDTO(dto); err != nil {
+		return nil, err
+	}
+
 	exists, err := uc.repo.OrderExists(ctx, dto.ExternalID, dto.IntegrationID)
 	if err != nil {
 		return nil, fmt.Errorf("error checking if order exists: %w", err)

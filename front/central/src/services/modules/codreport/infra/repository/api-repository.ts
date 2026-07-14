@@ -36,7 +36,7 @@ export class CodReportApiRepository {
 
     private rangeParams(f: ReportFilters): URLSearchParams {
         const sp = new URLSearchParams();
-        if (f.range === 'custom' && f.start_date && f.end_date) {
+        if (f.start_date && f.end_date) {
             sp.append('start_date', f.start_date);
             sp.append('end_date', f.end_date);
         } else if (f.range) {

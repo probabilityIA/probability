@@ -34,21 +34,22 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		InternalNumber: order.InternalNumber,
 
 		// Información financiera
-		Subtotal:                order.Subtotal,
-		Tax:                     order.Tax,
-		Discount:                order.Discount,
+		Subtotal:                    order.Subtotal,
+		Tax:                         order.Tax,
+		Discount:                    order.Discount,
 		ShippingCost:                order.ShippingCost,
 		ShippingDiscount:            order.ShippingDiscount,
 		ShippingDiscountPresentment: order.ShippingDiscountPresentment,
 		TotalAmount:                 order.TotalAmount,
 		Currency:                    order.Currency,
+		IsCod:                       order.IsCod,
 		CodTotal:                    order.CodTotal,
 		SubtotalPresentment:         order.SubtotalPresentment,
 		TaxPresentment:              order.TaxPresentment,
 		DiscountPresentment:         order.DiscountPresentment,
 		ShippingCostPresentment:     order.ShippingCostPresentment,
-		TotalAmountPresentment:  order.TotalAmountPresentment,
-		CurrencyPresentment:     order.CurrencyPresentment,
+		TotalAmountPresentment:      order.TotalAmountPresentment,
+		CurrencyPresentment:         order.CurrencyPresentment,
 
 		// Información del cliente
 		CustomerID:        order.CustomerID,
@@ -60,11 +61,11 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		CustomerDNI:       order.CustomerDNI,
 
 		// Dirección de envío (desnormalizado)
-		ShippingStreet:     order.ShippingStreet,
-		ShippingCity:       order.ShippingCity,
-		ShippingState:      order.ShippingState,
-		ShippingCountry:    order.ShippingCountry,
-		ShippingPostalCode: order.ShippingPostalCode,
+		ShippingStreet:        order.ShippingStreet,
+		ShippingCity:          order.ShippingCity,
+		ShippingState:         order.ShippingState,
+		ShippingCountry:       order.ShippingCountry,
+		ShippingPostalCode:    order.ShippingPostalCode,
 		ShippingLat:           order.ShippingLat,
 		ShippingLng:           order.ShippingLng,
 		ShippingGeoConfidence: order.ShippingGeoConfidence,
@@ -239,6 +240,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		OrderStatusURL:         order.OrderStatusURL,
 		GuideLink:              order.GuideLink,
 		IsPaid:                 order.IsPaid,
+		IsCod:                  order.IsCod,
 		CodTotal:               order.CodTotal,
 		IsConfirmed:            order.IsConfirmed,
 		Novelty:                order.Novelty,
@@ -287,17 +289,17 @@ func ToDomainOrderItems(items []map[string]interface{}) []entities.ProbabilityOr
 		}
 
 		result[i] = entities.ProbabilityOrderItem{
-			ProductID:     productID,
-			ProductSKU:    sku,
-			ProductName:   name,
-			VariantLabel:  variantLabel,
-			VariantID:     nil,
-			Quantity:      int(qty),
-			UnitPrice:     price,
-			TotalPrice:    price * qty,
-			Currency:      "COP",
-			Discount:      0,
-			Tax:           0,
+			ProductID:    productID,
+			ProductSKU:   sku,
+			ProductName:  name,
+			VariantLabel: variantLabel,
+			VariantID:    nil,
+			Quantity:     int(qty),
+			UnitPrice:    price,
+			TotalPrice:   price * qty,
+			Currency:     "COP",
+			Discount:     0,
+			Tax:          0,
 		}
 	}
 	return result
