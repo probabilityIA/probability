@@ -34,7 +34,7 @@ func TestTestConnection_Success(t *testing.T) {
 		},
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	if err := uc.TestConnection(ctx, configProd(), credencialesCompletas()); err != nil {
 		t.Errorf("se esperaba exito, se obtuvo error: %v", err)
@@ -64,7 +64,7 @@ func TestTestConnection_PropagaCredencialesAlCliente(t *testing.T) {
 		"partner_id": "mi-partner-id",
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	if err := uc.TestConnection(ctx, configProd(), credenciales); err != nil {
 		t.Fatalf("se esperaba exito, se obtuvo error: %v", err)
@@ -103,7 +103,7 @@ func TestTestConnection_IsTestingUsaBaseURLTest(t *testing.T) {
 		"is_testing":    true,
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	if err := uc.TestConnection(ctx, config, credencialesCompletas()); err != nil {
 		t.Fatalf("se esperaba exito, se obtuvo error: %v", err)
@@ -130,7 +130,7 @@ func TestTestConnection_AccountIDOpcional(t *testing.T) {
 		"partner_id": "mi-partner-id",
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	if err := uc.TestConnection(ctx, configProd(), credenciales); err != nil {
 		t.Errorf("se esperaba exito (account_id es opcional), se obtuvo error: %v", err)
@@ -158,7 +158,7 @@ func TestTestConnection_APIURLOverrideEnCredenciales(t *testing.T) {
 		"api_url":    "https://override.siigo.com",
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	if err := uc.TestConnection(ctx, configProd(), credenciales); err != nil {
 		t.Fatalf("se esperaba exito, se obtuvo error: %v", err)
@@ -178,7 +178,7 @@ func TestTestConnection_SinURLConfiguradaFalla(t *testing.T) {
 		},
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	err := uc.TestConnection(ctx, nil, credencialesCompletas())
 	if err == nil {
@@ -199,7 +199,7 @@ func TestTestConnection_ClienteRetornaError(t *testing.T) {
 		},
 	}
 
-	uc := New(clientMock, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(clientMock, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	err := uc.TestConnection(ctx, configProd(), credencialesCompletas())
 	if err == nil {
@@ -285,7 +285,7 @@ func TestTestConnection_ValidacionDeCamposRequeridos(t *testing.T) {
 				},
 			}
 
-			uc := New(mockConCaptura, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+			uc := New(mockConCaptura, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 			err := uc.TestConnection(ctx, configProd(), tt.credenciales)
 			if err == nil {
@@ -303,7 +303,7 @@ func TestTestConnection_ValidacionDeCamposRequeridos(t *testing.T) {
 
 func TestTestConnection_TipoIncorrectoEnCredenciales(t *testing.T) {
 	ctx := context.Background()
-	uc := New(&mocks.SiigoClientMock{}, &mocks.IntegrationCoreMock{}, &mocks.LoggerMock{})
+	uc := New(&mocks.SiigoClientMock{}, &mocks.IntegrationCoreMock{}, nil, nil, &mocks.LoggerMock{})
 
 	credenciales := map[string]any{
 		"username":   12345,

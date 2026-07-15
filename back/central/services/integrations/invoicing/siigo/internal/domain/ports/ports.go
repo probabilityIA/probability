@@ -50,6 +50,13 @@ type IInvoiceUseCase interface {
 	CreateWebhooks(ctx context.Context, integrationID string, baseURL string) (*WebhookCreateResult, error)
 	DeleteWebhook(ctx context.Context, integrationID string, webhookID string) error
 	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]dtos.WebhookItem, error)
+
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error)
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+}
+
+type IProductReadRepository interface {
+	ListProductsByBusiness(ctx context.Context, businessID uint) ([]dtos.ProductForSync, error)
 }
 
 type WebhookCreateResult struct {

@@ -50,9 +50,10 @@ interface SiigoInventorySectionProps {
     integrationId?: number;
     onSyncNow?: () => void;
     canSyncNow?: boolean;
+    onProductSync?: () => void;
 }
 
-export function SiigoInventorySection({ value, onChange, businessId, integrationId, onSyncNow, canSyncNow }: SiigoInventorySectionProps) {
+export function SiigoInventorySection({ value, onChange, businessId, integrationId, onSyncNow, canSyncNow, onProductSync }: SiigoInventorySectionProps) {
     const [warehouses, setWarehouses] = useState<NamedWarehouse[]>([]);
     const [loading, setLoading] = useState(false);
 
@@ -161,6 +162,23 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                     onToggle={() => set({ product_sync_enabled: !value.product_sync_enabled })}
                 />
             </div>
+
+            {onProductSync && (
+                <div className="mt-3">
+                    <button
+                        type="button"
+                        onClick={onProductSync}
+                        disabled={!integrationId}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50"
+                        style={{ border: `1px solid ${GREEN_BORDER}`, color: GREEN }}
+                    >
+                        <ArrowPathIcon className="w-4 h-4" /> Sincronizar productos (detectar y crear)
+                    </button>
+                    {!integrationId && (
+                        <p className="mt-1 text-[11px] text-gray-400 text-center">Guarda la integracion para poder sincronizar productos.</p>
+                    )}
+                </div>
+            )}
 
             {value.enabled && (
                 <div className="mt-3 space-y-3">

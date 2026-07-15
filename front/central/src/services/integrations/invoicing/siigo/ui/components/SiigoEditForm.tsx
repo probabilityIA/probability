@@ -31,6 +31,7 @@ import {
 } from './SiigoFormKit';
 import { SiigoInventorySection, InventorySyncConfig } from './SiigoInventorySection';
 import { SiigoInventorySyncModal } from './SiigoInventorySyncModal';
+import { SiigoProductSyncModal } from './SiigoProductSyncModal';
 import { SiigoWebhookManager } from './SiigoWebhookManager';
 
 function initialInventoryConfig(config: any): InventorySyncConfig {
@@ -89,6 +90,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
 
     const [inventorySync, setInventorySync] = useState<InventorySyncConfig>(initialInventoryConfig(initialData.config));
     const [showSyncModal, setShowSyncModal] = useState(false);
+    const [showProductSyncModal, setShowProductSyncModal] = useState(false);
 
     const [formData, setFormData] = useState({
         name: initialData.name,
@@ -385,6 +387,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 integrationId={integrationId}
                 onSyncNow={() => setShowSyncModal(true)}
                 canSyncNow={canSyncNow}
+                onProductSync={() => setShowProductSyncModal(true)}
             />
 
             <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks de Siigo">
@@ -453,6 +456,12 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
         <SiigoInventorySyncModal
             isOpen={showSyncModal}
             onClose={() => setShowSyncModal(false)}
+            integrationId={integrationId}
+            businessId={selectedBusinessId}
+        />
+        <SiigoProductSyncModal
+            isOpen={showProductSyncModal}
+            onClose={() => setShowProductSyncModal(false)}
             integrationId={integrationId}
             businessId={selectedBusinessId}
         />

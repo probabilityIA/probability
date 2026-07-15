@@ -44,3 +44,15 @@ export async function listSiigoWarehousesAction(integrationId: number, businessI
     if (businessId) body.business_id = businessId;
     return postWithAuth('/invoicing/inventory/siigo-warehouses', body);
 }
+
+export async function reconcileSiigoProductsAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/siigo/products/reconcile', body);
+}
+
+export async function applySiigoProductsAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/siigo/products/apply', body);
+}

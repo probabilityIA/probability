@@ -18,6 +18,8 @@ func TestProcessOrderForInvoicing_AlwaysReturnsError(t *testing.T) {
 	uc := New(
 		&mocks.SiigoClientMock{},
 		&mocks.IntegrationCoreMock{},
+		nil,
+		nil,
 		&mocks.LoggerMock{},
 	)
 
@@ -42,6 +44,8 @@ func TestProcessOrderForInvoicing_ErrorMessageContainsSiigo(t *testing.T) {
 	uc := New(
 		&mocks.SiigoClientMock{},
 		&mocks.IntegrationCoreMock{},
+		nil,
+		nil,
 		&mocks.LoggerMock{},
 	)
 
@@ -76,6 +80,8 @@ func TestProcessOrderForInvoicing_WithNilOrderSnapshot(t *testing.T) {
 	uc := New(
 		&mocks.SiigoClientMock{},
 		&mocks.IntegrationCoreMock{},
+		nil,
+		nil,
 		&mocks.LoggerMock{},
 	)
 
