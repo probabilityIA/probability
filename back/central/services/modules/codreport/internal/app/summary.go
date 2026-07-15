@@ -40,6 +40,24 @@ func (uc *UseCase) Summary(ctx context.Context, f dtos.ReportFilter) (*entities.
 		monthly[i].Net = n
 	}
 
+	detail, err := uc.repo.SummaryCarrierDetail(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	history, err := uc.repo.SummaryHistory(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+
+	var enCursoTotal, entregadoTotal float64
+	var enCursoOrders, entregadoOrders int
+	for i := range detail {
+		enCursoTotal += detail[i].EnCurso
+		enCursoOrders += detail[i].EnCursoOrders
+		entregadoTotal += detail[i].Entregado
+		entregadoOrders += detail[i].EntregadoOrders
+	}
+
 	return &entities.CodSummary{
 		TotalCollected:  totalCollected,
 		TotalPending:    totalPending,
@@ -49,5 +67,11 @@ func (uc *UseCase) Summary(ctx context.Context, f dtos.ReportFilter) (*entities.
 		OrdersPending:   ordersPending,
 		ByCarrier:       collected,
 		Monthly:         monthly,
+		EnCursoTotal:    enCursoTotal,
+		EnCursoOrders:   enCursoOrders,
+		EntregadoTotal:  entregadoTotal,
+		EntregadoOrders: entregadoOrders,
+		CarrierDetail:   detail,
+		History:         history,
 	}, nil
 }

@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle2, RefreshCw, ShieldCheck, AlertCircle, Package } from 'lucide-react';
-import { getSelectableOrdersAction, confirmCodCutAction } from '../../infra/actions';
+import { getSelectableOrdersAction, createDraftCutAction } from '../../infra/actions';
 import { CodOrder } from '../../domain/types';
-import { formatMoney, formatDateOnly, carrierLabel } from './helpers';
+import { formatMoney, formatDateOnly, formatDateTime, carrierLabel } from './helpers';
 
 interface Props {
     isOpen: boolean;
@@ -65,31 +65,31 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
         if (selected.size === 0) return;
         setSubmitting(true);
         setError(null);
-        const res = await confirmCodCutAction(periodStart, periodEnd, Array.from(selected), businessId || undefined);
+        const res = await createDraftCutAction(periodStart, periodEnd, Array.from(selected), businessId || undefined);
         if (res.success) {
-            onConfirmed('Corte de pago confirmado exitosamente');
+            onConfirmed('Borrador de corte creado. Revisa y confirmalo para consignar.');
             onClose();
         } else {
-            setError((res as any).message || 'Error al confirmar el corte');
+            setError((res as any).message || 'Error al crear el borrador');
         }
         setSubmitting(false);
     };
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-4xl w-full max-h-[85vh] flex flex-col">
                 <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <ShieldCheck size={18} className="text-emerald-600" /> Marcar corte de pago
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         Semana <strong>{formatDateOnly(periodStart)} - {formatDateOnly(periodEnd)}</strong>.
-                        Marca solo las ordenes que efectivamente pagaste al cliente. Las que dejes sin marcar
-                        quedan pendientes para el siguiente corte.
+                        Elige las ordenes que iras a consignar. Se crea un borrador que luego confirmas
+                        (o cancelas). Las que dejes sin marcar quedan disponibles para otro corte.
                     </p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-3">
+                <div className="flex-1 overflow-auto px-5 py-3">
                     {error && (
                         <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm flex items-center gap-2">
                             <AlertCircle size={15} /> {error}
@@ -115,7 +115,10 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                                     <th className="text-left py-2 font-semibold">Orden</th>
                                     <th className="text-left py-2 font-semibold">Cliente</th>
                                     <th className="text-left py-2 font-semibold">Transportadora</th>
-                                    <th className="text-right py-2 font-semibold">COD</th>
+                                    <th className="text-right py-2 font-semibold">COD orden</th>
+                                    <th className="text-right py-2 font-semibold">Cargo carrier</th>
+                                    <th className="text-right py-2 font-semibold">Total cliente</th>
+                                    <th className="text-left py-2 font-semibold">Entregado</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -130,10 +133,16 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                                             <td className="py-2 pr-2">
                                                 <input type="checkbox" checked={checked} onChange={() => toggle(o.order_id)} onClick={e => e.stopPropagation()} className="accent-emerald-600 cursor-pointer" />
                                             </td>
-                                            <td className="py-2 font-mono text-xs text-gray-700 dark:text-gray-300">#{o.order_number || o.order_id.slice(0, 8)}</td>
-                                            <td className="py-2 text-gray-900 dark:text-white truncate max-w-[160px]">{o.customer_name || '-'}</td>
-                                            <td className="py-2 text-gray-600 dark:text-gray-300">{carrierLabel(o.carrier)}</td>
-                                            <td className="py-2 text-right font-semibold text-gray-900 dark:text-white">{formatMoney(o.cod_total, o.currency)}</td>
+                                            <td className="py-2 font-mono text-xs font-bold text-[#6d28d9] whitespace-nowrap">#{o.order_number || o.order_id.slice(0, 8)}</td>
+                                            <td className="py-2">
+                                                <div className="text-gray-900 dark:text-white truncate max-w-[150px]">{o.customer_name || '-'}</div>
+                                                <div className="text-[10.5px] text-gray-400 whitespace-nowrap">{formatDateTime(o.created_at)}</div>
+                                            </td>
+                                            <td className="py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">{carrierLabel(o.carrier)}</td>
+                                            <td className="py-2 text-right text-gray-600 dark:text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(o.cod_total, o.currency)}</td>
+                                            <td className="py-2 text-right text-[#c2410c] tabular-nums whitespace-nowrap">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
+                                            <td className="py-2 text-right font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
+                                            <td className="py-2 text-[11px] text-gray-500 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '-'}</td>
                                         </tr>
                                     );
                                 })}
@@ -144,7 +153,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
 
                 <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3">
                     <div className="text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Pagadas: </span>
+                        <span className="text-gray-500 dark:text-gray-400">Seleccionadas: </span>
                         <span className="font-bold text-gray-800 dark:text-gray-200">{selected.size}</span>
                         <span className="text-gray-400 mx-2">|</span>
                         <span className="text-gray-500 dark:text-gray-400">Total: </span>
@@ -164,7 +173,7 @@ export function CutSelectionModal({ isOpen, onClose, onConfirmed, periodStart, p
                             className="px-3 py-2 text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
                         >
                             {submitting ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                            Confirmar corte
+                            Crear borrador
                         </button>
                     </div>
                 </div>

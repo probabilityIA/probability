@@ -36,8 +36,20 @@ func (m *ucMock) SelectableOrders(_ context.Context, _ dtos.SelectableOrdersFilt
 	return nil, nil
 }
 
-func (m *ucMock) ConfirmCut(_ context.Context, _ dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
+func (m *ucMock) CutOrders(_ context.Context, _ uint, _ uint) ([]entities.CodOrder, error) {
+	return nil, nil
+}
+
+func (m *ucMock) DeleteCut(_ context.Context, _ uint, _ uint) error {
+	return nil
+}
+
+func (m *ucMock) CreateDraft(_ context.Context, _ dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
 	return &entities.PaymentCut{}, nil
+}
+
+func (m *ucMock) ConfirmCut(_ context.Context, _ uint, _ uint, _ uint, _ string) error {
+	return nil
 }
 
 func (m *ucMock) CarrierConfigs(_ context.Context, _ uint) ([]entities.CarrierConfig, error) {

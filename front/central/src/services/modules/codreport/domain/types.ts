@@ -16,6 +16,25 @@ export interface MonthlyPoint {
     net: number;
 }
 
+export interface CarrierDetail {
+    carrier: string;
+    orders: number;
+    en_curso: number;
+    en_curso_orders: number;
+    entregado: number;
+    entregado_orders: number;
+    por_pagar: number;
+    recaudado: number;
+    cargo: number;
+    total: number;
+}
+
+export interface HistoryPoint {
+    label: string;
+    entregado: number;
+    en_curso: number;
+}
+
 export interface CodSummary {
     total_collected: number;
     total_pending: number;
@@ -25,6 +44,12 @@ export interface CodSummary {
     orders_pending: number;
     by_carrier: CarrierAggregate[];
     monthly: MonthlyPoint[];
+    en_curso_total: number;
+    en_curso_orders: number;
+    entregado_total: number;
+    entregado_orders: number;
+    carrier_detail: CarrierDetail[];
+    history: HistoryPoint[];
 }
 
 export type CodState = 'collected' | 'pending_payment' | 'in_progress' | 'pending' | 'not_collectable';
@@ -64,6 +89,7 @@ export interface PaymentCut {
     by_carrier: CarrierAggregate[];
     confirmed_by: number;
     confirmed_by_name: string;
+    confirmed_by_avatar: string;
     confirmed_at: string | null;
 }
 
@@ -89,6 +115,7 @@ export interface CodOrdersParams extends ReportFilters {
     page_size?: number;
     collected?: boolean;
     has_guide?: boolean;
+    status?: string;
     search?: string;
 }
 

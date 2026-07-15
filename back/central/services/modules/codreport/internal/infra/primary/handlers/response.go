@@ -24,6 +24,25 @@ type monthlyPointResponse struct {
 	Net       float64 `json:"net"`
 }
 
+type carrierDetailResponse struct {
+	Carrier         string  `json:"carrier"`
+	Orders          int     `json:"orders"`
+	EnCurso         float64 `json:"en_curso"`
+	EnCursoOrders   int     `json:"en_curso_orders"`
+	Entregado       float64 `json:"entregado"`
+	EntregadoOrders int     `json:"entregado_orders"`
+	PorPagar        float64 `json:"por_pagar"`
+	Recaudado       float64 `json:"recaudado"`
+	Cargo           float64 `json:"cargo"`
+	Total           float64 `json:"total"`
+}
+
+type historyPointResponse struct {
+	Label     string  `json:"label"`
+	Entregado float64 `json:"entregado"`
+	EnCurso   float64 `json:"en_curso"`
+}
+
 type summaryResponse struct {
 	TotalCollected  float64                    `json:"total_collected"`
 	TotalPending    float64                    `json:"total_pending"`
@@ -33,6 +52,12 @@ type summaryResponse struct {
 	OrdersPending   int                        `json:"orders_pending"`
 	ByCarrier       []carrierAggregateResponse `json:"by_carrier"`
 	Monthly         []monthlyPointResponse     `json:"monthly"`
+	EnCursoTotal    float64                    `json:"en_curso_total"`
+	EnCursoOrders   int                        `json:"en_curso_orders"`
+	EntregadoTotal  float64                    `json:"entregado_total"`
+	EntregadoOrders int                        `json:"entregado_orders"`
+	CarrierDetail   []carrierDetailResponse    `json:"carrier_detail"`
+	History         []historyPointResponse     `json:"history"`
 }
 
 type codOrderResponse struct {
@@ -68,9 +93,10 @@ type paymentCutResponse struct {
 	TotalDiscount   float64                    `json:"total_discount"`
 	TotalNet        float64                    `json:"total_net"`
 	ByCarrier       []carrierAggregateResponse `json:"by_carrier"`
-	ConfirmedBy     uint                       `json:"confirmed_by"`
-	ConfirmedByName string                     `json:"confirmed_by_name"`
-	ConfirmedAt     *time.Time                 `json:"confirmed_at"`
+	ConfirmedBy       uint                     `json:"confirmed_by"`
+	ConfirmedByName   string                   `json:"confirmed_by_name"`
+	ConfirmedByAvatar string                   `json:"confirmed_by_avatar"`
+	ConfirmedAt       *time.Time               `json:"confirmed_at"`
 }
 
 type carrierConfigResponse struct {
@@ -107,6 +133,30 @@ func mapSummary(s *entities.CodSummary) summaryResponse {
 			Net:       s.Monthly[i].Net,
 		}
 	}
+	detail := make([]carrierDetailResponse, len(s.CarrierDetail))
+	for i := range s.CarrierDetail {
+		d := s.CarrierDetail[i]
+		detail[i] = carrierDetailResponse{
+			Carrier:         d.Carrier,
+			Orders:          d.Orders,
+			EnCurso:         d.EnCurso,
+			EnCursoOrders:   d.EnCursoOrders,
+			Entregado:       d.Entregado,
+			EntregadoOrders: d.EntregadoOrders,
+			PorPagar:        d.PorPagar,
+			Recaudado:       d.Recaudado,
+			Cargo:           d.Cargo,
+			Total:           d.Total,
+		}
+	}
+	history := make([]historyPointResponse, len(s.History))
+	for i := range s.History {
+		history[i] = historyPointResponse{
+			Label:     s.History[i].Label,
+			Entregado: s.History[i].Entregado,
+			EnCurso:   s.History[i].EnCurso,
+		}
+	}
 	return summaryResponse{
 		TotalCollected:  s.TotalCollected,
 		TotalPending:    s.TotalPending,
@@ -116,6 +166,12 @@ func mapSummary(s *entities.CodSummary) summaryResponse {
 		OrdersPending:   s.OrdersPending,
 		ByCarrier:       mapCarrierAggregates(s.ByCarrier),
 		Monthly:         monthly,
+		EnCursoTotal:    s.EnCursoTotal,
+		EnCursoOrders:   s.EnCursoOrders,
+		EntregadoTotal:  s.EntregadoTotal,
+		EntregadoOrders: s.EntregadoOrders,
+		CarrierDetail:   detail,
+		History:         history,
 	}
 }
 
@@ -158,10 +214,11 @@ func mapCut(c *entities.PaymentCut) paymentCutResponse {
 		TotalCollected:  c.TotalCollected,
 		TotalDiscount:   c.TotalDiscount,
 		TotalNet:        c.TotalNet,
-		ByCarrier:       mapCarrierAggregates(c.ByCarrier),
-		ConfirmedBy:     c.ConfirmedBy,
-		ConfirmedByName: c.ConfirmedByName,
-		ConfirmedAt:     c.ConfirmedAt,
+		ByCarrier:         mapCarrierAggregates(c.ByCarrier),
+		ConfirmedBy:       c.ConfirmedBy,
+		ConfirmedByName:   c.ConfirmedByName,
+		ConfirmedByAvatar: c.ConfirmedByAvatar,
+		ConfirmedAt:       c.ConfirmedAt,
 	}
 }
 

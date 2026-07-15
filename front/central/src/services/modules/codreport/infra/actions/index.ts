@@ -13,9 +13,9 @@ const getRepo = async () => {
     return new CodReportApiRepository(token);
 };
 
-export const getCodSummaryAction = async (filters: ReportFilters) => {
+export const getCodSummaryAction = async (filters: ReportFilters, bucket?: string) => {
     try {
-        return await (await getRepo()).getSummary(filters);
+        return await (await getRepo()).getSummary(filters, bucket);
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al obtener el resumen', data: null as any };
     }
@@ -53,11 +53,35 @@ export const getSelectableOrdersAction = async (periodStart: string, periodEnd: 
     }
 };
 
-export const confirmCodCutAction = async (periodStart: string, periodEnd: string, orderIds: string[], businessId?: number) => {
+export const getCutOrdersAction = async (cutId: number, businessId?: number) => {
     try {
-        return await (await getRepo()).confirmCut(periodStart, periodEnd, orderIds, businessId);
+        return await (await getRepo()).getCutOrders(cutId, businessId);
     } catch (error: any) {
-        return { success: false, message: error.message || 'Error al confirmar el corte', data: null as any };
+        return { success: false, message: error.message || 'Error al obtener las ordenes del corte', data: [] as any };
+    }
+};
+
+export const deleteCodCutAction = async (cutId: number, businessId?: number) => {
+    try {
+        return await (await getRepo()).deleteCut(cutId, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al eliminar el corte' };
+    }
+};
+
+export const createDraftCutAction = async (periodStart: string, periodEnd: string, orderIds: string[], businessId?: number) => {
+    try {
+        return await (await getRepo()).createDraft(periodStart, periodEnd, orderIds, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al crear el borrador del corte', data: null as any };
+    }
+};
+
+export const confirmCodCutAction = async (cutId: number, businessId?: number) => {
+    try {
+        return await (await getRepo()).confirmCut(cutId, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al confirmar el corte' };
     }
 };
 

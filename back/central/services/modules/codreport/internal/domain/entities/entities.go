@@ -60,6 +60,32 @@ type CodSummary struct {
 	OrdersPending   int
 	ByCarrier       []CarrierAggregate
 	Monthly         []MonthlyPoint
+
+	EnCursoTotal    float64
+	EnCursoOrders   int
+	EntregadoTotal  float64
+	EntregadoOrders int
+	CarrierDetail   []CarrierDetail
+	History         []HistoryPoint
+}
+
+type CarrierDetail struct {
+	Carrier         string
+	Orders          int
+	EnCurso         float64
+	EnCursoOrders   int
+	Entregado       float64
+	EntregadoOrders int
+	PorPagar        float64
+	Recaudado       float64
+	Cargo           float64
+	Total           float64
+}
+
+type HistoryPoint struct {
+	Label     string
+	Entregado float64
+	EnCurso   float64
 }
 
 type PaymentCut struct {
@@ -72,10 +98,11 @@ type PaymentCut struct {
 	TotalCollected  float64
 	TotalDiscount   float64
 	TotalNet        float64
-	ByCarrier       []CarrierAggregate
-	ConfirmedBy     uint
-	ConfirmedByName string
-	ConfirmedAt     *time.Time
+	ByCarrier         []CarrierAggregate
+	ConfirmedBy       uint
+	ConfirmedByName   string
+	ConfirmedByAvatar string
+	ConfirmedAt       *time.Time
 }
 
 type WeekAggregate struct {

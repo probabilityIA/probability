@@ -7,6 +7,7 @@ type ReportFilter struct {
 	StartDate  time.Time
 	EndDate    time.Time
 	Carrier    string
+	Bucket     string
 }
 
 type OrdersFilter struct {
@@ -14,6 +15,7 @@ type OrdersFilter struct {
 	StartDate  time.Time
 	EndDate    time.Time
 	Carrier    string
+	Status     string
 	Collected  *bool
 	HasGuide   *bool
 	Search     string

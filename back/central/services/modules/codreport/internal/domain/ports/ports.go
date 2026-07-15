@@ -11,6 +11,8 @@ import (
 type IRepository interface {
 	ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
 	AggregateByCarrier(ctx context.Context, f dtos.ReportFilter, collected bool) ([]entities.CarrierAggregate, error)
+	SummaryCarrierDetail(ctx context.Context, f dtos.ReportFilter) ([]entities.CarrierDetail, error)
+	SummaryHistory(ctx context.Context, f dtos.ReportFilter) ([]entities.HistoryPoint, error)
 	MonthlyHistory(ctx context.Context, businessID uint, months int) ([]entities.MonthlyPoint, error)
 	WeeklyAggregates(ctx context.Context, businessID uint, weeks int) ([]entities.WeekAggregate, error)
 	CarrierConfigs(ctx context.Context, businessID uint) ([]entities.CarrierConfig, error)
@@ -24,4 +26,7 @@ type IRepository interface {
 	CutPeriodOrders(ctx context.Context, businessID uint, start, end time.Time) ([]entities.CarrierAggregate, error)
 	SelectableCutOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error)
 	PayoutOrders(ctx context.Context, businessID uint, orderIDs []string) ([]entities.PayoutOrder, error)
+	CutOrders(ctx context.Context, businessID uint, cutID uint) ([]entities.CodOrder, error)
+	ConfirmDraftCut(ctx context.Context, businessID uint, cutID uint, userID uint, userName string) error
+	DeleteCut(ctx context.Context, businessID uint, cutID uint) error
 }

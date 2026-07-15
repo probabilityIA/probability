@@ -2,74 +2,83 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Search, RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileCheck2, FileX2, FileText, Truck, Ban,
+    RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileText, Truck, Ban,
 } from 'lucide-react';
-import { getCodOrdersAction } from '../../infra/actions';
-import { CodOrder, CodState, ReportFilters } from '../../domain/types';
+import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction } from '../../infra/actions';
+import { CodOrder, CodState, CodSummary, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { GuidePreviewModal } from './GuidePreviewModal';
 
 interface Props {
     filters: ReportFilters;
 }
 
-const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-    pending: { label: 'Pendiente', cls: 'bg-gray-100 text-gray-600' },
-    picked_up: { label: 'Recogido', cls: 'bg-blue-100 text-blue-700' },
-    in_transit: { label: 'En transito', cls: 'bg-blue-100 text-blue-700' },
-    out_for_delivery: { label: 'En reparto', cls: 'bg-indigo-100 text-indigo-700' },
-    on_hold: { label: 'En espera', cls: 'bg-amber-100 text-amber-700' },
-    delivered: { label: 'Entregado', cls: 'bg-emerald-100 text-emerald-700' },
-    failed: { label: 'Fallido', cls: 'bg-red-100 text-red-700' },
-    returned: { label: 'Devuelto', cls: 'bg-red-100 text-red-700' },
-    cancelled: { label: 'Cancelado', cls: 'bg-gray-100 text-gray-500' },
+const CARD = 'bg-white dark:bg-gray-800 border border-[#ececf0] dark:border-gray-700 rounded-2xl';
+
+const STATUS_PILL: Record<string, { bg: string; c: string; label: string }> = {
+    pending: { bg: '#f1f5f9', c: '#475569', label: 'Pendiente' },
+    picked_up: { bg: '#eef2ff', c: '#4f46e5', label: 'Recogido' },
+    in_transit: { bg: '#eef2ff', c: '#4f46e5', label: 'En transito' },
+    out_for_delivery: { bg: '#eef2ff', c: '#4338ca', label: 'En reparto' },
+    on_hold: { bg: '#fef3c7', c: '#b45309', label: 'En espera' },
+    delivered: { bg: '#dcfce7', c: '#15803d', label: 'Entregado' },
+    failed: { bg: '#fee2e2', c: '#b91c1c', label: 'Fallido' },
+    returned: { bg: '#fee2e2', c: '#b91c1c', label: 'Devuelto' },
+    cancelled: { bg: '#f1f5f9', c: '#64748b', label: 'Cancelado' },
 };
 
-function CodStateBadge({ state }: { state: CodState }) {
-    if (state === 'collected') {
-        return (
-            <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
-                <CheckCircle2 size={13} /> Recaudada
-            </span>
-        );
-    }
-    if (state === 'pending_payment') {
-        return (
-            <span
-                className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-semibold"
-                title="Entregada: falta que el administrador la marque como pagada al cliente"
-            >
-                <Clock size={13} /> Pendiente de pago
-            </span>
-        );
-    }
-    if (state === 'in_progress') {
-        return (
-            <span
-                className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs font-semibold"
-                title="En curso: no se cuenta como recaudada hasta que se entregue"
-            >
-                <Truck size={13} /> En progreso
-            </span>
-        );
-    }
-    if (state === 'pending') {
-        return (
-            <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-semibold">
-                <Clock size={13} /> Pendiente
-            </span>
-        );
-    }
+const CARRIER_CHIP_COLORS = ['#e11d48', '#ea580c', '#0891b2', '#7c3aed', '#0ea5e9', '#16a34a', '#db2777', '#4f46e5', '#f59e0b', '#14b8a6'];
+function carrierChipColor(name: string): string {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return CARRIER_CHIP_COLORS[h % CARRIER_CHIP_COLORS.length];
+}
+
+const REC_META: Record<CodState, { c: string; label: string; icon: any; title?: string }> = {
+    collected: { c: '#16a34a', label: 'Recaudada', icon: CheckCircle2 },
+    pending_payment: { c: '#d97706', label: 'Pendiente de pago', icon: Clock, title: 'Entregada: falta que el administrador la marque como pagada al cliente' },
+    in_progress: { c: '#2563eb', label: 'En progreso', icon: Truck, title: 'En curso: no se cuenta como recaudada hasta que se entregue' },
+    pending: { c: '#d97706', label: 'Pendiente', icon: Clock },
+    not_collectable: { c: '#9a9aa5', label: 'No recaudable', icon: Ban, title: 'No recaudable' },
+};
+
+function RecaudoBadge({ state }: { state: CodState }) {
+    const m = REC_META[state] || REC_META.not_collectable;
+    const Icon = m.icon;
     return (
-        <span className="inline-flex items-center gap-1 text-gray-400 text-xs font-semibold" title="No recaudable">
-            <Ban size={13} /> No recaudable
+        <span className="inline-flex items-center gap-1.5 text-[12.5px] font-bold whitespace-nowrap" style={{ color: m.c }} title={m.title}>
+            <span className="w-[7px] h-[7px] rounded-full shrink-0" style={{ background: m.c }} />
+            <Icon size={13} /> {m.label}
         </span>
     );
 }
 
+interface KpiProps { accent: string; label: string; value: string; sub: string; }
+function KpiCard({ accent, label, value, sub }: KpiProps) {
+    return (
+        <div className={`${CARD} relative overflow-hidden p-[18px]`}>
+            <div className="absolute left-0 top-0 bottom-0 w-1" style={{ background: accent }} />
+            <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-wide" style={{ color: accent }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: accent }} />
+                {label}
+            </div>
+            <div className="text-[27px] font-extrabold tracking-tight mt-2.5 text-gray-900 dark:text-white">{value}</div>
+            <div className="text-[12.5px] text-gray-400 dark:text-gray-500 font-medium mt-1">{sub}</div>
+        </div>
+    );
+}
+
+const ESTADO_TABS: { key: '' | 'false' | 'true'; label: string }[] = [
+    { key: '', label: 'Todas' },
+    { key: 'false', label: 'Por pagar' },
+    { key: 'true', label: 'Pagadas' },
+];
+
 export default function CodOrdersTab({ filters }: Props) {
     const [orders, setOrders] = useState<CodOrder[]>([]);
+    const [summary, setSummary] = useState<CodSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
@@ -78,10 +87,58 @@ export default function CodOrdersTab({ filters }: Props) {
     const [totalPages, setTotalPages] = useState(0);
     const [collected, setCollected] = useState<'' | 'true' | 'false'>('');
     const [hasGuide, setHasGuide] = useState<'' | 'true' | 'false'>('');
+    const [status, setStatus] = useState('');
+    const [carrier, setCarrier] = useState('');
+    const [carriers, setCarriers] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
     const [tz, setTz] = useState('');
     const [guidePreview, setGuidePreview] = useState<CodOrder | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        getCarrierConfigsAction(filters.business_id).then(res => {
+            if (cancelled || !res.success) return;
+            const names = (res.data || []).map((c: any) => c.carrier_name).filter(Boolean);
+            setCarriers(Array.from(new Set(names)) as string[]);
+        });
+        return () => { cancelled = true; };
+    }, [filters.business_id]);
+
+    const availableFilters: FilterOption[] = [
+        { key: 'search', label: 'Orden / Cliente', type: 'text', placeholder: 'Numero de orden o cliente' },
+        {
+            key: 'status', label: 'Estado', type: 'select',
+            options: Object.entries(STATUS_PILL).map(([value, v]) => ({ value, label: v.label })),
+        },
+        {
+            key: 'carrier', label: 'Transportadora', type: 'select',
+            options: carriers.map(c => ({ value: c, label: carrierLabel(c) })),
+        },
+        {
+            key: 'has_guide', label: 'Guia', type: 'select',
+            options: [{ value: 'true', label: 'Con guia' }, { value: 'false', label: 'Sin guia' }],
+        },
+    ];
+
+    const activeFilters: ActiveFilter[] = [];
+    if (search) activeFilters.push({ key: 'search', label: 'Orden / Cliente', value: search, type: 'text' });
+    if (status) activeFilters.push({ key: 'status', label: 'Estado', value: STATUS_PILL[status]?.label || status, type: 'select' });
+    if (carrier) activeFilters.push({ key: 'carrier', label: 'Transportadora', value: carrierLabel(carrier), type: 'select' });
+    if (hasGuide) activeFilters.push({ key: 'has_guide', label: 'Guia', value: hasGuide === 'true' ? 'Con guia' : 'Sin guia', type: 'select' });
+
+    const onAddFilter = (key: string, value: any) => {
+        if (key === 'search') setSearch(String(value));
+        else if (key === 'status') setStatus(String(value));
+        else if (key === 'carrier') setCarrier(String(value));
+        else if (key === 'has_guide') setHasGuide(String(value) as any);
+    };
+    const onRemoveFilter = (key: string) => {
+        if (key === 'search') setSearch('');
+        else if (key === 'status') setStatus('');
+        else if (key === 'carrier') setCarrier('');
+        else if (key === 'has_guide') setHasGuide('');
+    };
 
     useEffect(() => { setTz(browserTimeZone()); }, []);
 
@@ -90,7 +147,15 @@ export default function CodOrdersTab({ filters }: Props) {
         return () => clearTimeout(t);
     }, [search]);
 
-    useEffect(() => { setPage(1); }, [filters, collected, hasGuide, debounced]);
+    useEffect(() => { setPage(1); }, [filters, collected, hasGuide, status, carrier, debounced]);
+
+    useEffect(() => {
+        let cancelled = false;
+        getCodSummaryAction(filters).then(res => {
+            if (!cancelled && res.success) setSummary(res.data);
+        });
+        return () => { cancelled = true; };
+    }, [filters]);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -101,6 +166,8 @@ export default function CodOrdersTab({ filters }: Props) {
             page_size: pageSize,
             collected: collected === '' ? undefined : collected === 'true',
             has_guide: hasGuide === '' ? undefined : hasGuide === 'true',
+            status: status || undefined,
+            carrier: carrier || undefined,
             search: debounced || undefined,
         });
         if (res.success) {
@@ -112,187 +179,187 @@ export default function CodOrdersTab({ filters }: Props) {
             setOrders([]);
         }
         setLoading(false);
-    }, [filters, page, collected, hasGuide, debounced]);
+    }, [filters, page, collected, hasGuide, status, carrier, debounced]);
 
     useEffect(() => { load(); }, [load]);
 
+    const filteredTotal = orders.reduce((a, o) => a + o.cod_total + (o.cod_carrier_fee || 0), 0);
+    const currency = orders[0]?.currency;
+
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-wrap">
-                <div className="flex items-center gap-2">
-                    <Package size={16} className="text-purple-600" />
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Ordenes contra entrega</h3>
-                    <span className="text-xs text-gray-500">({total})</span>
-                </div>
-                <div className="flex-1" />
-                <div className="relative">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Buscar orden o cliente..."
-                        className="pl-9 pr-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-56"
-                    />
-                </div>
-                <select
-                    value={collected}
-                    onChange={e => setCollected(e.target.value as any)}
-                    className="px-2 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                    <option value="">Todas</option>
-                    <option value="true">Pagadas al cliente</option>
-                    <option value="false">Por pagar</option>
-                </select>
-                <select
-                    value={hasGuide}
-                    onChange={e => setHasGuide(e.target.value as any)}
-                    className="px-2 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                    <option value="">Guia: todas</option>
-                    <option value="true">Con guia</option>
-                    <option value="false">Sin guia</option>
-                </select>
-                <button
-                    onClick={load}
-                    disabled={loading}
-                    className="p-1.5 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                    title="Refrescar"
-                >
-                    <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                </button>
+        <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+                <KpiCard accent="#16a34a" label="Recaudado"
+                    value={formatMoney(summary?.total_collected, currency)}
+                    sub={`${summary?.orders_collected ?? 0} ordenes pagadas al cliente`} />
+                <KpiCard accent="#d97706" label="Por pagar"
+                    value={formatMoney(summary?.total_pending, currency)}
+                    sub={`${summary?.orders_pending ?? 0} entregadas sin consignar`} />
+                <KpiCard accent="#e11d48" label="Descuento carrier"
+                    value={formatMoney(summary?.total_discount, currency)}
+                    sub="sobre lo recaudado" />
+                <KpiCard accent="#7c3aed" label="Neto recibido"
+                    value={formatMoney(summary?.total_net, currency)}
+                    sub="despues de descuento" />
             </div>
 
-            {error && (
-                <div className="m-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm flex items-center gap-2">
-                    <AlertCircle size={15} /> {error}
-                </div>
-            )}
+            <div className={`${CARD} overflow-hidden`}>
+                <div className="flex items-center gap-3 px-[18px] py-3 border-b border-[#f0f0f3] dark:border-gray-700 flex-wrap">
+                    <div className="flex-1 min-w-[200px]">
+                        <DynamicFilters
+                            availableFilters={availableFilters}
+                            activeFilters={activeFilters}
+                            onAddFilter={onAddFilter}
+                            onRemoveFilter={onRemoveFilter}
+                            className="!p-0 !bg-transparent !border-0 !shadow-none !rounded-none"
+                        />
+                    </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="text-[11px] uppercase text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700">
-                            <th className="text-left px-3 py-2 font-semibold">Orden</th>
-                            <th className="text-left px-3 py-2 font-semibold" title={tz ? `Zona horaria: ${tz}` : undefined}>
-                                Fecha creacion
-                            </th>
-                            <th className="text-left px-3 py-2 font-semibold">Cliente</th>
-                            <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
-                            <th className="text-center px-3 py-2 font-semibold">Guia</th>
-                            <th className="text-center px-3 py-2 font-semibold">Guia PDF</th>
-                            <th className="text-left px-3 py-2 font-semibold">Estado</th>
-                            <th className="text-right px-3 py-2 font-semibold">COD orden (prod + envio)</th>
-                            <th className="text-right px-3 py-2 font-semibold">Cargo COD carrier</th>
-                            <th className="text-right px-3 py-2 font-semibold">Total cliente</th>
-                            <th className="text-center px-3 py-2 font-semibold">Recaudo</th>
-                            <th className="text-center px-3 py-2 font-semibold">Corte</th>
-                            <th className="text-left px-3 py-2 font-semibold" title={tz ? `Zona horaria: ${tz}` : undefined}>
-                                Entregado
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading && (
-                            <tr><td colSpan={13} className="text-center py-10 text-gray-400">
-                                <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
-                            </td></tr>
-                        )}
-                        {!loading && orders.length === 0 && !error && (
-                            <tr><td colSpan={13} className="text-center py-10 text-gray-400 text-sm">
-                                <Package size={28} className="mx-auto mb-2 opacity-50" />
-                                No hay ordenes contra entrega en el periodo.
-                            </td></tr>
-                        )}
-                        {!loading && orders.map(o => {
-                            const st = STATUS_LABELS[o.status] || { label: o.status, cls: 'bg-gray-100 text-gray-600' };
+                    <span className="text-[12px] font-bold text-[#6d28d9] bg-[#f3ecff] dark:bg-purple-900/40 px-2.5 py-0.5 rounded-full shrink-0">{total}</span>
+
+                    <div className="flex gap-[3px] bg-[#f2f2f5] dark:bg-gray-700 p-[3px] rounded-[11px] shrink-0">
+                        {ESTADO_TABS.map(t => {
+                            const active = collected === t.key;
                             return (
-                                <tr key={o.order_id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                                    <td className="px-3 py-2 font-mono text-xs text-gray-700 dark:text-gray-300">#{o.order_number || o.order_id.slice(0, 8)}</td>
-                                    <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">{formatDateTime(o.created_at)}</td>
-                                    <td className="px-3 py-2 text-gray-900 dark:text-white truncate max-w-[160px]">{o.customer_name || '-'}</td>
-                                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{carrierLabel(o.carrier)}</td>
-                                    <td className="px-3 py-2 text-center">
-                                        {o.has_guide ? (
-                                            (() => {
-                                                const logo = getCarrierLogo(o.carrier);
-                                                return logo ? (
-                                                    <span className="inline-flex items-center justify-center h-7 w-12 rounded border border-gray-200 dark:border-gray-600 bg-white p-0.5" title={`Guia generada - ${carrierLabel(o.carrier)}`}>
+                                <button
+                                    key={t.key}
+                                    onClick={() => setCollected(t.key)}
+                                    className="px-3.5 py-[7px] rounded-lg text-[13px] font-bold transition-colors"
+                                    style={active
+                                        ? { background: '#fff', color: '#4c1d95', boxShadow: '0 1px 2px rgba(0,0,0,.08)' }
+                                        : { color: '#6a6a76', background: 'transparent' }}
+                                >
+                                    {t.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="m-3 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm flex items-center gap-2">
+                        <AlertCircle size={15} /> {error}
+                    </div>
+                )}
+
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse min-w-[1100px]">
+                        <thead>
+                            <tr className="bg-[#fafafb] dark:bg-gray-900/40">
+                                {['Orden', 'Cliente', 'Transportadora', 'Guia PDF', 'Estado'].map(h => (
+                                    <th key={h} className="text-left px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">{h}</th>
+                                ))}
+                                <th className="text-right px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">COD orden</th>
+                                <th className="text-right px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">Cargo carrier</th>
+                                <th className="text-right px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">Total cliente</th>
+                                <th className="text-left px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">Recaudo</th>
+                                <th className="text-left px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider" title={tz ? `Zona horaria: ${tz}` : undefined}>Corte / Entregado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading && (
+                                <tr><td colSpan={10} className="text-center py-12 text-gray-400">
+                                    <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
+                                </td></tr>
+                            )}
+                            {!loading && orders.length === 0 && !error && (
+                                <tr><td colSpan={10} className="text-center py-12 text-gray-400 text-sm">
+                                    <Package size={28} className="mx-auto mb-2 opacity-50" />
+                                    No hay ordenes que coincidan con los filtros.
+                                </td></tr>
+                            )}
+                            {!loading && orders.map((o, i) => {
+                                const st = STATUS_PILL[o.status] || { bg: '#f1f5f9', c: '#475569', label: o.status };
+                                const cc = carrierChipColor(o.carrier || '');
+                                const logo = getCarrierLogo(o.carrier);
+                                return (
+                                    <tr key={o.order_id} className="hover:bg-[#fafafb] dark:hover:bg-gray-700/30" style={{ borderTop: i === 0 ? 'none' : '1px solid #f2f2f5' }}>
+                                        <td className="px-3 py-3.5 text-[13px] font-bold text-[#6d28d9] font-mono whitespace-nowrap">#{o.order_number || o.order_id.slice(0, 8)}</td>
+                                        <td className="px-3 py-3.5">
+                                            <div className="text-[13.5px] font-semibold text-[#26262e] dark:text-white truncate max-w-[170px]">{o.customer_name || '-'}</div>
+                                            <div className="text-[11.5px] text-[#a0a0ab] mt-0.5 whitespace-nowrap">{formatDateTime(o.created_at)}</div>
+                                        </td>
+                                        <td className="px-3 py-3.5">
+                                            <div className="flex items-center gap-2">
+                                                {logo ? (
+                                                    <span className="inline-flex items-center justify-center h-7 w-10 rounded border border-gray-200 dark:border-gray-600 bg-white p-0.5 shrink-0" title={carrierLabel(o.carrier)}>
                                                         <img src={logo} alt={carrierLabel(o.carrier)} className="max-h-full max-w-full object-contain" />
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold" title={`Guia generada - ${carrierLabel(o.carrier)}`}>
-                                                        <FileCheck2 size={13} /> Generada
+                                                    <span className="w-[22px] h-[22px] rounded-md text-white inline-flex items-center justify-center text-[11px] font-extrabold shrink-0" style={{ background: cc }}>
+                                                        {(o.carrier || '?').charAt(0).toUpperCase()}
                                                     </span>
-                                                );
-                                            })()
-                                        ) : (
-                                            <span className="inline-flex items-center gap-1 text-gray-400 text-xs" title="Sin guia generada">
-                                                <FileX2 size={13} /> Sin guia
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2 text-center">
-                                        {o.has_guide && o.shipment_id ? (
-                                            <button
-                                                onClick={() => setGuidePreview(o)}
-                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                                                title="Ver y descargar guia PDF"
-                                            >
-                                                <FileText size={13} /> Ver PDF
-                                            </button>
-                                        ) : (
-                                            <span className="text-gray-300 text-xs">-</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${st.cls}`}>{st.label}</span>
-                                    </td>
-                                    <td className="px-3 py-2 text-right font-semibold text-gray-900 dark:text-white">{formatMoney(o.cod_total, o.currency)}</td>
-                                    <td className="px-3 py-2 text-right text-amber-700 dark:text-amber-400">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
-                                    <td className="px-3 py-2 text-right font-semibold text-blue-700 dark:text-blue-300">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
-                                    <td className="px-3 py-2 text-center">
-                                        <CodStateBadge state={o.cod_state} />
-                                    </td>
-                                    <td className="px-3 py-2 text-center">
-                                        {o.cut_status === 'confirmed' ? (
-                                            <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
-                                                <Lock size={12} /> Confirmado
-                                            </span>
-                                        ) : o.collected ? (
-                                            <span className="text-gray-400 text-xs">Sin confirmar</span>
-                                        ) : (
-                                            <span className="text-gray-300 text-xs">-</span>
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '-'}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
+                                                )}
+                                                <span className="text-[13px] text-[#3a3a44] dark:text-gray-300 font-medium whitespace-nowrap">{carrierLabel(o.carrier)}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-3.5 text-center">
+                                            {o.has_guide && o.shipment_id ? (
+                                                <button
+                                                    onClick={() => setGuidePreview(o)}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                                    title="Ver y descargar guia PDF"
+                                                >
+                                                    <FileText size={13} /> Ver PDF
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-300 text-xs">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-3.5">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold whitespace-nowrap" style={{ background: st.bg, color: st.c }}>{st.label}</span>
+                                        </td>
+                                        <td className="px-3 py-3.5 text-right text-[13px] text-[#4a4a54] dark:text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(o.cod_total, o.currency)}</td>
+                                        <td className="px-3 py-3.5 text-right text-[13px] text-[#c2410c] tabular-nums whitespace-nowrap">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
+                                        <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
+                                        <td className="px-3 py-3.5"><RecaudoBadge state={o.cod_state} /></td>
+                                        <td className="px-3 py-3.5">
+                                            {o.cut_status === 'confirmed' ? (
+                                                <div className="text-[12.5px] font-semibold text-emerald-600 inline-flex items-center gap-1"><Lock size={12} /> Confirmado</div>
+                                            ) : o.collected ? (
+                                                <div className="text-[12.5px] font-semibold text-[#c2410c]">Sin confirmar</div>
+                                            ) : (
+                                                <div className="text-[12.5px] font-semibold text-[#9a9aa5]">—</div>
+                                            )}
+                                            <div className="text-[11.5px] text-[#a0a0ab] mt-0.5 whitespace-nowrap">{o.delivered_at ? formatDateTime(o.delivered_at) : '—'}</div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
 
-            {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-2 border-t border-gray-200 dark:border-gray-700 text-xs">
-                    <span className="text-gray-500">Pagina {page} de {totalPages}</span>
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                            disabled={page <= 1}
-                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30"
-                        >
-                            <ChevronLeft size={15} />
-                        </button>
-                        <button
-                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                            disabled={page >= totalPages}
-                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30"
-                        >
-                            <ChevronRight size={15} />
-                        </button>
+                <div className="flex items-center justify-between px-[18px] py-3 border-t border-[#f0f0f3] dark:border-gray-700 bg-[#fafafb] dark:bg-gray-900/40 flex-wrap gap-2">
+                    <div className="text-[12.5px] text-gray-400 dark:text-gray-500 font-medium">
+                        Mostrando <b className="text-[#3a3a44] dark:text-gray-200">{orders.length}</b> de {total} ordenes
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="text-[12.5px] text-gray-400 dark:text-gray-500 font-semibold">
+                            Total cliente (pagina): <b className="text-gray-900 dark:text-white">{formatMoney(filteredTotal, currency)}</b>
+                        </div>
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                                <span className="text-[12px] text-gray-500 mr-1">Pag {page} / {totalPages}</span>
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page <= 1}
+                                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30"
+                                >
+                                    <ChevronLeft size={15} />
+                                </button>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page >= totalPages}
+                                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30"
+                                >
+                                    <ChevronRight size={15} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}
+            </div>
 
             <GuidePreviewModal
                 isOpen={!!guidePreview}

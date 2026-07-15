@@ -21,6 +21,7 @@ func (h *Handlers) Summary(c *gin.Context) {
 		StartDate:  start,
 		EndDate:    end,
 		Carrier:    strings.TrimSpace(c.Query("carrier")),
+		Bucket:     strings.TrimSpace(c.Query("bucket")),
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

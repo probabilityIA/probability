@@ -23,7 +23,7 @@ func (r *Repository) AggregateByCarrier(ctx context.Context, f dtos.ReportFilter
 	if collected {
 		conds = append(conds, paidExpr)
 		if !f.StartDate.IsZero() && !f.EndDate.IsZero() {
-			conds = append(conds, "EXISTS (SELECT 1 FROM cod_payment_cut_order cpo_r WHERE cpo_r.order_id = o.id AND cpo_r.deleted_at IS NULL AND cpo_r.paid_at BETWEEN ? AND ?)")
+			conds = append(conds, "EXISTS (SELECT 1 FROM cod_payment_cut_order cpo_r JOIN cod_payment_cut c_r ON c_r.id = cpo_r.cod_payment_cut_id AND c_r.deleted_at IS NULL AND c_r.status = 'confirmed' WHERE cpo_r.order_id = o.id AND cpo_r.deleted_at IS NULL AND cpo_r.paid_at BETWEEN ? AND ?)")
 			args = append(args, f.StartDate, f.EndDate)
 		}
 	} else {
@@ -86,6 +86,7 @@ SELECT to_char(date_trunc('month', cpo.paid_at), 'YYYY-MM') AS month,
 	COUNT(*) AS orders_count,
 	COALESCE(SUM(cpo.cod_amount),0) AS total_collected
 FROM cod_payment_cut_order cpo
+JOIN cod_payment_cut c ON c.id = cpo.cod_payment_cut_id AND c.deleted_at IS NULL AND c.status = 'confirmed'
 WHERE cpo.deleted_at IS NULL AND cpo.business_id = ?
 	AND cpo.paid_at >= date_trunc('month', now()) - make_interval(months => ?)
 GROUP BY 1

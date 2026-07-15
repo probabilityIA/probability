@@ -30,7 +30,9 @@ type codOrderRow struct {
 
 const hasGuideExpr = `(COALESCE(NULLIF(s.guide_id,''),'') <> '' OR COALESCE(NULLIF(s.guide_url,''),'') <> '' OR COALESCE(NULLIF(s.probability_guide_url,''),'') <> '')`
 
-const paidExpr = `EXISTS (SELECT 1 FROM cod_payment_cut_order cpo WHERE cpo.order_id = o.id AND cpo.deleted_at IS NULL)`
+const paidExpr = `EXISTS (SELECT 1 FROM cod_payment_cut_order cpo JOIN cod_payment_cut c ON c.id = cpo.cod_payment_cut_id AND c.deleted_at IS NULL AND c.status = 'confirmed' WHERE cpo.order_id = o.id AND cpo.deleted_at IS NULL)`
+
+const linkedExpr = `EXISTS (SELECT 1 FROM cod_payment_cut_order cpol WHERE cpol.order_id = o.id AND cpol.deleted_at IS NULL)`
 
 func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
 	conds := []string{"o.deleted_at IS NULL", "o.cod_total > 0", "o.business_id = ?"}
@@ -43,6 +45,10 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 	if f.Carrier != "" {
 		conds = append(conds, "UPPER(TRIM(COALESCE(s.carrier,''))) = ?")
 		args = append(args, strings.ToUpper(strings.TrimSpace(f.Carrier)))
+	}
+	if f.Status != "" {
+		conds = append(conds, "s.status = ?")
+		args = append(args, strings.TrimSpace(f.Status))
 	}
 	if f.Collected != nil {
 		if *f.Collected {

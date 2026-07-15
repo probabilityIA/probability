@@ -19,6 +19,12 @@ func (m *repoMock) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]en
 	return m.listCodOrdersFn(ctx, f)
 }
 
+func (m *repoMock) SummaryCarrierDetail(_ context.Context, _ dtos.ReportFilter) ([]entities.CarrierDetail, error) {
+	return nil, nil
+}
+func (m *repoMock) SummaryHistory(_ context.Context, _ dtos.ReportFilter) ([]entities.HistoryPoint, error) {
+	return nil, nil
+}
 func (m *repoMock) AggregateByCarrier(_ context.Context, _ dtos.ReportFilter, _ bool) ([]entities.CarrierAggregate, error) {
 	return nil, nil
 }
@@ -58,6 +64,15 @@ func (m *repoMock) SelectableCutOrders(_ context.Context, _ dtos.SelectableOrder
 }
 func (m *repoMock) PayoutOrders(_ context.Context, _ uint, _ []string) ([]entities.PayoutOrder, error) {
 	return nil, nil
+}
+func (m *repoMock) CutOrders(_ context.Context, _ uint, _ uint) ([]entities.CodOrder, error) {
+	return nil, nil
+}
+func (m *repoMock) ConfirmDraftCut(_ context.Context, _ uint, _ uint, _ uint, _ string) error {
+	return nil
+}
+func (m *repoMock) DeleteCut(_ context.Context, _ uint, _ uint) error {
+	return nil
 }
 
 func TestListOrders_ForwardsHasGuideFilter(t *testing.T) {

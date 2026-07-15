@@ -47,8 +47,9 @@ export class CodReportApiRepository {
         return sp;
     }
 
-    async getSummary(f: ReportFilters): Promise<SingleResult<CodSummary>> {
+    async getSummary(f: ReportFilters, bucket?: string): Promise<SingleResult<CodSummary>> {
         const sp = this.rangeParams(f);
+        if (bucket) sp.append('bucket', bucket);
         return this.request<SingleResult<CodSummary>>(`/cod-report/summary?${sp.toString()}`);
     }
 
@@ -58,6 +59,7 @@ export class CodReportApiRepository {
         if (p.page_size) sp.append('page_size', String(p.page_size));
         if (p.collected !== undefined) sp.append('collected', String(p.collected));
         if (p.has_guide !== undefined) sp.append('has_guide', String(p.has_guide));
+        if (p.status) sp.append('status', p.status);
         if (p.search) sp.append('search', p.search);
         return this.request<Paginated<CodOrder>>(`/cod-report/orders?${sp.toString()}`);
     }
@@ -76,13 +78,34 @@ export class CodReportApiRepository {
         return this.request<SingleResult<CodOrder[]>>(`/cod-report/cuts/selectable?${sp.toString()}`);
     }
 
-    async confirmCut(periodStart: string, periodEnd: string, orderIds: string[], businessId?: number): Promise<SingleResult<PaymentCut>> {
+    async getCutOrders(cutId: number, businessId?: number): Promise<SingleResult<CodOrder[]>> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<SingleResult<CodOrder[]>>(`/cod-report/cuts/orders?${sp.toString()}`);
+    }
+
+    async deleteCut(cutId: number, businessId?: number): Promise<{ success: boolean; message?: string }> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<{ success: boolean; message?: string }>(`/cod-report/cuts?${sp.toString()}`, { method: 'DELETE' });
+    }
+
+    async createDraft(periodStart: string, periodEnd: string, orderIds: string[], businessId?: number): Promise<SingleResult<PaymentCut>> {
         const sp = new URLSearchParams();
         if (businessId) sp.append('business_id', String(businessId));
-        return this.request<SingleResult<PaymentCut>>(`/cod-report/cuts/confirm?${sp.toString()}`, {
+        return this.request<SingleResult<PaymentCut>>(`/cod-report/cuts/draft?${sp.toString()}`, {
             method: 'POST',
             body: JSON.stringify({ period_start: periodStart, period_end: periodEnd, order_ids: orderIds }),
         });
+    }
+
+    async confirmCut(cutId: number, businessId?: number): Promise<{ success: boolean; message?: string }> {
+        const sp = new URLSearchParams();
+        sp.append('cut_id', String(cutId));
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<{ success: boolean; message?: string }>(`/cod-report/cuts/confirm?${sp.toString()}`, { method: 'POST' });
     }
 
     async getCarrierConfigs(businessId?: number): Promise<SingleResult<CarrierConfig[]>> {

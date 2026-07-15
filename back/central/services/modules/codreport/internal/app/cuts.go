@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"sort"
-	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/codreport/internal/domain/dtos"
@@ -11,67 +11,9 @@ import (
 )
 
 func (uc *UseCase) ListCuts(ctx context.Context, businessID uint, isAdmin bool) ([]entities.PaymentCut, error) {
-	dm := uc.discountMap(ctx, businessID)
-
-	weekAggs, err := uc.repo.WeeklyAggregates(ctx, businessID, 12)
+	cuts, err := uc.repo.ConfirmedCuts(ctx, businessID)
 	if err != nil {
 		return nil, err
-	}
-	confirmed, err := uc.repo.ConfirmedCuts(ctx, businessID)
-	if err != nil {
-		return nil, err
-	}
-
-	confirmedByWeek := map[string]entities.PaymentCut{}
-	for i := range confirmed {
-		confirmedByWeek[confirmed[i].PeriodStart.Format("2006-01-02")] = confirmed[i]
-	}
-
-	weekMap := map[string][]entities.CarrierAggregate{}
-	weekStart := map[string]time.Time{}
-	order := []string{}
-	for i := range weekAggs {
-		key := weekAggs[i].WeekStart.Format("2006-01-02")
-		if _, ok := weekMap[key]; !ok {
-			order = append(order, key)
-			weekStart[key] = weekAggs[i].WeekStart
-		}
-		weekMap[key] = append(weekMap[key], entities.CarrierAggregate{
-			Carrier:        weekAggs[i].Carrier,
-			OrdersCount:    weekAggs[i].Orders,
-			TotalCollected: weekAggs[i].Collected,
-		})
-	}
-
-	cuts := []entities.PaymentCut{}
-	seen := map[string]bool{}
-	for _, key := range order {
-		seen[key] = true
-		if c, ok := confirmedByWeek[key]; ok {
-			cuts = append(cuts, c)
-			continue
-		}
-		aggs := weekMap[key]
-		domain.EnrichCarrierAggregates(aggs, dm)
-		oc, tc, td, tn := domain.SumAggregates(aggs)
-		ws := weekStart[key]
-		cuts = append(cuts, entities.PaymentCut{
-			BusinessID:     businessID,
-			PeriodStart:    ws,
-			PeriodEnd:      ws.AddDate(0, 0, 6),
-			Status:         "pending",
-			OrdersCount:    oc,
-			TotalCollected: tc,
-			TotalDiscount:  td,
-			TotalNet:       tn,
-			ByCarrier:      aggs,
-		})
-	}
-	for i := range confirmed {
-		key := confirmed[i].PeriodStart.Format("2006-01-02")
-		if !seen[key] {
-			cuts = append(cuts, confirmed[i])
-		}
 	}
 
 	sort.Slice(cuts, func(i, j int) bool {
@@ -107,12 +49,37 @@ func (uc *UseCase) SelectableOrders(ctx context.Context, f dtos.SelectableOrders
 	return orders, nil
 }
 
-func (uc *UseCase) ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
+func (uc *UseCase) DeleteCut(ctx context.Context, businessID uint, cutID uint) error {
+	return uc.repo.DeleteCut(ctx, businessID, cutID)
+}
+
+func (uc *UseCase) CutOrders(ctx context.Context, businessID uint, cutID uint) ([]entities.CodOrder, error) {
+	orders, err := uc.repo.CutOrders(ctx, businessID, cutID)
+	if err != nil {
+		return nil, err
+	}
+	dm := uc.discountMap(ctx, businessID)
+	for i := range orders {
+		pct := dm[orders[i].Carrier]
+		d, n := domain.ApplyDiscount(orders[i].CodTotal, pct)
+		orders[i].DiscountPct = pct
+		orders[i].Discount = d
+		orders[i].Net = n
+		orders[i].CodState = domain.CodStateCollected
+		orders[i].CutStatus = "confirmed"
+	}
+	return orders, nil
+}
+
+func (uc *UseCase) CreateDraft(ctx context.Context, d dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
 	dm := uc.discountMap(ctx, d.BusinessID)
 
 	payouts, err := uc.repo.PayoutOrders(ctx, d.BusinessID, d.OrderIDs)
 	if err != nil {
 		return nil, err
+	}
+	if len(payouts) == 0 {
+		return nil, fmt.Errorf("no hay ordenes validas para el corte (entregadas y aun sin consignar)")
 	}
 
 	userName := d.UserName
@@ -124,6 +91,7 @@ func (uc *UseCase) ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entit
 		BusinessID:  d.BusinessID,
 		PeriodStart: d.PeriodStart,
 		PeriodEnd:   d.PeriodEnd,
+		Status:      "draft",
 	}
 	cutID, err := uc.repo.UpsertCutOrders(ctx, shell, payouts, d.UserID, userName)
 	if err != nil {
@@ -137,24 +105,27 @@ func (uc *UseCase) ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entit
 	domain.EnrichCarrierAggregates(aggs, dm)
 	oc, tc, td, tn := domain.SumAggregates(aggs)
 
-	now := time.Now().UTC()
 	cut := entities.PaymentCut{
-		ID:              cutID,
-		BusinessID:      d.BusinessID,
-		PeriodStart:     d.PeriodStart,
-		PeriodEnd:       d.PeriodEnd,
-		Status:          "confirmed",
-		OrdersCount:     oc,
-		TotalCollected:  tc,
-		TotalDiscount:   td,
-		TotalNet:        tn,
-		ByCarrier:       aggs,
-		ConfirmedBy:     d.UserID,
-		ConfirmedByName: userName,
-		ConfirmedAt:     &now,
+		ID:             cutID,
+		BusinessID:     d.BusinessID,
+		PeriodStart:    d.PeriodStart,
+		PeriodEnd:      d.PeriodEnd,
+		Status:         "draft",
+		OrdersCount:    oc,
+		TotalCollected: tc,
+		TotalDiscount:  td,
+		TotalNet:       tn,
+		ByCarrier:      aggs,
 	}
 	if err := uc.repo.UpdateCutTotals(ctx, cut); err != nil {
 		return nil, err
 	}
 	return &cut, nil
+}
+
+func (uc *UseCase) ConfirmCut(ctx context.Context, businessID uint, cutID uint, userID uint, userName string) error {
+	if userName == "" {
+		userName = uc.repo.UserName(ctx, userID)
+	}
+	return uc.repo.ConfirmDraftCut(ctx, businessID, cutID, userID, userName)
 }
