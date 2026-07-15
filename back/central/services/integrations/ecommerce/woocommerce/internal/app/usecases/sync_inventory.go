@@ -105,12 +105,20 @@ func (uc *wooCommerceUseCase) SyncInventory(ctx context.Context, integrationID s
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
 		qty := stock[m.ProductID]
+		action := "updated"
 		if uerr := uc.client.UpdateProductStock(ctx, storeURL, consumerKey, consumerSecret, m.ExternalItemID, qty); uerr != nil {
 			uc.logger.Error(ctx).Err(uerr).Str("sku", m.SKU).Str("external_product_id", m.ExternalItemID).Msg("Error al actualizar stock en WooCommerce")
 			failed++
+			action = "failed"
 		} else {
 			updated++
 		}
+		uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woo.inventory.sync.item", map[string]interface{}{
+			"correlation_id": correlationID,
+			"sku":            m.SKU,
+			"quantity":       qty,
+			"action":         action,
+		})
 		uc.maybeInventoryProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, updated, unchanged, skipped, failed)
 	}
 

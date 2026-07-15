@@ -86,7 +86,7 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 	} else {
 		for _, w := range wooProducts {
 			if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
-				wooBySKU[key] = w.ID
+				wooBySKU[key] = wooExternalRef(w)
 			}
 		}
 	}

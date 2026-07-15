@@ -14,7 +14,13 @@ import (
 
 func (c *WooCommerceClient) UpdateProductStock(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error {
 	storeURL = strings.TrimRight(storeURL, "/")
-	endpoint := fmt.Sprintf("%s/wp-json/wc/v3/products/%s", storeURL, productExternalID)
+
+	var endpoint string
+	if parent, variation, ok := splitVariationRef(productExternalID); ok {
+		endpoint = fmt.Sprintf("%s/wp-json/wc/v3/products/%s/variations/%s", storeURL, parent, variation)
+	} else {
+		endpoint = fmt.Sprintf("%s/wp-json/wc/v3/products/%s", storeURL, productExternalID)
+	}
 
 	payload := map[string]interface{}{
 		"manage_stock":   true,
@@ -53,4 +59,12 @@ func (c *WooCommerceClient) UpdateProductStock(ctx context.Context, storeURL, co
 	}
 
 	return nil
+}
+
+func splitVariationRef(ref string) (string, string, bool) {
+	parts := strings.SplitN(ref, ":", 2)
+	if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
+		return parts[0], parts[1], true
+	}
+	return "", "", false
 }

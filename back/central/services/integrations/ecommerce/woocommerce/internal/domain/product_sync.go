@@ -25,6 +25,7 @@ type ProductForSync struct {
 
 type WooProduct struct {
 	ID            string
+	ParentID      string
 	SKU           string
 	Name          string
 	Price         float64

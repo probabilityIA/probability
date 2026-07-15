@@ -13,7 +13,7 @@ interface WooCommerceInventorySyncModalProps {
     onCompleted?: () => void;
 }
 
-const INVENTORY_EVENT_TYPES = ['woo.inventory.sync.started', 'woo.inventory.sync.progress', 'woo.inventory.sync.completed'];
+const INVENTORY_EVENT_TYPES = ['woo.inventory.sync.started', 'woo.inventory.sync.item', 'woo.inventory.sync.progress', 'woo.inventory.sync.completed'];
 
 type Phase = 'idle' | 'starting' | 'running' | 'done' | 'error';
 
@@ -24,11 +24,18 @@ interface Counts {
     failed: number;
 }
 
+interface SyncItem {
+    sku: string;
+    quantity: number;
+    action: 'updated' | 'failed';
+}
+
 export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, businessId, onCompleted }: WooCommerceInventorySyncModalProps) {
     const [phase, setPhase] = useState<Phase>('idle');
     const [total, setTotal] = useState(0);
     const [processed, setProcessed] = useState(0);
     const [counts, setCounts] = useState<Counts>({ updated: 0, unchanged: 0, skipped: 0, failed: 0 });
+    const [items, setItems] = useState<SyncItem[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const correlationRef = useRef<string | null>(null);
@@ -45,6 +52,12 @@ export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, 
             if (eventType === 'woo.inventory.sync.started') {
                 setTotal(Number(data.total) || 0);
                 setPhase('running');
+            } else if (eventType === 'woo.inventory.sync.item') {
+                setItems((prev) => [...prev, {
+                    sku: String(data.sku || ''),
+                    quantity: Number(data.quantity) || 0,
+                    action: data.action === 'failed' ? 'failed' : 'updated',
+                }]);
             } else if (eventType === 'woo.inventory.sync.progress') {
                 setProcessed(Number(data.processed) || 0);
                 setCounts({
@@ -83,6 +96,7 @@ export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, 
             setTotal(0);
             setProcessed(0);
             setCounts({ updated: 0, unchanged: 0, skipped: 0, failed: 0 });
+            setItems([]);
             setErrorMessage(null);
             correlationRef.current = null;
             return;
@@ -181,6 +195,27 @@ export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, 
                             ))}
                         </div>
 
+                        {items.length > 0 && (
+                            <div className="mt-4">
+                                <style>{`@keyframes wooInvRowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}`}</style>
+                                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Detalle por producto</p>
+                                <div className="max-h-56 overflow-y-auto rounded-lg border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+                                    {items.slice(-20).reverse().map((it) => (
+                                        <div key={it.sku} style={{ animation: 'wooInvRowIn 0.25s ease' }} className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px]">
+                                            <span className="text-gray-500 dark:text-gray-400 font-mono truncate">{it.sku || '(sin sku)'}</span>
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                <span className="tabular-nums text-gray-700 dark:text-gray-200">{it.quantity} u</span>
+                                                <ActionBadge action={it.action} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                {items.length > 20 && (
+                                    <p className="mt-1 text-[11px] text-gray-400">Mostrando los ultimos 20 de {items.length}.</p>
+                                )}
+                            </div>
+                        )}
+
                         {phase === 'starting' && (
                             <div className="flex items-center justify-center py-6 gap-2 text-gray-500 dark:text-gray-400">
                                 <Loader2 size={18} className="animate-spin" />
@@ -203,4 +238,13 @@ export function WooCommerceInventorySyncModal({ isOpen, onClose, integrationId, 
             </div>
         </div>
     );
+}
+
+function ActionBadge({ action }: { action: SyncItem['action'] }) {
+    const map = {
+        updated: { label: 'Actualizado', cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+        failed: { label: 'Fallido', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+    };
+    const { label, cls } = map[action];
+    return <span className={`px-1.5 py-0.5 rounded font-semibold ${cls}`}>{label}</span>;
 }

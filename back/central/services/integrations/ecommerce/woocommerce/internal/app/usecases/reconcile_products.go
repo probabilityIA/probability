@@ -16,6 +16,13 @@ func normalizeSKU(sku string) string {
 	return strings.ToLower(strings.TrimSpace(sku))
 }
 
+func wooExternalRef(w domain.WooProduct) string {
+	if w.ParentID != "" {
+		return w.ParentID + ":" + w.ID
+	}
+	return w.ID
+}
+
 func fullImageURL(imageURL string) string {
 	imageURL = strings.TrimSpace(imageURL)
 	if imageURL == "" || strings.HasPrefix(imageURL, "http://") || strings.HasPrefix(imageURL, "https://") {
@@ -108,7 +115,7 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 	wooBySKU := make(map[string]string)
 	for _, w := range wooProducts {
 		if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
-			wooBySKU[key] = w.ID
+			wooBySKU[key] = wooExternalRef(w)
 		}
 	}
 
@@ -219,7 +226,7 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 			Name:           w.Name,
 			TrackInventory: true,
 			Price:          w.Price,
-			ExternalID:     w.ID,
+			ExternalID:     wooExternalRef(w),
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {
