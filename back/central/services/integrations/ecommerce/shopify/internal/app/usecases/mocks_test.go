@@ -131,6 +131,18 @@ func (m *mockShopifyClient) SetDebug(enabled bool) {
 	}
 }
 
+func (m *mockShopifyClient) GetLocations(ctx context.Context, storeName, accessToken string) ([]domain.ShopifyLocation, error) {
+	return nil, nil
+}
+
+func (m *mockShopifyClient) GetProduct(ctx context.Context, storeName, accessToken, productID string) (*domain.ShopifyProduct, error) {
+	return nil, nil
+}
+
+func (m *mockShopifyClient) SetInventoryLevel(ctx context.Context, storeName, accessToken string, locationID, inventoryItemID int64, available int) error {
+	return nil
+}
+
 
 type mockOrderPublisher struct {
 	PublishFn       func(ctx context.Context, order *domain.ProbabilityOrderDTO) error

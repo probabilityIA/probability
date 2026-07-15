@@ -18,6 +18,9 @@ type ShopifyClient interface {
 	DeleteWebhook(ctx context.Context, storeName, accessToken, webhookID string) error
 	CreateCarrierService(ctx context.Context, storeName, accessToken, callbackURL, name string) (string, error)
 	DeleteCarrierService(ctx context.Context, storeName, accessToken, carrierServiceID string) error
+	GetLocations(ctx context.Context, storeName, accessToken string) ([]ShopifyLocation, error)
+	GetProduct(ctx context.Context, storeName, accessToken, productID string) (*ShopifyProduct, error)
+	SetInventoryLevel(ctx context.Context, storeName, accessToken string, locationID, inventoryItemID int64, available int) error
 	SetDebug(enabled bool)
 }
 

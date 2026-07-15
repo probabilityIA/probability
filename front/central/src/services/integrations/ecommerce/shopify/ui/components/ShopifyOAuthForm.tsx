@@ -11,6 +11,9 @@ import {
     InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
+import { ShopifyInventorySection, ShopifyInventoryConfig } from './ShopifyInventorySection';
+import { ShopifyLocationMappingSection, ShopifyLocationMapping } from './ShopifyLocationMappingSection';
+import { ShopifyInventorySyncModal } from './ShopifyInventorySyncModal';
 import { getActionError } from '@/shared/utils/action-result';
 import { useToast } from '@/shared/providers/toast-provider';
 import {
@@ -118,6 +121,29 @@ export default function ShopifyOAuthForm({
         initialData?.config?.carrier_calculated_shipping_enabled === true
     );
     const [carrierLoading, setCarrierLoading] = useState(false);
+    const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [inventorySync, setInventorySync] = useState<ShopifyInventoryConfig>(() => {
+        const c: any = initialData?.config || {};
+        return {
+            enabled: !!c.inventory_sync_enabled,
+            mode: c.inventory_warehouse_mode === 'single' ? 'single' : 'sum',
+            single_warehouse_id: Number(c.inventory_single_warehouse_id) || 0,
+            warehouse_ids: Array.isArray(c.inventory_warehouse_ids) ? c.inventory_warehouse_ids.map(Number) : [],
+        };
+    });
+    const [defaultLocationId, setDefaultLocationId] = useState<string>(() => {
+        const c: any = initialData?.config || {};
+        return c.shopify_default_location_id ? String(c.shopify_default_location_id) : '';
+    });
+    const [locationMappings, setLocationMappings] = useState<ShopifyLocationMapping[]>(() => {
+        const c: any = initialData?.config || {};
+        return Array.isArray(c.shopify_location_mappings)
+            ? c.shopify_location_mappings.map((m: any) => ({
+                internal_warehouse_id: Number(m.internal_warehouse_id) || 0,
+                shopify_location_id: String(m.shopify_location_id ?? ''),
+            }))
+            : [];
+    });
 
     useEffect(() => {
         let cancelled = false;
@@ -164,10 +190,27 @@ export default function ShopifyOAuthForm({
             if (formData.client_secret) credentials.client_secret = formData.client_secret;
             if (accessToken) credentials.access_token = accessToken;
 
+            const cleanMappings = locationMappings
+                .filter((m) => m.internal_warehouse_id > 0 && m.shopify_location_id.trim() !== '')
+                .map((m) => ({
+                    internal_warehouse_id: m.internal_warehouse_id,
+                    shopify_location_id: m.shopify_location_id.trim(),
+                }));
+
+            const mergedConfig = {
+                ...(initialData?.config || {}),
+                inventory_sync_enabled: inventorySync.enabled,
+                inventory_warehouse_mode: inventorySync.mode,
+                inventory_single_warehouse_id: inventorySync.single_warehouse_id,
+                inventory_warehouse_ids: inventorySync.warehouse_ids,
+                shopify_default_location_id: defaultLocationId.trim() ? Number(defaultLocationId.trim()) || 0 : 0,
+                shopify_location_mappings: cleanMappings,
+            };
+
             onSubmit({
                 name: formData.name,
                 store_id: formData.shop_domain,
-                config: initialData?.config || {},
+                config: mergedConfig,
                 credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
                 is_testing: isTesting,
             });
@@ -373,6 +416,32 @@ export default function ShopifyOAuthForm({
                     >
                         <ShopifyWebhookManager integrationId={integrationId} />
                     </div>
+
+                    <ShopifyInventorySection
+                        value={inventorySync}
+                        onChange={setInventorySync}
+                        businessId={initialData?.business_id ?? null}
+                        integrationId={integrationId}
+                        onSyncNow={() => setInventorySyncOpen(true)}
+                        canSyncNow={inventorySync.enabled}
+                    />
+
+                    {inventorySync.enabled && (
+                        <ShopifyLocationMappingSection
+                            mappings={locationMappings}
+                            onChangeMappings={setLocationMappings}
+                            defaultLocationId={defaultLocationId}
+                            onChangeDefaultLocation={setDefaultLocationId}
+                            businessId={initialData?.business_id ?? null}
+                        />
+                    )}
+
+                    <ShopifyInventorySyncModal
+                        isOpen={inventorySyncOpen}
+                        onClose={() => setInventorySyncOpen(false)}
+                        integrationId={integrationId}
+                        businessId={initialData?.business_id ?? null}
+                    />
 
                     <div
                         className="rounded-xl p-4 dark:bg-gray-800/60"
