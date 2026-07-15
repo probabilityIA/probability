@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    Search, RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileCheck2, FileX2, Truck, Ban,
+    Search, RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileCheck2, FileX2, FileText, Truck, Ban,
 } from 'lucide-react';
 import { getCodOrdersAction } from '../../infra/actions';
 import { CodOrder, CodState, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { GuidePreviewModal } from './GuidePreviewModal';
 
 interface Props {
     filters: ReportFilters;
@@ -30,6 +31,16 @@ function CodStateBadge({ state }: { state: CodState }) {
         return (
             <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold">
                 <CheckCircle2 size={13} /> Recaudada
+            </span>
+        );
+    }
+    if (state === 'pending_payment') {
+        return (
+            <span
+                className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-semibold"
+                title="Entregada: falta que el administrador la marque como pagada al cliente"
+            >
+                <Clock size={13} /> Pendiente de pago
             </span>
         );
     }
@@ -70,6 +81,7 @@ export default function CodOrdersTab({ filters }: Props) {
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
     const [tz, setTz] = useState('');
+    const [guidePreview, setGuidePreview] = useState<CodOrder | null>(null);
 
     useEffect(() => { setTz(browserTimeZone()); }, []);
 
@@ -128,8 +140,8 @@ export default function CodOrdersTab({ filters }: Props) {
                     className="px-2 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                     <option value="">Todas</option>
-                    <option value="true">Recaudadas</option>
-                    <option value="false">Por recaudar</option>
+                    <option value="true">Pagadas al cliente</option>
+                    <option value="false">Por pagar</option>
                 </select>
                 <select
                     value={hasGuide}
@@ -167,6 +179,7 @@ export default function CodOrdersTab({ filters }: Props) {
                             <th className="text-left px-3 py-2 font-semibold">Cliente</th>
                             <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
                             <th className="text-center px-3 py-2 font-semibold">Guia</th>
+                            <th className="text-center px-3 py-2 font-semibold">Guia PDF</th>
                             <th className="text-left px-3 py-2 font-semibold">Estado</th>
                             <th className="text-right px-3 py-2 font-semibold">COD orden (prod + envio)</th>
                             <th className="text-right px-3 py-2 font-semibold">Cargo COD carrier</th>
@@ -180,12 +193,12 @@ export default function CodOrdersTab({ filters }: Props) {
                     </thead>
                     <tbody>
                         {loading && (
-                            <tr><td colSpan={12} className="text-center py-10 text-gray-400">
+                            <tr><td colSpan={13} className="text-center py-10 text-gray-400">
                                 <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
                             </td></tr>
                         )}
                         {!loading && orders.length === 0 && !error && (
-                            <tr><td colSpan={12} className="text-center py-10 text-gray-400 text-sm">
+                            <tr><td colSpan={13} className="text-center py-10 text-gray-400 text-sm">
                                 <Package size={28} className="mx-auto mb-2 opacity-50" />
                                 No hay ordenes contra entrega en el periodo.
                             </td></tr>
@@ -216,6 +229,19 @@ export default function CodOrdersTab({ filters }: Props) {
                                             <span className="inline-flex items-center gap-1 text-gray-400 text-xs" title="Sin guia generada">
                                                 <FileX2 size={13} /> Sin guia
                                             </span>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-2 text-center">
+                                        {o.has_guide && o.shipment_id ? (
+                                            <button
+                                                onClick={() => setGuidePreview(o)}
+                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                                                title="Ver y descargar guia PDF"
+                                            >
+                                                <FileText size={13} /> Ver PDF
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-300 text-xs">-</span>
                                         )}
                                     </td>
                                     <td className="px-3 py-2">
@@ -267,6 +293,14 @@ export default function CodOrdersTab({ filters }: Props) {
                     </div>
                 </div>
             )}
+
+            <GuidePreviewModal
+                isOpen={!!guidePreview}
+                onClose={() => setGuidePreview(null)}
+                shipmentId={guidePreview?.shipment_id ?? null}
+                orderLabel={guidePreview ? `#${guidePreview.order_number || guidePreview.order_id.slice(0, 8)}` : undefined}
+                carrierLabel={guidePreview ? carrierLabel(guidePreview.carrier) : undefined}
+            />
         </div>
     );
 }
