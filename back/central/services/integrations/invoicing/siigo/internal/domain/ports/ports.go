@@ -63,6 +63,7 @@ type WebhookLogEntry struct {
 	Source              string
 	EventType           string
 	URL                 string
+	Headers             map[string][]string
 	Body                []byte
 	RemoteIP            string
 	IntegrationID       *uint

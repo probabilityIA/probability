@@ -27,6 +27,7 @@ type webhookLogRow struct {
 	EventType           string         `gorm:"column:event_type"`
 	URL                 string         `gorm:"column:url"`
 	Method              string         `gorm:"column:method"`
+	Headers             datatypes.JSON `gorm:"column:headers"`
 	RequestBody         datatypes.JSON `gorm:"column:request_body"`
 	RemoteIP            string         `gorm:"column:remote_ip"`
 	Status              string         `gorm:"column:status"`
@@ -67,6 +68,13 @@ func (r *WebhookLogRepository) LogIncoming(ctx context.Context, entry ports.Webh
 		bodyJSON = datatypes.JSON([]byte("{}"))
 	}
 
+	var headersJSON datatypes.JSON
+	if len(entry.Headers) > 0 {
+		if raw, mErr := json.Marshal(entry.Headers); mErr == nil {
+			headersJSON = datatypes.JSON(raw)
+		}
+	}
+
 	eventType := entry.EventType
 	if eventType == "" {
 		eventType = "unknown"
@@ -85,6 +93,7 @@ func (r *WebhookLogRepository) LogIncoming(ctx context.Context, entry ports.Webh
 		EventType:      eventType,
 		URL:            entry.URL,
 		Method:         "POST",
+		Headers:        headersJSON,
 		RequestBody:    bodyJSON,
 		RemoteIP:       entry.RemoteIP,
 		Status:         "received",

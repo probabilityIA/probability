@@ -53,10 +53,20 @@ func (h *Handler) HandleWebhook(c *gin.Context) {
 		}
 	}
 
+	h.log.Info(c.Request.Context()).
+		Str("uri", c.Request.RequestURI).
+		Str("content_type", c.ContentType()).
+		Int("content_length", len(body)).
+		Str("remote_ip", c.ClientIP()).
+		Str("raw_body", string(body)).
+		Interface("headers", c.Request.Header).
+		Msg("Webhook Siigo recibido (captura cruda)")
+
 	logID, logErr := h.webhookLog.LogIncoming(c.Request.Context(), ports.WebhookLogEntry{
 		Source:              "siigo",
 		EventType:           payload.Topic,
-		URL:                 c.Request.URL.Path,
+		URL:                 c.Request.RequestURI,
+		Headers:             c.Request.Header,
 		Body:                body,
 		RemoteIP:            c.ClientIP(),
 		IntegrationID:       integrationID,
