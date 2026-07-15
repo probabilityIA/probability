@@ -83,6 +83,36 @@ func (r *ProductRepository) GetStockForProducts(ctx context.Context, productIDs 
 	return result, nil
 }
 
+func (r *ProductRepository) GetInventoryByWarehouses(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]map[uint]int, error) {
+	result := make(map[string]map[uint]int)
+	if len(productIDs) == 0 {
+		return result, nil
+	}
+	var rows []struct {
+		ProductID   string
+		WarehouseID uint
+		Qty         int
+	}
+	query := r.db.Conn(ctx).
+		Table("inventory_levels").
+		Select("product_id, warehouse_id, COALESCE(SUM(available_qty), 0) AS qty").
+		Where("product_id IN ? AND deleted_at IS NULL", productIDs)
+	if len(warehouseIDs) > 0 {
+		query = query.Where("warehouse_id IN ?", warehouseIDs)
+	}
+	err := query.Group("product_id, warehouse_id").Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if result[row.ProductID] == nil {
+			result[row.ProductID] = make(map[uint]int)
+		}
+		result[row.ProductID][row.WarehouseID] = row.Qty
+	}
+	return result, nil
+}
+
 func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, businessID uint) ([]domain.ProductForSync, error) {
 	var rows []struct {
 		ID             string

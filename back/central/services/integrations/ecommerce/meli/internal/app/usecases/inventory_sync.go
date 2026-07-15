@@ -24,6 +24,45 @@ func toUint(v interface{}) uint {
 	return 0
 }
 
+func toStr(v interface{}) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case float64:
+		return strconv.FormatInt(int64(val), 10)
+	case int64:
+		return strconv.FormatInt(val, 10)
+	case int:
+		return strconv.Itoa(val)
+	}
+	return ""
+}
+
+func parseWarehouseMappings(config map[string]interface{}) []domain.WarehouseMapping {
+	raw, ok := config["warehouse_mappings"].([]interface{})
+	if !ok {
+		return nil
+	}
+	var mappings []domain.WarehouseMapping
+	for _, item := range raw {
+		m, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		internalID := toUint(m["internal_warehouse_id"])
+		storeID := toStr(m["ml_store_id"])
+		if internalID == 0 || storeID == "" {
+			continue
+		}
+		mappings = append(mappings, domain.WarehouseMapping{
+			InternalWarehouseID: internalID,
+			MLStoreID:           storeID,
+			MLNetworkNodeID:     toStr(m["ml_network_node_id"]),
+		})
+	}
+	return mappings
+}
+
 func parseInventoryConfig(config map[string]interface{}) domain.InventoryConfig {
 	cfg := domain.InventoryConfig{Mode: "sum"}
 	if v, ok := config["inventory_warehouse_mode"].(string); ok && v != "" {
@@ -40,6 +79,7 @@ func parseInventoryConfig(config map[string]interface{}) domain.InventoryConfig 
 	if v, ok := config["inventory_sync_enabled"].(bool); ok {
 		cfg.Enabled = v
 	}
+	cfg.WarehouseMappings = parseWarehouseMappings(config)
 	return cfg
 }
 
@@ -65,7 +105,6 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 	}
 
 	cfg := parseInventoryConfig(integration.Config)
-	warehouseIDs := resolveWarehouseIDs(cfg)
 
 	accessToken, err := uc.EnsureValidToken(ctx, integrationID)
 	if err != nil {
@@ -77,6 +116,16 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 		return fmt.Errorf("listing mapped items: %w", err)
 	}
 
+	if len(cfg.WarehouseMappings) > 0 {
+		return uc.syncInventoryMultiWarehouse(ctx, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID)
+	}
+
+	return uc.syncInventorySingle(ctx, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID)
+}
+
+func (uc *meliUseCase) syncInventorySingle(ctx context.Context, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string) error {
+	warehouseIDs := resolveWarehouseIDs(cfg)
+
 	productIDs := make([]string, 0, len(mapped))
 	for _, m := range mapped {
 		productIDs = append(productIDs, m.ProductID)
@@ -87,7 +136,7 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 	}
 
 	total := len(mapped)
-	uc.emitInventoryEvent(ctx, businessID, uint(integIDUint), "meli.inventory.sync.started", map[string]interface{}{
+	uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.started", map[string]interface{}{
 		"correlation_id": correlationID,
 		"total":          total,
 	})
@@ -97,12 +146,12 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 		qty := stock[m.ProductID]
 		if uerr := uc.client.UpdateStock(ctx, accessToken, m.ExternalItemID, qty); uerr != nil {
 			if uerr == domain.ErrTokenExpired {
-				newToken, rerr := uc.EnsureValidToken(ctx, integrationID)
+				newToken, rerr := uc.EnsureValidToken(ctx, integrationIDStr)
 				if rerr == nil {
 					accessToken = newToken
 					if retry := uc.client.UpdateStock(ctx, accessToken, m.ExternalItemID, qty); retry == nil {
 						updated++
-						uc.maybeInventoryProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, updated, unchanged, skipped, failed)
+						uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
 						continue
 					}
 				}
@@ -112,10 +161,10 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 		} else {
 			updated++
 		}
-		uc.maybeInventoryProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, updated, unchanged, skipped, failed)
+		uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
 	}
 
-	uc.emitInventoryEvent(ctx, businessID, uint(integIDUint), "meli.inventory.sync.completed", map[string]interface{}{
+	uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.completed", map[string]interface{}{
 		"correlation_id": correlationID,
 		"total":          total,
 		"updated":        updated,
