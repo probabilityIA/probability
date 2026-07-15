@@ -12,6 +12,7 @@ type IHandler interface {
 	SyncProducts(c *gin.Context)
 	ReconcileProducts(c *gin.Context)
 	ApplyProducts(c *gin.Context)
+	AssociateProducts(c *gin.Context)
 	SyncInventory(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
@@ -35,6 +36,7 @@ func (h *wooCommerceHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 		woo.POST("/products/sync", middleware.JWT(), h.SyncProducts)
 		woo.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
 		woo.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
+		woo.POST("/products/associate", middleware.JWT(), h.AssociateProducts)
 		woo.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
 	}
 }

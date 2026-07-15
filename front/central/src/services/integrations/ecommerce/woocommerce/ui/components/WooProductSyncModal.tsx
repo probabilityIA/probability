@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft } from 'lucide-react';
+import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft, Link2 } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
-import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction } from '../../infra/actions';
+import { reconcileWooProductsAction, applyWooProductsAction, syncWooProductsAction, associateWooProductsAction } from '../../infra/actions';
 
 interface WooProductSyncModalProps {
     isOpen: boolean;
@@ -20,6 +20,7 @@ interface Brief {
 
 interface Diff {
     matched: number;
+    matchedNotAssociated: Brief[];
     onlyInProbability: Brief[];
     onlyInWoo: Brief[];
     probabilityNoSku: number;
@@ -54,6 +55,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     const [failed, setFailed] = useState(0);
     const [isFullSync, setIsFullSync] = useState(false);
     const [items, setItems] = useState<SyncItem[]>([]);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const correlationRef = useRef<string | null>(null);
@@ -67,8 +69,10 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setPhase('error');
             return;
         }
+        setSelected(new Set());
         setDiff({
             matched: Number(res.matched) || 0,
+            matchedNotAssociated: res.matched_not_associated || [],
             onlyInProbability: res.only_in_probability || [],
             onlyInWoo: res.only_in_woocommerce || [],
             probabilityNoSku: Number(res.probability_no_sku) || 0,
@@ -89,6 +93,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             setFailed(0);
             setIsFullSync(false);
             setItems([]);
+            setSelected(new Set());
             setErrorMessage(null);
             correlationRef.current = null;
             return;
@@ -114,6 +119,35 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
             return;
         }
         correlationRef.current = res.correlation_id;
+    };
+
+    const handleAssociate = async (skus?: string[]) => {
+        setDirection(null);
+        setIsFullSync(false);
+        setPhase('running');
+        setTotal(skus ? skus.length : (diff?.matchedNotAssociated.length || 0));
+        setProcessed(0);
+        setCreated(0);
+        setUpdated(0);
+        setFailed(0);
+        setItems([]);
+        correlationRef.current = null;
+        const res: any = await associateWooProductsAction(integrationId, businessId ?? undefined, skus);
+        if (!res?.success || !res?.correlation_id) {
+            setErrorMessage(res?.message || 'No se pudo iniciar la asociacion');
+            setPhase('error');
+            return;
+        }
+        correlationRef.current = res.correlation_id;
+    };
+
+    const toggleSelected = (sku: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(sku)) next.delete(sku);
+            else next.add(sku);
+            return next;
+        });
     };
 
     const handleFullSync = async () => {
@@ -183,7 +217,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
     if (!isOpen) return null;
 
     const progressPct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : phase === 'done' ? 100 : 0;
-    const inSync = diff && diff.onlyInProbability.length === 0 && diff.onlyInWoo.length === 0;
+    const inSync = diff && diff.onlyInProbability.length === 0 && diff.onlyInWoo.length === 0 && diff.matchedNotAssociated.length === 0;
 
     return (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -223,7 +257,7 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
                                 <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden en ambos lados</span>
+                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya estan asociados a este canal</span>
                             </div>
 
                             <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10 p-3 flex items-start justify-between gap-3">
@@ -235,6 +269,27 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                                     <RefreshCw size={14} /> Sincronizar stock
                                 </button>
                             </div>
+
+                            {diff.matchedNotAssociated.length > 0 && (
+                                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Crea la relacion (sin tocar stock) para que el canal los reconozca como propios.</p>
+                                        </div>
+                                        <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                            <Link2 size={14} /> Asociar todos
+                                        </button>
+                                    </div>
+                                    <SelectableProductList items={diff.matchedNotAssociated} selected={selected} onToggle={toggleSelected} />
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <span className="text-[11px] text-gray-400">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
+                                        <button onClick={() => handleAssociate(Array.from(selected))} disabled={selected.size === 0} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                            <Link2 size={14} /> Asociar seleccionados
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             {inSync ? (
                                 <div className="text-center py-6 text-gray-600 dark:text-gray-300">
@@ -287,8 +342,8 @@ export function WooProductSyncModal({ isOpen, onClose, integrationId, businessId
                     {(phase === 'running' || phase === 'done') && (
                         <div>
                             <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                                {direction === 'to_woo' ? <ArrowUpFromLine size={16} className="text-violet-600" /> : <ArrowDownToLine size={16} className="text-blue-600" />}
-                                {isFullSync ? 'Sincronizando stock con WooCommerce' : direction === 'to_woo' ? 'Creando en WooCommerce' : 'Creando en Probability'}
+                                {direction === 'to_woo' ? <ArrowUpFromLine size={16} className="text-violet-600" /> : (!direction && !isFullSync) ? <Link2 size={16} className="text-amber-600" /> : <ArrowDownToLine size={16} className="text-blue-600" />}
+                                {isFullSync ? 'Sincronizando stock con WooCommerce' : direction === 'to_woo' ? 'Creando en WooCommerce' : direction === 'to_probability' ? 'Creando en Probability' : 'Asociando al canal'}
                                 {phase === 'running' && <Loader2 size={14} className="animate-spin text-gray-400" />}
                             </div>
                             <div className="flex items-center justify-between mb-2">
@@ -369,6 +424,27 @@ function ProductList({ items }: { items: Brief[] }) {
                 </div>
             ))}
             {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+        </div>
+    );
+}
+
+function SelectableProductList({ items, selected, onToggle }: { items: Brief[]; selected: Set<string>; onToggle: (sku: string) => void }) {
+    if (items.length === 0) return null;
+    return (
+        <div className="mt-2 max-h-40 overflow-y-auto rounded-md bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/40 divide-y divide-gray-100 dark:divide-gray-700">
+            {items.slice(0, 200).map((p, i) => (
+                <label key={i} className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-900/10">
+                    <input
+                        type="checkbox"
+                        checked={selected.has(p.sku)}
+                        onChange={() => onToggle(p.sku)}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-200 truncate flex-1">{p.name || '(sin nombre)'}</span>
+                    <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
+                </label>
+            ))}
+            {items.length > 200 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 200} mas (usa "Asociar todos")...</div>}
         </div>
     );
 }

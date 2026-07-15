@@ -60,12 +60,48 @@ func (h *wooCommerceHandler) ReconcileProducts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":              true,
-		"matched":              result.Matched,
-		"only_in_probability":  briefsToResponse(result.OnlyInProbability),
-		"only_in_woocommerce":  briefsToResponse(result.OnlyInWoo),
-		"probability_no_sku":   result.ProbabilityNoSKU,
-		"woocommerce_no_sku":   result.WooNoSKU,
+		"success":                true,
+		"matched":                result.Matched,
+		"matched_not_associated": briefsToResponse(result.MatchedNotAssociated),
+		"only_in_probability":    briefsToResponse(result.OnlyInProbability),
+		"only_in_woocommerce":    briefsToResponse(result.OnlyInWoo),
+		"probability_no_sku":     result.ProbabilityNoSKU,
+		"woocommerce_no_sku":     result.WooNoSKU,
+	})
+}
+
+type associateRequest struct {
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Skus          []string `json:"skus"`
+}
+
+func (h *wooCommerceHandler) AssociateProducts(c *gin.Context) {
+	var req associateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "integration_id es requerido"})
+		return
+	}
+	businessID, ok := h.resolveBusinessID(c, req.BusinessID)
+	if !ok {
+		return
+	}
+
+	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
+	correlationID := uuid.New().String()
+	skus := req.Skus
+
+	go func() {
+		ctx := context.Background()
+		if err := h.useCase.AssociateProducts(ctx, integrationID, businessID, correlationID, skus); err != nil {
+			h.logger.Error(ctx).Err(err).Msg("Error asociando productos a WooCommerce")
+		}
+	}()
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"success":        true,
+		"correlation_id": correlationID,
+		"message":        "Asociacion iniciada",
 	})
 }
 

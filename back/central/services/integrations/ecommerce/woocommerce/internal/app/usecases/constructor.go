@@ -33,6 +33,7 @@ type IWooCommerceUseCase interface {
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
 	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 }
 
 type wooCommerceUseCase struct {

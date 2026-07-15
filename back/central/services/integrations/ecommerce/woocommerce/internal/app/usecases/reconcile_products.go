@@ -67,10 +67,23 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		return nil, err
 	}
 
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	mapped, merr := uc.productRepo.ListMappedItems(ctx, uint(integIDUint))
+	if merr != nil {
+		return nil, fmt.Errorf("listing mapped items: %w", merr)
+	}
+	associatedSKUs := make(map[string]bool)
+	for _, m := range mapped {
+		if k := normalizeSKU(m.SKU); k != "" {
+			associatedSKUs[k] = true
+		}
+	}
+
 	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
-		OnlyInProbability: []domain.ProductBrief{},
-		OnlyInWoo:         []domain.ProductBrief{},
+		MatchedNotAssociated: []domain.ProductBrief{},
+		OnlyInProbability:    []domain.ProductBrief{},
+		OnlyInWoo:            []domain.ProductBrief{},
 	}
 	for _, p := range probProducts {
 		key := normalizeSKU(p.SKU)
@@ -90,7 +103,11 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		}
 		wooSKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
-			result.Matched++
+			if associatedSKUs[key] {
+				result.Matched++
+			} else {
+				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
+			}
 		} else {
 			result.OnlyInWoo = append(result.OnlyInWoo, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
 		}
@@ -246,6 +263,90 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 		"total":          total,
 		"created":        created,
 		"updated":        0,
+		"failed":         failed,
+	})
+	return nil
+}
+
+func (uc *wooCommerceUseCase) AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	_, _, _, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	if err != nil {
+		return err
+	}
+
+	wooBySKU := make(map[string]string)
+	for _, w := range wooProducts {
+		if k := normalizeSKU(w.SKU); k != "" && w.ID != "" {
+			wooBySKU[k] = wooExternalRef(w)
+		}
+	}
+	probBySKU := make(map[string]domain.ProductForSync)
+	for _, p := range probProducts {
+		if k := normalizeSKU(p.SKU); k != "" {
+			probBySKU[k] = p
+		}
+	}
+
+	mappedItems, err := uc.productRepo.ListMappedItems(ctx, uint(integIDUint))
+	if err != nil {
+		return err
+	}
+	associated := make(map[string]bool)
+	for _, m := range mappedItems {
+		if k := normalizeSKU(m.SKU); k != "" {
+			associated[k] = true
+		}
+	}
+
+	targets := make([]string, 0)
+	if len(skus) > 0 {
+		for _, s := range skus {
+			if k := normalizeSKU(s); k != "" {
+				targets = append(targets, k)
+			}
+		}
+	} else {
+		for k := range probBySKU {
+			if wooBySKU[k] != "" && !associated[k] {
+				targets = append(targets, k)
+			}
+		}
+	}
+
+	total := len(targets)
+	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.started", map[string]interface{}{
+		"correlation_id": correlationID,
+		"direction":      "associate",
+		"total":          total,
+	})
+
+	updated, failed := 0, 0
+	for i, k := range targets {
+		p, okP := probBySKU[k]
+		ref, okW := wooBySKU[k]
+		if !okP || !okW || ref == "" || associated[k] {
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, 0, updated, failed)
+			continue
+		}
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), ref); merr != nil {
+			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al asociar producto a WooCommerce")
+			failed++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, 0, "failed")
+		} else {
+			associated[k] = true
+			updated++
+			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, 0, "updated")
+		}
+		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, 0, updated, failed)
+	}
+
+	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.completed", map[string]interface{}{
+		"correlation_id": correlationID,
+		"direction":      "associate",
+		"total":          total,
+		"created":        0,
+		"updated":        updated,
 		"failed":         failed,
 	})
 	return nil

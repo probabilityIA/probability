@@ -51,6 +51,13 @@ export async function applyWooProductsAction(integrationId: number, direction: '
     return postWithAuth('/woocommerce/products/apply', body);
 }
 
+export async function associateWooProductsAction(integrationId: number, businessId?: number, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/woocommerce/products/associate', body);
+}
+
 export async function syncWooInventoryAction(integrationId: number, businessId?: number) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;
