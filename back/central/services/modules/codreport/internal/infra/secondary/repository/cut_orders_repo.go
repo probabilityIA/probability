@@ -150,7 +150,7 @@ func (r *Repository) PaidAggregatesForCut(ctx context.Context, cutID uint) ([]en
 	var rows []carrierAggRow
 	sql := `
 SELECT carrier, COUNT(*) AS orders_count, COALESCE(SUM(cod_amount),0) AS total_collected
-FROM cod_payment_cut_orders
+FROM cod_payment_cut_order
 WHERE cod_payment_cut_id = ? AND deleted_at IS NULL
 GROUP BY carrier
 ORDER BY total_collected DESC`
