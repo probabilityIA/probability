@@ -14,9 +14,11 @@ import {
     InformationCircleIcon,
     BoltIcon,
     ArrowPathIcon,
+    LinkIcon,
 } from '@heroicons/react/24/outline';
 import { MercadoLibreProductSyncModal } from './MercadoLibreProductSyncModal';
 import { MercadoLibreInventorySection, MeliInventoryConfig } from './MercadoLibreInventorySection';
+import { MercadoLibreWarehouseMappingSection, MeliWarehouseMapping } from './MercadoLibreWarehouseMappingSection';
 import { MercadoLibreInventorySyncModal } from './MercadoLibreInventorySyncModal';
 
 interface MercadoLibreConfigFormProps {
@@ -66,6 +68,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
     const [logoFailed, setLogoFailed] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [reconnecting, setReconnecting] = useState(false);
     const [inventorySync, setInventorySync] = useState<MeliInventoryConfig>(() => {
         const c: any = initialData?.config || {};
         return {
@@ -74,6 +77,16 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
             single_warehouse_id: Number(c.inventory_single_warehouse_id) || 0,
             warehouse_ids: Array.isArray(c.inventory_warehouse_ids) ? c.inventory_warehouse_ids.map(Number) : [],
         };
+    });
+    const [warehouseMappings, setWarehouseMappings] = useState<MeliWarehouseMapping[]>(() => {
+        const c: any = initialData?.config || {};
+        return Array.isArray(c.warehouse_mappings)
+            ? c.warehouse_mappings.map((m: any) => ({
+                internal_warehouse_id: Number(m.internal_warehouse_id) || 0,
+                ml_store_id: String(m.ml_store_id ?? ''),
+                ml_network_node_id: String(m.ml_network_node_id ?? ''),
+            }))
+            : [];
     });
 
     const [formData, setFormData] = useState({
@@ -160,11 +173,51 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
         }
     };
 
+    const handleReconnect = async () => {
+        if (!integrationId) return;
+        setReconnecting(true);
+        try {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+            const response = await fetch(`${apiBaseUrl}/integrations/meli/connect`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TokenStorage.getSessionToken()}`,
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    integration_name: formData.name || initialData?.name || 'MercadoLibre',
+                    business_id: selectedBusinessId ?? 0,
+                    is_testing: false,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success || !data.authorization_url) {
+                throw new Error(data.error || data.message || 'Error al iniciar la reconexion OAuth');
+            }
+            try {
+                localStorage.setItem('meli_reconnect', JSON.stringify({ integration_id: integrationId }));
+            } catch { }
+            window.location.href = data.authorization_url;
+        } catch (err: any) {
+            setErrorModal(err.message || 'Error al reconectar con MercadoLibre');
+            setReconnecting(false);
+        }
+    };
+
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
+            const cleanMappings = warehouseMappings
+                .filter((m) => m.internal_warehouse_id > 0 && m.ml_store_id.trim() !== '')
+                .map((m) => ({
+                    internal_warehouse_id: m.internal_warehouse_id,
+                    ml_store_id: m.ml_store_id.trim(),
+                    ml_network_node_id: m.ml_network_node_id.trim(),
+                }));
+
             const config: any = {
                 ...(initialData?.config || {}),
                 seller_id: formData.seller_id || undefined,
@@ -172,6 +225,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
                 inventory_warehouse_ids: inventorySync.warehouse_ids,
+                warehouse_mappings: cleanMappings,
             };
 
             if (isEdit && integrationId) {
@@ -496,6 +550,43 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                                <LinkIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
+                                Reconectar con MercadoLibre
+                            </h4>
+                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                                Vuelve a autorizar con OAuth para renovar los tokens sin pegarlos a mano. Actualiza esta misma integracion.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleReconnect}
+                            disabled={reconnecting}
+                            className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors disabled:opacity-60"
+                            style={{ backgroundColor: GREEN }}
+                            onMouseEnter={(e) => { if (!reconnecting) (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                        >
+                            {reconnecting ? (
+                                'Redirigiendo...'
+                            ) : (
+                                <>
+                                    <LinkIcon className="w-3.5 h-3.5" />
+                                    Reconectar
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {isEdit && integrationId && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                                 <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
                                 Sincronizar productos
                             </h4>
@@ -526,6 +617,14 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                 onSyncNow={isEdit && integrationId ? () => setInventorySyncOpen(true) : undefined}
                 canSyncNow={inventorySync.enabled}
             />
+
+            {inventorySync.enabled && (
+                <MercadoLibreWarehouseMappingSection
+                    value={warehouseMappings}
+                    onChange={setWarehouseMappings}
+                    businessId={selectedBusinessId}
+                />
+            )}
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

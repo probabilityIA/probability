@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
+import { createIntegrationAction, updateIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
@@ -62,6 +62,42 @@ export function MercadoLibreOAuthCallback() {
                 }
 
                 const sellerId = tokenData.seller_id ? String(tokenData.seller_id) : '';
+
+                let reconnectId: number | null = null;
+                try {
+                    const raw = localStorage.getItem('meli_reconnect');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed?.integration_id) reconnectId = Number(parsed.integration_id);
+                    }
+                } catch { }
+
+                if (reconnectId) {
+                    localStorage.removeItem('meli_reconnect');
+                    const updateResponse: any = await updateIntegrationAction(reconnectId, {
+                        store_id: sellerId || undefined,
+                        config: {
+                            app_id: tokenData.client_id,
+                            seller_id: tokenData.seller_id,
+                            token_expires_at: tokenData.expires_at,
+                        } as any,
+                        credentials: {
+                            access_token: tokenData.access_token,
+                            refresh_token: tokenData.refresh_token,
+                            client_id: tokenData.client_id,
+                            client_secret: tokenData.client_secret,
+                        } as any,
+                    });
+
+                    if (!updateResponse || updateResponse.success === false) {
+                        throw new Error(updateResponse?.message || 'Error al reconectar la integracion');
+                    }
+
+                    setStatus('success');
+                    setMessage('MercadoLibre reconectado exitosamente. Redirigiendo...');
+                    setTimeout(() => router.push('/integrations'), 2000);
+                    return;
+                }
 
                 const response = await createIntegrationAction({
                     name: integrationName,
