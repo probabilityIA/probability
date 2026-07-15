@@ -56,6 +56,17 @@ func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.In
 		return nil, fmt.Errorf("fetching order: %w", err)
 	}
 
+	uc.enrichBillingInfo(ctx, accessToken, order)
+
+	if order.PackID != nil && *order.PackID > 0 {
+		merged, perr := uc.consolidatePack(ctx, accessToken, *order.PackID, order)
+		if perr != nil {
+			uc.logger.Warn(ctx).Err(perr).Int64("pack_id", *order.PackID).Msg("Failed to consolidate pack, using single order")
+		} else if merged != nil {
+			order = merged
+		}
+	}
+
 	var shippingDetail *domain.MeliShippingDetail
 	if order.Shipping != nil && order.Shipping.ID > 0 {
 		shippingDetail, err = uc.client.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
@@ -66,8 +77,6 @@ func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.In
 			shippingDetail = nil
 		}
 	}
-
-	uc.enrichBillingInfo(ctx, accessToken, order)
 
 	dto := mapper.MapMeliOrderToProbability(order, shippingDetail, rawJSON)
 	dto.IntegrationID = integration.ID
