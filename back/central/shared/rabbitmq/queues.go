@@ -29,6 +29,10 @@ const (
 
 	QueueOrdersToShipments = "orders.events.shipments"
 
+	QueueOrdersToMeli = "orders.events.meli"
+
+	QueueMeliBillingRetry = "meli.order.billing_retry"
+
 	QueueOrdersConfirmationRequested = "orders.confirmation.requested"
 
 	QueueWhatsAppOrderConfirmed = "orders.whatsapp.confirmed"

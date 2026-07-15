@@ -27,6 +27,8 @@ type IMeliUseCase interface {
 	UpdateItemStock(ctx context.Context, integrationID, itemID string, quantity int) error
 
 	PushOrderStatus(ctx context.Context, integrationID string, shipmentID int64, status string) error
+
+	RetryBilling(ctx context.Context, integrationID string, orderID int64) (bool, error)
 }
 
 type meliUseCase struct {

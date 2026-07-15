@@ -56,7 +56,9 @@ func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.In
 		return nil, fmt.Errorf("fetching order: %w", err)
 	}
 
-	uc.enrichBillingInfo(ctx, accessToken, order)
+	if uc.enrichBillingInfo(ctx, accessToken, order) {
+		uc.enqueueBillingRetry(ctx, strconv.FormatUint(uint64(integration.ID), 10), order.ID, 1)
+	}
 
 	if order.PackID != nil && *order.PackID > 0 {
 		merged, perr := uc.consolidatePack(ctx, accessToken, *order.PackID, order)

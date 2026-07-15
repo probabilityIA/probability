@@ -7,6 +7,7 @@ import (
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/primary/handlers"
+	meliqueue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/client"
 	melicore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/queue"
@@ -17,8 +18,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa el módulo de MercadoLibre y retorna el provider para registrar en integrationCore.
-// type_id = 3 (IntegrationTypeMercadoLibre)
 func New(
 	router *gin.RouterGroup,
 	logger log.ILogger,
@@ -29,13 +28,12 @@ func New(
 ) integrationcore.IIntegrationContract {
 	logger = logger.WithModule("meli")
 
-	// 1. Infraestructura secundaria
 	httpClient := client.New()
 	integrationService := melicore.NewIntegrationService(coreIntegration)
 	productRepo := repository.New(database, logger)
 	inventoryRepo := repository.NewInventory(database, logger)
+	orderLookupRepo := repository.NewOrderLookup(database, logger)
 
-	// Publisher de órdenes a RabbitMQ (con fallback no-op si no hay conexión)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
 	if rabbitMQ != nil {
 		orderPublisher = queue.New(rabbitMQ, logger, config)
@@ -44,13 +42,18 @@ func New(
 			Msg("RabbitMQ not available, MercadoLibre orders will not be published to queue")
 	}
 
-	// 2. Casos de uso
 	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, inventoryRepo, rabbitMQ, logger)
 
-	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger, config, coreIntegration)
 	handler.RegisterRoutes(router, logger)
 
-	// 4. Retornar provider para que el bundle padre lo registre en el core
+	if rabbitMQ != nil {
+		statusConsumer := meliqueue.NewOrderStatusConsumer(rabbitMQ, uc, orderLookupRepo, logger)
+		statusConsumer.Start(context.Background())
+
+		billingConsumer := meliqueue.NewBillingRetryConsumer(rabbitMQ, uc, logger)
+		billingConsumer.Start(context.Background())
+	}
+
 	return melicore.New(uc)
 }
