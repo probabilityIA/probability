@@ -9,25 +9,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-// MapMeliOrderToProbability convierte una orden de MercadoLibre al DTO canónico de Probability.
-// shippingDetail puede ser nil si no se pudo obtener el detalle del envío.
+const meliAPIBaseURL = "https://api.mercadolibre.com"
+
 func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.MeliShippingDetail, rawJSON []byte) *canonical.ProbabilityOrderDTO {
 	now := time.Now()
 
-	// Calcular shipping cost
 	shippingCost := 0.0
 	if shippingDetail != nil && shippingDetail.ShippingOption != nil {
 		shippingCost = shippingDetail.ShippingOption.Cost
 	}
 
-	// Subtotal = TotalAmount - ShippingCost + CouponAmount
-	// MeLi: TotalAmount ya incluye descuentos pero no shipping
 	subtotal := order.TotalAmount + order.CouponAmount
 
-	// Customer
 	customerName := strings.TrimSpace(fmt.Sprintf("%s %s", order.Buyer.FirstName, order.Buyer.LastName))
 	if customerName == "" {
 		customerName = order.Buyer.Nickname
+	}
+	if customerName == "" && shippingDetail != nil && shippingDetail.ReceiverAddress != nil {
+		customerName = shippingDetail.ReceiverAddress.ReceiverName
 	}
 
 	customerPhone := ""
@@ -38,19 +37,20 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 			customerPhone = order.Buyer.Phone.Number
 		}
 	}
+	if customerPhone == "" && shippingDetail != nil && shippingDetail.ReceiverAddress != nil {
+		customerPhone = shippingDetail.ReceiverAddress.ReceiverPhone
+	}
 
 	customerDNI := ""
 	if order.Buyer.BillingInfo != nil {
 		customerDNI = order.Buyer.BillingInfo.DocNumber
 	}
 
-	// Coupon
 	var coupon *string
 	if order.CouponID != nil && *order.CouponID != "" {
 		coupon = order.CouponID
 	}
 
-	// Status mapping
 	status := mapMeliOrderStatus(order.Status)
 
 	dto := &canonical.ProbabilityOrderDTO{
@@ -59,7 +59,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		ExternalID:      fmt.Sprintf("%d", order.ID),
 		OrderNumber:     fmt.Sprintf("%d", order.ID),
 		Subtotal:        subtotal,
-		Tax:             0, // MeLi no separa impuestos
+		Tax:             0,
 		Discount:        order.CouponAmount,
 		ShippingCost:    shippingCost,
 		TotalAmount:     order.TotalAmount,
@@ -71,11 +71,11 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		Status:          status,
 		OriginalStatus:  order.Status,
 		Coupon:          coupon,
+		OrderTypeName:   deriveOrderType(shippingDetail),
 		OccurredAt:      order.DateCreated,
 		ImportedAt:      now,
 	}
 
-	// Order items
 	dto.OrderItems = make([]canonical.ProbabilityOrderItemDTO, 0, len(order.OrderItems))
 	for _, item := range order.OrderItems {
 		productID := item.Item.ID
@@ -104,7 +104,6 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		})
 	}
 
-	// Addresses (from shipping detail)
 	if shippingDetail != nil && shippingDetail.ReceiverAddress != nil {
 		addr := shippingDetail.ReceiverAddress
 		street := addr.StreetName
@@ -112,24 +111,33 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 			street = addr.StreetName + " " + addr.StreetNumber
 		}
 
-		dto.Addresses = append(dto.Addresses, canonical.ProbabilityAddressDTO{
+		city := addr.City.Name
+		if strings.EqualFold(addr.State.Name, "Bogota D.C.") || strings.EqualFold(addr.State.Name, "Bogotá D.C.") {
+			if addr.City.Name != "" {
+				street = strings.TrimSpace(street + " - " + addr.City.Name)
+			}
+			city = addr.State.Name
+		}
+
+		address := canonical.ProbabilityAddressDTO{
 			Type:       "shipping",
+			FirstName:  customerName,
+			Phone:      customerPhone,
 			Street:     street,
-			City:       addr.City.Name,
+			City:       city,
 			State:      addr.State.Name,
 			Country:    addr.Country.Name,
 			PostalCode: addr.ZipCode,
 			Latitude:   addr.Latitude,
 			Longitude:  addr.Longitude,
-		})
-
+		}
 		if addr.Comment != "" {
 			instructions := addr.Comment
-			dto.Addresses[len(dto.Addresses)-1].Instructions = &instructions
+			address.Instructions = &instructions
 		}
+		dto.Addresses = append(dto.Addresses, address)
 	}
 
-	// Payments
 	dto.Payments = make([]canonical.ProbabilityPaymentDTO, 0, len(order.Payments))
 	for _, p := range order.Payments {
 		gateway := p.PaymentMethodID
@@ -144,7 +152,6 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		})
 	}
 
-	// Shipment
 	if shippingDetail != nil {
 		carrier := "mercadoenvios"
 		shStatus := mapMeliShippingStatus(shippingDetail.Status)
@@ -153,6 +160,18 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 			Carrier:      &carrier,
 			Status:       shStatus,
 			ShippingCost: &shippingCost,
+		}
+
+		if shippingDetail.ID > 0 {
+			guideID := fmt.Sprintf("%d", shippingDetail.ID)
+			shipment.GuideID = &guideID
+			guideURL := fmt.Sprintf("%s/shipment_labels?shipment_ids=%d&response_type=pdf", meliAPIBaseURL, shippingDetail.ID)
+			shipment.GuideURL = &guideURL
+		}
+
+		if shippingDetail.TrackingNumber != "" {
+			tn := shippingDetail.TrackingNumber
+			shipment.TrackingNumber = &tn
 		}
 
 		if shippingDetail.ShippingOption != nil {
@@ -166,7 +185,6 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		dto.Shipments = append(dto.Shipments, shipment)
 	}
 
-	// Channel metadata
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "mercadolibre",
@@ -181,7 +199,29 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 	return dto
 }
 
-// mapMeliOrderStatus mapea el estado de orden MeLi al estado canónico de Probability.
+func deriveOrderType(shippingDetail *domain.MeliShippingDetail) string {
+	if shippingDetail == nil {
+		return "marketplace"
+	}
+	switch shippingDetail.LogisticType {
+	case "fulfillment":
+		return "full"
+	case "self_service":
+		return "flex"
+	case "cross_docking":
+		return "cross_docking"
+	case "drop_off", "xd_drop_off":
+		return "mercado_envios"
+	}
+	switch shippingDetail.LogisticMode {
+	case "me1":
+		return "me1"
+	case "me2":
+		return "mercado_envios"
+	}
+	return "marketplace"
+}
+
 func mapMeliOrderStatus(meliStatus string) string {
 	switch meliStatus {
 	case "confirmed":
@@ -196,12 +236,13 @@ func mapMeliOrderStatus(meliStatus string) string {
 		return "paid"
 	case "cancelled":
 		return "cancelled"
+	case "invalid":
+		return "cancelled"
 	default:
 		return meliStatus
 	}
 }
 
-// mapMeliPaymentStatus mapea el estado de pago MeLi al estado canónico.
 func mapMeliPaymentStatus(meliStatus string) string {
 	switch meliStatus {
 	case "approved":
@@ -210,7 +251,7 @@ func mapMeliPaymentStatus(meliStatus string) string {
 		return "pending"
 	case "rejected":
 		return "failed"
-	case "refunded":
+	case "refunded", "charged_back":
 		return "refunded"
 	case "cancelled":
 		return "cancelled"
@@ -219,10 +260,9 @@ func mapMeliPaymentStatus(meliStatus string) string {
 	}
 }
 
-// mapMeliShippingStatus mapea el estado de envío MeLi al estado canónico.
 func mapMeliShippingStatus(meliStatus string) string {
 	switch meliStatus {
-	case "ready_to_ship":
+	case "pending", "handling", "ready_to_ship":
 		return "pending"
 	case "shipped":
 		return "shipped"

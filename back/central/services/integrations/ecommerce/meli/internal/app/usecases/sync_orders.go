@@ -27,7 +27,6 @@ func (uc *meliUseCase) emitOrderSyncEvent(ctx context.Context, integration *doma
 	})
 }
 
-// SyncOrders sincroniza órdenes de MercadoLibre de los últimos 30 días.
 func (uc *meliUseCase) SyncOrders(ctx context.Context, integrationID string) error {
 	after := time.Now().AddDate(0, 0, -30)
 	params := map[string]interface{}{
@@ -36,10 +35,7 @@ func (uc *meliUseCase) SyncOrders(ctx context.Context, integrationID string) err
 	return uc.SyncOrdersWithParams(ctx, integrationID, params)
 }
 
-// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados.
-// Soporta: created_at_min, created_at_max, status (string).
 func (uc *meliUseCase) SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error {
-	// 1. Obtener integración
 	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
 		return fmt.Errorf("getting integration: %w", err)
@@ -48,19 +44,16 @@ func (uc *meliUseCase) SyncOrdersWithParams(ctx context.Context, integrationID s
 		return domain.ErrIntegrationNotFound
 	}
 
-	// 2. Obtener seller_id del config o store_id
 	sellerID, err := extractSellerID(integration)
 	if err != nil {
 		return err
 	}
 
-	// 3. Obtener access_token vigente
 	accessToken, err := uc.EnsureValidToken(ctx, integrationID)
 	if err != nil {
 		return fmt.Errorf("ensuring valid token: %w", err)
 	}
 
-	// 4. Construir query params
 	queryParams := buildMeliQueryParams(params)
 
 	uc.logger.Info(ctx).
@@ -68,7 +61,6 @@ func (uc *meliUseCase) SyncOrdersWithParams(ctx context.Context, integrationID s
 		Int64("seller_id", sellerID).
 		Msg("Starting MercadoLibre order sync")
 
-	// 5. Lanzar sincronización en background
 	go uc.syncOrdersAsync(context.Background(), integration, accessToken, sellerID, queryParams)
 
 	return nil
@@ -81,7 +73,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 	totalSynced := 0
 	offset := 0
 	if params.Limit == 0 {
-		params.Limit = 50 // MeLi max per page
+		params.Limit = 50
 	}
 
 	integrationID := fmt.Sprintf("%d", integration.ID)
@@ -91,7 +83,6 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 
 		result, rawOrders, err := uc.client.GetOrders(ctx, accessToken, sellerID, params)
 		if err != nil {
-			// Si el token expiró durante la sync, intentar refrescar
 			if err == domain.ErrTokenExpired {
 				uc.logger.Info(ctx).Msg("Token expired during sync, refreshing...")
 				newToken, refreshErr := uc.EnsureValidToken(ctx, integrationID)
@@ -100,7 +91,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 					break
 				}
 				accessToken = newToken
-				continue // Reintentar la misma página
+				continue
 			}
 
 			uc.logger.Error(ctx).Err(err).
@@ -116,13 +107,13 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			break
 		}
 
-		for i, order := range result.Orders {
+		for i := range result.Orders {
+			order := result.Orders[i]
 			var rawJSON []byte
 			if i < len(rawOrders) {
 				rawJSON = rawOrders[i]
 			}
 
-			// Obtener detalles de envío si hay shipping
 			var shippingDetail *domain.MeliShippingDetail
 			if order.Shipping != nil && order.Shipping.ID > 0 {
 				detail, shErr := uc.client.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
@@ -134,6 +125,8 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 					shippingDetail = detail
 				}
 			}
+
+			uc.enrichBillingInfo(ctx, accessToken, &order)
 
 			dto := mapper.MapMeliOrderToProbability(&order, shippingDetail, rawJSON)
 			dto.IntegrationID = integration.ID
@@ -154,13 +147,11 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			Int("total", result.Total).
 			Msg("MeLi orders page synced")
 
-		// MeLi paginación: si offset + limit >= total, terminamos
 		if offset+params.Limit >= result.Total {
 			break
 		}
 
 		offset += params.Limit
-		// Rate limiting: 1s entre páginas (MeLi es más agresivo que WooCommerce)
 		time.Sleep(1 * time.Second)
 	}
 
@@ -175,10 +166,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 	})
 }
 
-// extractSellerID obtiene el seller_id de una integración.
-// Busca primero en config["seller_id"], luego usa StoreID.
 func extractSellerID(integration *domain.Integration) (int64, error) {
-	// Opción 1: config["seller_id"]
 	if v, ok := integration.Config["seller_id"]; ok {
 		switch id := v.(type) {
 		case float64:
@@ -196,7 +184,6 @@ func extractSellerID(integration *domain.Integration) (int64, error) {
 		}
 	}
 
-	// Opción 2: StoreID
 	if integration.StoreID != "" {
 		var parsed int64
 		_, err := fmt.Sscanf(integration.StoreID, "%d", &parsed)
@@ -208,7 +195,6 @@ func extractSellerID(integration *domain.Integration) (int64, error) {
 	return 0, domain.ErrSellerIDNotFound
 }
 
-// buildMeliQueryParams construye los parámetros de consulta a partir de un mapa genérico.
 func buildMeliQueryParams(params interface{}) *domain.GetOrdersParams {
 	qp := &domain.GetOrdersParams{
 		Sort:  "date_desc",

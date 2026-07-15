@@ -2,24 +2,19 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
+
+	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/client/response"
 )
 
-// HandleNotification recibe notificaciones IPN de MercadoLibre.
-// MercadoLibre envía un POST con el topic y el resource en el body JSON.
-// Se responde 200 inmediatamente y se procesa en background.
-//
-// Referencia: https://developers.mercadolibre.com/es_ar/recibir-notificaciones
 func (h *meliHandler) HandleNotification(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 1. Leer body crudo
 	rawBody, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		h.logger.Error(ctx).Err(err).Msg("Failed to read notification body")
@@ -27,7 +22,6 @@ func (h *meliHandler) HandleNotification(c *gin.Context) {
 		return
 	}
 
-	// 2. Deserializar la notificación
 	var notifBody response.MeliNotificationBody
 	if err := json.Unmarshal(rawBody, &notifBody); err != nil {
 		h.logger.Warn(ctx).Err(err).
@@ -37,6 +31,8 @@ func (h *meliHandler) HandleNotification(c *gin.Context) {
 		return
 	}
 
+	h.verifyNotificationSignature(ctx, c, notifBody.Resource)
+
 	h.logger.Info(ctx).
 		Str("topic", notifBody.Topic).
 		Str("resource", notifBody.Resource).
@@ -44,10 +40,8 @@ func (h *meliHandler) HandleNotification(c *gin.Context) {
 		Int("attempts", notifBody.Attempts).
 		Msg("MercadoLibre IPN notification received")
 
-	// 3. Responder 200 inmediatamente (MeLi espera respuesta rápida, si no, re-envía)
 	c.Status(http.StatusOK)
 
-	// 4. Convertir a dominio y procesar en background
 	notification := notifBody.ToDomain()
 	go h.processNotificationAsync(&notification)
 }

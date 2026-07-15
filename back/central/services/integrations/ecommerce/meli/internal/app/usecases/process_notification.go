@@ -6,115 +6,206 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/app/usecases/mapper"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-// ProcessNotification procesa una notificación IPN de MercadoLibre.
-// MeLi solo envía topic + resource URL; debemos obtener la orden completa de la API.
 func (uc *meliUseCase) ProcessNotification(ctx context.Context, notification *domain.MeliNotification) error {
-	// 1. Filtrar por topic — solo procesar "orders_v2"
-	if notification.Topic != "orders_v2" {
+	switch notification.Topic {
+	case "orders_v2", "orders":
+		return uc.processOrderNotification(ctx, notification)
+	case "shipments":
+		return uc.processShipmentNotification(ctx, notification)
+	case "payments":
+		return uc.processPaymentNotification(ctx, notification)
+	case "items", "items_prices", "stock-locations":
+		return uc.processItemNotification(ctx, notification)
+	case "claims", "messages", "post_purchase":
+		return uc.processClaimNotification(ctx, notification)
+	default:
 		uc.logger.Info(ctx).
 			Str("topic", notification.Topic).
 			Str("resource", notification.Resource).
-			Msg("Ignoring non-order notification")
+			Msg("Ignoring unsupported MercadoLibre notification topic")
 		return nil
 	}
+}
 
-	// 2. Extraer order_id del resource path ("/orders/123456789")
-	orderID, err := extractOrderIDFromResource(notification.Resource)
-	if err != nil {
-		uc.logger.Error(ctx).Err(err).
-			Str("resource", notification.Resource).
-			Msg("Failed to extract order ID from notification resource")
-		return fmt.Errorf("extracting order_id: %w", err)
-	}
-
-	uc.logger.Info(ctx).
-		Int64("order_id", orderID).
-		Int64("user_id", notification.UserID).
-		Msg("Processing MercadoLibre order notification")
-
-	// 3. Buscar integración por seller_id (notification.UserID = seller_id de MeLi)
-	sellerID := fmt.Sprintf("%d", notification.UserID)
+func (uc *meliUseCase) resolveIntegrationAndToken(ctx context.Context, userID int64) (*domain.Integration, string, error) {
+	sellerID := fmt.Sprintf("%d", userID)
 	integration, err := uc.service.GetIntegrationByStoreID(ctx, sellerID)
 	if err != nil {
-		uc.logger.Error(ctx).Err(err).
-			Str("seller_id", sellerID).
-			Msg("Failed to find integration by seller_id")
-		return fmt.Errorf("finding integration: %w", err)
+		return nil, "", fmt.Errorf("finding integration: %w", err)
 	}
 	if integration == nil {
-		uc.logger.Warn(ctx).
-			Str("seller_id", sellerID).
-			Msg("No integration found for MeLi seller_id")
-		return domain.ErrIntegrationNotFound
+		uc.logger.Warn(ctx).Str("seller_id", sellerID).Msg("No integration found for MeLi seller_id")
+		return nil, "", domain.ErrIntegrationNotFound
 	}
-
 	integrationID := fmt.Sprintf("%d", integration.ID)
-
-	// 4. Obtener access_token vigente
 	accessToken, err := uc.EnsureValidToken(ctx, integrationID)
 	if err != nil {
-		uc.logger.Error(ctx).Err(err).
-			Uint("integration_id", integration.ID).
-			Msg("Failed to ensure valid token")
-		return fmt.Errorf("ensuring valid token: %w", err)
+		return nil, "", fmt.Errorf("ensuring valid token: %w", err)
 	}
+	return integration, accessToken, nil
+}
 
-	// 5. Obtener orden completa de la API de MeLi
+func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.Integration, accessToken string, orderID int64) (*canonical.ProbabilityOrderDTO, error) {
 	order, rawJSON, err := uc.client.GetOrder(ctx, accessToken, orderID)
 	if err != nil {
-		uc.logger.Error(ctx).Err(err).
-			Int64("order_id", orderID).
-			Msg("Failed to fetch order from MeLi API")
-		return fmt.Errorf("fetching order: %w", err)
+		return nil, fmt.Errorf("fetching order: %w", err)
 	}
 
-	// 6. Obtener detalles de envío si hay shipping
 	var shippingDetail *domain.MeliShippingDetail
 	if order.Shipping != nil && order.Shipping.ID > 0 {
 		shippingDetail, err = uc.client.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
 		if err != nil {
-			// No es fatal — logear y continuar sin datos de envío
 			uc.logger.Warn(ctx).Err(err).
 				Int64("shipment_id", order.Shipping.ID).
 				Msg("Failed to fetch shipment detail, continuing without shipping data")
+			shippingDetail = nil
 		}
 	}
 
-	// 7. Mapear a DTO canónico
+	uc.enrichBillingInfo(ctx, accessToken, order)
+
 	dto := mapper.MapMeliOrderToProbability(order, shippingDetail, rawJSON)
 	dto.IntegrationID = integration.ID
 	dto.BusinessID = integration.BusinessID
+	return dto, nil
+}
 
-	// 8. Publicar a la cola
+func (uc *meliUseCase) publishOrder(ctx context.Context, integration *domain.Integration, accessToken string, orderID int64) error {
+	dto, err := uc.fetchOrderDTO(ctx, integration, accessToken, orderID)
+	if err != nil {
+		return err
+	}
 	if err := uc.publisher.Publish(ctx, dto); err != nil {
-		uc.logger.Error(ctx).Err(err).
-			Int64("order_id", orderID).
-			Msg("Failed to publish MeLi order to queue")
 		return fmt.Errorf("publishing order: %w", err)
 	}
-
 	uc.logger.Info(ctx).
 		Int64("order_id", orderID).
-		Str("status", order.Status).
 		Uint("integration_id", integration.ID).
-		Msg("MercadoLibre order published successfully")
-
+		Msg("MercadoLibre order published")
 	return nil
 }
 
-// extractOrderIDFromResource extrae el order_id numérico del resource path.
-// Ejemplo: "/orders/123456789" -> 123456789
-func extractOrderIDFromResource(resource string) (int64, error) {
-	// El resource puede ser "/orders/123456789" o "orders/123456789"
-	parts := strings.Split(strings.Trim(resource, "/"), "/")
-	if len(parts) < 2 {
+func (uc *meliUseCase) processOrderNotification(ctx context.Context, notification *domain.MeliNotification) error {
+	orderID, err := extractResourceIntID(notification.Resource)
+	if err != nil {
+		return fmt.Errorf("extracting order_id: %w", err)
+	}
+	integration, accessToken, err := uc.resolveIntegrationAndToken(ctx, notification.UserID)
+	if err != nil {
+		return err
+	}
+	return uc.publishOrder(ctx, integration, accessToken, orderID)
+}
+
+func (uc *meliUseCase) processShipmentNotification(ctx context.Context, notification *domain.MeliNotification) error {
+	shipmentID, err := extractResourceIntID(notification.Resource)
+	if err != nil {
+		return fmt.Errorf("extracting shipment_id: %w", err)
+	}
+	integration, accessToken, err := uc.resolveIntegrationAndToken(ctx, notification.UserID)
+	if err != nil {
+		return err
+	}
+	orderIDs, err := uc.client.GetShipmentOrderIDs(ctx, accessToken, shipmentID)
+	if err != nil {
+		return fmt.Errorf("resolving shipment orders: %w", err)
+	}
+	if len(orderIDs) == 0 {
+		uc.logger.Warn(ctx).Int64("shipment_id", shipmentID).Msg("No orders found for shipment")
+		return nil
+	}
+	for _, orderID := range orderIDs {
+		if perr := uc.publishOrder(ctx, integration, accessToken, orderID); perr != nil {
+			uc.logger.Error(ctx).Err(perr).Int64("order_id", orderID).Msg("Failed to publish order from shipment notification")
+		}
+	}
+	return nil
+}
+
+func (uc *meliUseCase) processPaymentNotification(ctx context.Context, notification *domain.MeliNotification) error {
+	paymentID, err := extractResourceIntID(notification.Resource)
+	if err != nil {
+		return fmt.Errorf("extracting payment_id: %w", err)
+	}
+	integration, accessToken, err := uc.resolveIntegrationAndToken(ctx, notification.UserID)
+	if err != nil {
+		return err
+	}
+	orderID, err := uc.client.GetPaymentOrderID(ctx, accessToken, paymentID)
+	if err != nil {
+		if err == domain.ErrOrderNotFound {
+			uc.logger.Info(ctx).Int64("payment_id", paymentID).Msg("Payment has no associated order, skipping")
+			return nil
+		}
+		return fmt.Errorf("resolving payment order: %w", err)
+	}
+	return uc.publishOrder(ctx, integration, accessToken, orderID)
+}
+
+func (uc *meliUseCase) processClaimNotification(ctx context.Context, notification *domain.MeliNotification) error {
+	claimID, err := extractResourceIntID(notification.Resource)
+	if err != nil {
+		return fmt.Errorf("extracting claim_id: %w", err)
+	}
+	integration, accessToken, err := uc.resolveIntegrationAndToken(ctx, notification.UserID)
+	if err != nil {
+		return err
+	}
+	claim, err := uc.client.GetClaim(ctx, accessToken, claimID)
+	if err != nil {
+		if err == domain.ErrOrderNotFound {
+			return nil
+		}
+		return fmt.Errorf("fetching claim: %w", err)
+	}
+	if claim.ResourceType != "order" || claim.ResourceID <= 0 {
+		uc.logger.Info(ctx).Int64("claim_id", claimID).Msg("Claim not attached to an order, skipping")
+		return nil
+	}
+	dto, err := uc.fetchOrderDTO(ctx, integration, accessToken, claim.ResourceID)
+	if err != nil {
+		return err
+	}
+	note := buildClaimNote(claim)
+	dto.Notes = &note
+	if err := uc.publisher.Publish(ctx, dto); err != nil {
+		return fmt.Errorf("publishing order with claim note: %w", err)
+	}
+	return nil
+}
+
+func buildClaimNote(claim *domain.MeliClaim) string {
+	parts := []string{fmt.Sprintf("Reclamo MercadoLibre (%s)", claim.Status)}
+	if claim.Reason != "" {
+		parts = append(parts, claim.Reason)
+	}
+	if len(claim.Messages) > 0 {
+		parts = append(parts, strings.Join(claim.Messages, " | "))
+	}
+	return strings.Join(parts, ": ")
+}
+
+func extractResourceIntID(resource string) (int64, error) {
+	segment := extractResourceStringID(resource)
+	if segment == "" {
 		return 0, fmt.Errorf("invalid resource format: %s", resource)
 	}
-	// El último segmento es el ID
-	idStr := parts[len(parts)-1]
-	return strconv.ParseInt(idStr, 10, 64)
+	return strconv.ParseInt(segment, 10, 64)
+}
+
+func extractResourceStringID(resource string) string {
+	trimmed := strings.Trim(resource, "/")
+	if trimmed == "" {
+		return ""
+	}
+	if idx := strings.IndexByte(trimmed, '?'); idx >= 0 {
+		trimmed = trimmed[:idx]
+	}
+	parts := strings.Split(trimmed, "/")
+	return parts[len(parts)-1]
 }

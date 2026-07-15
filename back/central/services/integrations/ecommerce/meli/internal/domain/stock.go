@@ -36,3 +36,12 @@ type MeliPack struct {
 	ID       int64
 	OrderIDs []int64
 }
+
+type MeliClaim struct {
+	ID           int64
+	ResourceType string
+	ResourceID   int64
+	Reason       string
+	Status       string
+	Messages     []string
+}
