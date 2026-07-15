@@ -14,7 +14,16 @@ core de integraciones, y requiere sign-off.
 
 ## Items
 
-### URGENTE (bloqueante de produccion)
+### URGENTE (bloqueante de produccion) - RESUELTO 2026-07-14
+
+Corregido: se agrego `UpdateIntegrationCredentials` a `core.IIntegrationService`
+(facade en `bundle.go` via `useCase.UpdateIntegration` con `UpdateIntegrationDTO{Credentials}`),
+se expuso en el puerto/adaptador de meli, y `refreshAccessToken` ahora persiste
+`{access_token nuevo, refresh_token rotado, client_secret}` tras cada refresh
+(ademas de `token_expires_at`). Mocks de siigo/factus actualizados. Build+tests OK.
+Pendiente de verificacion E2E: correr mas de 6h y confirmar varios ciclos de refresh.
+
+Descripcion original del bug:
 
 `refresh_token.go` -> `refreshAccessToken` NO persiste:
 - el nuevo `access_token`, ni

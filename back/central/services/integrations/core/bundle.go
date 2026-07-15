@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
@@ -75,6 +76,7 @@ type IIntegrationService interface {
 	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
+	UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
 	// GetPlatformCredential decrypts a field from the integration type's platform credentials.
 	// Use when an integration has use_platform_token=true in its config.
@@ -190,6 +192,16 @@ func (ic *integrationCore) DecryptCredential(ctx context.Context, integrationID 
 
 func (ic *integrationCore) UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error {
 	return ic.useCase.UpdateIntegrationConfig(ctx, integrationID, newConfig)
+}
+
+func (ic *integrationCore) UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error {
+	id, err := strconv.ParseUint(integrationID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid integration id %q: %w", integrationID, err)
+	}
+	creds := credentials
+	_, err = ic.useCase.UpdateIntegration(ctx, uint(id), domain.UpdateIntegrationDTO{Credentials: &creds})
+	return err
 }
 
 func (ic *integrationCore) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {

@@ -7,12 +7,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-// integrationServiceAdapter adapta core.IIntegrationService -> domain.IIntegrationService.
 type integrationServiceAdapter struct {
 	core integrationcore.IIntegrationService
 }
 
-// NewIntegrationService crea el adaptador de servicio de integración para MercadoLibre.
 func NewIntegrationService(core integrationcore.IIntegrationService) domain.IIntegrationService {
 	return &integrationServiceAdapter{core: core}
 }
@@ -41,6 +39,10 @@ func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integ
 
 func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error {
 	return a.core.UpdateIntegrationConfig(ctx, integrationID, config)
+}
+
+func (a *integrationServiceAdapter) UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error {
+	return a.core.UpdateIntegrationCredentials(ctx, integrationID, credentials)
 }
 
 func (a *integrationServiceAdapter) GetIntegrationByStoreID(ctx context.Context, storeID string) (*domain.Integration, error) {

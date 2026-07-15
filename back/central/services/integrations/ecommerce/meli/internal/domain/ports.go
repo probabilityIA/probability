@@ -48,6 +48,7 @@ type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error
+	UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error
 	GetIntegrationByStoreID(ctx context.Context, storeID string) (*Integration, error)
 }
 

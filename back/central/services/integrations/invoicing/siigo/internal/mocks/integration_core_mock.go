@@ -49,6 +49,10 @@ func (m *IntegrationCoreMock) UpdateIntegrationConfig(ctx context.Context, integ
 	return nil
 }
 
+func (m *IntegrationCoreMock) UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error {
+	return nil
+}
+
 // GetIntegrationConfig implementa core.IIntegrationService.
 func (m *IntegrationCoreMock) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {
 	if m.GetIntegrationConfigFn != nil {
