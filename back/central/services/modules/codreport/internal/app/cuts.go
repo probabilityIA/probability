@@ -90,31 +90,71 @@ func (uc *UseCase) ListCuts(ctx context.Context, businessID uint, isAdmin bool) 
 	return cuts, nil
 }
 
-func (uc *UseCase) ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
-	dm := uc.discountMap(ctx, d.BusinessID)
-
-	aggs, err := uc.repo.CutPeriodOrders(ctx, d.BusinessID, d.PeriodStart, d.PeriodEnd)
+func (uc *UseCase) SelectableOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error) {
+	orders, err := uc.repo.SelectableCutOrders(ctx, f)
 	if err != nil {
 		return nil, err
 	}
-	domain.EnrichCarrierAggregates(aggs, dm)
-	oc, tc, td, tn := domain.SumAggregates(aggs)
+	dm := uc.discountMap(ctx, f.BusinessID)
+	for i := range orders {
+		pct := dm[orders[i].Carrier]
+		d, n := domain.ApplyDiscount(orders[i].CodTotal, pct)
+		orders[i].DiscountPct = pct
+		orders[i].Discount = d
+		orders[i].Net = n
+		orders[i].CodState = domain.CodStatePendingPayment
+	}
+	return orders, nil
+}
 
-	cut := entities.PaymentCut{
-		BusinessID:     d.BusinessID,
-		PeriodStart:    d.PeriodStart,
-		PeriodEnd:      d.PeriodEnd,
-		Status:         "confirmed",
-		OrdersCount:    oc,
-		TotalCollected: tc,
-		TotalDiscount:  td,
-		TotalNet:       tn,
-		ByCarrier:      aggs,
+func (uc *UseCase) ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
+	dm := uc.discountMap(ctx, d.BusinessID)
+
+	payouts, err := uc.repo.PayoutOrders(ctx, d.BusinessID, d.OrderIDs)
+	if err != nil {
+		return nil, err
 	}
 
 	userName := d.UserName
 	if userName == "" {
 		userName = uc.repo.UserName(ctx, d.UserID)
 	}
-	return uc.repo.SaveConfirmedCut(ctx, cut, d.UserID, userName)
+
+	shell := entities.PaymentCut{
+		BusinessID:  d.BusinessID,
+		PeriodStart: d.PeriodStart,
+		PeriodEnd:   d.PeriodEnd,
+	}
+	cutID, err := uc.repo.UpsertCutOrders(ctx, shell, payouts, d.UserID, userName)
+	if err != nil {
+		return nil, err
+	}
+
+	aggs, err := uc.repo.PaidAggregatesForCut(ctx, cutID)
+	if err != nil {
+		return nil, err
+	}
+	domain.EnrichCarrierAggregates(aggs, dm)
+	oc, tc, td, tn := domain.SumAggregates(aggs)
+
+	now := time.Now().UTC()
+	cut := entities.PaymentCut{
+		ID:              cutID,
+		BusinessID:      d.BusinessID,
+		PeriodStart:     d.PeriodStart,
+		PeriodEnd:       d.PeriodEnd,
+		Status:          "confirmed",
+		OrdersCount:     oc,
+		TotalCollected:  tc,
+		TotalDiscount:   td,
+		TotalNet:        tn,
+		ByCarrier:       aggs,
+		ConfirmedBy:     d.UserID,
+		ConfirmedByName: userName,
+		ConfirmedAt:     &now,
+	}
+	if err := uc.repo.UpdateCutTotals(ctx, cut); err != nil {
+		return nil, err
+	}
+	return &cut, nil
 }

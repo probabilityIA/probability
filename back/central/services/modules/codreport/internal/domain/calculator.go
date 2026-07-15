@@ -8,6 +8,7 @@ import (
 
 const (
 	CodStateCollected      = "collected"
+	CodStatePendingPayment = "pending_payment"
 	CodStateInProgress     = "in_progress"
 	CodStatePending        = "pending"
 	CodStateNotCollectable = "not_collectable"
@@ -35,6 +36,16 @@ func CollectionState(shipmentStatus string) string {
 
 func IsCollected(shipmentStatus string) bool {
 	return CollectionState(shipmentStatus) == CodStateCollected
+}
+
+func PaymentState(shipmentStatus string, paid bool) string {
+	if paid {
+		return CodStateCollected
+	}
+	if shipmentStatus == "delivered" {
+		return CodStatePendingPayment
+	}
+	return CollectionState(shipmentStatus)
 }
 
 func ApplyDiscount(collected, pct float64) (discount, net float64) {

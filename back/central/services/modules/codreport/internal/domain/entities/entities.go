@@ -26,6 +26,7 @@ type CodOrder struct {
 	Currency      string
 	Status        string
 	Collected     bool
+	Paid          bool
 	CodState      string
 	CreatedAt     time.Time
 	DeliveredAt   *time.Time
@@ -82,4 +83,10 @@ type WeekAggregate struct {
 	Carrier   string
 	Orders    int
 	Collected float64
+}
+
+type PayoutOrder struct {
+	OrderID   string
+	Carrier   string
+	CodAmount float64
 }

@@ -10,6 +10,7 @@ import (
 func (r *Repository) migrateCodReport(ctx context.Context) error {
 	if err := r.db.Conn(ctx).AutoMigrate(
 		&models.CodPaymentCut{},
+		&models.CodPaymentCutOrder{},
 	); err != nil {
 		return fmt.Errorf("failed to auto-migrate cod report: %w", err)
 	}

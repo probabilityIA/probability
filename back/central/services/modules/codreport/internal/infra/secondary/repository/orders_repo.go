@@ -23,11 +23,14 @@ type codOrderRow struct {
 	Collected     bool
 	ShipmentID    uint
 	HasGuide      bool
+	Paid          bool
 	CreatedAt     time.Time
 	DeliveredAt   *time.Time
 }
 
 const hasGuideExpr = `(COALESCE(NULLIF(s.guide_id,''),'') <> '' OR COALESCE(NULLIF(s.guide_url,''),'') <> '' OR COALESCE(NULLIF(s.probability_guide_url,''),'') <> '')`
+
+const paidExpr = `EXISTS (SELECT 1 FROM cod_payment_cut_orders cpo WHERE cpo.order_id = o.id AND cpo.deleted_at IS NULL)`
 
 func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
 	conds := []string{"o.deleted_at IS NULL", "o.cod_total > 0", "o.business_id = ?"}
@@ -43,9 +46,9 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 	}
 	if f.Collected != nil {
 		if *f.Collected {
-			conds = append(conds, "s.status = 'delivered'")
+			conds = append(conds, paidExpr)
 		} else {
-			conds = append(conds, "s.status <> 'delivered'")
+			conds = append(conds, "NOT "+paidExpr)
 		}
 	}
 	if f.Search != "" {
@@ -90,6 +93,7 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	COALESCE(s.cod_carrier_fee,0) AS cod_carrier_fee,
 	s.status, s.delivered_at,
 	(s.status = 'delivered') AS collected,
+	`+paidExpr+` AS paid,
 	`+hasGuideExpr+` AS has_guide
 FROM orders o %s
 WHERE %s
@@ -117,6 +121,7 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 			Currency:      rows[i].Currency,
 			Status:        rows[i].Status,
 			Collected:     rows[i].Collected,
+			Paid:          rows[i].Paid,
 			CreatedAt:     rows[i].CreatedAt,
 			DeliveredAt:   rows[i].DeliveredAt,
 		}

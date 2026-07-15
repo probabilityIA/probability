@@ -31,15 +31,14 @@ func (uc *UseCase) ListOrders(ctx context.Context, f dtos.OrdersFilter) ([]entit
 		orders[i].DiscountPct = pct
 		orders[i].Discount = d
 		orders[i].Net = n
-		orders[i].CodState = domain.CollectionState(orders[i].Status)
-		orders[i].Collected = domain.IsCollected(orders[i].Status)
-		if orders[i].Collected {
-			orders[i].CutStatus = "pending"
-			if orders[i].DeliveredAt != nil {
-				ws, _ := domain.WeekBounds(*orders[i].DeliveredAt)
-				if confirmedWeeks[ws.Format("2006-01-02")] {
-					orders[i].CutStatus = "confirmed"
-				}
+		orders[i].CodState = domain.PaymentState(orders[i].Status, orders[i].Paid)
+		orders[i].Collected = orders[i].Paid
+		if orders[i].Paid {
+			orders[i].CutStatus = "confirmed"
+		} else if orders[i].DeliveredAt != nil {
+			ws, _ := domain.WeekBounds(*orders[i].DeliveredAt)
+			if confirmedWeeks[ws.Format("2006-01-02")] {
+				orders[i].CutStatus = "pending"
 			}
 		}
 	}

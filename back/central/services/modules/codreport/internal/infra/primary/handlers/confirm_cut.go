@@ -10,8 +10,9 @@ import (
 )
 
 type confirmCutRequest struct {
-	PeriodStart string `json:"period_start"`
-	PeriodEnd   string `json:"period_end"`
+	PeriodStart string   `json:"period_start"`
+	PeriodEnd   string   `json:"period_end"`
+	OrderIDs    []string `json:"order_ids"`
 }
 
 func (h *Handlers) ConfirmCut(c *gin.Context) {
@@ -43,12 +44,18 @@ func (h *Handlers) ConfirmCut(c *gin.Context) {
 	}
 	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 0, time.UTC)
 
+	if len(req.OrderIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Debes seleccionar al menos una orden pagada al cliente"})
+		return
+	}
+
 	userID, _ := middleware.GetUserID(c)
 
 	cut, err := h.uc.ConfirmCut(c.Request.Context(), dtos.ConfirmCutDTO{
 		BusinessID:  businessID,
 		PeriodStart: start,
 		PeriodEnd:   end,
+		OrderIDs:    req.OrderIDs,
 		UserID:      userID,
 	})
 	if err != nil {

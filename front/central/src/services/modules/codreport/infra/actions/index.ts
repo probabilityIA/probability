@@ -45,9 +45,17 @@ export const getCodCutsAction = async (businessId?: number) => {
     }
 };
 
-export const confirmCodCutAction = async (periodStart: string, periodEnd: string, businessId?: number) => {
+export const getSelectableOrdersAction = async (periodStart: string, periodEnd: string, businessId?: number) => {
     try {
-        return await (await getRepo()).confirmCut(periodStart, periodEnd, businessId);
+        return await (await getRepo()).getSelectableOrders(periodStart, periodEnd, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al obtener las ordenes de la semana', data: [] as any };
+    }
+};
+
+export const confirmCodCutAction = async (periodStart: string, periodEnd: string, orderIds: string[], businessId?: number) => {
+    try {
+        return await (await getRepo()).confirmCut(periodStart, periodEnd, orderIds, businessId);
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al confirmar el corte', data: null as any };
     }

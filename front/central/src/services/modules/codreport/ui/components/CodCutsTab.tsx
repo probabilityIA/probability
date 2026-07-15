@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     Calendar, CheckCircle2, ChevronDown, ChevronUp, RefreshCw, AlertCircle, ShieldCheck, Clock, Plus,
 } from 'lucide-react';
-import { getCodCutsAction, confirmCodCutAction } from '../../infra/actions';
+import { getCodCutsAction } from '../../infra/actions';
 import { PaymentCut } from '../../domain/types';
 import { formatMoney, formatDateTime, formatDateOnly, carrierLabel } from './helpers';
+import { CutSelectionModal } from './CutSelectionModal';
 
 interface Props {
     businessId?: number | null;
@@ -38,12 +39,10 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [expanded, setExpanded] = useState<string | null>(null);
-    const [confirmTarget, setConfirmTarget] = useState<PaymentCut | null>(null);
-    const [confirming, setConfirming] = useState(false);
     const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
     const [createOpen, setCreateOpen] = useState(false);
     const [createDate, setCreateDate] = useState('');
-    const [creating, setCreating] = useState(false);
+    const [selectionPeriod, setSelectionPeriod] = useState<{ start: string; end: string } | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -61,41 +60,21 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
 
     useEffect(() => { load(); }, [load]);
 
-    const doConfirm = async () => {
-        if (!confirmTarget) return;
-        setConfirming(true);
-        setFeedback(null);
-        const res = await confirmCodCutAction(
-            confirmTarget.period_start.slice(0, 10),
-            confirmTarget.period_end.slice(0, 10),
-            businessId || undefined,
-        );
-        if (res.success) {
-            setFeedback({ ok: true, msg: 'Corte de pago confirmado exitosamente' });
-            setConfirmTarget(null);
-            await load();
-        } else {
-            setFeedback({ ok: false, msg: (res as any).message || 'Error al confirmar el corte' });
-        }
-        setConfirming(false);
+    const openSelection = (start: string, end: string) => {
+        setSelectionPeriod({ start, end });
+    };
+
+    const onCutConfirmed = async (msg: string) => {
+        setFeedback({ ok: true, msg });
+        await load();
         setTimeout(() => setFeedback(null), 3500);
     };
 
-    const doCreate = async () => {
+    const continueCreate = () => {
         if (!createDate) return;
         const { start, end } = weekBounds(createDate);
-        setCreating(true);
-        setFeedback(null);
-        const res = await confirmCodCutAction(start, end, businessId || undefined);
-        if (res.success) {
-            setFeedback({ ok: true, msg: 'Corte de pago creado exitosamente' });
-            setCreateOpen(false);
-            await load();
-        } else {
-            setFeedback({ ok: false, msg: (res as any).message || 'Error al crear el corte' });
-        }
-        setCreating(false);
-        setTimeout(() => setFeedback(null), 3500);
+        setCreateOpen(false);
+        openSelection(start, end);
     };
 
     return (
@@ -178,7 +157,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             <div className="flex-1" />
                             <div className="flex items-center gap-4 text-xs">
                                 <div className="text-right">
-                                    <div className="text-[10px] uppercase text-gray-400 font-bold">Recaudado</div>
+                                    <div className="text-[10px] uppercase text-gray-400 font-bold">{isConfirmed ? 'Pagado' : 'Por pagar'}</div>
                                     <div className="font-bold text-emerald-600">{formatMoney(cut.total_collected)}</div>
                                 </div>
                                 <div className="text-right">
@@ -194,7 +173,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             </button>
                             {canConfirm && !isConfirmed && (
                                 <button
-                                    onClick={() => setConfirmTarget(cut)}
+                                    onClick={() => openSelection(cut.period_start.slice(0, 10), cut.period_end.slice(0, 10))}
                                     className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5"
                                 >
                                     <ShieldCheck size={13} /> Confirmar corte
@@ -239,39 +218,15 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                 );
             })}
 
-            {confirmTarget && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-5">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                            <ShieldCheck size={18} className="text-emerald-600" /> Confirmar corte de pago
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                            Vas a confirmar el recaudo de la semana{' '}
-                            <strong>{periodLabel(confirmTarget.period_start, confirmTarget.period_end)}</strong>.
-                            Una vez confirmado, el negocio podra ver esta semana como cerrada.
-                        </p>
-                        <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3 text-sm space-y-1 mb-4">
-                            <div className="flex justify-between"><span className="text-gray-700 dark:text-gray-200 font-semibold">Recaudado</span><span className="font-bold text-emerald-600">{formatMoney(confirmTarget.total_collected)}</span></div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setConfirmTarget(null)}
-                                disabled={confirming}
-                                className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={doConfirm}
-                                disabled={confirming}
-                                className="px-3 py-2 text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
-                            >
-                                {confirming ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                                Confirmar corte
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {selectionPeriod && (
+                <CutSelectionModal
+                    isOpen={!!selectionPeriod}
+                    onClose={() => setSelectionPeriod(null)}
+                    onConfirmed={onCutConfirmed}
+                    periodStart={selectionPeriod.start}
+                    periodEnd={selectionPeriod.end}
+                    businessId={businessId}
+                />
             )}
 
             {createOpen && (
@@ -281,8 +236,8 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             <Plus size={18} className="text-emerald-600" /> Marcar corte de pago
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                            Selecciona cualquier dia de la semana que quieres cerrar. El corte agrupa el recaudo
-                            entregado de esa semana (lunes a domingo).
+                            Selecciona cualquier dia de la semana que quieres cerrar. Luego eliges orden por orden
+                            cuales se pagaron al cliente (lunes a domingo).
                         </p>
                         <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
                             Dia de la semana
@@ -304,18 +259,17 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                         <div className="flex justify-end gap-2">
                             <button
                                 onClick={() => setCreateOpen(false)}
-                                disabled={creating}
                                 className="px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                             >
                                 Cancelar
                             </button>
                             <button
-                                onClick={doCreate}
-                                disabled={creating || !createDate}
+                                onClick={continueCreate}
+                                disabled={!createDate}
                                 className="px-3 py-2 text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
                             >
-                                {creating ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                                Crear corte
+                                <CheckCircle2 size={14} />
+                                Continuar
                             </button>
                         </div>
                     </div>

@@ -17,7 +17,11 @@ type IRepository interface {
 	DiscoveredCarriers(ctx context.Context, businessID uint) ([]string, error)
 	SaveCarrierConfig(ctx context.Context, d dtos.SaveCarrierConfigDTO) (*entities.CarrierConfig, error)
 	ConfirmedCuts(ctx context.Context, businessID uint) ([]entities.PaymentCut, error)
-	SaveConfirmedCut(ctx context.Context, cut entities.PaymentCut, userID uint, userName string) (*entities.PaymentCut, error)
+	UpsertCutOrders(ctx context.Context, cut entities.PaymentCut, orders []entities.PayoutOrder, userID uint, userName string) (uint, error)
+	PaidAggregatesForCut(ctx context.Context, cutID uint) ([]entities.CarrierAggregate, error)
+	UpdateCutTotals(ctx context.Context, cut entities.PaymentCut) error
 	UserName(ctx context.Context, userID uint) string
 	CutPeriodOrders(ctx context.Context, businessID uint, start, end time.Time) ([]entities.CarrierAggregate, error)
+	SelectableCutOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error)
+	PayoutOrders(ctx context.Context, businessID uint, orderIDs []string) ([]entities.PayoutOrder, error)
 }

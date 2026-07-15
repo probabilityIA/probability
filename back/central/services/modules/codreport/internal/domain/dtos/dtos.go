@@ -32,6 +32,13 @@ type ConfirmCutDTO struct {
 	BusinessID  uint
 	PeriodStart time.Time
 	PeriodEnd   time.Time
+	OrderIDs    []string
 	UserID      uint
 	UserName    string
+}
+
+type SelectableOrdersFilter struct {
+	BusinessID  uint
+	PeriodStart time.Time
+	PeriodEnd   time.Time
 }

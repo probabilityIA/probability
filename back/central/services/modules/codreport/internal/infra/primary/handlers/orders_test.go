@@ -32,6 +32,10 @@ func (m *ucMock) ListCuts(_ context.Context, _ uint, _ bool) ([]entities.Payment
 	return nil, nil
 }
 
+func (m *ucMock) SelectableOrders(_ context.Context, _ dtos.SelectableOrdersFilter) ([]entities.CodOrder, error) {
+	return nil, nil
+}
+
 func (m *ucMock) ConfirmCut(_ context.Context, _ dtos.ConfirmCutDTO) (*entities.PaymentCut, error) {
 	return &entities.PaymentCut{}, nil
 }

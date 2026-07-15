@@ -40,11 +40,23 @@ func (m *repoMock) SaveCarrierConfig(_ context.Context, _ dtos.SaveCarrierConfig
 func (m *repoMock) ConfirmedCuts(_ context.Context, _ uint) ([]entities.PaymentCut, error) {
 	return nil, nil
 }
-func (m *repoMock) SaveConfirmedCut(_ context.Context, _ entities.PaymentCut, _ uint, _ string) (*entities.PaymentCut, error) {
-	return &entities.PaymentCut{}, nil
+func (m *repoMock) UpsertCutOrders(_ context.Context, _ entities.PaymentCut, _ []entities.PayoutOrder, _ uint, _ string) (uint, error) {
+	return 1, nil
+}
+func (m *repoMock) PaidAggregatesForCut(_ context.Context, _ uint) ([]entities.CarrierAggregate, error) {
+	return nil, nil
+}
+func (m *repoMock) UpdateCutTotals(_ context.Context, _ entities.PaymentCut) error {
+	return nil
 }
 func (m *repoMock) UserName(_ context.Context, _ uint) string { return "" }
 func (m *repoMock) CutPeriodOrders(_ context.Context, _ uint, _, _ time.Time) ([]entities.CarrierAggregate, error) {
+	return nil, nil
+}
+func (m *repoMock) SelectableCutOrders(_ context.Context, _ dtos.SelectableOrdersFilter) ([]entities.CodOrder, error) {
+	return nil, nil
+}
+func (m *repoMock) PayoutOrders(_ context.Context, _ uint, _ []string) ([]entities.PayoutOrder, error) {
 	return nil, nil
 }
 
@@ -94,7 +106,7 @@ func TestListOrders_PreservesHasGuide(t *testing.T) {
 	}
 }
 
-func TestListOrders_EnCursoNoCuentaComoRecaudada(t *testing.T) {
+func TestListOrders_SoloPagadaCuentaComoRecaudada(t *testing.T) {
 	repo := &repoMock{
 		listCodOrdersFn: func(_ context.Context, _ dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
 			return []entities.CodOrder{
@@ -103,7 +115,8 @@ func TestListOrders_EnCursoNoCuentaComoRecaudada(t *testing.T) {
 				{OrderID: "c", Status: "pending"},
 				{OrderID: "d", Status: "delivered"},
 				{OrderID: "e", Status: "cancelled", Collected: true},
-			}, 5, nil
+				{OrderID: "f", Status: "delivered", Paid: true},
+			}, 6, nil
 		},
 	}
 	uc := New(repo, log.New())
@@ -120,8 +133,9 @@ func TestListOrders_EnCursoNoCuentaComoRecaudada(t *testing.T) {
 		{domain.CodStateInProgress, false},
 		{domain.CodStateInProgress, false},
 		{domain.CodStatePending, false},
-		{domain.CodStateCollected, true},
+		{domain.CodStatePendingPayment, false},
 		{domain.CodStateNotCollectable, false},
+		{domain.CodStateCollected, true},
 	}
 	for i := range want {
 		if orders[i].CodState != want[i].state {

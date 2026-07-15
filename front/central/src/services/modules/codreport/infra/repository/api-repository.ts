@@ -68,12 +68,20 @@ export class CodReportApiRepository {
         return this.request<CutsResult>(`/cod-report/cuts?${sp.toString()}`);
     }
 
-    async confirmCut(periodStart: string, periodEnd: string, businessId?: number): Promise<SingleResult<PaymentCut>> {
+    async getSelectableOrders(periodStart: string, periodEnd: string, businessId?: number): Promise<SingleResult<CodOrder[]>> {
+        const sp = new URLSearchParams();
+        sp.append('period_start', periodStart);
+        sp.append('period_end', periodEnd);
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<SingleResult<CodOrder[]>>(`/cod-report/cuts/selectable?${sp.toString()}`);
+    }
+
+    async confirmCut(periodStart: string, periodEnd: string, orderIds: string[], businessId?: number): Promise<SingleResult<PaymentCut>> {
         const sp = new URLSearchParams();
         if (businessId) sp.append('business_id', String(businessId));
         return this.request<SingleResult<PaymentCut>>(`/cod-report/cuts/confirm?${sp.toString()}`, {
             method: 'POST',
-            body: JSON.stringify({ period_start: periodStart, period_end: periodEnd }),
+            body: JSON.stringify({ period_start: periodStart, period_end: periodEnd, order_ids: orderIds }),
         });
     }
 

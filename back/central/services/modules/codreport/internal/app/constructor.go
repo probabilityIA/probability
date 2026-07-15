@@ -13,6 +13,7 @@ type Iapp interface {
 	Summary(ctx context.Context, f dtos.ReportFilter) (*entities.CodSummary, error)
 	ListOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
 	ListCuts(ctx context.Context, businessID uint, isAdmin bool) ([]entities.PaymentCut, error)
+	SelectableOrders(ctx context.Context, f dtos.SelectableOrdersFilter) ([]entities.CodOrder, error)
 	ConfirmCut(ctx context.Context, d dtos.ConfirmCutDTO) (*entities.PaymentCut, error)
 	CarrierConfigs(ctx context.Context, businessID uint) ([]entities.CarrierConfig, error)
 	SaveCarrierConfig(ctx context.Context, d dtos.SaveCarrierConfigDTO) (*entities.CarrierConfig, error)

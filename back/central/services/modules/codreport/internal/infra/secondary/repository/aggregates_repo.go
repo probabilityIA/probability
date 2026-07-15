@@ -21,15 +21,15 @@ func (r *Repository) AggregateByCarrier(ctx context.Context, f dtos.ReportFilter
 	args := []any{f.BusinessID}
 
 	if collected {
-		conds = append(conds, "s.status = 'delivered'")
+		conds = append(conds, paidExpr)
 		if !f.StartDate.IsZero() && !f.EndDate.IsZero() {
-			conds = append(conds, "COALESCE(s.delivered_at, s.updated_at) BETWEEN ? AND ?")
+			conds = append(conds, "EXISTS (SELECT 1 FROM cod_payment_cut_orders cpo_r WHERE cpo_r.order_id = o.id AND cpo_r.deleted_at IS NULL AND cpo_r.paid_at BETWEEN ? AND ?)")
 			args = append(args, f.StartDate, f.EndDate)
 		}
 	} else {
-		conds = append(conds, fmt.Sprintf("s.status IN (%s)", pendingStatuses))
+		conds = append(conds, "s.status = 'delivered'", "NOT "+paidExpr)
 		if !f.StartDate.IsZero() && !f.EndDate.IsZero() {
-			conds = append(conds, "o.created_at BETWEEN ? AND ?")
+			conds = append(conds, "COALESCE(s.delivered_at, s.updated_at) BETWEEN ? AND ?")
 			args = append(args, f.StartDate, f.EndDate)
 		}
 	}
@@ -81,16 +81,15 @@ func (r *Repository) MonthlyHistory(ctx context.Context, businessID uint, months
 	if months < 1 {
 		months = 6
 	}
-	query := fmt.Sprintf(`
-SELECT to_char(date_trunc('month', COALESCE(s.delivered_at, s.updated_at)), 'YYYY-MM') AS month,
+	query := `
+SELECT to_char(date_trunc('month', cpo.paid_at), 'YYYY-MM') AS month,
 	COUNT(*) AS orders_count,
-	COALESCE(SUM(o.cod_total),0) AS total_collected
-FROM orders o %s
-WHERE o.deleted_at IS NULL AND o.cod_total > 0 AND o.business_id = ?
-	AND s.status = 'delivered'
-	AND COALESCE(s.delivered_at, s.updated_at) >= date_trunc('month', now()) - make_interval(months => ?)
+	COALESCE(SUM(cpo.cod_amount),0) AS total_collected
+FROM cod_payment_cut_orders cpo
+WHERE cpo.deleted_at IS NULL AND cpo.business_id = ?
+	AND cpo.paid_at >= date_trunc('month', now()) - make_interval(months => ?)
 GROUP BY 1
-ORDER BY 1`, latestShipmentJoin)
+ORDER BY 1`
 
 	var rows []monthlyRow
 	if err := r.db.Conn(ctx).Raw(query, businessID, months-1).Scan(&rows).Error; err != nil {

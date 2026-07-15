@@ -51,6 +51,7 @@ type codOrderResponse struct {
 	Currency      string     `json:"currency"`
 	Status        string     `json:"status"`
 	Collected     bool       `json:"collected"`
+	Paid          bool       `json:"paid"`
 	CodState      string     `json:"cod_state"`
 	CutStatus     string     `json:"cut_status"`
 	CreatedAt     time.Time  `json:"created_at"`
@@ -137,6 +138,7 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 			Currency:      in[i].Currency,
 			Status:        in[i].Status,
 			Collected:     in[i].Collected,
+			Paid:          in[i].Paid,
 			CodState:      in[i].CodState,
 			CutStatus:     in[i].CutStatus,
 			CreatedAt:     in[i].CreatedAt,
