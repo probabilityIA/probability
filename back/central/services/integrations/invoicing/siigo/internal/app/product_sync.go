@@ -47,6 +47,14 @@ func (uc *invoicingUseCase) listAllSiigoProducts(ctx context.Context, credential
 }
 
 func (uc *invoicingUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) ([]dtos.ProductForSync, []dtos.ProductItem, error) {
+	integration, err := uc.integrationCore.GetIntegrationByID(ctx, integrationID)
+	if err != nil || integration == nil {
+		return nil, nil, fmt.Errorf("integracion no encontrada")
+	}
+	if integration.BusinessID == nil || *integration.BusinessID != businessID {
+		return nil, nil, fmt.Errorf("la integracion no pertenece al negocio")
+	}
+
 	credentials, err := uc.resolveWebhookCredentials(ctx, integrationID)
 	if err != nil {
 		return nil, nil, err
