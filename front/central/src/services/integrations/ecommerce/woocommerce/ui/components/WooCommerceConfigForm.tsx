@@ -693,28 +693,26 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                     className="rounded-xl p-4 dark:bg-gray-800/60"
                     style={{ backgroundColor: '#ffffff', border: `1px solid ${CARD_BORDER}` }}
                 >
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-                                <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
-                                Sincronizar productos
-                            </h4>
-                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
-                                Cruza los productos por SKU y te muestra que falta en cada lado; eliges crear en WooCommerce lo que solo esta en Probability, o al reves.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setProductSyncOpen(true)}
-                            className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors"
-                            style={{ backgroundColor: GREEN }}
-                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
-                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
-                        >
-                            <ArrowPathIcon className="w-3.5 h-3.5" />
+                    <div>
+                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                            <ArrowPathIcon className="w-4 h-4" style={{ color: GREEN_DARK }} />
                             Sincronizar productos
-                        </button>
+                        </h4>
+                        <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                            Cruza los productos por SKU y te muestra que falta en cada lado; eliges crear en WooCommerce lo que solo esta en Probability, o al reves.
+                        </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => setProductSyncOpen(true)}
+                        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                        style={{ backgroundColor: GREEN }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                    >
+                        <ArrowPathIcon className="w-3.5 h-3.5" />
+                        Sincronizar productos
+                    </button>
                 </div>
             )}
 

@@ -160,22 +160,25 @@ export function WooCommerceInventorySection({ value, onChange, businessId, integ
                         <span>Solo se actualizan productos ya vinculados (creados desde "Sincronizar productos"). El match es por SKU.</span>
                     </p>
 
-                    {onSyncNow && (
-                        <button
-                            type="button"
-                            onClick={onSyncNow}
-                            disabled={!canSyncNow}
-                            className="w-full inline-flex items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold text-white transition-colors disabled:opacity-50"
-                            style={{ backgroundColor: ACCENT }}
-                        >
-                            <ArrowDownTrayIcon className="w-4 h-4" />
-                            Sincronizar inventario ahora
-                        </button>
-                    )}
-                    {onSyncNow && !canSyncNow && (
-                        <p className="text-[11px] text-gray-400 flex items-center gap-1">
+                </div>
+            )}
+
+            {onSyncNow && (
+                <div className="mt-4">
+                    <button
+                        type="button"
+                        onClick={onSyncNow}
+                        disabled={!canSyncNow}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-lg py-2 text-[13px] font-semibold text-white transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: ACCENT }}
+                    >
+                        <ArrowDownTrayIcon className="w-4 h-4" />
+                        Sincronizar inventario a WooCommerce
+                    </button>
+                    {!canSyncNow && (
+                        <p className="mt-1 text-[11px] text-gray-400 flex items-center gap-1">
                             <ArrowPathIcon className="w-3.5 h-3.5" />
-                            Guarda la integracion para poder sincronizar.
+                            Activa la sincronizacion de inventario para poder sincronizar.
                         </p>
                     )}
                 </div>

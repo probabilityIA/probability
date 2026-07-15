@@ -16,6 +16,13 @@ func (uc *wooCommerceUseCase) UpdateInventory(ctx context.Context, integrationID
 		return domain.ErrIntegrationNotFound
 	}
 
+	if enabled, _ := integration.Config["inventory_sync_enabled"].(bool); !enabled {
+		uc.logger.Info(ctx).
+			Str("integration_id", integrationID).
+			Msg("Sync de inventario desactivado para la integracion WooCommerce, push omitido")
+		return nil
+	}
+
 	storeURL, err := extractString(integration.Config, "store_url")
 	if err != nil {
 		return domain.ErrMissingStoreURL
