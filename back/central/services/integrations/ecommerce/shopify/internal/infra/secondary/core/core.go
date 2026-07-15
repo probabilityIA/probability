@@ -27,6 +27,10 @@ func (s *ShopifyCore) SyncOrdersByIntegrationID(ctx context.Context, integration
 	return s.useCase.SyncOrders(ctx, integrationID)
 }
 
+func (s *ShopifyCore) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
+	return s.useCase.UpdateInventory(ctx, integrationID, productExternalID, quantity)
+}
+
 // SyncOrdersByIntegrationIDWithParams sincroniza órdenes con parámetros de filtrado.
 // Convierte map[string]interface{} a domain.SyncOrdersParams y delega al use case.
 func (s *ShopifyCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {

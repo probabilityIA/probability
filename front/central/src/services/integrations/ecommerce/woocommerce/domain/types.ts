@@ -1,14 +1,16 @@
-// WooCommerce Integration Configuration Types
-
 export interface WooCommerceConfig {
-    store_url: string;          // URL de la tienda (ej: https://mitienda.com)
-    free_shipping_enabled?: boolean;  // Habilita envio gratis por monto minimo
-    free_shipping_min?: number;       // Monto minimo de la orden para envio gratis
+    store_url: string;
+    free_shipping_enabled?: boolean;
+    free_shipping_min?: number;
+    inventory_sync_enabled?: boolean;
+    inventory_warehouse_mode?: 'single' | 'sum';
+    inventory_single_warehouse_id?: number;
+    inventory_warehouse_ids?: number[];
 }
 
 export interface WooCommerceCredentials {
-    consumer_key: string;       // Consumer Key de la API REST
-    consumer_secret: string;    // Consumer Secret de la API REST
+    consumer_key: string;
+    consumer_secret: string;
 }
 
 export interface WooCommerceIntegrationData {

@@ -44,8 +44,23 @@ type ReconcileResult struct {
 	WooNoSKU          int
 }
 
+type MappedItem struct {
+	ProductID      string
+	SKU            string
+	ExternalItemID string
+}
+
+type InventoryConfig struct {
+	Enabled           bool
+	Mode              string
+	SingleWarehouseID uint
+	WarehouseIDs      []uint
+}
+
 type IProductRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]ProductForSync, error)
 	GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error)
 	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, externalProductID string) error
+	ListMappedItems(ctx context.Context, integrationID uint) ([]MappedItem, error)
+	GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error)
 }

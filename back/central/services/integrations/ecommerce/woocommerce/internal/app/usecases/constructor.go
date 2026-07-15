@@ -8,39 +8,30 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// IWooCommerceUseCase define las operaciones de negocio de WooCommerce.
 type IWooCommerceUseCase interface {
-	// TestConnection verifica que las credenciales de una integración sean válidas.
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 
-	// SyncOrders sincroniza órdenes de WooCommerce (últimos 30 días por defecto).
 	SyncOrders(ctx context.Context, integrationID string) error
 
-	// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados.
 	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error
 
-	// ProcessWebhookOrder procesa una orden recibida por webhook.
 	ProcessWebhookOrder(ctx context.Context, topic string, storeURL string, integrationID string, rawBody []byte) error
 
-	// CreateWebhooks registra los webhooks de ordenes en WooCommerce.
 	CreateWebhooks(ctx context.Context, integrationID, baseURL, secret string) error
 
-	// ListWebhooks lista los webhooks de Probability en la tienda WooCommerce.
 	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
 
-	// DeleteWebhook elimina un webhook de la tienda WooCommerce.
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+
 	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 
-	// ReconcileProducts cruza los productos de ambos lados por SKU.
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
-	// ApplyProductsToWoo crea en WooCommerce los productos que solo existen en Probability.
 	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error
-	// ApplyProductsToProbability crea en Probability los productos que solo existen en WooCommerce.
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
@@ -53,7 +44,6 @@ type wooCommerceUseCase struct {
 	logger      log.ILogger
 }
 
-// New crea el use case de WooCommerce con todas sus dependencias.
 func New(
 	client domain.IWooCommerceClient,
 	service domain.IIntegrationService,

@@ -13,9 +13,9 @@ type SyncOrdersUseCase struct {
 	orderPublisher     domain.OrderPublisher
 	log                log.ILogger
 	syncEventPublisher domain.ISyncEventPublisher
+	inventoryRepo      domain.IInventoryRepository
 }
 
-// IShopifyUseCase define la interfaz para los casos de uso de Shopify
 type IShopifyUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrders(ctx context.Context, integrationID string) error
@@ -36,15 +36,17 @@ type IShopifyUseCase interface {
 	EnableCarrierCalculatedShipping(ctx context.Context, integrationID string, publicBaseURL string) (string, error)
 	DisableCarrierCalculatedShipping(ctx context.Context, integrationID string) error
 	SetAutoGenerateGuide(ctx context.Context, integrationID string, enabled bool) error
+	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 }
 
-// New crea una nueva instancia de IShopifyUseCase
-func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, logger log.ILogger, syncEventPub domain.ISyncEventPublisher) IShopifyUseCase {
+func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, logger log.ILogger, syncEventPub domain.ISyncEventPublisher, inventoryRepo domain.IInventoryRepository) IShopifyUseCase {
 	return &SyncOrdersUseCase{
 		integrationService: integrationService,
 		shopifyClient:      shopifyClient,
 		orderPublisher:     orderPublisher,
 		log:                logger.WithModule("shopify.usecase"),
 		syncEventPublisher: syncEventPub,
+		inventoryRepo:      inventoryRepo,
 	}
 }

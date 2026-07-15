@@ -9,6 +9,8 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { WooProductSyncModal } from './WooProductSyncModal';
+import { WooCommerceInventorySection, WooInventoryConfig } from './WooCommerceInventorySection';
+import { WooCommerceInventorySyncModal } from './WooCommerceInventorySyncModal';
 import { WooWebhookManager } from './WooWebhookManager';
 import { getWooPluginZipAction } from '../../infra/actions';
 import {
@@ -138,6 +140,16 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [revoking, setRevoking] = useState(false);
     const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
+    const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [inventorySync, setInventorySync] = useState<WooInventoryConfig>(() => {
+        const c: any = initialData?.config || {};
+        return {
+            enabled: !!c.inventory_sync_enabled,
+            mode: c.inventory_warehouse_mode === 'single' ? 'single' : 'sum',
+            single_warehouse_id: Number(c.inventory_single_warehouse_id) || 0,
+            warehouse_ids: Array.isArray(c.inventory_warehouse_ids) ? c.inventory_warehouse_ids.map(Number) : [],
+        };
+    });
     const [showHelpImages, setShowHelpImages] = useState(false);
     const [showPluginInfo, setShowPluginInfo] = useState(false);
     const [brokenInfoImages, setBrokenInfoImages] = useState<Record<number, boolean>>({});
@@ -304,6 +316,10 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 store_url: formData.store_url,
                 free_shipping_enabled: freeShippingEnabled,
                 free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
+                inventory_sync_enabled: inventorySync.enabled,
+                inventory_warehouse_mode: inventorySync.mode,
+                inventory_single_warehouse_id: inventorySync.single_warehouse_id,
+                inventory_warehouse_ids: inventorySync.warehouse_ids,
             };
 
             if (isEdit && integrationId) {
@@ -702,6 +718,15 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 </div>
             )}
 
+            <WooCommerceInventorySection
+                value={inventorySync}
+                onChange={setInventorySync}
+                businessId={selectedBusinessId}
+                integrationId={isEdit ? integrationId : undefined}
+                onSyncNow={isEdit && integrationId ? () => setInventorySyncOpen(true) : undefined}
+                canSyncNow={inventorySync.enabled}
+            />
+
             {isEdit && integrationId && (
                 <div
                     className="rounded-xl p-4 dark:bg-gray-800/60"
@@ -912,6 +937,15 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 <WooProductSyncModal
                     isOpen={productSyncOpen}
                     onClose={() => setProductSyncOpen(false)}
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId}
+                />
+            )}
+
+            {isEdit && integrationId && (
+                <WooCommerceInventorySyncModal
+                    isOpen={inventorySyncOpen}
+                    onClose={() => setInventorySyncOpen(false)}
                     integrationId={integrationId}
                     businessId={selectedBusinessId}
                 />

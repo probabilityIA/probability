@@ -51,6 +51,12 @@ export async function applyWooProductsAction(integrationId: number, direction: '
     return postWithAuth('/woocommerce/products/apply', body);
 }
 
+export async function syncWooInventoryAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/woocommerce/inventory/sync', body);
+}
+
 export async function getWooPluginZipAction(): Promise<{ success: boolean; data?: string; message?: string }> {
     try {
         const response = await fetch(`${API_BASE_URL}/woocommerce/plugin-download`, { cache: 'no-store' });
