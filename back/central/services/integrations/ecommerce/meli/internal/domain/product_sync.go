@@ -8,6 +8,9 @@ type CreateProductInput struct {
 	Price         float64
 	Description   string
 	StockQuantity int
+	SiteID        string
+	CurrencyID    string
+	ListingTypeID string
 }
 
 type ProductForSync struct {

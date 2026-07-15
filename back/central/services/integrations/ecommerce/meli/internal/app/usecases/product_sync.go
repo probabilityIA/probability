@@ -156,6 +156,8 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 		"total":          total,
 	})
 
+	siteID, currencyID, listingTypeID := uc.resolveProductPublishConfig(ctx, integrationID)
+
 	created, failed := 0, 0
 	for i, p := range missing {
 		newID, cerr := uc.client.CreateProduct(ctx, accessToken, domain.CreateProductInput{
@@ -164,6 +166,9 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 			Price:         p.Price,
 			Description:   p.Description,
 			StockQuantity: p.StockQuantity,
+			SiteID:        siteID,
+			CurrencyID:    currencyID,
+			ListingTypeID: listingTypeID,
 		})
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en MercadoLibre")
@@ -254,6 +259,17 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 		"failed":         failed,
 	})
 	return nil
+}
+
+func (uc *meliUseCase) resolveProductPublishConfig(ctx context.Context, integrationID string) (string, string, string) {
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
+	if err != nil || integration == nil {
+		return "", "", ""
+	}
+	site, _ := integration.Config["meli_site_id"].(string)
+	currency, _ := integration.Config["meli_currency_id"].(string)
+	listing, _ := integration.Config["meli_listing_type_id"].(string)
+	return site, currency, listing
 }
 
 func (uc *meliUseCase) maybeProgress(ctx context.Context, businessID, integrationID uint, correlationID string, processed, total, created, failed int) {

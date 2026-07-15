@@ -18,8 +18,15 @@ const meliCurrencyID = "COP"
 
 const meliListingTypeID = "bronze"
 
-func (c *MeliClient) predictCategory(ctx context.Context, accessToken, title string) (string, error) {
-	endpoint := fmt.Sprintf("%s/sites/%s/domain_discovery/search?limit=1&q=%s", c.baseURL, meliSiteID, url.QueryEscape(title))
+func firstNonEmpty(value, fallback string) string {
+	if value != "" {
+		return value
+	}
+	return fallback
+}
+
+func (c *MeliClient) predictCategory(ctx context.Context, accessToken, siteID, title string) (string, error) {
+	endpoint := fmt.Sprintf("%s/sites/%s/domain_discovery/search?limit=1&q=%s", c.baseURL, siteID, url.QueryEscape(title))
 	req, err := c.newAuthorizedRequest(ctx, http.MethodGet, endpoint, accessToken)
 	if err != nil {
 		return "", err
@@ -46,7 +53,11 @@ func (c *MeliClient) predictCategory(ctx context.Context, accessToken, title str
 }
 
 func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, input domain.CreateProductInput) (string, error) {
-	categoryID, err := c.predictCategory(ctx, accessToken, input.Name)
+	siteID := firstNonEmpty(input.SiteID, meliSiteID)
+	currencyID := firstNonEmpty(input.CurrencyID, meliCurrencyID)
+	listingTypeID := firstNonEmpty(input.ListingTypeID, meliListingTypeID)
+
+	categoryID, err := c.predictCategory(ctx, accessToken, siteID, input.Name)
 	if err != nil {
 		return "", err
 	}
@@ -60,10 +71,10 @@ func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, inpu
 		"title":              input.Name,
 		"category_id":        categoryID,
 		"price":              input.Price,
-		"currency_id":        meliCurrencyID,
+		"currency_id":        currencyID,
 		"available_quantity": quantity,
 		"buying_mode":        "buy_it_now",
-		"listing_type_id":    meliListingTypeID,
+		"listing_type_id":    listingTypeID,
 		"condition":          "new",
 		"attributes": []map[string]interface{}{
 			{"id": "SELLER_SKU", "value_name": input.SKU},
