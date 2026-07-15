@@ -48,3 +48,23 @@ func (r *Repository) GetIntegrationTypeByIntegrationID(ctx context.Context, inte
 
 	return typeID, nil
 }
+
+func (r *Repository) GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error) {
+	var row struct {
+		BusinessID *uint
+	}
+
+	err := r.db.Conn(ctx).
+		Model(&models.Integration{}).
+		Select("business_id").
+		Where("id = ? AND deleted_at IS NULL", integrationID).
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return 0, fmt.Errorf("failed to get integration business: %w", err)
+	}
+	if row.BusinessID == nil {
+		return 0, nil
+	}
+	return *row.BusinessID, nil
+}

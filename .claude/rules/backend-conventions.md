@@ -62,3 +62,38 @@ POST/PUT/DELETE: `business_id` en query param, no en body.
 **Frontend:** `isSuperAdmin` -> selector obligatorio -> sin negocio = gate/placeholder -> pasar `business_id` a todas las operaciones -> resetear al cambiar negocio -> usar `useBusinessesSimple` de `@/services/auth/business/ui/hooks/`
 
 Modulos implementados: orders, invoicing, customers. Referencia: `services/modules/customers/`
+
+## 6. Creacion de Productos desde Integraciones (regla de arquitectura)
+
+Una integracion NUNCA crea productos escribiendo la tabla `products` ni llamando
+al modulo `products` directamente. La UNICA via para materializar productos en
+Probability desde una integracion es **publicar a la cola**
+`rabbitmq.QueueProductsProviderUpsert` (`products.provider_upsert.requests`).
+
+El mensaje debe incluir SIEMPRE el `integration_id`:
+
+```go
+type productUpsertMessage struct {
+    BusinessID     uint    `json:"business_id"`
+    IntegrationID  uint    `json:"integration_id"` // OBLIGATORIO
+    SKU            string  `json:"sku"`
+    Name           string  `json:"name"`
+    TrackInventory bool    `json:"track_inventory"`
+    Price          float64 `json:"price"`
+    ExternalID     string  `json:"external_id"`
+}
+```
+
+El consumer del modulo `products` (`UpsertFromProvider`) crea/actualiza el producto
+y, con el `integration_id`, crea la relacion producto<->canal en
+`product_business_integrations` (idempotente). Asi todo el catalogo queda asociado
+a su canal de origen, lo que habilita a futuro empujar inventario solo a los
+productos asociados a cada canal (ver `.claude/alerts/inventario-saliente-por-canal.md`).
+
+- Publican HOY por esta via: WooCommerce, MercadoLibre, Siigo (manual y auto-sync).
+- Las integraciones SI pueden escribir directamente `product_business_integrations`
+  (mapping), pero la creacion del PRODUCTO va por la cola.
+- Los repos de integraciones sobre `products` deben ser solo LECTURA (SELECT).
+
+**Violacion critica:** integracion que crea/actualiza filas en `products` sin pasar
+por la cola de upsert (rompe la asociacion producto<->canal y el aislamiento de modulos).

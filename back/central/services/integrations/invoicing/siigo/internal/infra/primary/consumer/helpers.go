@@ -41,10 +41,7 @@ func (c *InvoiceRequestConsumer) resolveIntegration(
 		return nil, "decryption_failed", fmt.Errorf("failed to decrypt access_key")
 	}
 
-	accountID, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "account_id")
-	if err != nil {
-		return nil, "decryption_failed", fmt.Errorf("failed to decrypt account_id")
-	}
+	accountID, _ := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "account_id")
 
 	partnerID, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "partner_id")
 	if err != nil {

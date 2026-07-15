@@ -10,9 +10,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
 
+func (uc *useCase) assertIntegrationBelongsToBusiness(ctx context.Context, integrationID, businessID uint) error {
+	integBusinessID, err := uc.repo.GetIntegrationBusinessID(ctx, integrationID)
+	if err != nil {
+		return fmt.Errorf("integracion no encontrada")
+	}
+	if integBusinessID == 0 || integBusinessID != businessID {
+		return fmt.Errorf("la integracion no pertenece al negocio")
+	}
+	return nil
+}
+
 func (uc *useCase) RequestInventorySync(ctx context.Context, businessID, integrationID uint) (string, error) {
 	if integrationID == 0 {
 		return "", fmt.Errorf("integration_id is required")
+	}
+
+	if err := uc.assertIntegrationBelongsToBusiness(ctx, integrationID, businessID); err != nil {
+		return "", err
 	}
 
 	provider, err := uc.resolveProvider(ctx, integrationID)
@@ -61,6 +76,10 @@ func (uc *useCase) RequestInventorySync(ctx context.Context, businessID, integra
 func (uc *useCase) RequestListSiigoWarehouses(ctx context.Context, businessID, integrationID uint) (string, error) {
 	if integrationID == 0 {
 		return "", fmt.Errorf("integration_id is required")
+	}
+
+	if err := uc.assertIntegrationBelongsToBusiness(ctx, integrationID, businessID); err != nil {
+		return "", err
 	}
 
 	provider, err := uc.resolveProvider(ctx, integrationID)

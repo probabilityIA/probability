@@ -103,6 +103,8 @@ type IRepository interface {
 	// Replicado localmente para determinar el proveedor de facturación dinámicamente
 	GetIntegrationTypeByIntegrationID(ctx context.Context, integrationID uint) (int, error)
 
+	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
+
 	// ============================================
 	// COMPARACIÓN DE FACTURAS (in-memory, sin persistencia)
 	// ============================================
