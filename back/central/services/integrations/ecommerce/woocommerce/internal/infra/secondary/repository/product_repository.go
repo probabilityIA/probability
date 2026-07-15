@@ -62,6 +62,58 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 	return products, nil
 }
 
+func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID uint) ([]domain.MappedItem, error) {
+	var rows []struct {
+		ProductID         string
+		SKU               string
+		ExternalProductID string
+	}
+	err := r.db.Conn(ctx).
+		Table("product_business_integrations AS pbi").
+		Select("pbi.product_id, p.sku, pbi.external_product_id").
+		Joins("JOIN products p ON p.id = pbi.product_id").
+		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND pbi.external_product_id <> '' AND p.deleted_at IS NULL", integrationID).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	items := make([]domain.MappedItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, domain.MappedItem{
+			ProductID:      row.ProductID,
+			SKU:            row.SKU,
+			ExternalItemID: row.ExternalProductID,
+		})
+	}
+	return items, nil
+}
+
+func (r *ProductRepository) GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error) {
+	result := make(map[string]int)
+	if len(productIDs) == 0 {
+		return result, nil
+	}
+	var rows []struct {
+		ProductID string
+		Qty       int
+	}
+	query := r.db.Conn(ctx).
+		Table("inventory_levels").
+		Select("product_id, COALESCE(SUM(available_qty), 0) AS qty").
+		Where("product_id IN ? AND deleted_at IS NULL", productIDs)
+	if len(warehouseIDs) > 0 {
+		query = query.Where("warehouse_id IN ?", warehouseIDs)
+	}
+	err := query.Group("product_id").Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		result[row.ProductID] = row.Qty
+	}
+	return result, nil
+}
+
 func (r *ProductRepository) GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error) {
 	var result struct {
 		ExternalProductID string

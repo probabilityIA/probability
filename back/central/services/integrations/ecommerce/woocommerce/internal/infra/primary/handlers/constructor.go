@@ -7,17 +7,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IHandler define los endpoints HTTP de WooCommerce.
 type IHandler interface {
-	// HandleWebhook recibe webhooks de WooCommerce.
 	HandleWebhook(c *gin.Context)
-	// SyncProducts dispara la sincronizacion de productos a WooCommerce.
 	SyncProducts(c *gin.Context)
-	// ReconcileProducts cruza los productos de ambos lados por SKU.
 	ReconcileProducts(c *gin.Context)
-	// ApplyProducts aplica la reconciliacion en la direccion elegida.
 	ApplyProducts(c *gin.Context)
-	// RegisterRoutes registra las rutas en el router.
+	SyncInventory(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 
@@ -26,7 +21,6 @@ type wooCommerceHandler struct {
 	logger  log.ILogger
 }
 
-// New crea el handler HTTP de WooCommerce.
 func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger) IHandler {
 	return &wooCommerceHandler{
 		useCase: useCase,
@@ -34,7 +28,6 @@ func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger) IHandler {
 	}
 }
 
-// RegisterRoutes registra las rutas de WooCommerce en el router.
 func (h *wooCommerceHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
 	woo := router.Group("/woocommerce")
 	{
@@ -42,5 +35,6 @@ func (h *wooCommerceHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 		woo.POST("/products/sync", middleware.JWT(), h.SyncProducts)
 		woo.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
 		woo.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
+		woo.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
 	}
 }
