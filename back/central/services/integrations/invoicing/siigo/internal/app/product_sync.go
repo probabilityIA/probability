@@ -76,9 +76,16 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 		return nil, err
 	}
 
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	associated, err := uc.productRepo.ListAssociatedSKUs(ctx, businessID, uint(integIDUint))
+	if err != nil {
+		return nil, fmt.Errorf("listing associated skus: %w", err)
+	}
+
 	result := &dtos.ReconcileResult{
-		OnlyInProbability: []dtos.ProductBrief{},
-		OnlyInSiigo:       []dtos.ProductBrief{},
+		MatchedNotAssociated: []dtos.ProductBrief{},
+		OnlyInProbability:    []dtos.ProductBrief{},
+		OnlyInSiigo:          []dtos.ProductBrief{},
 	}
 
 	probBySKU := make(map[string]dtos.ProductForSync)
@@ -100,7 +107,11 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 		}
 		siigoSKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
-			result.Matched++
+			if associated[key] {
+				result.Matched++
+			} else {
+				result.MatchedNotAssociated = append(result.MatchedNotAssociated, dtos.ProductBrief{SKU: s.Code, Name: s.Name})
+			}
 		} else {
 			result.OnlyInSiigo = append(result.OnlyInSiigo, dtos.ProductBrief{SKU: s.Code, Name: s.Name})
 		}
@@ -115,27 +126,40 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 	return result, nil
 }
 
-func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	probProducts, siigoProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
 	}
 
-	probSKUs := make(map[string]bool)
-	for _, p := range probProducts {
-		if key := normalizeSKU(p.SKU); key != "" {
-			probSKUs[key] = true
-		}
-	}
-
 	missing := make([]dtos.ProductItem, 0)
-	for _, s := range siigoProducts {
-		key := normalizeSKU(s.Code)
-		if key == "" || probSKUs[key] {
-			continue
+	if len(skus) > 0 {
+		want := make(map[string]bool, len(skus))
+		for _, s := range skus {
+			if key := normalizeSKU(s); key != "" {
+				want[key] = true
+			}
 		}
-		missing = append(missing, s)
+		for _, s := range siigoProducts {
+			if key := normalizeSKU(s.Code); key != "" && want[key] {
+				missing = append(missing, s)
+			}
+		}
+	} else {
+		probSKUs := make(map[string]bool)
+		for _, p := range probProducts {
+			if key := normalizeSKU(p.SKU); key != "" {
+				probSKUs[key] = true
+			}
+		}
+		for _, s := range siigoProducts {
+			key := normalizeSKU(s.Code)
+			if key == "" || probSKUs[key] {
+				continue
+			}
+			missing = append(missing, s)
+		}
 	}
 
 	total := len(missing)

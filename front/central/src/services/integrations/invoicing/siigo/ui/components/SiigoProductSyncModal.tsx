@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowDownToLine, ArrowRightLeft } from 'lucide-react';
+import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowDownToLine, ArrowRightLeft, Link2 } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { reconcileSiigoProductsAction, applySiigoProductsAction } from '../../infra/actions';
 
@@ -20,6 +20,7 @@ interface Brief {
 
 interface Diff {
     matched: number;
+    matchedNotAssociated: Brief[];
     onlyInProbability: Brief[];
     onlyInSiigo: Brief[];
     probabilityNoSku: number;
@@ -37,6 +38,8 @@ type Phase = 'analyzing' | 'diff' | 'running' | 'done' | 'error';
 export function SiigoProductSyncModal({ isOpen, onClose, integrationId, businessId, onCompleted }: SiigoProductSyncModalProps) {
     const [phase, setPhase] = useState<Phase>('analyzing');
     const [diff, setDiff] = useState<Diff | null>(null);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [actionLabel, setActionLabel] = useState('Procesando');
     const [total, setTotal] = useState(0);
     const [processed, setProcessed] = useState(0);
     const [created, setCreated] = useState(0);
@@ -48,6 +51,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
     const analyze = useCallback(async () => {
         setPhase('analyzing');
         setErrorMessage(null);
+        setSelected(new Set());
         const res: any = await reconcileSiigoProductsAction(integrationId, businessId ?? undefined);
         if (!res?.success) {
             setErrorMessage(res?.message || 'No se pudo analizar los productos');
@@ -56,6 +60,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
         }
         setDiff({
             matched: Number(res.matched) || 0,
+            matchedNotAssociated: res.matched_not_associated || [],
             onlyInProbability: res.only_in_probability || [],
             onlyInSiigo: res.only_in_siigo || [],
             probabilityNoSku: Number(res.probability_no_sku) || 0,
@@ -68,6 +73,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
         if (!isOpen) {
             setPhase('analyzing');
             setDiff(null);
+            setSelected(new Set());
             setTotal(0);
             setProcessed(0);
             setCreated(0);
@@ -79,20 +85,40 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
         analyze();
     }, [isOpen, analyze]);
 
-    const handleApply = async () => {
+    const runApply = async (skus: string[] | undefined, label: string, count: number) => {
+        setActionLabel(label);
         setPhase('running');
-        setTotal(diff?.onlyInSiigo.length || 0);
+        setTotal(count);
         setProcessed(0);
         setCreated(0);
         setFailed(0);
         correlationRef.current = null;
-        const res: any = await applySiigoProductsAction(integrationId, businessId ?? undefined);
+        const res: any = await applySiigoProductsAction(integrationId, businessId ?? undefined, skus);
         if (!res?.success || !res?.correlation_id) {
-            setErrorMessage(res?.message || 'No se pudo iniciar la sincronizacion');
+            setErrorMessage(res?.message || 'No se pudo iniciar la operacion');
             setPhase('error');
             return;
         }
         correlationRef.current = res.correlation_id;
+    };
+
+    const handleCreate = () => runApply(undefined, 'Creando en Probability', diff?.onlyInSiigo.length || 0);
+    const handleAssociateAll = () => {
+        const skus = (diff?.matchedNotAssociated || []).map((p) => p.sku);
+        runApply(skus, 'Asociando al canal', skus.length);
+    };
+    const handleAssociateSelected = () => {
+        const skus = Array.from(selected);
+        runApply(skus, 'Asociando al canal', skus.length);
+    };
+
+    const toggleSelected = (sku: string) => {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(sku)) next.delete(sku);
+            else next.add(sku);
+            return next;
+        });
     };
 
     const handleMessage = useCallback((event: MessageEvent) => {
@@ -133,7 +159,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
     if (!isOpen) return null;
 
     const progressPct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : phase === 'done' ? 100 : 0;
-    const nothingToCreate = diff && diff.onlyInSiigo.length === 0;
+    const nothingToDo = diff && diff.onlyInSiigo.length === 0 && diff.matchedNotAssociated.length === 0;
 
     return (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -173,23 +199,46 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                         <div className="space-y-4">
                             <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
                                 <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
-                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden por SKU en ambos lados</span>
+                                <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos ya asociados a este canal</span>
                             </div>
 
-                            {nothingToCreate ? (
+                            {nothingToDo && (
                                 <div className="text-center py-6 text-gray-600 dark:text-gray-300">
                                     <CheckCircle2 size={40} className="mx-auto text-emerald-500 mb-2" />
-                                    <p className="font-semibold">Nada por crear</p>
-                                    <p className="text-xs text-gray-400 mt-1">Todos los productos de Siigo ya existen en Probability.</p>
+                                    <p className="font-semibold">Todo al dia</p>
+                                    <p className="text-xs text-gray-400 mt-1">No hay productos por crear ni por asociar a este canal.</p>
                                 </div>
-                            ) : (
+                            )}
+
+                            {diff.matchedNotAssociated.length > 0 && (
+                                <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} existe{diff.matchedNotAssociated.length !== 1 ? 'n' : ''} en Probability pero no asociado{diff.matchedNotAssociated.length !== 1 ? 's' : ''} a este canal</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Asocialos para que el canal los reconozca como propios.</p>
+                                        </div>
+                                        <button onClick={handleAssociateAll} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                            <Link2 size={14} /> Asociar todos
+                                        </button>
+                                    </div>
+                                    <SelectableProductList items={diff.matchedNotAssociated} selected={selected} onToggle={toggleSelected} />
+                                    <div className="mt-2 flex items-center justify-between">
+                                        <span className="text-[11px] text-gray-400">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
+                                        <button onClick={handleAssociateSelected} disabled={selected.size === 0} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                                            <Link2 size={14} /> Asociar seleccionados
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {diff.onlyInSiigo.length > 0 && (
                                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Siigo hay {diff.onlyInSiigo.length} producto{diff.onlyInSiigo.length !== 1 ? 's' : ''} que no estan en Probability</p>
-                                            <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuracion de bodegas.</p>
+                                            <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability y quedaran asociados a este canal.</p>
                                         </div>
-                                        <button onClick={handleApply} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                        <button onClick={handleCreate} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <ArrowDownToLine size={14} /> Crear en Probability
                                         </button>
                                     </div>
@@ -217,7 +266,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                         <div>
                             <div className="flex items-center gap-2 mb-3 text-sm font-medium text-gray-700 dark:text-gray-200">
                                 <ArrowDownToLine size={16} className="text-emerald-600" />
-                                Creando en Probability
+                                {actionLabel}
                                 {phase === 'running' && <Loader2 size={14} className="animate-spin text-gray-400" />}
                             </div>
                             <div className="flex items-center justify-between mb-2">
@@ -238,7 +287,7 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
 
                             {phase === 'done' && (
                                 <>
-                                    <p className="text-[11px] text-gray-400 mt-4">Los productos se crean en segundo plano; pueden tardar unos segundos en aparecer en el catalogo.</p>
+                                    <p className="text-[11px] text-gray-400 mt-4">La operacion corre en segundo plano; puede tardar unos segundos en reflejarse.</p>
                                     <div className="flex justify-between mt-4">
                                         <button onClick={analyze} className="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1.5">
                                             <RefreshCw size={14} /> Analizar de nuevo
@@ -268,6 +317,27 @@ function ProductList({ items }: { items: Brief[] }) {
                 </div>
             ))}
             {items.length > 100 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 100} mas...</div>}
+        </div>
+    );
+}
+
+function SelectableProductList({ items, selected, onToggle }: { items: Brief[]; selected: Set<string>; onToggle: (sku: string) => void }) {
+    if (items.length === 0) return null;
+    return (
+        <div className="mt-2 max-h-40 overflow-y-auto rounded-md bg-white dark:bg-gray-800/60 border border-amber-100 dark:border-amber-900/40 divide-y divide-gray-100 dark:divide-gray-700">
+            {items.slice(0, 200).map((p, i) => (
+                <label key={i} className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] cursor-pointer hover:bg-amber-50/50 dark:hover:bg-amber-900/10">
+                    <input
+                        type="checkbox"
+                        checked={selected.has(p.sku)}
+                        onChange={() => onToggle(p.sku)}
+                        className="h-3.5 w-3.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <span className="text-gray-700 dark:text-gray-200 truncate flex-1">{p.name || '(sin nombre)'}</span>
+                    <span className="text-gray-400 font-mono ml-2 flex-shrink-0">{p.sku}</span>
+                </label>
+            ))}
+            {items.length > 200 && <div className="px-2.5 py-1.5 text-[11px] text-gray-400">y {items.length - 200} mas (usa "Asociar todos")...</div>}
         </div>
     );
 }

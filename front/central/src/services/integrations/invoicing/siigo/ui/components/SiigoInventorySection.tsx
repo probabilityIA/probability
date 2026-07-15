@@ -169,8 +169,8 @@ export function SiigoInventorySection({ value, onChange, businessId, integration
                         type="button"
                         onClick={onProductSync}
                         disabled={!integrationId}
-                        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50"
-                        style={{ border: `1px solid ${GREEN_BORDER}`, color: GREEN }}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
+                        style={{ backgroundColor: GREEN }}
                     >
                         <ArrowPathIcon className="w-4 h-4" /> Sincronizar productos (detectar y crear)
                     </button>

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/ports"
@@ -47,4 +48,29 @@ func (r *ProductReadRepository) ListProductsByBusiness(ctx context.Context, busi
 		})
 	}
 	return products, nil
+}
+
+func (r *ProductReadRepository) ListAssociatedSKUs(ctx context.Context, businessID, integrationID uint) (map[string]bool, error) {
+	var rows []struct {
+		SKU string
+	}
+
+	err := r.db.Conn(ctx).
+		Table("product_business_integrations AS pbi").
+		Select("p.sku AS sku").
+		Joins("JOIN products p ON p.id = pbi.product_id").
+		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND p.business_id = ? AND p.deleted_at IS NULL", integrationID, businessID).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	set := make(map[string]bool, len(rows))
+	for _, row := range rows {
+		key := strings.ToLower(strings.TrimSpace(row.SKU))
+		if key != "" {
+			set[key] = true
+		}
+	}
+	return set, nil
 }

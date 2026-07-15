@@ -15,7 +15,7 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 	existing, err := uc.repo.GetProductBySKU(ctx, dto.BusinessID, dto.SKU)
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
-			_, cerr := uc.ProductCRUD.CreateProduct(ctx, &domain.CreateProductRequest{
+			created, cerr := uc.ProductCRUD.CreateProduct(ctx, &domain.CreateProductRequest{
 				BusinessID:     dto.BusinessID,
 				SKU:            dto.SKU,
 				Name:           dto.Name,
@@ -26,7 +26,10 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 				Status:         "active",
 				IsActive:       true,
 			})
-			return cerr
+			if cerr != nil {
+				return cerr
+			}
+			return uc.ensureIntegrationMapping(ctx, created.ID, dto.IntegrationID, dto.ExternalID)
 		}
 		return err
 	}
@@ -34,10 +37,27 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 	name := dto.Name
 	price := dto.Price
 	track := dto.TrackInventory
-	_, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, &domain.UpdateProductRequest{
+	if _, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, &domain.UpdateProductRequest{
 		Name:           &name,
 		Price:          &price,
 		TrackInventory: &track,
-	})
-	return uerr
+	}); uerr != nil {
+		return uerr
+	}
+	return uc.ensureIntegrationMapping(ctx, existing.ID, dto.IntegrationID, dto.ExternalID)
+}
+
+func (uc *UseCases) ensureIntegrationMapping(ctx context.Context, productID string, integrationID uint, externalID string) error {
+	if integrationID == 0 || productID == "" {
+		return nil
+	}
+	exists, err := uc.repo.ProductIntegrationExists(ctx, productID, integrationID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+	_, err = uc.repo.AddProductIntegration(ctx, productID, integrationID, externalID, nil, nil, nil)
+	return err
 }

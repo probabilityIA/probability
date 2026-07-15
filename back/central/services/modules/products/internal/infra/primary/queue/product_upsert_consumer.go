@@ -74,6 +74,7 @@ func (c *ProductUpsertConsumer) handle(ctx context.Context, body []byte) {
 
 	err := c.useCase.UpsertFromProvider(ctx, &domain.ProductProviderUpsertDTO{
 		BusinessID:     msg.BusinessID,
+		IntegrationID:  msg.IntegrationID,
 		SKU:            msg.SKU,
 		Name:           msg.Name,
 		TrackInventory: msg.TrackInventory,

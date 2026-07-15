@@ -82,18 +82,20 @@ func (h *ProductHandler) ReconcileProducts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"success":             true,
-		"matched":             result.Matched,
-		"only_in_probability": productBriefsToResponse(result.OnlyInProbability),
-		"only_in_siigo":       productBriefsToResponse(result.OnlyInSiigo),
-		"probability_no_sku":  result.ProbabilityNoSKU,
-		"siigo_no_sku":        result.SiigoNoSKU,
+		"success":                true,
+		"matched":                result.Matched,
+		"matched_not_associated": productBriefsToResponse(result.MatchedNotAssociated),
+		"only_in_probability":    productBriefsToResponse(result.OnlyInProbability),
+		"only_in_siigo":          productBriefsToResponse(result.OnlyInSiigo),
+		"probability_no_sku":     result.ProbabilityNoSKU,
+		"siigo_no_sku":           result.SiigoNoSKU,
 	})
 }
 
 type productApplyRequest struct {
-	IntegrationID uint  `json:"integration_id" binding:"required"`
-	BusinessID    *uint `json:"business_id"`
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Skus          []string `json:"skus"`
 }
 
 func (h *ProductHandler) ApplyProducts(c *gin.Context) {
@@ -109,10 +111,11 @@ func (h *ProductHandler) ApplyProducts(c *gin.Context) {
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
 	correlationID := uuid.New().String()
+	skus := req.Skus
 
 	go func() {
 		ctx := context.Background()
-		if err := h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID); err != nil {
+		if err := h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID, skus); err != nil {
 			h.log.Error(ctx).Err(err).Msg("Error aplicando sincronizacion de productos Siigo")
 		}
 	}()

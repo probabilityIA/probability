@@ -52,11 +52,12 @@ type IInvoiceUseCase interface {
 	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]dtos.WebhookItem, error)
 
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error)
-	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 }
 
 type IProductReadRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]dtos.ProductForSync, error)
+	ListAssociatedSKUs(ctx context.Context, businessID, integrationID uint) (map[string]bool, error)
 }
 
 type WebhookCreateResult struct {

@@ -13,6 +13,7 @@ import (
 // CreateProductRequest representa la solicitud para crear un producto
 type ProductProviderUpsertDTO struct {
 	BusinessID     uint
+	IntegrationID  uint
 	SKU            string
 	Name           string
 	TrackInventory bool

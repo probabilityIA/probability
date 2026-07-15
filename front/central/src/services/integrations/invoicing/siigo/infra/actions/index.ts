@@ -51,8 +51,9 @@ export async function reconcileSiigoProductsAction(integrationId: number, busine
     return postWithAuth('/siigo/products/reconcile', body);
 }
 
-export async function applySiigoProductsAction(integrationId: number, businessId?: number) {
+export async function applySiigoProductsAction(integrationId: number, businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
     return postWithAuth('/siigo/products/apply', body);
 }
