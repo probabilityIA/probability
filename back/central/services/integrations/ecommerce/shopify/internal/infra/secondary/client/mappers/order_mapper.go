@@ -21,52 +21,43 @@ func calculateBasePriceFromTax(priceWithTax float64, taxRate *float64) float64 {
 	return priceWithTax / (1 + rate)
 }
 
-// extractShipmentStatusFromFulfillments extrae el shipment_status de fulfillments
-// Prioridad: "delivered" > más reciente por UpdatedAt
-// Si no hay fulfillments con shipment_status, retorna fallback: fulfillment_status > financial_status
 func extractShipmentStatusFromFulfillments(fulfillments []response.Fulfillment, fulfillmentStatus *string, financialStatus string) string {
-	// Prioridad 1: Buscar shipment_status en fulfillments
+
 	if len(fulfillments) > 0 {
-		// Buscar el fulfillment más reciente con shipment_status
+
 		var latestShipmentStatus *string
 		var latestUpdatedAt time.Time
 
 		for _, fulfillment := range fulfillments {
 			if fulfillment.ShipmentStatus != nil {
-				// Priorizar "delivered" sobre otros estados
+
 				if *fulfillment.ShipmentStatus == "delivered" {
 					return *fulfillment.ShipmentStatus
 				}
-				// Tomar el más reciente
+
 				if latestShipmentStatus == nil || fulfillment.UpdatedAt.After(latestUpdatedAt) {
 					latestShipmentStatus = fulfillment.ShipmentStatus
 					latestUpdatedAt = fulfillment.UpdatedAt
 				}
 			}
 		}
-		
-		// Si encontramos shipment_status, retornarlo
+
 		if latestShipmentStatus != nil {
 			return *latestShipmentStatus
 		}
 	}
-	
-	// Prioridad 2: Usar fulfillment_status si existe
+
 	if fulfillmentStatus != nil && *fulfillmentStatus != "" {
 		return *fulfillmentStatus
 	}
-	
-	// Prioridad 3: Fallback a financial_status
+
 	return financialStatus
 }
 
-// MapOrderResponseToShopifyOrder mapea una Order de respuesta de Shopify a ShopifyOrder del dominio
 func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
-	// Convertir precios de string a float64 (shop_money - USD)
-	// ParseFloat devuelve 0.0 en caso de error, que es un default seguro para campos monetarios
+
 	totalAmount, _ := strconv.ParseFloat(orderResp.TotalPrice, 64)
 
-	// Extraer precios en presentment_money (moneda local) si están disponibles
 	var totalAmountPresentment float64
 	var currencyPresentment string
 	var subtotalPresentment, taxPresentment, discountPresentment, shippingCostPresentment float64
@@ -80,27 +71,22 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		currencyPresentment = orderResp.PresentmentCurrency
 	}
 
-	// Extraer subtotal en moneda local
 	if orderResp.SubtotalPriceSet != nil && orderResp.SubtotalPriceSet.PresentmentMoney.Amount != "" {
 		subtotalPresentment, _ = strconv.ParseFloat(orderResp.SubtotalPriceSet.PresentmentMoney.Amount, 64)
 	}
 
-	// Extraer tax en moneda local
 	if orderResp.TotalTaxSet != nil && orderResp.TotalTaxSet.PresentmentMoney.Amount != "" {
 		taxPresentment, _ = strconv.ParseFloat(orderResp.TotalTaxSet.PresentmentMoney.Amount, 64)
 	}
 
-	// Extraer discount en moneda local
 	if orderResp.TotalDiscountsSet != nil && orderResp.TotalDiscountsSet.PresentmentMoney.Amount != "" {
 		discountPresentment, _ = strconv.ParseFloat(orderResp.TotalDiscountsSet.PresentmentMoney.Amount, 64)
 	}
 
-	// Extraer shipping cost en moneda local (sumar todos los shipping lines)
 	if orderResp.TotalShippingPriceSet != nil && orderResp.TotalShippingPriceSet.PresentmentMoney.Amount != "" {
 		shippingCostPresentment, _ = strconv.ParseFloat(orderResp.TotalShippingPriceSet.PresentmentMoney.Amount, 64)
 	}
 
-	// Mapear customer
 	customer := domain.ShopifyCustomer{
 		Email: orderResp.Email,
 		Phone: "",
@@ -114,11 +100,10 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		if orderResp.Customer.Phone != nil && *orderResp.Customer.Phone != "" {
 			customer.Phone = *orderResp.Customer.Phone
 		}
-		// Map Orders Count and Total Spent
+
 		customer.OrdersCount = orderResp.Customer.OrdersCount
 		customer.TotalSpent = orderResp.Customer.TotalSpent
 
-		// Map Default Address
 		if orderResp.Customer.DefaultAddress != nil {
 			da := orderResp.Customer.DefaultAddress
 			defaultAddress := domain.ShopifyAddress{
@@ -143,12 +128,11 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			customer.DefaultAddress = &defaultAddress
 		}
 	} else {
-		// Si no hay customer, usar email de la orden
+
 		customer.Name = orderResp.Email
 		customer.Email = orderResp.Email
 	}
 
-	// Fallback: teléfono desde shipping_address o default_address
 	if customer.Phone == "" {
 		if orderResp.ShippingAddress != nil && orderResp.ShippingAddress.Phone != nil && *orderResp.ShippingAddress.Phone != "" {
 			customer.Phone = *orderResp.ShippingAddress.Phone
@@ -159,7 +143,6 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		}
 	}
 
-	// Mapear shipping address
 	shippingAddress := domain.ShopifyAddress{
 		Street:     "",
 		Address2:   "",
@@ -178,7 +161,6 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		shippingAddress.Country = orderResp.ShippingAddress.Country
 		shippingAddress.PostalCode = orderResp.ShippingAddress.Zip
 
-		// Mapear coordenadas si existen
 		if orderResp.ShippingAddress.Latitude != nil && orderResp.ShippingAddress.Longitude != nil {
 			shippingAddress.Coordinates = &struct {
 				Lat float64
@@ -190,22 +172,22 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		}
 	}
 
-	// Mapear items
 	items := make([]domain.ShopifyOrderItem, len(orderResp.LineItems))
 	for i, item := range orderResp.LineItems {
 		unitPrice, _ := strconv.ParseFloat(item.Price, 64)
 		totalDiscount, _ := strconv.ParseFloat(item.TotalDiscount, 64)
 
-		// Si total_discount es 0, sumar discount_allocations (descuentos automáticos/across)
-		// Shopify pone descuentos automáticos en discount_allocations, no en total_discount
-		if totalDiscount == 0 && len(item.DiscountAllocations) > 0 {
+		if len(item.DiscountAllocations) > 0 {
+			var allocTotal float64
 			for _, alloc := range item.DiscountAllocations {
 				allocAmount, _ := strconv.ParseFloat(alloc.Amount, 64)
-				totalDiscount += allocAmount
+				allocTotal += allocAmount
+			}
+			if allocTotal > totalDiscount {
+				totalDiscount = allocTotal
 			}
 		}
 
-		// Calcular impuesto total y extraer tasa de tax_lines
 		var totalTax float64
 		var taxRate *float64
 		for _, taxLine := range item.TaxLines {
@@ -217,7 +199,6 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			}
 		}
 
-		// Extraer precios en moneda local del item (presentment_money)
 		var unitPricePresentment, discountPresentment, taxPresentment float64
 		if item.PriceSet != nil && item.PriceSet.PresentmentMoney.Amount != "" {
 			unitPricePresentment, _ = strconv.ParseFloat(item.PriceSet.PresentmentMoney.Amount, 64)
@@ -225,16 +206,19 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		if item.TotalDiscountSet != nil && item.TotalDiscountSet.PresentmentMoney.Amount != "" {
 			discountPresentment, _ = strconv.ParseFloat(item.TotalDiscountSet.PresentmentMoney.Amount, 64)
 		}
-		// Si discount presentment es 0, sumar desde discount_allocations presentment_money
-		if discountPresentment == 0 && len(item.DiscountAllocations) > 0 {
+		if len(item.DiscountAllocations) > 0 {
+			var allocPresentment float64
 			for _, alloc := range item.DiscountAllocations {
 				if alloc.AmountSet != nil && alloc.AmountSet.PresentmentMoney.Amount != "" {
 					allocAmount, _ := strconv.ParseFloat(alloc.AmountSet.PresentmentMoney.Amount, 64)
-					discountPresentment += allocAmount
+					allocPresentment += allocAmount
 				}
 			}
+			if allocPresentment > discountPresentment {
+				discountPresentment = allocPresentment
+			}
 		}
-		// Calcular tax en moneda local sumando las tax_lines
+
 		for _, taxLine := range item.TaxLines {
 			if taxLine.PriceSet != nil && taxLine.PriceSet.PresentmentMoney.Amount != "" {
 				taxPricePresentment, _ := strconv.ParseFloat(taxLine.PriceSet.PresentmentMoney.Amount, 64)
@@ -242,10 +226,9 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			}
 		}
 
-		// Convertir gramos a float64 para peso
 		var weight *float64
 		if item.Grams > 0 {
-			weightVal := float64(item.Grams) / 1000.0 // Convertir a kg
+			weightVal := float64(item.Grams) / 1000.0
 			weight = &weightVal
 		}
 
@@ -253,31 +236,29 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		variantID := item.VariantID
 
 		items[i] = domain.ShopifyOrderItem{
-			ExternalID:   strconv.FormatInt(item.VariantID, 10),
-			Name:         item.Name,
-			SKU:          item.SKU,
-			Quantity:     item.Quantity,
-			UnitPrice:    unitPrice,
-			ProductID:    &productID,
-			VariantID:    &variantID,
-			Title:        item.Title,
-			VariantTitle: item.VariantTitle,
-			Discount:     totalDiscount,
-			Tax:          totalTax,
-			TaxRate:      taxRate,
-			Weight:       weight,
+			ExternalID:               strconv.FormatInt(item.VariantID, 10),
+			Name:                     item.Name,
+			SKU:                      item.SKU,
+			Quantity:                 item.Quantity,
+			UnitPrice:                unitPrice,
+			ProductID:                &productID,
+			VariantID:                &variantID,
+			Title:                    item.Title,
+			VariantTitle:             item.VariantTitle,
+			Discount:                 totalDiscount,
+			Tax:                      totalTax,
+			TaxRate:                  taxRate,
+			Weight:                   weight,
 			UnitPriceBase:            calculateBasePriceFromTax(unitPrice, taxRate),
 			UnitPriceBasePresentment: calculateBasePriceFromTax(unitPricePresentment, taxRate),
-			UnitPricePresentment: unitPricePresentment,
-			DiscountPresentment:  discountPresentment,
-			TaxPresentment:       taxPresentment,
+			UnitPricePresentment:     unitPricePresentment,
+			DiscountPresentment:      discountPresentment,
+			TaxPresentment:           taxPresentment,
 		}
 	}
 
-	// Determinar status: Prioridad shipment_status > fulfillment_status > financial_status
 	status := extractShipmentStatusFromFulfillments(orderResp.Fulfillments, orderResp.FulfillmentStatus, orderResp.FinancialStatus)
 
-	// Mapear metadata
 	metadata := make(map[string]interface{})
 	metadata["shopify_id"] = orderResp.ID
 	metadata["shopify_name"] = orderResp.Name
@@ -289,13 +270,10 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 	metadata["source_name"] = orderResp.SourceName
 	metadata["payment_gateway_names"] = orderResp.PaymentGatewayNames
 
-	// Extraer datos de note_attributes (incluye _customer_dni, _business_id, etc.)
 	for _, attr := range orderResp.NoteAttributes {
 		metadata["note_attr_"+attr.Name] = attr.Value
 	}
 
-	// Extraer DNI desde billing_address.company o default_address.company
-	// En tiendas colombianas, el campo "company" del checkout se usa para el número de cédula
 	if orderResp.BillingAddress != nil && orderResp.BillingAddress.Company != nil && *orderResp.BillingAddress.Company != "" {
 		metadata["billing_company_dni"] = *orderResp.BillingAddress.Company
 	} else if orderResp.ShippingAddress != nil && orderResp.ShippingAddress.Company != nil && *orderResp.ShippingAddress.Company != "" {
@@ -304,20 +282,16 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		metadata["billing_company_dni"] = *orderResp.Customer.DefaultAddress.Company
 	}
 
-	// Determinar OrderStatusURL
 	orderStatusURL := ""
 	if orderResp.OrderStatusURL != nil {
 		orderStatusURL = *orderResp.OrderStatusURL
 	}
 
-	// Usar el Name de Shopify (ej: "#1001") como OrderNumber, o el OrderNumber numérico si Name está vacío
 	orderNumber := orderResp.Name
 	if orderNumber == "" {
 		orderNumber = strconv.Itoa(orderResp.OrderNumber)
 	}
 
-	// Calcular shipping cost total y shipping discount desde ShippingLines
-	// Price = precio original, DiscountedPrice = precio después de descuentos de envío
 	var shippingCost float64
 	var actualShippingCost float64
 	var actualShippingCostPresentment float64
@@ -325,7 +299,6 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		price, _ := strconv.ParseFloat(line.Price, 64)
 		shippingCost += price
 
-		// DiscountedPrice contiene el precio después de aplicar descuentos de envío
 		discounted, _ := strconv.ParseFloat(line.DiscountedPrice, 64)
 		actualShippingCost += discounted
 
@@ -335,7 +308,6 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		}
 	}
 
-	// Shipping discount = original price - discounted price
 	shippingDiscount := shippingCost - actualShippingCost
 	if shippingDiscount < 0 {
 		shippingDiscount = 0
@@ -372,19 +344,18 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		ImportedAt:      time.Now(),
 		OrderStatusURL:  orderStatusURL,
 		RawData:         rawOrder,
-		// Precios en moneda local
+
 		SubtotalPresentment:         subtotalPresentment,
 		TaxPresentment:              taxPresentment,
 		DiscountPresentment:         discountPresentment,
 		ShippingCostPresentment:     shippingCostPresentment,
 		ShippingDiscount:            shippingDiscount,
 		ShippingDiscountPresentment: shippingDiscountPresentment,
-		TotalAmountPresentment:  totalAmountPresentment,
-		CurrencyPresentment:     currencyPresentment,
+		TotalAmountPresentment:      totalAmountPresentment,
+		CurrencyPresentment:         currencyPresentment,
 	}
 }
 
-// MapOrdersResponseToShopifyOrders mapea múltiples órdenes de respuesta a ShopifyOrder del dominio
 func MapOrdersResponseToShopifyOrders(ordersResp []response.Order, rawOrders [][]byte, businessID *uint, integrationID uint, integrationType string) []domain.ShopifyOrder {
 	orders := make([]domain.ShopifyOrder, len(ordersResp))
 	for i, orderResp := range ordersResp {
@@ -397,11 +368,8 @@ func MapOrdersResponseToShopifyOrders(ordersResp []response.Order, rawOrders [][
 	return orders
 }
 
-// MapOrderResponseToDomain mapea una Order de respuesta de Shopify a map[string]interface{} (legacy)
-// DEPRECATED: Usar MapOrderResponseToShopifyOrder en su lugar
 func MapOrderResponseToDomain(orderResp response.Order) map[string]interface{} {
-	// Convertir la estructura tipada a map[string]interface{} para mantener compatibilidad
-	// mientras se migra el código existente
+
 	orderMap := make(map[string]interface{})
 
 	orderMap["id"] = orderResp.ID
@@ -434,36 +402,30 @@ func MapOrderResponseToDomain(orderResp response.Order) map[string]interface{} {
 		orderMap["location_id"] = *orderResp.LocationID
 	}
 
-	// Mapear customer
 	if orderResp.Customer != nil {
 		orderMap["customer"] = mapCustomerToDomain(orderResp.Customer)
 	}
 
-	// Mapear shipping_address
 	if orderResp.ShippingAddress != nil {
 		orderMap["shipping_address"] = mapAddressToDomain(orderResp.ShippingAddress)
 	}
 
-	// Mapear billing_address
 	if orderResp.BillingAddress != nil {
 		orderMap["billing_address"] = mapAddressToDomain(orderResp.BillingAddress)
 	}
 
-	// Mapear line_items
 	lineItems := make([]map[string]interface{}, len(orderResp.LineItems))
 	for i, item := range orderResp.LineItems {
 		lineItems[i] = mapLineItemToDomain(item)
 	}
 	orderMap["line_items"] = lineItems
 
-	// Mapear shipping_lines
 	shippingLines := make([]map[string]interface{}, len(orderResp.ShippingLines))
 	for i, line := range orderResp.ShippingLines {
 		shippingLines[i] = mapShippingLineToDomain(line)
 	}
 	orderMap["shipping_lines"] = shippingLines
 
-	// Mapear fulfillments
 	fulfillments := make([]map[string]interface{}, len(orderResp.Fulfillments))
 	for i, fulfillment := range orderResp.Fulfillments {
 		fulfillments[i] = mapFulfillmentToDomain(fulfillment)
@@ -473,7 +435,6 @@ func MapOrderResponseToDomain(orderResp response.Order) map[string]interface{} {
 	return orderMap
 }
 
-// MapOrdersResponseToDomain mapea múltiples órdenes de respuesta a maps del dominio
 func MapOrdersResponseToDomain(ordersResp []response.Order) []map[string]interface{} {
 	orders := make([]map[string]interface{}, len(ordersResp))
 	for i, orderResp := range ordersResp {
@@ -482,7 +443,6 @@ func MapOrdersResponseToDomain(ordersResp []response.Order) []map[string]interfa
 	return orders
 }
 
-// mapCustomerToDomain mapea un Customer de respuesta a map del dominio
 func mapCustomerToDomain(customer *response.Customer) map[string]interface{} {
 	customerMap := make(map[string]interface{})
 	customerMap["id"] = customer.ID
@@ -511,7 +471,6 @@ func mapCustomerToDomain(customer *response.Customer) map[string]interface{} {
 	return customerMap
 }
 
-// mapAddressToDomain mapea una Address de respuesta a map del dominio
 func mapAddressToDomain(address *response.Address) map[string]interface{} {
 	addressMap := make(map[string]interface{})
 	addressMap["first_name"] = address.FirstName
@@ -545,7 +504,6 @@ func mapAddressToDomain(address *response.Address) map[string]interface{} {
 	return addressMap
 }
 
-// mapLineItemToDomain mapea un LineItem de respuesta a map del dominio
 func mapLineItemToDomain(item response.LineItem) map[string]interface{} {
 	itemMap := make(map[string]interface{})
 	itemMap["id"] = item.ID
@@ -572,7 +530,6 @@ func mapLineItemToDomain(item response.LineItem) map[string]interface{} {
 		itemMap["vendor"] = *item.Vendor
 	}
 
-	// Mapear tax_lines
 	if len(item.TaxLines) > 0 {
 		taxLines := make([]map[string]interface{}, len(item.TaxLines))
 		for i, taxLine := range item.TaxLines {
@@ -588,7 +545,6 @@ func mapLineItemToDomain(item response.LineItem) map[string]interface{} {
 	return itemMap
 }
 
-// mapShippingLineToDomain mapea una ShippingLine de respuesta a map del dominio
 func mapShippingLineToDomain(line response.ShippingLine) map[string]interface{} {
 	lineMap := make(map[string]interface{})
 	lineMap["id"] = line.ID
@@ -614,7 +570,6 @@ func mapShippingLineToDomain(line response.ShippingLine) map[string]interface{} 
 	return lineMap
 }
 
-// mapFulfillmentToDomain mapea un Fulfillment de respuesta a map del dominio
 func mapFulfillmentToDomain(fulfillment response.Fulfillment) map[string]interface{} {
 	fulfillmentMap := make(map[string]interface{})
 	fulfillmentMap["id"] = fulfillment.ID
@@ -651,7 +606,6 @@ func mapFulfillmentToDomain(fulfillment response.Fulfillment) map[string]interfa
 	return fulfillmentMap
 }
 
-// MapToShopifyAPIOrder mapea una Order de respuesta a ShopifyAPIOrder del dominio
 func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 	order := domain.ShopifyAPIOrder{
 		ID:                  orderResp.ID,
@@ -680,7 +634,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		order.Phone = *orderResp.Phone
 	}
 
-	// Mapear customer
 	if orderResp.Customer != nil {
 		order.Customer = &domain.ShopifyAPICustomer{
 			ID:            orderResp.Customer.ID,
@@ -695,7 +648,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		}
 	}
 
-	// Mapear shipping_address
 	if orderResp.ShippingAddress != nil {
 		order.ShippingAddress = &domain.ShopifyAPIAddress{
 			FirstName:   orderResp.ShippingAddress.FirstName,
@@ -717,7 +669,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		}
 	}
 
-	// Mapear billing_address
 	if orderResp.BillingAddress != nil {
 		order.BillingAddress = &domain.ShopifyAPIAddress{
 			FirstName:   orderResp.BillingAddress.FirstName,
@@ -739,7 +690,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		}
 	}
 
-	// Mapear line_items
 	order.LineItems = make([]domain.ShopifyLineItem, len(orderResp.LineItems))
 	for i, item := range orderResp.LineItems {
 		order.LineItems[i] = domain.ShopifyLineItem{
@@ -758,7 +708,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		}
 	}
 
-	// Mapear shipping_lines
 	order.ShippingLines = make([]domain.ShopifyShippingLine, len(orderResp.ShippingLines))
 	for i, line := range orderResp.ShippingLines {
 		code := ""
@@ -785,7 +734,6 @@ func MapToShopifyAPIOrder(orderResp response.Order) domain.ShopifyAPIOrder {
 		}
 	}
 
-	// Mapear fulfillments
 	order.Fulfillments = make([]domain.ShopifyFulfillment, len(orderResp.Fulfillments))
 	for i, fulfillment := range orderResp.Fulfillments {
 		order.Fulfillments[i] = domain.ShopifyFulfillment{
