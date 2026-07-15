@@ -20,7 +20,6 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { WooStorePowerWidget } from '@/services/woostore/ui/components/WooStorePowerWidget';
 
-// Mapeo de código de categoría → nombre del recurso en BD
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
     'ecommerce': 'Integraciones-E-commerce',
     'invoicing': 'Integraciones-Facturacion-Electronica',
@@ -46,12 +45,10 @@ export default function IntegrationsPage() {
     const { hasPermission, isSuperAdmin } = usePermissions();
     const { setActionButtons } = useNavbarActions();
 
-    // Read active tab and category from URL (driven by subnavbar)
     const currentTab = searchParams.get('tab');
     const currentCategory = searchParams.get('category');
     const isTypesTab = currentTab === 'types';
 
-    // Filter categories by permissions
     const allowedCategories = useMemo(() => {
         return categories.filter(c => {
             if (isSuperAdmin) return true;
@@ -61,7 +58,6 @@ export default function IntegrationsPage() {
         });
     }, [categories, isSuperAdmin, hasPermission]);
 
-    // Determine active category code
     const activeCategoryCode = useMemo(() => {
         if (isTypesTab) return null;
         if (currentCategory) return currentCategory;
@@ -71,7 +67,6 @@ export default function IntegrationsPage() {
         return first?.code || null;
     }, [isTypesTab, currentCategory, allowedCategories]);
 
-    // Set action buttons in navbar
     useEffect(() => {
         setActionButtons(
             <Button
@@ -146,7 +141,6 @@ export default function IntegrationsPage() {
                 />
             )}
 
-            {/* Create Modal */}
             {!isTypesTab ? (
                 <CreateIntegrationModal
                     isOpen={showCreateModal}
@@ -168,7 +162,6 @@ export default function IntegrationsPage() {
                 </Modal>
             )}
 
-            {/* Edit Modal for Integration Types */}
             <Modal
                 isOpen={showEditModal}
                 onClose={handleModalClose}
@@ -191,11 +184,11 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 3, 4, 8].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
                 <div
                     style={
-                        selectedIntegration && [1, 3, 4].includes(Number(selectedIntegration.integration_type_id))
+                        selectedIntegration && [1, 3, 4, 8].includes(Number(selectedIntegration.integration_type_id))
                             ? { width: 'min(768px, 92vw)' }
                             : undefined
                     }
