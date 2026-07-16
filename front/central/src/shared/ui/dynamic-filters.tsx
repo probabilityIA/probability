@@ -36,6 +36,7 @@ interface DynamicFiltersProps {
     onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
     sortOptions?: Array<{ value: string; label: string }>;
     className?: string;
+    embedded?: boolean;
 }
 
 export function DynamicFilters({
@@ -58,6 +59,7 @@ export function DynamicFilters({
         { value: 'total_amount', label: 'Ordenar por monto' },
     ],
     className = '',
+    embedded = false,
 }: DynamicFiltersProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(null);
@@ -169,7 +171,11 @@ export function DynamicFilters({
 
     return (
         <div
-          className={`p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 bg-primary-50 dark:bg-gray-900 border-primary-200 dark:border-gray-800 ${className}`}
+          className={
+            embedded
+                ? `px-4 sm:px-6 lg:px-8 py-2.5 ${className}`
+                : `p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 bg-primary-50 dark:bg-gray-900 border-primary-200 dark:border-gray-800 ${className}`
+          }
         >
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Botón Añadir Filtro y Chips */}

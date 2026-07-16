@@ -5,15 +5,18 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 interface NavbarContextType {
     actionButtons: React.ReactNode | null;
     setActionButtons: (buttons: React.ReactNode | null) => void;
+    secondaryContent: React.ReactNode | null;
+    setSecondaryContent: (content: React.ReactNode | null) => void;
 }
 
 const NavbarContext = createContext<NavbarContextType | undefined>(undefined);
 
 export const NavbarProvider = ({ children }: { children: ReactNode }) => {
     const [actionButtons, setActionButtons] = useState<React.ReactNode | null>(null);
+    const [secondaryContent, setSecondaryContent] = useState<React.ReactNode | null>(null);
 
     return (
-        <NavbarContext.Provider value={{ actionButtons, setActionButtons }}>
+        <NavbarContext.Provider value={{ actionButtons, setActionButtons, secondaryContent, setSecondaryContent }}>
             {children}
         </NavbarContext.Provider>
     );

@@ -18,13 +18,6 @@ export function InvoicingConfigFormPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const { permissions } = usePermissions();
-  const {
-    integrations,
-    loading: integrationsLoading,
-    setFilterCategory,
-    setFilterBusinessId,
-  } = useIntegrations();
-  const { businesses, loading: businessesLoading } = useBusinessesSimple();
 
   const [selectedInvoicingIntegrationId, setSelectedInvoicingIntegrationId] = useState<number | null>(null);
   const [selectedEcommerceIntegrationIds, setSelectedEcommerceIntegrationIds] = useState<number[]>([]);
@@ -34,13 +27,18 @@ export function InvoicingConfigFormPage() {
   const businessId = permissions?.business_id || 0;
   const isSuperAdmin = !businessId || businessId === 0;
 
-  // Para super admin, usar el negocio seleccionado; para usuario normal, usar su businessId
   const effectiveBusinessId = isSuperAdmin ? selectedBusinessId : businessId;
+
+  const {
+    integrations,
+    loading: integrationsLoading,
+    setFilterCategory,
+  } = useIntegrations('', effectiveBusinessId);
+  const { businesses, loading: businessesLoading } = useBusinessesSimple();
 
   useEffect(() => {
     if (effectiveBusinessId) {
-      setFilterBusinessId(effectiveBusinessId); // Filtrar por el negocio seleccionado/del usuario
-      setFilterCategory(currentCategory);       // Filtrar por categoría actual (invoicing o ecommerce)
+      setFilterCategory(currentCategory);
     }
   }, [effectiveBusinessId, currentCategory]);
 

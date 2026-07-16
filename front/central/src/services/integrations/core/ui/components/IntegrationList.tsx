@@ -1,33 +1,30 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     PlayIcon,
     ArrowPathIcon,
     PencilIcon,
-    PowerIcon,
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { useIntegrations } from '../hooks/useIntegrations';
 import { useSSE } from '@/shared/hooks/use-sse';
-import { getActiveIntegrationTypesAction } from '../../infra/actions';
 import {
     Integration,
     SyncOrdersParams
 } from '../../domain/types';
 import { getOrderStatusMappingsAction } from '@/services/modules/orderstatus/infra/actions';
 import { OrderStatusMapping } from '@/services/modules/orderstatus/domain/types';
-import { Input, Button, Badge, Spinner, Table, Alert, ConfirmModal, Select, DateRangePicker } from '@/shared/ui';
-import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
+import { Input, Button, Badge, Spinner, Alert, ConfirmModal, Select, DateRangePicker } from '@/shared/ui';
 import { useToast } from '@/shared/providers/toast-provider';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { playNotificationSound } from '@/shared/utils';
-import { usePermissions } from '@/shared/contexts/permissions-context';
-import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
     filterCategory?: string;
+    businessId?: number | null;
+    onCreate?: () => void;
 }
 
 // Estado de un lote individual
@@ -83,31 +80,42 @@ function isEcommerceIntegration(integration: { category?: string; integration_ty
     return integration.category === 'ecommerce' || ECOMMERCE_TYPE_IDS.has(integration.integration_type_id ?? -1);
 }
 
-export default function IntegrationList({ onEdit, filterCategory: propFilterCategory }: IntegrationListProps) {
+export default function IntegrationList({ onEdit, filterCategory: propFilterCategory, businessId = null, onCreate }: IntegrationListProps) {
     const {
         integrations,
         loading,
+        loadingMore,
         error,
-        page,
         setPage,
-        totalPages,
-        search,
-        setSearch,
-        filterType,
-        setFilterType,
+        hasMore,
+        loadMore,
+        total,
         filterCategory,
         setFilterCategory,
-        filterBusinessId,
-        setFilterBusinessId,
         deleteIntegration,
         toggleActive,
         testConnection,
         syncOrders,
         setError
-    } = useIntegrations(propFilterCategory || '');
+    } = useIntegrations(propFilterCategory || '', businessId);
 
-    const { isSuperAdmin } = usePermissions();
-    const { businesses: businessOptions } = useBusinessesSimple();
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const node = loadMoreRef.current;
+        if (!node || !hasMore) return;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                    loadMore();
+                }
+            },
+            { rootMargin: '200px' }
+        );
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadingMore, loadMore]);
+
 
     // Sincronizar cambios de categoría después del montaje inicial (cambio de pestaña)
     // No causa doble fetch en el montaje porque el hook ya inicia con propFilterCategory
@@ -122,29 +130,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         show: false,
         id: null
     });
-
-    // Estado para tipos de integración para filtros
-    const [integrationTypes, setIntegrationTypes] = useState<Array<{ value: string; label: string }>>([]);
-
-    // Obtener tipos de integración para el filtro
-    useEffect(() => {
-        const fetchIntegrationTypes = async () => {
-            try {
-                const token = TokenStorage.getSessionToken();
-                const response = await getActiveIntegrationTypesAction(token);
-                if (response.success && response.data) {
-                    const options = response.data.map((type) => ({
-                        value: type.code || type.name.toLowerCase().replace(/\s+/g, '_'),
-                        label: type.name,
-                    }));
-                    setIntegrationTypes(options);
-                }
-            } catch (err) {
-                console.error('Error fetching integration types for filter:', err);
-            }
-        };
-        fetchIntegrationTypes();
-    }, []);
 
     // Estado para el modal de sincronización
     const [syncModal, setSyncModal] = useState<{ show: boolean; id: number | null; name: string; integrationTypeId?: number }>({
@@ -641,119 +626,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         return () => clearTimeout(timer);
     }, [syncing, syncProgress?.totalFetched, syncProgress?.created, syncProgress?.updated, syncProgress?.rejected]);
 
-    // Filtros dinámicos - sincronizar con el hook
-    const [filters, setFilters] = useState<{
-        search?: string;
-        type?: string;
-        business?: string;
-    }>({});
-
-    // Definir filtros disponibles
-    const availableFilters: FilterOption[] = useMemo(() => {
-        const filters: FilterOption[] = [
-            {
-                key: 'search',
-                label: 'Nombre',
-                type: 'text',
-                placeholder: 'Buscar por nombre...',
-            },
-            {
-                key: 'type',
-                label: 'Tipo',
-                type: 'select',
-                options: integrationTypes,
-            },
-        ];
-        if (isSuperAdmin) {
-            filters.push({
-                key: 'business',
-                label: 'Negocio',
-                type: 'select',
-                options: (businessOptions || []).map((b: any) => ({
-                    value: String(b.id),
-                    label: b.name,
-                })),
-            });
-        }
-        return filters;
-    }, [integrationTypes, isSuperAdmin, businessOptions]);
-
-    // Convertir filtros a ActiveFilter[]
-    const activeFilters: ActiveFilter[] = useMemo(() => {
-        const active: ActiveFilter[] = [];
-
-        if (filters.search) {
-            active.push({
-                key: 'search',
-                label: 'Nombre',
-                value: filters.search,
-                type: 'text',
-            });
-        }
-
-        if (filters.type) {
-            active.push({
-                key: 'type',
-                label: 'Tipo',
-                value: filters.type,
-                type: 'select',
-            });
-        }
-
-        if (filters.business) {
-            active.push({
-                key: 'business',
-                label: 'Negocio',
-                value: filters.business,
-                type: 'select',
-            });
-        }
-
-        return active;
-    }, [filters]);
-
-    // Manejar agregar filtro
-    const handleAddFilter = useCallback((filterKey: string, value: any) => {
-        setFilters((prev) => {
-            const newFilters = { ...prev, [filterKey]: value };
-            // Sincronizar con el estado del hook
-            if (filterKey === 'search') {
-                setSearch(value);
-            } else if (filterKey === 'type') {
-                setFilterType(value);
-            } else if (filterKey === 'business') {
-                const parsed = value ? parseInt(value, 10) : null;
-                setFilterBusinessId(Number.isFinite(parsed as number) ? (parsed as number) : null);
-            }
-            return newFilters;
-        });
-        setPage(1);
-    }, [setSearch, setFilterType, setFilterBusinessId, setPage]);
-
-    // Manejar eliminar filtro
-    const handleRemoveFilter = useCallback((filterKey: string) => {
-        setFilters((prev) => {
-            const newFilters = { ...prev };
-            delete (newFilters as any)[filterKey];
-            // Sincronizar con el estado del hook
-            if (filterKey === 'search') {
-                setSearch('');
-            } else if (filterKey === 'type') {
-                setFilterType('');
-            } else if (filterKey === 'business') {
-                setFilterBusinessId(null);
-            }
-            return newFilters;
-        });
-        setPage(1);
-    }, [setSearch, setFilterType, setFilterBusinessId, setPage]);
-
-    // Manejar cambio de ordenamiento
-    const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
-        // Por ahora no tenemos ordenamiento en integraciones, pero podemos agregarlo después
-        console.log('Sort changed:', sortBy, sortOrder);
-    }, []);
-
     const handleDeleteClick = (id: number) => {
         setDeleteModal({ show: true, id });
     };
@@ -983,188 +855,184 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         );
     }
 
-    const columns = [
-        { key: 'id', label: 'ID' },
-        { key: 'logo', label: 'Logo' },
-        { key: 'name', label: 'Nombre' },
-        { key: 'type', label: 'Tipo' },
-        { key: 'category', label: 'Categoría' },
-        { key: 'business', label: 'Empresa' },
-        { key: 'status', label: 'Estado' },
-        { key: 'actions', label: 'Acciones' }
-    ];
+    const renderCard = (integration: Integration) => {
+        const initial = integration.name.charAt(0).toUpperCase();
+        const logo = integration.integration_type?.image_url ? (
+            <img
+                src={integration.integration_type.image_url}
+                alt={integration.integration_type.name || integration.name}
+                className="w-11 h-11 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800 flex-shrink-0"
+                onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                    const parent = (e.target as HTMLImageElement).parentElement;
+                    if (parent) {
+                        parent.innerHTML = '<div class="w-11 h-11 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-sm font-semibold flex-shrink-0">' + initial + '</div>';
+                    }
+                }}
+            />
+        ) : (
+            <div className="w-11 h-11 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-sm font-semibold flex-shrink-0">
+                {initial}
+            </div>
+        );
 
-    const renderRow = (integration: Integration) => ({
-        id: integration.id,
-        logo: (
-            <div className="flex items-center justify-center">
-                {integration.integration_type?.image_url ? (
-                    <img
-                        src={integration.integration_type.image_url}
-                        alt={integration.integration_type.name || integration.name}
-                        className="w-12 h-12 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800"
-                        onError={(e) => {
-                            // Si la imagen falla al cargar, mostrar un placeholder
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            const parent = (e.target as HTMLImageElement).parentElement;
-                            if (parent) {
-                                parent.innerHTML = '<div class="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">Sin logo</div>';
-                            }
-                        }}
-                    />
-                ) : (
-                    <div className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">
-                        {integration.name.charAt(0).toUpperCase()}
+        const subtitleParts = [integration.integration_type?.name, integration.business_name].filter(Boolean);
+        const categoryLabel = integration.category_name || integration.category;
+        const categoryColor = integration.category_color || '#6B7280';
+
+        return (
+            <div
+                key={integration.id}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col gap-3"
+            >
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        {logo}
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">{integration.name}</span>
+                                <span className="text-[10px] text-gray-400 flex-shrink-0">#{integration.id}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {subtitleParts.length > 0 ? subtitleParts.join(' · ') : 'Sin tipo'}
+                            </div>
+                            {categoryLabel && (
+                                <span
+                                    className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium text-white whitespace-nowrap"
+                                    style={{ backgroundColor: categoryColor }}
+                                >
+                                    {categoryLabel}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge type={integration.is_active ? 'success' : 'error'}>
+                            {integration.is_active ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                        {integration.is_default && (
+                            <Badge type="primary">Por defecto</Badge>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 dark:border-gray-700 pt-3">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => handleTest(integration.id)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            title="Probar conexion"
+                            aria-label="Probar conexion"
+                        >
+                            <PlayIcon className="w-3.5 h-3.5" />
+                            Probar
+                        </button>
+                        {isEcommerceIntegration(integration) && (
+                            <button
+                                onClick={() => handleSyncClick(integration.id, integration.name)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                title="Sincronizar ordenes"
+                                aria-label="Sincronizar ordenes"
+                            >
+                                <ArrowPathIcon className="w-3.5 h-3.5" />
+                                Sincronizar
+                            </button>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        {onEdit && (
+                            <button
+                                onClick={() => onEdit(integration)}
+                                className="p-1.5 text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                title="Editar integracion"
+                                aria-label="Editar integracion"
+                            >
+                                <PencilIcon className="w-4 h-4" />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => handleDeleteClick(integration.id)}
+                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-md transition-colors"
+                            title="Eliminar integracion"
+                            aria-label="Eliminar integracion"
+                        >
+                            <TrashIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => toggleActive(integration.id, integration.is_active)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${integration.is_active ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            title={integration.is_active ? 'Desactivar integracion' : 'Activar integracion'}
+                            aria-label={integration.is_active ? 'Desactivar integracion' : 'Activar integracion'}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${integration.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <div className="mx-auto w-full max-w-7xl">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+                <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">Integraciones conectadas</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Las integraciones conectadas a tu cuenta.</p>
+                    <span className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        {integrations.filter(i => i.is_active).length} activas · {total} en total
+                    </span>
+                </div>
+
+                <div className="p-6 space-y-4">
+                    {error && (
+                        <Alert type="error" onClose={() => setError(null)}>
+                            {error}
+                        </Alert>
+                    )}
+
+                    {integrations.length === 0 ? (
+                        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 p-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                            No hay integraciones disponibles
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {integrations.map(renderCard)}
+                        </div>
+                    )}
+
+                    {integrations.length > 0 && (
+                        <div ref={loadMoreRef} className="flex justify-center items-center py-2">
+                            {loadingMore ? (
+                                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                    <Spinner size="sm" />
+                                    Cargando mas...
+                                </div>
+                            ) : hasMore ? (
+                                <button
+                                    onClick={loadMore}
+                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    Cargar mas
+                                </button>
+                            ) : (
+                                <span className="text-xs text-gray-400">No hay mas integraciones</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {onCreate && (
+                    <div className="border-t border-gray-100 dark:border-gray-700 p-4">
+                        <Button variant="primary" onClick={onCreate} className="w-full justify-center gap-2">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Crear Integración
+                        </Button>
                     </div>
                 )}
             </div>
-        ),
-        name: (
-            <div>
-                <div className="text-sm font-medium text-gray-900 dark:text-white">{integration.name}</div>
-                {integration.description && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">{integration.description}</div>
-                )}
-            </div>
-        ),
-        type: (
-            <div className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
-                {integration.integration_type?.name || (
-                    <span className="text-gray-400 text-xs">—</span>
-                )}
-            </div>
-        ),
-        category: (
-            <span
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
-                style={{ backgroundColor: integration.category_color || '#6B7280' }}
-            >
-                {integration.category_name || integration.category || 'Sin categoría'}
-            </span>
-        ),
-        business: (
-            <div className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
-                {integration.business_name || (
-                    <span className="text-gray-400 text-xs">Sin empresa</span>
-                )}
-            </div>
-        ),
-        status: (
-            <div className="flex items-center gap-2">
-                <Badge type={integration.is_active ? 'success' : 'error'}>
-                    {integration.is_active ? 'Activo' : 'Inactivo'}
-                </Badge>
-                {integration.is_default && (
-                    <Badge type="primary">Por defecto</Badge>
-                )}
-            </div>
-        ),
-        actions: (
-            <div className="flex gap-2 items-center">
-                <button
-                    onClick={() => handleTest(integration.id)}
-                    className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    title="Probar conexión"
-                    aria-label="Probar conexión"
-                >
-                    <PlayIcon className="w-4 h-4" />
-                </button>
-                {isEcommerceIntegration(integration) && (
-                    <button
-                        onClick={() => handleSyncClick(integration.id, integration.name)}
-                        className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                        title="Sincronizar órdenes"
-                        aria-label="Sincronizar órdenes"
-                    >
-                        <ArrowPathIcon className="w-4 h-4" />
-                    </button>
-                )}
-                {onEdit && (
-                    <button
-                        onClick={() => onEdit(integration)}
-                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                        title="Editar integración"
-                        aria-label="Editar integración"
-                    >
-                        <PencilIcon className="w-4 h-4" />
-                    </button>
-                )}
-                <button
-                    onClick={() => toggleActive(integration.id, integration.is_active)}
-                    className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${integration.is_active
-                        ? 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500'
-                        : 'bg-gray-50 dark:bg-gray-7000 hover:bg-gray-600 text-white focus:ring-gray-500'
-                        }`}
-                    title={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
-                    aria-label={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
-                >
-                    <PowerIcon className="w-4 h-4" />
-                </button>
-                <button
-                    onClick={() => handleDeleteClick(integration.id)}
-                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                    title="Eliminar integración"
-                    aria-label="Eliminar integración"
-                >
-                    <TrashIcon className="w-4 h-4" />
-                </button>
-            </div>
-        )
-    });
-
-    return (
-        <div className="space-y-4">
-            <DynamicFilters
-                availableFilters={availableFilters}
-                activeFilters={activeFilters}
-                onAddFilter={handleAddFilter}
-                onRemoveFilter={handleRemoveFilter}
-                sortBy="created_at"
-                sortOrder="desc"
-                onSortChange={handleSortChange}
-                sortOptions={[
-                    { value: 'created_at', label: 'Ordenar por fecha de creación' },
-                    { value: 'updated_at', label: 'Ordenar por fecha de actualización' },
-                    { value: 'name', label: 'Ordenar por nombre' },
-                ]}
-            />
-
-            {error && (
-                <Alert type="error" onClose={() => setError(null)}>
-                    {error}
-                </Alert>
-            )}
-
-            <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
-                <Table
-                    columns={columns}
-                    data={integrations.map(renderRow)}
-                    emptyMessage="No hay integraciones disponibles"
-                />
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2">
-                    <Button
-                        onClick={() => setPage(page - 1)}
-                        disabled={page === 1}
-                        variant="primary"
-                    >
-                        Anterior
-                    </Button>
-                    <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
-                        Página {page} de {totalPages}
-                    </span>
-                    <Button
-                        onClick={() => setPage(page + 1)}
-                        disabled={page === totalPages}
-                        variant="primary"
-                    >
-                        Siguiente
-                    </Button>
-                </div>
-            )}
 
             <ConfirmModal
                 isOpen={deleteModal.show}

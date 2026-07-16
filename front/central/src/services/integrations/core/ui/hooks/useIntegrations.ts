@@ -14,41 +14,86 @@ import { Integration, SyncOrdersParams } from '../../domain/types';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { getActionError } from '@/shared/utils/action-result';
 
-export const useIntegrations = (initialCategory: string = '') => {
+const PAGE_SIZE = 10;
+
+export const useIntegrations = (initialCategory: string = '', businessId: number | null = null) => {
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
 
-    // Filters
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState<string>('');
     const [filterCategory, setFilterCategory] = useState<string>(initialCategory);
-    const [filterBusinessId, setFilterBusinessId] = useState<number | null>(null);
+
+    const buildParams = useCallback((targetPage: number) => ({
+        page: targetPage,
+        page_size: PAGE_SIZE,
+        search: search || undefined,
+        type: filterType || undefined,
+        category: filterCategory || undefined,
+        business_id: businessId || undefined,
+    }), [search, filterType, filterCategory, businessId]);
 
     const fetchIntegrations = useCallback(async () => {
+        const isFirstPage = page === 1;
+        if (isFirstPage) {
+            setLoading(true);
+        } else {
+            setLoadingMore(true);
+        }
+        setError(null);
+        try {
+            const token = TokenStorage.getSessionToken();
+            const response = await getIntegrationsAction(buildParams(page), token);
+            const data = response.data || [];
+            setIntegrations(prev => (isFirstPage ? data : [...prev, ...data]));
+            setTotalPages(response.total_pages);
+            setTotal(response.total ?? 0);
+        } catch (err: any) {
+            console.error('Error fetching integrations:', err);
+            setError(getActionError(err, 'Error fetching integrations'));
+        } finally {
+            if (isFirstPage) {
+                setLoading(false);
+            } else {
+                setLoadingMore(false);
+            }
+        }
+    }, [page, buildParams]);
+
+    const reloadAll = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const token = TokenStorage.getSessionToken();
-            const response = await getIntegrationsAction({
-                page,
-                page_size: 10,
-                search: search || undefined,
-                type: filterType || undefined,
-                category: filterCategory || undefined,
-                business_id: filterBusinessId || undefined,
-            }, token);
-            setIntegrations(response.data || []);
-            setTotalPages(response.total_pages);
+            const accumulated: Integration[] = [];
+            let lastTotalPages = 1;
+            for (let p = 1; p <= page; p++) {
+                const response = await getIntegrationsAction(buildParams(p), token);
+                accumulated.push(...(response.data || []));
+                lastTotalPages = response.total_pages;
+                setTotal(response.total ?? 0);
+                if (p >= response.total_pages) break;
+            }
+            setIntegrations(accumulated);
+            setTotalPages(lastTotalPages);
         } catch (err: any) {
             console.error('Error fetching integrations:', err);
             setError(getActionError(err, 'Error fetching integrations'));
         } finally {
             setLoading(false);
         }
-    }, [page, search, filterType, filterCategory, filterBusinessId]);
+    }, [page, buildParams]);
+
+    const hasMore = page < totalPages;
+
+    const loadMore = useCallback(() => {
+        setPage(prev => (prev < totalPages ? prev + 1 : prev));
+    }, [totalPages]);
 
     const deleteIntegration = async (id: number) => {
         try {
@@ -59,7 +104,7 @@ export const useIntegrations = (initialCategory: string = '') => {
                 setError(message);
                 return false;
             }
-            fetchIntegrations();
+            reloadAll();
             return true;
         } catch (err: any) {
             console.error('Error deleting integration:', err);
@@ -79,7 +124,7 @@ export const useIntegrations = (initialCategory: string = '') => {
                 setError(message);
                 return false;
             }
-            fetchIntegrations();
+            setIntegrations(prev => prev.map(i => (i.id === id ? { ...i, is_active: !isActive } : i)));
             return true;
         } catch (err: any) {
             console.error('Error toggling integration status:', err);
@@ -97,7 +142,7 @@ export const useIntegrations = (initialCategory: string = '') => {
                 setError(message);
                 return false;
             }
-            fetchIntegrations();
+            reloadAll();
             return true;
         } catch (err: any) {
             console.error('Error setting default integration:', err);
@@ -135,24 +180,26 @@ export const useIntegrations = (initialCategory: string = '') => {
     return {
         integrations,
         loading,
+        loadingMore,
         error,
         page,
         setPage,
         totalPages,
+        total,
+        hasMore,
+        loadMore,
         search,
         setSearch,
         filterType,
         setFilterType,
         filterCategory,
         setFilterCategory,
-        filterBusinessId,
-        setFilterBusinessId,
         deleteIntegration,
         toggleActive,
         setAsDefault,
         testConnection,
         syncOrders,
-        refresh: fetchIntegrations,
+        refresh: reloadAll,
 
         setError
     };

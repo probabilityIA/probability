@@ -18,7 +18,10 @@ import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/
 import { MercadoLibreOAuthCallback } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useIntegrationsBusiness } from '@/shared/contexts/integrations-business-context';
 import { WooStorePowerWidget } from '@/services/woostore/ui/components/WooStorePowerWidget';
+
+const ALL_TAB_CATEGORIES = 'platform,ecommerce,invoicing,messaging';
 
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
     'ecommerce': 'Integraciones-E-commerce',
@@ -44,10 +47,16 @@ export default function IntegrationsPage() {
     const { categories, loading: categoriesLoading } = useCategories();
     const { hasPermission, isSuperAdmin } = usePermissions();
     const { setActionButtons } = useNavbarActions();
+    const { selectedBusinessId } = useIntegrationsBusiness();
+
+    const needsBusiness = isSuperAdmin && !selectedBusinessId;
+    const businessIdForList = isSuperAdmin ? selectedBusinessId : null;
 
     const currentTab = searchParams.get('tab');
     const currentCategory = searchParams.get('category');
     const isTypesTab = currentTab === 'types';
+    const isEnvironmentTab = currentTab === 'environment' && isSuperAdmin;
+    const isAllTab = currentTab === 'all';
 
     const allowedCategories = useMemo(() => {
         return categories.filter(c => {
@@ -59,23 +68,27 @@ export default function IntegrationsPage() {
     }, [categories, isSuperAdmin, hasPermission]);
 
     const activeCategoryCode = useMemo(() => {
-        if (isTypesTab) return null;
+        if (isTypesTab || isEnvironmentTab || isAllTab) return null;
         if (currentCategory) return currentCategory;
         const first = allowedCategories
             .filter(c => c.is_visible && c.is_active)
             .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
         return first?.code || null;
-    }, [isTypesTab, currentCategory, allowedCategories]);
+    }, [isTypesTab, isEnvironmentTab, isAllTab, currentCategory, allowedCategories]);
 
     useEffect(() => {
-        setActionButtons(
-            <Button
-                variant="primary"
-                onClick={() => setShowCreateModal(true)}
-            >
-                {isTypesTab ? 'Crear Tipo' : 'Crear Integración'}
-            </Button>
-        );
+        if (isTypesTab) {
+            setActionButtons(
+                <Button
+                    variant="primary"
+                    onClick={() => setShowCreateModal(true)}
+                >
+                    Crear Tipo
+                </Button>
+            );
+        } else {
+            setActionButtons(null);
+        }
         return () => setActionButtons(null);
     }, [isTypesTab, setActionButtons]);
 
@@ -109,30 +122,61 @@ export default function IntegrationsPage() {
         setShowEditModal(true);
     };
 
+    const handleEditIntegration = async (integration: Integration) => {
+        try {
+            const response = await getIntegrationByIdAction(integration.id);
+            if (response.success && response.data) {
+                setSelectedIntegration(response.data);
+                setShowEditIntegrationModal(true);
+            } else {
+                console.error('Error al obtener integracion:', response.message);
+                alert('Error al cargar la integracion para editar');
+            }
+        } catch (error) {
+            console.error('Error al obtener integracion:', error);
+            alert('Error al cargar la integracion para editar');
+        }
+    };
+
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-            <div className="mb-4">
-                <WooStorePowerWidget />
-            </div>
-            {!isTypesTab && activeCategoryCode !== null ? (
+            {isEnvironmentTab ? (
+                <div className="max-w-3xl space-y-4">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Ambiente de pruebas</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Enciende o apaga el ambiente de WooCommerce que usamos para probar las integraciones.
+                        </p>
+                    </div>
+                    <WooStorePowerWidget />
+                </div>
+            ) : isTypesTab ? (
+                <IntegrationTypeList
+                    key={`types-${refreshKey}`}
+                    onEdit={handleEditType}
+                />
+            ) : needsBusiness ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-16 text-center">
+                    <p className="text-base font-medium text-gray-700 dark:text-gray-200">Selecciona un negocio</p>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Como super admin, elige un negocio en el selector de arriba para ver sus integraciones.
+                    </p>
+                </div>
+            ) : isAllTab ? (
                 <IntegrationList
-                    key={`cat-${activeCategoryCode}-${refreshKey}`}
+                    key={`all-${businessIdForList ?? 'none'}-${refreshKey}`}
+                    filterCategory={ALL_TAB_CATEGORIES}
+                    businessId={businessIdForList}
+                    onEdit={handleEditIntegration}
+                    onCreate={() => setShowCreateModal(true)}
+                />
+            ) : activeCategoryCode !== null ? (
+                <IntegrationList
+                    key={`cat-${activeCategoryCode}-${businessIdForList ?? 'none'}-${refreshKey}`}
                     filterCategory={activeCategoryCode}
-                    onEdit={async (integration) => {
-                        try {
-                            const response = await getIntegrationByIdAction(integration.id);
-                            if (response.success && response.data) {
-                                setSelectedIntegration(response.data);
-                                setShowEditIntegrationModal(true);
-                            } else {
-                                console.error('Error al obtener integración:', response.message);
-                                alert('Error al cargar la integración para editar');
-                            }
-                        } catch (error) {
-                            console.error('Error al obtener integración:', error);
-                            alert('Error al cargar la integración para editar');
-                        }
-                    }}
+                    businessId={businessIdForList}
+                    onEdit={handleEditIntegration}
+                    onCreate={() => setShowCreateModal(true)}
                 />
             ) : (
                 <IntegrationTypeList

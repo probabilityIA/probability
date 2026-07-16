@@ -6,6 +6,7 @@ import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, No
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
+import { IntegrationsBusinessProvider } from '@/shared/contexts/integrations-business-context';
 import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
 import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
 import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
@@ -94,6 +95,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
       >
         <OrdersBusinessProvider>
           <InventoryBusinessProvider>
+            <IntegrationsBusinessProvider>
             <NotificationBusinessProvider>
               <InvoicingBusinessProvider>
                 <DeliveryBusinessProvider>
@@ -119,6 +121,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                 </DeliveryBusinessProvider>
               </InvoicingBusinessProvider>
             </NotificationBusinessProvider>
+            </IntegrationsBusinessProvider>
           </InventoryBusinessProvider>
         </OrdersBusinessProvider>
         <style jsx>{`
