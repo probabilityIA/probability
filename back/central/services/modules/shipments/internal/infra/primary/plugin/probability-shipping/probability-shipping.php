@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -64,7 +64,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.5.0',
+        '1.6.0',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -73,7 +73,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.5.0',
+        '1.6.0',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
@@ -115,6 +115,33 @@ function probability_shipping_public_config() {
     }
     return $cfg;
 }
+
+function probability_shipping_cod_gateway_ids() {
+    return (array) apply_filters('probability_shipping_cod_gateways', array('cod'));
+}
+
+function probability_shipping_is_cod() {
+    if (!function_exists('WC')) {
+        return false;
+    }
+    $wc = WC();
+    if (!$wc || !isset($wc->session) || !$wc->session) {
+        return false;
+    }
+    $chosen = $wc->session->get('chosen_payment_method');
+    if (!$chosen) {
+        return false;
+    }
+    return in_array($chosen, probability_shipping_cod_gateway_ids(), true);
+}
+
+add_filter('woocommerce_cart_shipping_packages', function ($packages) {
+    $is_cod = probability_shipping_is_cod() ? 'yes' : 'no';
+    foreach ($packages as $i => $package) {
+        $packages[$i]['probability_cod'] = $is_cod;
+    }
+    return $packages;
+});
 
 function probability_shipping_b64url_decode($data) {
     $pad = strlen($data) % 4;
@@ -350,7 +377,12 @@ add_action('woocommerce_shipping_init', function () {
                 }
             }
 
+            $is_cod = isset($package['probability_cod'])
+                ? ($package['probability_cod'] === 'yes')
+                : probability_shipping_is_cod();
+
             return array(
+                'cod' => $is_cod,
                 'destination' => array(
                     'country'   => $country,
                     'state'     => $state_name,

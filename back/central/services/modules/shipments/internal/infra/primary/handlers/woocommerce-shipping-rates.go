@@ -37,6 +37,7 @@ type wooRateRequest struct {
 	Destination wooRateDestination `json:"destination"`
 	Contents    []wooRateItem      `json:"contents"`
 	Currency    string             `json:"currency"`
+	COD         bool               `json:"cod"`
 }
 
 type wooRate struct {
@@ -148,7 +149,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		}
 	}
 
-	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL)
+	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL, req.COD)
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
 }
 
@@ -222,7 +223,7 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 	}
 }
 
-func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string) []wooRate {
+func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quoteID uint, logoBaseURL string, isCOD bool) []wooRate {
 	out := make([]wooRate, 0)
 
 	for i, rate := range ratesList {
@@ -231,6 +232,19 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 		flete := toFloat(rate["flete"])
 		if carrierName == "" || flete <= 0 {
 			continue
+		}
+
+		cost := flete
+		codCarrierFee := 0.0
+		codProbabilityMargin := 0.0
+		if isCOD {
+			supportsCOD, _ := rate["cod"].(bool)
+			if !supportsCOD {
+				continue
+			}
+			codCarrierFee = toFloat(rate["codCarrierFee"])
+			codProbabilityMargin = toFloat(rate["codProbabilityMargin"])
+			cost = flete + codCarrierFee + codProbabilityMargin
 		}
 
 		logoURL := ""
@@ -259,20 +273,27 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			id += "_" + strconv.Itoa(i)
 		}
 
+		meta := map[string]interface{}{
+			"quote_id":     quoteID,
+			"rate_index":   i,
+			"carrier":      carrierName,
+			"product":      product,
+			"service_code": toStr(rate["serviceCode"]),
+			"id_rate":      rate["idRate"],
+			"logo_url":     logoURL,
+			"cod":          isCOD,
+		}
+		if isCOD {
+			meta["cod_carrier_fee"] = codCarrierFee
+			meta["cod_probability_margin"] = codProbabilityMargin
+		}
+
 		wr := wooRate{
 			ID:       id,
 			Label:    label,
-			Cost:     strconv.FormatFloat(flete, 'f', -1, 64),
+			Cost:     strconv.FormatFloat(cost, 'f', -1, 64),
 			Currency: currency,
-			MetaData: map[string]interface{}{
-				"quote_id":     quoteID,
-				"rate_index":   i,
-				"carrier":      carrierName,
-				"product":      product,
-				"service_code": toStr(rate["serviceCode"]),
-				"id_rate":      rate["idRate"],
-				"logo_url":     logoURL,
-			},
+			MetaData: meta,
 		}
 
 		out = append(out, wr)

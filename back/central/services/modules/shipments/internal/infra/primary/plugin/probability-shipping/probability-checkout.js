@@ -262,6 +262,9 @@
 
     if (window.jQuery) {
         window.jQuery(document.body).on('updated_checkout country_to_state_changed', function () { wire(); });
+        window.jQuery(document.body).on('change', 'input[name="payment_method"]', function () {
+            window.jQuery(document.body).trigger('update_checkout');
+        });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', wire);

@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -21,6 +21,14 @@ de envio con su precio antes de pagar.
 5. Listo: en el checkout apareceran las tarifas reales de las transportadoras.
 
 == Changelog ==
+
+= 1.6.0 =
+* La cotizacion ahora informa si el pedido es contra entrega (COD). Antes se
+  cotizaba siempre como pago anticipado, por lo que los pedidos contra entrega
+  quedaban sin el recargo de la transportadora.
+* Las tarifas se recalculan al cambiar el metodo de pago en el checkout.
+* Filtro `probability_shipping_cod_gateways` para declarar pasarelas de contra
+  entrega distintas a la estandar de WooCommerce (`cod`).
 
 = 1.5.0 =
 * Mapa (OpenStreetMap) que muestra el punto de entrega segun la direccion, para
