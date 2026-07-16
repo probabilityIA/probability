@@ -9,6 +9,10 @@ import {
     KeyIcon,
     ShoppingBagIcon,
     InformationCircleIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ClipboardDocumentIcon,
+    CheckIcon,
 } from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
 import { ShopifyInventorySection, ShopifyInventoryConfig } from './ShopifyInventorySection';
@@ -49,6 +53,105 @@ const GREEN_BORDER = 'color-mix(in srgb, var(--color-primary) 25%, white)';
 const CARD_BG = '#fafafd';
 const CARD_BORDER = '#eceaf3';
 const INPUT_BORDER = '#e9e9f0';
+
+const SHOPIFY_ASSETS_BASE = 'https://probability-media-assets.s3.us-east-1.amazonaws.com/docs/shopify-integration';
+const SHOPIFY_REQUIRED_SCOPES = 'read_customers,write_customers,read_fulfillments,write_fulfillments,read_orders,write_orders,read_products,write_products';
+const SHOPIFY_REDIRECT_URL = 'https://www.probabilityia.com.co/api/v1/shopify/callback';
+const SHOPIFY_APP_URL = 'https://www.probabilityia.com.co';
+
+const SHOPIFY_CONNECTION_STEPS = [
+    {
+        step: 1,
+        title: 'Entra a Integraciones en tu panel de Probability',
+        description: 'En el menu lateral, abre "Integraciones" y selecciona la pestana "Plataforma".',
+        image: `${SHOPIFY_ASSETS_BASE}/01-panel-probability-integraciones-plataforma.png`,
+    },
+    {
+        step: 2,
+        title: 'Cambia a la pestana "E-commerce"',
+        description: 'Ahi veras las integraciones de tienda online que ya tengas conectadas.',
+        image: `${SHOPIFY_ASSETS_BASE}/02-panel-probability-integraciones-ecommerce.png`,
+    },
+    {
+        step: 3,
+        title: 'Crea una nueva integracion',
+        description: 'Clic en "Crear Integracion" y selecciona la categoria "E-commerce".',
+        image: `${SHOPIFY_ASSETS_BASE}/03-modal-nueva-integracion-seleccionar-categoria.png`,
+    },
+    {
+        step: 4,
+        title: 'Selecciona Shopify como proveedor',
+        description: 'Dentro de E-commerce, elige la tarjeta "Shopify".',
+        image: `${SHOPIFY_ASSETS_BASE}/04-modal-nueva-integracion-seleccionar-shopify.png`,
+    },
+    {
+        step: 5,
+        title: 'Entra a Shopify Partners',
+        description: 'Inicia sesion en partners.shopify.com y selecciona la organizacion/tienda de desarrollo donde crearas la Custom App.',
+        image: `${SHOPIFY_ASSETS_BASE}/05-shopify-partners-selector-tiendas.png`,
+    },
+    {
+        step: 6,
+        title: 'Crea una app nueva',
+        description: 'En el Dev Dashboard, ve a "Apps" y clic en "Crear app".',
+        image: `${SHOPIFY_ASSETS_BASE}/06-shopify-dev-dashboard-apps-crear-app.png`,
+    },
+    {
+        step: 7,
+        title: 'Nombra tu app',
+        description: 'Elige "Empezar desde Dev Dashboard", escribe un nombre para la app (ej: el nombre del negocio) y clic en "Crear".',
+        image: `${SHOPIFY_ASSETS_BASE}/07-shopify-dev-dashboard-crear-app-nombre.png`,
+    },
+    {
+        step: 8,
+        title: 'Configura los alcances (scopes)',
+        description: 'En "Versiones" > "Acceso a la API", pega los Alcances necesarios en el campo "Alcances". Estos son obligatorios para que la app pueda leer/escribir clientes, pedidos, productos y fulfillments.',
+        image: `${SHOPIFY_ASSETS_BASE}/08-shopify-app-scopes-configurados-urls-vacias-INCOMPLETO.png`,
+        copyItems: [
+            { label: 'Alcances requeridos', text: SHOPIFY_REQUIRED_SCOPES },
+        ],
+    },
+    {
+        step: 9,
+        title: 'Configura las URLs (paso critico)',
+        description: 'Justo debajo, llena "URLs de redireccionamiento" y "URL de la app" con los valores de abajo. Si dejas estos campos vacios, Shopify rechazara la conexion con un error de "hosts must match". Clic en "Publicar".',
+        image: `${SHOPIFY_ASSETS_BASE}/14-shopify-app-urls-redireccionamiento-correctas-FIX.png`,
+        copyItems: [
+            { label: 'URL de redireccionamiento', text: SHOPIFY_REDIRECT_URL },
+            { label: 'URL de la app', text: SHOPIFY_APP_URL },
+        ],
+    },
+    {
+        step: 10,
+        title: 'Copia el Client ID y Client Secret',
+        description: 'Ve a "Configuracion" y copia el "ID de cliente" y el "Secreto" (clic en el icono del ojo para revelarlo). Los necesitaras en el paso 13.',
+        image: `${SHOPIFY_ASSETS_BASE}/10-shopify-app-credenciales-client-id-secret.png`,
+    },
+    {
+        step: 11,
+        title: 'Publica la primera version',
+        description: 'Shopify crea automaticamente una version de la app. La veras activa en la seccion "Versiones".',
+        image: `${SHOPIFY_ASSETS_BASE}/09-shopify-app-versiones-publicada.png`,
+    },
+    {
+        step: 12,
+        title: 'Vuelve al formulario de Probability',
+        description: 'Pega el Client ID y Client Secret que copiaste en el paso 10, junto con el dominio de la tienda, y clic en "Conectar con Shopify".',
+        image: `${SHOPIFY_ASSETS_BASE}/11-probability-form-conexion-custom-app.png`,
+    },
+    {
+        step: 13,
+        title: 'Autoriza el acceso en Shopify',
+        description: 'Shopify te mostrara los permisos que la app necesita. Clic en "Instalar" para autorizar.',
+        image: `${SHOPIFY_ASSETS_BASE}/12-shopify-instalar-app-permisos.png`,
+    },
+    {
+        step: 14,
+        title: 'Listo, la integracion queda activa',
+        description: 'Vuelve al panel de Probability: la integracion Shopify aparecera con estado "Activo".',
+        image: `${SHOPIFY_ASSETS_BASE}/13-panel-probability-integracion-shopify-activa.png`,
+    },
+];
 
 const fieldLabel = 'block text-[13px] font-semibold text-gray-900 dark:text-gray-100 mb-1';
 const fieldHint = 'text-[11px] text-gray-400 dark:text-gray-500 mt-1 flex items-start gap-1';
@@ -116,6 +219,14 @@ export default function ShopifyOAuthForm({
     const accessToken = initialData?.credentials?.access_token || '';
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const [logoFailed, setLogoFailed] = useState(false);
+    const [guideStepIndex, setGuideStepIndex] = useState(0);
+    const [copiedGuideLabel, setCopiedGuideLabel] = useState<string | null>(null);
+
+    const handleCopyGuideText = async (label: string, text: string) => {
+        await navigator.clipboard.writeText(text);
+        setCopiedGuideLabel(label);
+        setTimeout(() => setCopiedGuideLabel((prev) => (prev === label ? null : prev)), 2000);
+    };
 
     const { showToast } = useToast();
     const [carrierEnabled, setCarrierEnabled] = useState<boolean>(
@@ -409,6 +520,132 @@ export default function ShopifyOAuthForm({
                     </div>
                 </div>
             </div>
+
+            {!isEdit && (
+                <div
+                    className="rounded-xl p-4 dark:bg-gray-800/60"
+                    style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-md" style={{ backgroundColor: GREEN_SOFT }}>
+                            <InformationCircleIcon style={{ color: GREEN, width: 16, height: 16 }} />
+                        </span>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Sigue los pasos para hacer la conexion a Shopify</h3>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 ml-9">
+                        Crea la Custom App en el Shopify Partner Dashboard y copia aqui el Client ID y Client Secret que genera.
+                    </p>
+
+                    {(() => {
+                        const totalSteps = SHOPIFY_CONNECTION_STEPS.length;
+                        const currentStep = SHOPIFY_CONNECTION_STEPS[guideStepIndex];
+                        const goPrev = () => setGuideStepIndex((i) => Math.max(0, i - 1));
+                        const goNext = () => setGuideStepIndex((i) => Math.min(totalSteps - 1, i + 1));
+
+                        return (
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span
+                                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                                        style={{ backgroundColor: GREEN }}
+                                    >
+                                        {currentStep.step}
+                                    </span>
+                                    <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">
+                                        Paso {guideStepIndex + 1} de {totalSteps}
+                                    </span>
+                                </div>
+
+                                <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-100">{currentStep.title}</p>
+                                <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">{currentStep.description}</p>
+
+                                <div className="relative mt-3 flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={goPrev}
+                                        disabled={guideStepIndex === 0}
+                                        aria-label="Paso anterior"
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        style={{ border: `1px solid ${INPUT_BORDER}` }}
+                                    >
+                                        <ChevronLeftIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                                    </button>
+
+                                    <div className="min-w-0 flex-1 flex justify-center">
+                                        <img
+                                            src={currentStep.image}
+                                            alt={currentStep.title}
+                                            className="max-h-[28rem] w-auto max-w-full rounded-lg object-contain"
+                                            style={{ border: `1px solid ${INPUT_BORDER}` }}
+                                            loading="lazy"
+                                        />
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={goNext}
+                                        disabled={guideStepIndex === totalSteps - 1}
+                                        aria-label="Paso siguiente"
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        style={{ border: `1px solid ${INPUT_BORDER}` }}
+                                    >
+                                        <ChevronRightIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                                    </button>
+                                </div>
+
+                                {currentStep.copyItems && currentStep.copyItems.length > 0 && (
+                                    <div className="mt-3 space-y-3">
+                                        {currentStep.copyItems.map((item) => (
+                                            <div key={item.label}>
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                                        {item.label}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCopyGuideText(item.label, item.text)}
+                                                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                        style={{ border: `1px solid ${INPUT_BORDER}`, color: copiedGuideLabel === item.label ? GREEN : '#6b7280' }}
+                                                    >
+                                                        {copiedGuideLabel === item.label ? (
+                                                            <>
+                                                                <CheckIcon className="h-3.5 w-3.5" /> Copiado
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <ClipboardDocumentIcon className="h-3.5 w-3.5" /> Copiar
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                <code className="block w-full rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2 text-[11px] font-mono text-gray-700 dark:text-gray-300 break-all" style={{ border: `1px solid ${INPUT_BORDER}` }}>
+                                                    {item.text}
+                                                </code>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="flex items-center justify-center gap-1.5 mt-3">
+                                    {SHOPIFY_CONNECTION_STEPS.map((step, idx) => (
+                                        <button
+                                            key={step.step}
+                                            type="button"
+                                            onClick={() => setGuideStepIndex(idx)}
+                                            aria-label={`Ir al paso ${idx + 1}`}
+                                            className="h-1.5 rounded-full transition-all"
+                                            style={{
+                                                width: idx === guideStepIndex ? '18px' : '6px',
+                                                backgroundColor: idx === guideStepIndex ? GREEN : INPUT_BORDER,
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            )}
 
             {isEdit && integrationId && (
                 <>
