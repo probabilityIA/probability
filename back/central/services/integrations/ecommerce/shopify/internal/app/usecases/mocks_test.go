@@ -143,6 +143,14 @@ func (m *mockShopifyClient) SetInventoryLevel(ctx context.Context, storeName, ac
 	return nil
 }
 
+func (m *mockShopifyClient) ListProducts(ctx context.Context, storeName, accessToken string) ([]domain.ShopifyProductForSync, error) {
+	return nil, nil
+}
+
+func (m *mockShopifyClient) CreateProduct(ctx context.Context, storeName, accessToken string, input domain.CreateProductInput) (string, error) {
+	return "", nil
+}
+
 
 type mockOrderPublisher struct {
 	PublishFn       func(ctx context.Context, order *domain.ProbabilityOrderDTO) error

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
@@ -311,11 +312,17 @@ func (uc *SyncOrdersUseCase) UpdateInventory(ctx context.Context, integrationID 
 	if err != nil {
 		return err
 	}
-	product, err := uc.shopifyClient.GetProduct(ctx, storeDomain, accessToken, productExternalID)
+	productID := productExternalID
+	variantSKU := ""
+	if parts := strings.SplitN(productExternalID, ":", 2); len(parts) == 2 {
+		productID = parts[0]
+		variantSKU = parts[1]
+	}
+	product, err := uc.shopifyClient.GetProduct(ctx, storeDomain, accessToken, productID)
 	if err != nil {
 		return err
 	}
-	invItemID := resolveInventoryItemID(product, "")
+	invItemID := resolveInventoryItemID(product, variantSKU)
 	if invItemID == 0 {
 		return fmt.Errorf("no inventory_item_id for product %s", productExternalID)
 	}

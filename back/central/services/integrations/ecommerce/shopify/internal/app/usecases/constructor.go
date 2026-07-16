@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type SyncOrdersUseCase struct {
@@ -14,6 +15,8 @@ type SyncOrdersUseCase struct {
 	log                log.ILogger
 	syncEventPublisher domain.ISyncEventPublisher
 	inventoryRepo      domain.IInventoryRepository
+	productRepo        domain.IProductRepository
+	rabbit             rabbitmq.IQueue
 }
 
 type IShopifyUseCase interface {
@@ -38,9 +41,13 @@ type IShopifyUseCase interface {
 	SetAutoGenerateGuide(ctx context.Context, integrationID string, enabled bool) error
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	ApplyProductsToShopify(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 }
 
-func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, logger log.ILogger, syncEventPub domain.ISyncEventPublisher, inventoryRepo domain.IInventoryRepository) IShopifyUseCase {
+func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, logger log.ILogger, syncEventPub domain.ISyncEventPublisher, inventoryRepo domain.IInventoryRepository, productRepo domain.IProductRepository, rabbit rabbitmq.IQueue) IShopifyUseCase {
 	return &SyncOrdersUseCase{
 		integrationService: integrationService,
 		shopifyClient:      shopifyClient,
@@ -48,5 +55,7 @@ func New(integrationService domain.IIntegrationService, shopifyClient domain.Sho
 		log:                logger.WithModule("shopify.usecase"),
 		syncEventPublisher: syncEventPub,
 		inventoryRepo:      inventoryRepo,
+		productRepo:        productRepo,
+		rabbit:             rabbit,
 	}
 }

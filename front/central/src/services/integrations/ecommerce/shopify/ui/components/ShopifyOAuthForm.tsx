@@ -14,6 +14,7 @@ import ShopifyWebhookManager from './ShopifyWebhookManager';
 import { ShopifyInventorySection, ShopifyInventoryConfig } from './ShopifyInventorySection';
 import { ShopifyLocationMappingSection, ShopifyLocationMapping } from './ShopifyLocationMappingSection';
 import { ShopifyInventorySyncModal } from './ShopifyInventorySyncModal';
+import { ShopifyProductSyncModal } from './ShopifyProductSyncModal';
 import { getActionError } from '@/shared/utils/action-result';
 import { useToast } from '@/shared/providers/toast-provider';
 import {
@@ -122,6 +123,7 @@ export default function ShopifyOAuthForm({
     );
     const [carrierLoading, setCarrierLoading] = useState(false);
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
+    const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [inventorySync, setInventorySync] = useState<ShopifyInventoryConfig>(() => {
         const c: any = initialData?.config || {};
         return {
@@ -416,6 +418,31 @@ export default function ShopifyOAuthForm({
                     >
                         <ShopifyWebhookManager integrationId={integrationId} />
                     </div>
+
+                    <div
+                        className="rounded-xl p-4 dark:bg-gray-800/60"
+                        style={{ backgroundColor: CARD_BG, border: `1px solid ${CARD_BORDER}` }}
+                    >
+                        <h4 className="text-[13px] font-bold text-gray-900 dark:text-gray-100">Sincronizar productos</h4>
+                        <p className="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">
+                            Cruza los productos por SKU; crea en Shopify o en Probability los que falten y asocia los que coinciden.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setProductSyncOpen(true)}
+                            className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                            style={{ backgroundColor: GREEN }}
+                        >
+                            Sincronizar productos
+                        </button>
+                    </div>
+
+                    <ShopifyProductSyncModal
+                        isOpen={productSyncOpen}
+                        onClose={() => setProductSyncOpen(false)}
+                        integrationId={integrationId}
+                        businessId={initialData?.business_id ?? null}
+                    />
 
                     <ShopifyInventorySection
                         value={inventorySync}

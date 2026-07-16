@@ -45,7 +45,8 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 
 	syncEventPub := eventpublisher.New(rabbitMQ)
 	inventoryRepo := shopifyrepo.NewInventory(database, logger)
-	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, logger, syncEventPub, inventoryRepo)
+	productRepo := shopifyrepo.NewProduct(database, logger)
+	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, logger, syncEventPub, inventoryRepo, productRepo, rabbitMQ)
 
 	if rabbitMQ != nil {
 		inventoryPushConsumer := shopifyqueue.NewInventoryPushConsumer(rabbitMQ, useCase, logger)

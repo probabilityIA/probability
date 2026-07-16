@@ -20,6 +20,8 @@ type ShopifyClient interface {
 	DeleteCarrierService(ctx context.Context, storeName, accessToken, carrierServiceID string) error
 	GetLocations(ctx context.Context, storeName, accessToken string) ([]ShopifyLocation, error)
 	GetProduct(ctx context.Context, storeName, accessToken, productID string) (*ShopifyProduct, error)
+	ListProducts(ctx context.Context, storeName, accessToken string) ([]ShopifyProductForSync, error)
+	CreateProduct(ctx context.Context, storeName, accessToken string, input CreateProductInput) (string, error)
 	SetInventoryLevel(ctx context.Context, storeName, accessToken string, locationID, inventoryItemID int64, available int) error
 	SetDebug(enabled bool)
 }

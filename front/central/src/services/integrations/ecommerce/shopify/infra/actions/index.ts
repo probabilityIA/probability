@@ -33,6 +33,25 @@ async function postWithAuth(path: string, body: Record<string, unknown>) {
     return { success: true, ...data };
 }
 
+export async function reconcileShopifyProductsAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/integrations/shopify/products/reconcile', body);
+}
+
+export async function applyShopifyProductsAction(integrationId: number, direction: 'to_shopify' | 'to_probability', businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId, direction };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/integrations/shopify/products/apply', body);
+}
+
+export async function associateShopifyProductsAction(integrationId: number, businessId?: number, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/integrations/shopify/products/associate', body);
+}
+
 export async function syncShopifyInventoryAction(integrationId: number, businessId?: number) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;

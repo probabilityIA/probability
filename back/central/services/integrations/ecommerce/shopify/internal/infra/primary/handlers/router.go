@@ -24,6 +24,10 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 
 		shopifyGroup.POST("/inventory/sync", middleware.JWT(), h.SyncInventoryHandler)
 
+		shopifyGroup.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
+		shopifyGroup.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
+		shopifyGroup.POST("/products/associate", middleware.JWT(), h.AssociateProducts)
+
 		shopifyGroup.POST("/webhook", h.WebhookHandler)
 		shopifyGroup.POST("/webhook/:integration_id", h.WebhookHandler)
 
