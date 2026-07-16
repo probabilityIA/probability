@@ -62,18 +62,23 @@ func (c *InvoiceRequestConsumer) processInventorySyncRequest(
 	singleWarehouseID := uintFromConfig(ictx.Config, "inventory_single_warehouse_id")
 	mappings := parseWarehouseMappings(ictx.Config["inventory_warehouse_mappings"])
 
-	products := make([]siigoDtos.ProductItem, 0)
-	pageSize := 100
-	for page := 1; ; page++ {
-		batch, err := c.siigoClient.ListProducts(ctx, ictx.Credentials, page, pageSize)
-		if err != nil {
-			c.log.Error(ctx).Err(err).Int("page", page).Msg("Failed to list Siigo products for inventory sync")
-			break
+	products := request.InvoiceData.WebhookProducts
+	if len(products) == 0 {
+		products = make([]siigoDtos.ProductItem, 0)
+		pageSize := 100
+		for page := 1; ; page++ {
+			batch, err := c.siigoClient.ListProducts(ctx, ictx.Credentials, page, pageSize)
+			if err != nil {
+				c.log.Error(ctx).Err(err).Int("page", page).Msg("Failed to list Siigo products for inventory sync")
+				break
+			}
+			products = append(products, batch...)
+			if len(batch) < pageSize {
+				break
+			}
 		}
-		products = append(products, batch...)
-		if len(batch) < pageSize {
-			break
-		}
+	} else {
+		c.log.Info(ctx).Int("webhook_products", len(products)).Msg("Usando productos del webhook (sync dirigido, sin re-listar catalogo)")
 	}
 
 	if enabled, _ := ictx.Config["product_sync_enabled"].(bool); enabled {

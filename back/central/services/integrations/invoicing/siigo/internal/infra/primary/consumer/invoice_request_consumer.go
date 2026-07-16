@@ -36,18 +36,19 @@ type invoiceItemData struct {
 }
 
 type invoiceData struct {
-	IntegrationID uint                   `json:"integration_id"`
-	Customer      invoiceCustomerData    `json:"customer"`
-	Items         []invoiceItemData      `json:"items"`
-	Total         float64                `json:"total"`
-	Subtotal      float64                `json:"subtotal"`
-	Tax           float64                `json:"tax"`
-	Discount      float64                `json:"discount"`
-	ShippingCost  float64                `json:"shipping_cost"`
-	Currency      string                 `json:"currency"`
-	OrderID       string                 `json:"order_id"`
-	OrderNumber   string                 `json:"order_number"`
-	Config        map[string]interface{} `json:"config"`
+	IntegrationID   uint                    `json:"integration_id"`
+	Customer        invoiceCustomerData     `json:"customer"`
+	Items           []invoiceItemData       `json:"items"`
+	Total           float64                 `json:"total"`
+	Subtotal        float64                 `json:"subtotal"`
+	Tax             float64                 `json:"tax"`
+	Discount        float64                 `json:"discount"`
+	ShippingCost    float64                 `json:"shipping_cost"`
+	Currency        string                  `json:"currency"`
+	OrderID         string                  `json:"order_id"`
+	OrderNumber     string                  `json:"order_number"`
+	Config          map[string]interface{}  `json:"config"`
+	WebhookProducts []siigoDtos.ProductItem `json:"webhook_products,omitempty"`
 }
 
 type InvoiceRequestMessage struct {

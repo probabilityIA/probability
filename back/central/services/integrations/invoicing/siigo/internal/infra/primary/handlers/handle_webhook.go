@@ -12,13 +12,40 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type siigoWebhookPayload struct {
-	Topic      string `json:"topic"`
-	CompanyKey string `json:"company_key"`
+	Topic      string                 `json:"topic"`
+	CompanyKey string                 `json:"company_key"`
+	Resources  []siigoWebhookResource `json:"resources"`
+}
+
+type siigoWebhookResource struct {
+	ID                string                  `json:"id"`
+	Code              string                  `json:"code"`
+	Name              string                  `json:"name"`
+	StockControl      bool                    `json:"stock_control"`
+	AvailableQuantity float64                 `json:"available_quantity"`
+	Prices            []siigoWebhookPrice     `json:"prices"`
+	Warehouses        []siigoWebhookWarehouse `json:"warehouses"`
+}
+
+type siigoWebhookPrice struct {
+	PriceList []siigoWebhookPriceItem `json:"price_list"`
+}
+
+type siigoWebhookPriceItem struct {
+	Value    float64 `json:"value"`
+	Position int     `json:"position"`
+}
+
+type siigoWebhookWarehouse struct {
+	ID       int     `json:"id"`
+	Name     string  `json:"name"`
+	Quantity float64 `json:"quantity"`
 }
 
 type inventorySyncRequest struct {
@@ -31,8 +58,33 @@ type inventorySyncRequest struct {
 }
 
 type inventorySyncData struct {
-	IntegrationID uint                   `json:"integration_id"`
-	Config        map[string]interface{} `json:"config"`
+	IntegrationID   uint                    `json:"integration_id"`
+	Config          map[string]interface{}  `json:"config"`
+	WebhookProducts []siigoDtos.ProductItem `json:"webhook_products,omitempty"`
+}
+
+func webhookResourcesToProducts(resources []siigoWebhookResource) []siigoDtos.ProductItem {
+	products := make([]siigoDtos.ProductItem, 0, len(resources))
+	for _, r := range resources {
+		price := 0.0
+		if len(r.Prices) > 0 && len(r.Prices[0].PriceList) > 0 {
+			price = r.Prices[0].PriceList[0].Value
+		}
+		warehouses := make([]siigoDtos.ProductWarehouseStock, 0, len(r.Warehouses))
+		for _, w := range r.Warehouses {
+			warehouses = append(warehouses, siigoDtos.ProductWarehouseStock{ID: w.ID, Name: w.Name, Quantity: w.Quantity})
+		}
+		products = append(products, siigoDtos.ProductItem{
+			ID:                r.ID,
+			Code:              r.Code,
+			Name:              r.Name,
+			Price:             price,
+			StockControl:      r.StockControl,
+			AvailableQuantity: r.AvailableQuantity,
+			Warehouses:        warehouses,
+		})
+	}
+	return products
 }
 
 func (h *Handler) HandleWebhook(c *gin.Context) {
@@ -78,10 +130,10 @@ func (h *Handler) HandleWebhook(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"received": true})
 
-	go h.process(logID, integrationID, payload.Topic)
+	go h.process(logID, integrationID, payload.Topic, webhookResourcesToProducts(payload.Resources))
 }
 
-func (h *Handler) process(logID string, integrationID *uint, topic string) {
+func (h *Handler) process(logID string, integrationID *uint, topic string, products []siigoDtos.ProductItem) {
 	ctx := context.Background()
 
 	if integrationID == nil {
@@ -100,7 +152,7 @@ func (h *Handler) process(logID string, integrationID *uint, topic string) {
 		businessID = *integration.BusinessID
 	}
 
-	if err := h.publishInventorySync(ctx, *integrationID, businessID); err != nil {
+	if err := h.publishInventorySync(ctx, *integrationID, businessID, products); err != nil {
 		h.log.Error(ctx).Err(err).Uint("integration_id", *integrationID).Msg("Error al disparar sync de inventario desde webhook Siigo")
 		h.finish(ctx, logID, "failed", http.StatusInternalServerError, err.Error())
 		return
@@ -110,12 +162,13 @@ func (h *Handler) process(logID string, integrationID *uint, topic string) {
 		Uint("integration_id", *integrationID).
 		Uint("business_id", businessID).
 		Str("topic", topic).
+		Int("webhook_products", len(products)).
 		Msg("Webhook Siigo procesado, sync de inventario disparado")
 
 	h.finish(ctx, logID, "ok", http.StatusOK, "")
 }
 
-func (h *Handler) publishInventorySync(ctx context.Context, integrationID, businessID uint) error {
+func (h *Handler) publishInventorySync(ctx context.Context, integrationID, businessID uint, products []siigoDtos.ProductItem) error {
 	if h.rabbit == nil {
 		return fmt.Errorf("rabbitmq no disponible")
 	}
@@ -129,6 +182,7 @@ func (h *Handler) publishInventorySync(ctx context.Context, integrationID, busin
 			Config: map[string]interface{}{
 				"business_id": businessID,
 			},
+			WebhookProducts: products,
 		},
 		CorrelationID: uuid.New().String(),
 		Timestamp:     time.Now(),
