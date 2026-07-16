@@ -34,7 +34,15 @@ func normalizeSKU(sku string) string {
 func (uc *invoicingUseCase) listAllSiigoProducts(ctx context.Context, credentials dtos.Credentials) ([]dtos.ProductItem, error) {
 	all := make([]dtos.ProductItem, 0)
 	for page := 1; page <= siigoProductsMaxPages; page++ {
-		batch, err := uc.siigoClient.ListProducts(ctx, credentials, page, siigoProductsPageSize)
+		var batch []dtos.ProductItem
+		var err error
+		for attempt := 1; attempt <= 3; attempt++ {
+			batch, err = uc.siigoClient.ListProducts(ctx, credentials, page, siigoProductsPageSize)
+			if err == nil {
+				break
+			}
+			uc.log.Warn(ctx).Err(err).Int("page", page).Int("attempt", attempt).Msg("Reintentando listar productos de Siigo")
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -130,6 +138,15 @@ func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, inte
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	probProducts, siigoProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
+		uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "siigo.product.sync.completed", map[string]interface{}{
+			"correlation_id": correlationID,
+			"direction":      "to_probability",
+			"total":          0,
+			"created":        0,
+			"updated":        0,
+			"failed":         0,
+			"error":          err.Error(),
+		})
 		return err
 	}
 

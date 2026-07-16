@@ -20,7 +20,7 @@ func New(logger log.ILogger) ports.ISiigoClient {
 	logger.Info(context.Background()).Msg("Creating Siigo HTTP client")
 
 	httpConfig := httpclient.HTTPClientConfig{
-		Timeout:    30 * time.Second,
+		Timeout:    90 * time.Second,
 		RetryCount: 2,
 		RetryWait:  3 * time.Second,
 		Debug:      true,

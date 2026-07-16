@@ -137,6 +137,11 @@ export function SiigoProductSyncModal({ isOpen, onClose, integrationId, business
                 setCreated(Number(data.created) || 0);
                 setFailed(Number(data.failed) || 0);
             } else if (eventType === 'siigo.product.sync.completed') {
+                if (data.error) {
+                    setErrorMessage(String(data.error));
+                    setPhase('error');
+                    return;
+                }
                 setProcessed(Number(data.total) || 0);
                 setTotal(Number(data.total) || 0);
                 setCreated(Number(data.created) || 0);
