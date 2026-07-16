@@ -10,31 +10,24 @@ import (
 	"gorm.io/gorm"
 )
 
-// AdjustStockTx ejecuta el ajuste de stock completo dentro de una transacción con SELECT FOR UPDATE.
-// Garantiza atomicidad: el nivel y el movimiento se crean/actualizan en una sola transacción.
-// El cache se invalida después del commit (fire-and-forget).
 func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockTxParams) (*dtos.AdjustStockTxResult, error) {
 	var result dtos.AdjustStockTxResult
 
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
-		// 1. SELECT FOR UPDATE del inventory_level (o crear si no existe)
 		level, err := r.getOrCreateLevelKeyTx(tx, params.ProductID, params.WarehouseID, params.LocationID, params.LotID, params.StateID, params.BusinessID)
 		if err != nil {
 			return fmt.Errorf("getOrCreateLevelTx: %w", err)
 		}
 
-		// 2. Calcular nueva cantidad (permite negativo para pérdidas/daños)
 		newQty := level.Quantity + params.Quantity
 		previousQty := level.Quantity
 
-		// 3. UPDATE inventory_level dentro del tx
 		level.Quantity = newQty
 		level.AvailableQty = newQty - level.ReservedQty
 		if err := r.updateLevelTx(tx, level); err != nil {
 			return fmt.Errorf("updateLevelTx: %w", err)
 		}
 
-		// 4. INSERT stock_movement dentro del tx
 		movement := &models.StockMovement{
 			ProductID:      params.ProductID,
 			WarehouseID:    params.WarehouseID,
@@ -56,7 +49,13 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 			return fmt.Errorf("createMovementTx: %w", err)
 		}
 
-		// Construir resultado
+		if err := tx.Exec(
+			"UPDATE products SET stock_quantity = COALESCE((SELECT SUM(quantity) FROM inventory_levels WHERE product_id = ? AND deleted_at IS NULL), 0) WHERE id = ?",
+			params.ProductID, params.ProductID,
+		).Error; err != nil {
+			return fmt.Errorf("update product stock_quantity: %w", err)
+		}
+
 		levelEntity := mappers.LevelModelToEntity(level)
 		result = dtos.AdjustStockTxResult{
 			Movement:    mappers.MovementModelToEntity(movement),
@@ -64,14 +63,13 @@ func (r *Repository) AdjustStockTx(ctx context.Context, params dtos.AdjustStockT
 			Level:       levelEntity,
 		}
 
-		return nil // commit automático
+		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache invalidation después del commit (fire-and-forget)
 	if r.cache != nil {
 		go r.cache.InvalidateProduct(context.Background(), params.ProductID, params.BusinessID)
 		go r.cache.InvalidateLevel(context.Background(), params.ProductID, params.WarehouseID)

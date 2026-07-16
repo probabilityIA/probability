@@ -92,8 +92,6 @@ func (uc *useCase) updateProductTotalStock(ctx context.Context, productID string
 		total += level.Quantity
 	}
 
-	_ = uc.repo.UpdateProductStockQuantity(ctx, productID, total)
-
 	uc.pushEcommerceStock(ctx, productID, businessID, total)
 }
 
