@@ -155,6 +155,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [brokenInfoImages, setBrokenInfoImages] = useState<Record<number, boolean>>({});
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
     const [downloadingPlugin, setDownloadingPlugin] = useState(false);
+    const [codQuotingDisabled, setCodQuotingDisabled] = useState<boolean>(!!initialData?.config?.cod_quoting_disabled);
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
     const [freeShippingMin, setFreeShippingMin] = useState<string>(
         initialData?.config?.free_shipping_min != null ? String(initialData.config.free_shipping_min) : ''
@@ -316,6 +317,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 store_url: formData.store_url,
                 free_shipping_enabled: freeShippingEnabled,
                 free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
+                cod_quoting_disabled: codQuotingDisabled,
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -801,6 +803,24 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                 <span className="mt-1 block text-[11px] text-gray-400">En la moneda de la tienda (ej. 100000 = $100.000).</span>
                             </div>
                         )}
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">No cotizar pedidos contra entrega</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">Si el comprador elige contra entrega, no se muestran tarifas de Probability en el checkout. Necesitas otro metodo de envio configurado en la zona.</span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={codQuotingDisabled}
+                                onClick={() => setCodQuotingDisabled((v) => !v)}
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${codQuotingDisabled ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${codQuotingDisabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
                     </div>
 
                     <ol className="grid grid-cols-1 gap-y-2 mb-4 sm:grid-cols-2 sm:gap-x-4">

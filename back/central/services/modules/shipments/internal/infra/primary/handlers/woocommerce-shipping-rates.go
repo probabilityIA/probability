@@ -78,6 +78,11 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		return
 	}
 
+	if req.COD && resolved.CODQuotingDisabled {
+		c.JSON(http.StatusOK, emptyRates)
+		return
+	}
+
 	if resolved.FreeShippingEnabled && resolved.FreeShippingMin > 0 {
 		var subtotal float64
 		for _, it := range req.Contents {
