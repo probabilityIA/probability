@@ -19,6 +19,7 @@ type wooResolved struct {
 	Origin              *domain.OriginAddress `json:"origin"`
 	FreeShippingEnabled bool                  `json:"free_shipping_enabled"`
 	FreeShippingMin     float64               `json:"free_shipping_min"`
+	CODQuotingDisabled  bool                  `json:"cod_quoting_disabled"`
 }
 
 func wooResKey(integrationID uint) string {
@@ -58,6 +59,9 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 
 	if enabled, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "free_shipping_enabled"); ferr == nil {
 		r.FreeShippingEnabled = enabled
+	}
+	if disabled, ferr := h.uc.Repo().GetIntegrationConfigFlag(ctx, integrationID, "cod_quoting_disabled"); ferr == nil {
+		r.CODQuotingDisabled = disabled
 	}
 	if r.FreeShippingEnabled {
 		if minStr, verr := h.uc.Repo().GetIntegrationConfigValue(ctx, integrationID, "free_shipping_min"); verr == nil && minStr != "" {
