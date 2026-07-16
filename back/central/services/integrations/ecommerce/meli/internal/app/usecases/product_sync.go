@@ -88,10 +88,23 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		return nil, err
 	}
 
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	mapped, merr := uc.inventoryRepo.ListMappedItems(ctx, uint(integIDUint))
+	if merr != nil {
+		return nil, fmt.Errorf("listing mapped items: %w", merr)
+	}
+	associatedSKUs := make(map[string]bool)
+	for _, m := range mapped {
+		if k := normalizeSKU(m.SKU); k != "" {
+			associatedSKUs[k] = true
+		}
+	}
+
 	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
-		OnlyInProbability: []domain.ProductBrief{},
-		OnlyInMeli:        []domain.ProductBrief{},
+		MatchedNotAssociated: []domain.ProductBrief{},
+		OnlyInProbability:    []domain.ProductBrief{},
+		OnlyInMeli:           []domain.ProductBrief{},
 	}
 	for _, p := range probProducts {
 		key := normalizeSKU(p.SKU)
@@ -111,7 +124,11 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		}
 		meliSKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
-			result.Matched++
+			if associatedSKUs[key] {
+				result.Matched++
+			} else {
+				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
+			}
 		} else {
 			result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
 		}
@@ -253,6 +270,88 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "meli.product.sync.completed", map[string]interface{}{
 		"correlation_id": correlationID,
 		"direction":      "to_probability",
+		"total":          total,
+		"created":        created,
+		"updated":        0,
+		"failed":         failed,
+	})
+	return nil
+}
+
+func (uc *meliUseCase) AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	_, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	if err != nil {
+		return err
+	}
+
+	meliBySKU := make(map[string]string)
+	for _, m := range meliProducts {
+		if k := normalizeSKU(m.SKU); k != "" && m.ID != "" {
+			meliBySKU[k] = m.ID
+		}
+	}
+	probBySKU := make(map[string]domain.ProductForSync)
+	for _, p := range probProducts {
+		if k := normalizeSKU(p.SKU); k != "" {
+			probBySKU[k] = p
+		}
+	}
+
+	mapped, err := uc.inventoryRepo.ListMappedItems(ctx, uint(integIDUint))
+	if err != nil {
+		return err
+	}
+	associated := make(map[string]bool)
+	for _, m := range mapped {
+		if k := normalizeSKU(m.SKU); k != "" {
+			associated[k] = true
+		}
+	}
+
+	targets := make([]string, 0)
+	if len(skus) > 0 {
+		for _, s := range skus {
+			if k := normalizeSKU(s); k != "" {
+				targets = append(targets, k)
+			}
+		}
+	} else {
+		for k := range probBySKU {
+			if meliBySKU[k] != "" && !associated[k] {
+				targets = append(targets, k)
+			}
+		}
+	}
+
+	total := len(targets)
+	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "meli.product.sync.started", map[string]interface{}{
+		"correlation_id": correlationID,
+		"direction":      "associate",
+		"total":          total,
+	})
+
+	created, failed := 0, 0
+	for i, k := range targets {
+		p, okP := probBySKU[k]
+		ref, okM := meliBySKU[k]
+		if !okP || !okM || ref == "" || associated[k] {
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, failed)
+			continue
+		}
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), ref); merr != nil {
+			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al asociar producto a MercadoLibre")
+			failed++
+		} else {
+			associated[k] = true
+			created++
+		}
+		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, failed)
+	}
+
+	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "meli.product.sync.completed", map[string]interface{}{
+		"correlation_id": correlationID,
+		"direction":      "associate",
 		"total":          total,
 		"created":        created,
 		"updated":        0,

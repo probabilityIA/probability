@@ -53,6 +53,9 @@ func New(
 
 		billingConsumer := meliqueue.NewBillingRetryConsumer(rabbitMQ, uc, logger)
 		billingConsumer.Start(context.Background())
+
+		inventoryPushConsumer := meliqueue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
+		inventoryPushConsumer.Start(context.Background())
 	}
 
 	return melicore.New(uc)

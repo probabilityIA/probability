@@ -7,6 +7,18 @@ import (
 )
 
 func (uc *meliUseCase) UpdateItemStock(ctx context.Context, integrationID, itemID string, quantity int) error {
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return err
+	}
+	if integration == nil {
+		return nil
+	}
+	if enabled, _ := integration.Config["inventory_sync_enabled"].(bool); !enabled {
+		uc.logger.Info(ctx).Str("integration_id", integrationID).Msg("Sync de inventario desactivado para MercadoLibre, push omitido")
+		return nil
+	}
+
 	accessToken, err := uc.EnsureValidToken(ctx, integrationID)
 	if err != nil {
 		return err

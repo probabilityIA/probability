@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	core "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	core "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -48,6 +48,7 @@ func (h *meliHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger
 		oauthGroup.GET("/oauth/token", h.GetOAuthTokenHandler)
 		oauthGroup.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
 		oauthGroup.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
+		oauthGroup.POST("/products/associate", middleware.JWT(), h.AssociateProducts)
 		oauthGroup.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
 	}
 

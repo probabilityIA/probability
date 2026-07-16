@@ -22,6 +22,7 @@ type IMeliUseCase interface {
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
 	ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 	UpdateItemStock(ctx context.Context, integrationID, itemID string, quantity int) error

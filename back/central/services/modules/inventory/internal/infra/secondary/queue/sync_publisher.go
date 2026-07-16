@@ -4,11 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
+
+func ecommerceStockPushQueue(integrationTypeCode string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(integrationTypeCode)) {
+	case "woocommerce":
+		return rabbitmq.QueueWooInventoryStockPush, true
+	case "mercado libre", "mercadolibre", "meli":
+		return rabbitmq.QueueMeliInventoryStockPush, true
+	case "shopify":
+		return rabbitmq.QueueShopifyInventoryStockPush, true
+	}
+	return "", false
+}
 
 const (
 	exchangeName = rabbitmq.ExchangeInventory
@@ -71,17 +84,22 @@ func (p *SyncPublisher) PublishEcommerceStockPush(ctx context.Context, msg ports
 		return nil
 	}
 
+	queueName, ok := ecommerceStockPushQueue(msg.IntegrationTypeCode)
+	if !ok {
+		return nil
+	}
+
 	body, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("failed to marshal ecommerce stock push message: %w", err)
 	}
 
-	if err := p.queue.DeclareQueue(rabbitmq.QueueWooInventoryStockPush, true); err != nil {
-		p.logger.Error().Err(err).Msg("Failed to declare woocommerce stock push queue")
+	if err := p.queue.DeclareQueue(queueName, true); err != nil {
+		p.logger.Error().Err(err).Str("queue", queueName).Msg("Failed to declare ecommerce stock push queue")
 		return err
 	}
 
-	if err := p.queue.Publish(ctx, rabbitmq.QueueWooInventoryStockPush, body); err != nil {
+	if err := p.queue.Publish(ctx, queueName, body); err != nil {
 		p.logger.Error().
 			Err(err).
 			Str("product_id", msg.ProductID).

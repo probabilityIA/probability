@@ -39,6 +39,13 @@ export async function reconcileMeliProductsAction(integrationId: number, busines
     return postWithAuth('/integrations/meli/products/reconcile', body);
 }
 
+export async function associateMeliProductsAction(integrationId: number, businessId?: number, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/integrations/meli/products/associate', body);
+}
+
 export async function applyMeliProductsAction(integrationId: number, direction: 'to_meli' | 'to_probability', businessId?: number) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction };
     if (businessId) body.business_id = businessId;

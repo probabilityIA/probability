@@ -111,9 +111,6 @@ func (uc *useCase) pushEcommerceStock(ctx context.Context, productID string, bus
 	}
 
 	for _, integ := range integrations {
-		if integ.IntegrationTypeCode != "woocommerce" {
-			continue
-		}
 		if integ.ExternalProductID == "" {
 			continue
 		}

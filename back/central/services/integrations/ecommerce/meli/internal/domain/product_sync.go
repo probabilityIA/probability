@@ -38,11 +38,12 @@ type ProductBrief struct {
 }
 
 type ReconcileResult struct {
-	Matched           int
-	OnlyInProbability []ProductBrief
-	OnlyInMeli        []ProductBrief
-	ProbabilityNoSKU  int
-	MeliNoSKU         int
+	Matched              int
+	MatchedNotAssociated []ProductBrief
+	OnlyInProbability    []ProductBrief
+	OnlyInMeli           []ProductBrief
+	ProbabilityNoSKU     int
+	MeliNoSKU            int
 }
 
 type IProductRepository interface {

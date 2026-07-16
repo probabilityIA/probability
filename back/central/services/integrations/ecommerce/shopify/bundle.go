@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/handlers"
+	shopifyqueue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client"
 	shopifycore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/eventpublisher"
@@ -45,6 +46,11 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	syncEventPub := eventpublisher.New(rabbitMQ)
 	inventoryRepo := shopifyrepo.NewInventory(database, logger)
 	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, logger, syncEventPub, inventoryRepo)
+
+	if rabbitMQ != nil {
+		inventoryPushConsumer := shopifyqueue.NewInventoryPushConsumer(rabbitMQ, useCase, logger)
+		inventoryPushConsumer.Start(context.Background())
+	}
 
 	shopifyCore := shopifycore.New(useCase)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)

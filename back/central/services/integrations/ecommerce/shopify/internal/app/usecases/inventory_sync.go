@@ -298,6 +298,10 @@ func (uc *SyncOrdersUseCase) UpdateInventory(ctx context.Context, integrationID 
 	if integration == nil {
 		return fmt.Errorf("integration not found")
 	}
+	if enabled, _ := integration.Config["inventory_sync_enabled"].(bool); !enabled {
+		uc.log.Info(ctx).Str("integration_id", integrationID).Msg("Sync de inventario desactivado para Shopify, push omitido")
+		return nil
+	}
 	storeDomain, accessToken, err := uc.resolveStoreAndToken(ctx, integration, integrationID)
 	if err != nil {
 		return err
