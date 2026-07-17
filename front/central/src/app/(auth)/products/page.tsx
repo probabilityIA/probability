@@ -45,11 +45,6 @@ export default function ProductsPage() {
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-    const handleRefresh = () => {
-        if (activeTab === 'products') productListRef.current?.refreshProducts();
-        else familyListRef.current?.refresh();
-    };
-
     const handleCreate = () => {
         if (activeTab === 'products') {
             setSelectedProduct(undefined);
@@ -179,13 +174,6 @@ export default function ProductsPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                                     </svg>
-                                </button>
-                                <button
-                                    onClick={handleRefresh}
-                                    className="group px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:border-business-primary text-business-primary font-bold rounded-lg transition-all duration-200 text-sm shadow-sm flex items-center gap-2 whitespace-nowrap"
-                                >
-                                    <span className="inline-block transition-transform duration-500 group-hover:rotate-180">&#8635;</span>
-                                    Actualizar
                                 </button>
                                 <button
                                     onClick={handleCreate}

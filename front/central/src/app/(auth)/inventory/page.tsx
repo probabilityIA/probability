@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdjustmentsHorizontalIcon, BuildingStorefrontIcon, CubeIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { AdjustmentsHorizontalIcon, BuildingStorefrontIcon, CubeIcon, ChartBarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { AdjustStockModal, TransferStockModal, ProductInventoryView, WarehouseInventoryView, InventoryAnalyticsView } from '@/services/modules/inventory/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
@@ -38,7 +38,6 @@ export default function InventoryStockPage() {
         setModalType(null);
         setSelectedProductId(undefined);
         setAdjustWarehouseId(null);
-        // Pequeño delay para asegurar que el backend procesó la actualización
         setTimeout(() => {
             refreshProductView?.();
         }, 300);
@@ -46,10 +45,30 @@ export default function InventoryStockPage() {
 
     const canShowActions = !requiresBusinessSelection;
 
+    const handleOpenAdjustModal = useCallback(() => {
+        setSelectedProductId(undefined);
+        setAdjustWarehouseId(null);
+        setModalType('adjust');
+    }, []);
+
     useEffect(() => {
-        setActionButtons(null);
+        if (!canShowActions) {
+            setActionButtons(null);
+            return () => setActionButtons(null);
+        }
+
+        setActionButtons(
+            <button
+                onClick={handleOpenAdjustModal}
+                className="px-4 py-2 btn-business-primary text-white rounded-lg text-sm hover:shadow-md transition-all flex items-center gap-2 whitespace-nowrap"
+                title="Anadir stock"
+            >
+                <PlusIcon className="w-4 h-4" />
+                Anadir stock
+            </button>
+        );
         return () => setActionButtons(null);
-    }, [setActionButtons]);
+    }, [setActionButtons, canShowActions, handleOpenAdjustModal]);
 
     const viewBtnCls = (active: boolean) =>
         `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${active
@@ -93,7 +112,6 @@ export default function InventoryStockPage() {
                             <ProductInventoryView
                                 businessId={effectiveBusinessId}
                                 onRefreshRef={handleProductViewRefreshRef}
-                                onOpenAdjustModal={() => { setSelectedProductId(undefined); setAdjustWarehouseId(null); setModalType('adjust'); }}
                                 onAdjust={handleAdjustFromProduct}
                             />
                         )}
