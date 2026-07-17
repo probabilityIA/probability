@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Probability Shipping
  * Description: Cotiza tarifas de transportadoras (EnvioClick, etc.) en el checkout consultando la API de Probability.
- * Version: 1.6.0
+ * Version: 1.6.1
  * Author: Probability
  * Requires Plugins: woocommerce
  */
@@ -64,7 +64,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-checkout',
         plugins_url('probability-checkout.js', __FILE__),
         array('jquery', 'probability-leaflet'),
-        '1.6.0',
+        '1.6.1',
         true
     );
     wp_localize_script('probability-checkout', 'ProbabilityCheckout', $config);
@@ -73,7 +73,7 @@ add_action('wp_enqueue_scripts', function () {
         'probability-blocks',
         plugins_url('probability-blocks.js', __FILE__),
         array('wp-data', 'probability-leaflet'),
-        '1.6.0',
+        '1.6.1',
         true
     );
     wp_localize_script('probability-blocks', 'ProbabilityCheckoutBlocks', $config);
@@ -203,7 +203,7 @@ add_action('woocommerce_shipping_init', function () {
                 'fallback_cost' => array(
                     'title'       => 'Costo de respaldo',
                     'type'        => 'text',
-                    'description' => 'Si la API no devuelve tarifas, usar este costo (vacio = sin opcion de envio).',
+                    'description' => 'Si la API falla o no devuelve tarifas, usar este costo (vacio = sin opcion de envio). No aplica cuando el pedido es contra entrega y el negocio no cotiza contra entrega en Probability.',
                     'default'     => '',
                     'desc_tip'    => true,
                 ),
@@ -299,6 +299,10 @@ add_action('woocommerce_shipping_init', function () {
 
             $data  = json_decode(wp_remote_retrieve_body($response), true);
             $rates = isset($data['rates']) && is_array($data['rates']) ? $data['rates'] : array();
+
+            if (!empty($data['cod_blocked'])) {
+                return;
+            }
 
             if (empty($rates)) {
                 $this->maybe_fallback();

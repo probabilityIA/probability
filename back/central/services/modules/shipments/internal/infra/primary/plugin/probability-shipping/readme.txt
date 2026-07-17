@@ -3,7 +3,7 @@ Contributors: probability
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 
 Cotiza tarifas de transportadoras (EnvioClick y otras) en el checkout de
@@ -21,6 +21,12 @@ de envio con su precio antes de pagar.
 5. Listo: en el checkout apareceran las tarifas reales de las transportadoras.
 
 == Changelog ==
+
+= 1.6.1 =
+* El "Costo de respaldo" ya no se aplica cuando el negocio tiene desactivada la
+  cotizacion contra entrega en Probability. Antes, tener ese campo con valor
+  hacia que el pedido contra entrega igual mostrara una tarifa, saltandose la
+  restriccion.
 
 = 1.6.0 =
 * La cotizacion ahora informa si el pedido es contra entrega (COD). Antes se

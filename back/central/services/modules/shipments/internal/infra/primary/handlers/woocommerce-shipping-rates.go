@@ -79,7 +79,7 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	}
 
 	if req.COD && resolved.CODQuotingDisabled {
-		c.JSON(http.StatusOK, emptyRates)
+		c.JSON(http.StatusOK, gin.H{"rates": []wooRate{}, "cod_blocked": true})
 		return
 	}
 
@@ -155,6 +155,12 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	}
 
 	rates := mapQuoteRatesToWoo(ratesList, currency, quoteID, h.pluginBaseURL, req.COD)
+
+	if req.COD && len(rates) == 0 && len(ratesList) > 0 {
+		c.JSON(http.StatusOK, gin.H{"rates": []wooRate{}, "cod_blocked": true})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
 }
 
