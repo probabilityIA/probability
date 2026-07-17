@@ -155,6 +155,8 @@ const (
 
 	QueueJumpsellerInventoryStockPush = "inventory.jumpseller.stock_push"
 
+	QueueVtexInventoryStockPush = "inventory.vtex.stock_push"
+
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
 
 	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"

@@ -238,11 +238,11 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 3, 4, 8, 33].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 3, 4, 8, 16, 33].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
                 <div
                     style={
-                        selectedIntegration && [1, 3, 4, 8, 33].includes(Number(selectedIntegration.integration_type_id))
+                        selectedIntegration && [1, 3, 4, 8, 16, 33].includes(Number(selectedIntegration.integration_type_id))
                             ? { width: 'min(768px, 92vw)' }
                             : undefined
                     }

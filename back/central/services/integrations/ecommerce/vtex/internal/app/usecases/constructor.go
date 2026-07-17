@@ -5,41 +5,60 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// IVTEXUseCase define las operaciones de negocio de VTEX.
 type IVTEXUseCase interface {
-	// TestConnection verifica que las credenciales de una integración sean válidas.
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 
-	// SyncOrders sincroniza órdenes de los últimos 30 días.
 	SyncOrders(ctx context.Context, integrationID string) error
-
-	// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados.
 	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error
-
-	// ProcessWebhook procesa un webhook de VTEX (cambio de estado de orden).
 	ProcessWebhook(ctx context.Context, payload *domain.VTEXWebhookPayload) error
+
+	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
+
+	AssertIntegrationOwned(ctx context.Context, integrationID string, businessID uint) error
+	CreateWebhooks(ctx context.Context, integrationID, baseURL string, force bool) error
+	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookItem, error)
+	InspectWebhook(ctx context.Context, integrationID, baseURL string) (*domain.WebhookItem, error)
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+
+	GetWarehouses(ctx context.Context, integrationID string, businessID uint) (*domain.WarehousesInfo, error)
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
+	PushStock(ctx context.Context, integrationID, productID, productExternalID string, quantity int) error
 }
 
 type vtexUseCase struct {
-	client    domain.IVTEXClient
-	service   domain.IIntegrationService
-	publisher domain.OrderPublisher
-	logger    log.ILogger
+	client         domain.IVTEXClient
+	service        domain.IIntegrationService
+	publisher      domain.OrderPublisher
+	productRepo    domain.IProductRepository
+	rabbit         rabbitmq.IQueue
+	webhookBaseURL string
+	logger         log.ILogger
 }
 
-// New crea el use case de VTEX con todas sus dependencias.
 func New(
 	client domain.IVTEXClient,
 	service domain.IIntegrationService,
 	publisher domain.OrderPublisher,
+	productRepo domain.IProductRepository,
+	rabbit rabbitmq.IQueue,
+	webhookBaseURL string,
 	logger log.ILogger,
 ) IVTEXUseCase {
 	return &vtexUseCase{
-		client:    client,
-		service:   service,
-		publisher: publisher,
-		logger:    logger.WithModule("vtex"),
+		client:         client,
+		service:        service,
+		publisher:      publisher,
+		productRepo:    productRepo,
+		rabbit:         rabbit,
+		webhookBaseURL: webhookBaseURL,
+		logger:         logger.WithModule("vtex"),
 	}
 }

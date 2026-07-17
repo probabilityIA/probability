@@ -35,7 +35,7 @@ func New(
 	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWoocommerce, wooProvider)
 
-	vtexProvider := vtex.New(router, logger, config, rabbitMQ, integrationCore)
+	vtexProvider := vtex.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeVTEX, vtexProvider)
 
 	tiendanubeProvider := tiendanube.New(router, logger, config, rabbitMQ, integrationCore)

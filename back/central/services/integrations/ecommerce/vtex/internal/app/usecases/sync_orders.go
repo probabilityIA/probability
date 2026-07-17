@@ -10,7 +10,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
 )
 
-// SyncOrders sincroniza órdenes de VTEX de los últimos 30 días.
 func (uc *vtexUseCase) SyncOrders(ctx context.Context, integrationID string) error {
 	after := time.Now().AddDate(0, 0, -30)
 	params := map[string]interface{}{
@@ -19,10 +18,7 @@ func (uc *vtexUseCase) SyncOrders(ctx context.Context, integrationID string) err
 	return uc.SyncOrdersWithParams(ctx, integrationID, params)
 }
 
-// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados.
-// Soporta: created_at_min, created_at_max, status (string).
 func (uc *vtexUseCase) SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error {
-	// 1. Obtener integración
 	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
 		return fmt.Errorf("getting integration: %w", err)
@@ -31,33 +27,30 @@ func (uc *vtexUseCase) SyncOrdersWithParams(ctx context.Context, integrationID s
 		return domain.ErrIntegrationNotFound
 	}
 
-	// 2. Obtener credenciales
-	storeURL, apiKey, apiToken, err := uc.getCredentials(ctx, integration, integrationID)
+	cred, err := uc.resolveCredential(ctx, integration, integrationID)
 	if err != nil {
 		return err
 	}
 
-	// 3. Construir filtros
 	filters := buildVTEXFilters(params)
 
 	uc.logger.Info(ctx).
 		Str("integration_id", integrationID).
-		Str("store_url", storeURL).
+		Str("account", cred.AccountName).
 		Msg("Starting VTEX order sync")
 
-	// 4. Lanzar sincronización en background
-	go uc.syncOrdersAsync(context.Background(), integration, storeURL, apiKey, apiToken, filters)
+	go uc.syncOrdersAsync(context.Background(), integration, cred, filters)
 
 	return nil
 }
 
-func (uc *vtexUseCase) syncOrdersAsync(ctx context.Context, integration *domain.Integration, storeURL, apiKey, apiToken string, filters map[string]string) {
+func (uc *vtexUseCase) syncOrdersAsync(ctx context.Context, integration *domain.Integration, cred domain.Credential, filters map[string]string) {
 	totalSynced := 0
 	page := 1
-	perPage := 15 // VTEX default
+	perPage := 15
 
 	for {
-		result, err := uc.client.GetOrders(ctx, storeURL, apiKey, apiToken, page, perPage, filters)
+		result, err := uc.client.GetOrders(ctx, cred, page, perPage, filters)
 		if err != nil {
 			uc.logger.Error(ctx).Err(err).
 				Int("page", page).
@@ -70,8 +63,7 @@ func (uc *vtexUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 		}
 
 		for _, summary := range result.List {
-			// Obtener detalle completo de cada orden
-			order, rawJSON, err := uc.client.GetOrderByID(ctx, storeURL, apiKey, apiToken, summary.OrderID)
+			order, rawJSON, err := uc.client.GetOrderByID(ctx, cred, summary.OrderID)
 			if err != nil {
 				uc.logger.Error(ctx).Err(err).
 					Str("order_id", summary.OrderID).
@@ -98,13 +90,11 @@ func (uc *vtexUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			Int("total", result.Paging.Total).
 			Msg("VTEX orders page synced")
 
-		// Si ya estamos en la última página, terminar
 		if page >= result.Paging.Pages {
 			break
 		}
 
 		page++
-		// Rate limiting: 500ms entre páginas
 		time.Sleep(500 * time.Millisecond)
 	}
 
@@ -114,33 +104,6 @@ func (uc *vtexUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 		Msg("VTEX order sync completed")
 }
 
-// getCredentials obtiene store_url, api_key y api_token de una integración.
-func (uc *vtexUseCase) getCredentials(ctx context.Context, integration *domain.Integration, integrationID string) (storeURL, apiKey, apiToken string, err error) {
-	storeURL, err = extractString(integration.Config, "store_url")
-	if err != nil {
-		return "", "", "", domain.ErrMissingStoreURL
-	}
-
-	apiKey, err = uc.service.DecryptCredential(ctx, integrationID, "api_key")
-	if err != nil {
-		return "", "", "", fmt.Errorf("decrypting api_key: %w", err)
-	}
-	if apiKey == "" {
-		return "", "", "", domain.ErrMissingAPIKey
-	}
-
-	apiToken, err = uc.service.DecryptCredential(ctx, integrationID, "api_token")
-	if err != nil {
-		return "", "", "", fmt.Errorf("decrypting api_token: %w", err)
-	}
-	if apiToken == "" {
-		return "", "", "", domain.ErrMissingAPIToken
-	}
-
-	return storeURL, apiKey, apiToken, nil
-}
-
-// buildVTEXFilters construye los filtros de la API de VTEX a partir de un mapa genérico.
 func buildVTEXFilters(params interface{}) map[string]string {
 	filters := make(map[string]string)
 
@@ -149,7 +112,6 @@ func buildVTEXFilters(params interface{}) map[string]string {
 		return filters
 	}
 
-	// Convertir created_at_min/max a f_creationDate de VTEX
 	var dateFrom, dateTo string
 	if v, ok := m["created_at_min"].(string); ok && v != "" {
 		dateFrom = v
@@ -161,7 +123,6 @@ func buildVTEXFilters(params interface{}) map[string]string {
 	}
 
 	if dateFrom != "" {
-		// VTEX format: f_creationDate=creationDate:[2026-01-01T00:00:00.000Z TO 2026-02-24T23:59:59.999Z]
 		filters["f_creationDate"] = url.QueryEscape(fmt.Sprintf("creationDate:[%s TO %s]", dateFrom, dateTo))
 	}
 

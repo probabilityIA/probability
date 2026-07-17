@@ -21,6 +21,8 @@ func ecommerceStockPushQueue(integrationTypeCode string) (string, bool) {
 		return rabbitmq.QueueShopifyInventoryStockPush, true
 	case "jumpseller":
 		return rabbitmq.QueueJumpsellerInventoryStockPush, true
+	case "vtex":
+		return rabbitmq.QueueVtexInventoryStockPush, true
 	}
 	return "", false
 }

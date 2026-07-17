@@ -7,42 +7,38 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
 )
 
-// TestConnection verifica que las credenciales de VTEX sean válidas.
-// Extrae store_url (config) y api_key / api_token (credentials).
 func (uc *vtexUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	storeURL, err := extractString(config, "store_url")
+	accountName, err := extractString(config, "account_name")
 	if err != nil {
-		return domain.ErrMissingStoreURL
+		return domain.ErrMissingAccountName
 	}
 
-	apiKey, err := extractString(credentials, "api_key")
-	if err != nil {
-		return domain.ErrMissingAPIKey
+	accountName = CleanAccountName(accountName)
+	if accountName == "" {
+		return domain.ErrMissingAccountName
 	}
 
-	apiToken, err := extractString(credentials, "api_token")
+	appKey, err := extractString(credentials, "app_key")
 	if err != nil {
-		return domain.ErrMissingAPIToken
+		return domain.ErrMissingAppKey
 	}
 
-	if err := uc.client.TestConnection(ctx, storeURL, apiKey, apiToken); err != nil {
-		uc.logger.Error(ctx).Err(err).Msg("VTEX test connection failed")
+	appToken, err := extractString(credentials, "app_token")
+	if err != nil {
+		return domain.ErrMissingAppToken
+	}
+
+	cred := domain.Credential{
+		AccountName: accountName,
+		AppKey:      appKey,
+		AppToken:    appToken,
+	}
+
+	if err := uc.client.TestConnection(ctx, cred); err != nil {
+		uc.logger.Error(ctx).Err(err).Str("account", accountName).Msg("VTEX test connection failed")
 		return fmt.Errorf("vtex: test connection failed: %w", err)
 	}
 
-	uc.logger.Info(ctx).Msg("VTEX test connection successful")
+	uc.logger.Info(ctx).Str("account", accountName).Msg("VTEX test connection successful")
 	return nil
-}
-
-// extractString extrae un campo string de un mapa, retornando error si falta o es vacío.
-func extractString(m map[string]interface{}, key string) (string, error) {
-	v, ok := m[key]
-	if !ok {
-		return "", fmt.Errorf("missing field: %s", key)
-	}
-	s, ok := v.(string)
-	if !ok || s == "" {
-		return "", fmt.Errorf("field %s must be a non-empty string", key)
-	}
-	return s, nil
 }

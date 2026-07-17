@@ -6,31 +6,35 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 )
 
-// IVTEXClient define las operaciones del cliente HTTP de VTEX.
-// Implementado en infra/secondary/client.
-type IVTEXClient interface {
-	// TestConnection verifica que las credenciales sean válidas.
-	TestConnection(ctx context.Context, storeURL, apiKey, apiToken string) error
-
-	// GetOrders obtiene la lista de órdenes con paginación.
-	// Retorna el resumen de órdenes (sin detalle completo).
-	GetOrders(ctx context.Context, storeURL, apiKey, apiToken string, page, perPage int, filters map[string]string) (*VTEXOrderListResponse, error)
-
-	// GetOrderByID obtiene el detalle completo de una orden.
-	// Retorna la orden tipada y los bytes crudos (para ChannelMetadata.RawData).
-	GetOrderByID(ctx context.Context, storeURL, apiKey, apiToken string, orderID string) (*VTEXOrder, []byte, error)
+type Credential struct {
+	AccountName string
+	AppKey      string
+	AppToken    string
 }
 
-// IIntegrationService define las operaciones del core de integraciones
-// que el módulo de VTEX necesita.
+type IVTEXClient interface {
+	TestConnection(ctx context.Context, cred Credential) error
+
+	GetOrders(ctx context.Context, cred Credential, page, perPage int, filters map[string]string) (*VTEXOrderListResponse, error)
+	GetOrderByID(ctx context.Context, cred Credential, orderID string) (*VTEXOrder, []byte, error)
+
+	ListSKUs(ctx context.Context, cred Credential) ([]VTEXSKU, error)
+	GetSKUIDByRefID(ctx context.Context, cred Credential, refID string, isSeller bool) (string, error)
+
+	GetWarehouses(ctx context.Context, cred Credential) ([]Warehouse, error)
+	UpdateSKUInventory(ctx context.Context, cred Credential, skuID, warehouseID string, quantity int) error
+
+	GetOrderHook(ctx context.Context, cred Credential) (*HookConfig, error)
+	SetOrderHook(ctx context.Context, cred Credential, url, hookKey string) error
+	DeleteOrderHook(ctx context.Context, cred Credential) error
+}
+
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error
 }
 
-// OrderPublisher publica órdenes al canal canónico de RabbitMQ.
-// Implementado en infra/secondary/queue.
 type OrderPublisher interface {
 	Publish(ctx context.Context, order *canonical.ProbabilityOrderDTO) error
 }

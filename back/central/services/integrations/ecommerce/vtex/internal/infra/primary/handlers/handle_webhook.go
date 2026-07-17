@@ -11,15 +11,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/infra/secondary/client/response"
 )
 
-// HandleWebhook recibe webhooks de eventos de VTEX.
-// VTEX envía un POST con el payload del evento en el body (Hook v1).
-// Se responde 200 inmediatamente y se procesa en background.
-//
-// Referencia: https://developers.vtex.com/docs/guides/orders-feed
 func (h *vtexHandler) HandleWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 1. Leer body crudo
 	rawBody, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		h.logger.Error(ctx).Err(err).Msg("Failed to read VTEX webhook body")
@@ -27,7 +21,13 @@ func (h *vtexHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
-	// 2. Deserializar el payload del webhook
+	integrationID := c.Query("integration_id")
+	if integrationID == "" {
+		h.logger.Warn(ctx).Msg("VTEX webhook sin integration_id en la query")
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
 	var webhookBody response.VTEXWebhookBody
 	if err := json.Unmarshal(rawBody, &webhookBody); err != nil {
 		h.logger.Warn(ctx).Err(err).
@@ -41,14 +41,13 @@ func (h *vtexHandler) HandleWebhook(c *gin.Context) {
 		Str("order_id", webhookBody.OrderID).
 		Str("state", webhookBody.State).
 		Str("last_state", webhookBody.LastState).
-		Str("domain", webhookBody.Domain).
+		Str("integration_id", integrationID).
 		Msg("VTEX webhook received")
 
-	// 3. Responder 200 inmediatamente (VTEX espera respuesta rápida)
 	c.Status(http.StatusOK)
 
-	// 4. Convertir a dominio y procesar en background
 	payload := webhookBody.ToDomain()
+	payload.IntegrationID = integrationID
 	go h.processWebhookAsync(&payload)
 }
 
