@@ -13,6 +13,13 @@ import InventoryTour from '@/services/modules/inventory/ui/components/InventoryT
 import { useResourceConfig } from '@/services/auth/business/ui/hooks/useResourceConfig';
 import { InventoryDisabledNotice, useInventoryModuleActive } from '@/services/modules/inventory/ui';
 
+const DEMO_ALLOWED_RESOURCES = new Set([
+    'Productos',
+    'Products',
+    'Inventario-Stock',
+    'Inventario-Movimientos',
+]);
+
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const [tourOpen, setTourOpen] = useState(false);
     const [pulseTour, setPulseTour] = useState(false);
@@ -45,9 +52,12 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
 
     const isResourcesLoading = permissionsNotLoaded || (businessIdForConfig > 0 && businessConfigLoading);
 
+    const isDemo = permissions?.role_name === 'demo';
+
     const allow = (resource: string) => {
         if (isSuperAdmin) return true;
         if (isResourcesLoading) return false;
+        if (isDemo && !DEMO_ALLOWED_RESOURCES.has(resource)) return false;
         if (!businessActiveSet.has(resource)) return false;
         if (hasPermission(resource, 'Read')) return true;
         if (isInventarioSub(resource) && hasPermission('Inventario', 'Read')) return true;
