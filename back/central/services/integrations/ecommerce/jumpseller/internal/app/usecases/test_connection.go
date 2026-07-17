@@ -7,26 +7,27 @@ import (
 )
 
 func (uc *jumpsellerUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	apiKey, err := extractString(credentials, "api_key")
-	if err != nil {
-		return domain.ErrMissingAPIKey
-	}
-
-	apiSecret, err := extractString(credentials, "api_secret")
-	if err != nil {
-		return domain.ErrMissingAPISecret
-	}
-
 	effectiveURL, err := testConnectionBaseURL(config)
 	if err != nil {
 		uc.logger.Error(ctx).Err(err).Msg("El tipo de integracion Jumpseller no tiene la URL configurada en base de datos")
 		return err
 	}
 
-	cred := domain.Credential{
-		APIKey:    apiKey,
-		APISecret: apiSecret,
-		BaseURL:   effectiveURL,
+	cred := domain.Credential{BaseURL: effectiveURL}
+
+	if accessToken, _ := credentials["access_token"].(string); accessToken != "" {
+		cred.AccessToken = accessToken
+	} else {
+		apiKey, err := extractString(credentials, "api_key")
+		if err != nil {
+			return domain.ErrMissingAPIKey
+		}
+		apiSecret, err := extractString(credentials, "api_secret")
+		if err != nil {
+			return domain.ErrMissingAPISecret
+		}
+		cred.APIKey = apiKey
+		cred.APISecret = apiSecret
 	}
 
 	storeInfo, err := uc.client.GetStoreInfo(ctx, cred)
