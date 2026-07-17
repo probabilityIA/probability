@@ -29,6 +29,7 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+import { JumpsellerConfigForm } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { MercadoLibreOAuthForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
@@ -61,6 +62,7 @@ const INTEGRATION_TYPE_IDS = {
     BOLD: 23,
     TIENDA: 30,
     TIENDA_WEB: 31,
+    JUMPSELLER: 33,
 } as const;
 
 interface CreateIntegrationModalProps {
@@ -129,6 +131,7 @@ export function CreateIntegrationModal({
             case 3:
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE) return '4xl';
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.MERCADO_LIBRE) return '4xl';
+                if (selectedProvider?.id === INTEGRATION_TYPE_IDS.JUMPSELLER) return '2xl';
                 return 'full';
             default:
                 return '4xl';
@@ -377,6 +380,15 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     <WooCommerceConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.JUMPSELLER:
+                return (
+                    <JumpsellerConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 

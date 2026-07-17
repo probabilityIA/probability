@@ -153,6 +153,8 @@ const (
 
 	QueueShopifyInventoryStockPush = "inventory.shopify.stock_push"
 
+	QueueJumpsellerInventoryStockPush = "inventory.jumpseller.stock_push"
+
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
 
 	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"

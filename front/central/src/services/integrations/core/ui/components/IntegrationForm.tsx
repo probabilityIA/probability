@@ -24,6 +24,7 @@ import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecom
 import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
+import { JumpsellerConfigForm } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { BoldConfigForm, BoldEditForm } from '@/services/integrations/pay/bold/ui/components';
 import { getActionError } from '@/shared/utils/action-result';
 
@@ -50,6 +51,7 @@ const INTEGRATION_TYPE_IDS = {
     FALABELLA: 20,
     EXITO: 21,
     BOLD: 23,
+    JUMPSELLER: 33,
 } as const;
 
 interface IntegrationFormProps {
@@ -326,6 +328,26 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         business_id: integration.business_id,
                         is_testing: integration.is_testing,
                     }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.JUMPSELLER) {
+            return (
+                <JumpsellerConfigForm
+                    isEdit={true}
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        store_id: integration.store_id,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                    }}
+                    integrationTypeBaseURLTest={selectedType?.base_url_test}
                     onSuccess={onSuccess}
                     onCancel={onCancel}
                 />
@@ -963,6 +985,14 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
+                    {selectedType.id === INTEGRATION_TYPE_IDS.JUMPSELLER && (
+                        <JumpsellerConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
                     {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.WHATSAPP &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.SOFTPYMES &&
@@ -981,6 +1011,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                      selectedType.id !== INTEGRATION_TYPE_IDS.AMAZON &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.FALABELLA &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.EXITO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.JUMPSELLER &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.BOLD && (
                         <Alert type="warning">
                             <div className="space-y-3">

@@ -2,99 +2,97 @@ package domain
 
 import "strings"
 
-// Integration type IDs — mapean a integration_types.id en la base de datos
 const (
 	IntegrationTypeShopify      = 1
-	IntegrationTypeWhatsApp     = 2 // Whastap en la BD
+	IntegrationTypeWhatsApp     = 2
 	IntegrationTypeMercadoLibre = 3
 	IntegrationTypeWoocommerce  = 4
-	IntegrationTypeInvoicing    = 5 // Softpymes - Facturación electrónica
-	IntegrationTypePlatform     = 6 // Plataforma interna
-	IntegrationTypeFactus       = 7 // Factus - Facturación electrónica
-	IntegrationTypeSiigo        = 8  // Siigo - Facturación electrónica
-	IntegrationTypeAlegra       = 9  // Alegra - Facturación electrónica
-	IntegrationTypeWorldOffice  = 10 // World Office - Facturación electrónica
-	IntegrationTypeHelisa       = 11 // Helisa - Facturación electrónica
-	IntegrationTypeEnvioClick   = 12 // EnvioClick - Transporte
-	IntegrationTypeEnviame      = 13 // Enviame - Transporte
-	IntegrationTypeTu           = 14 // Tu - Transporte
-	IntegrationTypeMiPaquete    = 15 // MiPaquete - Transporte
-	IntegrationTypeVTEX         = 16 // VTEX - E-commerce
-	IntegrationTypeTiendanube   = 17 // Tiendanube - E-commerce
-	IntegrationTypeMagento      = 18 // Magento/Adobe Commerce - E-commerce
-	IntegrationTypeAmazon       = 19 // Amazon - Marketplace
-	IntegrationTypeFalabella    = 20 // Falabella - Marketplace
-	IntegrationTypeExito        = 21 // Exito - Marketplace
-	IntegrationTypeEmail        = 29 // Email - Mensajería (notificaciones por correo)
-	IntegrationTypeTienda       = 30 // Tienda - Storefront con login
-	IntegrationTypeTiendaWeb    = 31 // Sitio Web - Sitio web público
+	IntegrationTypeInvoicing    = 5
+	IntegrationTypePlatform     = 6
+	IntegrationTypeFactus       = 7
+	IntegrationTypeSiigo        = 8
+	IntegrationTypeAlegra       = 9
+	IntegrationTypeWorldOffice  = 10
+	IntegrationTypeHelisa       = 11
+	IntegrationTypeEnvioClick   = 12
+	IntegrationTypeEnviame      = 13
+	IntegrationTypeTu           = 14
+	IntegrationTypeMiPaquete    = 15
+	IntegrationTypeVTEX         = 16
+	IntegrationTypeTiendanube   = 17
+	IntegrationTypeMagento      = 18
+	IntegrationTypeAmazon       = 19
+	IntegrationTypeFalabella    = 20
+	IntegrationTypeExito        = 21
+	IntegrationTypeEmail        = 29
+	IntegrationTypeTienda       = 30
+	IntegrationTypeTiendaWeb    = 31
+	IntegrationTypeJumpseller   = 33
 )
 
-// IntegrationCategory representa la categoría de integración
 const (
-	IntegrationCategoryInternal = "internal" // Integraciones internas del sistema
-	IntegrationCategoryExternal = "external" // Integraciones externas con clientes
+	IntegrationCategoryInternal = "internal"
+	IntegrationCategoryExternal = "external"
 )
 
-// IntegrationTypeCodeAsInt convierte el código string de tipo de integración a su ID numérico.
-// Esta es la función canónica — usarla en todo el proyecto.
 func IntegrationTypeCodeAsInt(code string) int {
 	lowerCode := strings.ToLower(code)
 	switch lowerCode {
 	case "shopify":
-		return IntegrationTypeShopify // 1
+		return IntegrationTypeShopify
 	case "whatsapp", "whatsap", "whastap":
-		return IntegrationTypeWhatsApp // 2
+		return IntegrationTypeWhatsApp
 	case "mercado_libre", "mercado libre":
-		return IntegrationTypeMercadoLibre // 3
+		return IntegrationTypeMercadoLibre
 	case "woocommerce", "woocormerce":
-		return IntegrationTypeWoocommerce // 4
+		return IntegrationTypeWoocommerce
 	case "softpymes", "invoicing":
-		return IntegrationTypeInvoicing // 5
+		return IntegrationTypeInvoicing
 	case "platform":
-		return IntegrationTypePlatform // 6
+		return IntegrationTypePlatform
 	case "factus":
-		return IntegrationTypeFactus // 7
+		return IntegrationTypeFactus
 	case "siigo":
-		return IntegrationTypeSiigo // 8
+		return IntegrationTypeSiigo
 	case "alegra":
-		return IntegrationTypeAlegra // 9
+		return IntegrationTypeAlegra
 	case "world_office", "worldoffice":
-		return IntegrationTypeWorldOffice // 10
+		return IntegrationTypeWorldOffice
 	case "helisa":
-		return IntegrationTypeHelisa // 11
+		return IntegrationTypeHelisa
 	case "envioclick":
-		return IntegrationTypeEnvioClick // 12
+		return IntegrationTypeEnvioClick
 	case "enviame":
-		return IntegrationTypeEnviame // 13
+		return IntegrationTypeEnviame
 	case "tu":
-		return IntegrationTypeTu // 14
+		return IntegrationTypeTu
 	case "mipaquete", "mi_paquete":
-		return IntegrationTypeMiPaquete // 15
+		return IntegrationTypeMiPaquete
 	case "vtex":
-		return IntegrationTypeVTEX // 16
+		return IntegrationTypeVTEX
 	case "tiendanube", "tienda_nube":
-		return IntegrationTypeTiendanube // 17
+		return IntegrationTypeTiendanube
 	case "magento", "adobe_commerce":
-		return IntegrationTypeMagento // 18
+		return IntegrationTypeMagento
 	case "amazon":
-		return IntegrationTypeAmazon // 19
+		return IntegrationTypeAmazon
 	case "falabella":
-		return IntegrationTypeFalabella // 20
+		return IntegrationTypeFalabella
 	case "exito":
-		return IntegrationTypeExito // 21
+		return IntegrationTypeExito
+	case "jumpseller":
+		return IntegrationTypeJumpseller
 	case "email":
-		return IntegrationTypeEmail // 29
+		return IntegrationTypeEmail
 	case "tienda":
-		return IntegrationTypeTienda // 30
+		return IntegrationTypeTienda
 	case "tienda_web":
-		return IntegrationTypeTiendaWeb // 31
+		return IntegrationTypeTiendaWeb
 	default:
 		return 0
 	}
 }
 
-// IsValidCategory valida si una categoría de integración es válida
 func IsValidCategory(category string) bool {
 	return category == IntegrationCategoryInternal || category == IntegrationCategoryExternal
 }

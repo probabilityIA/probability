@@ -1,0 +1,25 @@
+package queue
+
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/log"
+)
+
+type noOpPublisher struct {
+	logger log.ILogger
+}
+
+func NewNoOpPublisher(logger log.ILogger) domain.OrderPublisher {
+	return &noOpPublisher{logger: logger}
+}
+
+func (p *noOpPublisher) Publish(ctx context.Context, order *canonical.ProbabilityOrderDTO) error {
+	p.logger.Warn(ctx).
+		Str("order_number", order.OrderNumber).
+		Uint("integration_id", order.IntegrationID).
+		Msg("RabbitMQ not available, Jumpseller order not published to queue (no-op)")
+	return nil
+}

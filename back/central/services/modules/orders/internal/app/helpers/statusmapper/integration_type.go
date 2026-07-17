@@ -13,6 +13,8 @@ func GetIntegrationTypeID(integrationType string) uint {
 		return 4
 	case "platform":
 		return 6
+	case "jumpseller":
+		return 33
 	default:
 		return 0
 	}

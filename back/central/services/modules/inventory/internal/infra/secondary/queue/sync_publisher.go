@@ -19,6 +19,8 @@ func ecommerceStockPushQueue(integrationTypeCode string) (string, bool) {
 		return rabbitmq.QueueMeliInventoryStockPush, true
 	case "shopify":
 		return rabbitmq.QueueShopifyInventoryStockPush, true
+	case "jumpseller":
+		return rabbitmq.QueueJumpsellerInventoryStockPush, true
 	}
 	return "", false
 }
@@ -28,19 +30,16 @@ const (
 	exchangeType = "topic"
 )
 
-// SyncPublisher publica mensajes de sync de inventario a RabbitMQ
 type SyncPublisher struct {
 	queue  rabbitmq.IQueue
 	logger log.ILogger
 }
 
-// New crea un nuevo publisher y declara el exchange
 func New(queue rabbitmq.IQueue, logger log.ILogger) ports.ISyncPublisher {
 	if queue == nil {
 		return &SyncPublisher{queue: nil, logger: logger}
 	}
 
-	// Declarar exchange
 	if err := queue.DeclareExchange(exchangeName, exchangeType, true); err != nil {
 		logger.Error().Err(err).Msg("Failed to declare inventory exchange")
 	}

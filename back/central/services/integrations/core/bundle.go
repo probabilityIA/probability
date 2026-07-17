@@ -23,21 +23,14 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-// ============================================
-// Re-exports para backward compatibility
-// ============================================
-
-// Type aliases — consumidores externos siguen usando core.IIntegrationContract etc.
 type IIntegrationContract = domain.IIntegrationContract
 type BaseIntegration = domain.BaseIntegration
 type WebhookInfo = domain.WebhookInfo
 type IntegrationWithCredentials = domain.IntegrationWithCredentials
 type PublicIntegration = domain.PublicIntegration
 
-// Sentinel error
 var ErrNotSupported = domain.ErrNotSupported
 
-// Integration type constants
 const (
 	IntegrationTypeShopify      = domain.IntegrationTypeShopify
 	IntegrationTypeWhatsApp     = domain.IntegrationTypeWhatsApp
@@ -63,14 +56,9 @@ const (
 	IntegrationTypeEmail        = domain.IntegrationTypeEmail
 	IntegrationTypeTienda       = domain.IntegrationTypeTienda
 	IntegrationTypeTiendaWeb    = domain.IntegrationTypeTiendaWeb
+	IntegrationTypeJumpseller   = domain.IntegrationTypeJumpseller
 )
 
-// ============================================
-// Interfaces públicas
-// ============================================
-
-// IIntegrationService expone las operaciones de consulta y configuración que los módulos
-// consumidores (facturación, ecommerce, etc.) necesitan del core de integraciones.
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*domain.PublicIntegration, error)
 	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error)
@@ -78,14 +66,9 @@ type IIntegrationService interface {
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
 	UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
-	// GetPlatformCredential decrypts a field from the integration type's platform credentials.
-	// Use when an integration has use_platform_token=true in its config.
 	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
-// IIntegrationCore es la interfaz completa del core de integraciones.
-// Embeds IIntegrationService + métodos de registro y operaciones internas.
-// Solo debe usarse en integrations/bundle.go y shopify/bundle.go.
 type IIntegrationCore interface {
 	IIntegrationService
 	RegisterIntegration(integrationType int, integration IIntegrationContract)
@@ -103,10 +86,6 @@ type IIntegrationCore interface {
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
 }
 
-// ============================================
-// Thin facade wrapping the use case
-// ============================================
-
 type integrationCore struct {
 	useCase    domain.IIntegrationUseCase
 	cache      domain.IIntegrationCache
@@ -114,41 +93,29 @@ type integrationCore struct {
 	encryption domain.IEncryptionService
 }
 
-// ============================================
-// Constructor
-// ============================================
-
 func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, logger log.ILogger, config env.IConfig, s3 storage.IS3Service, rabbitMQ rabbitmq.IQueue) IIntegrationCore {
-	// 1. Inicializar Servicio de Encriptación
 	encryptionService := encryption.New(config, logger)
 
-	// 2. Inicializar Cache Service
 	integrationCache := cache.New(redisClient, logger)
 	logger.Info(context.Background()).Msg("Integration cache initialized")
 
-	// Registrar prefijos de caché para startup logs
 	redisClient.RegisterCachePrefix("integration:meta:*")
 	redisClient.RegisterCachePrefix("integration:creds:*")
 	redisClient.RegisterCachePrefix("integration:code:*")
 	redisClient.RegisterCachePrefix("integration:idx:*")
 	redisClient.RegisterCachePrefix("integration:platform_creds:*")
 
-	// 3. Inicializar Repositorio (con cache)
 	repo := repository.New(db, logger, encryptionService, integrationCache)
 
-	// 4. Inicializar Casos de Uso
 	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config, rabbitMQ)
 	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, integrationCache, logger, config, encryptionService)
 
-	// 5. Inicializar Handlers (solo dependen del use case)
 	handlerIntegrations := handlerintegrations.New(integrationUseCase, logger, config)
 	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger, config)
 
-	// 6. Registrar Rutas
 	handlerIntegrations.RegisterRoutes(router, logger)
 	handlerIntegrationType.RegisterRoutes(router, logger)
 
-	// 7. Cache Warming en background
 	go func() {
 		bgCtx := context.Background()
 		logger.Info(bgCtx).Msg("Starting cache warming in background...")
@@ -159,7 +126,6 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 		}
 	}()
 
-	// 8. Iniciar SyncBatchConsumer (procesa lotes de sincronización de órdenes)
 	syncBatchConsumer := consumer.NewSyncBatchConsumer(
 		rabbitMQ,
 		func(integrationTypeID int) (domain.IIntegrationContract, bool) {
@@ -177,7 +143,6 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 	return &integrationCore{useCase: integrationUseCase, cache: integrationCache, repo: repo, encryption: encryptionService}
 }
 
-// IIntegrationService pass-throughs
 func (ic *integrationCore) GetIntegrationByID(ctx context.Context, integrationID string) (*domain.PublicIntegration, error) {
 	return ic.useCase.GetPublicIntegrationByID(ctx, integrationID)
 }
@@ -219,7 +184,6 @@ func (ic *integrationCore) GetPlatformCredential(ctx context.Context, integratio
 	return ic.useCase.GetPlatformCredentialByIntegrationID(ctx, integrationID, fieldName)
 }
 
-// IIntegrationCore pass-throughs
 func (ic *integrationCore) RegisterIntegration(integrationType int, integration IIntegrationContract) {
 	ic.useCase.RegisterProvider(integrationType, integration)
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"github.com/secamc93/probability/back/testing/integrations/bold"
 	"github.com/secamc93/probability/back/testing/integrations/envioclick"
+	"github.com/secamc93/probability/back/testing/integrations/jumpseller"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
@@ -51,7 +52,7 @@ func main() {
 	if config.Get("S3_KEY") != "" && config.Get("S3_SECRET") != "" {
 		s3Service = storage.New(config, logger)
 	} else {
-		logger.Warn().Msg("S3 not configured — EnvioClick PDFs will use mock URL")
+		logger.Warn().Msg("S3 not configured - EnvioClick PDFs will use mock URL")
 	}
 	envioclickServer := envioclick.New(logger, envioclickPort, s3Service, urlBase)
 
@@ -94,13 +95,23 @@ func main() {
 		}
 	}()
 
+	jumpsellerPort := getEnv("JUMPSELLER_MOCK_PORT", "9097")
+	jumpsellerServer := jumpseller.New(logger, jumpsellerPort)
+
+	go func() {
+		if err := jumpsellerServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting Jumpseller mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
 
 	// 4b. Start Shopify Mock API (simula GET /admin/api/2024-10/orders.json)
 	go func() {
-		initialOrders := 500 // Pre-generar 500 órdenes distribuidas en 6 meses
+		initialOrders := 500 // Pre-generar 500 ordenes distribuidas en 6 meses
 		if err := shopifyIntegration.Start(initialOrders); err != nil {
 			logger.Error().Msgf("Error starting Shopify Mock API: %s", err.Error())
 			os.Exit(1)
@@ -128,6 +139,7 @@ func main() {
 	fmt.Printf("Bold HTTP:         http://localhost:%s\n", boldPort)
 	fmt.Printf("Siigo HTTP:        http://localhost:%s\n", siigoPort)
 	fmt.Printf("WooCommerce HTTP:  http://localhost:%s\n", woocommercePort)
+	fmt.Printf("Jumpseller HTTP:   http://localhost:%s\n", jumpsellerPort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")

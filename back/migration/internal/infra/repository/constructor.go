@@ -80,6 +80,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWooCommerceTestURL(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateJumpsellerIntegrationType(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateJumpsellerOrderStatuses(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateOrderGeoConfidence(ctx); err != nil {
 		return err
 	}
