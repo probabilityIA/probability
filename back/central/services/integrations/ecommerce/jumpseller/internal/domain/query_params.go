@@ -16,7 +16,15 @@ type GetOrdersResult struct {
 }
 
 type Credential struct {
-	APIKey    string
-	APISecret string
-	BaseURL   string
+	APIKey      string
+	APISecret   string
+	AccessToken string
+	BaseURL     string
+}
+
+func (c Credential) PacerKey() string {
+	if c.APIKey != "" {
+		return c.APIKey
+	}
+	return c.AccessToken
 }

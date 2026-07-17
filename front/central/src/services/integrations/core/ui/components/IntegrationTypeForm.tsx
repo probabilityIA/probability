@@ -22,11 +22,14 @@ import { BoldTypeCredentialsForm } from '@/services/integrations/pay/bold/ui/com
 import type { BoldPlatformCredentials } from '@/services/integrations/pay/bold/ui/components';
 import { MercadoLibreTypeCredentialsForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import type { MercadoLibrePlatformCredentials } from '@/services/integrations/ecommerce/mercadolibre/ui';
+import { JumpsellerTypeCredentialsForm } from '@/services/integrations/ecommerce/jumpseller/ui';
+import type { JumpsellerPlatformCredentials } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 const WHATSAPP_TYPE_ID = 2;
 const BOLD_TYPE_ID = 23;
 const MERCADO_LIBRE_TYPE_ID = 3;
+const JUMPSELLER_TYPE_ID = 33;
 
 const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
     client_id: '',
@@ -35,6 +38,16 @@ const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
     test_client_id: '',
     test_client_secret: '',
     test_auth_domain: '',
+};
+
+const EMPTY_JUMPSELLER_CREDENTIALS: JumpsellerPlatformCredentials = {
+    client_id: '',
+    client_secret: '',
+    scopes: '',
+    redirect_uri: '',
+    test_client_id: '',
+    test_client_secret: '',
+    test_redirect_uri: '',
 };
 
 const ACCENT = 'var(--color-primary)';
@@ -130,6 +143,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     });
     const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
     const [meliCredentials, setMeliCredentials] = useState<MercadoLibrePlatformCredentials>(EMPTY_MELI_CREDENTIALS);
+    const [jumpsellerCredentials, setJumpsellerCredentials] = useState<JumpsellerPlatformCredentials>(EMPTY_JUMPSELLER_CREDENTIALS);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -210,6 +224,17 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     test_client_secret: String(d.test_client_secret || ''),
                                     test_auth_domain: String(d.test_auth_domain || ''),
                                 });
+                            } else if (integrationType.id === JUMPSELLER_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setJumpsellerCredentials({
+                                    client_id: String(d.client_id || ''),
+                                    client_secret: String(d.client_secret || ''),
+                                    scopes: String(d.scopes || ''),
+                                    redirect_uri: String(d.redirect_uri || ''),
+                                    test_client_id: String(d.test_client_id || ''),
+                                    test_client_secret: String(d.test_client_secret || ''),
+                                    test_redirect_uri: String(d.test_redirect_uri || ''),
+                                });
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -280,6 +305,16 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (meliCredentials.test_client_secret.trim()) meli.test_client_secret = meliCredentials.test_client_secret.trim();
                 if (meliCredentials.test_auth_domain.trim()) meli.test_auth_domain = meliCredentials.test_auth_domain.trim();
                 if (Object.keys(meli).length > 0) platformCredentials = meli;
+            } else if (integrationType?.id === JUMPSELLER_TYPE_ID) {
+                const js: Record<string, unknown> = {};
+                if (jumpsellerCredentials.client_id.trim()) js.client_id = jumpsellerCredentials.client_id.trim();
+                if (jumpsellerCredentials.client_secret.trim()) js.client_secret = jumpsellerCredentials.client_secret.trim();
+                if (jumpsellerCredentials.scopes.trim()) js.scopes = jumpsellerCredentials.scopes.trim();
+                if (jumpsellerCredentials.redirect_uri.trim()) js.redirect_uri = jumpsellerCredentials.redirect_uri.trim();
+                if (jumpsellerCredentials.test_client_id.trim()) js.test_client_id = jumpsellerCredentials.test_client_id.trim();
+                if (jumpsellerCredentials.test_client_secret.trim()) js.test_client_secret = jumpsellerCredentials.test_client_secret.trim();
+                if (jumpsellerCredentials.test_redirect_uri.trim()) js.test_redirect_uri = jumpsellerCredentials.test_redirect_uri.trim();
+                if (Object.keys(js).length > 0) platformCredentials = js;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -549,6 +584,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     <MercadoLibreTypeCredentialsForm
                         credentials={meliCredentials}
                         onChange={setMeliCredentials}
+                        isEditing={!!integrationType}
+                    />
+                </SectionCard>
+            ) : integrationType?.id === JUMPSELLER_TYPE_ID ? (
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <JumpsellerTypeCredentialsForm
+                        credentials={jumpsellerCredentials}
+                        onChange={setJumpsellerCredentials}
                         isEditing={!!integrationType}
                     />
                 </SectionCard>

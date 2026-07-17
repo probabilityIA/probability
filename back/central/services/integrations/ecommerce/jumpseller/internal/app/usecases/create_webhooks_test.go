@@ -26,6 +26,14 @@ func (f *fakeWebhookService) UpdateIntegrationConfig(ctx context.Context, integr
 	return nil
 }
 
+func (f *fakeWebhookService) UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error {
+	return nil
+}
+
+func (f *fakeWebhookService) GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	return "", nil
+}
+
 type fakeWebhookClient struct {
 	domain.IJumpsellerClient
 	hooks        []domain.WebhookItem

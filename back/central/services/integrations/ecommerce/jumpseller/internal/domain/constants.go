@@ -1,6 +1,18 @@
 package domain
 
 const (
+	OAuthAuthorizeURL = "https://accounts.jumpseller.com/oauth/authorize"
+	OAuthTokenURL     = "https://accounts.jumpseller.com/oauth/token"
+
+	AuthMethodOAuth = "oauth"
+
+	ConfigAuthMethod     = "auth_method"
+	ConfigTokenExpiresAt = "token_expires_at"
+
+	DefaultScopes = "read_store read_orders write_orders read_products write_products read_customers write_hooks"
+)
+
+const (
 	HeaderHmac      = "Jumpseller-Hmac-Sha256"
 	HeaderEvent     = "Jumpseller-Event"
 	HeaderStoreCode = "Jumpseller-Store-Code"

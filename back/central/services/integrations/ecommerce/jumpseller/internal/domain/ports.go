@@ -36,12 +36,16 @@ type IJumpsellerClient interface {
 	CreateProduct(ctx context.Context, cred Credential, input CreateProductInput) (string, error)
 
 	UpdateProduct(ctx context.Context, cred Credential, productID int64, input UpdateProductInput) error
+
+	RefreshToken(ctx context.Context, tokenURL, clientID, clientSecret, refreshToken string) (*TokenResponse, error)
 }
 
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error
+	UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error
+	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 type OrderPublisher interface {

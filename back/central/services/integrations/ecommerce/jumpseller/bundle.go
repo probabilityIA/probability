@@ -43,7 +43,7 @@ func New(
 
 	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
-	handler := handlers.New(uc, logger)
+	handler := handlers.New(uc, coreIntegration, config, logger)
 	handler.RegisterRoutes(router, logger)
 
 	if rabbitMQ != nil {
