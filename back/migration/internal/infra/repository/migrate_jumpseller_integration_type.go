@@ -77,8 +77,8 @@ const (
 4. Copia el campo "Login" y pegalo en el campo Login de Probability.
 5. Copia el campo "Auth Token" y pegalo en el campo Auth Token de Probability.
 6. Guarda la integracion. Probability validara las credenciales contra tu tienda
-   y registrara automaticamente los webhooks de ordenes (order_created, order_paid,
-   order_shipped y order_canceled).
+   y registrara automaticamente los webhooks de ordenes (order_paid, order_shipped
+   y order_canceled).
 
 Modo de pruebas: al activar "modo pruebas" la integracion no habla con la API real
 de Jumpseller sino con el simulador interno (back-testing), por lo que puedes usar

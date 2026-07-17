@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -28,8 +29,7 @@ func (uc *jumpsellerUseCase) CreateWebhooks(ctx context.Context, integrationID, 
 
 	existing, err := uc.client.ListHooks(ctx, cred)
 	if err != nil {
-		uc.logger.Warn(ctx).Err(err).Msg("No se pudieron listar los webhooks existentes de Jumpseller")
-		existing = nil
+		return fmt.Errorf("listando los webhooks existentes de Jumpseller: %w", err)
 	}
 
 	registered := make(map[string]bool, len(existing))
@@ -40,18 +40,26 @@ func (uc *jumpsellerUseCase) CreateWebhooks(ctx context.Context, integrationID, 
 	}
 
 	var created int
+	var failures []error
 	for _, event := range domain.WebhookOrderEvents {
 		if registered[event] {
 			continue
 		}
 		if _, err := uc.client.CreateHook(ctx, cred, event, deliveryURL); err != nil {
-			uc.logger.Warn(ctx).Err(err).
-				Str("event", event).
-				Str("integration_id", integrationID).
-				Msg("No se pudo registrar el webhook de Jumpseller (puede que ya exista)")
+			failures = append(failures, fmt.Errorf("%s: %w", event, err))
 			continue
 		}
 		created++
+	}
+
+	if len(failures) > 0 {
+		uc.logger.Error(ctx).
+			Str("integration_id", integrationID).
+			Str("delivery_url", deliveryURL).
+			Int("created", created).
+			Int("failed", len(failures)).
+			Msg("Jumpseller rechazo el registro de uno o mas webhooks")
+		return fmt.Errorf("%w. Detalle: %w", domain.ErrWebhookCreationFailed, errors.Join(failures...))
 	}
 
 	uc.logger.Info(ctx).

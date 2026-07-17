@@ -5,6 +5,7 @@ import (
 
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/domain"
 )
 
 type JumpsellerCore struct {
@@ -37,13 +38,8 @@ func (j *JumpsellerCore) GetWebhookURL(ctx context.Context, baseURL string, inte
 		URL:    usecases.WebhookDeliveryURL(baseURL, integrationID),
 		Method: "POST",
 		Description: "Probability crea estos webhooks automaticamente en tu tienda Jumpseller. " +
-			"Recibiras las ordenes en tiempo real cuando se creen, se paguen, se envien o se cancelen.",
-		Events: []string{
-			"order_created",
-			"order_paid",
-			"order_shipped",
-			"order_canceled",
-		},
+			"Recibiras las ordenes en tiempo real cuando se paguen, se envien o se cancelen.",
+		Events: domain.WebhookOrderEvents,
 	}, nil
 }
 

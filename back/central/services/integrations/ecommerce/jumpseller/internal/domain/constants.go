@@ -23,7 +23,6 @@ const (
 )
 
 const (
-	EventOrderCreated        = "order_created"
 	EventOrderPaid           = "order_paid"
 	EventOrderPendingPayment = "order_pending_payment"
 	EventOrderShipped        = "order_shipped"
@@ -34,7 +33,6 @@ const (
 )
 
 var WebhookOrderEvents = []string{
-	EventOrderCreated,
 	EventOrderPaid,
 	EventOrderCanceled,
 	EventOrderShipped,
