@@ -9,13 +9,25 @@ import (
 )
 
 // DeleteIntegration elimina una integración
-func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint) error {
+func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint, requesterBusinessID uint) error {
 	ctx = log.WithFunctionCtx(ctx, "DeleteIntegration")
 
 	// Verificar que existe
 	integration, err := uc.repo.GetIntegrationByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
+	}
+
+	// Aislamiento multi-tenant: un business (requesterBusinessID > 0) solo puede
+	// eliminar su propia integración. Super admin (requesterBusinessID == 0) elimina cualquiera.
+	if requesterBusinessID > 0 {
+		if integration.BusinessID == nil || *integration.BusinessID != requesterBusinessID {
+			uc.log.Warn(ctx).
+				Uint("id", id).
+				Uint("requester_business_id", requesterBusinessID).
+				Msg("Intento de eliminar una integración que no pertenece al negocio")
+			return domain.ErrIntegrationNotFound
+		}
 	}
 
 	// Validación: No se puede eliminar WhatsApp si es la única integración de ese tipo

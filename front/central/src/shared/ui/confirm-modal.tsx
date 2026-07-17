@@ -5,6 +5,7 @@
 
 'use client';
 
+import { ReactNode } from 'react';
 import { Modal } from './modal';
 
 interface ConfirmModalProps {
@@ -12,7 +13,7 @@ interface ConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title?: string;
-  message: string;
+  message: ReactNode;
   confirmText?: string;
   cancelText?: string;
   type?: 'danger' | 'warning' | 'info';
@@ -43,7 +44,7 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm" zIndex={60}>
       <div className="space-y-6">
         {/* Mensaje */}
-        <p className="text-gray-700 dark:text-gray-200 dark:text-gray-200">{message}</p>
+        <div className="text-gray-700 dark:text-gray-200 text-sm">{message}</div>
 
         {/* Botones */}
         <div className="flex gap-3 justify-end">

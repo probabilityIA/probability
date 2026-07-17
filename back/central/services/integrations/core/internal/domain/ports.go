@@ -84,7 +84,7 @@ type IIntegrationUseCase interface {
 	GetPublicIntegrationByID(ctx context.Context, integrationID string) (*PublicIntegration, error)
 	GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error)
 	DecryptCredentialField(ctx context.Context, integrationID string, fieldName string) (string, error)
-	DeleteIntegration(ctx context.Context, id uint) error
+	DeleteIntegration(ctx context.Context, id uint, requesterBusinessID uint) error
 	ListIntegrations(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
 	ActivateIntegration(ctx context.Context, id uint) error
 	DeactivateIntegration(ctx context.Context, id uint) error
