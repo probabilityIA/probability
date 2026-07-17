@@ -7,6 +7,7 @@ import {
     IntegrationTypeList,
     IntegrationTypeForm,
     CreateIntegrationModal,
+    IntegrationCategoryTabs,
     useCategories,
 } from '@/services/integrations/core/ui';
 import { Button, Modal } from '@/shared/ui';
@@ -138,9 +139,18 @@ export default function IntegrationsPage() {
         }
     };
 
+    const withTabs = (content: React.ReactNode) => (
+        <div className="mx-auto w-full max-w-7xl">
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+                <IntegrationCategoryTabs />
+                <div className="p-6">{content}</div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-            {isEnvironmentTab ? (
+            {isEnvironmentTab ? withTabs(
                 <div className="max-w-3xl space-y-4">
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Ambiente de pruebas</h2>
@@ -150,13 +160,13 @@ export default function IntegrationsPage() {
                     </div>
                     <WooStorePowerWidget />
                 </div>
-            ) : isTypesTab ? (
+            ) : isTypesTab ? withTabs(
                 <IntegrationTypeList
                     key={`types-${refreshKey}`}
                     onEdit={handleEditType}
                 />
-            ) : needsBusiness ? (
-                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 py-16 text-center">
+            ) : needsBusiness ? withTabs(
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 dark:border-gray-700 py-16 text-center">
                     <p className="text-base font-medium text-gray-700 dark:text-gray-200">Selecciona un negocio</p>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Como super admin, elige un negocio en el selector de arriba para ver sus integraciones.
@@ -178,7 +188,7 @@ export default function IntegrationsPage() {
                     onEdit={handleEditIntegration}
                     onCreate={() => setShowCreateModal(true)}
                 />
-            ) : (
+            ) : withTabs(
                 <IntegrationTypeList
                     key={`types-${refreshKey}`}
                     onEdit={handleEditType}
@@ -228,11 +238,11 @@ export default function IntegrationsPage() {
                         Editar Integración
                     </span>
                 )}
-                size={selectedIntegration && [1, 3, 4, 8].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
+                size={selectedIntegration && [1, 3, 4, 8, 33].includes(Number(selectedIntegration.integration_type_id)) ? '4xl' : '5xl'}
             >
                 <div
                     style={
-                        selectedIntegration && [1, 3, 4, 8].includes(Number(selectedIntegration.integration_type_id))
+                        selectedIntegration && [1, 3, 4, 8, 33].includes(Number(selectedIntegration.integration_type_id))
                             ? { width: 'min(768px, 92vw)' }
                             : undefined
                     }

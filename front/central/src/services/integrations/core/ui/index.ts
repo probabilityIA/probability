@@ -3,6 +3,7 @@ export { default as IntegrationForm } from './components/IntegrationForm';
 export { default as IntegrationTypeList } from './components/IntegrationTypeList';
 export { default as IntegrationTypeForm } from './components/IntegrationTypeForm';
 export { CategoryTabs } from './components/CategoryTabs';
+export { IntegrationCategoryTabs } from './components/IntegrationCategoryTabs';
 export { CategorySelector } from './components/CategorySelector';
 export { ProviderSelector } from './components/ProviderSelector';
 export { CreateIntegrationModal } from './components/CreateIntegrationModal';

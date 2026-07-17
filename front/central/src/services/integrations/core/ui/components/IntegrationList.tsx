@@ -19,6 +19,7 @@ import { Input, Button, Badge, Spinner, Alert, ConfirmModal, Select, DateRangePi
 import { useToast } from '@/shared/providers/toast-provider';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { playNotificationSound } from '@/shared/utils';
+import { IntegrationCategoryTabs } from './IntegrationCategoryTabs';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
@@ -975,10 +976,15 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     return (
         <div className="mx-auto w-full max-w-7xl">
             <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
-                <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="px-6 pt-6 pb-4">
                     <h2 className="text-lg font-bold text-gray-900 dark:text-white">Integraciones conectadas</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Las integraciones conectadas a tu cuenta.</p>
-                    <span className="inline-flex items-center gap-1.5 mt-3 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
+                </div>
+
+                <IntegrationCategoryTabs />
+
+                <div className="px-6 pt-4 border-b border-gray-100 dark:border-gray-700 pb-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-xs font-medium text-gray-600 dark:text-gray-300">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                         {integrations.filter(i => i.is_active).length} activas · {total} en total
                     </span>
