@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -55,7 +54,7 @@ func newTestServer(t *testing.T) (*httptest.Server, *string) {
 	var gotAuth string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotAuth = r.Header.Get("Authorization")
+		gotAuth = r.URL.Query().Get("login") + ":" + r.URL.Query().Get("authtoken")
 		w.Header().Set("Content-Type", "application/json")
 
 		switch {
@@ -80,7 +79,7 @@ func testCred(server *httptest.Server) domain.Credential {
 	return domain.Credential{APIKey: "login", APISecret: "token", BaseURL: server.URL}
 }
 
-func TestGetStoreInfoUsesBasicAuth(t *testing.T) {
+func TestGetStoreInfoUsesLoginAndAuthTokenQueryParams(t *testing.T) {
 	server, gotAuth := newTestServer(t)
 	client := New()
 
@@ -92,9 +91,9 @@ func TestGetStoreInfoUsesBasicAuth(t *testing.T) {
 		t.Fatalf("store info mal parseado: %+v", info)
 	}
 
-	expected := "Basic " + base64.StdEncoding.EncodeToString([]byte("login:token"))
+	expected := "login:token"
 	if *gotAuth != expected {
-		t.Fatalf("Authorization = %q, se esperaba %q", *gotAuth, expected)
+		t.Fatalf("login/authtoken = %q, se esperaba %q", *gotAuth, expected)
 	}
 }
 

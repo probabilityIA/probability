@@ -73,10 +73,14 @@ func (c *JumpsellerClient) do(ctx context.Context, cred domain.Credential, metho
 		return nil, err
 	}
 
-	endpoint := root + path
-	if len(query) > 0 {
-		endpoint = endpoint + "?" + query.Encode()
+	authed := url.Values{}
+	for k, v := range query {
+		authed[k] = v
 	}
+	authed.Set("login", cred.APIKey)
+	authed.Set("authtoken", cred.APISecret)
+
+	endpoint := root + path + "?" + authed.Encode()
 
 	pacer := c.pacers.forStore(cred.APIKey)
 
@@ -86,7 +90,7 @@ func (c *JumpsellerClient) do(ctx context.Context, cred domain.Credential, metho
 			return nil, werr
 		}
 
-		raw, status, headers, err := c.attempt(ctx, cred, method, endpoint, body)
+		raw, status, headers, err := c.attempt(ctx, method, endpoint, body)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +121,7 @@ func isRateLimited(status int, headers http.Header) bool {
 	return status == http.StatusForbidden && headers.Get(domain.RateLimitHeader) != ""
 }
 
-func (c *JumpsellerClient) attempt(ctx context.Context, cred domain.Credential, method, endpoint string, body interface{}) ([]byte, int, http.Header, error) {
+func (c *JumpsellerClient) attempt(ctx context.Context, method, endpoint string, body interface{}) ([]byte, int, http.Header, error) {
 	var reader io.Reader
 	if body != nil {
 		payload, err := json.Marshal(body)
@@ -132,7 +136,6 @@ func (c *JumpsellerClient) attempt(ctx context.Context, cred domain.Credential, 
 		return nil, 0, nil, fmt.Errorf("jumpseller client: creating request: %w", err)
 	}
 
-	req.SetBasicAuth(cred.APIKey, cred.APISecret)
 	req.Header.Set("Accept", "application/json")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
