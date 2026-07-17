@@ -52,26 +52,25 @@ func RequestToUpdateDTO(req request.BusinessRequest) domain.UpdateBusinessReques
 	}
 }
 
-// UpdateRequestToUpdateDTO convierte request.UpdateBusinessRequest a dtos.UpdateBusinessRequest
 func UpdateRequestToUpdateDTO(req request.UpdateBusinessRequest) domain.UpdateBusinessRequest {
 	return domain.UpdateBusinessRequest{
-		Name:               &req.Name,
-		Code:               &req.Code,
-		BusinessTypeID:     &req.BusinessTypeID,
-		Timezone:           &req.Timezone,
-		Address:            &req.Address,
-		Description:        &req.Description,
+		Name:               req.Name,
+		Code:               req.Code,
+		BusinessTypeID:     req.BusinessTypeID,
+		Timezone:           req.Timezone,
+		Address:            req.Address,
+		Description:        req.Description,
 		LogoFile:           req.LogoFile,
-		PrimaryColor:       &req.PrimaryColor,
-		SecondaryColor:     &req.SecondaryColor,
-		TertiaryColor:      &req.TertiaryColor,
-		QuaternaryColor:    &req.QuaternaryColor,
+		PrimaryColor:       req.PrimaryColor,
+		SecondaryColor:     req.SecondaryColor,
+		TertiaryColor:      req.TertiaryColor,
+		QuaternaryColor:    req.QuaternaryColor,
 		NavbarImageFile:    req.NavbarImageFile,
-		CustomDomain:       &req.CustomDomain,
-		IsActive:           &req.IsActive,
-		EnableDelivery:     &req.EnableDelivery,
-		EnablePickup:       &req.EnablePickup,
-		EnableReservations: &req.EnableReservations,
+		CustomDomain:       req.CustomDomain,
+		IsActive:           req.IsActive,
+		EnableDelivery:     req.EnableDelivery,
+		EnablePickup:       req.EnablePickup,
+		EnableReservations: req.EnableReservations,
 	}
 }
 
