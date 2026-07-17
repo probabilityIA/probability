@@ -6,11 +6,11 @@ import { CameraIcon } from '@heroicons/react/24/outline';
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
   onFileSelect: (file: File | null) => void;
-  onRemoveClick?: () => void; // Callback cuando se hace click en la X
-  onEditClick?: () => void; // Callback cuando se hace click en el icono de editar
+  onRemoveClick?: () => void;
+  onEditClick?: () => void;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
-  disableClick?: boolean; // Deshabilitar click en la imagen para abrir selector
+  disableClick?: boolean;
 }
 
 export function AvatarUpload({
@@ -26,7 +26,6 @@ export function AvatarUpload({
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
 
-  // Tamaños del avatar
   const sizeClasses = {
     sm: 'w-16 h-16',
     md: 'w-24 h-24',
@@ -39,7 +38,6 @@ export function AvatarUpload({
     lg: 'w-6 h-6',
   };
 
-  // Limpiar blob URL al desmontar
   useEffect(() => {
     return () => {
       if (localPreview) {
@@ -64,7 +62,6 @@ export function AvatarUpload({
     const file = e.target.files?.[0] || null;
 
     if (file) {
-      // Limpiar preview anterior
       if (localPreview) {
         URL.revokeObjectURL(localPreview);
       }
@@ -77,11 +74,9 @@ export function AvatarUpload({
 
   const handleRemove = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    // Si hay callback, llamarlo (para mostrar modal de confirmación)
     if (onRemoveClick) {
       onRemoveClick();
     } else {
-      // Comportamiento por defecto: eliminar directamente
       if (localPreview) {
         URL.revokeObjectURL(localPreview);
       }
@@ -95,7 +90,6 @@ export function AvatarUpload({
   }, [localPreview, onFileSelect, onRemoveClick]);
 
   const handleImageError = useCallback(() => {
-    console.error('AvatarUpload - Failed to load image');
     setHasError(true);
   }, []);
 
@@ -103,26 +97,35 @@ export function AvatarUpload({
     setHasError(false);
   }, []);
 
-  // Determinar qué imagen mostrar:
-  // Si hay un preview local (archivo seleccionado), usarlo
-  // Si no, usar la URL del avatar actual
   const displayUrl = localPreview || currentAvatarUrl;
   const showImage = displayUrl && !hasError;
+
+  const isCircleClickable = !disableClick || !showImage;
+  const handleCircleClick = disableClick ? handleEditClick : handleClick;
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
       <div className="relative group">
         <div
-          onClick={disableClick ? undefined : handleClick}
+          onClick={isCircleClickable ? handleCircleClick : undefined}
+          role={isCircleClickable ? 'button' : undefined}
+          tabIndex={isCircleClickable ? 0 : undefined}
+          onKeyDown={isCircleClickable ? (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleCircleClick();
+            }
+          } : undefined}
+          aria-label={isCircleClickable ? (showImage ? 'Cambiar foto' : 'Agregar foto') : undefined}
           className={`
             ${sizeClasses[size]}
             rounded-full overflow-hidden
             border-2 border-gray-300
             bg-gray-100
             flex items-center justify-center
-            ${disableClick ? '' : 'cursor-pointer'}
+            ${isCircleClickable ? 'cursor-pointer' : ''}
             transition-all duration-200
-            ${disableClick ? '' : 'hover:border-blue-500 hover:shadow-md'}
+            ${isCircleClickable ? 'hover:border-blue-500 hover:shadow-md' : ''}
             relative
           `}
         >
@@ -141,7 +144,6 @@ export function AvatarUpload({
           )}
         </div>
 
-        {/* Botón para editar/actualizar foto si hay imagen */}
         {showImage && (
           <button
             type="button"
@@ -156,7 +158,6 @@ export function AvatarUpload({
           </button>
         )}
 
-        {/* Botón para eliminar si hay imagen */}
         {showImage && (
           <button
             type="button"
@@ -165,7 +166,7 @@ export function AvatarUpload({
             aria-label="Eliminar foto"
             title="Eliminar foto"
           >
-            <span className="text-xs font-bold">×</span>
+            <span className="text-xs font-bold">&times;</span>
           </button>
         )}
       </div>
@@ -178,9 +179,9 @@ export function AvatarUpload({
         onChange={handleFileChange}
       />
 
-      {!disableClick && (
+      {isCircleClickable && (
         <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-          Haz clic para cambiar
+          {showImage ? 'Haz clic para cambiar' : 'Haz clic para agregar'}
         </p>
       )}
     </div>

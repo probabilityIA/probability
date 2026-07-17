@@ -8,8 +8,12 @@ import { Spinner } from './spinner';
 import { Alert } from './alert';
 import { ConfirmModal } from './confirm-modal';
 import { updateUserAction } from '@/services/auth/users/infra/actions';
+import { updateBusinessAction } from '@/services/auth/business/infra/actions';
+import { COLOR_PALETTES, BusinessPaletteColors } from '@/services/auth/business/domain/color-palettes';
 import { ChangePasswordForm } from '@/services/auth/login/ui';
 import { useDarkMode } from '@/shared/contexts/dark-mode-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useTheme } from '@/shared/providers/theme-provider';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -26,6 +30,10 @@ interface UserProfileModalProps {
 
 export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfileModalProps) {
   const { isDark, toggleDarkMode } = useDarkMode();
+  const { permissions, isSuperAdmin } = usePermissions();
+  const { setColors, getColors } = useTheme();
+  const [themeSaving, setThemeSaving] = useState<string | null>(null);
+  const [themeError, setThemeError] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -36,14 +44,8 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  // Resetear estado cuando el modal se abre o cambia el usuario
   useEffect(() => {
     if (isOpen && user) {
-      console.log('UserProfileModal - Modal opened/User changed:', {
-        userId: user.userId,
-        avatarUrl: user.avatarUrl,
-        isOpen
-      });
       setAvatarFile(null);
       setRemoveAvatar(false);
       setError(null);
@@ -57,11 +59,42 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
   if (!user) return null;
 
+  const roleName = (permissions?.role_name || '').toLowerCase();
+  const businessId = permissions?.business_id || 0;
+  const canChangeBusinessTheme =
+    businessId > 0 && (isSuperAdmin || roleName === 'demo' || roleName.includes('admin'));
+  const currentColors = getColors();
+
+  const handlePaletteSelect = async (palette: { name: string; colors: BusinessPaletteColors }) => {
+    if (themeSaving) return;
+
+    setThemeSaving(palette.name);
+    setThemeError(null);
+
+    try {
+      const response = await updateBusinessAction(businessId, {
+        primary_color: palette.colors.primary,
+        secondary_color: palette.colors.secondary,
+        tertiary_color: palette.colors.tertiary,
+        quaternary_color: palette.colors.quaternary,
+      });
+
+      if (response.success) {
+        setColors(palette.colors);
+      } else {
+        setThemeError('No se pudo guardar el tema del negocio');
+      }
+    } catch (err) {
+      setThemeError(err instanceof Error ? err.message : 'No se pudo guardar el tema del negocio');
+    } finally {
+      setThemeSaving(null);
+    }
+  };
+
   const handleSaveAvatar = async (file?: File | null, shouldRemove?: boolean) => {
     const fileToSave = file !== undefined ? file : avatarFile;
     const shouldRemoveAvatar = shouldRemove !== undefined ? shouldRemove : removeAvatar;
 
-    // Validar que haya algo que hacer
     if (!fileToSave && !shouldRemoveAvatar) {
       return;
     }
@@ -108,7 +141,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
   };
 
   const handleEditClick = () => {
-    // Crear input file temporal para abrir selector
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -129,10 +161,8 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
       cleanup();
     };
 
-    // Limpiar si el usuario cancela (cuando el input pierde el foco)
     input.oncancel = cleanup;
     
-    // También limpiar después de un tiempo por si acaso
     setTimeout(cleanup, 1000);
 
     document.body.appendChild(input);
@@ -140,7 +170,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
   };
 
   const handleFileSelect = (file: File | null) => {
-    // Esta función ya no se usa directamente, pero la mantenemos por compatibilidad
     if (file) {
       setPendingFile(file);
       setShowUpdateConfirm(true);
@@ -155,13 +184,11 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
     setRemoveAvatar(false);
     setError(null);
     setSuccess(false);
-    // Guardar automáticamente cuando se confirma la actualización
     await handleSaveAvatar(pendingFile, false);
     setPendingFile(null);
   };
 
   const handleRemoveClick = () => {
-    // Mostrar modal de confirmación
     setShowDeleteConfirm(true);
   };
 
@@ -171,7 +198,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
     setRemoveAvatar(true);
     setError(null);
     setSuccess(false);
-    // Guardar automáticamente cuando se confirma la eliminación
     await handleSaveAvatar(null, true);
   };
 
@@ -187,14 +213,12 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
   const handlePasswordChangeSuccess = () => {
     setShowChangePassword(false);
-    // Opcional: mostrar mensaje de éxito o recargar
   };
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose} title={showChangePassword ? "Cambiar Contraseña" : "Cambiar Foto de Perfil"}>
+      <Modal isOpen={isOpen} onClose={handleClose} title={showChangePassword ? "Cambiar Contraseña" : "Información del Perfil"}>
         <div className="space-y-6">
-          {/* Vista de cambio de contraseña */}
           {showChangePassword ? (
             <div>
               <button
@@ -205,7 +229,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                <span>Volver a foto de perfil</span>
+                <span>Volver a información del perfil</span>
               </button>
               <ChangePasswordForm
                 onSuccess={handlePasswordChangeSuccess}
@@ -225,7 +249,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
               <div className="flex flex-col items-center gap-4">
                 <AvatarUpload
-                  key={`${user.userId}-${isOpen}`} // Forzar re-render cuando cambia el usuario o se abre el modal
+                  key={`${user.userId}-${isOpen}`}
                   currentAvatarUrl={removeAvatar ? null : (user.avatarUrl || null)}
                   onFileSelect={handleFileSelect}
                   onRemoveClick={handleRemoveClick}
@@ -234,7 +258,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
                   size="lg"
                 />
 
-                {/* Toggle Tema Oscuro */}
                 <button
                   type="button"
                   onClick={toggleDarkMode}
@@ -257,7 +280,61 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
                   </div>
                 </button>
 
-                {/* Botón para cambiar contraseña debajo de la foto */}
+                {canChangeBusinessTheme && (
+                  <div className="w-full max-w-xs">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828L11 19.172M7 17h.01" />
+                      </svg>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Tema del negocio
+                      </span>
+                    </div>
+
+                    {themeError && (
+                      <div className="mb-2">
+                        <Alert type="error" onClose={() => setThemeError(null)}>{themeError}</Alert>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-5 gap-2">
+                      {COLOR_PALETTES.map((palette) => {
+                        const isCurrent = currentColors?.primary?.toUpperCase() === palette.colors.primary.toUpperCase();
+                        const isSaving = themeSaving === palette.name;
+                        return (
+                          <button
+                            key={palette.name}
+                            type="button"
+                            onClick={() => handlePaletteSelect(palette)}
+                            disabled={themeSaving !== null}
+                            title={palette.name}
+                            aria-label={`Aplicar tema ${palette.name}`}
+                            className={`relative h-9 rounded-md overflow-hidden border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isCurrent
+                                ? 'border-purple-500 ring-2 ring-purple-300 dark:ring-purple-800'
+                                : 'border-gray-200 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-400'
+                            }`}
+                          >
+                            <span className="absolute inset-0 flex">
+                              <span className="flex-1" style={{ backgroundColor: palette.colors.primary }} />
+                              <span className="flex-1" style={{ backgroundColor: palette.colors.tertiary }} />
+                              <span className="flex-1" style={{ backgroundColor: palette.colors.quaternary }} />
+                            </span>
+                            {isSaving && (
+                              <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                <Spinner size="sm" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Cambia los colores de toda la plataforma para tu negocio.
+                    </p>
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setShowChangePassword(true)}
@@ -274,7 +351,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
         </div>
       </Modal>
 
-      {/* Modal de confirmación para eliminar foto */}
       <ConfirmModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
@@ -286,7 +362,6 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
         type="danger"
       />
 
-      {/* Modal de confirmación para actualizar foto */}
       <ConfirmModal
         isOpen={showUpdateConfirm}
         onClose={() => {
