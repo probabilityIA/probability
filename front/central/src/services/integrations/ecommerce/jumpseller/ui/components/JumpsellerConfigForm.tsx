@@ -8,6 +8,7 @@ import { JumpsellerProductSyncModal } from './JumpsellerProductSyncModal';
 import { JumpsellerInventorySyncModal } from './JumpsellerInventorySyncModal';
 import { JumpsellerOrderSyncModal } from './JumpsellerOrderSyncModal';
 import { JumpsellerInventorySection, JumpsellerInventoryConfig, JumpsellerLocationsInfo } from './JumpsellerInventorySection';
+import { JumpsellerWebhookManager } from './JumpsellerWebhookManager';
 import { getJumpsellerLocationsAction } from '../../infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
@@ -23,6 +24,7 @@ import {
     ShoppingBagIcon,
     PhotoIcon,
     ChevronDownIcon,
+    BoltIcon,
 } from '@heroicons/react/24/outline';
 import {
     GREEN,
@@ -552,6 +554,66 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                             <ArrowPathIcon className="w-3.5 h-3.5" />
                             Sincronizar inventario ahora
                         </button>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Productos</h4>
+                            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                Cruza los productos por SKU; crea en Jumpseller o en Probability los que falten y asocia los que coinciden.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setProductSyncOpen(true)}
+                                className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                                style={{ backgroundColor: GREEN }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                            >
+                                <ArrowPathIcon className="w-3.5 h-3.5" />
+                                Sincronizar productos
+                            </button>
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <h4 className="text-[12px] font-bold text-gray-900 dark:text-gray-100">Ordenes</h4>
+                            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                Trae las ordenes de Jumpseller del periodo elegido. Los estados de Jumpseller (Paid, Canceled, Pending Payment) se traducen automaticamente a los de Probability (En Procesamiento, Cancelada, Pendiente).
+                            </p>
+
+                            <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                                <div>
+                                    <label className={fieldLabel}>Desde</label>
+                                    <input
+                                        type="date"
+                                        value={ordersFrom}
+                                        onChange={(e) => setOrdersFrom(e.target.value)}
+                                        className={inputCls}
+                                        style={{ borderColor: INPUT_BORDER }}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={fieldLabel}>Hasta</label>
+                                    <input
+                                        type="date"
+                                        value={ordersTo}
+                                        onChange={(e) => setOrdersTo(e.target.value)}
+                                        className={inputCls}
+                                        style={{ borderColor: INPUT_BORDER }}
+                                    />
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSyncOrders}
+                                className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
+                                style={{ backgroundColor: GREEN }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
+                            >
+                                <ArrowPathIcon className="w-3.5 h-3.5" />
+                                Sincronizar ordenes
+                            </button>
+                        </div>
                     </>
                 )}
             </SectionCard>
@@ -574,67 +636,10 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
             </SectionCard>
 
             {isEdit && integrationId && (
-                <SectionCard icon={<ArrowPathIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizar productos">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Cruza los productos por SKU; crea en Jumpseller o en Probability los que falten y asocia los que coinciden.
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setProductSyncOpen(true)}
-                        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
-                        style={{ backgroundColor: GREEN }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
-                    >
-                        <ArrowPathIcon className="w-3.5 h-3.5" />
-                        Sincronizar productos
-                    </button>
+                <SectionCard icon={<BoltIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Webhooks">
+                    <JumpsellerWebhookManager integrationId={integrationId} />
                 </SectionCard>
             )}
-
-            {isEdit && integrationId && (
-                <SectionCard icon={<ShoppingBagIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizar ordenes">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Trae las ordenes de Jumpseller del periodo elegido. Los estados de Jumpseller (Paid, Canceled, Pending Payment) se traducen automaticamente a los de Probability (En Procesamiento, Cancelada, Pendiente).
-                    </p>
-
-                    <div className="mt-3 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-                        <div>
-                            <label className={fieldLabel}>Desde</label>
-                            <input
-                                type="date"
-                                value={ordersFrom}
-                                onChange={(e) => setOrdersFrom(e.target.value)}
-                                className={inputCls}
-                                style={{ borderColor: INPUT_BORDER }}
-                            />
-                        </div>
-                        <div>
-                            <label className={fieldLabel}>Hasta</label>
-                            <input
-                                type="date"
-                                value={ordersTo}
-                                onChange={(e) => setOrdersTo(e.target.value)}
-                                className={inputCls}
-                                style={{ borderColor: INPUT_BORDER }}
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={handleSyncOrders}
-                        className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-[12px] font-semibold text-white transition-colors"
-                        style={{ backgroundColor: GREEN }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
-                    >
-                        <ArrowPathIcon className="w-3.5 h-3.5" />
-                        Sincronizar ordenes
-                    </button>
-                </SectionCard>
-            )}
-
 
             {isEdit && integrationId && (
                 <>
