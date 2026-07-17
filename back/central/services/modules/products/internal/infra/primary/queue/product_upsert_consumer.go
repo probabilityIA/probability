@@ -14,13 +14,19 @@ type ProductUpserter interface {
 }
 
 type productUpsertMessage struct {
-	BusinessID     uint    `json:"business_id"`
-	IntegrationID  uint    `json:"integration_id"`
-	SKU            string  `json:"sku"`
-	Name           string  `json:"name"`
-	TrackInventory bool    `json:"track_inventory"`
-	Price          float64 `json:"price"`
-	ExternalID     string  `json:"external_id"`
+	BusinessID     uint     `json:"business_id"`
+	IntegrationID  uint     `json:"integration_id"`
+	SKU            string   `json:"sku"`
+	Name           string   `json:"name"`
+	TrackInventory bool     `json:"track_inventory"`
+	Price          float64  `json:"price"`
+	ExternalID     string   `json:"external_id"`
+	Weight         *float64 `json:"weight,omitempty"`
+	WeightUnit     string   `json:"weight_unit,omitempty"`
+	Length         *float64 `json:"length,omitempty"`
+	Width          *float64 `json:"width,omitempty"`
+	Height         *float64 `json:"height,omitempty"`
+	DimensionUnit  string   `json:"dimension_unit,omitempty"`
 }
 
 type ProductUpsertConsumer struct {
@@ -80,6 +86,12 @@ func (c *ProductUpsertConsumer) handle(ctx context.Context, body []byte) {
 		TrackInventory: msg.TrackInventory,
 		Price:          msg.Price,
 		ExternalID:     msg.ExternalID,
+		Weight:         msg.Weight,
+		WeightUnit:     msg.WeightUnit,
+		Length:         msg.Length,
+		Width:          msg.Width,
+		Height:         msg.Height,
+		DimensionUnit:  msg.DimensionUnit,
 	})
 	if err != nil {
 		c.logger.Error(ctx).Err(err).Str("sku", msg.SKU).Uint("business_id", msg.BusinessID).Msg("Error al hacer upsert de producto desde proveedor")

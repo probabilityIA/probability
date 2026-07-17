@@ -19,6 +19,12 @@ type ProductProviderUpsertDTO struct {
 	TrackInventory bool
 	Price          float64
 	ExternalID     string
+	Weight         *float64
+	WeightUnit     string
+	Length         *float64
+	Width          *float64
+	Height         *float64
+	DimensionUnit  string
 }
 
 type CreateProductRequest struct {

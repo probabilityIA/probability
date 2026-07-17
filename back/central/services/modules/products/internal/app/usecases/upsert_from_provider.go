@@ -25,6 +25,12 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 				TrackInventory: dto.TrackInventory,
 				Status:         "active",
 				IsActive:       true,
+				Weight:         dto.Weight,
+				WeightUnit:     dto.WeightUnit,
+				Length:         dto.Length,
+				Width:          dto.Width,
+				Height:         dto.Height,
+				DimensionUnit:  dto.DimensionUnit,
 			})
 			if cerr != nil {
 				return cerr
@@ -37,11 +43,24 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 	name := dto.Name
 	price := dto.Price
 	track := dto.TrackInventory
-	if _, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, &domain.UpdateProductRequest{
+	req := &domain.UpdateProductRequest{
 		Name:           &name,
 		Price:          &price,
 		TrackInventory: &track,
-	}); uerr != nil {
+		Weight:         dto.Weight,
+		Length:         dto.Length,
+		Width:          dto.Width,
+		Height:         dto.Height,
+	}
+	if dto.Weight != nil && dto.WeightUnit != "" {
+		weightUnit := dto.WeightUnit
+		req.WeightUnit = &weightUnit
+	}
+	if (dto.Length != nil || dto.Width != nil || dto.Height != nil) && dto.DimensionUnit != "" {
+		dimensionUnit := dto.DimensionUnit
+		req.DimensionUnit = &dimensionUnit
+	}
+	if _, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, req); uerr != nil {
 		return uerr
 	}
 	return uc.ensureIntegrationMapping(ctx, existing.ID, dto.IntegrationID, dto.ExternalID)
