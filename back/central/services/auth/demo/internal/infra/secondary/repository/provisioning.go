@@ -137,6 +137,19 @@ func (r *Repository) ProvisionDemoIntegrations(ctx context.Context, businessID, 
 			Credentials:       envioclickCreds,
 			Description:       "Generacion de guias en modo prueba (mock) - demo",
 		},
+		{
+			Name:              "Inventario",
+			Code:              fmt.Sprintf("inventory_business_%d", businessID),
+			Category:          "internal",
+			IntegrationTypeID: 32,
+			BusinessID:        &businessID,
+			IsActive:          true,
+			IsDefault:         true,
+			IsTesting:         false,
+			Config:            datatypes.JSON([]byte("{}")),
+			Credentials:       platformCreds,
+			Description:       "Modulo interno de inventario - demo",
+		},
 	}
 
 	var siigoIntegrationID uint

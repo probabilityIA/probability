@@ -62,7 +62,17 @@ func (r *Repository) migrateDemoAutoregistro(ctx context.Context) error {
 		return err
 	}
 
-	permissionIDs := []uint{1, 2, createOrdenesID, 5, 66, 67, 68, 69, 6, 20}
+	readBilleteraID, err := r.ensurePermission(ctx, "Read Billetera", "Permiso para ver la billetera", 21, 2, businessScopeID)
+	if err != nil {
+		return err
+	}
+
+	createBilleteraID, err := r.ensurePermission(ctx, "Create Billetera", "Permiso para recargar saldo en la billetera", 21, 1, businessScopeID)
+	if err != nil {
+		return err
+	}
+
+	permissionIDs := []uint{1, 2, createOrdenesID, 5, 66, 67, 68, 69, 6, 20, readBilleteraID, createBilleteraID}
 	for _, pid := range permissionIDs {
 		if pid == 0 {
 			continue
