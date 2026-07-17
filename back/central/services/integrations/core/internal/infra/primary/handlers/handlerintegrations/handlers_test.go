@@ -366,7 +366,10 @@ func TestGetIntegrationByIDHandler_IDValido(t *testing.T) {
 	uc.On("GetIntegrationByIDWithCredentials", mock.Anything, uint(5)).Return(integracionConCreds, nil)
 
 	r := gin.New()
-	r.GET("/integrations/:id", h.GetIntegrationByIDHandler)
+	r.GET("/integrations/:id", func(c *gin.Context) {
+		c.Set("business_id", uint(0))
+		h.GetIntegrationByIDHandler(c)
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/integrations/5", nil)
 	w := httptest.NewRecorder()
@@ -380,6 +383,29 @@ func TestGetIntegrationByIDHandler_IDValido(t *testing.T) {
 	var body map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &body)
 	assert.Equal(t, true, body["success"])
+}
+
+func TestGetIntegrationByIDHandler_NegocioAjeno_NoFiltraCredenciales(t *testing.T) {
+	uc := new(mockIntegrationUseCase)
+	h, _ := handlerSetup(uc)
+
+	ajeno := uint(99)
+	uc.On("GetIntegrationByID", mock.Anything, uint(5)).Return(&domain.Integration{ID: 5, BusinessID: &ajeno}, nil)
+
+	r := gin.New()
+	r.GET("/integrations/:id", func(c *gin.Context) {
+		c.Set("business_id", uint(7))
+		h.GetIntegrationByIDHandler(c)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/integrations/5", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.NotContains(t, w.Body.String(), "credentials")
+	uc.AssertNotCalled(t, "GetIntegrationByIDWithCredentials", mock.Anything, mock.Anything)
 }
 
 func TestGetIntegrationByIDHandler_IDInvalido(t *testing.T) {
@@ -408,7 +434,10 @@ func TestGetIntegrationByIDHandler_NoEncontrado(t *testing.T) {
 	uc.On("GetIntegrationByIDWithCredentials", mock.Anything, uint(99)).Return(nil, domain.ErrIntegrationNotFound)
 
 	r := gin.New()
-	r.GET("/integrations/:id", h.GetIntegrationByIDHandler)
+	r.GET("/integrations/:id", func(c *gin.Context) {
+		c.Set("business_id", uint(0))
+		h.GetIntegrationByIDHandler(c)
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/integrations/99", nil)
 	w := httptest.NewRecorder()

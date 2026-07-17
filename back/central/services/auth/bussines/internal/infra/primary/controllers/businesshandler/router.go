@@ -6,25 +6,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RegisterRoutes registra las rutas del handler de Business
 func (h *BusinessHandler) RegisterRoutes(router *gin.RouterGroup, handler IBusinessHandler) {
 	businesses := router.Group("/businesses")
 
-	// Rutas de Business
 	businesses.GET("", middleware.JWT(), handler.GetBusinesses)
 	businesses.GET("/simple", middleware.JWT(), handler.GetBusinessesSimple)
 	businesses.GET("/configured-resources", middleware.JWT(), handler.GetBusinessesConfiguredResourcesHandler)
 	businesses.GET("/:id/configured-resources", middleware.JWT(), handler.GetBusinessConfiguredResourcesByIDHandler)
 	businesses.GET("/:id", middleware.JWT(), handler.GetBusinessByIDHandler)
-	businesses.POST("", middleware.JWT(), handler.CreateBusinessHandler)
+	businesses.POST("", middleware.JWT(), middleware.RequireSuperAdmin(), handler.CreateBusinessHandler)
 	businesses.PUT("/:id", middleware.JWT(), handler.UpdateBusinessHandler)
-	businesses.DELETE("/:id", middleware.JWT(), handler.DeleteBusinessHandler)
+	businesses.DELETE("/:id", middleware.JWT(), middleware.RequireSuperAdmin(), handler.DeleteBusinessHandler)
 
-	// Rutas para activar/desactivar recursos de business
-	businesses.PUT("/configured-resources/:resource_id/activate", middleware.JWT(), handler.ActivateBusinessResourceHandler)
-	businesses.PUT("/configured-resources/:resource_id/deactivate", middleware.JWT(), handler.DeactivateBusinessResourceHandler)
+	businesses.PUT("/configured-resources/:resource_id/activate", middleware.JWT(), middleware.RequireSuperAdmin(), handler.ActivateBusinessResourceHandler)
+	businesses.PUT("/configured-resources/:resource_id/deactivate", middleware.JWT(), middleware.RequireSuperAdmin(), handler.DeactivateBusinessResourceHandler)
 
-	// Rutas para activar/desactivar business
-	businesses.PUT("/:id/activate", middleware.JWT(), handler.ActivateBusinessHandler)
-	businesses.PUT("/:id/deactivate", middleware.JWT(), handler.DeactivateBusinessHandler)
+	businesses.PUT("/:id/activate", middleware.JWT(), middleware.RequireSuperAdmin(), handler.ActivateBusinessHandler)
+	businesses.PUT("/:id/deactivate", middleware.JWT(), middleware.RequireSuperAdmin(), handler.DeactivateBusinessHandler)
 }

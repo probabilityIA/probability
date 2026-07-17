@@ -51,9 +51,38 @@ func (h *handlers) GetUserByIDHandler(c *gin.Context) {
 			})
 			return
 		}
-		h.logger.Info(ctx).Uint("requested_user_id", req.ID).Uint("token_business_id", tokenBusinessID).Msg("Verificando acceso a usuario")
-		// TODO: Aquí deberíamos validar que el usuario pertenezca al business del token
-		// Por ahora, el caso de uso lo manejará internamente
+		if tokenBusinessID == 0 {
+			c.JSON(http.StatusForbidden, response.UserErrorResponse{
+				Error: "No tienes permisos para ver este usuario",
+			})
+			return
+		}
+		businesses, err := h.usecase.GetUserBusinesses(ctx, req.ID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, response.UserErrorResponse{
+				Error: "Usuario no encontrado",
+			})
+			return
+		}
+		belongs := false
+		for _, b := range businesses {
+			if b.ID == tokenBusinessID {
+				belongs = true
+				break
+			}
+		}
+		if !belongs {
+			h.logger.Error(ctx).
+				Uint("requested_user_id", req.ID).
+				Uint("token_business_id", tokenBusinessID).
+				Str("endpoint", "/users/:id").
+				Str("method", "GET").
+				Msg("Intento de ver un usuario de otro negocio")
+			c.JSON(http.StatusForbidden, response.UserErrorResponse{
+				Error: "No tienes permisos para ver este usuario",
+			})
+			return
+		}
 	}
 
 	h.logger.Info(ctx).Uint("id", req.ID).Bool("is_super_admin", isSuperAdmin).Msg("Iniciando solicitud para obtener usuario por ID")
