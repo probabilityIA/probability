@@ -43,3 +43,11 @@ func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integ
 func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error {
 	return a.core.UpdateIntegrationConfig(ctx, integrationID, config)
 }
+
+func (a *integrationServiceAdapter) UpdateIntegrationCredentials(ctx context.Context, integrationID string, credentials map[string]interface{}) error {
+	return a.core.UpdateIntegrationCredentials(ctx, integrationID, credentials)
+}
+
+func (a *integrationServiceAdapter) GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	return a.core.GetPlatformCredential(ctx, integrationID, fieldName)
+}

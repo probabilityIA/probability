@@ -127,9 +127,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         }
     }, [propFilterCategory]);
 
-    const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null; name: string }>({
         show: false,
-        id: null
+        id: null,
+        name: ''
     });
 
     // Estado para el modal de sincronización
@@ -627,15 +628,15 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         return () => clearTimeout(timer);
     }, [syncing, syncProgress?.totalFetched, syncProgress?.created, syncProgress?.updated, syncProgress?.rejected]);
 
-    const handleDeleteClick = (id: number) => {
-        setDeleteModal({ show: true, id });
+    const handleDeleteClick = (id: number, name: string) => {
+        setDeleteModal({ show: true, id, name });
     };
 
     const handleDeleteConfirm = async () => {
         if (deleteModal.id) {
             const success = await deleteIntegration(deleteModal.id);
             if (success) {
-                setDeleteModal({ show: false, id: null });
+                setDeleteModal({ show: false, id: null, name: '' });
             }
         }
     };
@@ -952,7 +953,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             </button>
                         )}
                         <button
-                            onClick={() => handleDeleteClick(integration.id)}
+                            onClick={() => handleDeleteClick(integration.id, integration.name)}
                             className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded-md transition-colors"
                             title="Eliminar integracion"
                             aria-label="Eliminar integracion"
@@ -1042,10 +1043,29 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
             <ConfirmModal
                 isOpen={deleteModal.show}
-                onClose={() => setDeleteModal({ show: false, id: null })}
+                onClose={() => setDeleteModal({ show: false, id: null, name: '' })}
                 onConfirm={handleDeleteConfirm}
-                title="Eliminar Integración"
-                message="¿Estás seguro de que deseas eliminar esta integración? Esta acción no se puede deshacer."
+                title="Eliminar integración"
+                confirmText="Sí, eliminar"
+                cancelText="Cancelar"
+                message={
+                    <div className="space-y-3">
+                        <p>
+                            Vas a eliminar la integración{' '}
+                            <span className="font-semibold text-gray-900 dark:text-white">{deleteModal.name || 'seleccionada'}</span>. Esta acción no se puede deshacer.
+                        </p>
+                        <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900 p-3">
+                            <p className="text-[13px] font-semibold text-red-700 dark:text-red-300 mb-1.5">Al eliminarla:</p>
+                            <ul className="list-disc pl-5 space-y-1 text-[12px] text-red-700/90 dark:text-red-300/90">
+                                <li>Se desconecta el canal: dejará de importar órdenes y de sincronizar stock y estados.</li>
+                                <li>Se borran sus credenciales y su configuración guardadas.</li>
+                                <li>Se dejan de enviar y recibir webhooks de esta tienda.</li>
+                                <li>Los productos y órdenes ya importados se conservan, pero pierden el vínculo con este canal.</li>
+                                <li>Para volver a usarla tendrás que conectarla de nuevo desde cero.</li>
+                            </ul>
+                        </div>
+                    </div>
+                }
             />
 
             {/* Modal de Sincronización con Filtros */}

@@ -17,6 +17,7 @@ import { getIntegrationByIdAction } from '@/services/integrations/core/infra/act
 import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
 import { MercadoLibreOAuthCallback } from '@/services/integrations/ecommerce/mercadolibre/ui';
+import { JumpsellerOAuthCallback } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useIntegrationsBusiness } from '@/shared/contexts/integrations-business-context';
@@ -37,6 +38,7 @@ export default function IntegrationsPage() {
     const searchParams = useSearchParams();
     const isOAuthCallback = searchParams.get('shopify_oauth');
     const isMeliOAuthCallback = searchParams.get('meli_oauth');
+    const isJumpsellerOAuthCallback = searchParams.get('jumpseller_oauth');
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -99,6 +101,10 @@ export default function IntegrationsPage() {
 
     if (isMeliOAuthCallback) {
         return <MercadoLibreOAuthCallback />;
+    }
+
+    if (isJumpsellerOAuthCallback) {
+        return <JumpsellerOAuthCallback />;
     }
 
     const handleSuccess = () => {

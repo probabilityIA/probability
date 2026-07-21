@@ -190,7 +190,7 @@ func TestDeleteIntegration_Exitoso(t *testing.T) {
 	cache.On("InvalidateIntegration", mock.Anything, uint(10)).Return(nil)
 
 	// Act
-	err := uc.DeleteIntegration(ctx, 10)
+	err := uc.DeleteIntegration(ctx, 10, 0)
 
 	// Assert
 	assert.NoError(t, err)
@@ -213,7 +213,7 @@ func TestDeleteIntegration_NoEncontrada(t *testing.T) {
 	repo.On("GetIntegrationByID", mock.Anything, uint(999)).Return(nil, errors.New("not found"))
 
 	// Act
-	err := uc.DeleteIntegration(ctx, 999)
+	err := uc.DeleteIntegration(ctx, 999, 0)
 
 	// Assert
 	assert.ErrorIs(t, err, domain.ErrIntegrationNotFound)
@@ -242,7 +242,7 @@ func TestDeleteIntegration_NoSePuedeEliminarWhatsApp(t *testing.T) {
 	repo.On("GetIntegrationByID", mock.Anything, uint(5)).Return(integracion, nil)
 
 	// Act
-	err := uc.DeleteIntegration(ctx, 5)
+	err := uc.DeleteIntegration(ctx, 5, 0)
 
 	// Assert
 	assert.ErrorIs(t, err, domain.ErrIntegrationCannotDeleteWhatsApp)

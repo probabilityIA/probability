@@ -87,8 +87,8 @@ func (m *mockIntegrationUseCase) DecryptCredentialField(ctx context.Context, int
 	return args.String(0), args.Error(1)
 }
 
-func (m *mockIntegrationUseCase) DeleteIntegration(ctx context.Context, id uint) error {
-	args := m.Called(ctx, id)
+func (m *mockIntegrationUseCase) DeleteIntegration(ctx context.Context, id uint, requesterBusinessID uint) error {
+	args := m.Called(ctx, id, requesterBusinessID)
 	return args.Error(0)
 }
 
@@ -458,10 +458,9 @@ func TestDeleteIntegrationHandler_EliminaConPermisos(t *testing.T) {
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	uc.On("DeleteIntegration", mock.Anything, uint(5)).Return(nil)
+	uc.On("DeleteIntegration", mock.Anything, uint(5), uint(0)).Return(nil)
 
 	r := gin.New()
-	// IsSuperAdmin verifica business_id == 0
 	r.DELETE("/integrations/:id", func(c *gin.Context) {
 		c.Set("business_id", uint(0)) // super admin = business_id 0
 		h.DeleteIntegrationHandler(c)
@@ -477,14 +476,19 @@ func TestDeleteIntegrationHandler_EliminaConPermisos(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
-func TestDeleteIntegrationHandler_SinPermisos_Retorna403(t *testing.T) {
-	// Arrange
+func TestDeleteIntegrationHandler_BusinessAjena_Retorna404(t *testing.T) {
+	// Arrange: un business intenta borrar una integracion que no es suya.
+	// El usecase valida pertenencia y devuelve ErrIntegrationNotFound (no se filtra existencia).
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
+	uc.On("DeleteIntegration", mock.Anything, uint(5), uint(7)).Return(domain.ErrIntegrationNotFound)
+
 	r := gin.New()
-	// Sin super admin
-	r.DELETE("/integrations/:id", h.DeleteIntegrationHandler)
+	r.DELETE("/integrations/:id", func(c *gin.Context) {
+		c.Set("business_id", uint(7)) // usuario business
+		h.DeleteIntegrationHandler(c)
+	})
 
 	req := httptest.NewRequest(http.MethodDelete, "/integrations/5", nil)
 	w := httptest.NewRecorder()
@@ -493,7 +497,30 @@ func TestDeleteIntegrationHandler_SinPermisos_Retorna403(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Assert
-	assert.Equal(t, http.StatusForbidden, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteIntegrationHandler_BusinessPropia_Retorna200(t *testing.T) {
+	// Arrange: un business borra SU propia integracion.
+	uc := new(mockIntegrationUseCase)
+	h, _ := handlerSetup(uc)
+
+	uc.On("DeleteIntegration", mock.Anything, uint(5), uint(7)).Return(nil)
+
+	r := gin.New()
+	r.DELETE("/integrations/:id", func(c *gin.Context) {
+		c.Set("business_id", uint(7))
+		h.DeleteIntegrationHandler(c)
+	})
+
+	req := httptest.NewRequest(http.MethodDelete, "/integrations/5", nil)
+	w := httptest.NewRecorder()
+
+	// Act
+	r.ServeHTTP(w, req)
+
+	// Assert
+	assert.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestDeleteIntegrationHandler_IDInvalido(t *testing.T) {
@@ -522,7 +549,7 @@ func TestDeleteIntegrationHandler_ErrorNoEncontrado(t *testing.T) {
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	uc.On("DeleteIntegration", mock.Anything, uint(99)).Return(domain.ErrIntegrationNotFound)
+	uc.On("DeleteIntegration", mock.Anything, uint(99), uint(0)).Return(domain.ErrIntegrationNotFound)
 
 	r := gin.New()
 	r.DELETE("/integrations/:id", func(c *gin.Context) {

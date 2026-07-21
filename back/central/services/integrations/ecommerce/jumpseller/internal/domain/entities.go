@@ -14,6 +14,14 @@ type Integration struct {
 	BaseURLTest     string
 }
 
+type TokenResponse struct {
+	AccessToken  string
+	RefreshToken string
+	TokenType    string
+	ExpiresIn    int
+	CreatedAt    int64
+}
+
 type StoreInfo struct {
 	Code             string
 	Name             string

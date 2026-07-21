@@ -31,7 +31,16 @@ func (uc *jumpsellerUseCase) fetchIntegration(ctx context.Context, integrationID
 	return integration, nil
 }
 
+func isOAuthIntegration(integration *domain.Integration) bool {
+	method, _ := integration.Config[domain.ConfigAuthMethod].(string)
+	return method == domain.AuthMethodOAuth
+}
+
 func (uc *jumpsellerUseCase) buildCredential(ctx context.Context, integrationID string, integration *domain.Integration) (domain.Credential, error) {
+	if isOAuthIntegration(integration) {
+		return uc.buildOAuthCredential(ctx, integrationID, integration)
+	}
+
 	apiKey, err := uc.service.DecryptCredential(ctx, integrationID, "api_key")
 	if err != nil {
 		return domain.Credential{}, fmt.Errorf("decrypting api_key: %w", err)
@@ -61,6 +70,27 @@ func (uc *jumpsellerUseCase) buildCredential(ctx context.Context, integrationID 
 		APIKey:    apiKey,
 		APISecret: apiSecret,
 		BaseURL:   effectiveURL,
+	}, nil
+}
+
+func (uc *jumpsellerUseCase) buildOAuthCredential(ctx context.Context, integrationID string, integration *domain.Integration) (domain.Credential, error) {
+	accessToken, err := uc.EnsureValidToken(ctx, integrationID, integration)
+	if err != nil {
+		return domain.Credential{}, err
+	}
+
+	effectiveURL, err := resolveEffectiveBaseURL(integration)
+	if err != nil {
+		uc.logger.Error(ctx).Err(err).
+			Str("integration_id", integrationID).
+			Bool("is_testing", integration.IsTesting).
+			Msg("El tipo de integracion Jumpseller no tiene la URL configurada en base de datos")
+		return domain.Credential{}, err
+	}
+
+	return domain.Credential{
+		AccessToken: accessToken,
+		BaseURL:     effectiveURL,
 	}, nil
 }
 

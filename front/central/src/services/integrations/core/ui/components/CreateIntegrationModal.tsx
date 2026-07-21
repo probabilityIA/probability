@@ -29,7 +29,7 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
-import { JumpsellerConfigForm } from '@/services/integrations/ecommerce/jumpseller/ui';
+import { JumpsellerConnectTabs } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { MercadoLibreOAuthForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
@@ -386,7 +386,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
 
             case INTEGRATION_TYPE_IDS.JUMPSELLER:
                 return (
-                    <JumpsellerConfigForm
+                    <JumpsellerConnectTabs
                         onSuccess={onSuccess}
                         onCancel={onBack}
                         integrationTypeBaseURLTest={integrationType.base_url_test}

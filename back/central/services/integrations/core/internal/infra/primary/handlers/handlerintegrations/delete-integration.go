@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
 )
@@ -27,16 +26,9 @@ import (
 //	@Failure		500	{object}	map[string]interface{}
 //	@Router			/integrations/{id} [delete]
 func (h *IntegrationHandler) DeleteIntegrationHandler(c *gin.Context) {
-	// Solo super admins pueden eliminar integraciones
-	if !middleware.IsSuperAdmin(c) {
-		h.logger.Error().Str("endpoint", "/integrations/:id").Str("method", "DELETE").Msg("Intento de eliminar integración sin permisos de super admin")
-		c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
-			Success: false,
-			Message: "Solo los super usuarios pueden eliminar integraciones",
-			Error:   "permisos insuficientes",
-		})
-		return
-	}
+	// Aislamiento multi-tenant: super admin (business_id == 0) elimina cualquiera;
+	// un usuario business solo puede eliminar integraciones de su propio negocio.
+	requesterBusinessID := c.GetUint("business_id")
 
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -50,7 +42,7 @@ func (h *IntegrationHandler) DeleteIntegrationHandler(c *gin.Context) {
 		return
 	}
 
-	if err := h.usecase.DeleteIntegration(c.Request.Context(), uint(id)); err != nil {
+	if err := h.usecase.DeleteIntegration(c.Request.Context(), uint(id), requesterBusinessID); err != nil {
 		statusCode := http.StatusInternalServerError
 		errorMsg := "Error al eliminar integración"
 
