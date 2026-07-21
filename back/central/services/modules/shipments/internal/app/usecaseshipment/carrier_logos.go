@@ -13,12 +13,12 @@ import (
 )
 
 var carrierLogoURLs = map[string]string{
-	"SERVIENTREGA":                 "https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1",
-	"COORDINADORA":                 "https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png",
+	"SERVIENTREGA":                 "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png",
+	"COORDINADORA":                 "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png",
 	"DHL":                          "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"DHLEXPRESS":                   "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"FEDEX":                        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png",
-	"INTERRAPIDISIMO":              "https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png",
+	"INTERRAPIDISIMO":              "https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg",
 	"472LOGISTICA":                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s",
 	"ENVIA":                        "https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png",
 	"TCC":                          "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png",
