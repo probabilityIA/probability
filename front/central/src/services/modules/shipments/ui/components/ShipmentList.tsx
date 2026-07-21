@@ -1171,7 +1171,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             <SyncProgressModal
                 isOpen={isSyncModalOpen}
                 onClose={() => setIsSyncModalOpen(false)}
-                businessId={selectedBusinessId}
+                businessId={isSuperAdmin ? (selectedBusinessId ?? null) : (defaultBusinessId ?? null)}
                 onCompleted={fetchShipments}
             />
 
