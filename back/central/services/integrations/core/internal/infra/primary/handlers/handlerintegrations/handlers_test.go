@@ -134,6 +134,10 @@ func (m *mockIntegrationUseCase) RegisterObserver(observer domain.IntegrationCre
 	m.Called(observer)
 }
 
+func (m *mockIntegrationUseCase) SetEcommerceLimitChecker(checker domain.EcommerceLimitChecker) {
+	m.Called(checker)
+}
+
 func (m *mockIntegrationUseCase) WarmCache(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
