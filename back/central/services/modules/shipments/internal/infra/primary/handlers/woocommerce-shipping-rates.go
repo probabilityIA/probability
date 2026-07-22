@@ -245,7 +245,8 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			continue
 		}
 
-		cost := flete
+		minimumInsurance := toFloat(rate["minimumInsurance"])
+		cost := flete + minimumInsurance
 		codCarrierFee := 0.0
 		codProbabilityMargin := 0.0
 		if isCOD {
@@ -255,7 +256,7 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			}
 			codCarrierFee = toFloat(rate["codCarrierFee"])
 			codProbabilityMargin = toFloat(rate["codProbabilityMargin"])
-			cost = flete + codCarrierFee + codProbabilityMargin
+			cost = flete + minimumInsurance + codCarrierFee + codProbabilityMargin
 		}
 
 		logoURL := ""
@@ -293,6 +294,8 @@ func mapQuoteRatesToWoo(ratesList []map[string]interface{}, currency string, quo
 			"id_rate":      rate["idRate"],
 			"logo_url":     logoURL,
 			"cod":          isCOD,
+			"flete":        flete,
+			"insurance":    minimumInsurance,
 		}
 		if isCOD {
 			meta["cod_carrier_fee"] = codCarrierFee

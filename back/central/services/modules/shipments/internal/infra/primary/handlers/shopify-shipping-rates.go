@@ -239,7 +239,8 @@ func mapQuoteRatesToShopify(ratesList []map[string]interface{}, currency string,
 			serviceCode += "_" + strconv.Itoa(i)
 		}
 
-		totalPriceCents := int64(math.Round(flete * 100))
+		minimumInsurance := toFloat(rate["minimumInsurance"])
+		totalPriceCents := int64(math.Round((flete + minimumInsurance) * 100))
 
 		sr := shopifyRate{
 			ServiceName: serviceName,
