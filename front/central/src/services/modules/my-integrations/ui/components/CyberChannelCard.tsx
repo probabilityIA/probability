@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { Clock, SlidersHorizontal } from 'lucide-react';
@@ -40,7 +41,7 @@ function relativeTime(iso?: string): string | null {
     return `hace ${Math.floor(months / 12)} a`;
 }
 
-export function CyberChannelCard({ integration, stats, onToggle, onEdit, togglingId, editingId }: CyberChannelCardProps) {
+export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, togglingId, editingId }: CyberChannelCardProps) {
     const isToggling = togglingId === integration.id;
     const isEditing = editingId === integration.id;
     const active = integration.is_active;
@@ -50,7 +51,21 @@ export function CyberChannelCard({ integration, stats, onToggle, onEdit, togglin
     const hasBreakdown = stats !== undefined && total > 0;
 
     return (
-        <div className="group flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+        <div
+            className="group relative overflow-hidden rounded-2xl p-px shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-8px_var(--neon)]"
+            style={{ '--neon': color } as CSSProperties}
+        >
+            <div className="absolute inset-0" style={{ backgroundColor: `${color}2c` }} />
+            <div
+                className="absolute inset-0"
+                style={{
+                    background: `linear-gradient(110deg, transparent 25%, ${color} 50%, transparent 75%)`,
+                    backgroundSize: '250% 100%',
+                    animation: 'cyber-sweep 3.2s linear infinite',
+                    animationDelay: `${(integration.id % 5) * -0.65}s`,
+                }}
+            />
+            <div className="relative z-10 flex h-full items-center gap-4 rounded-[15px] bg-white p-3 transition-colors group-hover:bg-gray-50/80 dark:bg-gray-800 dark:group-hover:bg-gray-700/60">
             <div className="flex w-48 flex-shrink-0 items-center gap-2.5" title={lastOrder ? `Ultima orden ${lastOrder}` : undefined}>
                 <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 ring-1 ring-gray-200 dark:bg-gray-700/60 dark:ring-gray-600">
                     {integration.integration_type?.image_url ? (
@@ -149,6 +164,7 @@ export function CyberChannelCard({ integration, stats, onToggle, onEdit, togglin
                         }`}
                     />
                 </button>
+            </div>
             </div>
         </div>
     );
