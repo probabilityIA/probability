@@ -25,6 +25,12 @@ interface RowState {
     message?: string;
 }
 
+interface SyncStartResult {
+    success?: boolean;
+    correlation_id?: string;
+    message?: string;
+}
+
 const EMPTY_ROW: RowState = { status: 'idle', total: 0, processed: 0, updated: 0, unchanged: 0, skipped: 0, failed: 0 };
 
 const SYNC_TIMEOUT_MS = 6 * 60 * 1000;
@@ -115,9 +121,9 @@ export function GlobalInventoryPanel({ integrations, businessId, onCompleted }: 
             if (!provider) continue;
 
             patchRow(integration.id, { status: 'starting' });
-            let result: { success?: boolean; correlation_id?: string; message?: string } | null = null;
+            let result: SyncStartResult | null = null;
             try {
-                result = await provider.syncInventory(integration.id, businessId ?? undefined) as typeof result;
+                result = await provider.syncInventory(integration.id, businessId ?? undefined) as SyncStartResult;
             } catch {
                 result = null;
             }

@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
-import { PencilSquareIcon } from '@heroicons/react/24/outline';
+import { SlidersHorizontal } from 'lucide-react';
 
 interface CyberIntegrationNodeProps {
     integration: Integration;
@@ -63,13 +63,13 @@ export function CyberIntegrationNode({ integration, color, onToggle, onEdit, tog
                 <button
                     onClick={() => onEdit(integration)}
                     disabled={isEditing}
-                    title="Editar integracion"
-                    className={`flex-shrink-0 p-1 text-gray-400 opacity-70 transition-all hover:text-indigo-600 group-hover:opacity-100 dark:hover:text-indigo-400 ${isEditing ? 'cursor-wait opacity-50' : ''}`}
+                    title="Configurar integracion"
+                    className={`flex-shrink-0 rounded-lg border border-indigo-200 bg-indigo-50 p-1.5 text-indigo-600 shadow-sm transition-all hover:scale-105 hover:bg-indigo-100 hover:shadow dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-900/60 ${isEditing ? 'cursor-wait opacity-60' : ''}`}
                 >
                     {isEditing ? (
                         <span className="block h-4 w-4 animate-spin rounded-full border border-transparent border-t-current" />
                     ) : (
-                        <PencilSquareIcon className="h-4 w-4" />
+                        <SlidersHorizontal className="h-4 w-4" />
                     )}
                 </button>
 

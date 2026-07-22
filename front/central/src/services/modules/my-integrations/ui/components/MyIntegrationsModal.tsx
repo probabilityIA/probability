@@ -10,11 +10,13 @@ import {
     deactivateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
 import { IntegrationForm } from '@/services/integrations/core/ui';
+import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
-import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, CATEGORY_COLORS } from '../../domain/types';
+import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, CATEGORY_COLORS, CHANNELS_COLOR } from '../../domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
+import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
 import { GlobalSyncModal } from './GlobalSyncModal';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
@@ -31,6 +33,8 @@ const HUB_KEYFRAMES = `
 @keyframes cyber-dash { to { stroke-dashoffset: -24; } }
 @keyframes cyber-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes cyber-sweep { from { background-position: 200% 0; } to { background-position: -100% 0; } }
+.orbit-ring:has(.orbit-chip:hover) { animation-play-state: paused !important; }
+.orbit-ring:has(.orbit-chip:hover) .orbit-chip { animation-play-state: paused !important; }
 `;
 
 export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
@@ -39,6 +43,8 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
 
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
+    const [stats, setStats] = useState<Record<number, IntegrationStatsItem>>({});
+    const [statsLoaded, setStatsLoaded] = useState(false);
     const [resourceActive, setResourceActive] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState<number | null>(null);
@@ -56,10 +62,11 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             const intParams: Record<string, unknown> = { page_size: 100 };
             if (effectiveBusinessId) intParams.business_id = effectiveBusinessId;
 
-            const [catRes, intRes, resourcesRes] = await Promise.all([
+            const [catRes, intRes, resourcesRes, statsRes] = await Promise.all([
                 getIntegrationCategoriesAction(),
                 getIntegrationsAction(intParams),
                 effectiveBusinessId ? getBusinessConfiguredResourcesAction(effectiveBusinessId) : Promise.resolve(null),
+                getIntegrationStatsAction(effectiveBusinessId ?? undefined),
             ]);
 
             if (catRes.success && catRes.data) {
@@ -71,6 +78,18 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
 
             if (intRes.success && intRes.data) {
                 setIntegrations(intRes.data as Integration[]);
+            }
+
+            if (statsRes.success && statsRes.data) {
+                const map: Record<number, IntegrationStatsItem> = {};
+                for (const item of statsRes.data) {
+                    map[item.integration_id] = item;
+                }
+                setStats(map);
+                setStatsLoaded(true);
+            } else {
+                setStats({});
+                setStatsLoaded(false);
             }
 
             if (resourcesRes?.success && resourcesRes.data) {
@@ -145,12 +164,12 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const getTargets = useCallback((): NetworkTarget[] => {
         const targets: NetworkTarget[] = [];
         clusterRefs.current.forEach((el, code) => {
-            const isChannel = (CHANNEL_CODES as readonly string[]).includes(code);
+            const isChannel = code === 'channels';
             targets.push({
                 key: code,
                 el,
                 dir: isChannel ? 'in' : 'out',
-                color: CATEGORY_COLORS[code] || '#6366f1',
+                color: isChannel ? CHANNELS_COLOR : CATEGORY_COLORS[code] || '#6366f1',
             });
         });
         return targets;
@@ -169,6 +188,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const channels = resolve(CHANNEL_CODES);
     const services = resolve(SERVICE_CODES);
     const internal = resolve(INTERNAL_CODES);
+    const channelIntegrations = channels.flatMap(cat => integrationsByCategory[cat.code] || []);
 
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
     const revision = loading ? 0 : categories.length * 1000 + integrations.length + 1;
@@ -195,6 +215,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         <>
             <Modal isOpen={isOpen} onClose={onClose} title="Tus Integraciones" size="4xl">
                 <style>{HUB_KEYFRAMES}</style>
+                <div style={{ width: 'min(72rem, 88vw)' }}>
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
                         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600" />
@@ -212,9 +233,17 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                             revision={revision}
                         />
                         <div className="relative z-10 flex flex-col gap-12 pt-3">
-                            <div className="flex flex-wrap gap-8 lg:flex-nowrap">
-                                {channels.map(renderCluster)}
-                            </div>
+                            <CyberChannelsCluster
+                                integrations={channelIntegrations}
+                                stats={stats}
+                                statsLoaded={statsLoaded}
+                                color={CHANNELS_COLOR}
+                                onToggle={handleToggle}
+                                onEdit={handleEdit}
+                                togglingId={togglingId}
+                                editingId={editLoadingId}
+                                anchorRef={setClusterRef('channels')}
+                            />
                             <CyberHub
                                 ref={hubRef}
                                 integrations={internalIntegrations}
@@ -227,6 +256,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                         </div>
                     </div>
                 )}
+                </div>
             </Modal>
 
             <Modal

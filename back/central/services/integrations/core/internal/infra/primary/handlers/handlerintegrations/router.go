@@ -6,23 +6,19 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IIntegrationHandler define la interfaz del handler de integraciones
-
-// RegisterRoutes registra las rutas del handler de integraciones
 func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
 	integrationsGroup := router.Group("/integrations")
 	{
-		// CRUD básico
 		integrationsGroup.GET("", middleware.JWT(), h.GetIntegrationsHandler)
 		integrationsGroup.GET("/simple", middleware.JWT(), h.GetIntegrationsSimpleHandler)
 		integrationsGroup.GET("/check", middleware.JWT(), h.CheckIntegrationExistsHandler)
+		integrationsGroup.GET("/stats", middleware.JWT(), h.GetIntegrationStatsHandler)
 		integrationsGroup.GET("/type/:type", middleware.JWT(), h.GetIntegrationByTypeHandler)
 		integrationsGroup.GET("/:id", middleware.JWT(), h.GetIntegrationByIDHandler)
 		integrationsGroup.POST("", middleware.JWT(), h.CreateIntegrationHandler)
 		integrationsGroup.PUT("/:id", middleware.JWT(), h.UpdateIntegrationHandler)
 		integrationsGroup.DELETE("/:id", middleware.JWT(), h.DeleteIntegrationHandler)
 
-		// Acciones específicas
 		integrationsGroup.POST("/test", middleware.JWT(), h.TestConnectionRawHandler)
 		integrationsGroup.POST("/sync-orders/business/:business_id", middleware.JWT(), h.SyncOrdersByBusinessHandler)
 		integrationsGroup.POST("/:id/test", middleware.JWT(), h.TestIntegrationHandler)

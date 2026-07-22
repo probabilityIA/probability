@@ -28,6 +28,7 @@ type IIntegrationHandler interface {
 	VerifyWebhooksHandler(c *gin.Context)
 	CreateWebhookHandler(c *gin.Context)
 	CheckIntegrationExistsHandler(c *gin.Context)
+	GetIntegrationStatsHandler(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 type IntegrationHandler struct {
@@ -45,7 +46,6 @@ func New(usecase domain.IIntegrationUseCase, logger log.ILogger, env env.IConfig
 	}
 }
 
-// getImageURLBase obtiene la URL base de S3 para construir URLs completas
 func (h *IntegrationHandler) getImageURLBase() string {
 	return h.env.Get("URL_BASE_DOMAIN_S3")
 }

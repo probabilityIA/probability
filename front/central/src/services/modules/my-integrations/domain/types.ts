@@ -2,6 +2,8 @@ export const CHANNEL_CODES = ['platform', 'ecommerce'] as const;
 export const SERVICE_CODES = ['messaging', 'invoicing'] as const;
 export const INTERNAL_CODES = ['internal'] as const;
 
+export const CHANNELS_COLOR = '#3b82f6';
+
 export const CATEGORY_COLORS: Record<string, string> = {
     platform: '#8b5cf6',
     ecommerce: '#3b82f6',
