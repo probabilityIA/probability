@@ -18,7 +18,7 @@ import (
 )
 
 // New inicializa el módulo de inventory
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, moduleAccessMW gin.HandlerFunc) {
 	// 1. Init Cache (resiliente: si redis es nil, cache no-op)
 	var cache repository.IInventoryCache
 	if redisClient != nil {
@@ -38,7 +38,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	uc := app.New(repo, publisher, eventPublisher, logger)
 
 	// 6. Init Handlers
-	h := handlers.New(uc, rabbitMQ)
+	h := handlers.New(uc, rabbitMQ, moduleAccessMW)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)

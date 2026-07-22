@@ -70,6 +70,22 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		return nil, domain.ErrIntegrationCategoryInvalid
 	}
 
+	if categoryCode == "ecommerce" && dto.BusinessID != nil && uc.ecommerceLimitChecker != nil {
+		limit, err := uc.ecommerceLimitChecker(ctx, *dto.BusinessID)
+		if err == nil && limit > 0 {
+			active := true
+			category := categoryCode
+			_, total, err := uc.repo.ListIntegrations(ctx, domain.IntegrationFilters{
+				BusinessID: dto.BusinessID,
+				Category:   &category,
+				IsActive:   &active,
+			})
+			if err == nil && total >= int64(limit) {
+				return nil, domain.ErrEcommerceLimitReached
+			}
+		}
+	}
+
 	// VALIDAR CONEXIÓN ANTES DE GUARDAR
 	// Obtener provider registrado para este tipo
 	integrationTypeInt := domain.IntegrationTypeCodeAsInt(integrationType.Code)

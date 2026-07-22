@@ -11,7 +11,7 @@ import {
     createSubscriptionTypeAction,
     updateSubscriptionTypeAction,
     deleteSubscriptionTypeAction,
-    getModuleCodesAction,
+    getModuleCatalogAction,
     purchaseSubscriptionAction,
     listOverridesAction,
     grantOverrideAction,
@@ -19,6 +19,7 @@ import {
     BusinessSubscription,
     SubscriptionType,
     BusinessModuleOverride,
+    ModuleInfo,
 } from '@/services/modules/wallet/infra/subscription-actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
@@ -134,6 +135,7 @@ export default function SubscriptionPage() {
 
 function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
     const [filter, setFilter] = useState('all');
+    const [search, setSearch] = useState('');
     const [registerModal, setRegisterModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
     const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
     const [selectedTypeId, setSelectedTypeId] = useState('');
@@ -208,25 +210,41 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
 
     const filteredBusinesses = businesses.filter((biz) => {
         const s = subStatuses[biz.id]?.status;
-        if (filter === 'active') return s === 'active' || s === 'paid';
-        if (filter === 'expired') return s === 'expired' || s === 'cancelled' || s === 'pending' || !s;
+        if (filter === 'active' && !(s === 'active' || s === 'paid')) return false;
+        if (filter === 'expired' && !(s === 'expired' || s === 'cancelled' || s === 'pending' || !s)) return false;
+        if (search.trim() && !biz.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
         return true;
     });
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Clientes y Suscripciones</h2>
-                <select
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
-                >
-                    <option value="all">Todos</option>
-                    <option value="active">Activos</option>
-                    <option value="expired">Vencidos / Suspendidos</option>
-                </select>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar por nombre de negocio..."
+                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[220px]"
+                    />
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                    >
+                        <option value="all">Todos</option>
+                        <option value="active">Activos</option>
+                        <option value="expired">Vencidos / Suspendidos</option>
+                    </select>
+                </div>
             </div>
+
+            {search.trim() && (
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                    {filteredBusinesses.length} resultado{filteredBusinesses.length !== 1 ? 's' : ''} para "{search.trim()}"
+                </p>
+            )}
 
             {message && (
                 <Alert type={message.type} onClose={() => setMessage(null)}>
@@ -302,30 +320,30 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
 
 function SubscriptionTypesAdminPanel() {
     const [types, setTypes] = useState<SubscriptionType[]>([]);
-    const [moduleCodes, setModuleCodes] = useState<string[]>([]);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [editModal, setEditModal] = useState<{ open: boolean; type?: SubscriptionType }>({ open: false });
 
-    const [form, setForm] = useState({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] as string[] });
+    const [form, setForm] = useState({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] as string[], max_ecommerce_channels: '0' });
 
     const load = useCallback(async () => {
         setLoading(true);
-        const [typesRes, codesRes] = await Promise.all([listSubscriptionTypesAction(false), getModuleCodesAction()]);
+        const [typesRes, catalogRes] = await Promise.all([listSubscriptionTypesAction(false), getModuleCatalogAction()]);
         if (typesRes.success && typesRes.data) setTypes(typesRes.data);
-        if (codesRes.success && codesRes.data) setModuleCodes(codesRes.data);
+        if (catalogRes.success && catalogRes.data) setModuleCatalog(catalogRes.data);
         setLoading(false);
     }, []);
 
     useEffect(() => { load(); }, [load]);
 
     const openCreate = () => {
-        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] });
+        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [], max_ecommerce_channels: '0' });
         setEditModal({ open: true });
     };
 
     const openEdit = (t: SubscriptionType) => {
-        setForm({ name: t.name, code: t.code, description: t.description, price: String(t.price), billing_period: t.billing_period, active: t.active, module_codes: t.module_codes ?? [] });
+        setForm({ name: t.name, code: t.code, description: t.description, price: String(t.price), billing_period: t.billing_period, active: t.active, module_codes: t.module_codes ?? [], max_ecommerce_channels: String(t.max_ecommerce_channels ?? 0) });
         setEditModal({ open: true, type: t });
     };
 
@@ -348,6 +366,7 @@ function SubscriptionTypesAdminPanel() {
                 billing_period: form.billing_period,
                 active: form.active,
                 module_codes: form.module_codes,
+                max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
             })
             : await createSubscriptionTypeAction({
                 name: form.name,
@@ -356,6 +375,7 @@ function SubscriptionTypesAdminPanel() {
                 price: Number(form.price),
                 billing_period: form.billing_period,
                 module_codes: form.module_codes,
+                max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
             });
 
         if (res.success) {
@@ -377,6 +397,8 @@ function SubscriptionTypesAdminPanel() {
             setMessage({ type: 'error', text: res.error || 'Error al eliminar' });
         }
     };
+
+    const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
 
     if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
 
@@ -404,7 +426,7 @@ function SubscriptionTypesAdminPanel() {
                         {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
                         <div className="flex flex-wrap gap-1">
                             {(t.module_codes ?? []).map((m) => (
-                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{m}</span>
+                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{moduleName(m)}</span>
                             ))}
                         </div>
                         <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
@@ -436,13 +458,14 @@ function SubscriptionTypesAdminPanel() {
                             Activo
                         </label>
                     )}
+                    <Input label="Límite de canales E-commerce (0 = sin límite)" type="number" value={form.max_ecommerce_channels} onChange={(e) => setForm({ ...form, max_ecommerce_channels: e.target.value })} />
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Módulos incluidos</label>
                         <div className="grid grid-cols-2 gap-2">
-                            {moduleCodes.map((code) => (
+                            {moduleCatalog.map(({ code, name }) => (
                                 <label key={code} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                                     <input type="checkbox" checked={form.module_codes.includes(code)} onChange={() => toggleModule(code)} />
-                                    {code}
+                                    {name}
                                 </label>
                             ))}
                         </div>
@@ -459,17 +482,19 @@ function SubscriptionTypesAdminPanel() {
 
 function OverridesPanel({ businessId, businessName }: { businessId: number; businessName?: string }) {
     const [overrides, setOverrides] = useState<BusinessModuleOverride[]>([]);
-    const [moduleCodes, setModuleCodes] = useState<string[]>([]);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCode, setSelectedCode] = useState('');
     const [notes, setNotes] = useState('');
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+    const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
+
     const load = useCallback(async () => {
         setLoading(true);
-        const [overridesRes, codesRes] = await Promise.all([listOverridesAction(businessId), getModuleCodesAction()]);
+        const [overridesRes, catalogRes] = await Promise.all([listOverridesAction(businessId), getModuleCatalogAction()]);
         if (overridesRes.success && overridesRes.data) setOverrides(overridesRes.data);
-        if (codesRes.success && codesRes.data) setModuleCodes(codesRes.data);
+        if (catalogRes.success && catalogRes.data) setModuleCatalog(catalogRes.data);
         setLoading(false);
     }, [businessId]);
 
@@ -512,7 +537,7 @@ function OverridesPanel({ businessId, businessName }: { businessId: number; busi
                 {overrides.length === 0 && <span className="text-sm text-gray-400">Sin módulos adicionales otorgados</span>}
                 {overrides.map((o) => (
                     <span key={o.id} className="inline-flex items-center gap-2 text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-3 py-1.5 rounded-full">
-                        {o.module_code}
+                        {moduleName(o.module_code)}
                         <button onClick={() => handleRevoke(o.module_code)} className="text-violet-400 hover:text-violet-700">×</button>
                     </span>
                 ))}
@@ -523,8 +548,8 @@ function OverridesPanel({ businessId, businessName }: { businessId: number; busi
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Módulo</label>
                     <select value={selectedCode} onChange={(e) => setSelectedCode(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
                         <option value="">Selecciona un módulo</option>
-                        {moduleCodes.filter((c) => !overrides.some((o) => o.module_code === c)).map((code) => (
-                            <option key={code} value={code}>{code}</option>
+                        {moduleCatalog.filter((m) => !overrides.some((o) => o.module_code === m.code)).map(({ code, name }) => (
+                            <option key={code} value={code}>{name}</option>
                         ))}
                     </select>
                 </div>
@@ -601,15 +626,19 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
 
 function PlanCatalog({ businessId, onPurchased }: { businessId?: number; onPurchased: () => void }) {
     const [types, setTypes] = useState<SubscriptionType[]>([]);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [purchaseModal, setPurchaseModal] = useState<{ open: boolean; type?: SubscriptionType }>({ open: false });
     const [months, setMonths] = useState('1');
     const [buying, setBuying] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+    const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
+
     useEffect(() => {
-        listSubscriptionTypesAction(true).then((res) => {
-            if (res.success && res.data) setTypes(res.data);
+        Promise.all([listSubscriptionTypesAction(true), getModuleCatalogAction()]).then(([typesRes, catalogRes]) => {
+            if (typesRes.success && typesRes.data) setTypes(typesRes.data);
+            if (catalogRes.success && catalogRes.data) setModuleCatalog(catalogRes.data);
             setLoading(false);
         });
     }, []);
@@ -647,7 +676,7 @@ function PlanCatalog({ businessId, onPurchased }: { businessId?: number; onPurch
                         {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
                         <div className="flex flex-wrap gap-1">
                             {(t.module_codes ?? []).map((m) => (
-                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{m}</span>
+                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{moduleName(m)}</span>
                             ))}
                         </div>
                         <Button variant="primary" className="w-full" onClick={() => { setMonths('1'); setPurchaseModal({ open: true, type: t }); }}>

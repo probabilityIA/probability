@@ -27,6 +27,9 @@ type IUseCase interface {
 
 	HasModuleAccess(ctx context.Context, businessID uint, moduleCode string) (bool, error)
 	GetModuleCodes() []string
+	GetModuleCatalog() []dtos.ModuleInfo
+	GetAccessibleModules(ctx context.Context, businessID uint) ([]string, error)
+	EcommerceChannelLimit(ctx context.Context, businessID uint) (int, error)
 
 	CheckExpiringSubscriptions(ctx context.Context) error
 }

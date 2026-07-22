@@ -12,6 +12,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.GET("/me", h.GetCurrentSubscription)
 		g.POST("/purchase", h.PurchaseSubscription)
 		g.GET("/module-codes", h.GetModuleCodes)
+		g.GET("/module-catalog", h.GetModuleCatalog)
+		g.GET("/my-modules", h.GetMyModules)
 
 		g.GET("/types", h.ListSubscriptionTypes)
 		g.GET("/types/:id", h.GetSubscriptionType)

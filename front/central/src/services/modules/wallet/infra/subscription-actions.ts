@@ -20,6 +20,7 @@ export interface SubscriptionType {
     billing_period: string;
     active: boolean;
     module_codes: string[];
+    max_ecommerce_channels: number;
     created_at?: string;
     updated_at?: string;
 }
@@ -86,6 +87,7 @@ export async function createSubscriptionTypeAction(payload: {
     price: number;
     billing_period?: string;
     module_codes: string[];
+    max_ecommerce_channels?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -111,6 +113,7 @@ export async function updateSubscriptionTypeAction(id: number, payload: {
     billing_period?: string;
     active: boolean;
     module_codes: string[];
+    max_ecommerce_channels?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -147,6 +150,38 @@ export async function getModuleCodesAction(): Promise<{ success: boolean; data?:
     try {
         const headers = await buildHeaders();
         const res = await fetch(`${env.API_BASE_URL}/subscriptions/module-codes`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export interface ModuleInfo {
+    code: string;
+    name: string;
+}
+
+export async function getModuleCatalogAction(): Promise<{ success: boolean; data?: ModuleInfo[]; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/module-catalog`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function getMyModulesAction(businessId?: number): Promise<{ success: boolean; data?: string[]; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const url = businessId
+            ? `${env.API_BASE_URL}/subscriptions/my-modules?business_id=${businessId}`
+            : `${env.API_BASE_URL}/subscriptions/my-modules`;
+        const res = await fetch(url, { headers, cache: 'no-store' });
         if (!res.ok) throw new Error(`Error ${res.status}`);
         const json = await res.json();
         return { success: true, data: json.data };

@@ -84,9 +84,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	ai.New(router, logger)
 	dashboard.New(router, database, logger)
 	payBundle := pay.New(router, database, logger, environment, rabbitMQ, redisClient, integrationCore)
-	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
+	subscriptionsBundle := subscriptions.New(router, database, logger, payBundle, announcementsBundle)
+	integrationCore.SetEcommerceLimitChecker(subscriptionsBundle.UseCase.EcommerceChannelLimit)
+	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
-	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
+	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))
 	drivers.New(router, database)
 	vehicles.New(router, database)
 	routes.New(router, database)
@@ -95,8 +97,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
-
-	subscriptions.New(router, database, logger, payBundle, announcementsBundle)
 
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)

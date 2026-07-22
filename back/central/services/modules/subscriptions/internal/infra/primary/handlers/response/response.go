@@ -7,30 +7,32 @@ import (
 )
 
 type SubscriptionTypeResponse struct {
-	ID            uint      `json:"id"`
-	Name          string    `json:"name"`
-	Code          string    `json:"code"`
-	Description   string    `json:"description"`
-	Price         float64   `json:"price"`
-	BillingPeriod string    `json:"billing_period"`
-	Active        bool      `json:"active"`
-	ModuleCodes   []string  `json:"module_codes"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID                   uint      `json:"id"`
+	Name                 string    `json:"name"`
+	Code                 string    `json:"code"`
+	Description          string    `json:"description"`
+	Price                float64   `json:"price"`
+	BillingPeriod        string    `json:"billing_period"`
+	Active               bool      `json:"active"`
+	ModuleCodes          []string  `json:"module_codes"`
+	MaxEcommerceChannels int       `json:"max_ecommerce_channels"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
 }
 
 func FromSubscriptionType(t *entities.SubscriptionType) SubscriptionTypeResponse {
 	return SubscriptionTypeResponse{
-		ID:            t.ID,
-		Name:          t.Name,
-		Code:          t.Code,
-		Description:   t.Description,
-		Price:         t.Price,
-		BillingPeriod: t.BillingPeriod,
-		Active:        t.Active,
-		ModuleCodes:   t.ModuleCodes,
-		CreatedAt:     t.CreatedAt,
-		UpdatedAt:     t.UpdatedAt,
+		ID:                   t.ID,
+		Name:                 t.Name,
+		Code:                 t.Code,
+		Description:          t.Description,
+		Price:                t.Price,
+		BillingPeriod:        t.BillingPeriod,
+		Active:               t.Active,
+		ModuleCodes:          t.ModuleCodes,
+		MaxEcommerceChannels: t.MaxEcommerceChannels,
+		CreatedAt:            t.CreatedAt,
+		UpdatedAt:            t.UpdatedAt,
 	}
 }
 

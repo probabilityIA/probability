@@ -8,14 +8,15 @@ import (
 )
 
 type IntegrationUseCase struct {
-	repo        domain.IRepository
-	encryption  domain.IEncryptionService
-	cache       domain.IIntegrationCache
-	providerReg *providerRegistry
-	log         log.ILogger
-	observers   []domain.IntegrationCreatedObserver
-	config      env.IConfig
-	queue       rabbitmq.IQueue
+	repo                  domain.IRepository
+	encryption            domain.IEncryptionService
+	cache                 domain.IIntegrationCache
+	providerReg           *providerRegistry
+	log                   log.ILogger
+	observers             []domain.IntegrationCreatedObserver
+	config                env.IConfig
+	queue                 rabbitmq.IQueue
+	ecommerceLimitChecker domain.EcommerceLimitChecker
 }
 
 // New crea una nueva instancia del caso de uso de integraciones
@@ -34,6 +35,10 @@ func New(repo domain.IRepository, encryption domain.IEncryptionService, cache do
 
 func (uc *IntegrationUseCase) RegisterObserver(observer domain.IntegrationCreatedObserver) {
 	uc.observers = append(uc.observers, observer)
+}
+
+func (uc *IntegrationUseCase) SetEcommerceLimitChecker(checker domain.EcommerceLimitChecker) {
+	uc.ecommerceLimitChecker = checker
 }
 
 // RegisterProvider registra un provider para un tipo de integración

@@ -84,6 +84,7 @@ type IIntegrationCore interface {
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
+	SetEcommerceLimitChecker(checker domain.EcommerceLimitChecker)
 }
 
 type integrationCore struct {
@@ -194,6 +195,10 @@ func (ic *integrationCore) OnIntegrationCreated(integrationType int, observer fu
 
 func (ic *integrationCore) GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool) {
 	return ic.useCase.GetProvider(integrationType)
+}
+
+func (ic *integrationCore) SetEcommerceLimitChecker(checker domain.EcommerceLimitChecker) {
+	ic.useCase.SetEcommerceLimitChecker(checker)
 }
 
 func (ic *integrationCore) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {

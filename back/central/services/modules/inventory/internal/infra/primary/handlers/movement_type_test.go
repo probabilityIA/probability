@@ -42,7 +42,7 @@ func setupMovementTypeContext(w *httptest.ResponseRecorder, method, path string,
 func TestCreateMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"code":"test","name":"Test","direction":"in"}`)
@@ -60,7 +60,7 @@ func TestCreateMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestCreateMovementType_BodyInvalido_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	// Falta "direction" (required con oneof=in out neutral)
@@ -83,7 +83,7 @@ func TestCreateMovementType_CodigoYaExiste_RetornaConflict(t *testing.T) {
 			return nil, domainerrors.ErrMovementTypeCodeExists
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"code":"inbound","name":"Entrada","direction":"in"}`)
@@ -105,7 +105,7 @@ func TestCreateMovementType_ErrorInterno_RetornaInternalServerError(t *testing.T
 			return nil, errors.New("error de base de datos")
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"code":"nuevo","name":"Nuevo Tipo","direction":"neutral"}`)
@@ -136,7 +136,7 @@ func TestCreateMovementType_Exitoso_RetornaCreatedConTipo(t *testing.T) {
 			return tipoEsperado, nil
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"code":"devolucion","name":"Devolución de cliente","description":"Devolucion por garantia","direction":"in"}`)
@@ -173,7 +173,7 @@ func TestCreateMovementType_Exitoso_RetornaCreatedConTipo(t *testing.T) {
 func TestUpdateMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"name":"Nuevo nombre"}`)
@@ -192,7 +192,7 @@ func TestUpdateMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestUpdateMovementType_IDInvalido_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"name":"Nuevo nombre"}`)
@@ -215,7 +215,7 @@ func TestUpdateMovementType_TipoNoExiste_RetornaNotFound(t *testing.T) {
 			return nil, domainerrors.ErrMovementTypeNotFound
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"name":"Actualizado"}`)
@@ -247,7 +247,7 @@ func TestUpdateMovementType_Exitoso_RetornaOKConTipoActualizado(t *testing.T) {
 			return tipoActualizado, nil
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"name":"Ajuste actualizado","is_active":false}`)
@@ -276,7 +276,7 @@ func TestUpdateMovementType_Exitoso_RetornaOKConTipoActualizado(t *testing.T) {
 func TestDeleteMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	params := gin.Params{{Key: "id", Value: "5"}}
@@ -294,7 +294,7 @@ func TestDeleteMovementType_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestDeleteMovementType_IDInvalido_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	params := gin.Params{{Key: "id", Value: "abc"}}
@@ -316,7 +316,7 @@ func TestDeleteMovementType_ErrorInterno_RetornaInternalServerError(t *testing.T
 			return errors.New("no se puede eliminar: tiene movimientos asociados")
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	params := gin.Params{{Key: "id", Value: "1"}}
@@ -340,7 +340,7 @@ func TestDeleteMovementType_Exitoso_RetornaOKConMensaje(t *testing.T) {
 			return nil
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	params := gin.Params{{Key: "id", Value: "7"}}
@@ -394,7 +394,7 @@ func TestListMovementTypes_Exitoso_RetornaRespuestaPaginada(t *testing.T) {
 			}, 2, nil
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListMovementTypesContext(w, 10, "page=1&page_size=20")
@@ -422,7 +422,7 @@ func TestListMovementTypes_Exitoso_RetornaRespuestaPaginada(t *testing.T) {
 func TestListMovementTypes_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListMovementTypesContext(w, 0, "")
@@ -457,7 +457,7 @@ func setupListMovementsContext(w *httptest.ResponseRecorder, businessID uint, qu
 func TestListMovements_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListMovementsContext(w, 0, "")
@@ -480,7 +480,7 @@ func TestListMovements_Exitoso_RetornaRespuestaPaginada(t *testing.T) {
 			}, 1, nil
 		},
 	}
-	h := New(uc, nil)
+	h := New(uc, nil, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListMovementsContext(w, 10, "product_id=prod-001&page=1&page_size=10")

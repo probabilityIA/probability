@@ -39,6 +39,7 @@ func (uc *UseCase) UpdateSubscriptionType(ctx context.Context, dto dtos.UpdateSu
 	existing.BillingPeriod = billingPeriod
 	existing.Active = dto.Active
 	existing.ModuleCodes = dto.ModuleCodes
+	existing.MaxEcommerceChannels = dto.MaxEcommerceChannels
 
 	if err := uc.repo.UpdateSubscriptionType(ctx, existing); err != nil {
 		return nil, err

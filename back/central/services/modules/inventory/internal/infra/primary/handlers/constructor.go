@@ -29,13 +29,14 @@ type IHandlers interface {
 
 // handlers contiene el use case
 type handlers struct {
-	uc     app.IUseCase
-	rabbit rabbitmq.IQueue
+	uc             app.IUseCase
+	rabbit         rabbitmq.IQueue
+	moduleAccessMW gin.HandlerFunc
 }
 
 // New crea una nueva instancia de los handlers
-func New(uc app.IUseCase, rabbit rabbitmq.IQueue) IHandlers {
-	return &handlers{uc: uc, rabbit: rabbit}
+func New(uc app.IUseCase, rabbit rabbitmq.IQueue, moduleAccessMW gin.HandlerFunc) IHandlers {
+	return &handlers{uc: uc, rabbit: rabbit, moduleAccessMW: moduleAccessMW}
 }
 
 // friendlyValidationError traduce errores de validación de Gin a mensajes legibles

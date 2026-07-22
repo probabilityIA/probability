@@ -78,19 +78,21 @@ type IHandler interface {
 
 // handler implementa IHandler
 type handler struct {
-	useCase ports.IUseCase
-	repo    ports.IRepository
-	config  env.IConfig
-	log     log.ILogger
+	useCase        ports.IUseCase
+	repo           ports.IRepository
+	config         env.IConfig
+	log            log.ILogger
+	moduleAccessMW gin.HandlerFunc
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger, config env.IConfig) IHandler {
+func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger, config env.IConfig, moduleAccessMW gin.HandlerFunc) IHandler {
 	return &handler{
-		useCase: useCase,
-		repo:    repo,
-		config:  config,
-		log:     logger.WithModule("invoicing.handler"),
+		useCase:        useCase,
+		repo:           repo,
+		config:         config,
+		log:            logger.WithModule("invoicing.handler"),
+		moduleAccessMW: moduleAccessMW,
 	}
 }
 

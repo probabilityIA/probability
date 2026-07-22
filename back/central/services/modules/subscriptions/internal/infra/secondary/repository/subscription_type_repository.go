@@ -11,13 +11,14 @@ import (
 
 func (r *Repository) CreateSubscriptionType(ctx context.Context, subType *entities.SubscriptionType) error {
 	typeDB := &models.SubscriptionType{
-		Name:          subType.Name,
-		Code:          subType.Code,
-		Description:   subType.Description,
-		Price:         subType.Price,
-		BillingPeriod: subType.BillingPeriod,
-		Active:        subType.Active,
-		Features:      marshalModuleCodes(subType.ModuleCodes),
+		Name:                 subType.Name,
+		Code:                 subType.Code,
+		Description:          subType.Description,
+		Price:                subType.Price,
+		BillingPeriod:        subType.BillingPeriod,
+		Active:               subType.Active,
+		Features:             marshalModuleCodes(subType.ModuleCodes),
+		MaxEcommerceChannels: subType.MaxEcommerceChannels,
 	}
 
 	if err := r.db.Conn(ctx).Create(typeDB).Error; err != nil {
@@ -32,12 +33,13 @@ func (r *Repository) CreateSubscriptionType(ctx context.Context, subType *entiti
 
 func (r *Repository) UpdateSubscriptionType(ctx context.Context, subType *entities.SubscriptionType) error {
 	updates := map[string]interface{}{
-		"name":           subType.Name,
-		"description":    subType.Description,
-		"price":          subType.Price,
-		"billing_period": subType.BillingPeriod,
-		"active":         subType.Active,
-		"features":       marshalModuleCodes(subType.ModuleCodes),
+		"name":                   subType.Name,
+		"description":            subType.Description,
+		"price":                  subType.Price,
+		"billing_period":         subType.BillingPeriod,
+		"active":                 subType.Active,
+		"features":               marshalModuleCodes(subType.ModuleCodes),
+		"max_ecommerce_channels": subType.MaxEcommerceChannels,
 	}
 	return r.db.Conn(ctx).Model(&models.SubscriptionType{}).Where("id = ?", subType.ID).Updates(updates).Error
 }

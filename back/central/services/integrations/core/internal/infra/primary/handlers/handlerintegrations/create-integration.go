@@ -102,6 +102,9 @@ func (h *IntegrationHandler) CreateIntegrationHandler(c *gin.Context) {
 			errors.Is(err, domain.ErrIntegrationCategoryInvalid) {
 			statusCode = http.StatusBadRequest
 			errorMsg = err.Error()
+		} else if errors.Is(err, domain.ErrEcommerceLimitReached) {
+			statusCode = http.StatusForbidden
+			errorMsg = err.Error()
 		}
 
 		h.logger.Error().

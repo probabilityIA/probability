@@ -27,16 +27,17 @@ func unmarshalModuleCodes(raw datatypes.JSON) []string {
 
 func subscriptionTypeToEntity(m *models.SubscriptionType) *entities.SubscriptionType {
 	return &entities.SubscriptionType{
-		ID:            m.ID,
-		Name:          m.Name,
-		Code:          m.Code,
-		Description:   m.Description,
-		Price:         m.Price,
-		BillingPeriod: m.BillingPeriod,
-		Active:        m.Active,
-		ModuleCodes:   unmarshalModuleCodes(m.Features),
-		CreatedAt:     m.CreatedAt,
-		UpdatedAt:     m.UpdatedAt,
+		ID:                   m.ID,
+		Name:                 m.Name,
+		Code:                 m.Code,
+		Description:          m.Description,
+		Price:                m.Price,
+		BillingPeriod:        m.BillingPeriod,
+		Active:               m.Active,
+		ModuleCodes:          unmarshalModuleCodes(m.Features),
+		MaxEcommerceChannels: m.MaxEcommerceChannels,
+		CreatedAt:            m.CreatedAt,
+		UpdatedAt:            m.UpdatedAt,
 	}
 }
 

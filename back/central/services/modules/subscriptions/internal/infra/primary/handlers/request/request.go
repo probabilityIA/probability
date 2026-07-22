@@ -1,21 +1,23 @@
 package request
 
 type CreateSubscriptionTypeRequest struct {
-	Name          string   `json:"name" binding:"required"`
-	Code          string   `json:"code" binding:"required"`
-	Description   string   `json:"description"`
-	Price         float64  `json:"price" binding:"required,gt=0"`
-	BillingPeriod string   `json:"billing_period"`
-	ModuleCodes   []string `json:"module_codes"`
+	Name                 string   `json:"name" binding:"required"`
+	Code                 string   `json:"code" binding:"required"`
+	Description          string   `json:"description"`
+	Price                float64  `json:"price" binding:"required,gt=0"`
+	BillingPeriod        string   `json:"billing_period"`
+	ModuleCodes          []string `json:"module_codes"`
+	MaxEcommerceChannels int      `json:"max_ecommerce_channels"`
 }
 
 type UpdateSubscriptionTypeRequest struct {
-	Name          string   `json:"name" binding:"required"`
-	Description   string   `json:"description"`
-	Price         float64  `json:"price" binding:"required,gt=0"`
-	BillingPeriod string   `json:"billing_period"`
-	Active        bool     `json:"active"`
-	ModuleCodes   []string `json:"module_codes"`
+	Name                 string   `json:"name" binding:"required"`
+	Description          string   `json:"description"`
+	Price                float64  `json:"price" binding:"required,gt=0"`
+	BillingPeriod        string   `json:"billing_period"`
+	Active               bool     `json:"active"`
+	ModuleCodes          []string `json:"module_codes"`
+	MaxEcommerceChannels int      `json:"max_ecommerce_channels"`
 }
 
 type PurchaseSubscriptionRequest struct {

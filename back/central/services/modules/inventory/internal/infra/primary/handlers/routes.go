@@ -8,6 +8,9 @@ import (
 func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 	inventory := router.Group("/inventory")
 	inventory.Use(middleware.JWT())
+	if h.moduleAccessMW != nil {
+		inventory.Use(h.moduleAccessMW)
+	}
 	{
 		inventory.GET("/product/:productId", h.GetProductInventory)
 		inventory.GET("/warehouse/:warehouseId", h.ListWarehouseInventory)

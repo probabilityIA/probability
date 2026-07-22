@@ -1,6 +1,10 @@
 package app
 
-import "context"
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/shared/moduleregistry"
+)
 
 func (uc *UseCase) HasModuleAccess(ctx context.Context, businessID uint, moduleCode string) (bool, error) {
 	overrides, err := uc.repo.ListOverridesByBusiness(ctx, businessID)
@@ -13,12 +17,16 @@ func (uc *UseCase) HasModuleAccess(ctx context.Context, businessID uint, moduleC
 		}
 	}
 
+	if moduleregistry.IsRestrictedByDefault(moduleCode) {
+		return false, nil
+	}
+
 	subTypeID, err := uc.repo.GetBusinessCurrentSubscriptionTypeID(ctx, businessID)
 	if err != nil {
 		return false, err
 	}
 	if subTypeID == nil {
-		return false, nil
+		return true, nil
 	}
 
 	subType, err := uc.repo.GetSubscriptionType(ctx, *subTypeID)
@@ -26,7 +34,7 @@ func (uc *UseCase) HasModuleAccess(ctx context.Context, businessID uint, moduleC
 		return false, err
 	}
 	if subType == nil {
-		return false, nil
+		return true, nil
 	}
 
 	for _, code := range subType.ModuleCodes {

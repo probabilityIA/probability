@@ -8,6 +8,10 @@ import (
 // RegisterRoutes registra todas las rutas del módulo de facturación
 func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	invoicing := router.Group("/invoicing")
+	invoicing.Use(middleware.JWT())
+	if h.moduleAccessMW != nil {
+		invoicing.Use(h.moduleAccessMW)
+	}
 	{
 		// Facturas
 		invoices := invoicing.Group("/invoices")

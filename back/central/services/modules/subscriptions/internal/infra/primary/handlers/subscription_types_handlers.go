@@ -54,12 +54,13 @@ func (h *Handlers) CreateSubscriptionType(c *gin.Context) {
 	}
 
 	subType, err := h.uc.CreateSubscriptionType(c.Request.Context(), dtos.CreateSubscriptionTypeDTO{
-		Name:          req.Name,
-		Code:          req.Code,
-		Description:   req.Description,
-		Price:         req.Price,
-		BillingPeriod: req.BillingPeriod,
-		ModuleCodes:   req.ModuleCodes,
+		Name:                 req.Name,
+		Code:                 req.Code,
+		Description:          req.Description,
+		Price:                req.Price,
+		BillingPeriod:        req.BillingPeriod,
+		ModuleCodes:          req.ModuleCodes,
+		MaxEcommerceChannels: req.MaxEcommerceChannels,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -87,13 +88,14 @@ func (h *Handlers) UpdateSubscriptionType(c *gin.Context) {
 	}
 
 	subType, err := h.uc.UpdateSubscriptionType(c.Request.Context(), dtos.UpdateSubscriptionTypeDTO{
-		ID:            uint(id),
-		Name:          req.Name,
-		Description:   req.Description,
-		Price:         req.Price,
-		BillingPeriod: req.BillingPeriod,
-		Active:        req.Active,
-		ModuleCodes:   req.ModuleCodes,
+		ID:                   uint(id),
+		Name:                 req.Name,
+		Description:          req.Description,
+		Price:                req.Price,
+		BillingPeriod:        req.BillingPeriod,
+		Active:               req.Active,
+		ModuleCodes:          req.ModuleCodes,
+		MaxEcommerceChannels: req.MaxEcommerceChannels,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

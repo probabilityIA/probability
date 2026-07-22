@@ -72,6 +72,10 @@ type IS3Service interface {
 // IntegrationCreatedObserver es un callback que se invoca al crear una integración
 type IntegrationCreatedObserver func(ctx context.Context, integration *Integration)
 
+// EcommerceLimitChecker devuelve el limite de canales de e-commerce del plan
+// de suscripcion actual del negocio (0 = sin limite).
+type EcommerceLimitChecker func(ctx context.Context, businessID uint) (limit int, err error)
+
 // IIntegrationUseCase define las operaciones del caso de uso de integraciones.
 // Incluye CRUD, test, sync, webhooks, y registro de providers.
 type IIntegrationUseCase interface {
@@ -101,6 +105,9 @@ type IIntegrationUseCase interface {
 
 	// Observers
 	RegisterObserver(observer IntegrationCreatedObserver)
+
+	// Limites por plan de suscripcion
+	SetEcommerceLimitChecker(checker EcommerceLimitChecker)
 
 	// Cache
 	WarmCache(ctx context.Context) error

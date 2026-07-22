@@ -26,13 +26,14 @@ func (uc *UseCase) CreateSubscriptionType(ctx context.Context, dto dtos.CreateSu
 	}
 
 	subType := &entities.SubscriptionType{
-		Name:          dto.Name,
-		Code:          dto.Code,
-		Description:   dto.Description,
-		Price:         dto.Price,
-		BillingPeriod: billingPeriod,
-		Active:        true,
-		ModuleCodes:   dto.ModuleCodes,
+		Name:                 dto.Name,
+		Code:                 dto.Code,
+		Description:          dto.Description,
+		Price:                dto.Price,
+		BillingPeriod:        billingPeriod,
+		Active:               true,
+		ModuleCodes:          dto.ModuleCodes,
+		MaxEcommerceChannels: dto.MaxEcommerceChannels,
 	}
 
 	if err := uc.repo.CreateSubscriptionType(ctx, subType); err != nil {

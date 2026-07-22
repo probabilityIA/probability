@@ -13,6 +13,7 @@ import { TokenStorage } from '@/shared/config';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { UserProfileModal } from './user-profile-modal';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getMyModulesAction } from '@/services/modules/wallet/infra/subscription-actions';
 
 interface SidebarProps {
   user: {
@@ -32,6 +33,17 @@ export function Sidebar({ user }: SidebarProps) {
   const [invoicingOpen, setInvoicingOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
   const isDemo = permissions?.role_name === 'demo';
+
+  // Modulos restringidos por suscripcion (storefront, tickets, delivery quedan
+  // ocultos por defecto para negocios sin ese modulo habilitado en su plan/overrides).
+  const [accessibleModules, setAccessibleModules] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (isSuperAdmin) return;
+    getMyModulesAction().then((res) => {
+      if (res.success && res.data) setAccessibleModules(res.data);
+    });
+  }, [isSuperAdmin]);
+  const hasSubscriptionModule = (code: string) => isSuperAdmin || (accessibleModules?.includes(code) ?? false);
 
   const businessLogo = useMemo(() => {
     if (isSuperAdmin) return null;
@@ -106,7 +118,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
-  const canViewTickets = !isDemo;
+  const canViewTickets = !isDemo && hasSubscriptionModule('tickets');
 
   // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
@@ -138,11 +150,11 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
 
   // Storefront / Tienda
-  const canViewStorefront = isSuperAdmin || hasPermission('Storefront', 'Read');
+  const canViewStorefront = (isSuperAdmin || hasPermission('Storefront', 'Read')) && hasSubscriptionModule('storefront');
   const canViewWebsiteConfig = isSuperAdmin || user?.role === 'Administrador';
 
   // Ultima milla
-  const canViewDelivery = isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read');
+  const canViewDelivery = (isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read')) && hasSubscriptionModule('delivery');
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;

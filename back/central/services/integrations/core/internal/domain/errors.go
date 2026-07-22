@@ -20,6 +20,7 @@ var (
 	ErrIntegrationConfigSerialize      = errors.New("error al serializar configuración")
 	ErrIntegrationTestFailed           = errors.New("test de conexión falló")
 	ErrIntegrationAccessTokenNotFound  = errors.New("access_token no encontrado o inválido en las credenciales")
+	ErrEcommerceLimitReached           = errors.New("se alcanzo el limite de canales de e-commerce del plan de suscripcion actual")
 
 	// Errores de validación de tipo de integración
 	ErrIntegrationTypeNameRequired = errors.New("el nombre del tipo de integración es obligatorio")

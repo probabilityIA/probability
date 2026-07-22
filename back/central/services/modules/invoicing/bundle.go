@@ -25,6 +25,7 @@ func New(
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redis.IRedis,
+	moduleAccessMW gin.HandlerFunc,
 ) {
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("invoicing")
@@ -95,7 +96,7 @@ func New(
 	// 3. INFRAESTRUCTURA PRIMARIA (Adaptadores de entrada)
 
 	// HTTP Handlers
-	handler := handlers.New(useCase, repo, moduleLogger, config)
+	handler := handlers.New(useCase, repo, moduleLogger, config, moduleAccessMW)
 	handler.RegisterRoutes(router)
 
 	// Consumers (RabbitMQ)
