@@ -3,6 +3,7 @@ package usecasemanifest
 import (
 	"bytes"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	"image/png"
 	"io"
@@ -71,8 +72,10 @@ func getCarrierLogoPNG(carrier string) []byte {
 	if err != nil {
 		return nil
 	}
+	rgba := image.NewRGBA(img.Bounds())
+	draw.Draw(rgba, rgba.Bounds(), img, img.Bounds().Min, draw.Src)
 	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
+	if err := png.Encode(&buf, rgba); err != nil {
 		return nil
 	}
 	data := buf.Bytes()
