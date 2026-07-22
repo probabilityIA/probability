@@ -1,26 +1,37 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Modal } from '@/shared/ui/modal';
 import {
     getIntegrationCategoriesAction,
     getIntegrationsAction,
+    getIntegrationByIdAction,
     activateIntegrationAction,
     deactivateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
+import { IntegrationForm } from '@/services/integrations/core/ui';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
-import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES } from '../../domain/types';
+import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, CATEGORY_COLORS } from '../../domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { FlowConverge, FlowDiverge } from './FlowArrow';
-import { IntegrationOrb } from './IntegrationOrb';
-import { InternalModulesOrb } from './InternalModulesOrb';
+import { CyberCluster } from './CyberCluster';
+import { CyberHub } from './CyberHub';
+import { GlobalSyncModal } from './GlobalSyncModal';
+import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
     onClose: () => void;
     businessId?: number | null;
 }
+
+const WIDE_FORM_TYPE_IDS = [1, 3, 4, 8, 16, 33];
+
+const HUB_KEYFRAMES = `
+@keyframes cyber-dash { to { stroke-dashoffset: -24; } }
+@keyframes cyber-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes cyber-sweep { from { background-position: 200% 0; } to { background-position: -100% 0; } }
+`;
 
 export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
     const { permissions, isSuperAdmin } = usePermissions();
@@ -31,11 +42,18 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [resourceActive, setResourceActive] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
+    const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
+    const [syncModalOpen, setSyncModalOpen] = useState(false);
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const hubRef = useRef<HTMLDivElement | null>(null);
+    const clusterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const intParams: Record<string, any> = { page_size: 100 };
+            const intParams: Record<string, unknown> = { page_size: 100 };
             if (effectiveBusinessId) intParams.business_id = effectiveBusinessId;
 
             const [catRes, intRes, resourcesRes] = await Promise.all([
@@ -82,7 +100,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 ? deactivateIntegrationAction
                 : activateIntegrationAction;
             const res = await action(integration.id);
-            if (res && (res as any).success !== false) {
+            if (res && (res as { success?: boolean }).success !== false) {
                 setIntegrations(prev =>
                     prev.map(i =>
                         i.id === integration.id ? { ...i, is_active: !i.is_active } : i
@@ -96,17 +114,53 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         }
     };
 
-    const handleEdit = (integration: Integration) => {
-        // TODO: abrir modal de configuración por tipo de integración
-        console.log('Edit integration:', integration.id, integration.name);
+    const handleEdit = async (integration: Integration) => {
+        setEditLoadingId(integration.id);
+        try {
+            const res = await getIntegrationByIdAction(integration.id);
+            if (res.success && res.data) {
+                setEditingIntegration(res.data as Integration);
+            } else {
+                console.error('Error al obtener integracion:', res.message);
+            }
+        } catch (err) {
+            console.error('Error al obtener integracion:', err);
+        } finally {
+            setEditLoadingId(null);
+        }
     };
+
+    const handleEditClose = () => setEditingIntegration(null);
+
+    const handleEditSuccess = () => {
+        setEditingIntegration(null);
+        fetchData();
+    };
+
+    const setClusterRef = useCallback((code: string) => (el: HTMLDivElement | null) => {
+        if (el) clusterRefs.current.set(code, el);
+        else clusterRefs.current.delete(code);
+    }, []);
+
+    const getTargets = useCallback((): NetworkTarget[] => {
+        const targets: NetworkTarget[] = [];
+        clusterRefs.current.forEach((el, code) => {
+            const isChannel = (CHANNEL_CODES as readonly string[]).includes(code);
+            targets.push({
+                key: code,
+                el,
+                dir: isChannel ? 'in' : 'out',
+                color: CATEGORY_COLORS[code] || '#6366f1',
+            });
+        });
+        return targets;
+    }, []);
 
     const integrationsByCategory = categories.reduce<Record<string, Integration[]>>((acc, cat) => {
         acc[cat.code] = integrations.filter(i => i.category === cat.code);
         return acc;
     }, {});
 
-    // Resolver categorías visibles por nivel
     const resolve = (codes: readonly string[]) =>
         codes
             .map(code => categories.find(c => c.code === code))
@@ -116,56 +170,94 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const services = resolve(SERVICE_CODES);
     const internal = resolve(INTERNAL_CODES);
 
+    const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
+    const revision = loading ? 0 : categories.length * 1000 + integrations.length + 1;
+
+    const editIsWide = editingIntegration
+        ? WIDE_FORM_TYPE_IDS.includes(Number(editingIntegration.integration_type_id))
+        : false;
+
+    const renderCluster = (cat: IntegrationCategory) => (
+        <CyberCluster
+            key={cat.code}
+            category={cat}
+            color={CATEGORY_COLORS[cat.code] || '#6366f1'}
+            integrations={integrationsByCategory[cat.code] || []}
+            onToggle={handleToggle}
+            onEdit={handleEdit}
+            togglingId={togglingId}
+            editingId={editLoadingId}
+            anchorRef={setClusterRef(cat.code)}
+        />
+    );
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Tus Integraciones" size="5xl">
-            {loading ? (
-                <div className="flex items-center justify-center py-16">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
-                </div>
-            ) : categories.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-12">No hay categorías disponibles</p>
-            ) : (
-                <div className="flex flex-col items-center w-full gap-3 pt-2">
-                    <div className="flex flex-wrap lg:flex-nowrap gap-6 w-full pt-2">
-                        {channels.map(cat => (
-                            <IntegrationOrb
-                                key={cat.code}
-                                category={cat}
-                                integrations={integrationsByCategory[cat.code] || []}
-                                onToggle={handleToggle}
-                                onEdit={handleEdit}
-                                togglingId={togglingId}
-                            />
-                        ))}
+        <>
+            <Modal isOpen={isOpen} onClose={onClose} title="Tus Integraciones" size="4xl">
+                <style>{HUB_KEYFRAMES}</style>
+                {loading ? (
+                    <div className="flex items-center justify-center py-16">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600" />
                     </div>
-
-                    <FlowConverge count={channels.length} />
-
-                    {internal.length > 0 && internal.map(cat => (
-                        <InternalModulesOrb
-                            key={cat.code}
-                            category={cat}
-                            integrations={integrationsByCategory[cat.code] || []}
-                            resourceActive={resourceActive}
+                ) : categories.length === 0 ? (
+                    <p className="py-12 text-center text-gray-500 dark:text-gray-400">
+                        No hay categorias disponibles
+                    </p>
+                ) : (
+                    <div ref={containerRef} className="relative">
+                        <NetworkLinks
+                            container={containerRef}
+                            hub={hubRef}
+                            getTargets={getTargets}
+                            revision={revision}
                         />
-                    ))}
-
-                    <FlowDiverge count={services.length} />
-
-                    <div className="flex flex-wrap lg:flex-nowrap gap-6 w-full pt-2">
-                        {services.map(cat => (
-                            <IntegrationOrb
-                                key={cat.code}
-                                category={cat}
-                                integrations={integrationsByCategory[cat.code] || []}
-                                onToggle={handleToggle}
-                                onEdit={handleEdit}
-                                togglingId={togglingId}
+                        <div className="relative z-10 flex flex-col gap-12 pt-3">
+                            <div className="flex flex-wrap gap-8 lg:flex-nowrap">
+                                {channels.map(renderCluster)}
+                            </div>
+                            <CyberHub
+                                ref={hubRef}
+                                integrations={internalIntegrations}
+                                resourceActive={resourceActive}
+                                onSyncClick={() => setSyncModalOpen(true)}
                             />
-                        ))}
+                            <div className="flex flex-wrap gap-8 lg:flex-nowrap">
+                                {services.map(renderCluster)}
+                            </div>
+                        </div>
                     </div>
+                )}
+            </Modal>
+
+            <Modal
+                isOpen={!!editingIntegration}
+                onClose={handleEditClose}
+                title={(
+                    <span className="inline-flex items-center justify-center gap-2">
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.9)]" />
+                        Editar Integracion
+                    </span>
+                )}
+                size={editIsWide ? '4xl' : '5xl'}
+                zIndex={60}
+            >
+                <div style={editIsWide ? { width: 'min(768px, 92vw)' } : undefined}>
+                    {editingIntegration && (
+                        <IntegrationForm
+                            integration={editingIntegration}
+                            onSuccess={handleEditSuccess}
+                            onCancel={handleEditClose}
+                        />
+                    )}
                 </div>
-            )}
-        </Modal>
+            </Modal>
+
+            <GlobalSyncModal
+                isOpen={syncModalOpen}
+                onClose={() => setSyncModalOpen(false)}
+                integrations={integrations}
+                businessId={effectiveBusinessId}
+            />
+        </>
     );
 }

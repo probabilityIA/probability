@@ -1,20 +1,13 @@
-/**
- * Códigos de categorías por nivel jerárquico.
- * Canales: donde se originan las órdenes (paralelos)
- * Servicios: donde se procesan (independientes desde el hub)
- */
 export const CHANNEL_CODES = ['platform', 'ecommerce'] as const;
-export const SERVICE_CODES = ['messaging', 'invoicing', 'shipping', 'payment'] as const;
+export const SERVICE_CODES = ['messaging', 'invoicing'] as const;
 export const INTERNAL_CODES = ['internal'] as const;
 
-export const CATEGORY_ICONS: Record<string, string> = {
-    platform: '🧩',
-    ecommerce: '🛒',
-    invoicing: '🧾',
-    messaging: '💬',
-    payment: '💳',
-    shipping: '🚚',
-    internal: '⚙️',
+export const CATEGORY_COLORS: Record<string, string> = {
+    platform: '#8b5cf6',
+    ecommerce: '#3b82f6',
+    messaging: '#a855f7',
+    invoicing: '#10b981',
+    internal: '#6366f1',
 };
 
 export const INTERNAL_MODULE_RESOURCE_NAME: Record<string, string> = {
