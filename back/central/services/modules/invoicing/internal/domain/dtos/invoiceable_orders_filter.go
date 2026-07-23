@@ -18,7 +18,7 @@ type InvoiceableOrdersFilter struct {
 }
 
 const (
-	InvoiceableOrdersMaxPageSize     = 200
+	InvoiceableOrdersMaxPageSize     = 1000
 	InvoiceableOrdersDefaultPageSize = 20
 )
 

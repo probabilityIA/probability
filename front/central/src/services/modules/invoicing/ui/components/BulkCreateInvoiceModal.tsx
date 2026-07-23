@@ -36,6 +36,7 @@ type SortKey = NonNullable<InvoiceableOrdersFilters['sortBy']>;
 type SortDir = NonNullable<InvoiceableOrdersFilters['sortOrder']>;
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+const MAX_BULK_ORDERS = 1000;
 
 const SORT_OPTIONS: { value: `${SortKey}:${SortDir}`; label: string }[] = [
   { value: 'created_at:desc',   label: 'Mas recientes' },
@@ -227,7 +228,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       const [sortBy, sortOrder] = sort.split(':') as [SortKey, SortDir];
       const r = await getInvoiceableOrdersAction({
         page: 1,
-        pageSize: 200,
+        pageSize: MAX_BULK_ORDERS,
         businessId: propBusinessId ?? selectedBusinessId ?? undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
@@ -244,6 +245,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   const handleSubmit = async () => {
     if (superAdminNeedsBusiness) { setShowBusinessAlert(true); return; }
     if (selectedOrderIds.size === 0) return;
+    if (selectedOrderIds.size > MAX_BULK_ORDERS) {
+      alert(`Maximo ${MAX_BULK_ORDERS} ordenes por lote. Tienes ${selectedOrderIds.size} seleccionadas.`);
+      return;
+    }
     setSubmitting(true);
     setBulkProgress(null);
     setBulkCompleted(false);
@@ -425,7 +430,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   />
                   <span className="text-sm font-medium">Pagina ({orders.length})</span>
                   <button type="button" onClick={handleSelectAllMatching} disabled={total === 0} className="text-xs text-violet-600 hover:underline disabled:opacity-50">
-                    Seleccionar todas las {total} coincidencias
+                    Seleccionar todas las {Math.min(total, MAX_BULK_ORDERS)} coincidencias{total > MAX_BULK_ORDERS ? ` (max ${MAX_BULK_ORDERS})` : ''}
                   </button>
                   <button type="button" onClick={() => setSelectedOrderIds(new Set())} disabled={selectedOrderIds.size === 0} className="text-xs text-gray-500 hover:underline disabled:opacity-30 ml-auto">
                     Limpiar seleccion
