@@ -49,6 +49,9 @@ func New(
 	if rabbitMQ != nil {
 		pushConsumer := jumpsellerqueue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
 		pushConsumer.Start(context.Background())
+
+		statusConsumer := jumpsellerqueue.NewOrderStatusConsumer(rabbitMQ, uc, logger)
+		statusConsumer.Start(context.Background())
 	}
 
 	baseURL := config.Get("WEBHOOK_BASE_URL")
