@@ -619,12 +619,39 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                 )}
             </div>
 
-            <PlanCatalog businessId={businessId} onPurchased={fetchSub} />
+            <PlanCatalog businessId={businessId} onPurchased={fetchSub} currentSubscription={subscription} isCurrentActive={!isExpired} />
         </div>
     );
 }
 
-function PlanCatalog({ businessId, onPurchased }: { businessId?: number; onPurchased: () => void }) {
+const CheckIcon = () => (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+        <path d="M4 12.5L9.5 18L20 6.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
+
+const StarIcon = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+        <path d="M12 2L14.6 8.4L21.5 9L16.2 13.5L18 20.5L12 16.7L6 20.5L7.8 13.5L2.5 9L9.4 8.4L12 2Z" fill="currentColor" />
+    </svg>
+);
+
+const ChannelsIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M3 3H21V8H3V3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M4 8V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V8" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        <path d="M9 12H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+);
+
+interface PlanCatalogProps {
+    businessId?: number;
+    onPurchased: () => void;
+    currentSubscription: BusinessSubscription | null;
+    isCurrentActive: boolean;
+}
+
+function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentActive }: PlanCatalogProps) {
     const [types, setTypes] = useState<SubscriptionType[]>([]);
     const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -659,31 +686,131 @@ function PlanCatalog({ businessId, onPurchased }: { businessId?: number; onPurch
 
     if (loading) return <div className="flex justify-center py-6"><Spinner /></div>;
 
+    const sorted = [...types].sort((a, b) => a.price - b.price);
+    const currentIndex = isCurrentActive ? sorted.findIndex((t) => t.id === currentSubscription?.subscription_type_id) : -1;
+    const featuredIndex = sorted.length >= 3 ? Math.floor((sorted.length - 1) / 2) : -1;
+
     return (
-        <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6 space-y-4">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Planes disponibles</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-                Compra o renueva tu suscripción pagando con el saldo de tu billetera.
-            </p>
+        <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6 space-y-5">
+            <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Planes disponibles</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    Compra o cambia de plan pagando con el saldo de tu billetera. El cambio se aplica de inmediato.
+                </p>
+            </div>
 
             {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {types.map((t) => (
-                    <div key={t.id} className="rounded-xl border border-gray-200 dark:border-gray-600 p-5 space-y-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{t.name}</h4>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(t.price)}<span className="text-xs font-normal text-gray-400">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span></p>
-                        {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
-                        <div className="flex flex-wrap gap-1">
-                            {(t.module_codes ?? []).map((m) => (
-                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{moduleName(m)}</span>
-                            ))}
+            <div className="grid gap-5 lg:grid-cols-3">
+                {sorted.map((t, i) => {
+                    const featured = i === featuredIndex;
+                    const isCurrent = i === currentIndex;
+                    const isUpgrade = currentIndex >= 0 && i > currentIndex;
+                    const isDowngrade = currentIndex >= 0 && i < currentIndex;
+
+                    let ctaLabel = 'Cambiar a este plan';
+                    let footnote: string | null = null;
+                    if (currentIndex < 0) { ctaLabel = 'Comprar'; }
+                    else if (isUpgrade) { footnote = 'Se prorratea en tu próxima factura'; }
+                    else if (isDowngrade) { footnote = 'Aplica al final de tu ciclo actual'; }
+
+                    return (
+                        <div
+                            key={t.id}
+                            className={`relative flex flex-col rounded-2xl border bg-white dark:bg-gray-800 overflow-hidden transition-transform ${
+                                featured
+                                    ? 'border-violet-500 shadow-lg shadow-violet-500/10 lg:-translate-y-1.5 z-10'
+                                    : 'border-gray-200 dark:border-gray-600 shadow-sm'
+                            }`}
+                        >
+                            {featured && (
+                                <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-violet-600 to-purple-500 text-white text-[11px] font-bold uppercase tracking-wide py-1.5">
+                                    <StarIcon /> Más elegido
+                                </div>
+                            )}
+
+                            <div className={featured ? 'pt-5 px-6 pb-5' : 'pt-6 px-6 pb-5'}>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">{t.name}</h4>
+                                    {isCurrent && (
+                                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/30 px-2 py-0.5 rounded-full">
+                                            Tu plan
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="flex items-end gap-1 mb-3">
+                                    <span className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">{formatCurrency(t.price)}</span>
+                                    <span className="text-sm font-semibold text-gray-400 pb-1">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span>
+                                </div>
+
+                                {t.description && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-4 min-h-[2.6rem]">{t.description}</p>
+                                )}
+
+                                <div className={`flex items-center gap-3 rounded-xl p-3 ${featured ? 'bg-violet-50 dark:bg-violet-900/20' : 'bg-gray-50 dark:bg-gray-700/40'}`}>
+                                    <div className={`w-[34px] h-[34px] rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                        featured ? 'bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                    }`}>
+                                        <ChannelsIcon />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                                            {t.max_ecommerce_channels > 0 ? `Hasta ${t.max_ecommerce_channels}` : 'Ilimitados'}
+                                        </div>
+                                        <div className="text-xs text-gray-400 leading-tight">canales de ecommerce conectados</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-gray-100 dark:border-gray-700 mx-6" />
+
+                            <div className="px-6 pt-4 pb-2 flex-1">
+                                <div className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-3">Módulos incluidos</div>
+                                <div className="flex flex-col gap-2.5">
+                                    {(t.module_codes ?? []).map((m) => (
+                                        <div key={m} className="flex items-center gap-2.5">
+                                            <span className={`w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 ${
+                                                featured ? 'bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                            }`}>
+                                                <CheckIcon />
+                                            </span>
+                                            <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">{moduleName(m)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="px-6 pt-5 pb-6">
+                                {isCurrent ? (
+                                    <button disabled className="w-full py-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-semibold text-sm cursor-default">
+                                        Plan actual
+                                    </button>
+                                ) : (
+                                    <Button
+                                        variant={featured ? 'purple' : 'outline-purple'}
+                                        className="w-full"
+                                        onClick={() => { setMonths('1'); setPurchaseModal({ open: true, type: t }); }}
+                                    >
+                                        {ctaLabel}
+                                    </Button>
+                                )}
+                                {footnote && (
+                                    <div className="text-[11px] text-gray-400 text-center mt-2">{footnote}</div>
+                                )}
+                            </div>
                         </div>
-                        <Button variant="primary" className="w-full" onClick={() => { setMonths('1'); setPurchaseModal({ open: true, type: t }); }}>
-                            Comprar
-                        </Button>
-                    </div>
-                ))}
+                    );
+                })}
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-gray-400 pt-1">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                    <path d="M12 8V13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <circle cx="12" cy="16.2" r="0.9" fill="currentColor" />
+                </svg>
+                El cambio de plan se aplica de forma inmediata y se prorratea en tu próxima factura.
             </div>
 
             <Modal isOpen={purchaseModal.open} onClose={() => setPurchaseModal({ open: false })} title={`Comprar ${purchaseModal.type?.name}`} size="sm">
