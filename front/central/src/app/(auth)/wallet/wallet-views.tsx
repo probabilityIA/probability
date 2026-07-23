@@ -139,10 +139,16 @@ export function AdminWalletView() {
         }
     };
 
-    const filteredWallets = wallets.filter(w => {
-        const businessName = businesses[w.BusinessID] || '';
-        return businessName.toLowerCase().includes(searchBusiness.toLowerCase());
-    });
+    const filteredWallets = wallets
+        .filter(w => {
+            const businessName = businesses[w.BusinessID] || '';
+            return businessName.toLowerCase().includes(searchBusiness.toLowerCase());
+        })
+        .sort((a, b) => {
+            const balanceA = typeof a.Balance === 'string' ? parseFloat(a.Balance) : a.Balance;
+            const balanceB = typeof b.Balance === 'string' ? parseFloat(b.Balance) : b.Balance;
+            return balanceB - balanceA;
+        });
 
     const totalBalance = wallets
         .filter(w => selectedBusinessesForKPI.has(w.BusinessID))
