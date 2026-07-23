@@ -15,7 +15,7 @@ import (
 
 var carrierLogoURLs = map[string]string{
 	"SERVIENTREGA":                  "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png",
-	"COORDINADORA":                  "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png",
+	"COORDINADORA":                  "https://www.elempleo.com/sitios-empresariales/colombia/coordinadora-mercantil/images/logo-coordinadora.png",
 	"DHL":                           "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"DHLEXPRESS":                    "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"FEDEX":                         "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png",
