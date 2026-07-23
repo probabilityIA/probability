@@ -2,11 +2,11 @@ package mocks
 
 import "context"
 
-// RabbitMQMock - Mock de rabbitmq.IQueue para testing
 type RabbitMQMock struct {
 	PublishFn           func(ctx context.Context, queueName string, message []byte) error
 	PublishToExchangeFn func(ctx context.Context, exchangeName string, routingKey string, message []byte) error
 	ConsumeFn           func(ctx context.Context, queueName string, handler func([]byte) error) error
+	ConsumeConcurrentFn func(ctx context.Context, queueName string, handler func([]byte) error, workers int) error
 	CloseFn             func() error
 	DeclareQueueFn      func(queueName string, durable bool) error
 	DeclareExchangeFn   func(exchangeName string, exchangeType string, durable bool) error
@@ -31,6 +31,13 @@ func (m *RabbitMQMock) PublishToExchange(ctx context.Context, exchangeName strin
 func (m *RabbitMQMock) Consume(ctx context.Context, queueName string, handler func([]byte) error) error {
 	if m.ConsumeFn != nil {
 		return m.ConsumeFn(ctx, queueName, handler)
+	}
+	return nil
+}
+
+func (m *RabbitMQMock) ConsumeConcurrent(ctx context.Context, queueName string, handler func([]byte) error, workers int) error {
+	if m.ConsumeConcurrentFn != nil {
+		return m.ConsumeConcurrentFn(ctx, queueName, handler, workers)
 	}
 	return nil
 }

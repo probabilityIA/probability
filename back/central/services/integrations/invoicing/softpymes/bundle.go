@@ -2,6 +2,7 @@ package softpymes
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/app"
@@ -14,7 +15,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New crea una nueva instancia del módulo Softpymes
+const defaultInvoiceWorkers = 3
+
 func New(
 	config env.IConfig,
 	logger log.ILogger,
@@ -23,44 +25,53 @@ func New(
 ) *softpymescore.SoftpymesCore {
 	logger = logger.WithModule("softpymes")
 
-	// 1. Cliente HTTP de Softpymes
-	// Sin URL quemada: la URL siempre viene de integration_types.base_url / base_url_test.
-	// El consumer valida que la URL no esté vacía antes de llamar al cliente.
 	httpClient := client.New(logger)
-	logger.Info(context.Background()).Msg("✅ Softpymes HTTP client initialized (URL dinámica desde integration_types)")
+	logger.Info(context.Background()).Msg("Softpymes HTTP client initialized (URL dinamica desde integration_types)")
 
-	// 2. Response Publisher (RabbitMQ)
 	responsePublisher := queue.New(rabbit, logger)
-	logger.Info(context.Background()).Msg("✅ Softpymes response publisher initialized")
+	logger.Info(context.Background()).Msg("Softpymes response publisher initialized")
 
-	// 3. Invoice Request Consumer (escucha "invoicing.softpymes.requests")
 	if rabbit != nil {
+		workers := defaultInvoiceWorkers
+		if raw := config.Get("SOFTPYMES_INVOICE_WORKERS"); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+				workers = parsed
+			} else {
+				logger.Warn(context.Background()).
+					Str("value", raw).
+					Int("default", defaultInvoiceWorkers).
+					Msg("SOFTPYMES_INVOICE_WORKERS invalido, usando default")
+			}
+		}
+
 		invoiceRequestConsumer := consumer.New(
 			rabbit,
 			coreIntegration,
 			httpClient,
 			responsePublisher,
 			logger,
+			workers,
 		)
-		logger.Info(context.Background()).Msg("✅ Softpymes invoice request consumer initialized")
+		logger.Info(context.Background()).
+			Int("workers", workers).
+			Msg("Softpymes invoice request consumer initialized")
 
 		go func() {
 			ctx := context.Background()
-			logger.Info(ctx).Msg("🚀 Starting Softpymes invoice request consumer in background...")
+			logger.Info(ctx).Msg("Starting Softpymes invoice request consumer in background...")
 			if err := invoiceRequestConsumer.Start(ctx); err != nil {
-				logger.Error(ctx).Err(err).Msg("❌ Softpymes invoice request consumer failed")
+				logger.Error(ctx).Err(err).Msg("Softpymes invoice request consumer failed")
 			}
 		}()
 	} else {
 		logger.Warn(context.Background()).
-			Msg("❌ RabbitMQ no disponible, consumer de facturación (Softpymes) deshabilitado")
+			Msg("RabbitMQ no disponible, consumer de facturacion (Softpymes) deshabilitado")
 	}
 
-	// 4. Use Case
 	useCase := app.New(httpClient, logger)
-	logger.Info(context.Background()).Msg("✅ Softpymes use case initialized")
+	logger.Info(context.Background()).Msg("Softpymes use case initialized")
 
-	logger.Info(context.Background()).Msg("✅ Softpymes bundle initialized")
+	logger.Info(context.Background()).Msg("Softpymes bundle initialized")
 
 	return softpymescore.New(useCase)
 }

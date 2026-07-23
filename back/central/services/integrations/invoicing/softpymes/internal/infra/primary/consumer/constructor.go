@@ -13,10 +13,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// DTOs locales replicados del módulo Invoicing para deserialización
-// (Regla de aislamiento: no importar entre módulos)
-
-// invoiceCustomerData datos del cliente (replicado de invoicing module)
 type invoiceCustomerData struct {
 	Name    string `json:"name"`
 	Email   string `json:"email"`
@@ -25,29 +21,26 @@ type invoiceCustomerData struct {
 	Address string `json:"address,omitempty"`
 }
 
-// invoiceItemData datos de un item (replicado de invoicing module)
 type invoiceItemData struct {
-	ProductID   *string  `json:"product_id"`
-	SKU         string   `json:"sku"`
-	Name        string   `json:"name"`
-	Description *string  `json:"description"`
-	Quantity    int      `json:"quantity"`
-	UnitPrice   float64  `json:"unit_price"`
-	UnitPriceBase float64 `json:"unit_price_base"`
-	TotalPrice  float64  `json:"total_price"`
-	Tax         float64  `json:"tax"`
-	TaxRate     *float64 `json:"tax_rate"`
+	ProductID       *string  `json:"product_id"`
+	SKU             string   `json:"sku"`
+	Name            string   `json:"name"`
+	Description     *string  `json:"description"`
+	Quantity        int      `json:"quantity"`
+	UnitPrice       float64  `json:"unit_price"`
+	UnitPriceBase   float64  `json:"unit_price_base"`
+	TotalPrice      float64  `json:"total_price"`
+	Tax             float64  `json:"tax"`
+	TaxRate         *float64 `json:"tax_rate"`
 	Discount        float64  `json:"discount"`
 	DiscountPercent float64  `json:"discount_percent"`
-	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment      float64 `json:"unit_price_presentment"`
-	UnitPriceBasePresentment  float64 `json:"unit_price_base_presentment"`
-	TotalPricePresentment     float64 `json:"total_price_presentment"`
-	DiscountPresentment       float64 `json:"discount_presentment"`
-	TaxPresentment            float64 `json:"tax_presentment"`
+	UnitPricePresentment     float64 `json:"unit_price_presentment"`
+	UnitPriceBasePresentment float64 `json:"unit_price_base_presentment"`
+	TotalPricePresentment    float64 `json:"total_price_presentment"`
+	DiscountPresentment      float64 `json:"discount_presentment"`
+	TaxPresentment           float64 `json:"tax_presentment"`
 }
 
-// invoiceData datos completos (replicado de invoicing module)
 type invoiceData struct {
 	IntegrationID    uint                   `json:"integration_id"`
 	Customer         invoiceCustomerData    `json:"customer"`
@@ -65,7 +58,6 @@ type invoiceData struct {
 	Config           map[string]interface{} `json:"config"`
 }
 
-// InvoiceRequestMessage es el mensaje recibido desde Invoicing Module
 type InvoiceRequestMessage struct {
 	InvoiceID     uint        `json:"invoice_id"`
 	Provider      string      `json:"provider"`
@@ -75,29 +67,33 @@ type InvoiceRequestMessage struct {
 	Timestamp     time.Time   `json:"timestamp"`
 }
 
-// InvoiceRequestConsumer consume solicitudes de facturación desde Invoicing Module
 type InvoiceRequestConsumer struct {
 	rabbit            rabbitmq.IQueue
 	integrationCore   integrationCore.IIntegrationService
 	softpymesClient   ports.ISoftpymesClient
 	responsePublisher *queue.ResponsePublisher
 	log               log.ILogger
+	workers           int
 }
 
-// New crea una nueva instancia del consumer
 func New(
 	rabbit rabbitmq.IQueue,
 	integrationCore integrationCore.IIntegrationService,
 	softpymesClient ports.ISoftpymesClient,
 	responsePublisher *queue.ResponsePublisher,
 	logger log.ILogger,
+	workers int,
 ) *InvoiceRequestConsumer {
+	if workers < 1 {
+		workers = 1
+	}
 	return &InvoiceRequestConsumer{
 		rabbit:            rabbit,
 		integrationCore:   integrationCore,
 		softpymesClient:   softpymesClient,
 		responsePublisher: responsePublisher,
 		log:               logger.WithModule("softpymes.invoice_request_consumer"),
+		workers:           workers,
 	}
 }
 
@@ -105,7 +101,6 @@ const (
 	QueueSoftpymesRequests = rabbitmq.QueueInvoicingSoftpymesRequests
 )
 
-// Start inicia el consumer
 func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
 	if c.rabbit == nil {
 		c.log.Warn(ctx).Msg("RabbitMQ client is nil, consumer cannot start")
@@ -114,40 +109,38 @@ func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
 
 	c.log.Info(ctx).
 		Str("queue", QueueSoftpymesRequests).
+		Int("workers", c.workers).
 		Msg("Starting Softpymes invoice request consumer")
 
-	// Declarar cola
 	if err := c.rabbit.DeclareQueue(QueueSoftpymesRequests, true); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to declare queue")
 		return err
 	}
 
-	// Iniciar consumo
-	if err := c.rabbit.Consume(ctx, QueueSoftpymesRequests, c.handleInvoiceRequest); err != nil {
+	if err := c.rabbit.ConsumeConcurrent(ctx, QueueSoftpymesRequests, c.handleInvoiceRequest, c.workers); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to start consuming")
 		return err
 	}
 
 	c.log.Info(ctx).
 		Str("queue", QueueSoftpymesRequests).
+		Int("workers", c.workers).
 		Msg("Consumer started successfully")
 
 	return nil
 }
 
-// handleInvoiceRequest procesa una solicitud de facturación
 func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	ctx := context.Background()
 	startTime := time.Now()
 
-	// Parsear mensaje con DTOs tipados
 	var request InvoiceRequestMessage
 	if err := json.Unmarshal(message, &request); err != nil {
 		c.log.Error(ctx).
 			Err(err).
 			Str("body", string(message)).
-			Msg("Failed to unmarshal request")
-		return err
+			Msg("Failed to unmarshal request - dropping corrupt message")
+		return nil
 	}
 
 	c.log.Info(ctx).
@@ -156,22 +149,18 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		Str("correlation_id", request.CorrelationID).
 		Msg("Received invoice request")
 
-	// Operación "compare": flujo propio (publica CompareResponseMessage, no InvoiceResponseMessage)
 	if request.Operation == "compare" {
 		return c.processCompareRequest(ctx, &request)
 	}
 
-	// Operación "list_items": flujo propio (publica ListItemsResponseMessage, no InvoiceResponseMessage)
 	if request.Operation == "list_items" {
 		return c.processListItemsRequest(ctx, &request)
 	}
 
-	// Operación "list_bank_accounts": flujo propio (publica ListBankAccountsResponseMessage)
 	if request.Operation == "list_bank_accounts" {
 		return c.processListBankAccountsRequest(ctx, &request)
 	}
 
-	// Procesar según operación (create/retry/cancel/check_status -> InvoiceResponseMessage)
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {
 	case "create", "retry":
@@ -189,7 +178,6 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		response = c.createErrorResponse(&request, "unknown_operation", "Unknown operation: "+request.Operation, startTime, nil)
 	}
 
-	// Publicar response
 	if err := c.responsePublisher.PublishResponse(ctx, response); err != nil {
 		c.log.Error(ctx).
 			Err(err).
