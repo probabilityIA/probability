@@ -17,6 +17,7 @@ const SHIPMENT_EVENT_TYPES: ShipmentSSEEventType[] = [
   'shipment.tracking_failed',
   'shipment.cancelled',
   'shipment.cancel_failed',
+  'shipment.sync_batch_completed',
 ];
 
 interface UseShipmentSSEOptions {
@@ -29,6 +30,7 @@ interface UseShipmentSSEOptions {
   onTrackingFailed?: (data: ShipmentSSEEventData) => void;
   onShipmentCancelled?: (data: ShipmentSSEEventData) => void;
   onCancelFailed?: (data: ShipmentSSEEventData) => void;
+  onSyncBatchCompleted?: (data: ShipmentSSEEventData) => void;
 }
 
 export function useShipmentSSE(options: UseShipmentSSEOptions) {
@@ -42,6 +44,7 @@ export function useShipmentSSE(options: UseShipmentSSEOptions) {
     onTrackingFailed,
     onShipmentCancelled,
     onCancelFailed,
+    onSyncBatchCompleted,
   } = options;
 
   // Use refs for callbacks to avoid reconnecting when they change
@@ -54,6 +57,7 @@ export function useShipmentSSE(options: UseShipmentSSEOptions) {
     onTrackingFailed,
     onShipmentCancelled,
     onCancelFailed,
+    onSyncBatchCompleted,
   });
 
   useEffect(() => {
@@ -66,6 +70,7 @@ export function useShipmentSSE(options: UseShipmentSSEOptions) {
       onTrackingFailed,
       onShipmentCancelled,
       onCancelFailed,
+      onSyncBatchCompleted,
     };
   });
 
@@ -101,6 +106,9 @@ export function useShipmentSSE(options: UseShipmentSSEOptions) {
           break;
         case 'shipment.cancel_failed':
           callbacksRef.current.onCancelFailed?.(data);
+          break;
+        case 'shipment.sync_batch_completed':
+          callbacksRef.current.onSyncBatchCompleted?.(data);
           break;
       }
     } catch {

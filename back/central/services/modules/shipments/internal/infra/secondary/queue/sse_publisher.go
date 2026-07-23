@@ -107,6 +107,17 @@ func (p *SSEPublisher) PublishCancelFailed(ctx context.Context, businessID uint,
 	})
 }
 
+// PublishSyncBatchCompleted publica la senal definitiva de que un lote de sincronizacion termino,
+// incluyendo los envios que fallaron o no se encontraron y por lo tanto nunca emiten
+// shipment.tracking_updated individualmente.
+func (p *SSEPublisher) PublishSyncBatchCompleted(ctx context.Context, businessID uint, correlationID string, summary map[string]interface{}) {
+	data := map[string]interface{}{"correlation_id": correlationID}
+	for k, v := range summary {
+		data[k] = v
+	}
+	p.publish(ctx, "shipment.sync_batch_completed", businessID, data)
+}
+
 // publish publica un evento al dispatcher central de forma no-bloqueante
 func (p *SSEPublisher) publish(ctx context.Context, eventType string, businessID uint, data map[string]interface{}) {
 	// Extract integration_id from data if present (enriched by response_consumer)
@@ -159,6 +170,8 @@ func (n *noopSSEPublisher) PublishTrackingUpdated(_ context.Context, _ uint, _ s
 func (n *noopSSEPublisher) PublishTrackingFailed(_ context.Context, _ uint, _ string, _ string) {}
 func (n *noopSSEPublisher) PublishShipmentCancelled(_ context.Context, _ uint, _ uint)          {}
 func (n *noopSSEPublisher) PublishCancelFailed(_ context.Context, _ uint, _ uint, _ string, _ string) {
+}
+func (n *noopSSEPublisher) PublishSyncBatchCompleted(_ context.Context, _ uint, _ string, _ map[string]interface{}) {
 }
 
 // Compile-time interface checks

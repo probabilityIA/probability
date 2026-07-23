@@ -15,6 +15,7 @@ type SSEPublisherMock struct {
 	PublishTrackingFailedFn   func(ctx context.Context, businessID uint, correlationID string, errorMsg string)
 	PublishShipmentCancelledFn func(ctx context.Context, businessID uint, shipmentID uint)
 	PublishCancelFailedFn     func(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string)
+	PublishSyncBatchCompletedFn func(ctx context.Context, businessID uint, correlationID string, summary map[string]interface{})
 }
 
 func (m *SSEPublisherMock) PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{}) {
@@ -62,5 +63,11 @@ func (m *SSEPublisherMock) PublishShipmentCancelled(ctx context.Context, busines
 func (m *SSEPublisherMock) PublishCancelFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string) {
 	if m.PublishCancelFailedFn != nil {
 		m.PublishCancelFailedFn(ctx, businessID, shipmentID, correlationID, errorMsg)
+	}
+}
+
+func (m *SSEPublisherMock) PublishSyncBatchCompleted(ctx context.Context, businessID uint, correlationID string, summary map[string]interface{}) {
+	if m.PublishSyncBatchCompletedFn != nil {
+		m.PublishSyncBatchCompletedFn(ctx, businessID, correlationID, summary)
 	}
 }

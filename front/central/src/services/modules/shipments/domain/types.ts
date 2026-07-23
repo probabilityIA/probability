@@ -273,7 +273,8 @@ export type ShipmentSSEEventType =
   | 'shipment.tracking_updated'
   | 'shipment.tracking_failed'
   | 'shipment.cancelled'
-  | 'shipment.cancel_failed';
+  | 'shipment.cancel_failed'
+  | 'shipment.sync_batch_completed';
 
 export interface ShipmentSSEEvent {
   id: string;

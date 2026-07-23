@@ -112,6 +112,8 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 			Str("correlation_id", response.CorrelationID).
 			Interface("summary", response.Data).
 			Msg("Sync batch summary received")
+		businessID := c.resolveBusinessID(ctx, &response)
+		c.ssePublisher.PublishSyncBatchCompleted(ctx, businessID, response.CorrelationID, response.Data)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", response.Operation).

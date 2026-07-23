@@ -48,21 +48,37 @@ const STATUS_LABELS: Record<string, string> = {
     cancelled: 'Cancelado',
 };
 
+function defaultDateFrom() {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().slice(0, 10);
+}
+
+function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+}
+
 export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: SyncProgressModalProps) {
-    const [phase, setPhase] = useState<'idle' | 'starting' | 'running' | 'done' | 'error'>('idle');
+    const [phase, setPhase] = useState<'idle' | 'setup' | 'starting' | 'running' | 'done' | 'error'>('idle');
     const [correlationPrefix, setCorrelationPrefix] = useState<string | null>(null);
     const [total, setTotal] = useState(0);
     const [batches, setBatches] = useState(0);
     const [updates, setUpdates] = useState<SyncUpdate[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [dateFrom, setDateFrom] = useState(defaultDateFrom());
+    const [dateTo, setDateTo] = useState(todayStr());
 
     const effectiveBusinessId = useMemo(() => businessId ?? 0, [businessId]);
     const businessIdRef = useRef(businessId);
     const correlationPrefixRef = useRef<string | null>(null);
     const phaseRef = useRef(phase);
+    const onCompletedRef = useRef(onCompleted);
     useEffect(() => {
         businessIdRef.current = businessId;
     }, [businessId]);
+    useEffect(() => {
+        onCompletedRef.current = onCompleted;
+    }, [onCompleted]);
     useEffect(() => {
         correlationPrefixRef.current = correlationPrefix;
     }, [correlationPrefix]);
@@ -98,59 +114,68 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
                 return [next, ...prev].slice(0, 200);
             });
         },
+        onSyncBatchCompleted: (data: ShipmentSSEEventData) => {
+            const currentPhase = phaseRef.current;
+            if (currentPhase !== 'running') return;
+
+            const corr = (data.correlation_id as string | undefined) || '';
+            const prefix = correlationPrefixRef.current;
+            const matches = prefix ? corr.startsWith(prefix) : corr.startsWith('sync-');
+            if (!matches) return;
+
+            setPhase('done');
+            onCompletedRef.current?.();
+        },
     });
 
     useEffect(() => {
         if (!isOpen) return;
-
-        let cancelled = false;
-        const run = async () => {
-            setPhase('starting');
-            setUpdates([]);
-            setErrorMessage(null);
-
-            const currentBusinessId = businessIdRef.current;
-            if (!currentBusinessId) {
-                if (!cancelled) {
-                    setErrorMessage('Selecciona un negocio antes de sincronizar');
-                    setPhase('error');
-                }
-                return;
-            }
-
-            const result: any = await syncShipmentStatusAction({
-                provider: 'envioclick',
-                business_id: currentBusinessId,
-            });
-
-            if (cancelled) return;
-
-            if (!result.success) {
-                setErrorMessage(result.message || result.error || 'No se pudo iniciar la sincronización');
-                setPhase('error');
-                return;
-            }
-
-            const corr = result.correlation_id as string | undefined;
-            const totalItems = (result.total_shipments as number | undefined) ?? 0;
-
-            if (totalItems === 0) {
-                setErrorMessage(result.message || 'No hay envíos para sincronizar en el rango indicado');
-                setPhase('error');
-                return;
-            }
-
-            setCorrelationPrefix(corr ?? null);
-            setTotal(totalItems);
-            setBatches((result.batches as number | undefined) ?? 0);
-            setPhase('running');
-        };
-        run();
-
-        return () => {
-            cancelled = true;
-        };
+        setPhase('setup');
+        setUpdates([]);
+        setErrorMessage(null);
+        setDateFrom(defaultDateFrom());
+        setDateTo(todayStr());
     }, [isOpen]);
+
+    const startSync = async () => {
+        setPhase('starting');
+        setUpdates([]);
+        setErrorMessage(null);
+
+        const currentBusinessId = businessIdRef.current;
+        if (!currentBusinessId) {
+            setErrorMessage('Selecciona un negocio antes de sincronizar');
+            setPhase('error');
+            return;
+        }
+
+        const result: any = await syncShipmentStatusAction({
+            provider: 'envioclick',
+            business_id: currentBusinessId,
+            date_from: dateFrom || undefined,
+            date_to: dateTo || undefined,
+        });
+
+        if (!result.success) {
+            setErrorMessage(result.message || result.error || 'No se pudo iniciar la sincronización');
+            setPhase('error');
+            return;
+        }
+
+        const corr = result.correlation_id as string | undefined;
+        const totalItems = (result.total_shipments as number | undefined) ?? 0;
+
+        if (totalItems === 0) {
+            setErrorMessage(result.message || 'No hay envíos para sincronizar en el rango indicado');
+            setPhase('error');
+            return;
+        }
+
+        setCorrelationPrefix(corr ?? null);
+        setTotal(totalItems);
+        setBatches((result.batches as number | undefined) ?? 0);
+        setPhase('running');
+    };
 
     useEffect(() => {
         if (phase === 'running' && total > 0 && updates.length >= total) {
@@ -190,7 +215,8 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Sincronización de Estados de Guías</h2>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {phase === 'setup' && 'Elige el rango de fechas a sincronizar'}
                                 {phase === 'starting' && 'Iniciando...'}
                                 {phase === 'running' && `${processed} de ${total} envíos · ${batches} batch${batches !== 1 ? 'es' : ''}`}
                                 {phase === 'done' && `Completado · ${processed} envíos actualizados`}
@@ -206,6 +232,53 @@ export function SyncProgressModal({ isOpen, onClose, businessId, onCompleted }: 
                         <X size={18} />
                     </button>
                 </div>
+
+                {phase === 'setup' && (
+                    <div className="p-6 space-y-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Por defecto se sincronizan los envíos creados en los últimos 30 días. Si necesitas
+                            actualizar una guía más antigua, amplía el rango de fechas.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Desde</label>
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    max={dateTo}
+                                    onChange={(e) => setDateFrom(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Hasta</label>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    min={dateFrom}
+                                    max={todayStr()}
+                                    onChange={(e) => setDateTo(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                            <button
+                                onClick={onClose}
+                                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={startSync}
+                                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                            >
+                                <RefreshCw size={14} />
+                                Sincronizar
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {phase === 'error' && (
                     <div className="p-6 flex flex-col items-center text-center gap-3">

@@ -280,4 +280,5 @@ type IShipmentSSEPublisher interface {
 	PublishTrackingFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)
 	PublishShipmentCancelled(ctx context.Context, businessID uint, shipmentID uint)
 	PublishCancelFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string)
+	PublishSyncBatchCompleted(ctx context.Context, businessID uint, correlationID string, summary map[string]interface{})
 }
