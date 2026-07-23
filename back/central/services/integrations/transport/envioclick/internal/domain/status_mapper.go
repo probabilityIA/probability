@@ -25,7 +25,7 @@ func ApiStatusToStep(status, statusDetail string) string {
 		return "Entregado"
 	case strings.Contains(combined, "no entregad"):
 		return "No Entregado"
-	case strings.Contains(combined, "devuelto"), strings.Contains(combined, "regresado"):
+	case strings.Contains(combined, "devuelto"), strings.Contains(combined, "regresado"), strings.Contains(combined, "retornad"):
 		return "Devuelto"
 	case strings.Contains(combined, "cancelad"):
 		return "Cancelado"
