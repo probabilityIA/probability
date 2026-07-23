@@ -84,6 +84,13 @@ func (m *RabbitMQMock) Consume(ctx context.Context, queue string, handler func([
 	return nil
 }
 
+func (m *RabbitMQMock) ConsumeConcurrent(ctx context.Context, queue string, handler func([]byte) error, workers int) error {
+	if m.ConsumeFn != nil {
+		return m.ConsumeFn(ctx, queue, handler)
+	}
+	return nil
+}
+
 func (m *RabbitMQMock) DeclareExchange(name, kind string, durable bool) error { return nil }
 func (m *RabbitMQMock) DeclareQueue(name string, durable bool) error           { return nil }
 func (m *RabbitMQMock) BindQueue(queue, exchange, routingKey string) error      { return nil }

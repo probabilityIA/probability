@@ -34,6 +34,13 @@ func (m *RabbitMQMock) Consume(ctx context.Context, queueName string, handler fu
 	return nil
 }
 
+func (m *RabbitMQMock) ConsumeConcurrent(ctx context.Context, queueName string, handler func([]byte) error, workers int) error {
+	if m.ConsumeFn != nil {
+		return m.ConsumeFn(ctx, queueName, handler)
+	}
+	return nil
+}
+
 func (m *RabbitMQMock) Close() error {
 	if m.CloseFn != nil {
 		return m.CloseFn()

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// QueueMock implementa rabbitmq.IQueue para testing
 type QueueMock struct {
 	mock.Mock
 }
@@ -23,6 +22,11 @@ func (m *QueueMock) PublishToExchange(ctx context.Context, exchangeName string, 
 
 func (m *QueueMock) Consume(ctx context.Context, queueName string, handler func([]byte) error) error {
 	args := m.Called(ctx, queueName, handler)
+	return args.Error(0)
+}
+
+func (m *QueueMock) ConsumeConcurrent(ctx context.Context, queueName string, handler func([]byte) error, workers int) error {
+	args := m.Called(ctx, queueName, handler, workers)
 	return args.Error(0)
 }
 
