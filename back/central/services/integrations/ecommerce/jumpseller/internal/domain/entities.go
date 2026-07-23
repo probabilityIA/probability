@@ -59,35 +59,38 @@ type WebhookItem struct {
 }
 
 type JumpsellerOrder struct {
-	ID                int64
-	CreatedAt         time.Time
-	Status            string
-	Currency          string
-	Subtotal          float64
-	Tax               float64
-	ShippingTax       float64
-	Shipping          float64
-	ShippingRequired  bool
-	Total             float64
-	Discount          float64
-	ShippingDiscount  float64
-	FulfillmentStatus string
-	ShipmentStatus    string
-	ShippingMethodID  int64
-	ShippingMethod    string
-	PaymentMethodName string
-	PaymentMethodType string
-	PaymentInfo       string
-	AdditionalInfo    string
-	TrackingNumber    string
-	TrackingCompany   string
-	TrackingURL       string
-	ShippingOption    string
-	Customer          OrderCustomer
-	ShippingAddress   Address
-	BillingAddress    Address
-	Products          []OrderProduct
-	AdditionalFields  []OrderAdditionalField
+	ID                 int64
+	CreatedAt          time.Time
+	CompletedAt        time.Time
+	Status             string
+	StatusEnum         string
+	Currency           string
+	Subtotal           float64
+	Tax                float64
+	ShippingTax        float64
+	Shipping           float64
+	ShippingRequired   bool
+	Total              float64
+	Discount           float64
+	ShippingDiscount   float64
+	FulfillmentStatus  string
+	ShipmentStatus     string
+	ShipmentStatusEnum string
+	ShippingMethodID   int64
+	ShippingMethod     string
+	PaymentMethodName  string
+	PaymentMethodType  string
+	PaymentInfo        string
+	AdditionalInfo     string
+	TrackingNumber     string
+	TrackingCompany    string
+	TrackingURL        string
+	ShippingOption     string
+	Customer           OrderCustomer
+	ShippingAddress    Address
+	BillingAddress     Address
+	Products           []OrderProduct
+	AdditionalFields   []OrderAdditionalField
 }
 
 type OrderCustomer struct {
@@ -104,7 +107,9 @@ type Address struct {
 	TaxID        string
 	Address      string
 	StreetNumber string
+	Complement   string
 	City         string
+	Municipality string
 	Postal       string
 	Region       string
 	Country      string

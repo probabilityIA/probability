@@ -51,7 +51,7 @@ func MapJumpsellerOrderToProbability(order *domain.JumpsellerOrder, rawJSON []by
 		CustomerEmail:   order.Customer.Email,
 		CustomerPhone:   order.Customer.Phone,
 		CustomerDNI:     order.BillingAddress.TaxID,
-		Status:          mapJumpsellerStatus(order.Status),
+		Status:          mapJumpsellerStatus(order.Status, order.StatusEnum),
 		OriginalStatus:  order.Status,
 		Notes:           notes,
 		OccurredAt:      order.CreatedAt,
@@ -99,9 +99,12 @@ func MapJumpsellerOrderToProbability(order *domain.JumpsellerOrder, rawJSON []by
 	if order.PaymentMethodName != "" || order.PaymentMethodType != "" {
 		paymentStatus := "pending"
 		var paidAt *time.Time
-		if order.Status == domain.StatusPaid {
+		if order.Status == domain.StatusPaid || order.StatusEnum == "paid" {
 			paymentStatus = "completed"
-			paid := order.CreatedAt
+			paid := order.CompletedAt
+			if paid.IsZero() {
+				paid = order.CreatedAt
+			}
 			paidAt = &paid
 		}
 
@@ -129,7 +132,7 @@ func MapJumpsellerOrderToProbability(order *domain.JumpsellerOrder, rawJSON []by
 
 		shipment := canonical.ProbabilityShipmentDTO{
 			Carrier:      &carrier,
-			Status:       mapShipmentStatus(order.ShipmentStatus, order.Status),
+			Status:       mapShipmentStatus(order.ShipmentStatusEnum, order.ShipmentStatus, order.Status),
 			ShippingCost: &shippingCost,
 		}
 
@@ -171,12 +174,18 @@ func mapAddress(address domain.Address, addressType string) canonical.Probabilit
 		street = strings.TrimSpace(street + " " + address.StreetNumber)
 	}
 
+	city := address.City
+	if address.Municipality != "" {
+		city = address.Municipality
+	}
+
 	return canonical.ProbabilityAddressDTO{
 		Type:       addressType,
 		FirstName:  address.Name,
 		LastName:   address.Surname,
 		Street:     street,
-		City:       address.City,
+		Street2:    address.Complement,
+		City:       city,
 		State:      address.Region,
 		Country:    address.Country,
 		PostalCode: address.Postal,
@@ -185,30 +194,40 @@ func mapAddress(address domain.Address, addressType string) canonical.Probabilit
 	}
 }
 
-func mapJumpsellerStatus(status string) string {
-	switch status {
-	case domain.StatusPendingPayment:
+func mapJumpsellerStatus(status, statusEnum string) string {
+	normalized := statusEnum
+	if normalized == "" {
+		normalized = strings.ToLower(strings.ReplaceAll(status, " ", "_"))
+	}
+
+	switch normalized {
+	case "pending_payment":
 		return "pending"
-	case domain.StatusPaid:
+	case "paid":
 		return "paid"
-	case domain.StatusCanceled:
+	case "canceled", "cancelled":
 		return "cancelled"
-	case domain.StatusAbandoned:
+	case "abandoned":
 		return "abandoned"
 	default:
-		return strings.ToLower(strings.ReplaceAll(status, " ", "_"))
+		return normalized
 	}
 }
 
-func mapShipmentStatus(shipmentStatus, orderStatus string) string {
-	switch strings.ToLower(strings.ReplaceAll(shipmentStatus, " ", "_")) {
+func mapShipmentStatus(shipmentStatusEnum, shipmentStatus, orderStatus string) string {
+	normalized := shipmentStatusEnum
+	if normalized == "" {
+		normalized = strings.ToLower(strings.ReplaceAll(shipmentStatus, " ", "_"))
+	}
+
+	switch normalized {
 	case domain.ShipmentDelivered:
 		return "delivered"
-	case domain.ShipmentInTransit, "shipped":
+	case domain.ShipmentInTransit, "shipped", "fulfilled":
 		return "in_transit"
 	case domain.ShipmentFailed:
 		return "failed"
-	case domain.ShipmentRequested:
+	case domain.ShipmentRequested, "unfulfilled":
 		return "pending"
 	}
 

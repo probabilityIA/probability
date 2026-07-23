@@ -1,51 +1,69 @@
 package response
 
 import (
+	"strings"
+
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/domain"
 )
+
+type FlexString string
+
+func (f *FlexString) UnmarshalJSON(data []byte) error {
+	s := strings.Trim(string(data), `"`)
+	if s == "null" {
+		*f = ""
+		return nil
+	}
+	*f = FlexString(s)
+	return nil
+}
 
 type OrderEnvelope struct {
 	Order JumpsellerOrderResponse `json:"order"`
 }
 
 type JumpsellerOrderResponse struct {
-	ID                int64                   `json:"id"`
-	CreatedAt         JSTime                  `json:"created_at"`
-	Status            string                  `json:"status"`
-	Currency          string                  `json:"currency"`
-	Subtotal          float64                 `json:"subtotal"`
-	Tax               float64                 `json:"tax"`
-	ShippingTax       float64                 `json:"shipping_tax"`
-	Shipping          float64                 `json:"shipping"`
-	ShippingRequired  bool                    `json:"shipping_required"`
-	Total             float64                 `json:"total"`
-	Discount          float64                 `json:"discount"`
-	ShippingDiscount  float64                 `json:"shipping_discount"`
-	FulfillmentStatus *string                 `json:"fulfillment_status"`
-	ShipmentStatus    string                  `json:"shipment_status"`
-	ShippingMethodID  int64                   `json:"shipping_method_id"`
-	ShippingMethod    string                  `json:"shipping_method_name"`
-	PaymentMethodName string                  `json:"payment_method_name"`
-	PaymentMethodType string                  `json:"payment_method_type"`
-	PaymentInfo       string                  `json:"payment_information"`
-	AdditionalInfo    string                  `json:"additional_information"`
-	TrackingNumber    *string                 `json:"tracking_number"`
-	TrackingCompany   *string                 `json:"tracking_company"`
-	TrackingURL       *string                 `json:"tracking_url"`
-	ShippingOption    string                  `json:"shipping_option"`
-	Customer          OrderCustomerResponse   `json:"customer"`
-	ShippingAddress   AddressResponse         `json:"shipping_address"`
-	BillingAddress    AddressResponse         `json:"billing_address"`
-	Products          []OrderProductResponse  `json:"products"`
-	AdditionalFields  []OrderAddFieldResponse `json:"additional_fields"`
+	ID                 int64                   `json:"id"`
+	CreatedAt          JSTime                  `json:"created_at"`
+	CompletedAt        JSTime                  `json:"completed_at"`
+	Status             string                  `json:"status"`
+	StatusEnum         string                  `json:"status_enum"`
+	Currency           string                  `json:"currency"`
+	Subtotal           float64                 `json:"subtotal"`
+	Tax                float64                 `json:"tax"`
+	ShippingTax        float64                 `json:"shipping_tax"`
+	Shipping           float64                 `json:"shipping"`
+	ShippingRequired   bool                    `json:"shipping_required"`
+	Total              float64                 `json:"total"`
+	Discount           float64                 `json:"discount"`
+	ShippingDiscount   float64                 `json:"shipping_discount"`
+	FulfillmentStatus  *string                 `json:"fulfillment_status"`
+	ShipmentStatus     string                  `json:"shipment_status"`
+	ShipmentStatusEnum string                  `json:"shipment_status_enum"`
+	ShippingMethodID   int64                   `json:"shipping_method_id"`
+	ShippingMethod     string                  `json:"shipping_method_name"`
+	PaymentMethodName  string                  `json:"payment_method_name"`
+	PaymentMethodType  string                  `json:"payment_method_type"`
+	PaymentInfo        string                  `json:"payment_information"`
+	AdditionalInfo     *string                 `json:"additional_information"`
+	TrackingNumber     *string                 `json:"tracking_number"`
+	TrackingCompany    *string                 `json:"tracking_company"`
+	TrackingURL        *string                 `json:"tracking_url"`
+	ShippingOption     string                  `json:"shipping_option"`
+	Customer           OrderCustomerResponse   `json:"customer"`
+	ShippingAddress    AddressResponse         `json:"shipping_address"`
+	BillingAddress     *AddressResponse        `json:"billing_address"`
+	Products           []OrderProductResponse  `json:"products"`
+	AdditionalFields   []OrderAddFieldResponse `json:"additional_fields"`
 }
 
 type OrderCustomerResponse struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
-	IP    string `json:"ip"`
+	ID       FlexString `json:"id"`
+	Name     string     `json:"name"`
+	Fullname string     `json:"fullname"`
+	Email    string     `json:"email"`
+	Phone    *string    `json:"phone"`
+	IP       string     `json:"ip"`
 }
 
 type AddressResponse struct {
@@ -60,6 +78,8 @@ type AddressResponse struct {
 	CountryCode  string   `json:"country_code"`
 	RegionCode   string   `json:"region_code"`
 	StreetNumber *string  `json:"street_number"`
+	Complement   *string  `json:"complement"`
+	Municipality *string  `json:"municipality"`
 	Latitude     *float64 `json:"latitude"`
 	Longitude    *float64 `json:"longitude"`
 }
@@ -97,7 +117,9 @@ func (a AddressResponse) toDomain() domain.Address {
 		TaxID:        deref(a.TaxID),
 		Address:      a.Address,
 		StreetNumber: deref(a.StreetNumber),
+		Complement:   deref(a.Complement),
 		City:         a.City,
+		Municipality: deref(a.Municipality),
 		Postal:       a.Postal,
 		Region:       a.Region,
 		Country:      a.Country,
@@ -134,40 +156,53 @@ func (o JumpsellerOrderResponse) ToDomain() domain.JumpsellerOrder {
 		})
 	}
 
+	customerName := o.Customer.Fullname
+	if customerName == "" {
+		customerName = o.Customer.Name
+	}
+
+	var billing domain.Address
+	if o.BillingAddress != nil {
+		billing = o.BillingAddress.toDomain()
+	}
+
 	return domain.JumpsellerOrder{
-		ID:                o.ID,
-		CreatedAt:         o.CreatedAt.Time,
-		Status:            o.Status,
-		Currency:          o.Currency,
-		Subtotal:          o.Subtotal,
-		Tax:               o.Tax,
-		ShippingTax:       o.ShippingTax,
-		Shipping:          o.Shipping,
-		ShippingRequired:  o.ShippingRequired,
-		Total:             o.Total,
-		Discount:          o.Discount,
-		ShippingDiscount:  o.ShippingDiscount,
-		FulfillmentStatus: deref(o.FulfillmentStatus),
-		ShipmentStatus:    o.ShipmentStatus,
-		ShippingMethodID:  o.ShippingMethodID,
-		ShippingMethod:    o.ShippingMethod,
-		PaymentMethodName: o.PaymentMethodName,
-		PaymentMethodType: o.PaymentMethodType,
-		PaymentInfo:       o.PaymentInfo,
-		AdditionalInfo:    o.AdditionalInfo,
-		TrackingNumber:    deref(o.TrackingNumber),
-		TrackingCompany:   deref(o.TrackingCompany),
-		TrackingURL:       deref(o.TrackingURL),
-		ShippingOption:    o.ShippingOption,
+		ID:                 o.ID,
+		CreatedAt:          o.CreatedAt.Time,
+		CompletedAt:        o.CompletedAt.Time,
+		Status:             o.Status,
+		StatusEnum:         o.StatusEnum,
+		Currency:           o.Currency,
+		Subtotal:           o.Subtotal,
+		Tax:                o.Tax,
+		ShippingTax:        o.ShippingTax,
+		Shipping:           o.Shipping,
+		ShippingRequired:   o.ShippingRequired,
+		Total:              o.Total,
+		Discount:           o.Discount,
+		ShippingDiscount:   o.ShippingDiscount,
+		FulfillmentStatus:  deref(o.FulfillmentStatus),
+		ShipmentStatus:     o.ShipmentStatus,
+		ShipmentStatusEnum: o.ShipmentStatusEnum,
+		ShippingMethodID:   o.ShippingMethodID,
+		ShippingMethod:     o.ShippingMethod,
+		PaymentMethodName:  o.PaymentMethodName,
+		PaymentMethodType:  o.PaymentMethodType,
+		PaymentInfo:        o.PaymentInfo,
+		AdditionalInfo:     deref(o.AdditionalInfo),
+		TrackingNumber:     deref(o.TrackingNumber),
+		TrackingCompany:    deref(o.TrackingCompany),
+		TrackingURL:        deref(o.TrackingURL),
+		ShippingOption:     o.ShippingOption,
 		Customer: domain.OrderCustomer{
-			ID:    o.Customer.ID,
-			Name:  o.Customer.Name,
+			ID:    string(o.Customer.ID),
+			Name:  customerName,
 			Email: o.Customer.Email,
-			Phone: o.Customer.Phone,
+			Phone: deref(o.Customer.Phone),
 			IP:    o.Customer.IP,
 		},
 		ShippingAddress:  o.ShippingAddress.toDomain(),
-		BillingAddress:   o.BillingAddress.toDomain(),
+		BillingAddress:   billing,
 		Products:         products,
 		AdditionalFields: fields,
 	}
