@@ -125,7 +125,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
                             {BUCKETS.map(bucket => (
-                                <span key={bucket.key} className="flex items-center gap-1 text-[11px] font-medium text-gray-600 dark:text-gray-300">
+                                <span key={bucket.key} className="flex items-center gap-1 whitespace-nowrap text-[11px] font-medium text-gray-600 dark:text-gray-300">
                                     <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ backgroundColor: bucket.dot }} />
                                     {numberFormat.format(stats[bucket.key])} {bucket.label}
                                 </span>
