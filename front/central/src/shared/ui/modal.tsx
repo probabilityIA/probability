@@ -105,7 +105,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           </div>
         ) : (
           <div
-            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8')} max-h-[90vh] overflow-hidden flex flex-col`}
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8')} ${size !== 'sm' && size !== 'md' && size !== '5xl' && size !== '6xl' && size !== '7xl' ? sizeClasses[size] : ''} max-h-[90vh] overflow-hidden flex flex-col`}
             style={
               size === 'sm' || size === 'md'
                 ? {

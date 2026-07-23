@@ -410,69 +410,214 @@ function SubscriptionTypesAdminPanel() {
                 <Button variant="primary" onClick={openCreate}>+ Nuevo tipo de suscripción</Button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-3">
                 {types.map((t) => (
-                    <div key={t.id} className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-5 space-y-3">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white">{t.name}</h3>
-                                <span className="text-xs text-gray-400">{t.code}</span>
+                    <div
+                        key={t.id}
+                        className={`relative flex flex-col rounded-2xl border bg-white dark:bg-gray-800 overflow-hidden transition-opacity ${
+                            t.active ? 'border-violet-200 dark:border-violet-800/60 shadow-sm shadow-violet-500/5' : 'border-gray-200 dark:border-gray-700 opacity-60'
+                        }`}
+                    >
+                        <div className={`flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide py-1.5 ${
+                            t.active
+                                ? 'bg-gradient-to-r from-violet-700 to-purple-500 text-white'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                        }`}>
+                            {t.active ? 'Activo' : 'Inactivo'}
+                        </div>
+
+                        <div className="pt-5 px-6 pb-5">
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{t.name}</h4>
+                                <span className="text-[11px] font-mono text-gray-400">{t.code}</span>
                             </div>
-                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${t.active ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
-                                {t.active ? 'Activo' : 'Inactivo'}
-                            </span>
+
+                            <div className="flex items-end gap-1 mb-3">
+                                <span className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">{formatCurrency(t.price)}</span>
+                                <span className="text-sm font-semibold text-gray-400 pb-1">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span>
+                            </div>
+
+                            {t.description && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-4 min-h-[2.6rem]">{t.description}</p>
+                            )}
+
+                            <div className="flex items-center gap-3 rounded-xl p-3 bg-violet-50 dark:bg-violet-900/20">
+                                <div className="w-[34px] h-[34px] rounded-lg flex items-center justify-center flex-shrink-0 bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                        <path d="M3 3H21V8H3V3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                        <path d="M4 8V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V8" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                        <path d="M9 12H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                                        {t.max_ecommerce_channels > 0 ? `Hasta ${t.max_ecommerce_channels}` : 'Ilimitados'}
+                                    </div>
+                                    <div className="text-xs text-gray-400 leading-tight">canales de ecommerce conectados</div>
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(t.price)}<span className="text-xs font-normal text-gray-400">/{t.billing_period === 'monthly' ? 'mes' : 'año'}</span></p>
-                        {t.description && <p className="text-sm text-gray-500 dark:text-gray-400">{t.description}</p>}
-                        <div className="flex flex-wrap gap-1">
-                            {(t.module_codes ?? []).map((m) => (
-                                <span key={m} className="text-xs bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full">{moduleName(m)}</span>
-                            ))}
+
+                        <div className="border-t border-violet-100 dark:border-violet-900/40 mx-6" />
+
+                        <div className="px-6 pt-4 pb-2 flex-1">
+                            <div className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-3">Módulos incluidos</div>
+                            <div className="flex flex-col gap-2.5">
+                                {(t.module_codes ?? []).length === 0 && (
+                                    <span className="text-xs text-gray-400 italic">Sin módulos asignados</span>
+                                )}
+                                {(t.module_codes ?? []).map((m) => (
+                                    <div key={m} className="flex items-center gap-2.5">
+                                        <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300">
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                                                <path d="M4 12.5L9.5 18L20 6.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        </span>
+                                        <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">{moduleName(m)}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
-                            <Button size="sm" variant="secondary" onClick={() => openEdit(t)} className="flex-1 text-xs">Editar</Button>
-                            <Button size="sm" variant="danger" onClick={() => handleDelete(t)} className="flex-1 text-xs">Eliminar</Button>
+
+                        <div className="px-6 pt-5 pb-6 flex gap-2">
+                            <Button size="sm" variant="outline-purple" onClick={() => openEdit(t)} className="flex-1">Editar</Button>
+                            <Button size="sm" variant="danger" onClick={() => handleDelete(t)} className="flex-1">Eliminar</Button>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <Modal isOpen={editModal.open} onClose={() => setEditModal({ open: false })} title={editModal.type ? `Editar ${editModal.type.name}` : 'Nuevo tipo de suscripción'} size="md">
-                <div className="space-y-4 p-4">
-                    <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                    {!editModal.type && (
-                        <Input label="Código (unico)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: basico" />
-                    )}
-                    <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-                    <Input label="Precio" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo de facturación</label>
-                        <select value={form.billing_period} onChange={(e) => setForm({ ...form, billing_period: e.target.value })} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
-                            <option value="monthly">Mensual</option>
-                            <option value="annual">Anual</option>
-                        </select>
+            <Modal isOpen={editModal.open} onClose={() => setEditModal({ open: false })} size="4xl">
+                <div className="flex flex-col">
+                    <div className="flex items-start justify-between gap-4 pb-4 mb-4 border-b border-gray-100 dark:border-gray-700">
+                        <div>
+                            <div className="flex items-center gap-2.5">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {editModal.type ? `Editar ${editModal.type.name}` : 'Nuevo tipo de suscripción'}
+                                </h3>
+                                {editModal.type && (
+                                    <span className="font-mono text-[11.5px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
+                                        {editModal.type.code}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-1">
+                                {editModal.type ? 'Los cambios se aplican a nuevos clientes y renovaciones.' : 'Define los datos y el alcance del nuevo plan.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setEditModal({ open: false })}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 5L19 19M19 5L5 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                        </button>
                     </div>
-                    {editModal.type && (
-                        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
-                            Activo
-                        </label>
-                    )}
-                    <Input label="Límite de canales E-commerce (0 = sin límite)" type="number" value={form.max_ecommerce_channels} onChange={(e) => setForm({ ...form, max_ecommerce_channels: e.target.value })} />
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Módulos incluidos</label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {moduleCatalog.map(({ code, name }) => (
-                                <label key={code} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox" checked={form.module_codes.includes(code)} onChange={() => toggleModule(code)} />
-                                    {name}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="space-y-4">
+                            <div className="flex items-baseline justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">Datos básicos</span>
+                                <span className="text-xs text-gray-400">Cómo se cobra</span>
+                            </div>
+
+                            <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                            {!editModal.type && (
+                                <Input label="Código (único)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: pro-mensual" className="font-mono" />
+                            )}
+                            <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                    <input
+                                        type="number"
+                                        value={form.price}
+                                        onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                        className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div className="text-xs font-semibold text-violet-600 dark:text-violet-400 mt-1.5">
+                                    ${(Number(form.price) || 0).toLocaleString('es-CO')} COP / {form.billing_period === 'monthly' ? 'mes' : 'año'}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Periodo de facturación</label>
+                                <select value={form.billing_period} onChange={(e) => setForm({ ...form, billing_period: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500">
+                                    <option value="monthly">Mensual</option>
+                                    <option value="annual">Anual</option>
+                                </select>
+                            </div>
+
+                            {editModal.type && (
+                                <div
+                                    onClick={() => setForm({ ...form, active: !form.active })}
+                                    className="flex items-start gap-2.5 bg-violet-50 dark:bg-violet-900/20 rounded-lg px-3.5 py-3 cursor-pointer"
+                                >
+                                    <span className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 border-[1.5px] ${form.active ? 'bg-violet-600 border-violet-600 text-white' : 'border-gray-300 dark:border-gray-600 text-transparent'}`}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                    </span>
+                                    <div>
+                                        <div className="text-[13.5px] font-semibold text-gray-900 dark:text-white">Plan activo</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">Los planes inactivos no pueden ser contratados por nuevos clientes.</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-4 sm:border-l sm:border-gray-100 dark:sm:border-gray-700 sm:pl-8">
+                            <div className="flex items-baseline justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wide text-violet-600 dark:text-violet-400">Alcance del plan</span>
+                                <span className="text-xs text-gray-400">Qué incluye</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Límite de canales e-commerce <span className="font-normal text-gray-400">— 0 sin límite</span>
                                 </label>
-                            ))}
+                                <input
+                                    type="number"
+                                    value={form.max_ecommerce_channels}
+                                    onChange={(e) => setForm({ ...form, max_ecommerce_channels: e.target.value })}
+                                    className="w-32 px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                />
+                                <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">Al superar el límite, el cliente no podrá conectar canales adicionales hasta cambiar de plan.</p>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-2.5">
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Módulos incluidos</label>
+                                    <span className="text-xs font-semibold text-violet-600 dark:text-violet-400">{form.module_codes.length} de {moduleCatalog.length}</span>
+                                </div>
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {moduleCatalog.map(({ code, name }) => {
+                                        const checked = form.module_codes.includes(code);
+                                        return (
+                                            <div
+                                                key={code}
+                                                onClick={() => toggleModule(code)}
+                                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border-[1.5px] cursor-pointer transition-colors ${
+                                                    checked
+                                                        ? 'bg-violet-50 dark:bg-violet-900/20 border-violet-500'
+                                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'
+                                                }`}
+                                            >
+                                                <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-[1.5px] ${checked ? 'bg-violet-600 border-violet-600 text-white' : 'border-gray-300 dark:border-gray-600 text-transparent'}`}>
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6.5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </span>
+                                                <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 truncate">{name}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2 pt-2">
+
+                    <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-gray-100 dark:border-gray-700">
                         <Button variant="secondary" onClick={() => setEditModal({ open: false })}>Cancelar</Button>
-                        <Button variant="primary" onClick={handleSave}>Guardar</Button>
+                        <Button variant="purple" onClick={handleSave}>Guardar</Button>
                     </div>
                 </div>
             </Modal>
