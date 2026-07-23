@@ -10,7 +10,6 @@ import { createIntegrationAction, testConnectionRawAction } from '../../infra/ac
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
-// Importar formularios específicos por tipo de integración
 import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 import { FactusConfigForm } from '@/services/integrations/invoicing/factus/ui';
 import { SiigoConfigForm } from '@/services/integrations/invoicing/siigo/ui';
@@ -37,7 +36,6 @@ import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
 import { ModuleActivateForm } from '@/services/integrations/internal/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
-// IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
     SHOPIFY: 1,
     WHATSAPP: 2,
@@ -70,6 +68,7 @@ interface CreateIntegrationModalProps {
     onClose: () => void;
     categories: IntegrationCategory[];
     onSuccess: () => void;
+    zIndex?: number;
 }
 
 type Step = 1 | 2 | 3;
@@ -79,6 +78,7 @@ export function CreateIntegrationModal({
     onClose,
     categories,
     onSuccess,
+    zIndex = 50,
 }: CreateIntegrationModalProps) {
     const [step, setStep] = useState<Step>(1);
     const [selectedCategory, setSelectedCategory] = useState<IntegrationCategory | null>(null);
@@ -95,7 +95,6 @@ export function CreateIntegrationModal({
     };
 
     const handleSuccess = () => {
-        // Reset state
         setStep(1);
         setSelectedCategory(null);
         setSelectedProvider(null);
@@ -103,7 +102,6 @@ export function CreateIntegrationModal({
     };
 
     const handleClose = () => {
-        // Reset state on close
         setStep(1);
         setSelectedCategory(null);
         setSelectedProvider(null);
@@ -121,13 +119,12 @@ export function CreateIntegrationModal({
         setSelectedProvider(null);
     };
 
-    // Determine modal size based on step
     const getModalSize = (): 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full' => {
         switch (step) {
-            case 1: // Category selection
-                return '4xl';
-            case 2: // Provider selection
-                return '4xl';
+            case 1:
+                return '2xl';
+            case 2:
+                return '2xl';
             case 3:
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.WOOCOMMERCE) return '4xl';
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.MERCADO_LIBRE) return '4xl';
@@ -150,8 +147,8 @@ export function CreateIntegrationModal({
                 </span>
             )}
             size={getModalSize()}
+            zIndex={zIndex}
         >
-            {/* Step 1: Select Category */}
             {step === 1 && (
                 <CategorySelector
                     categories={categories}
@@ -159,7 +156,6 @@ export function CreateIntegrationModal({
                 />
             )}
 
-            {/* Step 2: Select Provider */}
             {step === 2 && selectedCategory && (
                 <ProviderSelector
                     category={selectedCategory}
@@ -168,7 +164,6 @@ export function CreateIntegrationModal({
                 />
             )}
 
-            {/* Step 3: Configuration Form */}
             {step === 3 && selectedProvider && (
                 <FormWrapper
                     integrationType={selectedProvider}
@@ -181,7 +176,6 @@ export function CreateIntegrationModal({
     );
 }
 
-// Internal component to wrap the form with submission logic
 interface FormWrapperProps {
     integrationType: IntegrationType;
     onSuccess: () => void;
@@ -213,10 +207,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
         );
     }
 
-    // Renderizar formulario específico según el ID del tipo de integración
     const renderSpecificForm = () => {
-        // Modulos internos de la plataforma (Inventario, Notificaciones, Clientes, etc.)
-        // se activan con un formulario generico sin credenciales externas
         const categoryCode = integrationType.category?.code || integrationType.integration_category?.code;
         if (categoryCode === 'internal') {
             return <ModuleActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
@@ -444,8 +435,6 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
     );
 }
 
-// Formulario simple para activar WhatsApp (sin configuración, usa defaults del tipo)
-// Super admin debe seleccionar negocio antes de crear
 function WhatsAppActivateForm({
     integrationType,
     onSuccess,
@@ -508,7 +497,6 @@ function WhatsAppActivateForm({
                 </p>
             </div>
 
-            {/* Selector de negocio - solo para super admin */}
             {isSuperAdmin && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <label className="block text-sm font-medium text-blue-800 mb-2">
@@ -531,7 +519,6 @@ function WhatsAppActivateForm({
                 </div>
             )}
 
-            {/* Usar credenciales del tipo de integración */}
             <label className="flex items-start gap-3 cursor-pointer p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:bg-gray-700 transition-colors">
                 <input
                     type="checkbox"

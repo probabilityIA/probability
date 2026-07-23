@@ -9,7 +9,7 @@ import {
     activateIntegrationAction,
     deactivateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
-import { IntegrationForm } from '@/services/integrations/core/ui';
+import { IntegrationForm, CreateIntegrationModal } from '@/services/integrations/core/ui';
 import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
@@ -51,6 +51,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
     const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
     const [syncModalOpen, setSyncModalOpen] = useState(false);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const hubRef = useRef<HTMLDivElement | null>(null);
@@ -189,6 +190,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const services = resolve(SERVICE_CODES);
     const internal = resolve(INTERNAL_CODES);
     const channelIntegrations = channels.flatMap(cat => integrationsByCategory[cat.code] || []);
+    const createCategories = categories.filter(c => c.code === 'ecommerce' || c.code === 'invoicing');
 
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
     const revision = loading ? 0 : categories.length * 1000 + integrations.length + 1;
@@ -213,7 +215,25 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
 
     return (
         <>
-            <Modal isOpen={isOpen} onClose={onClose} title="Tus Integraciones" size="4xl">
+            <Modal
+                isOpen={isOpen}
+                onClose={onClose}
+                title={(
+                    <span className="relative block w-full">
+                        Tus Integraciones
+                        <button
+                            onClick={() => setCreateModalOpen(true)}
+                            className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/25"
+                        >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Crear Integracion
+                        </button>
+                    </span>
+                )}
+                size="4xl"
+            >
                 <style>{HUB_KEYFRAMES}</style>
                 <div style={{ width: 'min(72rem, 88vw)' }}>
                 {loading ? (
@@ -287,6 +307,17 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 onClose={() => setSyncModalOpen(false)}
                 integrations={integrations}
                 businessId={effectiveBusinessId}
+            />
+
+            <CreateIntegrationModal
+                isOpen={createModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+                zIndex={60}
+                categories={createCategories}
+                onSuccess={() => {
+                    setCreateModalOpen(false);
+                    fetchData();
+                }}
             />
         </>
     );
