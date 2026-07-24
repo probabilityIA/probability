@@ -2,14 +2,11 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
-
-var _ = strings.TrimSpace
 
 func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*domain.GuidePDFContext, error) {
 	var row struct {
@@ -46,6 +43,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WCity              *string
 		WState             *string
 		WPhone             *string
+		WPostal            *string
 		GuideURL           *string
 		Metadata           map[string]interface{}
 	}
@@ -77,21 +75,23 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			o.currency,
 			b.name AS business_name,
 			b.address AS business_address,
-			w.name AS w_name,
-			w.company AS w_company,
-			w.first_name AS w_first,
-			w.last_name AS w_last,
+			COALESCE(w.name, oa.alias) AS w_name,
+			COALESCE(w.company, oa.company) AS w_company,
+			COALESCE(w.first_name, oa.first_name) AS w_first,
+			COALESCE(w.last_name, oa.last_name) AS w_last,
 			w.address AS w_address,
-			w.street AS w_street,
-			w.city AS w_city,
-			w.state AS w_state,
-			w.phone AS w_phone,
+			COALESCE(w.street, oa.street) AS w_street,
+			COALESCE(w.city, oa.city) AS w_city,
+			COALESCE(w.state, oa.state) AS w_state,
+			COALESCE(w.phone, oa.phone) AS w_phone,
+			COALESCE(w.zip_code, oa.postal_code) AS w_postal,
 			s.guide_url,
 			s.metadata
 		FROM shipments s
 		LEFT JOIN orders o ON o.id = s.order_id
 		LEFT JOIN business b ON b.id = o.business_id
 		LEFT JOIN warehouses w ON w.id = s.warehouse_id
+		LEFT JOIN origin_address oa ON oa.business_id = o.business_id AND oa.is_default = true AND oa.deleted_at IS NULL
 		WHERE s.id = ? AND s.deleted_at IS NULL
 	`, shipmentID).Scan(&row).Error
 
@@ -212,7 +212,7 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		WarehouseCity:      val(row.WCity),
 		WarehouseState:     val(row.WState),
 		WarehousePhone:     val(row.WPhone),
-		WarehousePostal:    metaStr("postal_origen"),
+		WarehousePostal:    firstNonEmpty(metaStr("postal_origen"), val(row.WPostal)),
 		Origen:             metaStr("origen"),
 		AsCode:             metaStr("as_code"),
 		Paq:                metaStr("paq"),
@@ -225,9 +225,6 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 		Observaciones:      metaStr("observaciones"),
 		OrderItems:         orderItems,
 	}
-
-	fmt.Printf("DEBUG [Shipment %d]: Warehouse=%s | Address=%s | City=%s | Phone=%s | Items=%d\n",
-		row.ID, val(row.WCompany), wAddr, val(row.WCity), val(row.WPhone), len(orderItems))
 
 	return result, nil
 }

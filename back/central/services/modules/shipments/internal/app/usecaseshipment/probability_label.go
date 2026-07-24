@@ -219,12 +219,12 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	// ── Observaciones Cliente: ─────────────────────────────────────────
 	if obs := strings.TrimSpace(c.Observaciones); obs != "" {
 		pdf.SetXY(margin, y)
-		pdf.SetFont("Helvetica", "B", 6.5*scale)
-		pdf.CellFormat(usableW, 2.6*scale, tr("Observaciones Cliente:"), "", 1, "L", false, 0, "")
+		pdf.SetFont("Helvetica", "B", 7.5*scale)
+		pdf.CellFormat(usableW, 3.2*scale, tr("Observaciones Cliente:"), "", 1, "L", false, 0, "")
 		pdf.SetX(margin)
-		pdf.SetFont("Helvetica", "", 6*scale)
-		pdf.MultiCell(usableW, 2.6*scale, tr(obs), "", "L", false)
-		y = pdf.GetY() + 1
+		pdf.SetFont("Helvetica", "", 7*scale)
+		pdf.MultiCell(usableW, 3.2*scale, tr(obs), "", "L", false)
+		y = pdf.GetY() + 1.2
 	}
 
 	// ── Ref: ────────────────────────────────────────────────────────────
@@ -233,32 +233,32 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		refVal = strings.TrimSpace(c.OrderNumber)
 	}
 	if refVal != "" {
-		refLabelW := 9 * scale
+		refLabelW := 10 * scale
 		pdf.SetXY(margin, y)
-		pdf.SetFont("Helvetica", "BU", 6.5*scale)
-		pdf.CellFormat(refLabelW, 2.6*scale, tr("Ref:"), "", 0, "L", false, 0, "")
-		pdf.SetFont("Helvetica", "", 6*scale)
-		pdf.CellFormat(usableW-refLabelW, 2.6*scale, tr(refVal), "", 1, "L", false, 0, "")
-		y = pdf.GetY() + 1
+		pdf.SetFont("Helvetica", "BU", 7.5*scale)
+		pdf.CellFormat(refLabelW, 3.2*scale, tr("Ref:"), "", 0, "L", false, 0, "")
+		pdf.SetFont("Helvetica", "", 7*scale)
+		pdf.CellFormat(usableW-refLabelW, 3.2*scale, tr(refVal), "", 1, "L", false, 0, "")
+		y = pdf.GetY() + 1.2
 	}
 
 	// ── Banner "Recaudos Contra Entrega" (solo COD) ────────────────────
 	if c.CodTotal > 0 {
-		bannerH := 6.5 * scale
+		bannerH := 7 * scale
 		pdf.SetFillColor(0, 0, 0)
 		pdf.Rect(margin, y, usableW, bannerH, "F")
 		pdf.SetTextColor(255, 255, 255)
-		pdf.SetXY(margin, y+1.2*scale)
-		pdf.SetFont("Helvetica", "B", 7.5*scale)
-		pdf.CellFormat(usableW, 3.5*scale, tr("Recaudos Contra Entrega"), "", 1, "C", false, 0, "")
+		pdf.SetXY(margin, y+1.3*scale)
+		pdf.SetFont("Helvetica", "B", 8*scale)
+		pdf.CellFormat(usableW, 3.8*scale, tr("Recaudos Contra Entrega"), "", 1, "C", false, 0, "")
 		pdf.SetTextColor(0, 0, 0)
 		y += bannerH + 2
 	}
 
 	// ── Fila inferior: Origen | QR | Destino / Zona Hub / Equipo Reparto ─
 	footerH := hMm - y - margin
-	minFooterH := 24 * scale
-	maxFooterH := 34 * scale
+	minFooterH := 22 * scale
+	maxFooterH := 30 * scale
 	if footerH < minFooterH {
 		footerH = minFooterH
 		y = hMm - margin - footerH
@@ -324,33 +324,33 @@ func drawCoordBadge(pdf *gofpdf.Fpdf, tr func(string) string, text string, x, y,
 // donde termino de escribir, para encadenar el siguiente bloque.
 func drawCoordAddressBlock(pdf *gofpdf.Fpdf, tr func(string) string, label, name, address, line2 string, x, y, w, scale float64, textCol, mutedCol color.RGBA) float64 {
 	pdf.SetXY(x, y)
-	pdf.SetFont("Helvetica", "B", 6.5*scale)
+	pdf.SetFont("Helvetica", "B", 8*scale)
 	pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
 	labelTxt := label
 	if name != "" {
 		labelTxt = label + " " + name
 	}
-	pdf.MultiCell(w, 2.8*scale, tr(labelTxt), "", "L", false)
+	pdf.MultiCell(w, 3.6*scale, tr(labelTxt), "", "L", false)
 	y = pdf.GetY()
 
 	if address != "" {
 		pdf.SetX(x)
-		pdf.SetFont("Helvetica", "", 6*scale)
+		pdf.SetFont("Helvetica", "", 7*scale)
 		pdf.SetTextColor(int(textCol.R), int(textCol.G), int(textCol.B))
-		pdf.MultiCell(w, 2.4*scale, tr(address), "", "L", false)
+		pdf.MultiCell(w, 3.2*scale, tr(address), "", "L", false)
 		y = pdf.GetY()
 	}
 
 	if line2 != "" {
 		pdf.SetX(x)
-		pdf.SetFont("Helvetica", "", 5.5*scale)
+		pdf.SetFont("Helvetica", "", 6.5*scale)
 		pdf.SetTextColor(int(mutedCol.R), int(mutedCol.G), int(mutedCol.B))
-		pdf.CellFormat(w, 2.4*scale, tr(line2), "", 1, "L", false, 0, "")
+		pdf.CellFormat(w, 3*scale, tr(line2), "", 1, "L", false, 0, "")
 		y = pdf.GetY()
 	}
 
 	pdf.SetTextColor(0, 0, 0)
-	return y + 0.8*scale
+	return y + 1*scale
 }
 
 // drawCoordFooterRow dibuja la fila inferior de la guia: caja Origen (numero
@@ -480,9 +480,9 @@ func drawCoordHalfCell(pdf *gofpdf.Fpdf, tr func(string) string, label, value st
 	pdf.SetFont("Helvetica", "", 5.5*scale)
 	pdf.CellFormat(w, 2.4*scale, tr(label), "", 1, "C", false, 0, "")
 
-	pdf.SetFont("Helvetica", "B", 10*scale)
-	pdf.SetXY(x, y+h-6.5*scale)
-	pdf.CellFormat(w, 4.5*scale, tr(value), "", 0, "C", false, 0, "")
+	pdf.SetFont("Helvetica", "B", 12*scale)
+	pdf.SetXY(x, y+h-7*scale)
+	pdf.CellFormat(w, 5*scale, tr(value), "", 0, "C", false, 0, "")
 }
 
 // cityTelLine junta "ciudad" y "Tel: numero" con un separador visual,
