@@ -1071,6 +1071,7 @@ var providerUnavailableErrorMarkers = []string{
 	"authentication request failed",
 	"reintento abortado",
 	"no fue posible verificar",
+	"response has no info",
 	"status 429",
 	"status 502",
 	"status 503",
