@@ -18,7 +18,7 @@ func New(logger log.ILogger) ports.ISoftpymesClient {
 	httpConfig := httpclient.HTTPClientConfig{
 		Timeout:   90 * time.Second,
 		RetryWait: 3 * time.Second,
-		Debug:     true,
+		Debug:     false,
 	}
 
 	httpClient := httpclient.New(httpConfig, logger)

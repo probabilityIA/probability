@@ -49,17 +49,14 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer, b
 
 	c.log.Info(ctx).
 		Str("endpoint", authURL).
-		Interface("request_body", authReq).
 		Msg("📤 Sending authentication request to Softpymes")
 
-	// Hacer llamado a la API
-	// Header Referer es requerido según documentación (identificación de la instancia del cliente)
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetHeader("Referer", referer).
 		SetBody(authReq).
 		SetResult(&authResp).
-		SetDebug(true).
+		SetDebug(false).
 		Post(authURL)
 
 	if err != nil {
@@ -141,7 +138,7 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer, b
 // referer: Identificación de la instancia del cliente (requerido por API)
 func (c *Client) TestAuthentication(ctx context.Context, apiKey, apiSecret, referer, baseURL string) error {
 	c.log.Info(ctx).
-		Str("api_key_prefix", apiKey[:min(10, len(apiKey))]).
+		Str("api_key_length", fmt.Sprintf("%d chars", len(apiKey))).
 		Str("api_secret_length", fmt.Sprintf("%d chars", len(apiSecret))).
 		Str("referer", referer).
 		Msg("🧪 Testing Softpymes credentials")

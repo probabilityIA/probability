@@ -228,6 +228,8 @@ export function InvoiceDetailModal({
   const cashReceiptFailed = !!invoice?.invoice_number &&
     (invoice.provider_response as Record<string, any>)?.cash_receipt?.status === 'failed';
 
+  const isSoftpymesProvider = (invoice?.provider_name ?? '').toLowerCase().includes('softpymes');
+
   const hasPendingRetries = syncLogs.some(
     log => (log.status === 'failed' || log.status === 'pending') && log.next_retry_at
   );
@@ -643,7 +645,7 @@ export function InvoiceDetailModal({
                       : 'Habilitar Reintentos'}
                 </Button>
               )}
-              {invoice.status === 'issued' && (
+              {invoice.status === 'issued' && !isSoftpymesProvider && (
                 <Button
                   variant="danger"
                   size="sm"

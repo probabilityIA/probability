@@ -268,7 +268,6 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		SetHeader("Referer", referer).
 		SetBody(invoiceReq).
 		SetResult(&invoiceResp).
-		SetDebug(true).
 		Post(requestURL)
 
 	result.AuditData = &dtos.AuditData{

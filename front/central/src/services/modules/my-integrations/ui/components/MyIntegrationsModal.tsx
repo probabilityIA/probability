@@ -232,10 +232,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                         </button>
                     </span>
                 )}
-                size="4xl"
+                size="6xl"
             >
                 <style>{HUB_KEYFRAMES}</style>
-                <div style={{ width: 'min(80rem, 92vw)' }}>
+                <div className="mx-auto" style={{ width: 'min(80rem, 92vw)', maxWidth: '100%' }}>
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
                         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600" />

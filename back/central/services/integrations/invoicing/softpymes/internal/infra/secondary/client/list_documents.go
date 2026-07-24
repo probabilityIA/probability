@@ -126,7 +126,6 @@ func (c *Client) listDocuments(ctx context.Context, apiKey, apiSecret, referer s
 		SetHeader("Content-Type", "application/json").
 		SetBody(params).
 		SetResult(&listResp).
-		SetDebug(true).
 		Post(c.resolveURL(baseURL, "/app/integration/search/documents/"))
 
 	if err != nil {
