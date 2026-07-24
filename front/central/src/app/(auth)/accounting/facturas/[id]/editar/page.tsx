@@ -10,5 +10,5 @@ export default async function EditarFacturaPage({ params }: EditarFacturaPagePro
     if (invoiceId <= 0) {
         redirect('/accounting/facturas');
     }
-    redirect(`/accounting/facturas/${invoiceId}?editar=1`);
+    redirect(`/accounting/facturas?ver=${invoiceId}&editar=1`);
 }

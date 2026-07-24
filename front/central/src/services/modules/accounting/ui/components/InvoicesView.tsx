@@ -3,9 +3,10 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { SuperAdminBusinessSelector, Table } from '@/shared/ui';
-import { Concept, InvoicesListResponse, InvoiceStatus, Tax } from '../../domain/types';
+import { Concept, Invoice, InvoicesListResponse, InvoiceStatus, Tax } from '../../domain/types';
 import { formatCOP, formatEntryDate, invoiceStatusBadgeClass, invoiceStatusLabel } from '../format';
 import { InvoiceFormModal } from './InvoiceFormModal';
+import { InvoiceDetailModal } from './InvoiceDetailModal';
 
 interface InvoicesFilters {
     page: number;
@@ -20,6 +21,8 @@ interface InvoicesViewProps {
     concepts: Concept[];
     taxes: Tax[];
     filters: InvoicesFilters;
+    detailInvoice: Invoice | null;
+    openEditDetail?: boolean;
     error: string | null;
     openCreate?: boolean;
 }
@@ -36,7 +39,7 @@ function buildListUrl(filters: InvoicesFilters): string {
     return `/accounting/facturas?${params.toString()}`;
 }
 
-export function InvoicesView({ invoices, concepts, taxes, filters, error, openCreate = false }: InvoicesViewProps) {
+export function InvoicesView({ invoices, concepts, taxes, filters, detailInvoice, openEditDetail = false, error, openCreate = false }: InvoicesViewProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [showForm, setShowForm] = useState(openCreate);
@@ -53,6 +56,25 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
         if (fromQuery) {
             router.replace(buildListUrl(filters));
         }
+    };
+
+    const openDetail = (id: number) => {
+        startTransition(() => {
+            router.replace(`${buildListUrl(filters)}&ver=${id}`);
+        });
+    };
+
+    const closeDetail = () => {
+        startTransition(() => {
+            router.replace(buildListUrl(filters));
+        });
+    };
+
+    const clearDetailEdit = () => {
+        if (!detailInvoice) return;
+        startTransition(() => {
+            router.replace(`${buildListUrl(filters)}&ver=${detailInvoice.id}`);
+        });
     };
 
     const hasActiveFilters = Boolean(filters.status || filters.business_id || filters.is_test);
@@ -208,7 +230,7 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
                     emptyMessage="No hay facturas con los filtros seleccionados"
                     onRowClick={(_, index) => {
                         const invoice = invoices.data[index];
-                        if (invoice) router.push(`/accounting/facturas/${invoice.id}`);
+                        if (invoice) openDetail(invoice.id);
                     }}
                     pagination={{
                         currentPage: filters.page,
@@ -228,7 +250,23 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
                     onClose={closeForm}
                     concepts={concepts}
                     taxes={taxes}
-                    onSaved={(invoice) => router.push(`/accounting/facturas/${invoice.id}`)}
+                    onSaved={(invoice) => {
+                        setShowForm(false);
+                        openDetail(invoice.id);
+                    }}
+                />
+            )}
+
+            {detailInvoice && (
+                <InvoiceDetailModal
+                    key={detailInvoice.id}
+                    isOpen
+                    onClose={closeDetail}
+                    onCloseEdit={clearDetailEdit}
+                    invoice={detailInvoice}
+                    concepts={concepts}
+                    taxes={taxes}
+                    openEdit={openEditDetail}
                 />
             )}
         </div>

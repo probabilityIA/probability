@@ -8,4 +8,4 @@ export { TaxFormModal } from './components/TaxFormModal';
 export { DianConfigModal } from './components/DianConfigModal';
 export { InvoicesView } from './components/InvoicesView';
 export { InvoiceFormModal } from './components/InvoiceFormModal';
-export { InvoiceDetailView } from './components/InvoiceDetailView';
+export { InvoiceDetailModal } from './components/InvoiceDetailModal';
