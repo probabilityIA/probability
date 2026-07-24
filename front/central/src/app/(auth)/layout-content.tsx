@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar, AccountingSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
@@ -45,29 +45,23 @@ function LayoutContent({ user, children }: LayoutContentProps) {
     requestSecondaryCollapse
   } = useSidebar();
 
-  // No usamos sidebars secundarios separados: todo está integrado en el `Sidebar` principal.
   const showSecondarySidebar = false;
 
-  // Actualizar el contexto cuando cambia el estado del sidebar secundario
   React.useEffect(() => {
     setHasSecondarySidebar(showSecondarySidebar);
   }, [showSecondarySidebar, setHasSecondarySidebar]);
 
-  // Calcular el marginLeft del contenido principal
   const primaryWidth = primaryExpanded ? 250 : 80;
   const secondaryWidth = showSecondarySidebar ? (secondaryExpanded ? 240 : 60) : 0;
   const totalSidebarWidth = primaryWidth + secondaryWidth;
 
   const handleMainMouseEnter = () => {
-    // Cuando el cursor entra al contenido principal, cerrar ambos sidebars
-    // Solo en escritorio para evitar comportamientos extraños en móvil
     if (typeof window !== 'undefined' && window.innerWidth >= 768) {
       requestCollapse(false);
       requestSecondaryCollapse();
     }
   };
 
-  // Cliente final en storefront: layout simple sin sidebar
   if (isClienteFinal && isStorefrontPath) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -81,14 +75,8 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar Principal */}
       <Sidebar user={user} />
 
-      {/* Sidebar Secundario (IAM) eliminado: contenido integrado en Sidebar principal */}
-
-      {/* Sidebar Secundario (Ordenes) ya está integrado en Sidebar principal */}
-
-      {/* Contenido principal */}
       <main
         className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content flex flex-col"
         onMouseEnter={handleMainMouseEnter}
@@ -111,6 +99,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                       <StorefrontSubNavbar />
                       <IAMSubNavbar />
                       <WalletSubNavbar />
+                      <AccountingSubNavbar />
                       <div className="w-full min-w-0 flex-1">
                         <SubscriptionGuard>
                           {children}

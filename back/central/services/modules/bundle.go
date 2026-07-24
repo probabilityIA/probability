@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	integrationsCore "github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/modules/accounting"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
 	"github.com/secamc93/probability/back/central/services/modules/announcements"
@@ -97,6 +98,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
+	accounting.New(router, database, logger)
 
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)

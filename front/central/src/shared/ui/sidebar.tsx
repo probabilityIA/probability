@@ -1,7 +1,3 @@
-/**
- * Sidebar de navegación
- * Componente compartido para todas las páginas autenticadas
- */
 
 'use client';
 
@@ -34,8 +30,6 @@ export function Sidebar({ user }: SidebarProps) {
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
   const isDemo = permissions?.role_name === 'demo';
 
-  // Modulos restringidos por suscripcion (storefront, tickets, delivery quedan
-  // ocultos por defecto para negocios sin ese modulo habilitado en su plan/overrides).
   const [accessibleModules, setAccessibleModules] = useState<string[] | null>(null);
   useEffect(() => {
     if (isSuperAdmin) return;
@@ -53,7 +47,6 @@ export function Sidebar({ user }: SidebarProps) {
     return active?.logo_url || null;
   }, [isSuperAdmin, permissions]);
 
-  // Logo del negocio seleccionado por super admin
   const [superAdminBusinessLogo, setSuperAdminBusinessLogo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,18 +62,15 @@ export function Sidebar({ user }: SidebarProps) {
   }, [isSuperAdmin]);
 
   useEffect(() => {
-    // When primary sidebar collapses, ensure submenus collapse too
     if (!primaryExpanded) {
       setInvoicingOpen(false);
     }
   }, [primaryExpanded]);
 
   useEffect(() => {
-    // Cerrar sidebar móvil al cambiar de ruta
     setIsMobileOpen(false);
   }, [pathname, setIsMobileOpen]);
 
-  // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
   const ordersRoutes = ['/orders', '/shipments'];
   const inventoryRoutes = ['/products', '/warehouses', '/inventory'];
@@ -92,35 +82,22 @@ export function Sidebar({ user }: SidebarProps) {
     invoicingRoutes.some(route => pathname.startsWith(route)) ||
     deliveryRoutes.some(route => pathname.startsWith(route));
 
-  // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
-  // Si está cargando, esperamos (no mostramos nada o mostramos skeleton si se implementara)
-  // const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
-
-  // Verificar permisos para cada módulo
-
-  // Recursos: Solo para super admins (Plataforma)
   const canViewResources = isSuperAdmin;
-  // Empresas: Visible para super admins y usuarios de negocio con permiso
   const canViewBusinesses = isSuperAdmin || hasPermission('Empresas', 'Read');
 
-  // IAM Core: Visible para super admins Y administradores de negocio
-  // Agregamos variantes de nombres de recursos para robustez
   const canViewUsers = isSuperAdmin || hasPermission('Usuarios', 'Read') || hasPermission('Users', 'Read') || hasPermission('Empleados', 'Read');
   const canViewRoles = isSuperAdmin || hasPermission('Roles', 'Read') || hasPermission('Roles y Permisos', 'Read');
   const canViewPermissions = isSuperAdmin || hasPermission('Permisos', 'Read') || hasPermission('Permissions', 'Read');
 
-  // Orders Module
   const canViewProducts = isSuperAdmin || hasPermission('Productos', 'Read') || hasPermission('Products', 'Read');
   const canViewOrders = isSuperAdmin || hasPermission('Ordenes', 'Read') || hasPermission('Orders', 'Read');
   const canViewShipments = isSuperAdmin || hasPermission('Envios', 'Read') || hasPermission('Shipments', 'Read');
 
-  // Clientes: Visible para negocio
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
   const canViewTickets = !isDemo && hasSubscriptionModule('tickets');
 
-  // Bodegas e Inventario
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
   const canViewInventory = isSuperAdmin
     || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read')
@@ -137,34 +114,26 @@ export function Sidebar({ user }: SidebarProps) {
 
   const canViewNotifications = isSuperAdmin || hasPermission('Notificaciones', 'Read');
 
-  // Billetera
   const canViewWallet = isSuperAdmin || hasPermission('Billetera', 'Read');
 
-  // Integraciones: Visible para negocio (para crear integraciones)
-  // Integraciones: Visible para negocio (para crear integraciones)
   const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
 
-  // Facturación: Usa recurso único "Facturacion" de la BD (ID 10)
   const canViewInvoices = isSuperAdmin || hasPermission('Facturacion', 'Read');
   const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
   const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
 
-  // Storefront / Tienda
+  const canViewAccounting = isSuperAdmin;
+
   const canViewStorefront = (isSuperAdmin || hasPermission('Storefront', 'Read')) && hasSubscriptionModule('storefront');
   const canViewWebsiteConfig = isSuperAdmin || user?.role === 'Administrador';
 
-  // Ultima milla
   const canViewDelivery = (isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read')) && hasSubscriptionModule('delivery');
 
-  // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
   const canAccessOrders = canViewOrders || canViewShipments;
   const canAccessInventory = canViewProducts || canViewWarehouses || canViewInventory;
   const canAccessInvoicing = canViewInvoices || canViewInvoicingProviders || canViewInvoicingConfigs;
 
-
-
-  // Determinar la ruta de entrada para cada módulo (primera disponible)
   const getIAMEntryRoute = () => {
     if (canViewBusinesses) return '/businesses';
     if (canViewUsers) return '/users';
@@ -203,12 +172,10 @@ export function Sidebar({ user }: SidebarProps) {
 
   if (!user) return null;
 
-  // Helper para determinar si un link está activo
   const isActive = (path: string) => pathname === path;
 
   return (
     <>
-      {/* Botón Burger - Fijo en la parte superior derecha para móvil */}
       <button
         onClick={() => {
           const newState = !isMobileOpen;
@@ -231,15 +198,12 @@ export function Sidebar({ user }: SidebarProps) {
         )}
       </button>
 
-      {/* Overlay para móvil */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-20 md:hidden"
-        /* El overlay ya no cierra el menú al hacer clic, solo la burger lo hace */
         />
       )}
 
-      {/* Sidebar - Menú lateral expandible */}
       <aside
         className={`
           fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-tr-lg rounded-br-lg
@@ -249,20 +213,17 @@ export function Sidebar({ user }: SidebarProps) {
           width: primaryExpanded ? '200px' : '80px',
         }}
         onMouseEnter={() => {
-          // Solo expandir por hover si estamos en escritorio
           if (typeof window !== 'undefined' && window.innerWidth >= 768) {
             requestExpand();
           }
         }}
         onMouseLeave={() => {
-          // Solo colapsar por hover si estamos en escritorio
           if (typeof window !== 'undefined' && window.innerWidth >= 768) {
             requestCollapse(hasSecondarySidebar);
           }
         }}
       >
         <div className="flex flex-col h-full">
-          {/* Logo - Clickeable */}
           <a
             href="https://www.probabilityia.com.co/"
             target="_blank"
@@ -299,7 +260,6 @@ export function Sidebar({ user }: SidebarProps) {
           </a>
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent" />
 
-          {/* Tarjeta de usuario arriba */}
           <button
             type="button"
             onClick={() => setShowUserModal(true)}
@@ -307,7 +267,6 @@ export function Sidebar({ user }: SidebarProps) {
             title="Abrir perfil"
           >
             <div className={`flex items-center ${primaryExpanded ? 'gap-3' : 'justify-center'}`}>
-              {/* Avatar clickeable */}
               <div className="relative group">
                 {user.avatarUrl ? (
                   <img
@@ -323,7 +282,6 @@ export function Sidebar({ user }: SidebarProps) {
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                {/* Indicador de que es clickeable */}
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                   <svg className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -332,7 +290,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </div>
               </div>
 
-              {/* Nombre (solo visible cuando está expandido) */}
               {primaryExpanded && (
                 <div className="text-gray-800 dark:text-gray-100 dark:text-gray-200 overflow-hidden">
                   <p className="font-semibold text-sm truncate">{user.name}</p>
@@ -342,10 +299,8 @@ export function Sidebar({ user }: SidebarProps) {
             </div>
           </button>
 
-          {/* Menú de navegación */}
           <nav className="flex-1 py-6 px-3 overflow-y-auto overflow-x-hidden">
             <ul className="space-y-2">
-              {/* Item Home  visible */}
               <li>
                 <Link
                   href="/home"
@@ -357,7 +312,6 @@ export function Sidebar({ user }: SidebarProps) {
                     }
                   `}
                 >
-                  {/* Indicador activo (barra lateral) */}
                   {isActive('/home') && (
                     <div
                       className="absolute left-0 w-1 h-8 rounded-r-full"
@@ -376,7 +330,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               </li>
 
-              {/* Item Billetera */}
               {canViewWallet && (
                 <li>
                   <Link
@@ -407,7 +360,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Integraciones - Solo si tiene permiso */}
               {canViewIntegrations && (
                 <li>
                   <Link
@@ -420,7 +372,6 @@ export function Sidebar({ user }: SidebarProps) {
                       }
                     `}
                   >
-                    {/* Indicador activo (barra lateral) */}
                     {(isActive('/integrations') || pathname.startsWith('/integrations')) && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
@@ -440,7 +391,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Inventario (consolidado: Productos, Bodegas, Inventario) */}
               {canAccessInventory && (
                 <li>
                   <Link
@@ -469,7 +419,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Ordenes */}
               {canAccessOrders && (
                 <li>
                   <Link
@@ -492,13 +441,12 @@ export function Sidebar({ user }: SidebarProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                     {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">Órdenes</span>
+                      <span className="text-sm font-medium transition-opacity duration-300">{'\u00d3rdenes'}</span>
                     )}
                   </Link>
                 </li>
               )}
 
-              {/* Item Ultima Milla */}
               {canViewDelivery && (
                 <li>
                   <Link
@@ -521,13 +469,12 @@ export function Sidebar({ user }: SidebarProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                     </svg>
                     {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">Última Milla</span>
+                      <span className="text-sm font-medium transition-opacity duration-300">{'\u00daltima Milla'}</span>
                     )}
                   </Link>
                 </li>
               )}
 
-              {/* Item Notificaciones */}
               {canViewNotifications && (
                 <li>
                   <Link
@@ -554,7 +501,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Clientes */}
               {canViewCustomers && (
                 <li>
                   <Link
@@ -640,7 +586,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Tienda (Storefront + Website Config) */}
               {(canViewStorefront || canViewWebsiteConfig) && (
                 <li>
                   <Link
@@ -669,7 +614,6 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Facturación - Link directo sin submenu */}
               {canAccessInvoicing && (
                 <li>
                   <Link
@@ -693,13 +637,40 @@ export function Sidebar({ user }: SidebarProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
                     </svg>
                     {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">Facturación</span>
+                      <span className="text-sm font-medium transition-opacity duration-300">{'Facturaci\u00f3n'}</span>
                     )}
                   </Link>
                 </li>
               )}
 
-              {/* Item Suscripción - Visible para todos */}
+              {canViewAccounting && (
+                <li>
+                  <Link
+                    href="/accounting"
+                    className={`
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
+                      ${pathname.startsWith('/accounting')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/accounting') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m-6 4h6m-6 4h3m-7.5 6h15a1.5 1.5 0 001.5-1.5v-15A1.5 1.5 0 0019.5 3h-15A1.5 1.5 0 003 4.5v15A1.5 1.5 0 004.5 21z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Contabilidad</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
               {!isDemo && (
               <li>
                 <Link
@@ -723,14 +694,13 @@ export function Sidebar({ user }: SidebarProps) {
                   </svg>
                   {primaryExpanded && (
                     <span className="text-sm font-medium transition-opacity duration-300">
-                      Suscripción
+                      {'Suscripci\u00f3n'}
                     </span>
                   )}
                 </Link>
               </li>
               )}
 
-              {/* Item IAM (Gestión de Identidad) - Link directo a Empresas */}
               {canAccessIAM && (
                 <li>
                   <Link
@@ -761,7 +731,6 @@ export function Sidebar({ user }: SidebarProps) {
             </ul>
           </nav>
 
-          {/* Botón logout abajo */}
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-2" />
           <div className="p-4 pt-2">
             <button
@@ -771,20 +740,18 @@ export function Sidebar({ user }: SidebarProps) {
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              {primaryExpanded && <span className="text-sm">Cerrar Sesión</span>}
+              {primaryExpanded && <span className="text-sm">{'Cerrar Sesi\u00f3n'}</span>}
             </button>
           </div>
         </div>
       </aside >
 
-      {/* Modal para cambiar foto de perfil */}
       < UserProfileModal
         isOpen={showUserModal}
         onClose={() => setShowUserModal(false)
         }
         user={user}
         onUpdate={() => {
-          // Recargar la página para actualizar el avatar en el sidebar
           window.location.reload();
         }}
       />
