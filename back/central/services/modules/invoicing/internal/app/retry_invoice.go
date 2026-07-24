@@ -225,7 +225,6 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 			Str("provider", provider).
 			Msg("Failed to publish retry request to queue")
 
-		// Marcar syncLog como failed
 		failedAt := time.Now()
 		duration := int(failedAt.Sub(syncLog.StartedAt).Milliseconds())
 		syncLog.Status = constants.SyncStatusFailed
@@ -233,6 +232,9 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		syncLog.Duration = &duration
 		errorMsg := "Failed to publish retry to queue: " + err.Error()
 		syncLog.ErrorMessage = &errorMsg
+		syncLog.RetryCount = lastLog.RetryCount
+		nextRetry := failedAt.Add(15 * time.Minute)
+		syncLog.NextRetryAt = &nextRetry
 
 		if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
 			uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")

@@ -336,7 +336,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Str("provider", provider).
 			Msg("Failed to publish invoice request to queue")
 
-		// Marcar syncLog como failed
 		failedAt := time.Now()
 		duration := int(failedAt.Sub(syncLog.StartedAt).Milliseconds())
 		syncLog.Status = constants.SyncStatusFailed
@@ -344,6 +343,8 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		syncLog.Duration = &duration
 		errorMsg := "Failed to publish to queue: " + err.Error()
 		syncLog.ErrorMessage = &errorMsg
+		nextRetry := failedAt.Add(15 * time.Minute)
+		syncLog.NextRetryAt = &nextRetry
 
 		if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
 			uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
