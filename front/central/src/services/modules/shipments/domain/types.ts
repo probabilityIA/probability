@@ -55,6 +55,7 @@ export interface GetCODShipmentsParams {
     page_size?: number;
     status?: string;
     is_paid?: boolean;
+    tracking_number?: string;
     business_id?: number;
 }
 

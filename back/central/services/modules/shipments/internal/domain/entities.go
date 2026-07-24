@@ -166,11 +166,12 @@ type ShipmentResponse struct {
 }
 
 type CODFilter struct {
-	BusinessID uint
-	Status     string
-	IsPaid     *bool
-	Page       int
-	PageSize   int
+	BusinessID     uint
+	Status         string
+	IsPaid         *bool
+	TrackingNumber string
+	Page           int
+	PageSize       int
 }
 
 type CollectCODRequest struct {
