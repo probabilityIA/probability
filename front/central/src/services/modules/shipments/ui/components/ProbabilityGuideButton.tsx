@@ -25,9 +25,14 @@ export function ProbabilityGuideButton({ shipmentId, carrier, className = '' }: 
     }, []);
 
     const carrierFormat = formats.find((f) => f.strategy !== 'rebuild');
+    const PREFERRED_DEFAULT_CODE = 'probability-10x10';
     const probabilityFormats = formats
         .filter((f) => f.strategy === 'rebuild')
-        .sort((a, b) => a.sort_order - b.sort_order);
+        .sort((a, b) => {
+            if (a.code === PREFERRED_DEFAULT_CODE) return -1;
+            if (b.code === PREFERRED_DEFAULT_CODE) return 1;
+            return a.sort_order - b.sort_order;
+        });
 
     const openGuide = (format?: GuideFormat) => {
         const code = format?.code || '';

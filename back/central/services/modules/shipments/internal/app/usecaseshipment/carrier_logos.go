@@ -3,6 +3,7 @@ package usecaseshipment
 import (
 	"bytes"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	"image/png"
 	"io"
@@ -14,7 +15,7 @@ import (
 
 var carrierLogoURLs = map[string]string{
 	"SERVIENTREGA":                 "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png",
-	"COORDINADORA":                 "https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png",
+	"COORDINADORA":                 "https://www.elempleo.com/sitios-empresariales/colombia/coordinadora-mercantil/images/logo-coordinadora.png",
 	"DHL":                          "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"DHLEXPRESS":                   "https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png",
 	"FEDEX":                        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png",
@@ -75,8 +76,10 @@ func getCarrierLogoBytes(carrier string) []byte {
 	if err != nil {
 		return nil
 	}
+	rgba := image.NewRGBA(img.Bounds())
+	draw.Draw(rgba, rgba.Bounds(), img, img.Bounds().Min, draw.Src)
 	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
+	if err := png.Encode(&buf, rgba); err != nil {
 		return nil
 	}
 	data := buf.Bytes()
