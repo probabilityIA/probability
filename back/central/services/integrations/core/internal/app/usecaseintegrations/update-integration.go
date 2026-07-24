@@ -10,17 +10,16 @@ import (
 	"gorm.io/datatypes"
 )
 
-// UpdateIntegration actualiza una integración existente
 func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dto domain.UpdateIntegrationDTO) (*domain.Integration, error) {
 	ctx = log.WithFunctionCtx(ctx, "UpdateIntegration")
 
-	// Obtener integración existente
 	existing, err := uc.repo.GetIntegrationByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
 	}
 
 	oldCode := existing.Code
+	oldStoreID := existing.StoreID
 	if dto.Name != nil {
 		existing.Name = *dto.Name
 	}
@@ -43,7 +42,6 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	if dto.IsDefault != nil {
 		existing.IsDefault = *dto.IsDefault
 		if *dto.IsDefault {
-			// Si se marca como default, desmarcar las demás
 			if err := uc.repo.SetIntegrationAsDefault(ctx, id); err != nil {
 				return nil, fmt.Errorf("error al marcar como default: %w", err)
 			}
@@ -53,7 +51,6 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Config = *dto.Config
 	}
 	if dto.Credentials != nil {
-		// DEBUG: Log credential keys being updated
 		credKeys := make([]string, 0, len(*dto.Credentials))
 		for k := range *dto.Credentials {
 			credKeys = append(credKeys, k)
@@ -63,7 +60,6 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 			Uint("id", id).
 			Msg("Credentials keys being updated in integration")
 
-		// Serializar credenciales (se encriptarán en el repository)
 		credentialsBytes, err := json.Marshal(*dto.Credentials)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsSerialize, err)
@@ -77,39 +73,29 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.IsTesting = *dto.IsTesting
 	}
 
-	// Solo actualizar UpdatedByID si es un ID válido (mayor que 0)
 	if dto.UpdatedByID > 0 {
 		existing.UpdatedByID = &dto.UpdatedByID
 	}
-	// Si UpdatedByID es 0, no actualizamos el campo (mantiene el valor existente o NULL)
 
-	// Si no se enviaron credenciales nuevas, limpiar las existentes (ya encriptadas)
-	// para evitar que el repositorio las re-procese y falle con "wrapper encriptado"
 	if dto.Credentials == nil {
 		existing.Credentials = nil
 	}
 
-	// Invalidar cache antes de actualizar
-	// Si solo cambia config/metadata, no borrar credentials cache (evita "no credentials found")
 	if dto.Credentials != nil {
-		// Credenciales cambiaron -> invalidar todo (metadata + credentials)
 		if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
 			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate cache")
 		}
 	} else {
-		// Solo metadata/config cambió -> invalidar solo metadata, preservar credentials cache
 		if err := uc.cache.InvalidateMetadata(ctx, id); err != nil {
 			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate metadata cache")
 		}
 	}
 
-	// Guardar cambios
 	if err := uc.repo.UpdateIntegration(ctx, id, existing); err != nil {
 		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar integración")
 		return nil, fmt.Errorf("error al actualizar integración: %w", err)
 	}
 
-	// ✅ NUEVO - Re-cachear metadata actualizada
 	integrationType, _ := uc.repo.GetIntegrationTypeByID(ctx, existing.IntegrationTypeID)
 
 	configMap := make(map[string]interface{})
@@ -146,15 +132,20 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		}
 	}
 
+	if oldStoreID != "" && oldStoreID != existing.StoreID {
+		if err := uc.cache.InvalidateStoreTypeIndex(ctx, oldStoreID, existing.IntegrationTypeID); err != nil {
+			uc.log.Warn(ctx).Err(err).Str("old_store_id", oldStoreID).Msg("Failed to invalidate old store index")
+		}
+	}
+
 	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {
 		uc.log.Warn(ctx).Err(err).Msg("Failed to cache updated metadata")
 	}
 
-	// ✅ NUEVO - Re-cachear credentials si cambiaron
 	if dto.Credentials != nil {
 		cachedCreds := &domain.CachedCredentials{
 			IntegrationID: existing.ID,
-			Credentials:   *dto.Credentials, // Ya están desencriptadas en el DTO
+			Credentials:   *dto.Credentials,
 		}
 		if err := uc.cache.SetCredentials(ctx, cachedCreds); err != nil {
 			uc.log.Warn(ctx).Err(err).Msg("Failed to cache updated credentials")

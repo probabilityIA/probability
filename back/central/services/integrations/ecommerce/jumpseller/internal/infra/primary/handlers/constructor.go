@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type IHandler interface {
@@ -21,6 +22,7 @@ type IHandler interface {
 	OAuthCallback(c *gin.Context)
 	GetOAuthToken(c *gin.Context)
 	VerifyApp(c *gin.Context)
+	TestExistingConnection(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 
@@ -29,14 +31,16 @@ type jumpsellerHandler struct {
 	coreIntegration integrationcore.IIntegrationCore
 	config          env.IConfig
 	logger          log.ILogger
+	rabbit          rabbitmq.IQueue
 }
 
-func New(useCase usecases.IJumpsellerUseCase, coreIntegration integrationcore.IIntegrationCore, config env.IConfig, logger log.ILogger) IHandler {
+func New(useCase usecases.IJumpsellerUseCase, coreIntegration integrationcore.IIntegrationCore, config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue) IHandler {
 	return &jumpsellerHandler{
 		useCase:         useCase,
 		coreIntegration: coreIntegration,
 		config:          config,
 		logger:          logger.WithModule("jumpseller"),
+		rabbit:          rabbit,
 	}
 }
 
@@ -57,6 +61,7 @@ func (h *jumpsellerHandler) RegisterRoutes(router *gin.RouterGroup, logger log.I
 	{
 		oauth.POST("/connect", middleware.JWT(), h.InitiateOAuth)
 		oauth.GET("/verify-app", middleware.JWT(), h.VerifyApp)
+		oauth.GET("/test", middleware.JWT(), h.TestExistingConnection)
 		oauth.GET("/oauth/token", h.GetOAuthToken)
 	}
 }

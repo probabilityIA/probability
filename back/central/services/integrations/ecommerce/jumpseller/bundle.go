@@ -43,7 +43,7 @@ func New(
 
 	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
-	handler := handlers.New(uc, coreIntegration, config, logger)
+	handler := handlers.New(uc, coreIntegration, config, logger, rabbitMQ)
 	handler.RegisterRoutes(router, logger)
 
 	if rabbitMQ != nil {
@@ -52,6 +52,9 @@ func New(
 
 		statusConsumer := jumpsellerqueue.NewOrderStatusConsumer(rabbitMQ, uc, logger)
 		statusConsumer.Start(context.Background())
+
+		webhookConsumer := jumpsellerqueue.NewWebhookConsumer(rabbitMQ, uc, logger)
+		webhookConsumer.Start(context.Background())
 	}
 
 	baseURL := config.Get("WEBHOOK_BASE_URL")

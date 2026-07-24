@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// CacheMock es un mock de domain.IIntegrationCache usando testify/mock
 type CacheMock struct {
 	mock.Mock
 }
@@ -67,6 +66,19 @@ func (m *CacheMock) GetByBusinessAndType(ctx context.Context, businessID, integr
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*domain.CachedIntegration), args.Error(1)
+}
+
+func (m *CacheMock) GetByStoreAndType(ctx context.Context, storeID string, integrationTypeID uint) (*domain.CachedIntegration, error) {
+	args := m.Called(ctx, storeID, integrationTypeID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.CachedIntegration), args.Error(1)
+}
+
+func (m *CacheMock) InvalidateStoreTypeIndex(ctx context.Context, storeID string, integrationTypeID uint) error {
+	args := m.Called(ctx, storeID, integrationTypeID)
+	return args.Error(0)
 }
 
 func (m *CacheMock) SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error {

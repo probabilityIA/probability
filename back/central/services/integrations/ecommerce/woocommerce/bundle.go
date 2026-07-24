@@ -19,8 +19,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa el módulo de WooCommerce y retorna el provider para registrar en integrationCore.
-// type_id = 4 (IntegrationTypeWoocommerce)
 func New(
 	router *gin.RouterGroup,
 	logger log.ILogger,
@@ -31,12 +29,10 @@ func New(
 ) integrationcore.IIntegrationContract {
 	logger = logger.WithModule("woocommerce")
 
-	// 1. Infraestructura secundaria
 	httpClient := client.New()
 	integrationService := woocore.NewIntegrationService(coreIntegration)
 	productRepo := wooproductrepo.New(database, logger)
 
-	// Publisher de órdenes a RabbitMQ (con fallback no-op si no hay conexión)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
 	if rabbitMQ != nil {
 		orderPublisher = queue.New(rabbitMQ, logger, config)
@@ -45,11 +41,9 @@ func New(
 			Msg("RabbitMQ not available, WooCommerce orders will not be published to queue")
 	}
 
-	// 2. Casos de uso
 	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
-	// 3. Handlers HTTP
-	handler := handlers.New(uc, logger)
+	handler := handlers.New(uc, logger, rabbitMQ)
 	handler.RegisterRoutes(router, logger)
 
 	if rabbitMQ != nil {
@@ -58,9 +52,11 @@ func New(
 
 		productSyncConsumer := wooqueue.NewProductSyncConsumer(rabbitMQ, uc, logger)
 		productSyncConsumer.Start(context.Background())
+
+		webhookConsumer := wooqueue.NewWebhookConsumer(rabbitMQ, uc, logger)
+		webhookConsumer.Start(context.Background())
 	}
 
-	// 4. Auto-registro de webhooks al crear una integracion WooCommerce
 	baseURL := config.Get("WEBHOOK_BASE_URL")
 	if baseURL == "" {
 		baseURL = config.Get("URL_BASE_SWAGGER")
@@ -82,6 +78,5 @@ func New(
 		logger.Warn(context.Background()).Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER configuradas, no se crearan webhooks automaticamente para WooCommerce")
 	}
 
-	// 5. Retornar provider para que el bundle padre lo registre en el core
 	return woocore.New(uc)
 }

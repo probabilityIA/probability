@@ -17,7 +17,6 @@ type IntegrationCache struct {
 	log   log.ILogger
 }
 
-// New crea una nueva instancia del cache de integraciones
 func New(redisClient redis.IRedis, logger log.ILogger) domain.IIntegrationCache {
 	return &IntegrationCache{
 		redis: redisClient,
@@ -64,17 +63,29 @@ func (c *IntegrationCache) SetIntegration(ctx context.Context, integration *doma
 		}
 	}
 
+	if integration.StoreID != "" {
+		storeIdx := storeTypeIndexKey(integration.StoreID, integration.IntegrationTypeID)
+		if integration.IsActive {
+			if err := c.redis.Set(ctx, storeIdx, strconv.Itoa(int(integration.ID)), ttlMetadata); err != nil {
+				c.log.Warn(ctx).Err(err).Str("store_id", integration.StoreID).Msg("Failed to cache store+type index")
+			}
+		} else {
+			if err := c.redis.Delete(ctx, storeIdx); err != nil {
+				c.log.Warn(ctx).Err(err).Str("store_id", integration.StoreID).Msg("Failed to remove stale store+type index")
+			}
+		}
+	}
+
 	c.log.Debug(ctx).Uint("integration_id", integration.ID).Msg("Integration cached")
 	return nil
 }
 
-// GetIntegration lee metadata desde cache
 func (c *IntegrationCache) GetIntegration(ctx context.Context, integrationID uint) (*domain.CachedIntegration, error) {
 	key := integrationKey(integrationID)
 
 	data, err := c.redis.Get(ctx, key)
 	if err != nil {
-		return nil, err // Cache miss
+		return nil, err
 	}
 
 	var integration domain.CachedIntegration
@@ -87,7 +98,6 @@ func (c *IntegrationCache) GetIntegration(ctx context.Context, integrationID uin
 	return &integration, nil
 }
 
-// SetCredentials cachea credentials desencriptadas (TTL corto - 1h)
 func (c *IntegrationCache) SetCredentials(ctx context.Context, creds *domain.CachedCredentials) error {
 	creds.CachedAt = time.Now()
 
@@ -107,13 +117,12 @@ func (c *IntegrationCache) SetCredentials(ctx context.Context, creds *domain.Cac
 	return nil
 }
 
-// GetCredentials lee credentials desencriptadas desde cache
 func (c *IntegrationCache) GetCredentials(ctx context.Context, integrationID uint) (*domain.CachedCredentials, error) {
 	key := credentialsKey(integrationID)
 
 	data, err := c.redis.Get(ctx, key)
 	if err != nil {
-		return nil, err // Cache miss
+		return nil, err
 	}
 
 	var creds domain.CachedCredentials
@@ -126,7 +135,6 @@ func (c *IntegrationCache) GetCredentials(ctx context.Context, integrationID uin
 	return &creds, nil
 }
 
-// GetCredentialField obtiene un campo específico de credentials
 func (c *IntegrationCache) GetCredentialField(ctx context.Context, integrationID uint, field string) (string, error) {
 	creds, err := c.GetCredentials(ctx, integrationID)
 	if err != nil {
@@ -151,7 +159,6 @@ func (c *IntegrationCache) GetCredentialField(ctx context.Context, integrationID
 	return strValue, nil
 }
 
-// SetPlatformCredentials cachea las credenciales de plataforma de un tipo de integración (TTL: 24h)
 func (c *IntegrationCache) SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error {
 	data, err := json.Marshal(creds)
 	if err != nil {
@@ -169,13 +176,12 @@ func (c *IntegrationCache) SetPlatformCredentials(ctx context.Context, integrati
 	return nil
 }
 
-// GetPlatformCredentials lee las credenciales de plataforma de un tipo de integración desde cache
 func (c *IntegrationCache) GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error) {
 	key := platformCredentialsKey(integrationTypeID)
 
 	data, err := c.redis.Get(ctx, key)
 	if err != nil {
-		return nil, err // Cache miss
+		return nil, err
 	}
 
 	var creds map[string]interface{}
@@ -188,14 +194,11 @@ func (c *IntegrationCache) GetPlatformCredentials(ctx context.Context, integrati
 	return creds, nil
 }
 
-// InvalidateIntegration elimina metadata + credentials de cache
 func (c *IntegrationCache) InvalidateIntegration(ctx context.Context, integrationID uint) error {
-	// Delete metadata
 	if err := c.redis.Delete(ctx, integrationKey(integrationID)); err != nil {
 		c.log.Warn(ctx).Err(err).Msg("Failed to delete metadata cache")
 	}
 
-	// Delete credentials (seguridad)
 	if err := c.redis.Delete(ctx, credentialsKey(integrationID)); err != nil {
 		c.log.Warn(ctx).Err(err).Msg("Failed to delete credentials cache")
 	}
@@ -204,7 +207,6 @@ func (c *IntegrationCache) InvalidateIntegration(ctx context.Context, integratio
 	return nil
 }
 
-// InvalidatePlatformCredentials elimina las credenciales de plataforma de un tipo de integración del cache
 func (c *IntegrationCache) InvalidatePlatformCredentials(ctx context.Context, integrationTypeID uint) error {
 	key := platformCredentialsKey(integrationTypeID)
 	if err := c.redis.Delete(ctx, key); err != nil {
@@ -215,7 +217,6 @@ func (c *IntegrationCache) InvalidatePlatformCredentials(ctx context.Context, in
 	return nil
 }
 
-// InvalidateMetadata elimina solo metadata de cache, preservando credentials
 func (c *IntegrationCache) InvalidateMetadata(ctx context.Context, integrationID uint) error {
 	if err := c.redis.Delete(ctx, integrationKey(integrationID)); err != nil {
 		c.log.Warn(ctx).Err(err).Msg("Failed to delete metadata cache")
@@ -255,32 +256,55 @@ func (c *IntegrationCache) SetBusinessTypeIndex(ctx context.Context, businessID,
 	return nil
 }
 
-// GetByCode busca por código usando index
 func (c *IntegrationCache) GetByCode(ctx context.Context, code string) (*domain.CachedIntegration, error) {
-	// 1. Get ID from index
 	idxKey := codeKey(code)
 	idStr, err := c.redis.Get(ctx, idxKey)
 	if err != nil {
-		return nil, err // Cache miss
+		return nil, err
 	}
 
-	// 2. Parse ID
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.log.Error(ctx).Err(err).Str("code", code).Msg("Failed to parse cached ID")
 		return nil, err
 	}
 
-	// 3. Get full metadata
 	return c.GetIntegration(ctx, uint(id))
 }
 
-// GetByBusinessAndType busca por business+type usando index
+func (c *IntegrationCache) GetByStoreAndType(ctx context.Context, storeID string, integrationTypeID uint) (*domain.CachedIntegration, error) {
+	idxKey := storeTypeIndexKey(storeID, integrationTypeID)
+	idStr, err := c.redis.Get(ctx, idxKey)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("store_id", storeID).Msg("Failed to parse cached ID")
+		return nil, err
+	}
+
+	return c.GetIntegration(ctx, uint(id))
+}
+
+func (c *IntegrationCache) InvalidateStoreTypeIndex(ctx context.Context, storeID string, integrationTypeID uint) error {
+	if storeID == "" {
+		return nil
+	}
+	key := storeTypeIndexKey(storeID, integrationTypeID)
+	if err := c.redis.Delete(ctx, key); err != nil {
+		c.log.Warn(ctx).Err(err).Str("key", key).Msg("Failed to delete store+type index cache")
+		return err
+	}
+	return nil
+}
+
 func (c *IntegrationCache) GetByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (*domain.CachedIntegration, error) {
 	idxKey := businessTypeIndexKey(businessID, integrationTypeID)
 	idStr, err := c.redis.Get(ctx, idxKey)
 	if err != nil {
-		return nil, err // Cache miss
+		return nil, err
 	}
 
 	id, err := strconv.ParseUint(idStr, 10, 32)

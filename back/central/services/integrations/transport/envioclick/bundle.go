@@ -63,8 +63,13 @@ func New(
 	}
 
 	webhookUC := app.NewWebhookUseCase(webhookRepo, webhookPublisher, logger)
-	webhookHandlers := handlers.New(webhookUC, logger)
+	webhookHandlers := handlers.New(webhookUC, logger, rabbit)
 	webhookHandlers.RegisterRoutes(router)
+
+	if rabbit != nil {
+		webhookQueueConsumer := consumer.NewWebhookQueueConsumer(rabbit, webhookUC, logger)
+		webhookQueueConsumer.Start(context.Background())
+	}
 	logger.Info(context.Background()).Msg("✅ EnvioClick webhook handler registered")
 
 	logger.Info(context.Background()).Msg("✅ EnvioClick bundle initialized")
