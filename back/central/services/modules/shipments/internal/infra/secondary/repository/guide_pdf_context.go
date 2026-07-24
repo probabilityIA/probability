@@ -75,22 +75,23 @@ func (r *Repository) GetGuidePDFContext(ctx context.Context, shipmentID uint) (*
 			o.currency,
 			b.name AS business_name,
 			b.address AS business_address,
-			COALESCE(w.name, oa.alias) AS w_name,
-			COALESCE(w.company, oa.company) AS w_company,
-			COALESCE(w.first_name, oa.first_name) AS w_first,
-			COALESCE(w.last_name, oa.last_name) AS w_last,
-			w.address AS w_address,
-			COALESCE(w.street, oa.street) AS w_street,
-			COALESCE(w.city, oa.city) AS w_city,
-			COALESCE(w.state, oa.state) AS w_state,
-			COALESCE(w.phone, oa.phone) AS w_phone,
-			COALESCE(w.zip_code, oa.postal_code) AS w_postal,
+			COALESCE(w.name, wd.name, oa.alias) AS w_name,
+			COALESCE(w.company, wd.company, oa.company) AS w_company,
+			COALESCE(w.first_name, wd.first_name, oa.first_name) AS w_first,
+			COALESCE(w.last_name, wd.last_name, oa.last_name) AS w_last,
+			COALESCE(w.address, wd.address) AS w_address,
+			COALESCE(w.street, wd.street, oa.street) AS w_street,
+			COALESCE(w.city, wd.city, oa.city) AS w_city,
+			COALESCE(w.state, wd.state, oa.state) AS w_state,
+			COALESCE(w.phone, wd.phone, oa.phone) AS w_phone,
+			COALESCE(w.zip_code, wd.zip_code, oa.postal_code) AS w_postal,
 			s.guide_url,
 			s.metadata
 		FROM shipments s
 		LEFT JOIN orders o ON o.id = s.order_id
 		LEFT JOIN business b ON b.id = o.business_id
 		LEFT JOIN warehouses w ON w.id = s.warehouse_id
+		LEFT JOIN warehouses wd ON wd.business_id = o.business_id AND wd.is_default = true AND wd.is_active = true AND wd.deleted_at IS NULL
 		LEFT JOIN origin_address oa ON oa.business_id = o.business_id AND oa.is_default = true AND oa.deleted_at IS NULL
 		WHERE s.id = ? AND s.deleted_at IS NULL
 	`, shipmentID).Scan(&row).Error

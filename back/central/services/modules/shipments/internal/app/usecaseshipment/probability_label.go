@@ -206,9 +206,15 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	if sender == "" {
 		sender = strings.TrimSpace(c.BusinessName)
 	}
+	senderAddress := strings.TrimSpace(c.WarehouseAddress)
+	if senderAddress == "" {
+		// Sin bodega ni direccion de origen configurada: usar la direccion
+		// general del negocio como ultimo recurso, mejor que dejarlo vacio.
+		senderAddress = strings.TrimSpace(c.BusinessAddress)
+	}
 	senderCity := joinNonEmptyProb(", ", strings.TrimSpace(c.WarehouseCity), strings.TrimSpace(c.WarehouseState))
 	senderLine2 := joinNonEmptyProb("  ", cityTelLine(senderCity, c.WarehousePhone), postalLine(c.WarehousePostal))
-	y = drawCoordAddressBlock(pdf, tr, "DE:", sender, strings.TrimSpace(c.WarehouseAddress), senderLine2, margin, y, usableW, scale, black, gray)
+	y = drawCoordAddressBlock(pdf, tr, "DE:", sender, senderAddress, senderLine2, margin, y, usableW, scale, black, gray)
 
 	// ── PARA: ───────────────────────────────────────────────────────────
 	recipient := strings.TrimSpace(c.CustomerName)
@@ -254,6 +260,13 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		pdf.SetTextColor(0, 0, 0)
 		y += bannerH + 2
 	}
+
+	// Linea divisoria entre la info de la orden (DE:/PARA:/Observaciones/Ref)
+	// y la info de origen/destino de la guia.
+	pdf.SetDrawColor(int(black.R), int(black.G), int(black.B))
+	pdf.SetLineWidth(0.5)
+	pdf.Line(margin, y, margin+usableW, y)
+	y += 2
 
 	// ── Fila inferior: Origen | QR | Destino / Zona Hub / Equipo Reparto ─
 	footerH := hMm - y - margin
