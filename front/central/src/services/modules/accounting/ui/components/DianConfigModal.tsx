@@ -113,6 +113,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL del API</label>
                     <input
                         type="text"
+                        autoComplete="off"
                         value={apiUrl}
                         onChange={(e) => setApiUrl(e.target.value)}
                         placeholder="https://api-sandbox.factus.com.co"
@@ -126,6 +127,8 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client ID *</label>
                         <input
                             type="text"
+                            autoComplete="off"
+                            data-1p-ignore="true"
                             value={clientId}
                             onChange={(e) => setClientId(e.target.value)}
                             className={inputClass}
@@ -135,6 +138,8 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Client Secret *</label>
                         <input
                             type="password"
+                            autoComplete="new-password"
+                            data-1p-ignore="true"
                             value={clientSecret}
                             onChange={(e) => setClientSecret(e.target.value)}
                             className={inputClass}
@@ -147,6 +152,8 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usuario *</label>
                         <input
                             type="text"
+                            autoComplete="off"
+                            data-1p-ignore="true"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="correo@empresa.com"
@@ -157,6 +164,8 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contrasena *</label>
                         <input
                             type="password"
+                            autoComplete="new-password"
+                            data-1p-ignore="true"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={inputClass}
