@@ -8,11 +8,11 @@ import (
 )
 
 type paymentTypeResponse struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Active   bool   `json:"active"`
-	DueDate  bool   `json:"due_date"`
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Active  bool   `json:"active"`
+	DueDate bool   `json:"due_date"`
 }
 
 func (c *Client) ListPaymentTypes(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error) {

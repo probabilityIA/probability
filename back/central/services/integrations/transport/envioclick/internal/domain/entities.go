@@ -85,10 +85,10 @@ type GenerateData struct {
 }
 
 type TrackingResponse struct {
-	Status         string         `json:"status"`
-	StatusCodes    []int          `json:"status_codes"`
-	StatusMessages []StatusMsg    `json:"status_messages"`
-	Data           TrackingData   `json:"data"`
+	Status         string       `json:"status"`
+	StatusCodes    []int        `json:"status_codes"`
+	StatusMessages []StatusMsg  `json:"status_messages"`
+	Data           TrackingData `json:"data"`
 }
 
 type StatusMsg struct {

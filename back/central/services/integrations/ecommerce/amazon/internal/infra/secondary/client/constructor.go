@@ -23,12 +23,12 @@ func New() domain.IAmazonClient {
 // TestConnection verifica las credenciales de Amazon SP-API.
 //
 // TODO: Implementar el flujo OAuth completo de Amazon SP-API:
-// 1. Usar refresh_token + client_id + client_secret para obtener un access_token
-//    POST https://api.amazon.com/auth/o2/token
-//    grant_type=refresh_token&refresh_token=X&client_id=Y&client_secret=Z
-// 2. Usar el access_token para llamar a GET /sellers/v1/marketplaceParticipations
-//    con el header x-amz-access-token
-// 3. Verificar que el seller_id aparece en las participaciones
+//  1. Usar refresh_token + client_id + client_secret para obtener un access_token
+//     POST https://api.amazon.com/auth/o2/token
+//     grant_type=refresh_token&refresh_token=X&client_id=Y&client_secret=Z
+//  2. Usar el access_token para llamar a GET /sellers/v1/marketplaceParticipations
+//     con el header x-amz-access-token
+//  3. Verificar que el seller_id aparece en las participaciones
 //
 // Referencia: https://developer-docs.amazon.com/sp-api/docs/connecting-to-the-selling-partner-api
 func (c *AmazonClient) TestConnection(ctx context.Context, sellerID, refreshToken, clientID, clientSecret string) error {

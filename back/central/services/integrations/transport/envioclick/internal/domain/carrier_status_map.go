@@ -20,9 +20,9 @@ var carrierStatusTable = map[carrierStatusKey]ProbabilityShipmentStatus{
 	{"envia", "direccion incorrecta/ insuficiente"}:           StatusOnHold,
 	{"envia", "direccion incorrecta insuficiente"}:            StatusOnHold,
 
-	{"interrapidisimo", "envio admitido"}:           StatusPickedUp,
-	{"interrapidisimo", "ingresado a bodega"}:       StatusInTransit,
-	{"interrapidisimo", "despachado para bodega"}:   StatusInTransit,
+	{"interrapidisimo", "envio admitido"}:            StatusPickedUp,
+	{"interrapidisimo", "ingresado a bodega"}:        StatusInTransit,
+	{"interrapidisimo", "despachado para bodega"}:    StatusInTransit,
 	{"interrapidisimo", "viajando en ruta nacional"}: StatusInTransit,
 	{"interrapidisimo", "viajando en ruta regional"}: StatusInTransit,
 

@@ -81,16 +81,3 @@ func (c *shopifyClient) ListWebhooks(ctx context.Context, storeName, accessToken
 
 	return webhooks, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

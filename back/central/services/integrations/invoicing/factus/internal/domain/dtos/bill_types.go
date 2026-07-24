@@ -6,15 +6,15 @@ package dtos
 // ListBillsParams parámetros para filtrar la consulta de facturas
 type ListBillsParams struct {
 	Page           int
-	PerPage        int     // Registros por página (filter[per_page])
-	Number         string  // Número de factura (ej: "SETP990000203")
-	Prefix         string  // Prefijo (ej: "SETP")
-	Identification string  // NIT / CC del cliente
-	Names          string  // Nombre del cliente
-	ReferenceCode  string  // Código de referencia interno
-	Status         *int    // Estado: 1=validada, 0=no validada
-	StartDate      string  // Fecha inicio YYYY-MM-DD
-	EndDate        string  // Fecha fin YYYY-MM-DD
+	PerPage        int    // Registros por página (filter[per_page])
+	Number         string // Número de factura (ej: "SETP990000203")
+	Prefix         string // Prefijo (ej: "SETP")
+	Identification string // NIT / CC del cliente
+	Names          string // Nombre del cliente
+	ReferenceCode  string // Código de referencia interno
+	Status         *int   // Estado: 1=validada, 0=no validada
+	StartDate      string // Fecha inicio YYYY-MM-DD
+	EndDate        string // Fecha fin YYYY-MM-DD
 }
 
 // BillDocument tipo de documento de una factura
@@ -104,23 +104,23 @@ type BillDetailItem struct {
 // BillDetail representa una factura electrónica con todos sus detalles
 // Retornada por GET /v1/bills/show/:number
 type BillDetail struct {
-	ID           int
-	Number       string
+	ID            int
+	Number        string
 	ReferenceCode *string
-	CUFE         string
-	QRCode       string
-	QRImage      string // base64 data URI
-	Status       int
-	Total        string
-	TaxAmount    string
-	GrossValue   string
-	Discount     string
-	Validated    string
-	CreatedAt    string
-	Document     BillDocument
-	PaymentForm  BillPaymentForm
-	Customer     BillDetailCustomer
-	Items        []BillDetailItem
-	CreditNotes  []BillNote
-	DebitNotes   []BillNote
+	CUFE          string
+	QRCode        string
+	QRImage       string // base64 data URI
+	Status        int
+	Total         string
+	TaxAmount     string
+	GrossValue    string
+	Discount      string
+	Validated     string
+	CreatedAt     string
+	Document      BillDocument
+	PaymentForm   BillPaymentForm
+	Customer      BillDetailCustomer
+	Items         []BillDetailItem
+	CreditNotes   []BillNote
+	DebitNotes    []BillNote
 }

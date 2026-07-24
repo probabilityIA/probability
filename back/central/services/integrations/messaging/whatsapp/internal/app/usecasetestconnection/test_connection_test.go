@@ -279,4 +279,3 @@ func TestTestConnection_ErrorPhoneNumberIDInvalidoConTestPhone(t *testing.T) {
 		t.Fatal("TestConnection() esperaba error cuando phone_number_id no es numérico")
 	}
 }
-

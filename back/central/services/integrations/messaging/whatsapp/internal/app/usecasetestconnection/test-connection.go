@@ -116,4 +116,3 @@ func (u *testConnectionUseCase) TestConnection(ctx context.Context, config map[s
 
 	return nil
 }
-

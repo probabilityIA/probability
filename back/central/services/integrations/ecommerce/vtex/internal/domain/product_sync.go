@@ -50,23 +50,23 @@ type MappedItem struct {
 }
 
 type VTEXSKU struct {
-	ID            string
-	ProductID     string
-	Name          string
-	RefID         string
-	EAN           string
-	Price         float64
-	IsActive      bool
-	Weight        *float64
-	Length        *float64
-	Width         *float64
-	Height        *float64
+	ID              string
+	ProductID       string
+	Name            string
+	RefID           string
+	EAN             string
+	Price           float64
+	IsActive        bool
+	Weight          *float64
+	Length          *float64
+	Width           *float64
+	Height          *float64
 	MeasurementUnit string
 }
 
 type Warehouse struct {
-	ID   string
-	Name string
+	ID       string
+	Name     string
 	IsActive bool
 }
 
@@ -80,8 +80,8 @@ type WarehouseMapping struct {
 }
 
 type InventoryConfig struct {
-	Enabled          bool
-	IsSeller         bool
+	Enabled           bool
+	IsSeller          bool
 	WarehouseMappings []WarehouseMapping
 }
 

@@ -26,7 +26,6 @@ func sampleResult() *entities.DeliveryResult {
 	}
 }
 
-
 func TestPublishResult_Success(t *testing.T) {
 	rmq := &mocks.RabbitMQMock{}
 	pub := New(rmq, mocks.NewLoggerMock())

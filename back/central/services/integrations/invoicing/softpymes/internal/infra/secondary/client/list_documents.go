@@ -12,27 +12,27 @@ import (
 // Estructura basada en la documentación oficial:
 // https://api-integracion.softpymes.com.co/doc/#api-Documentos-GetSearchDocument
 type Document struct {
-	Annuled                bool              `json:"annuled"`
-	ElectronicDocument     bool              `json:"electronicDocument"`
-	BranchCode             string            `json:"branchCode"`
-	BranchName             string            `json:"branchName"`
-	Comment                string            `json:"comment"`
-	CustomerIdentification string            `json:"customerIdentification"` // NIT/CC del cliente
-	CustomerName           string            `json:"customerName"`
-	Details                []DocumentDetail  `json:"details"`
-	DocumentDate           string            `json:"documentDate"` // Formato: string en respuesta
-	DocumentName           string            `json:"documentName"` // Tipo de documento (ej: "Factura de Venta")
-	DocumentNumber         string            `json:"documentNumber"`
-	DueDate                string            `json:"dueDate"`
-	PaymentTerm            string            `json:"paymentTerm"`
-	Prefix                 string            `json:"prefix"`
-	Seller                 DocumentSeller    `json:"seller"`
-	ShipInformation        ShipInformation   `json:"shipInformation"`
-	TermDays               int               `json:"termDays"`
-	Total                  string            `json:"total"`           // Viene como string en la API
-	TotalDiscount          string            `json:"totalDiscount"`   // Viene como string en la API
-	TotalIva               string            `json:"totalIva"`        // Viene como string en la API
-	TotalWithholdingTax    string            `json:"totalWithholdingTax"` // Viene como string en la API
+	Annuled                bool             `json:"annuled"`
+	ElectronicDocument     bool             `json:"electronicDocument"`
+	BranchCode             string           `json:"branchCode"`
+	BranchName             string           `json:"branchName"`
+	Comment                string           `json:"comment"`
+	CustomerIdentification string           `json:"customerIdentification"` // NIT/CC del cliente
+	CustomerName           string           `json:"customerName"`
+	Details                []DocumentDetail `json:"details"`
+	DocumentDate           string           `json:"documentDate"` // Formato: string en respuesta
+	DocumentName           string           `json:"documentName"` // Tipo de documento (ej: "Factura de Venta")
+	DocumentNumber         string           `json:"documentNumber"`
+	DueDate                string           `json:"dueDate"`
+	PaymentTerm            string           `json:"paymentTerm"`
+	Prefix                 string           `json:"prefix"`
+	Seller                 DocumentSeller   `json:"seller"`
+	ShipInformation        ShipInformation  `json:"shipInformation"`
+	TermDays               int              `json:"termDays"`
+	Total                  string           `json:"total"`               // Viene como string en la API
+	TotalDiscount          string           `json:"totalDiscount"`       // Viene como string en la API
+	TotalIva               string           `json:"totalIva"`            // Viene como string en la API
+	TotalWithholdingTax    string           `json:"totalWithholdingTax"` // Viene como string en la API
 }
 
 // DocumentDetail representa el detalle de un ítem en el documento
@@ -77,8 +77,8 @@ type ShipInformation struct {
 // ListDocumentsParams parámetros para filtrar documentos
 // Documentación: https://api-integracion.softpymes.com.co/doc/#api-Documentos-GetSearchDocument
 type ListDocumentsParams struct {
-	DateFrom       string  `json:"dateFrom"`       // REQUERIDO - Formato: YYYY-MM-DD
-	DateTo         string  `json:"dateTo"`         // REQUERIDO - Formato: YYYY-MM-DD (máx 30 días desde dateFrom)
+	DateFrom       string  `json:"dateFrom"`                 // REQUERIDO - Formato: YYYY-MM-DD
+	DateTo         string  `json:"dateTo"`                   // REQUERIDO - Formato: YYYY-MM-DD (máx 30 días desde dateFrom)
 	DocumentType   *string `json:"documentType,omitempty"`   // OPCIONAL - Tipo de documento
 	DocumentNumber *string `json:"documentNumber,omitempty"` // OPCIONAL - Número documento
 	Prefix         *string `json:"prefix,omitempty"`         // OPCIONAL - Prefijo documento

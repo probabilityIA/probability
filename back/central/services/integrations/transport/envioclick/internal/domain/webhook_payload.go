@@ -1,15 +1,15 @@
 package domain
 
 type WebhookPayload struct {
-	IDCarrier           int64           `json:"idCarrier"`
-	Carrier             string          `json:"carrier"`
-	IDOrder             int64           `json:"idOrder"`
-	TrackingCode        string          `json:"trackingCode"`
-	RealPickupDate      string          `json:"realPickupDate"`
-	ArrivalDate         string          `json:"arrivalDate"`
-	RealDeliveryDate    string          `json:"realDeliveryDate"`
-	MyShipmentReference string          `json:"myShipmentReference"`
-	Events              []WebhookEvent  `json:"events"`
+	IDCarrier           int64          `json:"idCarrier"`
+	Carrier             string         `json:"carrier"`
+	IDOrder             int64          `json:"idOrder"`
+	TrackingCode        string         `json:"trackingCode"`
+	RealPickupDate      string         `json:"realPickupDate"`
+	ArrivalDate         string         `json:"arrivalDate"`
+	RealDeliveryDate    string         `json:"realDeliveryDate"`
+	MyShipmentReference string         `json:"myShipmentReference"`
+	Events              []WebhookEvent `json:"events"`
 }
 
 type WebhookEvent struct {

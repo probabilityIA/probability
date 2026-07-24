@@ -5,7 +5,6 @@ import (
 	"testing"
 )
 
-
 func TestBuildSubject(t *testing.T) {
 	tests := []struct {
 		eventType string
@@ -23,7 +22,6 @@ func TestBuildSubject(t *testing.T) {
 		}
 	}
 }
-
 
 func TestBuildHTML_ContainsEventType(t *testing.T) {
 	html := buildHTML("order.created", nil)

@@ -9,8 +9,8 @@ import (
 type AuthResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`    // "Bearer"
-	ExpiresIn    int    `json:"expires_in"`    // 600 (10 min) para access, 3600 para refresh
+	TokenType    string `json:"token_type"` // "Bearer"
+	ExpiresIn    int    `json:"expires_in"` // 600 (10 min) para access, 3600 para refresh
 	Message      string `json:"message,omitempty"`
 	Error        string `json:"error,omitempty"`
 }

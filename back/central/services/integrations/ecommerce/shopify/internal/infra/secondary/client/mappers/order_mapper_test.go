@@ -17,20 +17,20 @@ func almostEqual(a, b float64) bool {
 // buildMinimalOrder construye una orden base con los campos mínimos para que el mapper no falle
 func buildMinimalOrder(lineItems []response.LineItem) response.Order {
 	return response.Order{
-		ID:              1234567890,
-		Name:            "#67269",
-		OrderNumber:     67269,
-		Email:           "test@example.com",
-		Currency:        "USD",
-		TotalPrice:      "44.99",
-		SubtotalPrice:   "41.80",
-		TotalTax:        "6.67",
-		TotalDiscounts:  "4.70",
-		FinancialStatus: "paid",
-		SourceName:      "web",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ProcessedAt:     time.Now(),
+		ID:                  1234567890,
+		Name:                "#67269",
+		OrderNumber:         67269,
+		Email:               "test@example.com",
+		Currency:            "USD",
+		TotalPrice:          "44.99",
+		SubtotalPrice:       "41.80",
+		TotalTax:            "6.67",
+		TotalDiscounts:      "4.70",
+		FinancialStatus:     "paid",
+		SourceName:          "web",
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		ProcessedAt:         time.Now(),
 		PresentmentCurrency: "COP",
 		TotalPriceSet: &response.MoneySet{
 			ShopMoney:        response.Money{Amount: "44.99", CurrencyCode: "USD"},
@@ -346,8 +346,8 @@ func TestDiscountAllocationWithoutAmountSet(t *testing.T) {
 			},
 			DiscountAllocations: []response.DiscountAllocation{
 				{
-					Amount:    "2.50",
-					AmountSet: nil, // sin presentment
+					Amount:                   "2.50",
+					AmountSet:                nil, // sin presentment
 					DiscountApplicationIndex: 0,
 				},
 			},

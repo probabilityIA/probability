@@ -22,10 +22,10 @@ const (
 	humanSessionTTL = 24 * time.Hour
 
 	// Prefijos de claves Redis
-	convKeyPrefix       = "whatsapp:conv:"
-	convPhoneOrderIdx   = "whatsapp:conv:idx:po:"
-	convActivePhoneIdx  = "whatsapp:conv:idx:active:"
-	humanSessionPrefix  = "whatsapp:human_session:"
+	convKeyPrefix      = "whatsapp:conv:"
+	convPhoneOrderIdx  = "whatsapp:conv:idx:po:"
+	convActivePhoneIdx = "whatsapp:conv:idx:active:"
+	humanSessionPrefix = "whatsapp:human_session:"
 )
 
 // conversationCache implementa IConversationCache usando Redis

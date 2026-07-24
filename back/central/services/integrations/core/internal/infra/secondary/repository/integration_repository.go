@@ -455,8 +455,8 @@ func (r *Repository) toModel(integration *domain.Integration) *models.Integratio
 			CreatedAt: integration.CreatedAt,
 			UpdatedAt: integration.UpdatedAt,
 		},
-		Name:              integration.Name,
-		Code:              integration.Code,
+		Name: integration.Name,
+		Code: integration.Code,
 		// Category NO se mapea - se deriva de IntegrationType.Category.Code
 		IntegrationTypeID: integration.IntegrationTypeID,
 		BusinessID:        integration.BusinessID,

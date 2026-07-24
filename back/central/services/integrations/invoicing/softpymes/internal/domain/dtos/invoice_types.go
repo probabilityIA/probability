@@ -17,42 +17,42 @@ type CustomerData struct {
 
 // ItemData datos de un item para la API de Softpymes
 type ItemData struct {
-	ProductID   *string
-	SKU         string
-	Name        string
-	Description *string
-	Quantity    int
-	UnitPrice     float64
-	UnitPriceBase float64 // Precio sin impuestos
-	TotalPrice    float64
-	Tax           float64
-	TaxRate       *float64
+	ProductID       *string
+	SKU             string
+	Name            string
+	Description     *string
+	Quantity        int
+	UnitPrice       float64
+	UnitPriceBase   float64 // Precio sin impuestos
+	TotalPrice      float64
+	Tax             float64
+	TaxRate         *float64
 	Discount        float64
 	DiscountPercent float64
 	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment      float64
-	UnitPriceBasePresentment  float64
-	TotalPricePresentment     float64
-	DiscountPresentment       float64
-	TaxPresentment            float64
+	UnitPricePresentment     float64
+	UnitPriceBasePresentment float64
+	TotalPricePresentment    float64
+	DiscountPresentment      float64
+	TaxPresentment           float64
 }
 
 // CreateInvoiceRequest datos tipados para crear una factura en Softpymes
 type CreateInvoiceRequest struct {
-	Customer     CustomerData
-	Items        []ItemData
-	Total        float64
-	Subtotal     float64
-	Tax          float64
-	Discount     float64
+	Customer         CustomerData
+	Items            []ItemData
+	Total            float64
+	Subtotal         float64
+	Tax              float64
+	Discount         float64
 	ShippingCost     float64
 	ShippingDiscount float64
 	ShippingCostBase float64 // Envío sin impuestos
 	Currency         string
-	OrderID      string
-	OrderNumber  string
-	Credentials  Credentials
-	Config       map[string]interface{}
+	OrderID          string
+	OrderNumber      string
+	Credentials      Credentials
+	Config           map[string]interface{}
 	// IsRetry indica que es un reintento: activa la consulta de idempotencia en Softpymes
 	IsRetry bool
 	// OrderCreatedAt es la fecha de creación de la orden (YYYY-MM-DD, zona Colombia).

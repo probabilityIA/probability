@@ -4,11 +4,11 @@ import "time"
 
 // IntegrationTypeInfo representa información básica del tipo de integración
 type IntegrationTypeInfo struct {
-	ID       uint   `json:"id" example:"1"`
-	Name     string `json:"name" example:"WhatsApp"`
-	Code     string `json:"code" example:"whatsapp"`
-	ImageURL string `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
-	Category *IntegrationCategoryInfo `json:"category,omitempty"` // Categoría del tipo de integración
+	ID       uint                     `json:"id" example:"1"`
+	Name     string                   `json:"name" example:"WhatsApp"`
+	Code     string                   `json:"code" example:"whatsapp"`
+	ImageURL string                   `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
+	Category *IntegrationCategoryInfo `json:"category,omitempty"`                                                                        // Categoría del tipo de integración
 }
 
 // IntegrationCategoryInfo representa información básica de una categoría
@@ -26,10 +26,10 @@ type IntegrationResponse struct {
 	Name              string                 `json:"name" example:"WhatsApp Principal"`
 	Code              string                 `json:"code" example:"whatsapp_platform"`
 	IntegrationTypeID uint                   `json:"integration_type_id" example:"1"`
-	IntegrationType   *IntegrationTypeInfo   `json:"integration_type,omitempty"` // Información del tipo si está cargado
-	Category          string                 `json:"category" example:"ecommerce"` // Código de la categoría
+	IntegrationType   *IntegrationTypeInfo   `json:"integration_type,omitempty"`                   // Información del tipo si está cargado
+	Category          string                 `json:"category" example:"ecommerce"`                 // Código de la categoría
 	CategoryName      string                 `json:"category_name,omitempty" example:"E-commerce"` // Nombre de la categoría
-	CategoryColor     string                 `json:"category_color,omitempty" example:"#3B82F6"` // Color de la categoría
+	CategoryColor     string                 `json:"category_color,omitempty" example:"#3B82F6"`   // Color de la categoría
 	BusinessID        *uint                  `json:"business_id" example:"16"`
 	BusinessName      *string                `json:"business_name,omitempty" example:"Mi Empresa S.A.S"`
 	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)

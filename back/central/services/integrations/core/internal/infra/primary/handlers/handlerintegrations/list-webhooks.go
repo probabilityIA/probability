@@ -8,18 +8,18 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
 )
 
-//	@Summary		Listar webhooks
-//	@Description	Lista todos los webhooks configurados para una integracion
-//	@Tags			Integrations
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id	path		int	true	"ID de la integracion"
-//	@Success		200	{object}	response.ListWebhooksResponse
-//	@Failure		400	{object}	response.ErrorResponse	"ID invalido"
-//	@Failure		404	{object}	response.ErrorResponse	"Integracion no encontrada"
-//	@Failure		500	{object}	response.ErrorResponse	"Error interno"
-//	@Router			/integrations/{id}/webhooks [get]
+// @Summary		Listar webhooks
+// @Description	Lista todos los webhooks configurados para una integracion
+// @Tags			Integrations
+// @Accept			json
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id	path		int	true	"ID de la integracion"
+// @Success		200	{object}	response.ListWebhooksResponse
+// @Failure		400	{object}	response.ErrorResponse	"ID invalido"
+// @Failure		404	{object}	response.ErrorResponse	"Integracion no encontrada"
+// @Failure		500	{object}	response.ErrorResponse	"Error interno"
+// @Router			/integrations/{id}/webhooks [get]
 func (h *IntegrationHandler) ListWebhooksHandler(c *gin.Context) {
 	idStr := c.Param("id")
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-		"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )

@@ -2,15 +2,15 @@ package response
 
 // CreateJournalResponse representa la respuesta de Siigo al crear un comprobante contable
 type CreateJournalResponse struct {
-	ID       string              `json:"id"`
-	Document JournalDocumentRef  `json:"document"`
-	Date     string              `json:"date"`
-	Number   int                 `json:"number"`
-	Name     string              `json:"name"` // Ej: "CC-10-20"
-	Items    []JournalItemRef    `json:"items,omitempty"`
-	Total    float64             `json:"total"`
-	Errors   []SiigoError        `json:"errors,omitempty"`
-	Metadata JournalMetadata     `json:"metadata,omitempty"`
+	ID       string             `json:"id"`
+	Document JournalDocumentRef `json:"document"`
+	Date     string             `json:"date"`
+	Number   int                `json:"number"`
+	Name     string             `json:"name"` // Ej: "CC-10-20"
+	Items    []JournalItemRef   `json:"items,omitempty"`
+	Total    float64            `json:"total"`
+	Errors   []SiigoError       `json:"errors,omitempty"`
+	Metadata JournalMetadata    `json:"metadata,omitempty"`
 }
 
 // JournalDocumentRef referencia al tipo de documento del journal

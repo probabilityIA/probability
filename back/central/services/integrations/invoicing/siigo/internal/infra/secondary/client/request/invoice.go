@@ -60,15 +60,15 @@ type SiigoPhone struct {
 
 // SiigoContact contacto del cliente (para email)
 type SiigoContact struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name,omitempty"`
-	Email     string `json:"email"`
-	SendElectronicInvoice bool `json:"send_electronic_invoice"`
+	FirstName             string `json:"first_name"`
+	LastName              string `json:"last_name,omitempty"`
+	Email                 string `json:"email"`
+	SendElectronicInvoice bool   `json:"send_electronic_invoice"`
 }
 
 // SiigoCurrency moneda de la factura
 type SiigoCurrency struct {
-	Code         string  `json:"code"`          // "COP", "USD", etc.
+	Code         string  `json:"code"` // "COP", "USD", etc.
 	ExchangeRate float64 `json:"exchange_rate,omitempty"`
 }
 
@@ -88,7 +88,7 @@ type SiigoTax struct {
 
 // SiigoPayment información de pago
 type SiigoPayment struct {
-	ID       int     `json:"id"`   // ID del método de pago en Siigo
-	Value    float64 `json:"value"`
-	DueDate  string  `json:"due_date,omitempty"` // "YYYY-MM-DD"
+	ID      int     `json:"id"` // ID del método de pago en Siigo
+	Value   float64 `json:"value"`
+	DueDate string  `json:"due_date,omitempty"` // "YYYY-MM-DD"
 }

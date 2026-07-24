@@ -14,19 +14,19 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	paidAt := now.Add(-1 * time.Hour)
 
 	order := &domain.WooCommerceOrder{
-		ID:            12345,
-		Number:        "WOO-5001",
-		Status:        "processing",
-		Currency:      "COP",
-		Total:         "250000.00",
-		TotalTax:      "39000.00",
-		DiscountTotal: "10000.00",
-		ShippingTotal: "15000.00",
-		DateCreated:   now,
-		CustomerNote:  "Entregar en la mañana",
-		PaymentMethod: "bacs",
+		ID:                 12345,
+		Number:             "WOO-5001",
+		Status:             "processing",
+		Currency:           "COP",
+		Total:              "250000.00",
+		TotalTax:           "39000.00",
+		DiscountTotal:      "10000.00",
+		ShippingTotal:      "15000.00",
+		DateCreated:        now,
+		CustomerNote:       "Entregar en la mañana",
+		PaymentMethod:      "bacs",
 		PaymentMethodTitle: "Transferencia bancaria",
-		DatePaid:      &paidAt,
+		DatePaid:           &paidAt,
 		Billing: domain.WooCommerceBilling{
 			FirstName: "María",
 			LastName:  "García",
@@ -295,7 +295,7 @@ func TestMapWooOrderToProbability_MinimalOrder(t *testing.T) {
 
 func TestMapWooStatus_AllStatuses(t *testing.T) {
 	tests := []struct {
-		wooStatus     string
+		wooStatus      string
 		expectedStatus string
 	}{
 		{"pending", "pending"},

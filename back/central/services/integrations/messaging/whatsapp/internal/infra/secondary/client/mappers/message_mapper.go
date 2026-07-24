@@ -1,7 +1,7 @@
 package mappers
 
 import (
-		"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/request"
 )
 

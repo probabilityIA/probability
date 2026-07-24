@@ -128,19 +128,19 @@ type MeliShippingDetail struct {
 }
 
 type MeliReceiverAddress struct {
-	ID           int64
-	AddressLine  string
-	StreetName   string
-	StreetNumber string
-	ZipCode      string
-	City         MeliLocation
-	State        MeliLocation
-	Country      MeliLocation
-	Neighborhood *MeliLocation
-	Latitude     *float64
-	Longitude    *float64
-	Comment      string
-	ReceiverName string
+	ID            int64
+	AddressLine   string
+	StreetName    string
+	StreetNumber  string
+	ZipCode       string
+	City          MeliLocation
+	State         MeliLocation
+	Country       MeliLocation
+	Neighborhood  *MeliLocation
+	Latitude      *float64
+	Longitude     *float64
+	Comment       string
+	ReceiverName  string
 	ReceiverPhone string
 }
 

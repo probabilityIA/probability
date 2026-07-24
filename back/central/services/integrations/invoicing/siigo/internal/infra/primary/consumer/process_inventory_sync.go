@@ -23,8 +23,8 @@ type providerStockSyncItem struct {
 }
 
 type warehouseMapping struct {
-	warehouseID uint
-	siigoWarehouseID    int
+	warehouseID      uint
+	siigoWarehouseID int
 }
 
 func (c *InvoiceRequestConsumer) processInventorySyncRequest(

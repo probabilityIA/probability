@@ -25,15 +25,15 @@ type creditNoteRequest struct {
 	Customer struct {
 		Identification string `json:"identification"`
 	} `json:"customer"`
-	Items   []creditNoteItem `json:"items"`
-	Reason  string           `json:"reason,omitempty"`
-	Observations string      `json:"observations,omitempty"`
+	Items        []creditNoteItem `json:"items"`
+	Reason       string           `json:"reason,omitempty"`
+	Observations string           `json:"observations,omitempty"`
 }
 
 type creditNoteResponse struct {
-	ID       string                `json:"id"`
-	Name     string                `json:"name"`
-	Number   int                   `json:"number"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Number   int    `json:"number"`
 	Metadata struct {
 		CUFE string `json:"cufe"`
 	} `json:"metadata"`

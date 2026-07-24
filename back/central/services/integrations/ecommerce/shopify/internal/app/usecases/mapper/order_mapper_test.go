@@ -9,15 +9,15 @@ import (
 
 func TestMapShopifyOrderToProbability_BasicFields(t *testing.T) {
 	order := &domain.ShopifyOrder{
-		ExternalID:  "12345",
-		OrderNumber: "#1001",
-		TotalAmount: 150000,
-		Currency:    "COP",
-		Subtotal:    120000,
-		Tax:         20000,
-		Discount:    5000,
+		ExternalID:   "12345",
+		OrderNumber:  "#1001",
+		TotalAmount:  150000,
+		Currency:     "COP",
+		Subtotal:     120000,
+		Tax:          20000,
+		Discount:     5000,
 		ShippingCost: 15000,
-		Metadata:    map[string]interface{}{},
+		Metadata:     map[string]interface{}{},
 	}
 
 	result := MapShopifyOrderToProbability(order)

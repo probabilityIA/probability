@@ -28,16 +28,3 @@ func (p *noOpPublisher) Publish(ctx context.Context, order *domain.ProbabilityOr
 		Msg("RabbitMQ not available, order not published to queue (no-op publisher)")
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

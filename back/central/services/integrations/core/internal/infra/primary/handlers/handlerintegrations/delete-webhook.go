@@ -60,16 +60,3 @@ func (h *IntegrationHandler) DeleteWebhookHandler(c *gin.Context) {
 		Message: "Webhook eliminado exitosamente",
 	})
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

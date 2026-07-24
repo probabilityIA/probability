@@ -56,16 +56,3 @@ func (c *shopifyClient) DeleteWebhook(ctx context.Context, storeName, accessToke
 		return fmt.Errorf("error al eliminar webhook en Shopify (código %d): %s", resp.StatusCode(), resp.String())
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

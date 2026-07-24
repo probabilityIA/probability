@@ -260,9 +260,9 @@ func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		omitField   string
-		emptyField  string
+		name       string
+		omitField  string
+		emptyField string
 	}{
 		{"falta client_id", "client_id", ""},
 		{"client_id vacío", "", "client_id"},

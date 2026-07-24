@@ -22,23 +22,23 @@ type invoiceCustomerData struct {
 }
 
 type invoiceItemData struct {
-	ProductID       *string  `json:"product_id"`
-	SKU             string   `json:"sku"`
-	Name            string   `json:"name"`
-	Description     *string  `json:"description"`
-	Quantity        int      `json:"quantity"`
-	UnitPrice       float64  `json:"unit_price"`
-	UnitPriceBase   float64  `json:"unit_price_base"`
-	TotalPrice      float64  `json:"total_price"`
-	Tax             float64  `json:"tax"`
-	TaxRate         *float64 `json:"tax_rate"`
-	Discount        float64  `json:"discount"`
-	DiscountPercent float64  `json:"discount_percent"`
-	UnitPricePresentment     float64 `json:"unit_price_presentment"`
-	UnitPriceBasePresentment float64 `json:"unit_price_base_presentment"`
-	TotalPricePresentment    float64 `json:"total_price_presentment"`
-	DiscountPresentment      float64 `json:"discount_presentment"`
-	TaxPresentment           float64 `json:"tax_presentment"`
+	ProductID                *string  `json:"product_id"`
+	SKU                      string   `json:"sku"`
+	Name                     string   `json:"name"`
+	Description              *string  `json:"description"`
+	Quantity                 int      `json:"quantity"`
+	UnitPrice                float64  `json:"unit_price"`
+	UnitPriceBase            float64  `json:"unit_price_base"`
+	TotalPrice               float64  `json:"total_price"`
+	Tax                      float64  `json:"tax"`
+	TaxRate                  *float64 `json:"tax_rate"`
+	Discount                 float64  `json:"discount"`
+	DiscountPercent          float64  `json:"discount_percent"`
+	UnitPricePresentment     float64  `json:"unit_price_presentment"`
+	UnitPriceBasePresentment float64  `json:"unit_price_base_presentment"`
+	TotalPricePresentment    float64  `json:"total_price_presentment"`
+	DiscountPresentment      float64  `json:"discount_presentment"`
+	TaxPresentment           float64  `json:"tax_presentment"`
 }
 
 type invoiceData struct {

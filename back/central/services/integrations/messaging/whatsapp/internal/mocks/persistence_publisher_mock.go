@@ -9,10 +9,10 @@ import (
 
 // PersistencePublisherMock implementa ports.IPersistencePublisher para tests unitarios
 type PersistencePublisherMock struct {
-	PublishConversationCreatedFn func(ctx context.Context, conversation *entities.Conversation) error
-	PublishConversationUpdatedFn func(ctx context.Context, conversation *entities.Conversation) error
-	PublishConversationExpiredFn func(ctx context.Context, conversationID string) error
-	PublishMessageLogCreatedFn   func(ctx context.Context, messageLog *entities.MessageLog) error
+	PublishConversationCreatedFn  func(ctx context.Context, conversation *entities.Conversation) error
+	PublishConversationUpdatedFn  func(ctx context.Context, conversation *entities.Conversation) error
+	PublishConversationExpiredFn  func(ctx context.Context, conversationID string) error
+	PublishMessageLogCreatedFn    func(ctx context.Context, messageLog *entities.MessageLog) error
 	PublishMessageStatusUpdatedFn func(ctx context.Context, messageID string, status entities.MessageStatus, timestamps map[string]time.Time) error
 }
 

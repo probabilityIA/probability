@@ -112,20 +112,20 @@ func (uc *syncUseCase) processSingleResult(
 	trackingNumber := item.TrackingNumber
 
 	logEntry := &domain.WebhookLog{
-		Source:        domain.WebhookSourceEnvioclick,
-		EventType:     domain.WebhookEventSync,
-		URL:           req.URL,
-		Method:        "INTERNAL",
-		RequestBody:   rawBody,
-		RemoteIP:      req.RemoteIP,
-		Status:        domain.WebhookLogStatusReceived,
-		ResponseCode:  200,
-		ShipmentID:    &item.ShipmentID,
-		BusinessID:    &req.BusinessID,
-		CorrelationID: &itemCorrelationID,
+		Source:         domain.WebhookSourceEnvioclick,
+		EventType:      domain.WebhookEventSync,
+		URL:            req.URL,
+		Method:         "INTERNAL",
+		RequestBody:    rawBody,
+		RemoteIP:       req.RemoteIP,
+		Status:         domain.WebhookLogStatusReceived,
+		ResponseCode:   200,
+		ShipmentID:     &item.ShipmentID,
+		BusinessID:     &req.BusinessID,
+		CorrelationID:  &itemCorrelationID,
 		TrackingNumber: &trackingNumber,
-		MappedStatus:  &mappedStatus,
-		RawStatus:     &step,
+		MappedStatus:   &mappedStatus,
+		RawStatus:      &step,
 	}
 	if err := uc.repo.Save(ctx, logEntry); err != nil {
 		uc.log.Warn(ctx).Err(err).Str("tracking_number", item.TrackingNumber).Msg("Failed to save sync log")
@@ -194,4 +194,3 @@ func (uc *syncUseCase) recordFailure(ctx context.Context, req domain.SyncBatchRe
 	}
 	result.Failed++
 }
-

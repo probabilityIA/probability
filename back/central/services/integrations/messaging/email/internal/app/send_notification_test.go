@@ -30,7 +30,6 @@ func validDTO() dtos.SendEmailDTO {
 	}
 }
 
-
 func TestSendNotificationEmail_Success(t *testing.T) {
 	client := &mocks.EmailClientMock{}
 	pub := &mocks.ResultPublisherMock{}
