@@ -36,10 +36,21 @@ El job de 533 ordenes quedo con `failed=890` (contadores inflados por reintentos
 
 ## Items
 
-- [URGENTE] Riesgo de facturas DUPLICADAS en SoftPymes/DIAN del 2026-07-23: los
-  406 "response has no info" y 230 timeouts de creacion pudieron crear la factura
-  igual y el codigo viejo la re-creo. Cuando SoftPymes vuelva, buscar comments
-  `order:<uuid>` repetidos de ese dia.
+- [RESUELTO 2026-07-23] Auditoria de duplicados ejecutada contra la API de SoftPymes
+  (3.337 documentos del dia, cruce por comment `order:<uuid>`): 0 fantasmas,
+  0 inconsistencias, solo 7 ordenes con doble factura (pares identicos).
+- [URGENTE - MANUAL] Anular en Pymes+ (web) los 7 documentos sobrantes; la API de
+  integracion NO tiene endpoint de anulacion. Anular estos, conservando el par:
+  0000006255 (queda 0000006259), 0000006256 (queda 0000006258),
+  0000006257 (queda 0000006260), 0000006943 (queda 0000007176),
+  0000007282 (queda 0000007287), 0000007283 (queda 0000007286),
+  0000007284 (queda 0000007285). Total doble-facturado ~1.425.000 COP.
+- [IMPORTANTE] Bug latente: `CancelInvoice` del cliente SoftPymes apunta a
+  `/app/integration/sales_invoice/cancel/` que NO existe (404 de ruta) — la
+  cancelacion de facturas SoftPymes nunca ha funcionado. Confirmar con SoftPymes
+  si existe endpoint de anulacion; si no, quitar/deshabilitar esa opcion en UI.
+- [IMPORTANTE] Seguridad: el cliente SoftPymes loguea apiKey/apiSecret en texto
+  plano en consola (request_body en authenticate + SetDebug). Redactar esos logs.
 - [IMPORTANTE] Relanzar las facturas que murieron en `cancelled` durante la caida
   (agotaron max_retries contra un proveedor caido, antes del fix de presupuesto).
 - [DESEABLE] Arreglar contadores de `bulk_invoice_jobs` (failed > total_orders).
