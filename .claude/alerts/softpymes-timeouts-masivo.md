@@ -26,18 +26,22 @@ El job de 533 ordenes quedo con `failed=890` (contadores inflados por reintentos
    falla (tambien por timeout) hace "proceeding with creation".
 4. Sin rate limiting ni backoff/circuit breaker hacia SoftPymes.
 
+## Resuelto 2026-07-23/24
+
+- Retry automatico de resty eliminado, workers=1, timeout 90s, retry fail-closed,
+  busqueda de existentes paginada (commit f6eec211, desplegado).
+- Errores de proveedor-caido (timeouts de red, login inalcanzable, 5xx, aborto de
+  verificacion) ya NO consumen retry_count: se reprograman cada 15 min hasta que
+  SoftPymes vuelva (response_consumer, isProviderUnavailableError).
+
 ## Items
 
-- [URGENTE] Riesgo de facturas DUPLICADAS en SoftPymes/DIAN: un POST con timeout o
-  respuesta 200 sin body pudo haber creado la factura igual; el retry automatico de
-  resty y el RetryConsumer la re-crean. Verificar en SoftPymes duplicados del
-  2026-07-23 buscando comments `order:<uuid>` repetidos.
-- [URGENTE] Quitar el retry automatico de resty para el POST de creacion de factura
-  (o limitarlo a errores previos al envio / 429). Timeout NO es idempotente.
-- [IMPORTANTE] Throttle/backoff en el consumer de SoftPymes (pausa entre requests,
-  parar ante timeouts consecutivos) y evaluar bajar workers.
-- [IMPORTANTE] Tratar timeout y "response has no info" como estado desconocido:
-  en retry, si la verificacion de existencia falla, NO crear (hoy crea igual).
+- [URGENTE] Riesgo de facturas DUPLICADAS en SoftPymes/DIAN del 2026-07-23: los
+  406 "response has no info" y 230 timeouts de creacion pudieron crear la factura
+  igual y el codigo viejo la re-creo. Cuando SoftPymes vuelva, buscar comments
+  `order:<uuid>` repetidos de ese dia.
+- [IMPORTANTE] Relanzar las facturas que murieron en `cancelled` durante la caida
+  (agotaron max_retries contra un proveedor caido, antes del fix de presupuesto).
 - [DESEABLE] Arreglar contadores de `bulk_invoice_jobs` (failed > total_orders).
 
 ## Criterio de cierre
