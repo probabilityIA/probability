@@ -59,4 +59,5 @@ type IRepository interface {
 	GetTaxesByIDs(ctx context.Context, ids []uint) ([]entities.Tax, error)
 	GetBusinessName(ctx context.Context, id uint) (string, error)
 	GetBusinessDefaultEmail(ctx context.Context, id uint) (string, error)
+	GetClientProfile(ctx context.Context, businessID uint) (*dtos.ClientProfileDTO, error)
 }

@@ -1,5 +1,6 @@
 import {
     AccountingReport,
+    ClientProfile,
     Concept,
     CreateConceptDTO,
     CreateEntryDTO,
@@ -45,4 +46,5 @@ export interface IAccountingRepository {
     getDianConfig(): Promise<DianConfig>;
     updateDianConfig(data: UpdateDianConfigDTO): Promise<DianConfig>;
     emitInvoiceDian(id: number, data: EmitDianDTO): Promise<Invoice>;
+    getClientProfile(businessId: number): Promise<ClientProfile>;
 }

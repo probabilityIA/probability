@@ -73,6 +73,22 @@ Pendiente de credenciales reales de Factus (sandbox o produccion) para probar la
 emision completa con CUFE. La integracion se guarda como integracion GLOBAL de
 plataforma (integrations.business_id IS NULL), patron ya soportado por el core.
 
+## 2026-07-24 - Suite ficha fiscal + cargos/retenciones (CU-50 a CU-58)
+
+Script: e2e_fiscal.py (14 checks) + verificacion de permisos aparte. **19 OK / 0 FAIL**.
+
+- CU-50: accounting_taxes con kind (IVA=CHARGE, RETEFUENTE/RETEICA=WITHHOLDING, GMF=OTHER). OK
+- CU-51/52: PUT/GET /businesses/:id/fiscal-profile (upsert, defaults, validacion person_type). OK
+- CU-53: GET /accounting/client-profile sugiere tax_ids segun flags de la ficha
+  (caso Viga: retefuente si; caso Mystic: ninguno). OK
+- CU-54/55: factura con IVA+RETEFUENTE+GMF: IVA suma (total 119.000), retefuente NO suma
+  (retencion informativa 11.000, neto a recibir 108.000), GMF ignorado en facturas. OK
+- CU-56/57: factura test pagada sin movimiento; limpieza. OK
+- CU-58 (permisos): business lee/edita SU ficha (200), ficha ajena 403 (GET y PUT),
+  endpoints accounting 403 para no super admin. OK
+  Nota: el login de usuario business devuelve el token SOLO en la cookie HttpOnly
+  session_token (el campo token del JSON va vacio); los tests deben capturar Set-Cookie.
+
 ## Notas
 
 - Login super admin de .env.ai fallo (password desactualizado en DB local). Se genero JWT

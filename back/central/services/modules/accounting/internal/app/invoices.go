@@ -38,26 +38,34 @@ func (uc *UseCase) buildInvoice(ctx context.Context, conceptID uint, taxIDs []ui
 	}
 	inv.Subtotal = round2(inv.Subtotal)
 	inv.TaxDetail = []entities.TaxLine{}
+	inv.WithholdingDetail = []entities.TaxLine{}
 	if len(taxIDs) > 0 {
 		taxes, err := uc.repo.GetTaxesByIDs(ctx, taxIDs)
 		if err != nil {
 			return nil, err
 		}
 		for _, tax := range taxes {
-			if !tax.IsActive {
+			if !tax.IsActive || tax.Kind == entities.TaxKindOther {
 				continue
 			}
 			amount := round2(inv.Subtotal * tax.RatePercent / 100)
-			inv.TaxDetail = append(inv.TaxDetail, entities.TaxLine{
+			line := entities.TaxLine{
 				TaxCode:     tax.Code,
 				TaxName:     tax.Name,
 				RatePercent: tax.RatePercent,
 				Amount:      amount,
-			})
+			}
+			if tax.Kind == entities.TaxKindWithholding {
+				inv.WithholdingDetail = append(inv.WithholdingDetail, line)
+				inv.WithholdingTotal += amount
+				continue
+			}
+			inv.TaxDetail = append(inv.TaxDetail, line)
 			inv.TaxTotal += amount
 		}
 	}
 	inv.TaxTotal = round2(inv.TaxTotal)
+	inv.WithholdingTotal = round2(inv.WithholdingTotal)
 	inv.Total = round2(inv.Subtotal + inv.TaxTotal)
 	return inv, nil
 }

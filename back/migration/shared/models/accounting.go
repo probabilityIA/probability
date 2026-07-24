@@ -29,6 +29,7 @@ type AccountingTax struct {
 	Name        string  `gorm:"size:120;not null"`
 	Description string  `gorm:"type:text"`
 	RatePercent float64 `gorm:"type:decimal(8,4);not null;default:0"`
+	Kind        string  `gorm:"size:15;not null;default:'CHARGE';index"`
 	IsActive    bool    `gorm:"default:true;index"`
 }
 
@@ -92,6 +93,9 @@ type AccountingInvoice struct {
 	DianQR           string `gorm:"type:text"`
 	DianEmittedAt    *time.Time
 	IsTest           bool `gorm:"default:false;index"`
+
+	WithholdingTotal  float64        `gorm:"type:decimal(15,2);not null;default:0"`
+	WithholdingDetail datatypes.JSON `gorm:"type:jsonb"`
 
 	Business Business                `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	Concept  AccountingConcept       `gorm:"foreignKey:ConceptID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`

@@ -63,24 +63,46 @@ type EmitInvoiceDianDTO struct {
 }
 
 type DianConfigDTO struct {
-	ApiURL           string
-	ClientID         string
-	ClientSecret     string
-	Username         string
-	Password         string
-	NumberingRangeID int
-	MunicipalityID   string
-	DocumentIDType   string
-	LegalOrgID       string
+	ApiURL            string
+	ClientID          string
+	ClientSecret      string
+	Username          string
+	Password          string
+	NumberingRangeID  int
+	MunicipalityID    string
+	DocumentIDType    string
+	LegalOrgID        string
+	PaymentMethodCode string
 }
 
 type DianConfigStatus struct {
-	Configured       bool   `json:"configured"`
-	IntegrationID    uint   `json:"integration_id"`
-	ApiURL           string `json:"api_url"`
-	Username         string `json:"username"`
-	NumberingRangeID int    `json:"numbering_range_id"`
-	MunicipalityID   string `json:"municipality_id"`
-	DocumentIDType   string `json:"identification_document_id"`
-	LegalOrgID       string `json:"legal_organization_id"`
+	Configured        bool   `json:"configured"`
+	IntegrationID     uint   `json:"integration_id"`
+	ApiURL            string `json:"api_url"`
+	Username          string `json:"username"`
+	NumberingRangeID  int    `json:"numbering_range_id"`
+	MunicipalityID    string `json:"municipality_id"`
+	DocumentIDType    string `json:"identification_document_id"`
+	LegalOrgID        string `json:"legal_organization_id"`
+	PaymentMethodCode string `json:"payment_method_code"`
+}
+
+type ClientProfileDTO struct {
+	BusinessID        uint    `json:"business_id"`
+	Configured        bool    `json:"configured"`
+	DocumentType      string  `json:"document_type"`
+	DocumentNumber    string  `json:"document_number"`
+	DV                string  `json:"dv"`
+	PersonType        string  `json:"person_type"`
+	MunicipalityID    string  `json:"municipality_id"`
+	Address           string  `json:"address"`
+	Phone             string  `json:"phone"`
+	BillingEmail      string  `json:"billing_email"`
+	AppliesIVA        bool    `json:"applies_iva"`
+	IVARate           float64 `json:"iva_rate"`
+	AppliesReteFuente bool    `json:"applies_retefuente"`
+	ReteFuenteRate    float64 `json:"retefuente_rate"`
+	AppliesReteICA    bool    `json:"applies_reteica"`
+	ReteICARate       float64 `json:"reteica_rate"`
+	SuggestedTaxIDs   []uint  `json:"suggested_tax_ids"`
 }

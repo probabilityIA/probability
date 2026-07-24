@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Modal, SuperAdminBusinessSelector } from '@/shared/ui';
-import { Concept, Invoice, InvoiceItemInputDTO, Tax } from '../../domain/types';
-import { createAccountingInvoiceAction, updateAccountingInvoiceAction } from '../../infra/actions';
+import { ClientProfile, Concept, Invoice, InvoiceItemInputDTO, Tax } from '../../domain/types';
+import { createAccountingInvoiceAction, getAccountingClientProfileAction, updateAccountingInvoiceAction } from '../../infra/actions';
 import { formatCOP, todayISO } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
 
@@ -43,6 +43,8 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
         [concepts],
     );
     const activeTaxes = useMemo(() => taxes.filter((t) => t.is_active), [taxes]);
+    const chargeTaxes = useMemo(() => activeTaxes.filter((t) => t.kind === 'CHARGE'), [activeTaxes]);
+    const withholdingTaxes = useMemo(() => activeTaxes.filter((t) => t.kind === 'WITHHOLDING'), [activeTaxes]);
 
     const defaultConceptId = useMemo(() => {
         if (invoice) return invoice.concept_id;
@@ -52,7 +54,10 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
 
     const initialTaxIds = useMemo(() => {
         if (!invoice) return [];
-        const codes = (invoice.tax_detail || []).map((d) => d.tax_code);
+        const codes = [
+            ...(invoice.tax_detail || []).map((d) => d.tax_code),
+            ...(invoice.withholding_detail || []).map((d) => d.tax_code),
+        ];
         return activeTaxes.filter((t) => codes.includes(t.code)).map((t) => t.id);
     }, [invoice, activeTaxes]);
 
@@ -78,15 +83,45 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
         return [emptyRow()];
     });
     const [saving, setSaving] = useState(false);
+    const [profile, setProfile] = useState<ClientProfile | null>(null);
 
     const subtotal = rows.reduce((acc, row) => acc + rowAmount(row), 0);
-    const selectedTaxes = activeTaxes.filter((t) => taxIds.includes(t.id));
-    const taxLines = selectedTaxes.map((tax) => ({
-        tax,
-        amount: Math.round((subtotal * tax.rate_percent) / 100),
-    }));
+    const taxLines = chargeTaxes
+        .filter((t) => taxIds.includes(t.id))
+        .map((tax) => ({
+            tax,
+            amount: Math.round((subtotal * tax.rate_percent) / 100),
+        }));
     const taxTotal = taxLines.reduce((acc, line) => acc + line.amount, 0);
     const total = subtotal + taxTotal;
+    const withholdingLines = withholdingTaxes
+        .filter((t) => taxIds.includes(t.id))
+        .map((tax) => ({
+            tax,
+            amount: Math.round((subtotal * tax.rate_percent) / 100),
+        }));
+    const withholdingTotal = withholdingLines.reduce((acc, line) => acc + line.amount, 0);
+    const netReceivable = total - withholdingTotal;
+
+    const handleBusinessChange = async (id: number | null) => {
+        setBusinessId(id);
+        setProfile(null);
+        if (!id) return;
+        const result = await getAccountingClientProfileAction(id);
+        if (!result.success) return;
+        const p = result.data;
+        setProfile(p);
+        if (!p.configured) return;
+        if (p.document_number) setCustomerDocument(p.document_number);
+        if (p.phone) setCustomerPhone(p.phone);
+        if (p.address) setCustomerAddress(p.address);
+        if (p.billing_email) setEmailTo((prev) => prev || p.billing_email);
+        const suggested = p.suggested_tax_ids || [];
+        if (suggested.length > 0) {
+            const visibleIds = [...chargeTaxes, ...withholdingTaxes].map((t) => t.id);
+            setTaxIds(suggested.filter((taxId) => visibleIds.includes(taxId)));
+        }
+    };
 
     const updateRow = (index: number, patch: Partial<ItemRow>) => {
         setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -181,10 +216,15 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Negocio cliente *</label>
                         <SuperAdminBusinessSelector
                             value={businessId}
-                            onChange={setBusinessId}
+                            onChange={handleBusinessChange}
                             variant="default"
                             placeholder="Selecciona un negocio"
                         />
+                        {profile && !profile.configured && (
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                Este negocio no tiene ficha fiscal configurada (se edita en el negocio)
+                            </p>
+                        )}
                     </div>
                 )}
                 {isEdit && invoice && (
@@ -229,6 +269,11 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                             placeholder="900123456"
                             className={inputClass}
                         />
+                        {profile?.configured && profile.dv && (
+                            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                {profile.document_type || 'NIT'} {profile.document_number}-{profile.dv}
+                            </p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
@@ -297,26 +342,50 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                     <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">No genera movimientos contables al marcarse pagada</p>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Impuestos aplicables</label>
-                    {activeTaxes.length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay impuestos activos configurados</p>
-                    ) : (
-                        <div className="flex flex-wrap gap-3">
-                            {activeTaxes.map((tax) => (
-                                <label
-                                    key={tax.id}
-                                    className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={taxIds.includes(tax.id)}
-                                        onChange={() => toggleTax(tax.id)}
-                                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                                    />
-                                    <span>{tax.name} ({tax.rate_percent}%)</span>
-                                </label>
-                            ))}
+                <div className="space-y-3">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Impuestos (suman al total)</label>
+                        {chargeTaxes.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">No hay impuestos activos configurados</p>
+                        ) : (
+                            <div className="flex flex-wrap gap-3">
+                                {chargeTaxes.map((tax) => (
+                                    <label
+                                        key={tax.id}
+                                        className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={taxIds.includes(tax.id)}
+                                            onChange={() => toggleTax(tax.id)}
+                                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                        />
+                                        <span>{tax.name} ({tax.rate_percent}%)</span>
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {withholdingTaxes.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Retenciones (informativas)</label>
+                            <div className="flex flex-wrap gap-3">
+                                {withholdingTaxes.map((tax) => (
+                                    <label
+                                        key={tax.id}
+                                        className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={taxIds.includes(tax.id)}
+                                            onChange={() => toggleTax(tax.id)}
+                                            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                        />
+                                        <span>{tax.name} ({tax.rate_percent}%)</span>
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">No suman al total; se muestran como neto a recibir</p>
                         </div>
                     )}
                 </div>
@@ -416,6 +485,20 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                                 <span>Total</span>
                                 <span>{formatCOP(total)}</span>
                             </div>
+                            {withholdingLines.length > 0 && (
+                                <>
+                                    {withholdingLines.map((line) => (
+                                        <div key={line.tax.id} className="flex justify-between text-gray-400 dark:text-gray-500">
+                                            <span>{line.tax.name} ({line.tax.rate_percent}%)</span>
+                                            <span>-{formatCOP(line.amount)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between pt-1.5 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-white">
+                                        <span>Neto a recibir</span>
+                                        <span>{formatCOP(netReceivable)}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

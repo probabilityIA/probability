@@ -38,8 +38,8 @@ type Ticket struct {
 	ResolvedAt *time.Time `gorm:"index"`
 	ClosedAt   *time.Time `gorm:"index"`
 
-	Comments    []TicketComment    `gorm:"foreignKey:TicketID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Attachments []TicketAttachment `gorm:"foreignKey:TicketID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Comments    []TicketComment       `gorm:"foreignKey:TicketID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Attachments []TicketAttachment    `gorm:"foreignKey:TicketID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	History     []TicketStatusHistory `gorm:"foreignKey:TicketID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 

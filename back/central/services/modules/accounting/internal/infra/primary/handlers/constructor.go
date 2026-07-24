@@ -29,6 +29,7 @@ type IHandlers interface {
 	MarkInvoicePaid(c *gin.Context)
 	CancelInvoice(c *gin.Context)
 	EmitInvoiceDian(c *gin.Context)
+	GetClientProfile(c *gin.Context)
 	GetDianConfig(c *gin.Context)
 	SaveDianConfig(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)

@@ -184,3 +184,6 @@ export const emitAccountingInvoiceDianAction = async (id: number, data: EmitDian
         revalidateInvoices(id);
         return result;
     });
+
+export const getAccountingClientProfileAction = async (businessId: number) =>
+    run(async () => (await getUseCases()).getClientProfile(businessId));

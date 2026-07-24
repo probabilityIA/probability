@@ -135,11 +135,16 @@ func (r *Repository) TaxCodeExists(ctx context.Context, code string, excludeID *
 }
 
 func (r *Repository) CreateTax(ctx context.Context, dto dtos.CreateTaxDTO) (*entities.Tax, error) {
+	kind := dto.Kind
+	if kind == "" {
+		kind = entities.TaxKindCharge
+	}
 	model := &models.AccountingTax{
 		Code:        dto.Code,
 		Name:        dto.Name,
 		Description: dto.Description,
 		RatePercent: dto.RatePercent,
+		Kind:        kind,
 		IsActive:    true,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -154,6 +159,9 @@ func (r *Repository) UpdateTax(ctx context.Context, dto dtos.UpdateTaxDTO) (*ent
 		"description":  dto.Description,
 		"rate_percent": dto.RatePercent,
 		"is_active":    dto.IsActive,
+	}
+	if dto.Kind != "" {
+		updates["kind"] = dto.Kind
 	}
 	res := r.db.Conn(ctx).Model(&models.AccountingTax{}).Where("id = ?", dto.ID).Updates(updates)
 	if res.Error != nil {

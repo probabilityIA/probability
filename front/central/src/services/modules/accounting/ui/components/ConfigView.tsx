@@ -8,7 +8,7 @@ import {
     updateAccountingConceptAction,
     updateAccountingTaxAction,
 } from '../../infra/actions';
-import { kindLabel } from '../format';
+import { kindLabel, taxKindBadgeClass, taxKindLabel } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConceptFormModal } from './ConceptFormModal';
 import { TaxFormModal } from './TaxFormModal';
@@ -88,6 +88,7 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
             name: tax.name,
             description: tax.description,
             rate_percent: tax.rate_percent,
+            kind: tax.kind,
             is_active: !tax.is_active,
         });
         setBusyKey(null);
@@ -241,6 +242,7 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
                                     <th className="px-4 py-2 font-medium">Codigo</th>
                                     <th className="px-4 py-2 font-medium">Nombre</th>
+                                    <th className="px-4 py-2 font-medium">Tipo</th>
                                     <th className="px-4 py-2 font-medium text-right">Tarifa</th>
                                     <th className="px-4 py-2 font-medium text-center">Activo</th>
                                     <th className="px-4 py-2 font-medium text-right">Acciones</th>
@@ -249,7 +251,7 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                                 {taxes.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                                        <td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                                             No hay impuestos registrados
                                         </td>
                                     </tr>
@@ -262,6 +264,11 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
                                             {tax.description && (
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">{tax.description}</p>
                                             )}
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${taxKindBadgeClass(tax.kind)}`}>
+                                                {taxKindLabel(tax.kind)}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-2 text-right">{tax.rate_percent}%</td>
                                         <td className="px-4 py-2 text-center">
@@ -313,6 +320,7 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
                                     <p>API: {dianConfig.api_url || 'Produccion'}</p>
                                     <p>Usuario: {dianConfig.username || '-'}</p>
                                     <p>Rango de numeracion: {dianConfig.numbering_range_id || 'Automatico'}</p>
+                                    <p>Medio de pago: {dianConfig.payment_method_code ? `Codigo ${dianConfig.payment_method_code}` : 'No definido'}</p>
                                 </div>
                             ) : (
                                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

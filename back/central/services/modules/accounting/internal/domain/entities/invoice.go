@@ -53,6 +53,9 @@ type Invoice struct {
 	DianEmittedAt    *time.Time
 	IsTest           bool
 
+	WithholdingTotal  float64
+	WithholdingDetail []TaxLine
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

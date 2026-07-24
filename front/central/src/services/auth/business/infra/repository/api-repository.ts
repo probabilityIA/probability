@@ -10,12 +10,13 @@ import {
     CreateBusinessDTO,
     UpdateBusinessDTO,
     ActionResponse,
-    ConfiguredResource,
     BusinessConfiguredResources,
     GetConfiguredResourcesParams,
     BusinessType,
     CreateBusinessTypeDTO,
-    UpdateBusinessTypeDTO
+    UpdateBusinessTypeDTO,
+    BusinessFiscalProfile,
+    UpdateFiscalProfileDTO
 } from '../../domain/types';
 
 export class BusinessApiRepository implements IBusinessRepository {
@@ -23,8 +24,6 @@ export class BusinessApiRepository implements IBusinessRepository {
     private token: string | null;
 
     constructor(token?: string | null) {
-        // Usar env.API_BASE_URL (servidor) en lugar de envPublic (cliente)
-        // Los repositorios se usan en Server Actions que corren en el servidor
         this.baseUrl = env.API_BASE_URL;
         this.token = token || null;
     }
@@ -44,7 +43,6 @@ export class BusinessApiRepository implements IBusinessRepository {
             try {
                 logBody = JSON.parse(options.body);
             } catch {
-                // Keep as string if not JSON
             }
         }
 
@@ -59,8 +57,6 @@ export class BusinessApiRepository implements IBusinessRepository {
             ...(options.headers as Record<string, string> || {}),
         };
 
-        // If the body is FormData, let the browser set the Content-Type header automatically.
-        // Remove the 'Content-Type' header if it was set for FormData.
         if (options.body instanceof FormData) {
             delete headers['Content-Type'];
         }
@@ -81,7 +77,7 @@ export class BusinessApiRepository implements IBusinessRepository {
 
             if (!res.ok) {
                 console.error(`[API Error] ${res.status} ${url}`, data);
-                throw new Error(data.message || 'An error occurred');
+                throw new Error(data.message || data.error || 'An error occurred');
             }
 
             return data;
@@ -90,8 +86,6 @@ export class BusinessApiRepository implements IBusinessRepository {
             throw error;
         }
     }
-
-    // --- Business ---
 
     async getBusinesses(params?: GetBusinessesParams): Promise<PaginatedResponse<Business>> {
         const searchParams = new URLSearchParams();
@@ -126,7 +120,6 @@ export class BusinessApiRepository implements IBusinessRepository {
         return this.fetch<SingleResponse<Business>>('/businesses', {
             method: 'POST',
             body: formData,
-            // Content-Type header is automatically set for FormData
         });
     }
 
@@ -153,8 +146,6 @@ export class BusinessApiRepository implements IBusinessRepository {
             method: 'DELETE',
         });
     }
-
-    // --- Configured Resources ---
 
     async getConfiguredResources(params?: GetConfiguredResourcesParams): Promise<PaginatedResponse<BusinessConfiguredResources>> {
         const searchParams = new URLSearchParams();
@@ -196,15 +187,18 @@ export class BusinessApiRepository implements IBusinessRepository {
         return this.fetch<ActionResponse>(`/businesses/${id}/deactivate`, { method: 'PUT' });
     }
 
-    // --- Business Types ---
+    async getFiscalProfile(businessId: number): Promise<SingleResponse<BusinessFiscalProfile>> {
+        return this.fetch<SingleResponse<BusinessFiscalProfile>>(`/businesses/${businessId}/fiscal-profile`);
+    }
+
+    async updateFiscalProfile(businessId: number, data: UpdateFiscalProfileDTO): Promise<SingleResponse<BusinessFiscalProfile>> {
+        return this.fetch<SingleResponse<BusinessFiscalProfile>>(`/businesses/${businessId}/fiscal-profile`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
 
     async getBusinessTypes(): Promise<PaginatedResponse<BusinessType>> {
-        // Note: The API example for getBusinessTypes doesn't show pagination in the response structure, 
-        // but the return type expects PaginatedResponse. 
-        // If the API returns a flat list in 'data', we might need to adjust the return type or wrap it.
-        // Based on the example: { success: true, message: "...", data: [...] }
-        // I will cast it to PaginatedResponse<BusinessType> but be aware 'pagination' field might be missing if the API doesn't send it.
-        // Ideally, we should fix the interface or the API. For now, I'll assume it matches or I'll just return it.
         return this.fetch<PaginatedResponse<BusinessType>>('/business-types');
     }
 

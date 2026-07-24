@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Modal } from '@/shared/ui';
-import { Tax } from '../../domain/types';
+import { Tax, TaxKind } from '../../domain/types';
 import { createAccountingTaxAction, updateAccountingTaxAction } from '../../infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
 
@@ -20,6 +20,7 @@ export function TaxFormModal({ isOpen, onClose, onSaved, tax }: TaxFormModalProp
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [ratePercent, setRatePercent] = useState('');
+    const [kind, setKind] = useState<TaxKind>('CHARGE');
     const [isActive, setIsActive] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -29,6 +30,7 @@ export function TaxFormModal({ isOpen, onClose, onSaved, tax }: TaxFormModalProp
         setName(tax?.name || '');
         setDescription(tax?.description || '');
         setRatePercent(tax ? String(tax.rate_percent) : '');
+        setKind(tax?.kind || 'CHARGE');
         setIsActive(tax?.is_active ?? true);
     }, [isOpen, tax]);
 
@@ -48,6 +50,7 @@ export function TaxFormModal({ isOpen, onClose, onSaved, tax }: TaxFormModalProp
                 name: name.trim(),
                 description: description.trim(),
                 rate_percent: rate,
+                kind,
                 is_active: isActive,
             })
             : await createAccountingTaxAction({
@@ -55,6 +58,7 @@ export function TaxFormModal({ isOpen, onClose, onSaved, tax }: TaxFormModalProp
                 name: name.trim(),
                 description: description.trim(),
                 rate_percent: rate,
+                kind,
             });
         setSaving(false);
         if (result.success) {
@@ -110,6 +114,18 @@ export function TaxFormModal({ isOpen, onClose, onSaved, tax }: TaxFormModalProp
                         placeholder="19"
                         className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo *</label>
+                    <select
+                        value={kind}
+                        onChange={(e) => setKind(e.target.value as TaxKind)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                        <option value="CHARGE">Cargo (suma al total)</option>
+                        <option value="WITHHOLDING">Retencion (informativa, no suma)</option>
+                        <option value="OTHER">Otro (no aplica a facturas)</option>
+                    </select>
                 </div>
                 {isEdit && (
                     <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">

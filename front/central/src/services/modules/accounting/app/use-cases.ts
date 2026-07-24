@@ -107,4 +107,8 @@ export class AccountingUseCases {
     async emitInvoiceDian(id: number, data: EmitDianDTO) {
         return this.repository.emitInvoiceDian(id, data);
     }
+
+    async getClientProfile(businessId: number) {
+        return this.repository.getClientProfile(businessId);
+    }
 }

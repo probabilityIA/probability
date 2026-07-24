@@ -11,13 +11,14 @@ import {
     GetConfiguredResourcesParams,
     BusinessType,
     CreateBusinessTypeDTO,
-    UpdateBusinessTypeDTO
+    UpdateBusinessTypeDTO,
+    BusinessFiscalProfile,
+    UpdateFiscalProfileDTO
 } from '../domain/types';
 
 export class BusinessUseCases {
     constructor(private repository: IBusinessRepository) { }
 
-    // Business
     async getBusinesses(params?: GetBusinessesParams): Promise<PaginatedResponse<Business>> {
         return this.repository.getBusinesses(params);
     }
@@ -38,7 +39,6 @@ export class BusinessUseCases {
         return this.repository.deleteBusiness(id);
     }
 
-    // Configured Resources
     async getConfiguredResources(params?: GetConfiguredResourcesParams): Promise<PaginatedResponse<BusinessConfiguredResources>> {
         return this.repository.getConfiguredResources(params);
     }
@@ -63,7 +63,14 @@ export class BusinessUseCases {
         return this.repository.deactivateBusiness(id);
     }
 
-    // Business Types
+    async getFiscalProfile(businessId: number): Promise<SingleResponse<BusinessFiscalProfile>> {
+        return this.repository.getFiscalProfile(businessId);
+    }
+
+    async updateFiscalProfile(businessId: number, data: UpdateFiscalProfileDTO): Promise<SingleResponse<BusinessFiscalProfile>> {
+        return this.repository.updateFiscalProfile(businessId, data);
+    }
+
     async getBusinessTypes(): Promise<PaginatedResponse<BusinessType>> {
         return this.repository.getBusinessTypes();
     }

@@ -17,22 +17,24 @@ import (
 
 func (r *Repository) CreateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error) {
 	model := &models.AccountingInvoice{
-		BusinessID:       inv.BusinessID,
-		ConceptID:        inv.ConceptID,
-		IssueDate:        inv.IssueDate,
-		DueDate:          inv.DueDate,
-		Status:           inv.Status,
-		Notes:            inv.Notes,
-		Subtotal:         inv.Subtotal,
-		TaxTotal:         inv.TaxTotal,
-		Total:            inv.Total,
-		TaxDetail:        datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
-		EmailTo:          inv.EmailTo,
-		CustomerDocument: inv.CustomerDocument,
-		CustomerPhone:    inv.CustomerPhone,
-		CustomerAddress:  inv.CustomerAddress,
-		DianStatus:       entities.DianStatusNone,
-		IsTest:           inv.IsTest,
+		BusinessID:        inv.BusinessID,
+		ConceptID:         inv.ConceptID,
+		IssueDate:         inv.IssueDate,
+		DueDate:           inv.DueDate,
+		Status:            inv.Status,
+		Notes:             inv.Notes,
+		Subtotal:          inv.Subtotal,
+		TaxTotal:          inv.TaxTotal,
+		Total:             inv.Total,
+		TaxDetail:         datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
+		EmailTo:           inv.EmailTo,
+		CustomerDocument:  inv.CustomerDocument,
+		CustomerPhone:     inv.CustomerPhone,
+		CustomerAddress:   inv.CustomerAddress,
+		DianStatus:        entities.DianStatusNone,
+		IsTest:            inv.IsTest,
+		WithholdingTotal:  inv.WithholdingTotal,
+		WithholdingDetail: datatypes.JSON(mappers.TaxLinesToJSON(inv.WithholdingDetail)),
 	}
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(model).Error; err != nil {
@@ -62,19 +64,21 @@ func (r *Repository) CreateInvoice(ctx context.Context, inv *entities.Invoice) (
 func (r *Repository) UpdateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error) {
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		updates := map[string]interface{}{
-			"concept_id":        inv.ConceptID,
-			"issue_date":        inv.IssueDate,
-			"due_date":          inv.DueDate,
-			"notes":             inv.Notes,
-			"email_to":          inv.EmailTo,
-			"subtotal":          inv.Subtotal,
-			"tax_total":         inv.TaxTotal,
-			"total":             inv.Total,
-			"tax_detail":        datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
-			"customer_document": inv.CustomerDocument,
-			"customer_phone":    inv.CustomerPhone,
-			"customer_address":  inv.CustomerAddress,
-			"is_test":           inv.IsTest,
+			"concept_id":         inv.ConceptID,
+			"issue_date":         inv.IssueDate,
+			"due_date":           inv.DueDate,
+			"notes":              inv.Notes,
+			"email_to":           inv.EmailTo,
+			"subtotal":           inv.Subtotal,
+			"tax_total":          inv.TaxTotal,
+			"total":              inv.Total,
+			"tax_detail":         datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
+			"customer_document":  inv.CustomerDocument,
+			"customer_phone":     inv.CustomerPhone,
+			"customer_address":   inv.CustomerAddress,
+			"is_test":            inv.IsTest,
+			"withholding_total":  inv.WithholdingTotal,
+			"withholding_detail": datatypes.JSON(mappers.TaxLinesToJSON(inv.WithholdingDetail)),
 		}
 		res := tx.Model(&models.AccountingInvoice{}).Where("id = ?", inv.ID).Updates(updates)
 		if res.Error != nil {
@@ -144,6 +148,9 @@ func (r *Repository) invoiceToEntity(row *invoiceRow, items []models.AccountingI
 	}
 	entry := models.AccountingEntry{TaxDetail: row.TaxDetail}
 	inv.TaxDetail = mappers.EntryToEntity(&entry, "", "", "").TaxDetail
+	wh := models.AccountingEntry{TaxDetail: row.WithholdingDetail}
+	inv.WithholdingDetail = mappers.EntryToEntity(&wh, "", "", "").TaxDetail
+	inv.WithholdingTotal = row.WithholdingTotal
 	for _, item := range items {
 		inv.Items = append(inv.Items, entities.InvoiceItem{
 			ID:          item.ID,

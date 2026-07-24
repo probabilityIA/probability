@@ -39,7 +39,7 @@ type InvoiceItem struct {
 	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado
 
 	// Información adicional del proveedor
-	ProviderItemID *string        `gorm:"size:255"` // ID del item en el sistema del proveedor
+	ProviderItemID *string        `gorm:"size:255"`   // ID del item en el sistema del proveedor
 	Metadata       datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional
 }
 

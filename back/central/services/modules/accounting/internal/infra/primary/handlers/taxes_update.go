@@ -35,6 +35,7 @@ func (h *Handlers) UpdateTax(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		RatePercent: req.RatePercent,
+		Kind:        req.Kind,
 		IsActive:    isActive,
 	})
 	if err != nil {

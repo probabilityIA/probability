@@ -199,12 +199,12 @@ type ChannelPaymentMethod struct {
 
 	// Identificación del método
 	Code        string `gorm:"size:128;not null;uniqueIndex:idx_channel_payment_method,priority:2"` // "shopify_payments"
-	Name        string `gorm:"size:128;not null"`                                                    // "Shopify Payments"
-	Description string `gorm:"type:text"`                                                             // Descripción del método
+	Name        string `gorm:"size:128;not null"`                                                   // "Shopify Payments"
+	Description string `gorm:"type:text"`                                                           // Descripción del método
 
 	// Configuración
 	IsActive     bool `gorm:"default:true;index"` // Si está activo
-	DisplayOrder int  `gorm:"default:0"`           // Orden de visualización
+	DisplayOrder int  `gorm:"default:0"`          // Orden de visualización
 }
 
 // TableName especifica el nombre de la tabla
@@ -225,12 +225,12 @@ type IntegrationChannelStatus struct {
 	// Canal de integración (FK a integration_types)
 	IntegrationTypeID uint   `gorm:"not null;index;uniqueIndex:idx_integration_channel_status,priority:1"`
 	Code              string `gorm:"size:128;not null;uniqueIndex:idx_integration_channel_status,priority:2"` // "paid", "pending"
-	Name              string `gorm:"size:128;not null"`                                                        // "Pagada", "Pendiente"
-	Description       string `gorm:"type:text"`                                                                // Descripción del estado en la plataforma
+	Name              string `gorm:"size:128;not null"`                                                       // "Pagada", "Pendiente"
+	Description       string `gorm:"type:text"`                                                               // Descripción del estado en la plataforma
 
 	// Configuración
 	IsActive     bool `gorm:"default:true;index"` // Si está activo
-	DisplayOrder int  `gorm:"default:0"`           // Orden de visualización
+	DisplayOrder int  `gorm:"default:0"`          // Orden de visualización
 
 	// Relación
 	IntegrationType IntegrationType `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`

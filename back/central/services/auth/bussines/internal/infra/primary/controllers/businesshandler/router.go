@@ -14,6 +14,8 @@ func (h *BusinessHandler) RegisterRoutes(router *gin.RouterGroup, handler IBusin
 	businesses.GET("/configured-resources", middleware.JWT(), handler.GetBusinessesConfiguredResourcesHandler)
 	businesses.GET("/:id/configured-resources", middleware.JWT(), handler.GetBusinessConfiguredResourcesByIDHandler)
 	businesses.GET("/:id", middleware.JWT(), handler.GetBusinessByIDHandler)
+	businesses.GET("/:id/fiscal-profile", middleware.JWT(), handler.GetFiscalProfileHandler)
+	businesses.PUT("/:id/fiscal-profile", middleware.JWT(), handler.UpsertFiscalProfileHandler)
 	businesses.POST("", middleware.JWT(), middleware.RequireSuperAdmin(), handler.CreateBusinessHandler)
 	businesses.PUT("/:id", middleware.JWT(), handler.UpdateBusinessHandler)
 	businesses.DELETE("/:id", middleware.JWT(), middleware.RequireSuperAdmin(), handler.DeleteBusinessHandler)

@@ -119,5 +119,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateAccountingInvoices(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateFiscalProfiles(ctx); err != nil {
+		return err
+	}
 	return r.migrateBackfillBusinessSubscriptions(ctx)
 }

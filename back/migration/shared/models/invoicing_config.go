@@ -33,8 +33,8 @@ type InvoicingConfig struct {
 	InvoicingIntegration   Integration `gorm:"foreignKey:InvoicingIntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	// Estado
-	Enabled      bool `gorm:"default:true;index"`  // Si la configuración está habilitada
-	AutoInvoice  bool `gorm:"default:false;index"` // Si factura automáticamente al crear orden
+	Enabled     bool `gorm:"default:true;index"`  // Si la configuración está habilitada
+	AutoInvoice bool `gorm:"default:false;index"` // Si factura automáticamente al crear orden
 
 	// Filtros (JSON - define qué órdenes deben facturarse)
 	Filters datatypes.JSON `gorm:"type:jsonb"`

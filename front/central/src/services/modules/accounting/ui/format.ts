@@ -30,6 +30,19 @@ export function kindLabel(kind: string): string {
     return kind;
 }
 
+export function taxKindLabel(kind: string): string {
+    if (kind === 'CHARGE') return 'Cargo';
+    if (kind === 'WITHHOLDING') return 'Retencion';
+    if (kind === 'OTHER') return 'Otro';
+    return kind;
+}
+
+export function taxKindBadgeClass(kind: string): string {
+    if (kind === 'CHARGE') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300';
+    if (kind === 'WITHHOLDING') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+}
+
 export function invoiceStatusLabel(status: string): string {
     if (status === 'DRAFT') return 'Borrador';
     if (status === 'SENT') return 'Enviada';

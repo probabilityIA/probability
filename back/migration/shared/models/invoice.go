@@ -32,18 +32,18 @@ type Invoice struct {
 	InvoicingIntegration   Integration `gorm:"foreignKey:InvoicingIntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Identificadores
-	InvoiceNumber string  `gorm:"size:128;not null;index"` // Número de factura del proveedor
-	ExternalID    *string `gorm:"size:255;index"`          // ID en el sistema del proveedor
-	InternalNumber string `gorm:"size:128;unique;index"`   // Número interno Probability (auto-generado)
+	InvoiceNumber  string  `gorm:"size:128;not null;index"` // Número de factura del proveedor
+	ExternalID     *string `gorm:"size:255;index"`          // ID en el sistema del proveedor
+	InternalNumber string  `gorm:"size:128;unique;index"`   // Número interno Probability (auto-generado)
 
 	// Información financiera (copiada de la orden en el momento de facturación)
-	Subtotal     float64 `gorm:"type:decimal(12,2);not null"` // Subtotal
-	Tax          float64 `gorm:"type:decimal(12,2);not null"` // Impuestos
-	Discount     float64 `gorm:"type:decimal(12,2);not null"` // Descuentos
+	Subtotal         float64 `gorm:"type:decimal(12,2);not null"`           // Subtotal
+	Tax              float64 `gorm:"type:decimal(12,2);not null"`           // Impuestos
+	Discount         float64 `gorm:"type:decimal(12,2);not null"`           // Descuentos
 	ShippingCost     float64 `gorm:"type:decimal(12,2);not null"`           // Costo de envío
 	ShippingDiscount float64 `gorm:"type:decimal(12,2);not null;default:0"` // Descuento de envío
-	TotalAmount  float64 `gorm:"type:decimal(12,2);not null"` // Total
-	Currency     string  `gorm:"size:10;default:'COP'"`       // Moneda
+	TotalAmount      float64 `gorm:"type:decimal(12,2);not null"`           // Total
+	Currency         string  `gorm:"size:10;default:'COP'"`                 // Moneda
 
 	// Información del cliente (desnormalizada de la orden)
 	CustomerName  string `gorm:"size:255;not null"` // Nombre del cliente
@@ -63,9 +63,9 @@ type Invoice struct {
 	IsTest bool `gorm:"default:false;index"` // Si es una factura de prueba (orden origen fue test)
 
 	// Timestamps
-	IssuedAt   *time.Time `gorm:"index"` // Cuándo se emitió la factura
-	CancelledAt *time.Time               // Cuándo se canceló
-	ExpiresAt  *time.Time               // Cuándo expira (si aplica)
+	IssuedAt    *time.Time `gorm:"index"` // Cuándo se emitió la factura
+	CancelledAt *time.Time // Cuándo se canceló
+	ExpiresAt   *time.Time // Cuándo expira (si aplica)
 
 	// URLs y archivos
 	InvoiceURL *string `gorm:"size:512"` // URL del PDF/XML de la factura

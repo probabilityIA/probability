@@ -22,8 +22,8 @@ type WebhookLog struct {
 	RequestBody datatypes.JSON `gorm:"type:jsonb;not null"`
 	RemoteIP    string         `gorm:"size:64"`
 
-	Status       string     `gorm:"size:32;not null;index"`
-	ResponseCode int        `gorm:"not null;default:200"`
+	Status       string `gorm:"size:32;not null;index"`
+	ResponseCode int    `gorm:"not null;default:200"`
 	ProcessedAt  *time.Time
 	ErrorMessage *string `gorm:"type:text"`
 

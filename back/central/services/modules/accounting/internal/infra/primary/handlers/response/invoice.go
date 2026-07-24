@@ -44,6 +44,10 @@ type InvoiceResponse struct {
 	DianQR           string     `json:"dian_qr"`
 	DianEmittedAt    *time.Time `json:"dian_emitted_at"`
 	IsTest           bool       `json:"is_test"`
+
+	WithholdingTotal  float64           `json:"withholding_total"`
+	WithholdingDetail []TaxLineResponse `json:"withholding_detail"`
+	NetReceivable     float64           `json:"net_receivable"`
 }
 
 func FromInvoice(e *entities.Invoice) InvoiceResponse {
@@ -55,6 +59,10 @@ func FromInvoice(e *entities.Invoice) InvoiceResponse {
 	taxes := make([]TaxLineResponse, len(e.TaxDetail))
 	for i, t := range e.TaxDetail {
 		taxes[i] = TaxLineResponse{TaxCode: t.TaxCode, TaxName: t.TaxName, RatePercent: t.RatePercent, Amount: t.Amount}
+	}
+	withholdings := make([]TaxLineResponse, len(e.WithholdingDetail))
+	for i, t := range e.WithholdingDetail {
+		withholdings[i] = TaxLineResponse{TaxCode: t.TaxCode, TaxName: t.TaxName, RatePercent: t.RatePercent, Amount: t.Amount}
 	}
 	items := make([]InvoiceItemResponse, len(e.Items))
 	for i, item := range e.Items {
@@ -90,6 +98,10 @@ func FromInvoice(e *entities.Invoice) InvoiceResponse {
 		DianQR:           e.DianQR,
 		DianEmittedAt:    e.DianEmittedAt,
 		IsTest:           e.IsTest,
+
+		WithholdingTotal:  e.WithholdingTotal,
+		WithholdingDetail: withholdings,
+		NetReceivable:     e.Total - e.WithholdingTotal,
 	}
 }
 

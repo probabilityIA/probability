@@ -26,6 +26,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
     const [municipalityId, setMunicipalityId] = useState('');
     const [identificationDocumentId, setIdentificationDocumentId] = useState('');
     const [legalOrganizationId, setLegalOrganizationId] = useState('');
+    const [paymentMethodCode, setPaymentMethodCode] = useState('');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +41,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
         setMunicipalityId(config?.municipality_id ? String(config.municipality_id) : '');
         setIdentificationDocumentId(config?.identification_document_id ? String(config.identification_document_id) : '');
         setLegalOrganizationId(config?.legal_organization_id ? String(config.legal_organization_id) : '');
+        setPaymentMethodCode(config?.payment_method_code || '');
         setError(null);
     }, [isOpen, config]);
 
@@ -77,6 +79,7 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
             municipality_id: municipality.value,
             identification_document_id: identificationDocument.value,
             legal_organization_id: legalOrganization.value,
+            payment_method_code: paymentMethodCode.trim() || undefined,
         };
 
         setSaving(true);
@@ -224,6 +227,20 @@ export function DianConfigModal({ isOpen, onClose, onSaved, config }: DianConfig
                             className={inputClass}
                         />
                         <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Default 2 = persona natural, 1 = juridica</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medio de pago (codigo, opcional)</label>
+                        <input
+                            type="text"
+                            value={paymentMethodCode}
+                            onChange={(e) => setPaymentMethodCode(e.target.value)}
+                            placeholder="10"
+                            className={inputClass}
+                        />
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">10 = efectivo, 47 = transferencia</p>
                     </div>
                 </div>
 

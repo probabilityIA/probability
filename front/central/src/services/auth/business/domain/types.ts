@@ -125,9 +125,45 @@ export interface CreateBusinessTypeDTO {
 
 export interface UpdateBusinessTypeDTO extends Partial<CreateBusinessTypeDTO> { }
 
-// ============================================
-// Simple Types para Dropdowns/Selectores
-// ============================================
+export interface BusinessFiscalProfile {
+    id?: number;
+    business_id?: number;
+    document_type: string;
+    document_number: string;
+    dv: string;
+    person_type: string;
+    tax_regime: string;
+    municipality_id: string;
+    address: string;
+    phone: string;
+    billing_email: string;
+    applies_iva: boolean;
+    iva_rate: number;
+    applies_retefuente: boolean;
+    retefuente_rate: number;
+    applies_reteica: boolean;
+    reteica_rate: number;
+    notes: string;
+}
+
+export interface UpdateFiscalProfileDTO {
+    document_type: string;
+    document_number: string;
+    dv: string;
+    person_type: string;
+    tax_regime: string;
+    municipality_id: string;
+    address: string;
+    phone: string;
+    billing_email: string;
+    applies_iva: boolean;
+    iva_rate: number;
+    applies_retefuente: boolean;
+    retefuente_rate: number;
+    applies_reteica: boolean;
+    reteica_rate: number;
+    notes: string;
+}
 
 export interface BusinessSimple {
     id: number;

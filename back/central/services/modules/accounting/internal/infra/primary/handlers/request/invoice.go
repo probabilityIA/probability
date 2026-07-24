@@ -46,13 +46,14 @@ type EmitInvoiceDianRequest struct {
 }
 
 type DianConfigRequest struct {
-	ApiURL           string `json:"api_url"`
-	ClientID         string `json:"client_id" binding:"required"`
-	ClientSecret     string `json:"client_secret" binding:"required"`
-	Username         string `json:"username" binding:"required"`
-	Password         string `json:"password" binding:"required"`
-	NumberingRangeID int    `json:"numbering_range_id"`
-	MunicipalityID   string `json:"municipality_id"`
-	DocumentIDType   string `json:"identification_document_id"`
-	LegalOrgID       string `json:"legal_organization_id"`
+	PaymentMethodCode string `json:"payment_method_code"`
+	ApiURL            string `json:"api_url"`
+	ClientID          string `json:"client_id" binding:"required"`
+	ClientSecret      string `json:"client_secret" binding:"required"`
+	Username          string `json:"username" binding:"required"`
+	Password          string `json:"password" binding:"required"`
+	NumberingRangeID  int    `json:"numbering_range_id"`
+	MunicipalityID    string `json:"municipality_id"`
+	DocumentIDType    string `json:"identification_document_id"`
+	LegalOrgID        string `json:"legal_organization_id"`
 }

@@ -54,7 +54,7 @@ type CreditNote struct {
 
 	// Timestamps
 	IssuedAt    *time.Time `gorm:"index"` // Cuándo se emitió
-	CancelledAt *time.Time               // Cuándo se canceló
+	CancelledAt *time.Time // Cuándo se canceló
 
 	// URLs y archivos
 	NoteURL *string `gorm:"size:512"` // URL del PDF/XML de la nota

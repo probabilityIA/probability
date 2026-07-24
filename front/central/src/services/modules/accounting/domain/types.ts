@@ -22,12 +22,15 @@ export interface Concept {
     taxes: ConceptTax[] | null;
 }
 
+export type TaxKind = 'CHARGE' | 'WITHHOLDING' | 'OTHER';
+
 export interface Tax {
     id: number;
     code: string;
     name: string;
     description: string;
     rate_percent: number;
+    kind: TaxKind;
     is_active: boolean;
 }
 
@@ -76,12 +79,14 @@ export interface CreateTaxDTO {
     name: string;
     description: string;
     rate_percent: number;
+    kind: TaxKind;
 }
 
 export interface UpdateTaxDTO {
     name: string;
     description: string;
     rate_percent: number;
+    kind: TaxKind;
     is_active: boolean;
 }
 
@@ -183,6 +188,9 @@ export interface Invoice {
     tax_total: number;
     total: number;
     tax_detail: InvoiceTaxDetail[] | null;
+    withholding_total: number;
+    withholding_detail: InvoiceTaxDetail[] | null;
+    net_receivable: number;
     email_to: string;
     sent_at: string;
     paid_at: string;
@@ -259,6 +267,7 @@ export interface DianConfig {
     municipality_id: number;
     identification_document_id: number;
     legal_organization_id: number;
+    payment_method_code: string;
 }
 
 export interface UpdateDianConfigDTO {
@@ -271,6 +280,27 @@ export interface UpdateDianConfigDTO {
     municipality_id?: number;
     identification_document_id?: number;
     legal_organization_id?: number;
+    payment_method_code?: string;
+}
+
+export interface ClientProfile {
+    business_id: number;
+    configured: boolean;
+    document_type: string;
+    document_number: string;
+    dv: string;
+    person_type: string;
+    municipality_id: string;
+    address: string;
+    phone: string;
+    billing_email: string;
+    applies_iva: boolean;
+    iva_rate: number;
+    applies_retefuente: boolean;
+    retefuente_rate: number;
+    applies_reteica: boolean;
+    reteica_rate: number;
+    suggested_tax_ids: number[] | null;
 }
 
 export interface EmitDianDTO {

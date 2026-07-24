@@ -30,15 +30,16 @@ func (h *Handlers) SaveDianConfig(c *gin.Context) {
 		return
 	}
 	status, err := h.uc.SaveDianConfig(c.Request.Context(), dtos.DianConfigDTO{
-		ApiURL:           req.ApiURL,
-		ClientID:         req.ClientID,
-		ClientSecret:     req.ClientSecret,
-		Username:         req.Username,
-		Password:         req.Password,
-		NumberingRangeID: req.NumberingRangeID,
-		MunicipalityID:   req.MunicipalityID,
-		DocumentIDType:   req.DocumentIDType,
-		LegalOrgID:       req.LegalOrgID,
+		ApiURL:            req.ApiURL,
+		ClientID:          req.ClientID,
+		ClientSecret:      req.ClientSecret,
+		Username:          req.Username,
+		Password:          req.Password,
+		NumberingRangeID:  req.NumberingRangeID,
+		MunicipalityID:    req.MunicipalityID,
+		DocumentIDType:    req.DocumentIDType,
+		LegalOrgID:        req.LegalOrgID,
+		PaymentMethodCode: req.PaymentMethodCode,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": err.Error()})

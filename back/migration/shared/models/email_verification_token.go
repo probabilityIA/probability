@@ -8,8 +8,8 @@ import (
 
 type EmailVerificationToken struct {
 	gorm.Model
-	UserID    uint   `gorm:"not null;index"`
-	TokenHash string `gorm:"size:64;not null;uniqueIndex"`
+	UserID    uint      `gorm:"not null;index"`
+	TokenHash string    `gorm:"size:64;not null;uniqueIndex"`
 	ExpiresAt time.Time `gorm:"not null;index"`
 	UsedAt    *time.Time
 	User      *User `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

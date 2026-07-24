@@ -350,6 +350,20 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                                 <span>Total</span>
                                 <span>{formatCOP(invoice.total)}</span>
                             </div>
+                            {invoice.withholding_total > 0 && (
+                                <>
+                                    {(invoice.withholding_detail || []).map((tax) => (
+                                        <div key={tax.tax_code} className="flex justify-between text-gray-400 dark:text-gray-500">
+                                            <span>{tax.tax_name} ({tax.rate_percent}%)</span>
+                                            <span>-{formatCOP(tax.amount)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between pt-1.5 border-t border-gray-200 dark:border-gray-700 font-semibold text-gray-900 dark:text-white">
+                                        <span>Neto a recibir</span>
+                                        <span>{formatCOP(invoice.net_receivable)}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 

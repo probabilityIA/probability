@@ -2,6 +2,7 @@ import { env } from '@/shared/config/env';
 import { IAccountingRepository } from '../../domain/ports';
 import {
     AccountingReport,
+    ClientProfile,
     Concept,
     CreateConceptDTO,
     CreateEntryDTO,
@@ -249,6 +250,11 @@ export class AccountingApiRepository implements IAccountingRepository {
             method: 'POST',
             body: JSON.stringify(data),
         });
+        return res.data;
+    }
+
+    async getClientProfile(businessId: number): Promise<ClientProfile> {
+        const res = await this.fetch<ClientProfile>(`/accounting/client-profile?business_id=${businessId}`);
         return res.data;
     }
 }

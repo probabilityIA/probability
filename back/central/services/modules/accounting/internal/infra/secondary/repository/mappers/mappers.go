@@ -54,6 +54,7 @@ func TaxToEntity(m *models.AccountingTax) *entities.Tax {
 		Name:        m.Name,
 		Description: m.Description,
 		RatePercent: m.RatePercent,
+		Kind:        m.Kind,
 		IsActive:    m.IsActive,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,

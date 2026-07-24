@@ -21,7 +21,7 @@ type NotificationEventType struct {
 
 	// Identificación del evento
 	EventCode string `gorm:"size:100;not null;index;uniqueIndex:idx_notification_type_event_code,priority:2"` // "order.created", "order.shipped"
-	EventName string `gorm:"size:200;not null"`                                                                 // "Confirmación de Pedido", "Pedido Enviado"
+	EventName string `gorm:"size:200;not null"`                                                               // "Confirmación de Pedido", "Pedido Enviado"
 
 	// Información
 	Description string `gorm:"type:text"` // Descripción del evento

@@ -6,6 +6,10 @@ const (
 	KindIncome  = "INCOME"
 	KindExpense = "EXPENSE"
 
+	TaxKindCharge      = "CHARGE"
+	TaxKindWithholding = "WITHHOLDING"
+	TaxKindOther       = "OTHER"
+
 	SourceGuideMargin    = "GUIDE_MARGIN"
 	SourceSubscription   = "SUBSCRIPTION"
 	SourceWalletRecharge = "WALLET_RECHARGE"
@@ -34,6 +38,7 @@ type Tax struct {
 	Name        string
 	Description string
 	RatePercent float64
+	Kind        string
 	IsActive    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

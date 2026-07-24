@@ -35,9 +35,9 @@ type InvoiceSyncLog struct {
 	Status string `gorm:"size:64;not null;index"`
 
 	// Detalles del request
-	RequestPayload  datatypes.JSON `gorm:"type:jsonb"` // Payload enviado al proveedor
-	RequestHeaders  datatypes.JSON `gorm:"type:jsonb"` // Headers del request
-	RequestURL      string         `gorm:"size:512"`   // URL del endpoint
+	RequestPayload datatypes.JSON `gorm:"type:jsonb"` // Payload enviado al proveedor
+	RequestHeaders datatypes.JSON `gorm:"type:jsonb"` // Headers del request
+	RequestURL     string         `gorm:"size:512"`   // URL del endpoint
 
 	// Detalles del response
 	ResponseStatus  int            `gorm:"index"`      // HTTP status code
@@ -51,15 +51,15 @@ type InvoiceSyncLog struct {
 	CashReceiptResponseBody   datatypes.JSON `gorm:"type:jsonb"` // Respuesta del recibo de caja
 
 	// Información de error (si aplica)
-	ErrorMessage *string `gorm:"type:text"` // Mensaje de error
-	ErrorCode    *string `gorm:"size:64"`   // Código de error del proveedor
+	ErrorMessage *string        `gorm:"type:text"`  // Mensaje de error
+	ErrorCode    *string        `gorm:"size:64"`    // Código de error del proveedor
 	ErrorDetails datatypes.JSON `gorm:"type:jsonb"` // Detalles adicionales del error
 
 	// Información de reintentos
-	RetryCount    int        `gorm:"default:0;index"` // Número de reintentos realizados
-	NextRetryAt   *time.Time `gorm:"index"`           // Cuándo se debe reintentar
-	MaxRetries    int        `gorm:"default:3"`       // Máximo de reintentos permitidos
-	RetriedAt     *time.Time                          // Cuándo se reintentó por última vez
+	RetryCount  int        `gorm:"default:0;index"` // Número de reintentos realizados
+	NextRetryAt *time.Time `gorm:"index"`           // Cuándo se debe reintentar
+	MaxRetries  int        `gorm:"default:3"`       // Máximo de reintentos permitidos
+	RetriedAt   *time.Time // Cuándo se reintentó por última vez
 
 	// Timestamps
 	StartedAt   time.Time  `gorm:"not null;index"` // Cuándo comenzó el intento

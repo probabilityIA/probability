@@ -33,6 +33,9 @@ type IBusinessRepository interface {
 	CreatePlatformIntegration(ctx context.Context, businessID uint) error
 
 	GetExistingOrderPrefixes(ctx context.Context) ([]string, error)
+
+	GetFiscalProfile(ctx context.Context, businessID uint) (*FiscalProfile, error)
+	UpsertFiscalProfile(ctx context.Context, profile *FiscalProfile) error
 }
 
 // IS3Service define las operaciones de almacenamiento en S3

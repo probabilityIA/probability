@@ -25,6 +25,7 @@ func (h *Handlers) CreateTax(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		RatePercent: req.RatePercent,
+		Kind:        req.Kind,
 	})
 	if err != nil {
 		switch {

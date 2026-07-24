@@ -8,13 +8,13 @@ import "gorm.io/gorm"
 type InvoicingConfigIntegration struct {
 	gorm.Model
 
-	ConfigID      uint            `gorm:"not null;index;uniqueIndex:idx_config_integration,priority:1"`
-	IntegrationID uint            `gorm:"not null;index;uniqueIndex:idx_config_integration,priority:2"`
+	ConfigID      uint `gorm:"not null;index;uniqueIndex:idx_config_integration,priority:1"`
+	IntegrationID uint `gorm:"not null;index;uniqueIndex:idx_config_integration,priority:2"`
 
 	// Relación con InvoicingConfig (cascade delete)
-	Config        InvoicingConfig `gorm:"foreignKey:ConfigID;constraint:OnDelete:CASCADE"`
+	Config InvoicingConfig `gorm:"foreignKey:ConfigID;constraint:OnDelete:CASCADE"`
 	// Relación con Integration
-	Integration   Integration     `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Integration Integration `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName especifica el nombre de la tabla

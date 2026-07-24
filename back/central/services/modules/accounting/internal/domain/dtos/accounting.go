@@ -23,6 +23,7 @@ type CreateTaxDTO struct {
 	Name        string
 	Description string
 	RatePercent float64
+	Kind        string
 }
 
 type UpdateTaxDTO struct {
@@ -30,6 +31,7 @@ type UpdateTaxDTO struct {
 	Name        string
 	Description string
 	RatePercent float64
+	Kind        string
 	IsActive    bool
 }
 

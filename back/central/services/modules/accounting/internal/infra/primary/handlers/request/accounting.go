@@ -20,12 +20,14 @@ type CreateTaxRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description string  `json:"description"`
 	RatePercent float64 `json:"rate_percent"`
+	Kind        string  `json:"kind"`
 }
 
 type UpdateTaxRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Description string  `json:"description"`
 	RatePercent float64 `json:"rate_percent"`
+	Kind        string  `json:"kind"`
 	IsActive    *bool   `json:"is_active"`
 }
 

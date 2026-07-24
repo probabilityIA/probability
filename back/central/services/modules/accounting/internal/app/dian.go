@@ -29,6 +29,7 @@ func (uc *UseCase) GetDianConfig(ctx context.Context) (*dtos.DianConfigStatus, e
 	status.LegalOrgID = configString(config, "legal_organization_id")
 	status.ApiURL = configString(config, "api_url_display")
 	status.Username = configString(config, "username_display")
+	status.PaymentMethodCode = configString(config, "payment_method_code")
 	return status, nil
 }
 
@@ -67,6 +68,9 @@ func (uc *UseCase) SaveDianConfig(ctx context.Context, dto dtos.DianConfigDTO) (
 	}
 	if dto.LegalOrgID != "" {
 		config["legal_organization_id"] = dto.LegalOrgID
+	}
+	if dto.PaymentMethodCode != "" {
+		config["payment_method_code"] = dto.PaymentMethodCode
 	}
 
 	if err := uc.dianIntegration.TestConnection(ctx, config, credentials); err != nil {
@@ -123,6 +127,24 @@ func (uc *UseCase) EmitInvoiceDian(ctx context.Context, dto dtos.EmitInvoiceDian
 
 	config := map[string]interface{}{
 		"reference_code": inv.Number,
+	}
+	if profile, err := uc.repo.GetClientProfile(ctx, inv.BusinessID); err == nil && profile.Configured {
+		if profile.DV != "" {
+			config["customer_dv"] = profile.DV
+		}
+		if profile.MunicipalityID != "" {
+			config["municipality_id"] = profile.MunicipalityID
+		}
+		if profile.PersonType == "NATURAL" {
+			config["legal_organization_id"] = "2"
+		} else {
+			config["legal_organization_id"] = "1"
+		}
+		if profile.DocumentType == "CC" {
+			config["identification_document_id"] = "1"
+		} else {
+			config["identification_document_id"] = "3"
+		}
 	}
 
 	result, err := uc.dianEmitter.Emit(ctx, integrationID, inv, config)

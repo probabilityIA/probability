@@ -19,10 +19,10 @@ type InvoicingProviderType struct {
 	ImageURL    string `gorm:"size:500"`                 // URL del logo del proveedor
 
 	// Información del proveedor
-	ApiBaseURL      string `gorm:"size:255"`        // URL base de la API
-	DocumentationURL string `gorm:"size:255"`       // URL de la documentación
-	IsActive        bool   `gorm:"default:true"`    // Si el tipo está activo y disponible
-	SupportedCountries string `gorm:"size:500"`    // Países soportados (separados por coma: "CO,MX,PE")
+	ApiBaseURL         string `gorm:"size:255"`     // URL base de la API
+	DocumentationURL   string `gorm:"size:255"`     // URL de la documentación
+	IsActive           bool   `gorm:"default:true"` // Si el tipo está activo y disponible
+	SupportedCountries string `gorm:"size:500"`     // Países soportados (separados por coma: "CO,MX,PE")
 
 	// Relaciones
 	InvoicingProviders []InvoicingProvider `gorm:"foreignKey:ProviderTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`

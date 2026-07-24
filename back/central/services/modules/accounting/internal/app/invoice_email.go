@@ -71,6 +71,12 @@ func renderInvoiceHTML(inv *entities.Invoice) string {
 		b.WriteString(fmt.Sprintf(`<tr><td style="text-align:right;padding:4px">%s (%g%%):</td><td style="text-align:right;padding:4px">%s</td></tr>`, esc(tax.TaxName), tax.RatePercent, formatCOP(tax.Amount)))
 	}
 	b.WriteString(`<tr><td style="text-align:right;padding:8px 4px;font-size:16px"><strong>Total:</strong></td><td style="text-align:right;padding:8px 4px;font-size:16px"><strong>` + formatCOP(inv.Total) + `</strong></td></tr>`)
+	for _, ret := range inv.WithholdingDetail {
+		b.WriteString(fmt.Sprintf(`<tr><td style="text-align:right;padding:4px;color:#6b7280">%s (%g%%) informativa:</td><td style="text-align:right;padding:4px;color:#6b7280">-%s</td></tr>`, esc(ret.TaxName), ret.RatePercent, formatCOP(ret.Amount)))
+	}
+	if inv.WithholdingTotal > 0 {
+		b.WriteString(`<tr><td style="text-align:right;padding:4px"><strong>Neto a recibir:</strong></td><td style="text-align:right;padding:4px"><strong>` + formatCOP(inv.Total-inv.WithholdingTotal) + `</strong></td></tr>`)
+	}
 	b.WriteString(`</table>`)
 	if inv.Notes != "" {
 		b.WriteString(`<p style="font-size:12px;color:#6b7280;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px">` + esc(inv.Notes) + `</p>`)
