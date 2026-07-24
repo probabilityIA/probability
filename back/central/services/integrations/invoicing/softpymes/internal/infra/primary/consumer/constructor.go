@@ -161,6 +161,10 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		return c.processListBankAccountsRequest(ctx, &request)
 	}
 
+	if request.Operation == "reconcile_failed" {
+		return c.processReconcileFailed(ctx, &request)
+	}
+
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {
 	case "create", "retry":

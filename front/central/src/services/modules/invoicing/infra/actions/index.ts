@@ -414,6 +414,22 @@ export async function requestInvoiceComparisonAction(
  *
  * @param businessId - ID del negocio (solo requerido para super admin)
  */
+/**
+ * Reintento masivo de facturas fallidas. El backend primero reconcilia contra el
+ * proveedor (si el documento ya existe lo trae y marca la factura como emitida)
+ * y solo re-encola la creación de las que realmente no existen.
+ *
+ * @param businessId - ID del negocio (solo requerido para super admin)
+ */
+export async function retryFailedInvoicesAction(
+  businessId?: number
+): Promise<{ success: boolean; queued: number; message: string }> {
+  const params = businessId ? `?business_id=${businessId}` : '';
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/retry-failed${params}`, {
+    method: 'POST',
+  });
+}
+
 export async function syncCancellationsAction(
   dateFrom: string,
   dateTo: string,

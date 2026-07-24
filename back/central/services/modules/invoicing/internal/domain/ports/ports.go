@@ -291,6 +291,11 @@ type IUseCase interface {
 
 	// Creación masiva de facturas (Asíncrono con RabbitMQ)
 	BulkCreateInvoicesAsync(ctx context.Context, dto *dtos.BulkCreateInvoicesDTO) (string, error)
+
+	// Reintento masivo de facturas fallidas: primero reconcilia contra el proveedor
+	// (si el documento ya existe lo trae y actualiza la factura) y solo re-encola
+	// la creación de las que realmente no existen.
+	RetryFailedBulk(ctx context.Context, businessID uint) (int, error)
 	GetBulkJobStatus(ctx context.Context, jobID string) (*entities.BulkInvoiceJob, error)
 	GetBulkJobItems(ctx context.Context, jobID string) ([]*entities.BulkInvoiceJobItem, error)
 	ListBulkJobs(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.BulkInvoiceJob, int64, error)

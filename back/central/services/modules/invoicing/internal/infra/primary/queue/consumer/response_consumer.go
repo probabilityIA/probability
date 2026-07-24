@@ -201,6 +201,8 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 			c.handleSuccess(ctx, invoice, syncLog, &response)
 		case dtos.ResponseStatusPendingValidation:
 			c.handlePendingValidation(ctx, invoice, syncLog, &response)
+		case dtos.ResponseStatusRetryRequeued:
+			c.handleRetryRequeued(ctx, invoice, syncLog, &response)
 		default:
 			c.handleError(ctx, invoice, syncLog, &response)
 		}
@@ -444,6 +446,47 @@ func (c *ResponseConsumer) handleError(
 
 	// Actualizar contadores de bulk job si la factura pertenece a uno
 	c.updateBulkJobOnResult(ctx, invoice.ID, false)
+}
+
+func (c *ResponseConsumer) handleRetryRequeued(
+	ctx context.Context,
+	invoice *entities.Invoice,
+	syncLog *entities.InvoiceSyncLog,
+	response *dtos.InvoiceResponseMessage,
+) {
+	invoice.Status = constants.InvoiceStatusFailed
+	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
+		c.log.Error(ctx).Err(err).Uint("invoice_id", invoice.ID).Msg("Failed to update invoice for requeue")
+		return
+	}
+
+	if syncLog == nil {
+		c.log.Warn(ctx).Uint("invoice_id", invoice.ID).Msg("No sync log to requeue")
+		return
+	}
+
+	syncLog.Status = constants.SyncStatusFailed
+	if syncLog.RetryCount >= syncLog.MaxRetries {
+		syncLog.MaxRetries = syncLog.RetryCount + constants.MaxRetries
+	}
+	nextRetry := time.Now()
+	syncLog.NextRetryAt = &nextRetry
+	errMsg := response.Error
+	if errMsg == "" {
+		errMsg = "re-encolada por reintento masivo de fallidas"
+	}
+	syncLog.ErrorMessage = &errMsg
+
+	if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+		c.log.Error(ctx).Err(err).Uint("invoice_id", invoice.ID).Msg("Failed to requeue sync log")
+		return
+	}
+
+	c.log.Info(ctx).
+		Uint("invoice_id", invoice.ID).
+		Int("retry_count", syncLog.RetryCount).
+		Int("max_retries", syncLog.MaxRetries).
+		Msg("Invoice requeued for creation retry after reconcile")
 }
 
 // handleCancelSuccess procesa una respuesta exitosa de cancelación

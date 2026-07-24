@@ -23,6 +23,7 @@ const (
 	OperationListBankAccounts    = "list_bank_accounts"
 	OperationCreateJournal       = "create_journal"
 	OperationCashReceipt         = "cash_receipt"
+	OperationReconcileFailed     = "reconcile_failed"
 	OperationInventorySync       = "inventory_sync"
 	OperationListSiigoWarehouses = "list_siigo_warehouses"
 )

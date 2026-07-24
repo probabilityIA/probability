@@ -55,6 +55,7 @@ type IHandler interface {
 	// Creación masiva de facturas
 	ListInvoiceableOrders(c *gin.Context)
 	BulkCreateInvoices(c *gin.Context)
+	RetryFailedInvoices(c *gin.Context)
 
 	// Jobs de facturación masiva
 	ListBulkJobs(c *gin.Context)
