@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -307,10 +308,22 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			result.ProviderMessage = invoiceResp.Message
 			return result, nil
 		}
+		providerErr := invoiceResp.Message
+		if providerErr == "" {
+			var generic map[string]interface{}
+			if json.Unmarshal(resp.Body(), &generic) == nil {
+				if e, ok := generic["error"].(string); ok && e != "" {
+					providerErr = e
+					if st, ok := generic["status"].(float64); ok && st > 0 {
+						providerErr = fmt.Sprintf("%s (status interno %d)", e, int(st))
+					}
+				}
+			}
+		}
 		c.log.Warn(ctx).
-			Str("message", invoiceResp.Message).
+			Str("provider_error", providerErr).
 			Msg("Invoice response has no info")
-		return result, fmt.Errorf("invoice response has no info: %s", invoiceResp.Message)
+		return result, fmt.Errorf("invoice response has no info: %s", providerErr)
 	}
 
 	if invoiceResp.Info.DocsFe != nil {

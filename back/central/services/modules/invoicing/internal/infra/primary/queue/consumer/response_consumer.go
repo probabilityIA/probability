@@ -1115,6 +1115,7 @@ var providerUnavailableErrorMarkers = []string{
 	"reintento abortado",
 	"no fue posible verificar",
 	"response has no info",
+	"internal server error",
 	"status 429",
 	"status 502",
 	"status 503",
