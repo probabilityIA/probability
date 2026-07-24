@@ -15,7 +15,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const defaultInvoiceWorkers = 3
+const defaultInvoiceWorkers = 1
 
 func New(
 	config env.IConfig,

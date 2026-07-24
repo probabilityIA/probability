@@ -405,16 +405,24 @@ func (c *ResponseConsumer) handleError(
 		syncLog.ErrorMessage = &response.Error
 		syncLog.ErrorCode = &response.ErrorCode
 
-		// Guardar detalles del error
 		if response.ErrorDetails != nil {
 			syncLog.ErrorDetails = response.ErrorDetails
 		}
 
-		// Poblar audit data del request/response HTTP al proveedor
 		c.populateSyncLogAudit(syncLog, response)
 
-		// Calcular próximo reintento si no se excedió el límite
-		if syncLog.RetryCount < syncLog.MaxRetries {
+		if isProviderUnavailableError(response.Error) {
+			if syncLog.RetryCount > 0 {
+				syncLog.RetryCount--
+			}
+			nextRetry := time.Now().Add(providerUnavailableRetryDelay)
+			syncLog.NextRetryAt = &nextRetry
+			c.log.Warn(ctx).
+				Uint("invoice_id", invoice.ID).
+				Time("next_retry_at", nextRetry).
+				Int("retry_count", syncLog.RetryCount).
+				Msg("Provider unavailable - retry rescheduled without consuming retry budget")
+		} else if syncLog.RetryCount < syncLog.MaxRetries {
 			nextRetry := c.calculateNextRetry(syncLog.RetryCount)
 			syncLog.NextRetryAt = &nextRetry
 		}
@@ -1050,7 +1058,35 @@ func formatOrderDate(orderDates map[string]*time.Time, orderID string) *string {
 	return nil
 }
 
-// calculateNextRetry calcula el próximo intento de retry (exponential backoff para failed)
+const providerUnavailableRetryDelay = 15 * time.Minute
+
+var providerUnavailableErrorMarkers = []string{
+	"context deadline exceeded",
+	"client.timeout",
+	"connection refused",
+	"connection reset",
+	"no such host",
+	"i/o timeout",
+	"tls handshake timeout",
+	"authentication request failed",
+	"reintento abortado",
+	"no fue posible verificar",
+	"status 429",
+	"status 502",
+	"status 503",
+	"status 504",
+}
+
+func isProviderUnavailableError(errMsg string) bool {
+	lower := strings.ToLower(errMsg)
+	for _, marker := range providerUnavailableErrorMarkers {
+		if strings.Contains(lower, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 func (c *ResponseConsumer) calculateNextRetry(retryCount int) time.Time {
 	// Backoff exponencial: 5min, 15min, 30min
 	delays := []time.Duration{

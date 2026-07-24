@@ -140,8 +140,18 @@ export interface BusinessSimple {
     quaternary_color?: string;
 }
 
+export interface BusinessesSimpleParams {
+    page?: number;
+    page_size?: number;
+    search?: string;
+}
+
 export interface BusinessesSimpleResponse {
     success: boolean;
     message: string;
     data: BusinessSimple[];
+    total?: number;
+    page?: number;
+    page_size?: number;
+    total_pages?: number;
 }
