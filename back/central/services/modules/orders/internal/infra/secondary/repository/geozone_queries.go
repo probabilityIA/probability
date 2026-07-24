@@ -73,11 +73,11 @@ func (r *Repository) ResolveOrderGeozone(ctx context.Context, orderID string, bu
 		    SELECT id,
 		           REGEXP_REPLACE(
 		             TRIM(unaccent(lower(COALESCE(shipping_city,  '')))),
-		             '\s*[,\(]?\s*d\.?\s*c\.?\s*\)?\s*$', '', 'g'
+		             '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g'
 		           ) AS city_norm,
 		           REGEXP_REPLACE(
 		             TRIM(unaccent(lower(COALESCE(shipping_state, '')))),
-		             '\s*[,\(]?\s*d\.?\s*c\.?\s*\)?\s*$', '', 'g'
+		             '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g'
 		           ) AS state_norm
 		    FROM orders WHERE id = ? AND geozone_state_id IS NULL
 		      AND shipping_city IS NOT NULL AND shipping_city <> ''
@@ -88,7 +88,7 @@ func (r *Repository) ResolveOrderGeozone(ctx context.Context, orderID string, bu
 		    JOIN geozones g
 		      ON g.deleted_at IS NULL AND g.type = 'city'
 		     AND (g.business_id = 0 OR g.business_id = ?)
-		     AND REGEXP_REPLACE(unaccent(lower(g.name)), '\s*[,\(]?\s*d\.?\s*c\.?\s*\)?\s*$', '', 'g') = t.city_norm
+		     AND REGEXP_REPLACE(unaccent(lower(g.name)), '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g') = t.city_norm
 		    LIMIT 1
 		),
 		matched_state AS (
@@ -97,7 +97,7 @@ func (r *Repository) ResolveOrderGeozone(ctx context.Context, orderID string, bu
 		    JOIN geozones g
 		      ON g.deleted_at IS NULL AND g.type = 'state'
 		     AND (g.business_id = 0 OR g.business_id = ?)
-		     AND REGEXP_REPLACE(unaccent(lower(g.name)), '\s*[,\(]?\s*d\.?\s*c\.?\s*\)?\s*$', '', 'g') IN (t.state_norm, t.city_norm)
+		     AND REGEXP_REPLACE(unaccent(lower(g.name)), '\s*[,\(]{0,1}\s*d\.{0,1}\s*c\.{0,1}\s*\){0,1}\s*$', '', 'g') IN (t.state_norm, t.city_norm)
 		    LIMIT 1
 		),
 		picked AS (
