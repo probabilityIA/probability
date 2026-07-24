@@ -11,6 +11,8 @@ import (
 type IJumpsellerUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 
+	TestExistingConnection(ctx context.Context, integrationID string, businessID uint) (*domain.StoreInfo, error)
+
 	SyncOrders(ctx context.Context, integrationID string) error
 
 	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error

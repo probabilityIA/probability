@@ -9,8 +9,19 @@ const (
 	ConfigAuthMethod     = "auth_method"
 	ConfigTokenExpiresAt = "token_expires_at"
 
-	DefaultScopes = "read_store read_orders write_orders read_products write_products read_customers write_hooks"
+	DefaultScopes = "read_store read_orders write_orders read_products write_products read_customers read_hooks write_hooks read_locations"
 )
+
+var RequiredScopes = []string{
+	"read_store",
+	"read_orders",
+	"write_orders",
+	"read_products",
+	"write_products",
+	"read_hooks",
+	"write_hooks",
+	"read_locations",
+}
 
 const (
 	HeaderHmac      = "Jumpseller-Hmac-Sha256"
