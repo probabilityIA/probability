@@ -17,17 +17,22 @@ import (
 
 func (r *Repository) CreateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error) {
 	model := &models.AccountingInvoice{
-		BusinessID: inv.BusinessID,
-		ConceptID:  inv.ConceptID,
-		IssueDate:  inv.IssueDate,
-		DueDate:    inv.DueDate,
-		Status:     inv.Status,
-		Notes:      inv.Notes,
-		Subtotal:   inv.Subtotal,
-		TaxTotal:   inv.TaxTotal,
-		Total:      inv.Total,
-		TaxDetail:  datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
-		EmailTo:    inv.EmailTo,
+		BusinessID:       inv.BusinessID,
+		ConceptID:        inv.ConceptID,
+		IssueDate:        inv.IssueDate,
+		DueDate:          inv.DueDate,
+		Status:           inv.Status,
+		Notes:            inv.Notes,
+		Subtotal:         inv.Subtotal,
+		TaxTotal:         inv.TaxTotal,
+		Total:            inv.Total,
+		TaxDetail:        datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
+		EmailTo:          inv.EmailTo,
+		CustomerDocument: inv.CustomerDocument,
+		CustomerPhone:    inv.CustomerPhone,
+		CustomerAddress:  inv.CustomerAddress,
+		DianStatus:       entities.DianStatusNone,
+		IsTest:           inv.IsTest,
 	}
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(model).Error; err != nil {
@@ -57,15 +62,19 @@ func (r *Repository) CreateInvoice(ctx context.Context, inv *entities.Invoice) (
 func (r *Repository) UpdateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error) {
 	err := r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
 		updates := map[string]interface{}{
-			"concept_id": inv.ConceptID,
-			"issue_date": inv.IssueDate,
-			"due_date":   inv.DueDate,
-			"notes":      inv.Notes,
-			"email_to":   inv.EmailTo,
-			"subtotal":   inv.Subtotal,
-			"tax_total":  inv.TaxTotal,
-			"total":      inv.Total,
-			"tax_detail": datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
+			"concept_id":        inv.ConceptID,
+			"issue_date":        inv.IssueDate,
+			"due_date":          inv.DueDate,
+			"notes":             inv.Notes,
+			"email_to":          inv.EmailTo,
+			"subtotal":          inv.Subtotal,
+			"tax_total":         inv.TaxTotal,
+			"total":             inv.Total,
+			"tax_detail":        datatypes.JSON(mappers.TaxLinesToJSON(inv.TaxDetail)),
+			"customer_document": inv.CustomerDocument,
+			"customer_phone":    inv.CustomerPhone,
+			"customer_address":  inv.CustomerAddress,
+			"is_test":           inv.IsTest,
 		}
 		res := tx.Model(&models.AccountingInvoice{}).Where("id = ?", inv.ID).Updates(updates)
 		if res.Error != nil {
@@ -104,24 +113,34 @@ type invoiceRow struct {
 
 func (r *Repository) invoiceToEntity(row *invoiceRow, items []models.AccountingInvoiceItem) *entities.Invoice {
 	inv := &entities.Invoice{
-		ID:           row.ID,
-		Number:       row.Number,
-		BusinessID:   row.BusinessID,
-		BusinessName: row.BusinessName,
-		ConceptID:    row.ConceptID,
-		ConceptName:  row.ConceptName,
-		IssueDate:    row.IssueDate,
-		DueDate:      row.DueDate,
-		Status:       row.Status,
-		Notes:        row.Notes,
-		Subtotal:     row.Subtotal,
-		TaxTotal:     row.TaxTotal,
-		Total:        row.Total,
-		EmailTo:      row.EmailTo,
-		SentAt:       row.SentAt,
-		PaidAt:       row.PaidAt,
-		CreatedAt:    row.CreatedAt,
-		UpdatedAt:    row.UpdatedAt,
+		ID:               row.ID,
+		Number:           row.Number,
+		BusinessID:       row.BusinessID,
+		BusinessName:     row.BusinessName,
+		ConceptID:        row.ConceptID,
+		ConceptName:      row.ConceptName,
+		IssueDate:        row.IssueDate,
+		DueDate:          row.DueDate,
+		Status:           row.Status,
+		Notes:            row.Notes,
+		Subtotal:         row.Subtotal,
+		TaxTotal:         row.TaxTotal,
+		Total:            row.Total,
+		EmailTo:          row.EmailTo,
+		SentAt:           row.SentAt,
+		PaidAt:           row.PaidAt,
+		CustomerDocument: row.CustomerDocument,
+		CustomerPhone:    row.CustomerPhone,
+		CustomerAddress:  row.CustomerAddress,
+		DianStatus:       row.DianStatus,
+		Cufe:             row.Cufe,
+		DianNumber:       row.DianNumber,
+		DianExternalID:   row.DianExternalID,
+		DianQR:           row.DianQR,
+		DianEmittedAt:    row.DianEmittedAt,
+		IsTest:           row.IsTest,
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        row.UpdatedAt,
 	}
 	entry := models.AccountingEntry{TaxDetail: row.TaxDetail}
 	inv.TaxDetail = mappers.EntryToEntity(&entry, "", "", "").TaxDetail
@@ -167,6 +186,9 @@ func (r *Repository) ListInvoices(ctx context.Context, params dtos.ListInvoicesP
 		}
 		if params.Status != "" {
 			q = q.Where("accounting_invoices.status = ?", params.Status)
+		}
+		if params.IsTest != nil {
+			q = q.Where("accounting_invoices.is_test = ?", *params.IsTest)
 		}
 		return q
 	}
@@ -216,6 +238,40 @@ func (r *Repository) SetInvoiceStatus(ctx context.Context, id uint, status strin
 		"email_to": emailTo,
 	}
 	res := r.db.Conn(ctx).Model(&models.AccountingInvoice{}).Where("id = ?", id).Updates(updates)
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domainerrors.ErrInvoiceNotFound
+	}
+	return nil
+}
+
+func (r *Repository) SetInvoiceCustomer(ctx context.Context, id uint, document, phone, address string) error {
+	res := r.db.Conn(ctx).Model(&models.AccountingInvoice{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"customer_document": document,
+		"customer_phone":    phone,
+		"customer_address":  address,
+	})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domainerrors.ErrInvoiceNotFound
+	}
+	return nil
+}
+
+func (r *Repository) SetInvoiceDian(ctx context.Context, id uint, result *entities.DianEmitResult) error {
+	now := time.Now()
+	res := r.db.Conn(ctx).Model(&models.AccountingInvoice{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"dian_status":      entities.DianStatusValidated,
+		"cufe":             result.CUFE,
+		"dian_number":      result.Number,
+		"dian_external_id": result.ExternalID,
+		"dian_qr":          result.QRCode,
+		"dian_emitted_at":  &now,
+	})
 	if res.Error != nil {
 		return res.Error
 	}

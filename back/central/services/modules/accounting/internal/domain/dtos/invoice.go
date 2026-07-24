@@ -9,30 +9,39 @@ type InvoiceItemDTO struct {
 }
 
 type CreateInvoiceDTO struct {
-	BusinessID uint
-	ConceptID  uint
-	IssueDate  time.Time
-	DueDate    *time.Time
-	Notes      string
-	EmailTo    string
-	TaxIDs     []uint
-	Items      []InvoiceItemDTO
+	BusinessID       uint
+	ConceptID        uint
+	IssueDate        time.Time
+	DueDate          *time.Time
+	Notes            string
+	EmailTo          string
+	CustomerDocument string
+	CustomerPhone    string
+	CustomerAddress  string
+	IsTest           bool
+	TaxIDs           []uint
+	Items            []InvoiceItemDTO
 }
 
 type UpdateInvoiceDTO struct {
-	ID        uint
-	ConceptID uint
-	IssueDate time.Time
-	DueDate   *time.Time
-	Notes     string
-	EmailTo   string
-	TaxIDs    []uint
-	Items     []InvoiceItemDTO
+	ID               uint
+	ConceptID        uint
+	IssueDate        time.Time
+	DueDate          *time.Time
+	Notes            string
+	EmailTo          string
+	CustomerDocument string
+	CustomerPhone    string
+	CustomerAddress  string
+	IsTest           bool
+	TaxIDs           []uint
+	Items            []InvoiceItemDTO
 }
 
 type ListInvoicesParams struct {
 	BusinessID *uint
 	Status     string
+	IsTest     *bool
 	Page       int
 	PageSize   int
 }
@@ -44,4 +53,34 @@ func (p ListInvoicesParams) Offset() int {
 type SendInvoiceDTO struct {
 	ID      uint
 	EmailTo string
+}
+
+type EmitInvoiceDianDTO struct {
+	ID               uint
+	CustomerDocument string
+	CustomerPhone    string
+	CustomerAddress  string
+}
+
+type DianConfigDTO struct {
+	ApiURL           string
+	ClientID         string
+	ClientSecret     string
+	Username         string
+	Password         string
+	NumberingRangeID int
+	MunicipalityID   string
+	DocumentIDType   string
+	LegalOrgID       string
+}
+
+type DianConfigStatus struct {
+	Configured       bool   `json:"configured"`
+	IntegrationID    uint   `json:"integration_id"`
+	ApiURL           string `json:"api_url"`
+	Username         string `json:"username"`
+	NumberingRangeID int    `json:"numbering_range_id"`
+	MunicipalityID   string `json:"municipality_id"`
+	DocumentIDType   string `json:"identification_document_id"`
+	LegalOrgID       string `json:"legal_organization_id"`
 }

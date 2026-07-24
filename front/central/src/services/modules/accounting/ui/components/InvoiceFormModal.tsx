@@ -61,7 +61,11 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
     const [issueDate, setIssueDate] = useState(invoice?.issue_date?.slice(0, 10) || todayISO());
     const [dueDate, setDueDate] = useState(invoice?.due_date?.slice(0, 10) || '');
     const [emailTo, setEmailTo] = useState(invoice?.email_to || '');
+    const [customerDocument, setCustomerDocument] = useState(invoice?.customer_document || '');
+    const [customerPhone, setCustomerPhone] = useState(invoice?.customer_phone || '');
+    const [customerAddress, setCustomerAddress] = useState(invoice?.customer_address || '');
     const [notes, setNotes] = useState(invoice?.notes || '');
+    const [isTest, setIsTest] = useState(invoice?.is_test ?? false);
     const [taxIds, setTaxIds] = useState<number[]>(initialTaxIds);
     const [rows, setRows] = useState<ItemRow[]>(() => {
         if (invoice?.items?.length) {
@@ -140,6 +144,10 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
             due_date: dueDate || undefined,
             notes: notes || undefined,
             email_to: emailTo || undefined,
+            customer_document: customerDocument.trim() || undefined,
+            customer_phone: customerPhone.trim() || undefined,
+            customer_address: customerAddress.trim() || undefined,
+            is_test: isTest,
             tax_ids: taxIds.length > 0 ? taxIds : undefined,
             items,
         };
@@ -211,6 +219,39 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                     </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Documento (NIT/CC)</label>
+                        <input
+                            type="text"
+                            value={customerDocument}
+                            onChange={(e) => setCustomerDocument(e.target.value)}
+                            placeholder="900123456"
+                            className={inputClass}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                        <input
+                            type="text"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            placeholder="3001234567"
+                            className={inputClass}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Direccion</label>
+                        <input
+                            type="text"
+                            value={customerAddress}
+                            onChange={(e) => setCustomerAddress(e.target.value)}
+                            placeholder="Calle 1 # 2-3"
+                            className={inputClass}
+                        />
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de emision *</label>
@@ -241,6 +282,19 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                         placeholder="Ej: factura por servicios del mes"
                         className={inputClass}
                     />
+                </div>
+
+                <div>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <input
+                            type="checkbox"
+                            checked={isTest}
+                            onChange={(e) => setIsTest(e.target.checked)}
+                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                        Factura de prueba (modo test)
+                    </label>
+                    <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">No genera movimientos contables al marcarse pagada</p>
                 </div>
 
                 <div>

@@ -75,6 +75,10 @@ func (uc *UseCase) CreateInvoice(ctx context.Context, dto dtos.CreateInvoiceDTO)
 	inv.DueDate = dto.DueDate
 	inv.Notes = strings.TrimSpace(dto.Notes)
 	inv.EmailTo = strings.TrimSpace(dto.EmailTo)
+	inv.CustomerDocument = strings.TrimSpace(dto.CustomerDocument)
+	inv.CustomerPhone = strings.TrimSpace(dto.CustomerPhone)
+	inv.CustomerAddress = strings.TrimSpace(dto.CustomerAddress)
+	inv.IsTest = dto.IsTest
 	inv.Status = entities.InvoiceStatusDraft
 	created, err := uc.repo.CreateInvoice(ctx, inv)
 	if err != nil {
@@ -101,6 +105,10 @@ func (uc *UseCase) UpdateInvoice(ctx context.Context, dto dtos.UpdateInvoiceDTO)
 	inv.DueDate = dto.DueDate
 	inv.Notes = strings.TrimSpace(dto.Notes)
 	inv.EmailTo = strings.TrimSpace(dto.EmailTo)
+	inv.CustomerDocument = strings.TrimSpace(dto.CustomerDocument)
+	inv.CustomerPhone = strings.TrimSpace(dto.CustomerPhone)
+	inv.CustomerAddress = strings.TrimSpace(dto.CustomerAddress)
+	inv.IsTest = dto.IsTest
 	inv.Status = existing.Status
 	if _, err := uc.repo.UpdateInvoice(ctx, inv); err != nil {
 		return nil, err
@@ -187,8 +195,15 @@ func (uc *UseCase) MarkInvoicePaid(ctx context.Context, id uint) (*entities.Invo
 	default:
 		return nil, domainerrors.ErrInvoiceNotPayable
 	}
-	businessID := inv.BusinessID
 	now := time.Now()
+	if inv.IsTest {
+		if err := uc.repo.SetInvoiceStatus(ctx, inv.ID, entities.InvoiceStatusPaid, inv.SentAt, &now, inv.EmailTo); err != nil {
+			return nil, err
+		}
+		uc.log.Info(ctx).Uint("invoice_id", inv.ID).Msg("Test invoice marked paid: no ledger entry created")
+		return uc.repo.GetInvoiceByID(ctx, inv.ID)
+	}
+	businessID := inv.BusinessID
 	entry := &entities.Entry{
 		ConceptID:   inv.ConceptID,
 		BusinessID:  &businessID,

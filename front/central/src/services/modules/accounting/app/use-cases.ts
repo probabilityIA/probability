@@ -4,9 +4,11 @@ import {
     CreateEntryDTO,
     CreateInvoiceDTO,
     CreateTaxDTO,
+    EmitDianDTO,
     GetEntriesParams,
     GetInvoicesParams,
     UpdateConceptDTO,
+    UpdateDianConfigDTO,
     UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../domain/types';
@@ -92,5 +94,17 @@ export class AccountingUseCases {
 
     async cancelInvoice(id: number) {
         return this.repository.cancelInvoice(id);
+    }
+
+    async getDianConfig() {
+        return this.repository.getDianConfig();
+    }
+
+    async updateDianConfig(data: UpdateDianConfigDTO) {
+        return this.repository.updateDianConfig(data);
+    }
+
+    async emitInvoiceDian(id: number, data: EmitDianDTO) {
+        return this.repository.emitInvoiceDian(id, data);
     }
 }

@@ -12,6 +12,17 @@ type IEmailSender interface {
 	SendHTML(ctx context.Context, to, subject, html string) error
 }
 
+type IDianEmitter interface {
+	Emit(ctx context.Context, integrationID uint, inv *entities.Invoice, config map[string]interface{}) (*entities.DianEmitResult, error)
+}
+
+type IDianIntegration interface {
+	GetGlobalIntegrationID(ctx context.Context) (uint, error)
+	GetConfig(ctx context.Context, integrationID uint) (map[string]interface{}, error)
+	Ensure(ctx context.Context, name string, config, credentials map[string]interface{}) (uint, error)
+	TestConnection(ctx context.Context, config, credentials map[string]interface{}) error
+}
+
 type IRepository interface {
 	ListConcepts(ctx context.Context) ([]entities.Concept, error)
 	GetConceptByID(ctx context.Context, id uint) (*entities.Concept, error)
@@ -42,6 +53,8 @@ type IRepository interface {
 	ListInvoices(ctx context.Context, params dtos.ListInvoicesParams) ([]entities.Invoice, int64, error)
 	DeleteInvoice(ctx context.Context, id uint) error
 	SetInvoiceStatus(ctx context.Context, id uint, status string, sentAt, paidAt *time.Time, emailTo string) error
+	SetInvoiceCustomer(ctx context.Context, id uint, document, phone, address string) error
+	SetInvoiceDian(ctx context.Context, id uint, result *entities.DianEmitResult) error
 	DeleteEntryBySource(ctx context.Context, sourceType, sourceID string) error
 	GetTaxesByIDs(ctx context.Context, ids []uint) ([]entities.Tax, error)
 	GetBusinessName(ctx context.Context, id uint) (string, error)

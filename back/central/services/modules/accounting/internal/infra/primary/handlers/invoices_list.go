@@ -29,6 +29,10 @@ func (h *Handlers) ListInvoices(c *gin.Context) {
 		Page:     page,
 		PageSize: pageSize,
 	}
+	if v := c.Query("is_test"); v == "true" || v == "false" {
+		isTest := v == "true"
+		params.IsTest = &isTest
+	}
 	if v := c.Query("business_id"); v != "" {
 		if id, err := strconv.ParseUint(v, 10, 64); err == nil && id > 0 {
 			businessID := uint(id)

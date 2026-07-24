@@ -82,6 +82,17 @@ type AccountingInvoice struct {
 	SentAt     *time.Time
 	PaidAt     *time.Time
 
+	CustomerDocument string `gorm:"size:30"`
+	CustomerPhone    string `gorm:"size:30"`
+	CustomerAddress  string `gorm:"size:255"`
+	DianStatus       string `gorm:"size:15;not null;default:'NONE';index"`
+	Cufe             string `gorm:"size:120"`
+	DianNumber       string `gorm:"size:40"`
+	DianExternalID   string `gorm:"size:40"`
+	DianQR           string `gorm:"type:text"`
+	DianEmittedAt    *time.Time
+	IsTest           bool `gorm:"default:false;index"`
+
 	Business Business                `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	Concept  AccountingConcept       `gorm:"foreignKey:ConceptID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	Items    []AccountingInvoiceItem `gorm:"foreignKey:InvoiceID"`

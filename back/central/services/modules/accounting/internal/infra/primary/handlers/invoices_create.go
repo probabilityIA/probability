@@ -49,14 +49,18 @@ func (h *Handlers) CreateInvoice(c *gin.Context) {
 		return
 	}
 	inv, err := h.uc.CreateInvoice(c.Request.Context(), dtos.CreateInvoiceDTO{
-		BusinessID: req.BusinessID,
-		ConceptID:  req.ConceptID,
-		IssueDate:  issueDate,
-		DueDate:    dueDate,
-		Notes:      req.Notes,
-		EmailTo:    req.EmailTo,
-		TaxIDs:     req.TaxIDs,
-		Items:      invoiceItemsToDTO(req.Items),
+		BusinessID:       req.BusinessID,
+		ConceptID:        req.ConceptID,
+		IssueDate:        issueDate,
+		DueDate:          dueDate,
+		Notes:            req.Notes,
+		EmailTo:          req.EmailTo,
+		CustomerDocument: req.CustomerDocument,
+		CustomerPhone:    req.CustomerPhone,
+		CustomerAddress:  req.CustomerAddress,
+		IsTest:           req.IsTest,
+		TaxIDs:           req.TaxIDs,
+		Items:            invoiceItemsToDTO(req.Items),
 	})
 	if err != nil {
 		h.invoiceError(c, err)

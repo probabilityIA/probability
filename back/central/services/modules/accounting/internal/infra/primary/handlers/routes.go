@@ -29,5 +29,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.POST("/invoices/:id/send", h.SendInvoice)
 		g.POST("/invoices/:id/pay", h.MarkInvoicePaid)
 		g.POST("/invoices/:id/cancel", h.CancelInvoice)
+		g.POST("/invoices/:id/emit-dian", h.EmitInvoiceDian)
+		g.GET("/dian-config", h.GetDianConfig)
+		g.PUT("/dian-config", h.SaveDianConfig)
 	}
 }

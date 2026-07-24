@@ -151,6 +151,8 @@ export interface SyncResult {
 
 export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'CANCELLED';
 
+export type DianStatus = 'NONE' | 'VALIDATED';
+
 export interface InvoiceTaxDetail {
     tax_code: string;
     tax_name: string;
@@ -184,6 +186,15 @@ export interface Invoice {
     email_to: string;
     sent_at: string;
     paid_at: string;
+    customer_document: string;
+    customer_phone: string;
+    customer_address: string;
+    dian_status: DianStatus;
+    cufe: string;
+    dian_number: string;
+    dian_qr: string;
+    dian_emitted_at: string;
+    is_test: boolean;
     items: InvoiceItem[] | null;
     created_at: string;
 }
@@ -201,6 +212,10 @@ export interface CreateInvoiceDTO {
     due_date?: string;
     notes?: string;
     email_to?: string;
+    customer_document?: string;
+    customer_phone?: string;
+    customer_address?: string;
+    is_test?: boolean;
     tax_ids?: number[];
     items: InvoiceItemInputDTO[];
 }
@@ -211,6 +226,10 @@ export interface UpdateInvoiceDTO {
     due_date?: string;
     notes?: string;
     email_to?: string;
+    customer_document?: string;
+    customer_phone?: string;
+    customer_address?: string;
+    is_test?: boolean;
     tax_ids?: number[];
     items: InvoiceItemInputDTO[];
 }
@@ -220,6 +239,7 @@ export interface GetInvoicesParams {
     page_size?: number;
     status?: InvoiceStatus;
     business_id?: number;
+    is_test?: 'true' | 'false';
 }
 
 export interface InvoicesListResponse {
@@ -228,6 +248,35 @@ export interface InvoicesListResponse {
     page: number;
     page_size: number;
     total_pages: number;
+}
+
+export interface DianConfig {
+    configured: boolean;
+    integration_id: number;
+    api_url: string;
+    username: string;
+    numbering_range_id: number;
+    municipality_id: number;
+    identification_document_id: number;
+    legal_organization_id: number;
+}
+
+export interface UpdateDianConfigDTO {
+    api_url?: string;
+    client_id: string;
+    client_secret: string;
+    username: string;
+    password: string;
+    numbering_range_id?: number;
+    municipality_id?: number;
+    identification_document_id?: number;
+    legal_organization_id?: number;
+}
+
+export interface EmitDianDTO {
+    customer_document?: string;
+    customer_phone?: string;
+    customer_address?: string;
 }
 
 export type ActionResult<T> =

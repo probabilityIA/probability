@@ -14,6 +14,7 @@ interface FacturasPageProps {
         page_size?: string;
         status?: string;
         business_id?: string;
+        is_test?: string;
         nueva?: string;
     }>;
 }
@@ -26,6 +27,9 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
         ? (params.status as InvoiceStatus)
         : null;
     const businessId = Number(params.business_id) || null;
+    const isTest = params.is_test === 'true' || params.is_test === 'false'
+        ? (params.is_test as 'true' | 'false')
+        : null;
     const openCreate = params.nueva === '1';
 
     const [invoicesResult, conceptsResult, taxesResult] = await Promise.all([
@@ -34,6 +38,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
             page_size: pageSize,
             status: status || undefined,
             business_id: businessId || undefined,
+            is_test: isTest || undefined,
         }),
         getAccountingConceptsAction(),
         getAccountingTaxesAction(),
@@ -59,7 +64,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
                     invoices={invoices}
                     concepts={concepts}
                     taxes={taxes}
-                    filters={{ page, page_size: pageSize, status, business_id: businessId }}
+                    filters={{ page, page_size: pageSize, status, business_id: businessId, is_test: isTest }}
                     error={error}
                     openCreate={openCreate}
                 />

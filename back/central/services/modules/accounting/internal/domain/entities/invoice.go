@@ -9,6 +9,9 @@ const (
 	InvoiceStatusCancelled = "CANCELLED"
 
 	SourceInvoice = "INVOICE"
+
+	DianStatusNone      = "NONE"
+	DianStatusValidated = "VALIDATED"
 )
 
 type InvoiceItem struct {
@@ -38,6 +41,26 @@ type Invoice struct {
 	SentAt       *time.Time
 	PaidAt       *time.Time
 	Items        []InvoiceItem
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+
+	CustomerDocument string
+	CustomerPhone    string
+	CustomerAddress  string
+	DianStatus       string
+	Cufe             string
+	DianNumber       string
+	DianExternalID   string
+	DianQR           string
+	DianEmittedAt    *time.Time
+	IsTest           bool
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type DianEmitResult struct {
+	Number     string
+	CUFE       string
+	QRCode     string
+	ExternalID string
+	IssuedAt   string
 }

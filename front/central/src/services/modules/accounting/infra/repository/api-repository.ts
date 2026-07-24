@@ -7,6 +7,8 @@ import {
     CreateEntryDTO,
     CreateInvoiceDTO,
     CreateTaxDTO,
+    DianConfig,
+    EmitDianDTO,
     EntriesListResponse,
     Entry,
     GetEntriesParams,
@@ -16,6 +18,7 @@ import {
     SyncResult,
     Tax,
     UpdateConceptDTO,
+    UpdateDianConfigDTO,
     UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../../domain/types';
@@ -224,6 +227,27 @@ export class AccountingApiRepository implements IAccountingRepository {
     async cancelInvoice(id: number): Promise<Invoice> {
         const res = await this.fetch<Invoice>(`/accounting/invoices/${id}/cancel`, {
             method: 'POST',
+        });
+        return res.data;
+    }
+
+    async getDianConfig(): Promise<DianConfig> {
+        const res = await this.fetch<DianConfig>('/accounting/dian-config');
+        return res.data;
+    }
+
+    async updateDianConfig(data: UpdateDianConfigDTO): Promise<DianConfig> {
+        const res = await this.fetch<DianConfig>('/accounting/dian-config', {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async emitInvoiceDian(id: number, data: EmitDianDTO): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}/emit-dian`, {
+            method: 'POST',
+            body: JSON.stringify(data),
         });
         return res.data;
     }

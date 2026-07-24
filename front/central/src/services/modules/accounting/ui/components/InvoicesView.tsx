@@ -12,6 +12,7 @@ interface InvoicesFilters {
     page_size: number;
     status: InvoiceStatus | null;
     business_id: number | null;
+    is_test: 'true' | 'false' | null;
 }
 
 interface InvoicesViewProps {
@@ -31,6 +32,7 @@ function buildListUrl(filters: InvoicesFilters): string {
     params.set('page_size', String(filters.page_size));
     if (filters.status) params.set('status', filters.status);
     if (filters.business_id) params.set('business_id', String(filters.business_id));
+    if (filters.is_test) params.set('is_test', filters.is_test);
     return `/accounting/facturas?${params.toString()}`;
 }
 
@@ -53,7 +55,7 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
         }
     };
 
-    const hasActiveFilters = Boolean(filters.status || filters.business_id);
+    const hasActiveFilters = Boolean(filters.status || filters.business_id || filters.is_test);
     const totalPages = invoices.total_pages || 0;
 
     const columns = [
@@ -68,7 +70,14 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
 
     const rows = invoices.data.map((invoice) => ({
         number: (
-            <span className="font-medium text-purple-700 dark:text-purple-300 whitespace-nowrap">{invoice.number}</span>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className="font-medium text-purple-700 dark:text-purple-300">{invoice.number}</span>
+                {invoice.is_test && (
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                        TEST
+                    </span>
+                )}
+            </span>
         ),
         business: (
             <span className="text-gray-800 dark:text-gray-200">{invoice.business_name || `#${invoice.business_id}`}</span>
@@ -130,6 +139,18 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
                         </select>
                     </div>
                     <div>
+                        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                        <select
+                            value={filters.is_test ?? ''}
+                            onChange={(e) => navigate({ is_test: (e.target.value || null) as 'true' | 'false' | null, page: 1 })}
+                            className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                            <option value="">Todas</option>
+                            <option value="false">Reales</option>
+                            <option value="true">De prueba</option>
+                        </select>
+                    </div>
+                    <div>
                         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Negocio</label>
                         <SuperAdminBusinessSelector
                             value={filters.business_id}
@@ -140,7 +161,7 @@ export function InvoicesView({ invoices, concepts, taxes, filters, error, openCr
                     </div>
                     {hasActiveFilters && (
                         <button
-                            onClick={() => navigate({ status: null, business_id: null, page: 1 })}
+                            onClick={() => navigate({ status: null, business_id: null, is_test: null, page: 1 })}
                             disabled={isPending}
                             className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >

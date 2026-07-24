@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	integrationsCore "github.com/secamc93/probability/back/central/services/integrations/core"
+	factusinv "github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
 	"github.com/secamc93/probability/back/central/services/modules/accounting"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
@@ -55,7 +56,7 @@ type ModuleBundles struct {
 	redisClient redis.IRedis
 }
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore) *ModuleBundles {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock, integrationCore integrationsCore.IIntegrationCore, dianEmitter *factusinv.PlatformEmitter) *ModuleBundles {
 	announcementsBundle := announcements.New(router, database, logger, s3)
 	payments.New(router, database, logger, environment)
 	orderstatus.New(router, database, logger, environment)
@@ -98,7 +99,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
-	accounting.New(router, database, logger, environment)
+	accounting.New(router, database, logger, environment, integrationCore, dianEmitter)
 
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)

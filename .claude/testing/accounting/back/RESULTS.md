@@ -54,6 +54,25 @@ Script: e2e_invoices.py (24 checks). Resultado: **24 OK / 0 FAIL** (tras fix).
 
 Datos de prueba eliminados (facturas soft-deleted, sin movimientos residuales).
 
+## 2026-07-24 - Suite DIAN/Factus + modo prueba (CU-40 a CU-47)
+
+Script: e2e_dian.py (14 checks). Resultado: **14 OK / 0 FAIL**.
+
+- CU-40: GET /accounting/dian-config sin configurar -> configured=false. OK
+- CU-41: PUT /accounting/dian-config con credenciales dummy contra el sandbox real de
+  Factus -> 400 "credenciales invalidas" (fail-closed: valida contra la API antes de
+  guardar; la cadena accounting -> integracion global -> cliente Factus funciona). OK
+- CU-42: crear factura con is_test=true + customer_document/phone/address. OK
+- CU-43: emitir DIAN sin integracion configurada -> 400 claro. OK
+- CU-44: emitir sin documento del cliente -> 400 claro. OK
+- CU-45: factura de prueba pagada NO crea movimiento contable (ledger limpio). OK
+- CU-46: filtro ?is_test=true|false en listado. OK
+- CU-47: limpieza de datos de prueba. OK
+
+Pendiente de credenciales reales de Factus (sandbox o produccion) para probar la
+emision completa con CUFE. La integracion se guarda como integracion GLOBAL de
+plataforma (integrations.business_id IS NULL), patron ya soportado por el core.
+
 ## Notas
 
 - Login super admin de .env.ai fallo (password desactualizado en DB local). Se genero JWT

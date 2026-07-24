@@ -35,14 +35,20 @@ type IUseCase interface {
 	SendInvoice(ctx context.Context, dto dtos.SendInvoiceDTO) (*entities.Invoice, error)
 	MarkInvoicePaid(ctx context.Context, id uint) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, id uint) (*entities.Invoice, error)
+
+	GetDianConfig(ctx context.Context) (*dtos.DianConfigStatus, error)
+	SaveDianConfig(ctx context.Context, dto dtos.DianConfigDTO) (*dtos.DianConfigStatus, error)
+	EmitInvoiceDian(ctx context.Context, dto dtos.EmitInvoiceDianDTO) (*entities.Invoice, error)
 }
 
 type UseCase struct {
-	repo  ports.IRepository
-	email ports.IEmailSender
-	log   log.ILogger
+	repo            ports.IRepository
+	email           ports.IEmailSender
+	dianEmitter     ports.IDianEmitter
+	dianIntegration ports.IDianIntegration
+	log             log.ILogger
 }
 
-func New(repo ports.IRepository, emailSender ports.IEmailSender, logger log.ILogger) IUseCase {
-	return &UseCase{repo: repo, email: emailSender, log: logger.WithModule("accounting")}
+func New(repo ports.IRepository, emailSender ports.IEmailSender, dianEmitter ports.IDianEmitter, dianIntegration ports.IDianIntegration, logger log.ILogger) IUseCase {
+	return &UseCase{repo: repo, email: emailSender, dianEmitter: dianEmitter, dianIntegration: dianIntegration, log: logger.WithModule("accounting")}
 }

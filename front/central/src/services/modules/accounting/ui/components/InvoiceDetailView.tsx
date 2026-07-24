@@ -8,6 +8,7 @@ import { Concept, Invoice, Tax } from '../../domain/types';
 import {
     cancelAccountingInvoiceAction,
     deleteAccountingInvoiceAction,
+    emitAccountingInvoiceDianAction,
     payAccountingInvoiceAction,
     sendAccountingInvoiceAction,
 } from '../../infra/actions';
@@ -50,6 +51,11 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
     const [showPay, setShowPay] = useState(false);
     const [showCancel, setShowCancel] = useState(false);
     const [showDelete, setShowDelete] = useState(false);
+    const [showEmitDian, setShowEmitDian] = useState(false);
+    const [dianDocument, setDianDocument] = useState(invoice.customer_document || '');
+    const [dianPhone, setDianPhone] = useState(invoice.customer_phone || '');
+    const [dianAddress, setDianAddress] = useState(invoice.customer_address || '');
+    const [emittingDian, setEmittingDian] = useState(false);
     const [busy, setBusy] = useState(false);
 
     const isDraft = invoice.status === 'DRAFT';
@@ -67,6 +73,38 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
     const canPay = invoice.status === 'DRAFT' || invoice.status === 'SENT';
     const canCancel = invoice.status !== 'CANCELLED';
     const canDelete = invoice.status === 'DRAFT' || invoice.status === 'CANCELLED';
+    const isDianValidated = invoice.dian_status === 'VALIDATED';
+    const canEmitDian = !isDianValidated && invoice.status !== 'CANCELLED';
+
+    const copyCufe = async () => {
+        try {
+            await navigator.clipboard.writeText(invoice.cufe);
+            showToast('CUFE copiado al portapapeles', 'success');
+        } catch {
+            showToast('No se pudo copiar el CUFE', 'error');
+        }
+    };
+
+    const handleEmitDian = async () => {
+        if (!dianDocument.trim()) {
+            showToast('El documento del cliente es requerido para emitir ante la DIAN', 'error');
+            return;
+        }
+        setEmittingDian(true);
+        const result = await emitAccountingInvoiceDianAction(invoice.id, {
+            customer_document: dianDocument.trim(),
+            customer_phone: dianPhone.trim() || undefined,
+            customer_address: dianAddress.trim() || undefined,
+        });
+        setEmittingDian(false);
+        if (result.success) {
+            showToast('Factura electronica emitida y validada por la DIAN', 'success');
+            setShowEmitDian(false);
+            router.refresh();
+        } else {
+            showToast(result.error, 'error');
+        }
+    };
 
     const handleSend = async () => {
         setSending(true);
@@ -172,6 +210,23 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
                             Marcar pagada
                         </button>
                     )}
+                    {canEmitDian && (
+                        <button
+                            onClick={() => {
+                                setDianDocument(invoice.customer_document || '');
+                                setDianPhone(invoice.customer_phone || '');
+                                setDianAddress(invoice.customer_address || '');
+                                setShowEmitDian(true);
+                            }}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors disabled:opacity-50"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Emitir DIAN
+                        </button>
+                    )}
                     {canCancel && (
                         <button
                             onClick={() => setShowCancel(true)}
@@ -204,8 +259,15 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
                     </div>
                     <div className="sm:text-right">
                         <p className="text-lg font-semibold text-gray-900 dark:text-white">{invoice.number}</p>
-                        <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${invoiceStatusBadgeClass(invoice.status)}`}>
-                            {invoiceStatusLabel(invoice.status)}
+                        <span className="inline-flex items-center gap-1.5 mt-1">
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ${invoiceStatusBadgeClass(invoice.status)}`}>
+                                {invoiceStatusLabel(invoice.status)}
+                            </span>
+                            {invoice.is_test && (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                    TEST
+                                </span>
+                            )}
                         </span>
                     </div>
                 </div>
@@ -289,6 +351,51 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
                     </div>
                 </div>
 
+                {isDianValidated && (
+                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Factura electronica</p>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Validada DIAN
+                            </span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                            {invoice.dian_number && (
+                                <p className="text-gray-700 dark:text-gray-300">
+                                    <span className="text-gray-500 dark:text-gray-400">Numero oficial:</span>{' '}
+                                    <span className="font-medium">{invoice.dian_number}</span>
+                                </p>
+                            )}
+                            {invoice.cufe && (
+                                <div className="flex items-start gap-2">
+                                    <p className="text-gray-700 dark:text-gray-300 min-w-0">
+                                        <span className="text-gray-500 dark:text-gray-400">CUFE:</span>{' '}
+                                        <span className="font-mono text-xs break-all">{invoice.cufe}</span>
+                                    </p>
+                                    <button
+                                        onClick={copyCufe}
+                                        className="print:hidden shrink-0 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        title="Copiar CUFE"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            )}
+                            {invoice.dian_emitted_at && (
+                                <p className="text-gray-700 dark:text-gray-300">
+                                    <span className="text-gray-500 dark:text-gray-400">Emitida ante la DIAN:</span>{' '}
+                                    <span className="font-medium">{formatEntryDate(invoice.dian_emitted_at)}</span>
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {invoice.notes && (
                     <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                         <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Notas</p>
@@ -330,12 +437,69 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
                 </div>
             </Modal>
 
+            <Modal isOpen={showEmitDian} onClose={() => setShowEmitDian(false)} title="Emitir factura electronica DIAN" size="md">
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Se emitira la factura {invoice.number} ante la DIAN a traves de Factus. Verifica los datos del cliente antes de continuar.
+                    </p>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Documento (NIT/CC) *</label>
+                        <input
+                            type="text"
+                            value={dianDocument}
+                            onChange={(e) => setDianDocument(e.target.value)}
+                            placeholder="900123456"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                        <input
+                            type="text"
+                            value={dianPhone}
+                            onChange={(e) => setDianPhone(e.target.value)}
+                            placeholder="3001234567"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Direccion</label>
+                        <input
+                            type="text"
+                            value={dianAddress}
+                            onChange={(e) => setDianAddress(e.target.value)}
+                            placeholder="Calle 1 # 2-3"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            onClick={() => setShowEmitDian(false)}
+                            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleEmitDian}
+                            disabled={emittingDian}
+                            className="px-4 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors disabled:opacity-50"
+                        >
+                            {emittingDian ? 'Emitiendo...' : 'Emitir DIAN'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
             <ConfirmModal
                 isOpen={showPay}
                 onClose={() => setShowPay(false)}
                 onConfirm={() => runAction(() => payAccountingInvoiceAction(invoice.id), 'Factura marcada como pagada')}
                 title="Marcar factura como pagada"
-                message={`Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)} y se creara el movimiento contable correspondiente.`}
+                message={
+                    invoice.is_test
+                        ? `Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)}. Factura de prueba: no genera movimiento contable.`
+                        : `Se marcara la factura ${invoice.number} como pagada por ${formatCOP(invoice.total)} y se creara el movimiento contable correspondiente.`
+                }
                 confirmText="Marcar pagada"
                 type="info"
             />
@@ -346,9 +510,16 @@ export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }
                 onConfirm={() => runAction(() => cancelAccountingInvoiceAction(invoice.id), 'Factura cancelada')}
                 title="Cancelar factura"
                 message={
-                    isPaid
-                        ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertira el movimiento contable del pago. Esta accion no se puede deshacer.`
-                        : `Se cancelara la factura ${invoice.number}. Esta accion no se puede deshacer.`
+                    <span>
+                        {isPaid
+                            ? `La factura ${invoice.number} esta PAGADA. Al cancelarla se revertira el movimiento contable del pago. Esta accion no se puede deshacer.`
+                            : `Se cancelara la factura ${invoice.number}. Esta accion no se puede deshacer.`}
+                        {isDianValidated && (
+                            <span className="block mt-2 font-medium">
+                                Advertencia: la factura electronica ya emitida ante la DIAN no se anula automaticamente.
+                            </span>
+                        )}
+                    </span>
                 }
                 confirmText="Cancelar factura"
                 type="danger"

@@ -10,9 +10,11 @@ import {
     CreateEntryDTO,
     CreateInvoiceDTO,
     CreateTaxDTO,
+    EmitDianDTO,
     GetEntriesParams,
     GetInvoicesParams,
     UpdateConceptDTO,
+    UpdateDianConfigDTO,
     UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../../domain/types';
@@ -163,5 +165,22 @@ export const cancelAccountingInvoiceAction = async (id: number) =>
         revalidateInvoices(id);
         revalidatePath('/accounting');
         revalidatePath('/accounting/movimientos');
+        return result;
+    });
+
+export const getAccountingDianConfigAction = async () =>
+    run(async () => (await getUseCases()).getDianConfig());
+
+export const updateAccountingDianConfigAction = async (data: UpdateDianConfigDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).updateDianConfig(data);
+        revalidatePath('/accounting/configuracion');
+        return result;
+    });
+
+export const emitAccountingInvoiceDianAction = async (id: number, data: EmitDianDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).emitInvoiceDian(id, data);
+        revalidateInvoices(id);
         return result;
     });

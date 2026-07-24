@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
 	"github.com/secamc93/probability/back/central/shared/storage"
+	"gorm.io/datatypes"
 )
 
 type IIntegrationContract = domain.IIntegrationContract
@@ -84,6 +86,8 @@ type IIntegrationCore interface {
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 	GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error)
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
+	GetGlobalIntegrationIDByTypeCode(ctx context.Context, typeCode string) (uint, error)
+	EnsureGlobalIntegration(ctx context.Context, typeCode, name string, config map[string]interface{}, credentials map[string]interface{}) (uint, error)
 	SetEcommerceLimitChecker(checker domain.EcommerceLimitChecker)
 }
 
@@ -255,6 +259,66 @@ func (ic *integrationCore) GetCachedPlatformCredentials(ctx context.Context, int
 
 func (ic *integrationCore) GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error) {
 	return ic.repo.GetIntegrationTypeByCode(ctx, code)
+}
+
+func (ic *integrationCore) GetGlobalIntegrationIDByTypeCode(ctx context.Context, typeCode string) (uint, error) {
+	intType, err := ic.repo.GetIntegrationTypeByCode(ctx, typeCode)
+	if err != nil {
+		return 0, fmt.Errorf("integration type %s not found: %w", typeCode, err)
+	}
+	integration, err := ic.repo.GetActiveIntegrationByIntegrationTypeID(ctx, intType.ID, nil)
+	if err != nil {
+		return 0, fmt.Errorf("no active global integration for type %s: %w", typeCode, err)
+	}
+	if integration == nil || integration.ID == 0 {
+		return 0, fmt.Errorf("no active global integration for type %s", typeCode)
+	}
+	return integration.ID, nil
+}
+
+func (ic *integrationCore) EnsureGlobalIntegration(ctx context.Context, typeCode, name string, config map[string]interface{}, credentials map[string]interface{}) (uint, error) {
+	intType, err := ic.repo.GetIntegrationTypeByCode(ctx, typeCode)
+	if err != nil {
+		return 0, fmt.Errorf("integration type %s not found: %w", typeCode, err)
+	}
+
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return 0, fmt.Errorf("invalid config: %w", err)
+	}
+
+	existing, findErr := ic.repo.GetIntegrationByIntegrationTypeID(ctx, intType.ID, nil)
+	if findErr != nil || existing == nil || existing.ID == 0 {
+		created, err := ic.useCase.CreateIntegration(ctx, domain.CreateIntegrationDTO{
+			Name:              name,
+			Code:              typeCode + "_platform_admin",
+			IntegrationTypeID: intType.ID,
+			BusinessID:        nil,
+			IsActive:          true,
+			Config:            configJSON,
+			Credentials:       credentials,
+			Description:       "Integracion administrativa de la plataforma",
+		})
+		if err != nil {
+			return 0, err
+		}
+		return created.ID, nil
+	}
+
+	isActive := true
+	cfg := datatypes.JSON(configJSON)
+	dto := domain.UpdateIntegrationDTO{
+		Name:     &name,
+		IsActive: &isActive,
+		Config:   &cfg,
+	}
+	if len(credentials) > 0 {
+		dto.Credentials = &credentials
+	}
+	if _, err := ic.useCase.UpdateIntegration(ctx, existing.ID, dto); err != nil {
+		return 0, err
+	}
+	return existing.ID, nil
 }
 
 func (ic *integrationCore) GetIntegrationIDByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (uint, error) {

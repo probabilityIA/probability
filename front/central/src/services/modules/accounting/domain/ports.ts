@@ -5,6 +5,8 @@ import {
     CreateEntryDTO,
     CreateInvoiceDTO,
     CreateTaxDTO,
+    DianConfig,
+    EmitDianDTO,
     EntriesListResponse,
     Entry,
     GetEntriesParams,
@@ -14,6 +16,7 @@ import {
     SyncResult,
     Tax,
     UpdateConceptDTO,
+    UpdateDianConfigDTO,
     UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from './types';
@@ -39,4 +42,7 @@ export interface IAccountingRepository {
     sendInvoice(id: number, emailTo?: string): Promise<Invoice>;
     payInvoice(id: number): Promise<Invoice>;
     cancelInvoice(id: number): Promise<Invoice>;
+    getDianConfig(): Promise<DianConfig>;
+    updateDianConfig(data: UpdateDianConfigDTO): Promise<DianConfig>;
+    emitInvoiceDian(id: number, data: EmitDianDTO): Promise<Invoice>;
 }

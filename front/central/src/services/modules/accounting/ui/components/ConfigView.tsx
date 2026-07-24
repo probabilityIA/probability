@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Concept, Tax } from '../../domain/types';
+import { Concept, DianConfig, Tax } from '../../domain/types';
 import {
     setAccountingConceptTaxAction,
     updateAccountingConceptAction,
@@ -12,10 +12,12 @@ import { kindLabel } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConceptFormModal } from './ConceptFormModal';
 import { TaxFormModal } from './TaxFormModal';
+import { DianConfigModal } from './DianConfigModal';
 
 interface ConfigViewProps {
     concepts: Concept[];
     taxes: Tax[];
+    dianConfig: DianConfig | null;
     error: string | null;
 }
 
@@ -36,13 +38,14 @@ function Switch({ checked, disabled, onChange, label }: { checked: boolean; disa
     );
 }
 
-export function ConfigView({ concepts, taxes, error }: ConfigViewProps) {
+export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [conceptModalOpen, setConceptModalOpen] = useState(false);
     const [conceptToEdit, setConceptToEdit] = useState<Concept | null>(null);
     const [taxModalOpen, setTaxModalOpen] = useState(false);
     const [taxToEdit, setTaxToEdit] = useState<Tax | null>(null);
+    const [dianModalOpen, setDianModalOpen] = useState(false);
     const [busyKey, setBusyKey] = useState<string | null>(null);
 
     const refresh = () => router.refresh();
@@ -291,6 +294,42 @@ export function ConfigView({ concepts, taxes, error }: ConfigViewProps) {
                 </div>
             </section>
 
+            <section className="space-y-3">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Facturacion electronica (DIAN)</h2>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-gray-900 dark:text-white">Factus</span>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${dianConfig?.configured
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                }`}>
+                                    {dianConfig?.configured ? 'Configurada' : 'Sin configurar'}
+                                </span>
+                            </div>
+                            {dianConfig?.configured ? (
+                                <div className="mt-2 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    <p>API: {dianConfig.api_url || 'Produccion'}</p>
+                                    <p>Usuario: {dianConfig.username || '-'}</p>
+                                    <p>Rango de numeracion: {dianConfig.numbering_range_id || 'Automatico'}</p>
+                                </div>
+                            ) : (
+                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Conecta las credenciales de Factus para emitir facturas electronicas ante la DIAN
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setDianModalOpen(true)}
+                            className="shrink-0 inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                        >
+                            {dianConfig?.configured ? 'Editar' : 'Configurar'}
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <ConceptFormModal
                 isOpen={conceptModalOpen}
                 onClose={() => setConceptModalOpen(false)}
@@ -309,6 +348,16 @@ export function ConfigView({ concepts, taxes, error }: ConfigViewProps) {
                     refresh();
                 }}
                 tax={taxToEdit}
+            />
+
+            <DianConfigModal
+                isOpen={dianModalOpen}
+                onClose={() => setDianModalOpen(false)}
+                onSaved={() => {
+                    setDianModalOpen(false);
+                    refresh();
+                }}
+                config={dianConfig}
             />
         </div>
     );

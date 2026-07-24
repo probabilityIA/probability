@@ -26,7 +26,7 @@ func New(
 	logger log.ILogger,
 	rabbitMQ rabbitmq.IQueue,
 	integrationCore core.IIntegrationCore,
-) {
+) *factus.PlatformEmitter {
 	// Softpymes (type_id=5)
 	softpymesBundle := softpymes.New(config, logger, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
@@ -54,4 +54,6 @@ func New(
 	// Router: consume invoicing.requests y enruta al proveedor correcto.
 	// Se inicializa al final para que las colas de proveedores ya estén declaradas.
 	router.New(logger, rabbitMQ)
+
+	return factus.NewPlatformEmitter(factusBundle)
 }

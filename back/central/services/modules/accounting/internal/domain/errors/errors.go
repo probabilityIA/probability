@@ -27,4 +27,9 @@ var (
 	ErrInvoiceConceptKind = errors.New("el concepto de la factura debe ser de tipo INCOME")
 	ErrBusinessNotFound   = errors.New("negocio no encontrado")
 	ErrInvoiceNotPayable  = errors.New("solo se puede marcar pagada una factura enviada o en borrador")
+
+	ErrDianNotConfigured    = errors.New("facturacion electronica no configurada: guarda las credenciales de Factus primero")
+	ErrDianAlreadyEmitted   = errors.New("la factura ya fue emitida electronicamente")
+	ErrDianDocumentRequired = errors.New("el documento de identificacion del cliente (NIT/CC) es requerido para emitir")
+	ErrDianCredentials      = errors.New("credenciales de Factus incompletas: client_id, client_secret, username y password son requeridos")
 )

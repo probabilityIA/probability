@@ -34,6 +34,16 @@ type InvoiceResponse struct {
 	PaidAt       *time.Time            `json:"paid_at"`
 	Items        []InvoiceItemResponse `json:"items"`
 	CreatedAt    time.Time             `json:"created_at"`
+
+	CustomerDocument string     `json:"customer_document"`
+	CustomerPhone    string     `json:"customer_phone"`
+	CustomerAddress  string     `json:"customer_address"`
+	DianStatus       string     `json:"dian_status"`
+	Cufe             string     `json:"cufe"`
+	DianNumber       string     `json:"dian_number"`
+	DianQR           string     `json:"dian_qr"`
+	DianEmittedAt    *time.Time `json:"dian_emitted_at"`
+	IsTest           bool       `json:"is_test"`
 }
 
 func FromInvoice(e *entities.Invoice) InvoiceResponse {
@@ -70,6 +80,16 @@ func FromInvoice(e *entities.Invoice) InvoiceResponse {
 		PaidAt:       e.PaidAt,
 		Items:        items,
 		CreatedAt:    e.CreatedAt,
+
+		CustomerDocument: e.CustomerDocument,
+		CustomerPhone:    e.CustomerPhone,
+		CustomerAddress:  e.CustomerAddress,
+		DianStatus:       e.DianStatus,
+		Cufe:             e.Cufe,
+		DianNumber:       e.DianNumber,
+		DianQR:           e.DianQR,
+		DianEmittedAt:    e.DianEmittedAt,
+		IsTest:           e.IsTest,
 	}
 }
 
