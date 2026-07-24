@@ -1,23 +1,42 @@
 import Link from 'next/link';
 import { AccountingGate, InvoiceDetailView } from '@/services/modules/accounting/ui';
-import { getAccountingInvoiceAction } from '@/services/modules/accounting/infra/actions';
+import {
+    getAccountingConceptsAction,
+    getAccountingInvoiceAction,
+    getAccountingTaxesAction,
+} from '@/services/modules/accounting/infra/actions';
 
 interface FacturaDetallePageProps {
     params: Promise<{ id: string }>;
+    searchParams: Promise<{ editar?: string }>;
 }
 
-export default async function FacturaDetallePage({ params }: FacturaDetallePageProps) {
-    const { id } = await params;
+export default async function FacturaDetallePage({ params, searchParams }: FacturaDetallePageProps) {
+    const [{ id }, query] = await Promise.all([params, searchParams]);
     const invoiceId = Number(id) || 0;
-    const result = invoiceId > 0
-        ? await getAccountingInvoiceAction(invoiceId)
-        : { success: false as const, error: 'Factura no encontrada' };
+    const openEdit = query.editar === '1';
+
+    const [result, conceptsResult, taxesResult] = await Promise.all([
+        invoiceId > 0
+            ? getAccountingInvoiceAction(invoiceId)
+            : Promise.resolve({ success: false as const, error: 'Factura no encontrada' }),
+        getAccountingConceptsAction(),
+        getAccountingTaxesAction(),
+    ]);
+
+    const concepts = conceptsResult.success ? conceptsResult.data : [];
+    const taxes = taxesResult.success ? taxesResult.data : [];
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <AccountingGate>
                 {result.success ? (
-                    <InvoiceDetailView invoice={result.data} />
+                    <InvoiceDetailView
+                        invoice={result.data}
+                        concepts={concepts}
+                        taxes={taxes}
+                        openEdit={openEdit}
+                    />
                 ) : (
                     <div className="max-w-4xl space-y-4">
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-lg px-4 py-3">

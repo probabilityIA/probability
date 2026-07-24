@@ -1,11 +1,11 @@
 'use client';
 
-import { useTransition } from 'react';
-import Link from 'next/link';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { SuperAdminBusinessSelector } from '@/shared/ui';
-import { InvoicesListResponse, InvoiceStatus } from '../../domain/types';
+import { SuperAdminBusinessSelector, Table } from '@/shared/ui';
+import { Concept, InvoicesListResponse, InvoiceStatus, Tax } from '../../domain/types';
 import { formatCOP, formatEntryDate, invoiceStatusBadgeClass, invoiceStatusLabel } from '../format';
+import { InvoiceFormModal } from './InvoiceFormModal';
 
 interface InvoicesFilters {
     page: number;
@@ -16,29 +16,83 @@ interface InvoicesFilters {
 
 interface InvoicesViewProps {
     invoices: InvoicesListResponse;
+    concepts: Concept[];
+    taxes: Tax[];
     filters: InvoicesFilters;
     error: string | null;
+    openCreate?: boolean;
 }
 
 const STATUSES: InvoiceStatus[] = ['DRAFT', 'SENT', 'PAID', 'CANCELLED'];
 
-export function InvoicesView({ invoices, filters, error }: InvoicesViewProps) {
+function buildListUrl(filters: InvoicesFilters): string {
+    const params = new URLSearchParams();
+    params.set('page', String(filters.page));
+    params.set('page_size', String(filters.page_size));
+    if (filters.status) params.set('status', filters.status);
+    if (filters.business_id) params.set('business_id', String(filters.business_id));
+    return `/accounting/facturas?${params.toString()}`;
+}
+
+export function InvoicesView({ invoices, concepts, taxes, filters, error, openCreate = false }: InvoicesViewProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
+    const [showForm, setShowForm] = useState(openCreate);
+    const [fromQuery] = useState(openCreate);
 
     const navigate = (next: Partial<InvoicesFilters>) => {
-        const merged = { ...filters, ...next };
-        const params = new URLSearchParams();
-        params.set('page', String(merged.page));
-        params.set('page_size', String(merged.page_size));
-        if (merged.status) params.set('status', merged.status);
-        if (merged.business_id) params.set('business_id', String(merged.business_id));
         startTransition(() => {
-            router.replace(`/accounting/facturas?${params.toString()}`);
+            router.replace(buildListUrl({ ...filters, ...next }));
         });
     };
 
+    const closeForm = () => {
+        setShowForm(false);
+        if (fromQuery) {
+            router.replace(buildListUrl(filters));
+        }
+    };
+
+    const hasActiveFilters = Boolean(filters.status || filters.business_id);
     const totalPages = invoices.total_pages || 0;
+
+    const columns = [
+        { key: 'number', label: 'Numero' },
+        { key: 'business', label: 'Negocio' },
+        { key: 'concept', label: 'Concepto' },
+        { key: 'issue_date', label: 'Emision' },
+        { key: 'due_date', label: 'Vencimiento' },
+        { key: 'status', label: 'Estado' },
+        { key: 'total', label: 'Total', align: 'right' as const },
+    ];
+
+    const rows = invoices.data.map((invoice) => ({
+        number: (
+            <span className="font-medium text-purple-700 dark:text-purple-300 whitespace-nowrap">{invoice.number}</span>
+        ),
+        business: (
+            <span className="text-gray-800 dark:text-gray-200">{invoice.business_name || `#${invoice.business_id}`}</span>
+        ),
+        concept: (
+            <span className="text-gray-800 dark:text-gray-200">{invoice.concept_name}</span>
+        ),
+        issue_date: (
+            <span className="text-gray-800 dark:text-gray-200 whitespace-nowrap">{formatEntryDate(invoice.issue_date)}</span>
+        ),
+        due_date: (
+            <span className="text-gray-800 dark:text-gray-200 whitespace-nowrap">
+                {invoice.due_date ? formatEntryDate(invoice.due_date) : '-'}
+            </span>
+        ),
+        status: (
+            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${invoiceStatusBadgeClass(invoice.status)}`}>
+                {invoiceStatusLabel(invoice.status)}
+            </span>
+        ),
+        total: (
+            <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatCOP(invoice.total)}</span>
+        ),
+    }));
 
     return (
         <div className="space-y-4">
@@ -49,15 +103,15 @@ export function InvoicesView({ invoices, filters, error }: InvoicesViewProps) {
                         {invoices.total} facturas emitidas
                     </p>
                 </div>
-                <Link
-                    href="/accounting/facturas/nueva"
+                <button
+                    onClick={() => setShowForm(true)}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     Nueva factura
-                </Link>
+                </button>
             </div>
 
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4">
@@ -84,6 +138,15 @@ export function InvoicesView({ invoices, filters, error }: InvoicesViewProps) {
                             placeholder="Todos los negocios"
                         />
                     </div>
+                    {hasActiveFilters && (
+                        <button
+                            onClick={() => navigate({ status: null, business_id: null, page: 1 })}
+                            disabled={isPending}
+                            className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                        >
+                            Limpiar filtros
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -93,87 +156,60 @@ export function InvoicesView({ invoices, filters, error }: InvoicesViewProps) {
                 </div>
             )}
 
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
-                                <th className="px-4 py-2 font-medium">Numero</th>
-                                <th className="px-4 py-2 font-medium">Negocio</th>
-                                <th className="px-4 py-2 font-medium">Concepto</th>
-                                <th className="px-4 py-2 font-medium">Emision</th>
-                                <th className="px-4 py-2 font-medium">Vencimiento</th>
-                                <th className="px-4 py-2 font-medium">Estado</th>
-                                <th className="px-4 py-2 font-medium text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {invoices.data.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                        No hay facturas con los filtros seleccionados
-                                    </td>
-                                </tr>
-                            )}
-                            {invoices.data.map((invoice) => (
-                                <tr
-                                    key={invoice.id}
-                                    onClick={() => router.push(`/accounting/facturas/${invoice.id}`)}
-                                    className="text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/40 cursor-pointer transition-colors"
-                                >
-                                    <td className="px-4 py-2 whitespace-nowrap">
-                                        <span className="font-medium text-purple-700 dark:text-purple-300">{invoice.number}</span>
-                                    </td>
-                                    <td className="px-4 py-2">{invoice.business_name || `#${invoice.business_id}`}</td>
-                                    <td className="px-4 py-2">{invoice.concept_name}</td>
-                                    <td className="px-4 py-2 whitespace-nowrap">{formatEntryDate(invoice.issue_date)}</td>
-                                    <td className="px-4 py-2 whitespace-nowrap">{invoice.due_date ? formatEntryDate(invoice.due_date) : '-'}</td>
-                                    <td className="px-4 py-2">
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${invoiceStatusBadgeClass(invoice.status)}`}>
-                                            {invoiceStatusLabel(invoice.status)}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-2 text-right font-medium whitespace-nowrap">{formatCOP(invoice.total)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {invoices.data.length === 0 && !isPending ? (
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm">
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                        <svg className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                            {hasActiveFilters
+                                ? 'No hay facturas con los filtros seleccionados'
+                                : 'Aun no has emitido facturas'}
+                        </p>
+                        <button
+                            onClick={() => setShowForm(true)}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nueva factura
+                        </button>
+                    </div>
                 </div>
+            ) : (
+                <Table
+                    columns={columns}
+                    data={rows}
+                    keyExtractor={(_, index) => invoices.data[index]?.id ?? index}
+                    loading={isPending}
+                    emptyMessage="No hay facturas con los filtros seleccionados"
+                    onRowClick={(_, index) => {
+                        const invoice = invoices.data[index];
+                        if (invoice) router.push(`/accounting/facturas/${invoice.id}`);
+                    }}
+                    pagination={{
+                        currentPage: filters.page,
+                        totalPages: Math.max(totalPages, 1),
+                        totalItems: invoices.total,
+                        itemsPerPage: filters.page_size,
+                        onPageChange: (page) => navigate({ page }),
+                        onItemsPerPageChange: (pageSize) => navigate({ page_size: pageSize, page: 1 }),
+                        itemsPerPageOptions: [10, 25, 50, 100],
+                    }}
+                />
+            )}
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                        <span>Por pagina:</span>
-                        <select
-                            value={filters.page_size}
-                            onChange={(e) => navigate({ page_size: Number(e.target.value), page: 1 })}
-                            className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                        >
-                            {[10, 25, 50, 100].map((size) => (
-                                <option key={size} value={size}>{size}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => navigate({ page: filters.page - 1 })}
-                            disabled={filters.page <= 1 || isPending}
-                            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-colors"
-                        >
-                            Anterior
-                        </button>
-                        <span className="text-sm text-gray-600 dark:text-gray-300">
-                            Pagina {filters.page} de {Math.max(totalPages, 1)}
-                        </span>
-                        <button
-                            onClick={() => navigate({ page: filters.page + 1 })}
-                            disabled={filters.page >= totalPages || isPending}
-                            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 transition-colors"
-                        >
-                            Siguiente
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {showForm && (
+                <InvoiceFormModal
+                    isOpen
+                    onClose={closeForm}
+                    concepts={concepts}
+                    taxes={taxes}
+                    onSaved={(invoice) => router.push(`/accounting/facturas/${invoice.id}`)}
+                />
+            )}
         </div>
     );
 }

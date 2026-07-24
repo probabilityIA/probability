@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ConfirmModal, Modal } from '@/shared/ui';
-import { Invoice } from '../../domain/types';
+import { Concept, Invoice, Tax } from '../../domain/types';
 import {
     cancelAccountingInvoiceAction,
     deleteAccountingInvoiceAction,
@@ -13,9 +13,13 @@ import {
 } from '../../infra/actions';
 import { formatCOP, formatEntryDate, invoiceStatusBadgeClass, invoiceStatusLabel } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
+import { InvoiceFormModal } from './InvoiceFormModal';
 
 interface InvoiceDetailViewProps {
     invoice: Invoice;
+    concepts: Concept[];
+    taxes: Tax[];
+    openEdit?: boolean;
 }
 
 const printStyles = `
@@ -37,7 +41,7 @@ const printStyles = `
 }
 `;
 
-export function InvoiceDetailView({ invoice }: InvoiceDetailViewProps) {
+export function InvoiceDetailView({ invoice, concepts, taxes, openEdit = false }: InvoiceDetailViewProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [showSend, setShowSend] = useState(false);
@@ -49,6 +53,15 @@ export function InvoiceDetailView({ invoice }: InvoiceDetailViewProps) {
     const [busy, setBusy] = useState(false);
 
     const isDraft = invoice.status === 'DRAFT';
+    const [showEdit, setShowEdit] = useState(openEdit && isDraft);
+    const [editFromQuery] = useState(openEdit);
+
+    const closeEdit = () => {
+        setShowEdit(false);
+        if (editFromQuery) {
+            router.replace(`/accounting/facturas/${invoice.id}`);
+        }
+    };
     const isPaid = invoice.status === 'PAID';
     const canSend = invoice.status === 'DRAFT' || invoice.status === 'SENT';
     const canPay = invoice.status === 'DRAFT' || invoice.status === 'SENT';
@@ -136,15 +149,16 @@ export function InvoiceDetailView({ invoice }: InvoiceDetailViewProps) {
                         </button>
                     )}
                     {isDraft && (
-                        <Link
-                            href={`/accounting/facturas/${invoice.id}/editar`}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        <button
+                            onClick={() => setShowEdit(true)}
+                            disabled={busy}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Editar
-                        </Link>
+                        </button>
                     )}
                     {canPay && (
                         <button
@@ -349,6 +363,20 @@ export function InvoiceDetailView({ invoice }: InvoiceDetailViewProps) {
                 confirmText="Eliminar"
                 type="danger"
             />
+
+            {showEdit && (
+                <InvoiceFormModal
+                    isOpen
+                    onClose={closeEdit}
+                    concepts={concepts}
+                    taxes={taxes}
+                    invoice={invoice}
+                    onSaved={() => {
+                        closeEdit();
+                        router.refresh();
+                    }}
+                />
+            )}
         </div>
     );
 }

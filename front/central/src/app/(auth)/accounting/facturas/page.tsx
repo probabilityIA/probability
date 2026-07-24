@@ -1,5 +1,9 @@
 import { AccountingGate, InvoicesView } from '@/services/modules/accounting/ui';
-import { getAccountingInvoicesAction } from '@/services/modules/accounting/infra/actions';
+import {
+    getAccountingConceptsAction,
+    getAccountingInvoicesAction,
+    getAccountingTaxesAction,
+} from '@/services/modules/accounting/infra/actions';
 import { InvoiceStatus } from '@/services/modules/accounting/domain/types';
 
 const VALID_STATUSES: InvoiceStatus[] = ['DRAFT', 'SENT', 'PAID', 'CANCELLED'];
@@ -10,6 +14,7 @@ interface FacturasPageProps {
         page_size?: string;
         status?: string;
         business_id?: string;
+        nueva?: string;
     }>;
 }
 
@@ -21,26 +26,42 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
         ? (params.status as InvoiceStatus)
         : null;
     const businessId = Number(params.business_id) || null;
+    const openCreate = params.nueva === '1';
 
-    const invoicesResult = await getAccountingInvoicesAction({
-        page,
-        page_size: pageSize,
-        status: status || undefined,
-        business_id: businessId || undefined,
-    });
+    const [invoicesResult, conceptsResult, taxesResult] = await Promise.all([
+        getAccountingInvoicesAction({
+            page,
+            page_size: pageSize,
+            status: status || undefined,
+            business_id: businessId || undefined,
+        }),
+        getAccountingConceptsAction(),
+        getAccountingTaxesAction(),
+    ]);
 
     const invoices = invoicesResult.success
         ? invoicesResult.data
         : { data: [], total: 0, page, page_size: pageSize, total_pages: 0 };
-    const error = invoicesResult.success ? null : invoicesResult.error;
+    const concepts = conceptsResult.success ? conceptsResult.data : [];
+    const taxes = taxesResult.success ? taxesResult.data : [];
+    const error = !invoicesResult.success
+        ? invoicesResult.error
+        : !conceptsResult.success
+            ? conceptsResult.error
+            : !taxesResult.success
+                ? taxesResult.error
+                : null;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <AccountingGate>
                 <InvoicesView
                     invoices={invoices}
+                    concepts={concepts}
+                    taxes={taxes}
                     filters={{ page, page_size: pageSize, status, business_id: businessId }}
                     error={error}
+                    openCreate={openCreate}
                 />
             </AccountingGate>
         </div>

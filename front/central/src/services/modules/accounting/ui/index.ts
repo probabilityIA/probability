@@ -6,5 +6,5 @@ export { ConfigView } from './components/ConfigView';
 export { ConceptFormModal } from './components/ConceptFormModal';
 export { TaxFormModal } from './components/TaxFormModal';
 export { InvoicesView } from './components/InvoicesView';
-export { InvoiceForm } from './components/InvoiceForm';
+export { InvoiceFormModal } from './components/InvoiceFormModal';
 export { InvoiceDetailView } from './components/InvoiceDetailView';
