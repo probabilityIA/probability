@@ -5,13 +5,18 @@ import {
     Concept,
     CreateConceptDTO,
     CreateEntryDTO,
+    CreateInvoiceDTO,
     CreateTaxDTO,
     EntriesListResponse,
     Entry,
     GetEntriesParams,
+    GetInvoicesParams,
+    Invoice,
+    InvoicesListResponse,
     SyncResult,
     Tax,
     UpdateConceptDTO,
+    UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../../domain/types';
 
@@ -149,6 +154,75 @@ export class AccountingApiRepository implements IAccountingRepository {
 
     async syncNow(): Promise<SyncResult> {
         const res = await this.fetch<SyncResult>('/accounting/sync', {
+            method: 'POST',
+        });
+        return res.data;
+    }
+
+    async getInvoices(params?: GetInvoicesParams): Promise<InvoicesListResponse> {
+        const searchParams = new URLSearchParams();
+        if (params) {
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    searchParams.append(key, String(value));
+                }
+            });
+        }
+        const query = searchParams.toString();
+        const res = await this.fetch<Invoice[]>(`/accounting/invoices${query ? `?${query}` : ''}`);
+        return {
+            data: res.data || [],
+            total: res.total ?? 0,
+            page: res.page ?? 1,
+            page_size: res.page_size ?? 10,
+            total_pages: res.total_pages ?? 0,
+        };
+    }
+
+    async getInvoice(id: number): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}`);
+        return res.data;
+    }
+
+    async createInvoice(data: CreateInvoiceDTO): Promise<Invoice> {
+        const res = await this.fetch<Invoice>('/accounting/invoices', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async updateInvoice(id: number, data: UpdateInvoiceDTO): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async deleteInvoice(id: number): Promise<void> {
+        await this.fetch<unknown>(`/accounting/invoices/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async sendInvoice(id: number, emailTo?: string): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}/send`, {
+            method: 'POST',
+            body: JSON.stringify({ email_to: emailTo || '' }),
+        });
+        return res.data;
+    }
+
+    async payInvoice(id: number): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}/pay`, {
+            method: 'POST',
+        });
+        return res.data;
+    }
+
+    async cancelInvoice(id: number): Promise<Invoice> {
+        const res = await this.fetch<Invoice>(`/accounting/invoices/${id}/cancel`, {
             method: 'POST',
         });
         return res.data;

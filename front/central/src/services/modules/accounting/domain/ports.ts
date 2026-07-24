@@ -3,13 +3,18 @@ import {
     Concept,
     CreateConceptDTO,
     CreateEntryDTO,
+    CreateInvoiceDTO,
     CreateTaxDTO,
     EntriesListResponse,
     Entry,
     GetEntriesParams,
+    GetInvoicesParams,
+    Invoice,
+    InvoicesListResponse,
     SyncResult,
     Tax,
     UpdateConceptDTO,
+    UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from './types';
 
@@ -26,4 +31,12 @@ export interface IAccountingRepository {
     deleteEntry(id: number): Promise<void>;
     getReport(from: string, to: string): Promise<AccountingReport>;
     syncNow(): Promise<SyncResult>;
+    getInvoices(params?: GetInvoicesParams): Promise<InvoicesListResponse>;
+    getInvoice(id: number): Promise<Invoice>;
+    createInvoice(data: CreateInvoiceDTO): Promise<Invoice>;
+    updateInvoice(id: number, data: UpdateInvoiceDTO): Promise<Invoice>;
+    deleteInvoice(id: number): Promise<void>;
+    sendInvoice(id: number, emailTo?: string): Promise<Invoice>;
+    payInvoice(id: number): Promise<Invoice>;
+    cancelInvoice(id: number): Promise<Invoice>;
 }

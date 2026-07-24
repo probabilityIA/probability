@@ -64,3 +64,40 @@ type AccountingEntry struct {
 }
 
 func (AccountingEntry) TableName() string { return "accounting_entries" }
+
+type AccountingInvoice struct {
+	gorm.Model
+	Number     string         `gorm:"size:30;uniqueIndex"`
+	BusinessID uint           `gorm:"not null;index"`
+	ConceptID  uint           `gorm:"not null;index"`
+	IssueDate  time.Time      `gorm:"type:date;not null"`
+	DueDate    *time.Time     `gorm:"type:date"`
+	Status     string         `gorm:"size:15;not null;default:'DRAFT';index"`
+	Notes      string         `gorm:"size:1000"`
+	Subtotal   float64        `gorm:"type:decimal(15,2);not null;default:0"`
+	TaxTotal   float64        `gorm:"type:decimal(15,2);not null;default:0"`
+	Total      float64        `gorm:"type:decimal(15,2);not null;default:0"`
+	TaxDetail  datatypes.JSON `gorm:"type:jsonb"`
+	EmailTo    string         `gorm:"size:255"`
+	SentAt     *time.Time
+	PaidAt     *time.Time
+
+	Business Business                `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Concept  AccountingConcept       `gorm:"foreignKey:ConceptID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Items    []AccountingInvoiceItem `gorm:"foreignKey:InvoiceID"`
+}
+
+func (AccountingInvoice) TableName() string { return "accounting_invoices" }
+
+type AccountingInvoiceItem struct {
+	gorm.Model
+	InvoiceID   uint    `gorm:"not null;index"`
+	Description string  `gorm:"size:300;not null"`
+	Quantity    float64 `gorm:"type:decimal(12,2);not null;default:1"`
+	UnitPrice   float64 `gorm:"type:decimal(15,2);not null"`
+	Amount      float64 `gorm:"type:decimal(15,2);not null"`
+
+	Invoice AccountingInvoice `gorm:"foreignKey:InvoiceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+func (AccountingInvoiceItem) TableName() string { return "accounting_invoice_items" }

@@ -23,6 +23,7 @@ export const AccountingSubNavbar = memo(function AccountingSubNavbar() {
     const menuItems = [
         { href: '/accounting', label: 'Reporte', icon: '\u{1F4C8}' },
         { href: '/accounting/movimientos', label: 'Movimientos', icon: '\u{1F4C4}' },
+        { href: '/accounting/facturas', label: 'Facturas', icon: '\u{1F9FE}' },
         { href: '/accounting/configuracion', label: 'Configuraci\u00f3n', icon: '\u2699\ufe0f' },
     ];
 

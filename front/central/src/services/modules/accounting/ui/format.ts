@@ -29,3 +29,23 @@ export function kindLabel(kind: string): string {
     if (kind === 'EXPENSE') return 'Gasto';
     return kind;
 }
+
+export function invoiceStatusLabel(status: string): string {
+    if (status === 'DRAFT') return 'Borrador';
+    if (status === 'SENT') return 'Enviada';
+    if (status === 'PAID') return 'Pagada';
+    if (status === 'CANCELLED') return 'Cancelada';
+    return status;
+}
+
+export function invoiceStatusBadgeClass(status: string): string {
+    if (status === 'SENT') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
+    if (status === 'PAID') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+    if (status === 'CANCELLED') return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+    return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+}
+
+export function todayISO(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}

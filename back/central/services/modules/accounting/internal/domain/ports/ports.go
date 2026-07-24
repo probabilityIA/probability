@@ -2,10 +2,15 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/accounting/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/accounting/internal/domain/entities"
 )
+
+type IEmailSender interface {
+	SendHTML(ctx context.Context, to, subject, html string) error
+}
 
 type IRepository interface {
 	ListConcepts(ctx context.Context) ([]entities.Concept, error)
@@ -30,4 +35,15 @@ type IRepository interface {
 	Report(ctx context.Context, params dtos.ReportParams) ([]dtos.ReportConceptRow, []dtos.ReportTaxRow, error)
 
 	FindSyncCandidates(ctx context.Context, sourceType string, limit int) ([]dtos.SyncCandidate, error)
+
+	CreateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error)
+	UpdateInvoice(ctx context.Context, inv *entities.Invoice) (*entities.Invoice, error)
+	GetInvoiceByID(ctx context.Context, id uint) (*entities.Invoice, error)
+	ListInvoices(ctx context.Context, params dtos.ListInvoicesParams) ([]entities.Invoice, int64, error)
+	DeleteInvoice(ctx context.Context, id uint) error
+	SetInvoiceStatus(ctx context.Context, id uint, status string, sentAt, paidAt *time.Time, emailTo string) error
+	DeleteEntryBySource(ctx context.Context, sourceType, sourceID string) error
+	GetTaxesByIDs(ctx context.Context, ids []uint) ([]entities.Tax, error)
+	GetBusinessName(ctx context.Context, id uint) (string, error)
+	GetBusinessDefaultEmail(ctx context.Context, id uint) (string, error)
 }

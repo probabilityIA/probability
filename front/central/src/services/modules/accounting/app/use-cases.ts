@@ -2,9 +2,12 @@ import { IAccountingRepository } from '../domain/ports';
 import {
     CreateConceptDTO,
     CreateEntryDTO,
+    CreateInvoiceDTO,
     CreateTaxDTO,
     GetEntriesParams,
+    GetInvoicesParams,
     UpdateConceptDTO,
+    UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../domain/types';
 
@@ -57,5 +60,37 @@ export class AccountingUseCases {
 
     async syncNow() {
         return this.repository.syncNow();
+    }
+
+    async getInvoices(params?: GetInvoicesParams) {
+        return this.repository.getInvoices(params);
+    }
+
+    async getInvoice(id: number) {
+        return this.repository.getInvoice(id);
+    }
+
+    async createInvoice(data: CreateInvoiceDTO) {
+        return this.repository.createInvoice(data);
+    }
+
+    async updateInvoice(id: number, data: UpdateInvoiceDTO) {
+        return this.repository.updateInvoice(id, data);
+    }
+
+    async deleteInvoice(id: number) {
+        return this.repository.deleteInvoice(id);
+    }
+
+    async sendInvoice(id: number, emailTo?: string) {
+        return this.repository.sendInvoice(id, emailTo);
+    }
+
+    async payInvoice(id: number) {
+        return this.repository.payInvoice(id);
+    }
+
+    async cancelInvoice(id: number) {
+        return this.repository.cancelInvoice(id);
     }
 }

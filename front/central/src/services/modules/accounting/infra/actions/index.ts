@@ -8,9 +8,12 @@ import {
     ActionResult,
     CreateConceptDTO,
     CreateEntryDTO,
+    CreateInvoiceDTO,
     CreateTaxDTO,
     GetEntriesParams,
+    GetInvoicesParams,
     UpdateConceptDTO,
+    UpdateInvoiceDTO,
     UpdateTaxDTO,
 } from '../../domain/types';
 
@@ -99,6 +102,65 @@ export const getAccountingReportAction = async (from: string, to: string) =>
 export const syncAccountingAction = async () =>
     run(async () => {
         const result = await (await getUseCases()).syncNow();
+        revalidatePath('/accounting');
+        revalidatePath('/accounting/movimientos');
+        return result;
+    });
+
+function revalidateInvoices(id?: number) {
+    revalidatePath('/accounting/facturas');
+    if (id) {
+        revalidatePath(`/accounting/facturas/${id}`);
+    }
+}
+
+export const getAccountingInvoicesAction = async (params?: GetInvoicesParams) =>
+    run(async () => (await getUseCases()).getInvoices(params));
+
+export const getAccountingInvoiceAction = async (id: number) =>
+    run(async () => (await getUseCases()).getInvoice(id));
+
+export const createAccountingInvoiceAction = async (data: CreateInvoiceDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).createInvoice(data);
+        revalidateInvoices();
+        return result;
+    });
+
+export const updateAccountingInvoiceAction = async (id: number, data: UpdateInvoiceDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).updateInvoice(id, data);
+        revalidateInvoices(id);
+        return result;
+    });
+
+export const deleteAccountingInvoiceAction = async (id: number) =>
+    run(async () => {
+        await (await getUseCases()).deleteInvoice(id);
+        revalidateInvoices(id);
+        return true;
+    });
+
+export const sendAccountingInvoiceAction = async (id: number, emailTo?: string) =>
+    run(async () => {
+        const result = await (await getUseCases()).sendInvoice(id, emailTo);
+        revalidateInvoices(id);
+        return result;
+    });
+
+export const payAccountingInvoiceAction = async (id: number) =>
+    run(async () => {
+        const result = await (await getUseCases()).payInvoice(id);
+        revalidateInvoices(id);
+        revalidatePath('/accounting');
+        revalidatePath('/accounting/movimientos');
+        return result;
+    });
+
+export const cancelAccountingInvoiceAction = async (id: number) =>
+    run(async () => {
+        const result = await (await getUseCases()).cancelInvoice(id);
+        revalidateInvoices(id);
         revalidatePath('/accounting');
         revalidatePath('/accounting/movimientos');
         return result;

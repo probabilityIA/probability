@@ -21,5 +21,13 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.DELETE("/entries/:id", h.DeleteEntry)
 		g.GET("/report", h.Report)
 		g.POST("/sync", h.Sync)
+		g.GET("/invoices", h.ListInvoices)
+		g.POST("/invoices", h.CreateInvoice)
+		g.GET("/invoices/:id", h.GetInvoice)
+		g.PUT("/invoices/:id", h.UpdateInvoice)
+		g.DELETE("/invoices/:id", h.DeleteInvoice)
+		g.POST("/invoices/:id/send", h.SendInvoice)
+		g.POST("/invoices/:id/pay", h.MarkInvoicePaid)
+		g.POST("/invoices/:id/cancel", h.CancelInvoice)
 	}
 }

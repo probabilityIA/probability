@@ -149,6 +149,87 @@ export interface SyncResult {
     by_source: Record<string, number> | null;
 }
 
+export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'CANCELLED';
+
+export interface InvoiceTaxDetail {
+    tax_code: string;
+    tax_name: string;
+    rate_percent: number;
+    amount: number;
+}
+
+export interface InvoiceItem {
+    id: number;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+}
+
+export interface Invoice {
+    id: number;
+    number: string;
+    business_id: number;
+    business_name: string;
+    concept_id: number;
+    concept_name: string;
+    issue_date: string;
+    due_date: string;
+    status: InvoiceStatus;
+    notes: string;
+    subtotal: number;
+    tax_total: number;
+    total: number;
+    tax_detail: InvoiceTaxDetail[] | null;
+    email_to: string;
+    sent_at: string;
+    paid_at: string;
+    items: InvoiceItem[] | null;
+    created_at: string;
+}
+
+export interface InvoiceItemInputDTO {
+    description: string;
+    quantity: number;
+    unit_price: number;
+}
+
+export interface CreateInvoiceDTO {
+    business_id: number;
+    concept_id: number;
+    issue_date: string;
+    due_date?: string;
+    notes?: string;
+    email_to?: string;
+    tax_ids?: number[];
+    items: InvoiceItemInputDTO[];
+}
+
+export interface UpdateInvoiceDTO {
+    concept_id: number;
+    issue_date: string;
+    due_date?: string;
+    notes?: string;
+    email_to?: string;
+    tax_ids?: number[];
+    items: InvoiceItemInputDTO[];
+}
+
+export interface GetInvoicesParams {
+    page?: number;
+    page_size?: number;
+    status?: InvoiceStatus;
+    business_id?: number;
+}
+
+export interface InvoicesListResponse {
+    data: Invoice[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
 export type ActionResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };

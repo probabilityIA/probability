@@ -26,13 +26,23 @@ type IUseCase interface {
 
 	Report(ctx context.Context, params dtos.ReportParams) (*dtos.ReportResponse, error)
 	Sync(ctx context.Context) (*dtos.SyncResult, error)
+
+	CreateInvoice(ctx context.Context, dto dtos.CreateInvoiceDTO) (*entities.Invoice, error)
+	UpdateInvoice(ctx context.Context, dto dtos.UpdateInvoiceDTO) (*entities.Invoice, error)
+	GetInvoice(ctx context.Context, id uint) (*entities.Invoice, error)
+	ListInvoices(ctx context.Context, params dtos.ListInvoicesParams) ([]entities.Invoice, int64, error)
+	DeleteInvoice(ctx context.Context, id uint) error
+	SendInvoice(ctx context.Context, dto dtos.SendInvoiceDTO) (*entities.Invoice, error)
+	MarkInvoicePaid(ctx context.Context, id uint) (*entities.Invoice, error)
+	CancelInvoice(ctx context.Context, id uint) (*entities.Invoice, error)
 }
 
 type UseCase struct {
-	repo ports.IRepository
-	log  log.ILogger
+	repo  ports.IRepository
+	email ports.IEmailSender
+	log   log.ILogger
 }
 
-func New(repo ports.IRepository, logger log.ILogger) IUseCase {
-	return &UseCase{repo: repo, log: logger.WithModule("accounting")}
+func New(repo ports.IRepository, emailSender ports.IEmailSender, logger log.ILogger) IUseCase {
+	return &UseCase{repo: repo, email: emailSender, log: logger.WithModule("accounting")}
 }

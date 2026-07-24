@@ -32,6 +32,28 @@ Ingesta historica idempotente verificada en DB (accounting_entries):
 
 Segundo sync devuelve created=0 (indice unico parcial source_type+source_id).
 
+## 2026-07-24 - Suite de facturas (CU-20 a CU-32)
+
+Script: e2e_invoices.py (24 checks). Resultado: **24 OK / 0 FAIL** (tras fix).
+
+- CU-20/21: crear factura a negocio Demo con 2 items + IVA 19%: numero FP-2026-NNNNN,
+  subtotal 125.000, IVA 23.750, total 148.750, status DRAFT. OK
+- CU-22: GET detalle con items. FAIL inicial -> BUG: la conexion global de GORM usa
+  Omit(clause.Associations), el Create no insertaba los items asociados. Fix: insertar
+  items explicitos en la transaccion (repository/invoices.go). Re-test OK.
+- CU-23/24: lista paginada con filtros; editar borrador recalcula totales. OK
+- CU-25: sin items 400; negocio inexistente 404. OK
+- CU-26: POST /invoices/:id/send envia email real via Resend (destino de prueba
+  flowprintml@gmail.com), status SENT + sent_at. OK
+- CU-27: editar factura enviada rechazado 400. OK
+- CU-28/29: marcar pagada crea movimiento contable (source INVOICE, idempotente);
+  pagar dos veces 400. OK
+- CU-30: cancelar factura pagada revierte el movimiento contable. OK
+- CU-31: eliminar cancelada 200 y GET posterior 404. OK
+- CU-32: usuario business recibe 403. OK
+
+Datos de prueba eliminados (facturas soft-deleted, sin movimientos residuales).
+
 ## Notas
 
 - Login super admin de .env.ai fallo (password desactualizado en DB local). Se genero JWT

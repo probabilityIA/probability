@@ -98,7 +98,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	publicsite.New(router, database, logger, environment)
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
-	accounting.New(router, database, logger)
+	accounting.New(router, database, logger, environment)
 
 	if rabbitMQ != nil {
 		monitoring.New(router, logger, environment, rabbitMQ)

@@ -20,6 +20,14 @@ type IHandlers interface {
 	DeleteEntry(c *gin.Context)
 	Report(c *gin.Context)
 	Sync(c *gin.Context)
+	ListInvoices(c *gin.Context)
+	CreateInvoice(c *gin.Context)
+	GetInvoice(c *gin.Context)
+	UpdateInvoice(c *gin.Context)
+	DeleteInvoice(c *gin.Context)
+	SendInvoice(c *gin.Context)
+	MarkInvoicePaid(c *gin.Context)
+	CancelInvoice(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
