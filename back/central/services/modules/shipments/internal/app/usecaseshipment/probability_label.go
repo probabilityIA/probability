@@ -262,11 +262,14 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 	}
 
 	// Linea divisoria entre la info de la orden (DE:/PARA:/Observaciones/Ref)
-	// y la info de origen/destino de la guia.
-	pdf.SetDrawColor(int(black.R), int(black.G), int(black.B))
-	pdf.SetLineWidth(0.5)
-	pdf.Line(margin, y, margin+usableW, y)
-	y += 2
+	// y la info de origen/destino de la guia. Si hay banner de "Recaudos
+	// Contra Entrega" ya cumple ese rol, no hace falta la linea extra.
+	if c.CodTotal <= 0 {
+		pdf.SetDrawColor(int(black.R), int(black.G), int(black.B))
+		pdf.SetLineWidth(0.5)
+		pdf.Line(margin, y, margin+usableW, y)
+		y += 2
+	}
 
 	// ── Fila inferior: Origen | QR | Destino / Zona Hub / Equipo Reparto ─
 	footerH := hMm - y - margin
