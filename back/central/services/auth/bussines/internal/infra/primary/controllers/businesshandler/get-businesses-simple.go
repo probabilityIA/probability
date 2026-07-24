@@ -2,29 +2,39 @@ package businesshandler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/infra/primary/controllers/businesshandler/response"
 )
 
-// GetBusinessesSimple godoc
-// @Summary Obtener lista simple de negocios
-// @Description Retorna solo ID y nombre de negocios activos para dropdowns/selectores
-// @Tags businesses
-// @Produce json
-// @Success 200 {object} response.GetBusinessesSimpleResponse
-// @Failure 500 {object} map[string]interface{}
-// @Router /businesses/simple [get]
-func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
-	// Parámetros para obtener todos los businesses activos sin paginación
-	page := 1
-	perPage := 1000 // Suficiente para obtener todos los businesses
-	name := ""      // Sin filtro de nombre
-	isActive := true
-	isActivePtr := &isActive
+const (
+	businessesSimpleDefaultPageSize = 1000
+	businessesSimpleMaxPageSize     = 1000
+)
 
-	// Obtener todos los negocios activos
-	businesses, _, err := h.usecase.GetBusinesses(c.Request.Context(), page, perPage, name, nil, isActivePtr)
+func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
+	page := 1
+	if raw := c.Query("page"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			page = parsed
+		}
+	}
+
+	pageSize := businessesSimpleDefaultPageSize
+	if raw := c.Query("page_size"); raw != "" {
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 {
+			if parsed > businessesSimpleMaxPageSize {
+				parsed = businessesSimpleMaxPageSize
+			}
+			pageSize = parsed
+		}
+	}
+
+	search := c.Query("search")
+
+	isActive := true
+	businesses, total, err := h.usecase.GetBusinesses(c.Request.Context(), page, pageSize, search, nil, &isActive)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error getting businesses for simple list")
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -35,7 +45,6 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 		return
 	}
 
-	// Mapear a formato simple (id, name, logo, colores)
 	simpleBusinesses := make([]response.BusinessSimpleResponse, 0, len(businesses))
 	for _, business := range businesses {
 		simpleBusinesses = append(simpleBusinesses, response.BusinessSimpleResponse{
@@ -50,9 +59,18 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 		})
 	}
 
+	totalPages := 0
+	if pageSize > 0 {
+		totalPages = int((total + int64(pageSize) - 1) / int64(pageSize))
+	}
+
 	c.JSON(http.StatusOK, response.GetBusinessesSimpleResponse{
-		Success: true,
-		Message: "Negocios obtenidos exitosamente",
-		Data:    simpleBusinesses,
+		Success:    true,
+		Message:    "Negocios obtenidos exitosamente",
+		Data:       simpleBusinesses,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
 	})
 }

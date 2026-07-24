@@ -10,7 +10,8 @@ import {
     GetConfiguredResourcesParams,
     CreateBusinessTypeDTO,
     UpdateBusinessTypeDTO,
-    BusinessesSimpleResponse
+    BusinessesSimpleResponse,
+    BusinessesSimpleParams
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
@@ -171,16 +172,23 @@ export const deleteBusinessTypeAction = async (id: number) => {
 // Simple Actions - Para Dropdowns/Selectores
 // ============================================
 
-export const getBusinessesSimpleAction = async (): Promise<BusinessesSimpleResponse> => {
+export const getBusinessesSimpleAction = async (params?: BusinessesSimpleParams): Promise<BusinessesSimpleResponse> => {
     try {
         const token = await getAuthToken();
 
-        const response = await fetch(`${env.API_BASE_URL}/businesses/simple`, {
+        const query = new URLSearchParams();
+        if (params?.page) query.set('page', String(params.page));
+        if (params?.page_size) query.set('page_size', String(params.page_size));
+        if (params?.search) query.set('search', params.search);
+        const queryString = query.toString();
+
+        const response = await fetch(`${env.API_BASE_URL}/businesses/simple${queryString ? `?${queryString}` : ''}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
+            cache: 'no-store',
         });
 
         if (!response.ok) {
