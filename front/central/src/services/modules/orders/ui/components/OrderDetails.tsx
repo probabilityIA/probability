@@ -32,6 +32,23 @@ interface OrderDetailsProps {
     mode?: 'details' | 'recommendation';
 }
 
+// Color por origen del cambio de estado: canal de venta, transportadora,
+// inventario o un usuario de la plataforma.
+function statusSourceStyle(source?: string): string {
+    switch (source) {
+        case 'sales_channel':
+            return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300';
+        case 'carrier':
+            return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+        case 'inventory':
+            return 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300';
+        case 'user':
+            return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+        default:
+            return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+    }
+}
+
 export default function OrderDetails({ initialOrder, onClose, mode = 'details' }: OrderDetailsProps) {
     const [fullOrder, setFullOrder] = useState<Order | null>(null);
     const [aiRecommendation, setAIRecommendation] = useState<AIRecommendation | null>(null);
@@ -902,6 +919,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 {' '}
                                                                 {new Date(entry.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                                                             </p>
+                                                            {entry.changed_by_name && (
+                                                                <span
+                                                                    className={`mt-1 max-w-[104px] truncate rounded-full px-1.5 py-px text-[8px] font-semibold leading-tight ${statusSourceStyle(entry.source)}`}
+                                                                    title={`${entry.source === 'user' ? 'Modificado por' : 'Modificado desde'}: ${entry.changed_by_name}`}
+                                                                >
+                                                                    {entry.changed_by_name}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     );
                                                 })}

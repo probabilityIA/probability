@@ -11,5 +11,6 @@ type OrderHistoryResponse struct {
 	NewStatus      string
 	ChangedBy      *uint
 	ChangedByName  string
+	Source         string
 	Reason         *string
 }

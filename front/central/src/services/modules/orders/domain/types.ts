@@ -218,6 +218,7 @@ export interface OrderHistory {
     new_status: string;
     changed_by?: number;
     changed_by_name: string;
+    source?: 'user' | 'sales_channel' | 'carrier' | 'inventory' | 'system';
     reason?: string;
 }
 

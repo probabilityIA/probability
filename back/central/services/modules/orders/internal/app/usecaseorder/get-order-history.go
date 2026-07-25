@@ -27,6 +27,7 @@ func (uc *UseCaseOrder) GetOrderHistory(ctx context.Context, orderID string) ([]
 			PreviousStatus: h.PreviousStatus,
 			NewStatus:      h.NewStatus,
 			ChangedBy:      h.ChangedBy,
+			Source:         h.Source,
 			ChangedByName:  h.ChangedByName,
 			Reason:         h.Reason,
 		}

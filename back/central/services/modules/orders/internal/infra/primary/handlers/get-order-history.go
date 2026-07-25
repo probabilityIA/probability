@@ -51,6 +51,7 @@ func (h *Handlers) GetOrderHistory(c *gin.Context) {
 			PreviousStatus: h.PreviousStatus,
 			NewStatus:      h.NewStatus,
 			ChangedBy:      h.ChangedBy,
+			Source:         h.Source,
 			ChangedByName:  h.ChangedByName,
 			Reason:         h.Reason,
 		}

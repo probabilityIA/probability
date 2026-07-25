@@ -11,5 +11,6 @@ type OrderHistoryResponse struct {
 	NewStatus      string    `json:"new_status"`
 	ChangedBy      *uint     `json:"changed_by,omitempty"`
 	ChangedByName  string    `json:"changed_by_name"`
+	Source         string    `json:"source,omitempty"`
 	Reason         *string   `json:"reason,omitempty"`
 }
