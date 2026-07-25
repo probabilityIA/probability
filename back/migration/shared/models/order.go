@@ -33,7 +33,7 @@ type Order struct {
 	Currency            string   `gorm:"size:10;default:'USD'"`
 	IsCod               bool     `gorm:"column:is_cod;not null;default:false;index"`
 	CodTotal            *float64 `gorm:"type:decimal(12,2)"`
-	CodIncludesShipping bool     `gorm:"column:cod_includes_shipping;not null;default:true"`
+	CodIncludesShipping bool     `gorm:"column:cod_includes_shipping;not null"`
 
 	SubtotalPresentment         float64 `gorm:"column:subtotal_presentment;type:decimal(12,2);not null;default:0"`
 	TaxPresentment              float64 `gorm:"column:tax_presentment;type:decimal(12,2);not null;default:0"`

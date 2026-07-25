@@ -233,6 +233,9 @@ export default function ShopifyOAuthForm({
         initialData?.config?.carrier_calculated_shipping_enabled === true
     );
     const [carrierLoading, setCarrierLoading] = useState(false);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(
+        initialData?.config?.cod_includes_shipping !== false
+    );
     const [inventorySyncOpen, setInventorySyncOpen] = useState(false);
     const [productSyncOpen, setProductSyncOpen] = useState(false);
     const [inventorySync, setInventorySync] = useState<ShopifyInventoryConfig>(() => {
@@ -316,6 +319,7 @@ export default function ShopifyOAuthForm({
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
                 inventory_warehouse_ids: inventorySync.warehouse_ids,
+                cod_includes_shipping: codIncludesShipping,
                 shopify_default_location_id: defaultLocationId.trim() ? Number(defaultLocationId.trim()) || 0 : 0,
                 shopify_location_mappings: cleanMappings,
             };
@@ -728,6 +732,14 @@ export default function ShopifyOAuthForm({
                                 checked={carrierEnabled}
                                 onToggle={handleToggleCarrierService}
                                 disabled={carrierLoading}
+                                activeColor="indigo"
+                            />
+                            <ToggleRow
+                                icon={<TruckIcon className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />}
+                                title="El total del pedido ya incluye el envio"
+                                subtitle="Desactivalo si las guias de contra entrega se generan en Probability y no llegan del canal de ventas: ahi se le suma el flete al total"
+                                checked={codIncludesShipping}
+                                onToggle={() => setCodIncludesShipping((v) => !v)}
                                 activeColor="indigo"
                             />
                             <div>

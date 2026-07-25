@@ -156,6 +156,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
     const [downloadingPlugin, setDownloadingPlugin] = useState(false);
     const [codQuotingDisabled, setCodQuotingDisabled] = useState<boolean>(!!initialData?.config?.cod_quoting_disabled);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
     const [freeShippingMin, setFreeShippingMin] = useState<string>(
         initialData?.config?.free_shipping_min != null ? String(initialData.config.free_shipping_min) : ''
@@ -318,6 +319,7 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 free_shipping_enabled: freeShippingEnabled,
                 free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
                 cod_quoting_disabled: codQuotingDisabled,
+                cod_includes_shipping: codIncludesShipping,
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -819,6 +821,28 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${codQuotingDisabled ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${codQuotingDisabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100">El total del pedido ya incluye el envio</span>
+                                <span className="block text-[11px] text-gray-500 dark:text-gray-400">
+                                    Activado: la tienda ya le cobro el envio al cliente en el checkout, asi que en contra entrega se recauda el total tal cual.
+                                    Desactivalo cuando las guias de contra entrega se generan en Probability y no llegan del canal de ventas: ahi el total
+                                    trae solo los productos y hay que sumarle el flete de la guia para saber cuanto recaudar.
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={codIncludesShipping}
+                                onClick={() => setCodIncludesShipping((v) => !v)}
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${codIncludesShipping ? 'bg-[var(--color-primary)]' : 'bg-gray-300 dark:bg-gray-600'}`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${codIncludesShipping ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
                         </div>
                     </div>

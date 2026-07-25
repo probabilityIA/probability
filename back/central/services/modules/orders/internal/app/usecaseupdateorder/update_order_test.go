@@ -25,6 +25,7 @@ type mockRepository struct {
 	GetLastManualOrderNumberFn                           func(ctx context.Context, businessID uint) (int, error)
 	GetFirstIntegrationIDByBusinessIDFn                  func(ctx context.Context, businessID uint) (uint, error)
 	GetPlatformIntegrationIDByBusinessIDFn               func(ctx context.Context, businessID uint) (uint, error)
+	GetIntegrationCodIncludesShippingFn                  func(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouseFn                               func(ctx context.Context, businessID uint) (bool, error)
 	OrderExistsFn                                        func(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalIDFn                               func(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
@@ -123,6 +124,13 @@ func (m *mockRepository) GetFirstIntegrationIDByBusinessID(ctx context.Context, 
 	}
 	return 0, nil
 }
+func (m *mockRepository) GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error) {
+	if m.GetIntegrationCodIncludesShippingFn != nil {
+		return m.GetIntegrationCodIncludesShippingFn(ctx, integrationID)
+	}
+	return true, nil
+}
+
 func (m *mockRepository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	if m.GetPlatformIntegrationIDByBusinessIDFn != nil {
 		return m.GetPlatformIntegrationIDByBusinessIDFn(ctx, businessID)

@@ -12,6 +12,11 @@ func (r *Repository) migrateOrderCodIncludesShipping(ctx context.Context) error 
 		return fmt.Errorf("add orders.cod_includes_shipping: %w", err)
 	}
 
+	setDefault := `ALTER TABLE orders ALTER COLUMN cod_includes_shipping SET DEFAULT true`
+	if err := r.db.Conn(ctx).Exec(setDefault).Error; err != nil {
+		return fmt.Errorf("default orders.cod_includes_shipping: %w", err)
+	}
+
 	backfill := `UPDATE orders SET cod_includes_shipping = false WHERE platform = 'manual' AND cod_includes_shipping = true`
 	if err := r.db.Conn(ctx).Exec(backfill).Error; err != nil {
 		return fmt.Errorf("backfill orders.cod_includes_shipping: %w", err)

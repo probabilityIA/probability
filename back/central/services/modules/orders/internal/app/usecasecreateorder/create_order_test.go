@@ -25,6 +25,7 @@ type mockRepository struct {
 	GetLastManualOrderNumberFn                           func(ctx context.Context, businessID uint) (int, error)
 	GetFirstIntegrationIDByBusinessIDFn                  func(ctx context.Context, businessID uint) (uint, error)
 	GetPlatformIntegrationIDByBusinessIDFn               func(ctx context.Context, businessID uint) (uint, error)
+	GetIntegrationCodIncludesShippingFn                  func(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouseFn                               func(ctx context.Context, businessID uint) (bool, error)
 	OrderExistsFn                                        func(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalIDFn                               func(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
@@ -123,6 +124,13 @@ func (m *mockRepository) GetFirstIntegrationIDByBusinessID(ctx context.Context, 
 	}
 	return 0, nil
 }
+func (m *mockRepository) GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error) {
+	if m.GetIntegrationCodIncludesShippingFn != nil {
+		return m.GetIntegrationCodIncludesShippingFn(ctx, integrationID)
+	}
+	return true, nil
+}
+
 func (m *mockRepository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	if m.GetPlatformIntegrationIDByBusinessIDFn != nil {
 		return m.GetPlatformIntegrationIDByBusinessIDFn(ctx, businessID)
@@ -1171,41 +1179,65 @@ func TestMapOrderToResponse_MapeaTodosLosCamposPrincipales(t *testing.T) {
 	}
 }
 
-func TestBuildOrderEntity_CodIncludesShipping(t *testing.T) {
+func TestResolveCodIncludesShipping(t *testing.T) {
 	tests := []struct {
 		name          string
 		isManualOrder bool
+		integrationID uint
+		configValue   bool
+		configErr     error
 		want          bool
 	}{
-		{
-			name:          "orden de canal: el total ya trae el envio que cobro la tienda",
-			isManualOrder: false,
-			want:          true,
-		},
 		{
 			name:          "orden manual: el total es solo productos, hay que sumarle el flete",
 			isManualOrder: true,
 			want:          false,
 		},
+		{
+			name:          "canal con switch activado: el total ya trae el envio",
+			integrationID: 197,
+			configValue:   true,
+			want:          true,
+		},
+		{
+			name:          "canal con switch desactivado: hay que sumarle el flete",
+			integrationID: 197,
+			configValue:   false,
+			want:          false,
+		},
+		{
+			name:          "canal sin integracion resuelta: asume que ya lo incluye",
+			integrationID: 0,
+			want:          true,
+		},
+		{
+			name:          "error leyendo el config: asume que ya lo incluye",
+			integrationID: 197,
+			configErr:     errors.New("boom"),
+			want:          true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
-			bID := uint(42)
+			repo := &mockRepository{
+				GetIntegrationCodIncludesShippingFn: func(ctx context.Context, integrationID uint) (bool, error) {
+					if tt.configErr != nil {
+						return true, tt.configErr
+					}
+					return tt.configValue, nil
+				},
+			}
+			uc := newTestCreateUseCase(repo, nil, nil, nil)
 			dto := &dtos.ProbabilityOrderDTO{
-				BusinessID:    &bID,
-				IntegrationID: 10,
-				ExternalID:    "EXT-COD-01",
-				TotalAmount:   100.0,
-				IsCod:         true,
+				IntegrationID: tt.integrationID,
 				IsManualOrder: tt.isManualOrder,
 			}
 
-			order := uc.buildOrderEntity(dto, nil, orderStatusMapping{})
+			uc.resolveCodIncludesShipping(context.Background(), dto)
 
-			if order.CodIncludesShipping != tt.want {
-				t.Errorf("CodIncludesShipping = %v, se esperaba %v", order.CodIncludesShipping, tt.want)
+			if dto.CodIncludesShipping != tt.want {
+				t.Errorf("CodIncludesShipping = %v, se esperaba %v", dto.CodIncludesShipping, tt.want)
 			}
 		})
 	}

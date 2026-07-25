@@ -121,6 +121,11 @@ func (m *RepositoryMock) GetPlatformIntegrationIDByBusinessID(ctx context.Contex
 	return args.Get(0).(uint), args.Error(1)
 }
 
+func (m *RepositoryMock) GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error) {
+	args := m.Called(ctx, integrationID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *RepositoryMock) BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error) {
 	args := m.Called(ctx, businessID)
 	return args.Bool(0), args.Error(1)

@@ -3,6 +3,7 @@ export interface WooCommerceConfig {
     free_shipping_enabled?: boolean;
     free_shipping_min?: number;
     cod_quoting_disabled?: boolean;
+    cod_includes_shipping?: boolean;
     inventory_sync_enabled?: boolean;
     inventory_warehouse_mode?: 'single' | 'sum';
     inventory_single_warehouse_id?: number;

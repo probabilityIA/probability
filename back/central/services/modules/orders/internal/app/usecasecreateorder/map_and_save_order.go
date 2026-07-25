@@ -58,6 +58,8 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 
 	statusMapping := uc.mapOrderStatuses(ctx, dto)
 
+	uc.resolveCodIncludesShipping(ctx, dto)
+
 	order := uc.buildOrderEntity(dto, clientID, statusMapping)
 
 	uc.hydrateBusinessName(ctx, order)

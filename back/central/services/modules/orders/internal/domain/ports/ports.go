@@ -23,6 +23,7 @@ type IRepository interface {
 	GetBusinessNameByID(ctx context.Context, businessID uint) (string, error)
 	GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
 	GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
+	GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error)
 
 	OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error)

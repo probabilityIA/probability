@@ -964,6 +964,27 @@ func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, b
 	return integration.ID, nil
 }
 
+func (r *Repository) GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error) {
+	var result struct {
+		Value *bool `gorm:"column:value"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("(config->>'cod_includes_shipping')::boolean AS value").
+		Where("id = ? AND deleted_at IS NULL", integrationID).
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		return true, err
+	}
+	if result.Value == nil {
+		return true, nil
+	}
+	return *result.Value, nil
+}
+
 // GetLastManualOrderNumber retorna el ultimo numero usado para el prefix
 // actual del negocio. Cuando un negocio estrena prefix, parte desde 0
 // (la siguiente orden sera 0001) sin importar cuantas ordenes 'prob-' tenga.

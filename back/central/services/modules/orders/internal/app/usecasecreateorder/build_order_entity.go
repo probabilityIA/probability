@@ -31,7 +31,7 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		Currency:                    dto.Currency,
 		IsCod:                       dto.IsCod,
 		CodTotal:                    dto.CodTotal,
-		CodIncludesShipping:         !dto.IsManualOrder,
+		CodIncludesShipping:         dto.CodIncludesShipping,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
 		DiscountPresentment:         dto.DiscountPresentment,
