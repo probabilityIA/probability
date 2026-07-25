@@ -110,6 +110,9 @@ type IRepository interface {
 	// GetOrderIntegrationID retrieves the integration_id for an order (replicated query — module isolation)
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
 
+	// GetOrderCodTotal retrieves the current cod_total for an order (replicated query — module isolation)
+	GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error)
+
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
 	EnsureWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, err error)

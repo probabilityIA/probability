@@ -3,13 +3,13 @@ package usecasemessaging
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 )
 
-// SendTemplate envía una plantilla de WhatsApp y crea/actualiza la conversación
 func (u *usecases) SendTemplate(
 	ctx context.Context,
 	templateName string,
@@ -24,7 +24,6 @@ func (u *usecases) SendTemplate(
 		Str("order_number", orderNumber).
 		Msg("[WhatsApp UseCase] - enviando plantilla")
 
-	// 1. Validar que la plantilla existe
 	templateDef, exists := entities.GetTemplateDefinition(templateName)
 	if !exists {
 		u.log.Error(ctx).
@@ -33,7 +32,6 @@ func (u *usecases) SendTemplate(
 		return "", &errors.ErrTemplateNotFound{TemplateName: templateName}
 	}
 
-	// 2. Validar que se proveen todas las variables requeridas
 	if err := entities.ValidateTemplateVariables(templateName, variables); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("template_name", templateName).
@@ -41,7 +39,6 @@ func (u *usecases) SendTemplate(
 		return "", err
 	}
 
-	// 3. Normalizar y validar número de teléfono
 	phoneNumber = NormalizePhoneNumber(phoneNumber)
 	if err := ValidatePhoneNumber(phoneNumber); err != nil {
 		u.log.Error(ctx).Err(err).
@@ -50,17 +47,14 @@ func (u *usecases) SendTemplate(
 		return "", fmt.Errorf("número de teléfono inválido: %w", err)
 	}
 
-	// 4. Obtener configuración de WhatsApp desde cache de credenciales
 	whatsappConfig, err := u.credentialsCache.GetWhatsAppConfig(ctx, businessID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
 	}
 
-	// 5. Construir mensaje con botones si aplica
 	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
 
-	// 6. Buscar o crear conversación
 	conversation, err := u.getOrCreateConversation(ctx, phoneNumber, orderNumber, businessID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
@@ -70,19 +64,16 @@ func (u *usecases) SendTemplate(
 		return "", err
 	}
 
-	// 6.5. Guardar variables de la plantilla en metadata de la conversación
-	// para que estén disponibles en futuras transiciones de estado
 	if conversation.Metadata == nil {
 		conversation.Metadata = make(map[string]interface{})
 	}
 	for i, varName := range templateDef.Variables {
-		varKey := string(rune('1' + i))
+		varKey := strconv.Itoa(i + 1)
 		if val, ok := variables[varKey]; ok && val != "" {
 			conversation.Metadata[varName] = val
 		}
 	}
 
-	// 7. Enviar mensaje — usar URL de platform_creds si disponible
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("template_name", templateName).
@@ -104,7 +95,6 @@ func (u *usecases) SendTemplate(
 		return "", fmt.Errorf("error al enviar mensaje de WhatsApp: %w", err)
 	}
 
-	// 8. Publicar message log para persistencia async
 	messageLog := &entities.MessageLog{
 		ConversationID: conversation.ID,
 		Direction:      entities.MessageDirectionOutbound,
@@ -119,10 +109,8 @@ func (u *usecases) SendTemplate(
 		u.log.Error(ctx).Err(err).
 			Str("message_id", messageID).
 			Msg("[WhatsApp UseCase] - error publicando mensaje en log")
-		// No retornamos error porque el mensaje ya fue enviado
 	}
 
-	// 9. Actualizar conversación en cache + publicar para persistencia
 	conversation.LastMessageID = messageID
 	conversation.LastTemplateID = templateName
 	conversation.UpdatedAt = time.Now()
@@ -148,7 +136,6 @@ func (u *usecases) SendTemplate(
 	return messageID, nil
 }
 
-// SendTemplateWithConversation envía una plantilla usando una conversación existente
 func (u *usecases) SendTemplateWithConversation(
 	ctx context.Context,
 	templateName string,
@@ -161,7 +148,6 @@ func (u *usecases) SendTemplateWithConversation(
 		Str("conversation_id", conversationID).
 		Msg("[WhatsApp UseCase] - enviando plantilla con conversación existente")
 
-	// 1. Validar plantilla y variables
 	templateDef, exists := entities.GetTemplateDefinition(templateName)
 	if !exists {
 		return "", &errors.ErrTemplateNotFound{TemplateName: templateName}
@@ -171,10 +157,8 @@ func (u *usecases) SendTemplateWithConversation(
 		return "", err
 	}
 
-	// Normalizar número de teléfono
 	phoneNumber = NormalizePhoneNumber(phoneNumber)
 
-	// 2. Obtener conversación existente desde cache
 	conversation, err := u.conversationCache.GetByID(ctx, conversationID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
@@ -183,7 +167,6 @@ func (u *usecases) SendTemplateWithConversation(
 		return "", err
 	}
 
-	// 3. Verificar que la conversación no ha expirado
 	if conversation.IsExpired() {
 		u.log.Error(ctx).
 			Str("conversation_id", conversationID).
@@ -191,21 +174,18 @@ func (u *usecases) SendTemplateWithConversation(
 		return "", &errors.ErrConversationExpired{ConversationID: conversationID}
 	}
 
-	// 4. Obtener configuración de WhatsApp desde cache
 	whatsappConfig, err := u.credentialsCache.GetWhatsAppConfig(ctx, conversation.BusinessID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
 	}
 
-	// 5. Construir y enviar mensaje
 	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
 	messageID, err := u.whatsApp.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
 	if err != nil {
 		return "", err
 	}
 
-	// 6. Publicar message log para persistencia async
 	messageLog := &entities.MessageLog{
 		ConversationID: conversation.ID,
 		Direction:      entities.MessageDirectionOutbound,
@@ -217,7 +197,6 @@ func (u *usecases) SendTemplateWithConversation(
 	}
 	u.persistPublisher.PublishMessageLogCreated(ctx, messageLog)
 
-	// 7. Actualizar conversación en cache + publicar
 	conversation.LastMessageID = messageID
 	conversation.LastTemplateID = templateName
 	conversation.UpdatedAt = time.Now()
@@ -227,21 +206,18 @@ func (u *usecases) SendTemplateWithConversation(
 	return messageID, nil
 }
 
-// buildTemplateMessage construye el mensaje de plantilla con todos sus componentes
 func (u *usecases) buildTemplateMessage(
 	templateName string,
 	phoneNumber string,
 	variables map[string]string,
 	templateDef entities.TemplateDefinition,
 ) entities.TemplateMessage {
-	// Construir componentes
 	components := []entities.TemplateComponent{}
 
-	// Agregar componente body con variables si existen
 	if len(templateDef.Variables) > 0 {
 		bodyParams := []entities.TemplateParameter{}
 		for i := range templateDef.Variables {
-			varKey := string(rune('1' + i))
+			varKey := strconv.Itoa(i + 1)
 			bodyParams = append(bodyParams, entities.TemplateParameter{
 				Type: "text",
 				Text: variables[varKey],
@@ -252,10 +228,6 @@ func (u *usecases) buildTemplateMessage(
 			Parameters: bodyParams,
 		})
 	}
-
-	// NOTA: Los botones de tipo "quick_reply" NO se envían en el payload.
-	// Estos botones ya están definidos en la plantilla en Meta y se
-	// renderizan automáticamente. Solo enviamos parámetros del body/header.
 
 	return entities.TemplateMessage{
 		MessagingProduct: "whatsapp",
@@ -270,27 +242,22 @@ func (u *usecases) buildTemplateMessage(
 	}
 }
 
-// getOrCreateConversation obtiene una conversación existente o crea una nueva
 func (u *usecases) getOrCreateConversation(
 	ctx context.Context,
 	phoneNumber string,
 	orderNumber string,
 	businessID uint,
 ) (*entities.Conversation, error) {
-	// Intentar obtener conversación existente
 	conversation, err := u.conversationCache.GetByPhoneAndOrder(ctx, phoneNumber, orderNumber)
 	if err == nil {
-		// Conversación encontrada
 		if conversation.IsActive() {
 			return conversation, nil
 		}
-		// Conversación expirada, crear una nueva
 		u.log.Info(ctx).
 			Str("conversation_id", conversation.ID).
 			Msg("[WhatsApp UseCase] - conversación expirada, creando nueva")
 	}
 
-	// Crear nueva conversación
 	newConversation := &entities.Conversation{
 		PhoneNumber:  phoneNumber,
 		OrderNumber:  orderNumber,
@@ -299,20 +266,17 @@ func (u *usecases) getOrCreateConversation(
 		Metadata:     make(map[string]interface{}),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-		ExpiresAt:    time.Now().Add(24 * time.Hour), // Ventana de 24h
+		ExpiresAt:    time.Now().Add(24 * time.Hour),
 	}
 
-	// Guardar en cache (genera UUID automáticamente)
 	if err := u.conversationCache.Save(ctx, newConversation); err != nil {
 		return nil, err
 	}
 
-	// Publicar para persistencia async
 	if err := u.persistPublisher.PublishConversationCreated(ctx, newConversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", newConversation.ID).
 			Msg("[WhatsApp UseCase] - error publicando creación de conversación")
-		// No retornamos error, la conversación ya está en cache
 	}
 
 	u.log.Info(ctx).

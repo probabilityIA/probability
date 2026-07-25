@@ -26,6 +26,7 @@ type RepositoryMock struct {
 	ClearOrderGuideDataFn             func(ctx context.Context, orderID string) error
 	EnsureAllBusinessesActiveFn       func(ctx context.Context) error
 	GetOrderIntegrationIDFn           func(ctx context.Context, orderUUID string) (uint, error)
+	GetOrderCodTotalFn                func(ctx context.Context, orderUUID string) (*float64, error)
 	GetIntegrationBusinessIDFn        func(ctx context.Context, integrationID uint) (uint, error)
 	GetCityDaneByNameFn               func(ctx context.Context, city, province string) (string, error)
 	CreateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
@@ -171,6 +172,13 @@ func (m *RepositoryMock) GetOrderIntegrationID(ctx context.Context, orderUUID st
 		return m.GetOrderIntegrationIDFn(ctx, orderUUID)
 	}
 	return 0, nil
+}
+
+func (m *RepositoryMock) GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error) {
+	if m.GetOrderCodTotalFn != nil {
+		return m.GetOrderCodTotalFn(ctx, orderUUID)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error) {

@@ -113,6 +113,11 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			trackingURL += "&b=" + strconv.FormatUint(uint64(*event.BusinessID), 10)
 		}
 	}
+	amountToCollect := event.CodTotal
+	if amountToCollect <= 0 {
+		amountToCollect = event.TotalAmount
+	}
+
 	switch templateName {
 	case "pedido_en_reparto_cod":
 		return map[string]string{
@@ -121,7 +126,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"3": orDefault(event.OrderNumber, "N/A"),
 			"4": orDefault(event.TrackingNumber, "N/A"),
 			"5": orDefault(event.Carrier, "Transportadora"),
-			"6": formatTotalAmount(event.TotalAmount, event.Currency),
+			"6": formatTotalAmount(amountToCollect, event.Currency),
 			"7": trackingURL,
 		}
 	case "pedido_en_reparto":
@@ -145,7 +150,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"8":  orDefault(event.PaymentMethodName, "contra entrega"),
 			"9":  orDefault(event.TrackingNumber, "N/A"),
 			"10": orDefault(event.Carrier, "Transportadora"),
-			"11": formatTotalAmount(event.TotalAmount, event.Currency),
+			"11": formatTotalAmount(amountToCollect, event.Currency),
 			"12": trackingURL,
 		}
 	case "pedido_entregado":
@@ -181,7 +186,7 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"6": orDefault(event.ShippingState, ""),
 			"7": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
 			"8": orDefault(event.PaymentMethodName, "contra entrega"),
-			"9": formatTotalAmount(event.TotalAmount, event.Currency),
+			"9": formatTotalAmount(amountToCollect, event.Currency),
 		}
 	}
 }

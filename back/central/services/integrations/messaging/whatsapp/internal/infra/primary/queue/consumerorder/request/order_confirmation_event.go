@@ -10,6 +10,8 @@ type OrderConfirmationEvent struct {
 	CustomerPhone     string  `json:"customer_phone"`
 	CustomerEmail     string  `json:"customer_email"`
 	TotalAmount       float64 `json:"total_amount"`
+	CodTotal          float64 `json:"cod_total"`
+	IsCod             bool    `json:"is_cod"`
 	Currency          string  `json:"currency"`
 	ItemsSummary      string  `json:"items_summary"`
 	ShippingAddress   string  `json:"shipping_address"`

@@ -14,6 +14,8 @@ var templateBodies = map[string]string{
 	"pedido_entregado_cod": "¡Hola {{1}}! 👋\n\nTu pedido en {{2}} fue entregado\n\n🧾Orden: {{3}}\n📍Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n- Método de pago: {{8}} 🚚\n🔢 Número de guía: {{9}}\n🚛 Transportadora: {{10}}\n💲Valor recaudado: {{11}}\n\nConsulta el detalle de tu envío aquí: {{12}}\n\n¡Gracias por tu compra!",
 
 	"confirmacion_pedido": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\n🧾 Orden: {{3}}\n📍 Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n\n¿Confirmas tu pedido?",
+
+	"confirmacion_pedido_contraentrega": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\n🧾Orden: {{3}}\n📍Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n- método de pago: {{8}} 🚚\n- valor a recaudar: {{9}}\n\n¿Confirmas tu pedido?",
 }
 
 func init() {

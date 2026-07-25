@@ -120,6 +120,11 @@ func (p *OrderRabbitPublisher) PublishOrderEvent(ctx context.Context, event *ent
 func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
 	itemsSummary := buildItemsSummary(order)
 
+	confirmationCodTotal := 0.0
+	if order.IsCod && order.CodTotal != nil {
+		confirmationCodTotal = *order.CodTotal
+	}
+
 	event := map[string]any{
 		"event_type":          "order.confirmation_requested",
 		"order_id":            order.ID,
@@ -130,6 +135,8 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 		"customer_phone":      order.CustomerPhone,
 		"customer_email":      order.CustomerEmail,
 		"total_amount":        order.TotalAmount,
+		"cod_total":           confirmationCodTotal,
+		"is_cod":              order.IsCod,
 		"currency":            order.Currency,
 		"items_summary":       itemsSummary,
 		"shipping_address":    order.ShippingStreet,
@@ -204,6 +211,11 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 		carrier = *order.Shipments[0].Carrier
 	}
 
+	codTotal := 0.0
+	if order.IsCod && order.CodTotal != nil {
+		codTotal = *order.CodTotal
+	}
+
 	event := map[string]any{
 		"event_type":      "order.guide_notification_requested",
 		"order_id":        order.ID,
@@ -215,6 +227,7 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 		"tracking_number": trackingNumber,
 		"carrier":         carrier,
 		"total_amount":    order.TotalAmount,
+		"cod_total":       codTotal,
 		"integration_id":  order.IntegrationID,
 		"platform":        order.Platform,
 		"timestamp":       time.Now().Unix(),

@@ -17,6 +17,8 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		ExternalID:     order.ExternalID,
 
 		TotalAmount:     order.TotalAmount,
+		CodTotal:        order.CodTotal,
+		IsCod:           order.IsCod,
 		Currency:        order.Currency,
 		PaymentMethodID: order.PaymentMethodID,
 		PaymentStatusID: order.PaymentStatusID,

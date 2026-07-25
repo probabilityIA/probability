@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -300,7 +301,7 @@ func ValidateTemplateVariables(templateName string, providedVars map[string]stri
 	}
 
 	for i, varName := range template.Variables {
-		varKey := string(rune('1' + i))
+		varKey := strconv.Itoa(i + 1)
 		if _, ok := providedVars[varKey]; !ok {
 			return &errors.ErrMissingVariable{
 				TemplateName: templateName,

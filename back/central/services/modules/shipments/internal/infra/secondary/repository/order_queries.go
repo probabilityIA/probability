@@ -114,6 +114,29 @@ func (r *Repository) GetOrderIntegrationID(ctx context.Context, orderUUID string
 	return result.IntegrationID, nil
 }
 
+func (r *Repository) GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error) {
+	var result struct {
+		CodTotal *float64 `gorm:"column:cod_total"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("orders").
+		Select("cod_total").
+		Where("id = ?", orderUUID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("orden %s no encontrada", orderUUID)
+		}
+		return nil, err
+	}
+
+	return result.CodTotal, nil
+}
+
 func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {
 	updates := map[string]interface{}{}
 	if guideLink != "" {

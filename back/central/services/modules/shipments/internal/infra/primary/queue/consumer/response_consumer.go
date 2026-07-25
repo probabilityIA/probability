@@ -300,6 +300,17 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				OrderNumber:   shipment.OrderNumber,
 				CodTotal:      shipment.CodTotal,
 			}
+
+			if shipment.OrderID != nil && *shipment.OrderID != "" {
+				if freshCod, err := c.repo.GetOrderCodTotal(ctx, *shipment.OrderID); err == nil {
+					notification.CodTotal = freshCod
+				} else {
+					c.log.Warn(ctx).Err(err).
+						Str("order_id", *shipment.OrderID).
+						Msg("Could not re-read cod_total after guide sync: notification may carry a stale amount")
+				}
+			}
+
 			if trackingNumber != "" {
 				url := "https://www.probabilityia.com.co/rastreo?tracking=" + trackingNumber
 				if businessID > 0 {

@@ -38,6 +38,10 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 const paymentMethodIDCOD uint = 6
 
 func isCODEvent(event entities.Event) bool {
+	if flag, ok := event.Data["is_cod"].(bool); ok && flag {
+		return true
+	}
+
 	val, ok := event.Data["payment_method_id"]
 	if !ok || val == nil {
 		return false
@@ -91,7 +95,7 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 	dataFields := []string{
 		"order_id", "order_number", "internal_number", "external_id",
 		"customer_name", "customer_phone", "customer_email",
-		"total_amount", "currency", "platform",
+		"total_amount", "cod_total", "is_cod", "currency", "platform",
 		"items_summary", "shipping_address", "shipping_street", "shipping_city", "shipping_state",
 		"business_name", "payment_method_id", "payment_method_name", "tracking_number", "carrier",
 	}
