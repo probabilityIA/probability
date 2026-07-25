@@ -50,7 +50,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.Or
 	// IMPORTANTE: OrderItems tiene los product_id de la tabla products (PRD_xxx)
 	// mientras que el JSONB Items tiene los IDs externos de las plataformas (Shopify, etc)
 	err := r.db.Conn(ctx).
-		Preload("OrderItems.Product").  // Preload items y productos
+		Preload("OrderItems.Product"). // Preload items y productos
 		Where("id = ?", orderID).
 		First(&order).Error
 
@@ -96,28 +96,29 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	}
 
 	orderData := &dtos.OrderData{
-		ID:              order.ID,
-		BusinessID:      uint(0),
-		IntegrationID:   order.IntegrationID,
-		OrderNumber:     order.OrderNumber,
-		TotalAmount:     order.TotalAmount,
-		Subtotal:        order.Subtotal,
-		Tax:             order.Tax,
-		Discount:        order.Discount,
+		ID:               order.ID,
+		BusinessID:       uint(0),
+		IntegrationID:    order.IntegrationID,
+		OrderNumber:      order.OrderNumber,
+		TotalAmount:      order.TotalAmount,
+		Subtotal:         order.Subtotal,
+		Tax:              order.Tax,
+		Discount:         order.Discount,
 		ShippingCost:     order.ShippingCost,
 		ShippingDiscount: order.ShippingDiscount,
-		Currency:        order.Currency,
-		CustomerName:    order.CustomerName,
-		CustomerEmail:   order.CustomerEmail,
-		CustomerPhone:   order.CustomerPhone,
-		CustomerDNI:     order.CustomerDNI,
-		IsPaid:          order.IsPaid,
-		IsCOD:           detectIsCOD(order),
-		PaymentMethodID: order.PaymentMethodID,
-		Invoiceable:     order.Invoiceable,
-		IsTest:          order.IsTest,
-		Status:          order.Status,
-		CreatedAt:       order.CreatedAt,
+		FreeShipping:     order.FreeShipping,
+		Currency:         order.Currency,
+		CustomerName:     order.CustomerName,
+		CustomerEmail:    order.CustomerEmail,
+		CustomerPhone:    order.CustomerPhone,
+		CustomerDNI:      order.CustomerDNI,
+		IsPaid:           order.IsPaid,
+		IsCOD:            detectIsCOD(order),
+		PaymentMethodID:  order.PaymentMethodID,
+		Invoiceable:      order.Invoiceable,
+		IsTest:           order.IsTest,
+		Status:           order.Status,
+		CreatedAt:        order.CreatedAt,
 	}
 
 	// BusinessID puede ser nil en el modelo, asignar valor
@@ -156,23 +157,23 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	items := make([]dtos.OrderItemData, 0, len(order.OrderItems))
 	for _, orderItem := range order.OrderItems {
 		item := dtos.OrderItemData{
-			ProductID:   orderItem.ProductID,  // ✅ ID correcto de tabla products (PRD_xxx)
-			SKU:         "",                    // Se obtendrá del Product si existe
-			Name:        "",                    // Se obtendrá del Product si existe
-			Description: nil,
-			Quantity:    orderItem.Quantity,
-			UnitPrice:   orderItem.UnitPrice,
-			UnitPriceBase: orderItem.UnitPriceBase,
-			TotalPrice:  orderItem.TotalPrice,
-			Tax:         orderItem.Tax,
-			TaxRate:     orderItem.TaxRate,
-			Discount:        orderItem.Discount,
-			DiscountPercent: orderItem.DiscountPercent,
-			UnitPricePresentment:      orderItem.UnitPricePresentment,
-			UnitPriceBasePresentment:  orderItem.UnitPriceBasePresentment,
-			TotalPricePresentment:     orderItem.TotalPricePresentment,
-			DiscountPresentment:       orderItem.DiscountPresentment,
-			TaxPresentment:            orderItem.TaxPresentment,
+			ProductID:                orderItem.ProductID, // ✅ ID correcto de tabla products (PRD_xxx)
+			SKU:                      "",                  // Se obtendrá del Product si existe
+			Name:                     "",                  // Se obtendrá del Product si existe
+			Description:              nil,
+			Quantity:                 orderItem.Quantity,
+			UnitPrice:                orderItem.UnitPrice,
+			UnitPriceBase:            orderItem.UnitPriceBase,
+			TotalPrice:               orderItem.TotalPrice,
+			Tax:                      orderItem.Tax,
+			TaxRate:                  orderItem.TaxRate,
+			Discount:                 orderItem.Discount,
+			DiscountPercent:          orderItem.DiscountPercent,
+			UnitPricePresentment:     orderItem.UnitPricePresentment,
+			UnitPriceBasePresentment: orderItem.UnitPriceBasePresentment,
+			TotalPricePresentment:    orderItem.TotalPricePresentment,
+			DiscountPresentment:      orderItem.DiscountPresentment,
+			TaxPresentment:           orderItem.TaxPresentment,
 		}
 
 		// Obtener información del producto desde la relación (si existe y no está soft-deleted)
@@ -197,6 +198,7 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 // - business_id (multi-tenant isolation)
 //   - Si businessID = 0 (super admin): retorna órdenes de TODOS los businesses
 //   - Si businessID != 0 (usuario normal): retorna solo órdenes de ese business
+//
 // - invoiceable = true
 // - invoice_id IS NULL (no facturadas previamente)
 func (r *Repository) GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error) {

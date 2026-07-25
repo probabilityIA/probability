@@ -13,8 +13,8 @@ type Invoice struct {
 	// Relaciones (solo IDs)
 	OrderID                string // UUID de la orden
 	BusinessID             uint
-	InvoicingProviderID    *uint  // DEPRECATED: Mantener temporalmente para dual-read
-	InvoicingIntegrationID *uint  // Integración de facturación (Softpymes - desde integrations/)
+	InvoicingProviderID    *uint // DEPRECATED: Mantener temporalmente para dual-read
+	InvoicingIntegrationID *uint // Integración de facturación (Softpymes - desde integrations/)
 
 	// Identificadores
 	InvoiceNumber  string
@@ -22,13 +22,14 @@ type Invoice struct {
 	InternalNumber string
 
 	// Información financiera
-	Subtotal     float64
-	Tax          float64
-	Discount     float64
+	Subtotal         float64
+	Tax              float64
+	Discount         float64
 	ShippingCost     float64
 	ShippingDiscount float64
-	TotalAmount  float64
-	Currency     string
+	FreeShipping     bool
+	TotalAmount      float64
+	Currency         string
 
 	// Información del cliente
 	CustomerName  string

@@ -192,6 +192,9 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	if effectiveShipping < 0 {
 		effectiveShipping = 0
 	}
+	if req.FreeShipping {
+		effectiveShipping = 0
+	}
 
 	if effectiveShipping > 0 {
 		shippingPrice := req.ShippingCostBase

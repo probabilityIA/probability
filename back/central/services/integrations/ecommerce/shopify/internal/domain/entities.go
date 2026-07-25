@@ -33,28 +33,29 @@ type ShopifyOrderDTO struct {
 }
 
 type ShopifyOrder struct {
-	BusinessID      *uint
-	IntegrationID   uint
-	IntegrationType string
-	Platform        string
-	ExternalID      string
-	OrderNumber     string
-	TotalAmount     float64
-	Subtotal        float64
-	Tax             float64
-	Discount        float64
-	ShippingCost    float64
-	Currency        string
-	Customer        ShopifyCustomer
-	ShippingAddress ShopifyAddress
-	Status          string
-	OriginalStatus  string
-	Items           []ShopifyOrderItem
-	Metadata        map[string]interface{}
-	OccurredAt      time.Time
-	ImportedAt      time.Time
-	OrderStatusURL  string
-	RawData         []byte
+	BusinessID       *uint
+	IntegrationID    uint
+	IntegrationType  string
+	Platform         string
+	ExternalID       string
+	OrderNumber      string
+	TotalAmount      float64
+	Subtotal         float64
+	Tax              float64
+	Discount         float64
+	ShippingCost     float64
+	HasShippingLines bool
+	Currency         string
+	Customer         ShopifyCustomer
+	ShippingAddress  ShopifyAddress
+	Status           string
+	OriginalStatus   string
+	Items            []ShopifyOrderItem
+	Metadata         map[string]interface{}
+	OccurredAt       time.Time
+	ImportedAt       time.Time
+	OrderStatusURL   string
+	RawData          []byte
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment         float64
@@ -126,6 +127,7 @@ type ProbabilityOrderDTO struct {
 	Tax             float64
 	Discount        float64
 	ShippingCost    float64
+	FreeShipping    bool
 	TotalAmount     float64
 	Currency        string
 	CodTotal        *float64

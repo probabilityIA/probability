@@ -18,6 +18,7 @@ type SerializableProbabilityOrderDTO struct {
 	Tax                float64                         `json:"tax"`
 	Discount           float64                         `json:"discount"`
 	ShippingCost       float64                         `json:"shipping_cost"`
+	FreeShipping       bool                            `json:"free_shipping"`
 	TotalAmount        float64                         `json:"total_amount"`
 	Currency           string                          `json:"currency"`
 	CodTotal           *float64                        `json:"cod_total"`

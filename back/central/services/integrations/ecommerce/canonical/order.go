@@ -25,6 +25,7 @@ type ProbabilityOrderDTO struct {
 	Tax             float64
 	Discount        float64
 	ShippingCost    float64
+	FreeShipping    bool
 	TotalAmount     float64
 	Currency        string
 	CodTotal        *float64

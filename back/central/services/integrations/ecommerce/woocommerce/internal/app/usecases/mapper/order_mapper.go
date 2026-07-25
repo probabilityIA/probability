@@ -39,6 +39,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	totalTax := parseFloat(order.TotalTax)
 	discount := parseFloat(order.DiscountTotal)
 	shippingCost := parseFloat(order.ShippingTotal)
+	freeShipping := shippingCost <= 0 && len(order.ShippingLines) > 0
 	subtotal := totalAmount - totalTax - shippingCost + discount
 
 	// Customer name from billing
@@ -73,6 +74,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 		Tax:             totalTax,
 		Discount:        discount,
 		ShippingCost:    shippingCost,
+		FreeShipping:    freeShipping,
 		TotalAmount:     totalAmount,
 		Currency:        order.Currency,
 		CustomerName:    customerName,

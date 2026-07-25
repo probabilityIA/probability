@@ -423,3 +423,49 @@ func TestParseFloat(t *testing.T) {
 		})
 	}
 }
+
+func TestMapWooOrderToProbability_FreeShipping(t *testing.T) {
+	tests := []struct {
+		name          string
+		shippingTotal string
+		shippingLines []domain.WooCommerceShippingLine
+		want          bool
+	}{
+		{
+			name:          "la tienda aplico envio gratis: hay linea de envio en cero",
+			shippingTotal: "0.00",
+			shippingLines: []domain.WooCommerceShippingLine{{MethodTitle: "Envio Gratuito", Total: "0.00"}},
+			want:          true,
+		},
+		{
+			name:          "la tienda cobro el envio",
+			shippingTotal: "15000.00",
+			shippingLines: []domain.WooCommerceShippingLine{{MethodTitle: "Envio estandar", Total: "15000.00"}},
+			want:          false,
+		},
+		{
+			name:          "sin linea de envio: no es envio gratis, es que no hubo envio",
+			shippingTotal: "0.00",
+			shippingLines: nil,
+			want:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			order := &domain.WooCommerceOrder{
+				ID:            1,
+				Number:        "1",
+				Total:         "100000.00",
+				ShippingTotal: tt.shippingTotal,
+				ShippingLines: tt.shippingLines,
+			}
+
+			dto := MapWooOrderToProbability(order, nil)
+
+			if dto.FreeShipping != tt.want {
+				t.Errorf("FreeShipping = %v, se esperaba %v", dto.FreeShipping, tt.want)
+			}
+		})
+	}
+}

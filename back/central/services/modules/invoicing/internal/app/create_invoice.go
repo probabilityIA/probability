@@ -144,6 +144,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Discount:               order.Discount,
 		ShippingCost:           order.ShippingCost,
 		ShippingDiscount:       order.ShippingDiscount,
+		FreeShipping:           order.FreeShipping,
 		TotalAmount:            order.TotalAmount,
 		Currency:               order.Currency,
 		CustomerName:           order.CustomerName,
@@ -294,7 +295,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	shippingCostBase := dtos.ShippingCostBase(invoice.ShippingCost, shippingTaxRate)
 
 	invoiceData := dtos.InvoiceData{
-		IntegrationID:    integrationID,
+		IntegrationID: integrationID,
 		Customer: dtos.InvoiceCustomerData{
 			Name:  invoice.CustomerName,
 			Email: invoice.CustomerEmail,
@@ -308,6 +309,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Discount:         invoice.Discount,
 		ShippingCost:     invoice.ShippingCost,
 		ShippingDiscount: invoice.ShippingDiscount,
+		FreeShipping:     invoice.FreeShipping,
 		ShippingCostBase: shippingCostBase,
 		Currency:         invoice.Currency,
 		OrderID:          invoice.OrderID,

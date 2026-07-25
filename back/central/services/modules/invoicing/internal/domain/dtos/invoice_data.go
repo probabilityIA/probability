@@ -11,24 +11,24 @@ type InvoiceCustomerData struct {
 
 // InvoiceItemData datos de un item para facturación
 type InvoiceItemData struct {
-	ProductID   *string  `json:"product_id"`
-	SKU         string   `json:"sku"`
-	Name        string   `json:"name"`
-	Description *string  `json:"description"`
-	Quantity    int      `json:"quantity"`
-	UnitPrice   float64  `json:"unit_price"`
-	UnitPriceBase float64 `json:"unit_price_base"` // Precio sin impuestos
-	TotalPrice  float64  `json:"total_price"`
-	Tax         float64  `json:"tax"`
-	TaxRate     *float64 `json:"tax_rate"`
+	ProductID       *string  `json:"product_id"`
+	SKU             string   `json:"sku"`
+	Name            string   `json:"name"`
+	Description     *string  `json:"description"`
+	Quantity        int      `json:"quantity"`
+	UnitPrice       float64  `json:"unit_price"`
+	UnitPriceBase   float64  `json:"unit_price_base"` // Precio sin impuestos
+	TotalPrice      float64  `json:"total_price"`
+	Tax             float64  `json:"tax"`
+	TaxRate         *float64 `json:"tax_rate"`
 	Discount        float64  `json:"discount"`
 	DiscountPercent float64  `json:"discount_percent"`
 	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment      float64 `json:"unit_price_presentment"`
-	UnitPriceBasePresentment  float64 `json:"unit_price_base_presentment"`
-	TotalPricePresentment     float64 `json:"total_price_presentment"`
-	DiscountPresentment       float64 `json:"discount_presentment"`
-	TaxPresentment            float64 `json:"tax_presentment"`
+	UnitPricePresentment     float64 `json:"unit_price_presentment"`
+	UnitPriceBasePresentment float64 `json:"unit_price_base_presentment"`
+	TotalPricePresentment    float64 `json:"total_price_presentment"`
+	DiscountPresentment      float64 `json:"discount_presentment"`
+	TaxPresentment           float64 `json:"tax_presentment"`
 }
 
 // ShippingCostBase calcula el costo de envío sin impuestos
@@ -50,6 +50,7 @@ type InvoiceData struct {
 	Discount         float64                `json:"discount"`
 	ShippingCost     float64                `json:"shipping_cost"`
 	ShippingDiscount float64                `json:"shipping_discount"`
+	FreeShipping     bool                   `json:"free_shipping"`
 	ShippingCostBase float64                `json:"shipping_cost_base"` // Envío sin impuestos
 	Currency         string                 `json:"currency"`
 	OrderID          string                 `json:"order_id"`

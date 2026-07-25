@@ -170,6 +170,9 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		shippingDiscount = s.ShippingDiscountPresentment
 	}
 
+	freeShipping := s.HasShippingLines &&
+		(shippingCost <= 0 || shippingDiscount >= shippingCost)
+
 	// Determine COD Total
 	var codTotal *float64
 	isCOD := false
@@ -225,6 +228,7 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		Tax:                         tax,
 		Discount:                    discount,
 		ShippingCost:                shippingCost,
+		FreeShipping:                freeShipping,
 		ShippingDiscount:            shippingDiscount,
 		ShippingDiscountPresentment: s.ShippingDiscountPresentment,
 		TotalAmount:                 totalAmount,

@@ -29,6 +29,7 @@ type Order struct {
 	Tax                 float64  `gorm:"type:decimal(12,2);not null;default:0"`
 	Discount            float64  `gorm:"type:decimal(12,2);not null;default:0"`
 	ShippingCost        float64  `gorm:"type:decimal(12,2);not null;default:0"`
+	FreeShipping        bool     `gorm:"column:free_shipping;not null;index"`
 	TotalAmount         float64  `gorm:"type:decimal(12,2);not null"`
 	Currency            string   `gorm:"size:10;default:'USD'"`
 	IsCod               bool     `gorm:"column:is_cod;not null;default:false;index"`

@@ -151,6 +151,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 		Tax:                         order.Tax,
 		Discount:                    order.Discount,
 		ShippingCost:                order.ShippingCost,
+		FreeShipping:                order.FreeShipping,
 		ShippingDiscount:            order.ShippingDiscount,
 		ShippingDiscountPresentment: order.ShippingDiscountPresentment,
 		TotalAmount:                 order.TotalAmount,
