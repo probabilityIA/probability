@@ -29,6 +29,7 @@ func (h *Handlers) ListManifestPending(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "carrier requerido"})
 		return
 	}
+	onlyWithGuide := c.DefaultQuery("only_with_guide", "false") == "true"
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "25"))
 
@@ -36,6 +37,7 @@ func (h *Handlers) ListManifestPending(c *gin.Context) {
 		BusinessID:      uint(bid),
 		IncludeChildren: includeChildren,
 		Carrier:         carrier,
+		OnlyWithGuide:   onlyWithGuide,
 		Page:            page,
 		PageSize:        pageSize,
 	})

@@ -275,7 +275,7 @@ export const getManifestCarriersAction = async (businessId: number): Promise<{ s
     }
 };
 
-export const getManifestPendingAction = async (businessId: number, carrier: string, page: number = 1, pageSize: number = 25): Promise<ManifestPendingPage> => {
+export const getManifestPendingAction = async (businessId: number, carrier: string, page: number = 1, pageSize: number = 25, onlyWithGuide: boolean = false): Promise<ManifestPendingPage> => {
     try {
         const token = await getAuthToken();
         const apiBase = env.API_BASE_URL;
@@ -285,6 +285,7 @@ export const getManifestPendingAction = async (businessId: number, carrier: stri
         params.set('carrier', carrier);
         params.set('page', String(page));
         params.set('page_size', String(pageSize));
+        if (onlyWithGuide) params.set('only_with_guide', 'true');
         const res = await fetch(`${apiBase}/shipments/manifest/pending?${params}`, {
             headers: { 'Authorization': `Bearer ${token}` },
             cache: 'no-store',

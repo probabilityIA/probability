@@ -31,18 +31,18 @@ func (r *Repository) ListPendingCarriers(ctx context.Context, businessID uint, i
 	businessIDs := r.resolveManifestBusinessIDs(ctx, businessID, includeChildren)
 
 	type row struct {
-		Carrier *string
+		Carrier string
 		Count   int64
 	}
 	var rows []row
 	err := r.db.Conn(ctx).
 		Table("shipments AS s").
-		Select("s.carrier, COUNT(*) AS count").
+		Select(carrierGroupExpr + " AS carrier, COUNT(*) AS count").
 		Joins("LEFT JOIN orders o ON o.id = s.order_id").
 		Where("s.deleted_at IS NULL").
 		Where("s.status = ?", "pending").
 		Where("o.business_id IN ?", businessIDs).
-		Group("s.carrier").
+		Group(carrierGroupExpr).
 		Order("count DESC").
 		Scan(&rows).Error
 	if err != nil {
@@ -50,10 +50,7 @@ func (r *Repository) ListPendingCarriers(ctx context.Context, businessID uint, i
 	}
 	out := make([]domain.ManifestCarrierCount, 0, len(rows))
 	for _, r := range rows {
-		name := ""
-		if r.Carrier != nil {
-			name = *r.Carrier
-		}
+		name := r.Carrier
 		if name == "" {
 			name = "Sin asignar"
 		}
@@ -61,6 +58,13 @@ func (r *Repository) ListPendingCarriers(ctx context.Context, businessID uint, i
 	}
 	return out, nil
 }
+
+// carrierGroupExpr normaliza s.carrier para agrupar variantes del mismo
+// transportador que llegan con distinta capitalizacion o con el nivel de
+// servicio pegado (ej. "coordinadora" y "COORDINADORA - Normal (2 dias
+// habiles)" deben contar como "COORDINADORA"). No modifica el dato crudo,
+// solo como se agrupa/filtra en este listado.
+const carrierGroupExpr = "UPPER(TRIM(SPLIT_PART(COALESCE(s.carrier, ''), ' - ', 1)))"
 
 func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, int64, error) {
 	if filter.BusinessID == 0 {
@@ -80,8 +84,12 @@ func (r *Repository) ListPendingForManifest(ctx context.Context, filter domain.M
 		if filter.Carrier == "Sin asignar" {
 			base = base.Where("(s.carrier IS NULL OR s.carrier = '')")
 		} else {
-			base = base.Where("s.carrier = ?", filter.Carrier)
+			base = base.Where(carrierGroupExpr+" = ?", filter.Carrier)
 		}
+	}
+
+	if filter.OnlyWithGuide {
+		base = base.Where("s.tracking_number IS NOT NULL AND s.tracking_number <> ''")
 	}
 
 	var total int64

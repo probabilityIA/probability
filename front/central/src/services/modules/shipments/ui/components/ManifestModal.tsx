@@ -39,6 +39,7 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
     const [totalPages, setTotalPages] = useState(1);
     const [selected, setSelected] = useState<Set<number>>(new Set());
     const [search, setSearch] = useState('');
+    const [onlyWithGuide, setOnlyWithGuide] = useState(false);
     const [generating, setGenerating] = useState(false);
 
     useEffect(() => {
@@ -59,16 +60,16 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
     useEffect(() => {
         if (!isOpen || !businessId || !carrier) return;
         setLoadingRows(true);
-        getManifestPendingAction(businessId, carrier, page, pageSize)
+        getManifestPendingAction(businessId, carrier, page, pageSize, onlyWithGuide)
             .then((res) => {
                 setRows(res.success ? res.data : []);
                 setTotal(res.total || 0);
                 setTotalPages(res.total_pages || 1);
             })
             .finally(() => setLoadingRows(false));
-    }, [isOpen, businessId, carrier, page, pageSize]);
+    }, [isOpen, businessId, carrier, page, pageSize, onlyWithGuide]);
 
-    useEffect(() => { setPage(1); }, [carrier, pageSize]);
+    useEffect(() => { setPage(1); }, [carrier, pageSize, onlyWithGuide]);
 
     const filteredRows = useMemo(() => {
         if (!search.trim()) return rows;
@@ -168,6 +169,15 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
                         />
                     </div>
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={onlyWithGuide}
+                            onChange={(e) => setOnlyWithGuide(e.target.checked)}
+                            className="rounded"
+                        />
+                        Solo con guia
+                    </label>
                     <div className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                         Seleccionados: <span className="text-indigo-600 dark:text-indigo-300">{selected.size}</span>
                     </div>
@@ -214,7 +224,11 @@ export function ManifestModal({ isOpen, onClose, businessId }: ManifestModalProp
                                         <td className="px-2 py-2 text-[11px] text-gray-500 dark:text-gray-400 truncate">{formatDate(s.shipment_created_at)}</td>
                                         <td className="px-2 py-2">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 truncate">Guia: {s.shipment_status || '—'}</span>
+                                                {s.tracking_number?.trim() ? (
+                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 truncate">Guia generada</span>
+                                                ) : (
+                                                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 truncate">Sin guia</span>
+                                                )}
                                                 <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 truncate">Ord: {s.order_status || '—'}</span>
                                             </div>
                                         </td>
