@@ -738,7 +738,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         )}
                                     </div>
 
-                                    <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
+                                    <div className="lg:col-span-1 lg:row-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
                                         <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Dirección</h3>
                                         {loadingDetails ? (
                                             <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
@@ -775,9 +775,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             </div>
                                         )}
                                     </div>
-                                </div>
 
-                                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                                     <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gestión y Novedades</h3>
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div className="flex flex-col">
@@ -838,6 +837,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 {isSendingWhatsApp ? 'Enviando...' : whatsAppSent ? '✓ Enviado' : '💬 WhatsApp'}
                                             </button>
                                         )}
+                                    </div>
                                     </div>
                                 </div>
 
