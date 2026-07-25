@@ -23,47 +23,20 @@ import { ChangeStatusModal } from './ChangeStatusModal';
 import { QuotationExpresModal } from './QuotationExpresModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
+import { getCarrierLogo } from '@/shared/utils/carrier-logos';
 
-// Mapeo de carrier (valor raw de BD) a logo URL
-const CARRIER_LOGOS: Record<string, string> = {
-    'SERVIENTREGA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-    'Servientrega': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-    'servientrega': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_servientrega.png',
-    'COORDINADORA': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
-    'Coordinadora': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
-    'coordinadora': 'https://images-cam93.s3.us-east-1.amazonaws.com/imagen_coordinadora.png',
-    'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-    'dhlexpress': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-    'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-    'dhl': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
-    'FEDEX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
-    'fedex': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
-    'INTERRAPIDISIMO': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg',
-    'InterRapidisimo': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg',
-    'interrapidisimo': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg',
-    'interrapidísimo': 'https://probability-media-assets.s3.us-east-1.amazonaws.com/carriers/interrapidisimo.jpg',
-    '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
-    '472logistica': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
-    'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-    'speed': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-    'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-    'speedcargo': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
-    'ENVIA': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-    'Envia': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-    'EnvioClick': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-    'envioclick': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-    'envia': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
-    'PIBOX': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
-    'pibox': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
-    'TCC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-    'tcc': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-    'TRANSPORTADORADECARACOLOMBIA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-    'transportadoradecaracolombia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
-    '99MINUTOS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
-    '99minutos': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
-    'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
-    'deprisa': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
-};
+const COMBINING_MARK_MIN = 0x0300;
+const COMBINING_MARK_MAX = 0x036f;
+
+function normalizeCarrierLabel(value: string): string {
+    const decomposed = value.normalize('NFD');
+    let out = '';
+    for (let i = 0; i < decomposed.length; i++) {
+        const code = decomposed.charCodeAt(i);
+        if (code < COMBINING_MARK_MIN || code > COMBINING_MARK_MAX) out += decomposed[i];
+    }
+    return out.toUpperCase().replace(/[\s\-_]/g, '');
+}
 
 // Componente memoizado para las filas de la tabla
 const OrderRow = memo(({
@@ -345,23 +318,39 @@ const OrderRow = memo(({
                 </td>
             )}
             <td className="px-3 sm:px-6 py-4 text-center hidden md:table-cell">
-                {order.shipment?.carrier ? (
-                    <div className="flex items-center justify-center">
-                        {CARRIER_LOGOS[order.shipment.carrier] ? (
-                            <img
-                                src={CARRIER_LOGOS[order.shipment.carrier]}
-                                alt={order.shipment.carrier}
-                                className="h-8 w-12 object-contain"
-                                loading="lazy"
-                                title={order.shipment.carrier}
-                            />
-                        ) : (
-                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 px-2 py-1 rounded">
-                                {order.shipment.carrier.substring(0, 6)}
-                            </span>
-                        )}
-                    </div>
-                ) : (
+                {order.shipment?.carrier ? (() => {
+                    const logo = getCarrierLogo(order.shipment.carrier);
+                    const hasGuide = !!order.shipment.tracking_number;
+                    const isFreeShipping = normalizeCarrierLabel(order.shipment.carrier) === 'ENVIOGRATUITO';
+                    const title = hasGuide
+                        ? order.shipment.carrier
+                        : `${order.shipment.carrier} (preseleccionada, sin guia generada)`;
+                    return (
+                        <div
+                            className={`flex items-center justify-center rounded-md py-1 ${isFreeShipping ? '' : hasGuide ? '' : 'bg-amber-50 dark:bg-amber-900/20'}`}
+                            title={title}
+                        >
+                            {logo ? (
+                                <img
+                                    src={logo}
+                                    alt={order.shipment.carrier}
+                                    className={`h-8 w-12 object-contain ${hasGuide ? '' : 'grayscale opacity-60'}`}
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <span className={`text-xs font-medium px-2 py-1 rounded ${
+                                    isFreeShipping
+                                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/40'
+                                        : hasGuide
+                                            ? 'text-gray-600 dark:text-gray-300 bg-gray-100'
+                                            : 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40'
+                                }`}>
+                                    {order.shipment.carrier.split(' - ')[0].substring(0, 12)}
+                                </span>
+                            )}
+                        </div>
+                    );
+                })() : (
                     <span className="text-xs text-gray-400 text-center block">Sin envío</span>
                 )}
             </td>

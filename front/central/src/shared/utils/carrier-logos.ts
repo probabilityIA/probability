@@ -20,8 +20,26 @@ export const CARRIER_LOGOS: Record<string, string> = {
     'RAPPI': 'https://static.vecteezy.com/system/resources/previews/067/941/720/non_2x/rappi-logo-rounded-hd-free-png.png',
 };
 
+const COMBINING_MARK_MIN = 0x0300;
+const COMBINING_MARK_MAX = 0x036f;
+
+function stripDiacritics(value: string): string {
+    let out = '';
+    const decomposed = value.normalize('NFD');
+    for (let i = 0; i < decomposed.length; i++) {
+        const code = decomposed.charCodeAt(i);
+        if (code < COMBINING_MARK_MIN || code > COMBINING_MARK_MAX) {
+            out += decomposed[i];
+        }
+    }
+    return out;
+}
+
 export function getCarrierLogo(carrier?: string | null): string | null {
     if (!carrier) return null;
-    const key = carrier.toUpperCase().replace(/[\s\-_]/g, '');
+    const baseName = carrier.split(' - ')[0];
+    const key = stripDiacritics(baseName)
+        .toUpperCase()
+        .replace(/[\s\-_]/g, '');
     return CARRIER_LOGOS[key] || null;
 }
