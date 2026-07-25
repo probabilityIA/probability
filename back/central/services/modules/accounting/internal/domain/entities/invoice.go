@@ -16,10 +16,21 @@ const (
 
 type InvoiceItem struct {
 	ID          uint
+	ServiceID   *uint
+	UnspscCode  string
 	Description string
 	Quantity    float64
 	UnitPrice   float64
 	Amount      float64
+}
+
+type Service struct {
+	ID         uint
+	Code       string
+	Name       string
+	UnspscCode string
+	UnitPrice  float64
+	IsActive   bool
 }
 
 type Invoice struct {

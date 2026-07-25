@@ -13,7 +13,7 @@ import (
 func invoiceItemsToDTO(items []request.InvoiceItemRequest) []dtos.InvoiceItemDTO {
 	out := make([]dtos.InvoiceItemDTO, len(items))
 	for i, item := range items {
-		out[i] = dtos.InvoiceItemDTO{Description: item.Description, Quantity: item.Quantity, UnitPrice: item.UnitPrice}
+		out[i] = dtos.InvoiceItemDTO{ServiceID: item.ServiceID, UnspscCode: item.UnspscCode, Description: item.Description, Quantity: item.Quantity, UnitPrice: item.UnitPrice}
 	}
 	return out
 }

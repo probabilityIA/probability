@@ -107,6 +107,8 @@ func (AccountingInvoice) TableName() string { return "accounting_invoices" }
 type AccountingInvoiceItem struct {
 	gorm.Model
 	InvoiceID   uint    `gorm:"not null;index"`
+	ServiceID   *uint   `gorm:"index"`
+	UnspscCode  string  `gorm:"size:10"`
 	Description string  `gorm:"size:300;not null"`
 	Quantity    float64 `gorm:"type:decimal(12,2);not null;default:1"`
 	UnitPrice   float64 `gorm:"type:decimal(15,2);not null"`
@@ -116,3 +118,14 @@ type AccountingInvoiceItem struct {
 }
 
 func (AccountingInvoiceItem) TableName() string { return "accounting_invoice_items" }
+
+type AccountingService struct {
+	gorm.Model
+	Code       string  `gorm:"size:30;not null;uniqueIndex"`
+	Name       string  `gorm:"size:200;not null"`
+	UnspscCode string  `gorm:"size:10"`
+	UnitPrice  float64 `gorm:"type:decimal(15,2);not null;default:0"`
+	IsActive   bool    `gorm:"default:true;index"`
+}
+
+func (AccountingService) TableName() string { return "accounting_services" }

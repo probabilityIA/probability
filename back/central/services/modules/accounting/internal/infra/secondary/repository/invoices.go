@@ -43,6 +43,8 @@ func (r *Repository) CreateInvoice(ctx context.Context, inv *entities.Invoice) (
 		for _, item := range inv.Items {
 			if err := tx.Create(&models.AccountingInvoiceItem{
 				InvoiceID:   model.ID,
+				ServiceID:   item.ServiceID,
+				UnspscCode:  item.UnspscCode,
 				Description: item.Description,
 				Quantity:    item.Quantity,
 				UnitPrice:   item.UnitPrice,
@@ -93,6 +95,8 @@ func (r *Repository) UpdateInvoice(ctx context.Context, inv *entities.Invoice) (
 		for _, item := range inv.Items {
 			if err := tx.Create(&models.AccountingInvoiceItem{
 				InvoiceID:   inv.ID,
+				ServiceID:   item.ServiceID,
+				UnspscCode:  item.UnspscCode,
 				Description: item.Description,
 				Quantity:    item.Quantity,
 				UnitPrice:   item.UnitPrice,
@@ -154,6 +158,8 @@ func (r *Repository) invoiceToEntity(row *invoiceRow, items []models.AccountingI
 	for _, item := range items {
 		inv.Items = append(inv.Items, entities.InvoiceItem{
 			ID:          item.ID,
+			ServiceID:   item.ServiceID,
+			UnspscCode:  item.UnspscCode,
 			Description: item.Description,
 			Quantity:    item.Quantity,
 			UnitPrice:   item.UnitPrice,

@@ -37,6 +37,10 @@ type IUseCase interface {
 	CancelInvoice(ctx context.Context, id uint) (*entities.Invoice, error)
 
 	GetClientProfile(ctx context.Context, businessID uint) (*dtos.ClientProfileDTO, error)
+	ListServices(ctx context.Context) ([]entities.Service, error)
+	CreateService(ctx context.Context, dto dtos.SaveServiceDTO) (*entities.Service, error)
+	UpdateService(ctx context.Context, dto dtos.SaveServiceDTO) (*entities.Service, error)
+	DeleteService(ctx context.Context, id uint) error
 	GetDianConfig(ctx context.Context) (*dtos.DianConfigStatus, error)
 	SaveDianConfig(ctx context.Context, dto dtos.DianConfigDTO) (*dtos.DianConfigStatus, error)
 	EmitInvoiceDian(ctx context.Context, dto dtos.EmitInvoiceDianDTO) (*entities.Invoice, error)

@@ -32,19 +32,33 @@ func (f *FactusEmitter) Emit(ctx context.Context, integrationID uint, inv *entit
 		ivaRate = &zero
 	}
 
+	allUnspsc := len(inv.Items) > 0
+	for _, item := range inv.Items {
+		if item.UnspscCode == "" {
+			allUnspsc = false
+			break
+		}
+	}
 	items := make([]factusinv.PlatformInvoiceItem, len(inv.Items))
 	for i, item := range inv.Items {
 		qty := int(math.Round(item.Quantity))
 		if qty < 1 {
 			qty = 1
 		}
+		code := fmt.Sprintf("%s-%d", inv.Number, i+1)
+		if allUnspsc {
+			code = item.UnspscCode
+		}
 		items[i] = factusinv.PlatformInvoiceItem{
-			Code:      fmt.Sprintf("%s-%d", inv.Number, i+1),
+			Code:      code,
 			Name:      item.Description,
 			Quantity:  qty,
 			UnitPrice: item.UnitPrice,
 			TaxRate:   ivaRate,
 		}
+	}
+	if allUnspsc {
+		config["standard_code_id"] = 2
 	}
 
 	result, err := f.emitter.Emit(ctx, factusinv.PlatformInvoiceRequest{

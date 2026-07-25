@@ -2,6 +2,7 @@ import { env } from '@/shared/config/env';
 import { IAccountingRepository } from '../../domain/ports';
 import {
     AccountingReport,
+    AccountingService,
     ClientProfile,
     Concept,
     CreateConceptDTO,
@@ -16,6 +17,7 @@ import {
     GetInvoicesParams,
     Invoice,
     InvoicesListResponse,
+    SaveServiceDTO,
     SyncResult,
     Tax,
     UpdateConceptDTO,
@@ -114,6 +116,33 @@ export class AccountingApiRepository implements IAccountingRepository {
             body: JSON.stringify(data),
         });
         return res.data;
+    }
+
+    async getServices(): Promise<AccountingService[]> {
+        const res = await this.fetch<AccountingService[]>('/accounting/services');
+        return res.data || [];
+    }
+
+    async createService(data: SaveServiceDTO): Promise<AccountingService> {
+        const res = await this.fetch<AccountingService>('/accounting/services', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async updateService(id: number, data: SaveServiceDTO): Promise<AccountingService> {
+        const res = await this.fetch<AccountingService>(`/accounting/services/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async deleteService(id: number): Promise<void> {
+        await this.fetch<unknown>(`/accounting/services/${id}`, {
+            method: 'DELETE',
+        });
     }
 
     async getEntries(params?: GetEntriesParams): Promise<EntriesListResponse> {

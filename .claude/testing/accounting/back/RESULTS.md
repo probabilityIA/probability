@@ -89,6 +89,15 @@ Script: e2e_fiscal.py (14 checks) + verificacion de permisos aparte. **19 OK / 0
   Nota: el login de usuario business devuelve el token SOLO en la cookie HttpOnly
   session_token (el campo token del JSON va vacio); los tests deben capturar Set-Cookie.
 
+## 2026-07-24 - Suite catalogo de servicios (CU-60 a CU-64)
+
+Script: e2e_services.py (8 checks). **8 OK / 0 FAIL**.
+
+- CRUD /accounting/services (seed SOFT-LOG, code en mayusculas, 409 duplicado, update, delete, 404).
+- Factura con item del catalogo persiste service_id + unspsc_code y calcula totales.
+- Al emitir DIAN: si TODOS los items tienen UNSPSC se envia standard_code_id=2 con el
+  codigo UNSPSC como code_reference; si no, codigo propio del contribuyente (default).
+
 ## Notas
 
 - Login super admin de .env.ai fallo (password desactualizado en DB local). Se genero JWT

@@ -1,5 +1,6 @@
 import {
     AccountingReport,
+    AccountingService,
     ClientProfile,
     Concept,
     CreateConceptDTO,
@@ -14,6 +15,7 @@ import {
     GetInvoicesParams,
     Invoice,
     InvoicesListResponse,
+    SaveServiceDTO,
     SyncResult,
     Tax,
     UpdateConceptDTO,
@@ -30,6 +32,10 @@ export interface IAccountingRepository {
     getTaxes(): Promise<Tax[]>;
     createTax(data: CreateTaxDTO): Promise<Tax>;
     updateTax(id: number, data: UpdateTaxDTO): Promise<Tax>;
+    getServices(): Promise<AccountingService[]>;
+    createService(data: SaveServiceDTO): Promise<AccountingService>;
+    updateService(id: number, data: SaveServiceDTO): Promise<AccountingService>;
+    deleteService(id: number): Promise<void>;
     getEntries(params?: GetEntriesParams): Promise<EntriesListResponse>;
     createEntry(data: CreateEntryDTO): Promise<Entry>;
     deleteEntry(id: number): Promise<void>;

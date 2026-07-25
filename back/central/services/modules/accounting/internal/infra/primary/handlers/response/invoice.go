@@ -8,6 +8,8 @@ import (
 
 type InvoiceItemResponse struct {
 	ID          uint    `json:"id"`
+	ServiceID   *uint   `json:"service_id"`
+	UnspscCode  string  `json:"unspsc_code"`
 	Description string  `json:"description"`
 	Quantity    float64 `json:"quantity"`
 	UnitPrice   float64 `json:"unit_price"`
@@ -66,7 +68,7 @@ func FromInvoice(e *entities.Invoice) InvoiceResponse {
 	}
 	items := make([]InvoiceItemResponse, len(e.Items))
 	for i, item := range e.Items {
-		items[i] = InvoiceItemResponse{ID: item.ID, Description: item.Description, Quantity: item.Quantity, UnitPrice: item.UnitPrice, Amount: item.Amount}
+		items[i] = InvoiceItemResponse{ID: item.ID, ServiceID: item.ServiceID, UnspscCode: item.UnspscCode, Description: item.Description, Quantity: item.Quantity, UnitPrice: item.UnitPrice, Amount: item.Amount}
 	}
 	return InvoiceResponse{
 		ID:           e.ID,

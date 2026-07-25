@@ -3,9 +3,20 @@ package dtos
 import "time"
 
 type InvoiceItemDTO struct {
+	ServiceID   *uint
+	UnspscCode  string
 	Description string
 	Quantity    float64
 	UnitPrice   float64
+}
+
+type SaveServiceDTO struct {
+	ID         uint
+	Code       string
+	Name       string
+	UnspscCode string
+	UnitPrice  float64
+	IsActive   bool
 }
 
 type CreateInvoiceDTO struct {

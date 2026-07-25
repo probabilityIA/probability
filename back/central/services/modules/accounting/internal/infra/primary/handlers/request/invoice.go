@@ -1,9 +1,19 @@
 package request
 
 type InvoiceItemRequest struct {
+	ServiceID   *uint   `json:"service_id"`
+	UnspscCode  string  `json:"unspsc_code"`
 	Description string  `json:"description" binding:"required"`
 	Quantity    float64 `json:"quantity" binding:"required"`
 	UnitPrice   float64 `json:"unit_price" binding:"required"`
+}
+
+type SaveServiceRequest struct {
+	Code       string  `json:"code" binding:"required"`
+	Name       string  `json:"name" binding:"required"`
+	UnspscCode string  `json:"unspsc_code"`
+	UnitPrice  float64 `json:"unit_price"`
+	IsActive   *bool   `json:"is_active"`
 }
 
 type CreateInvoiceRequest struct {

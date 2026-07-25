@@ -136,3 +136,23 @@ type EntriesListResponse struct {
 	PageSize   int             `json:"page_size"`
 	TotalPages int             `json:"total_pages"`
 }
+
+type ServiceResponse struct {
+	ID         uint    `json:"id"`
+	Code       string  `json:"code"`
+	Name       string  `json:"name"`
+	UnspscCode string  `json:"unspsc_code"`
+	UnitPrice  float64 `json:"unit_price"`
+	IsActive   bool    `json:"is_active"`
+}
+
+func FromService(e *entities.Service) ServiceResponse {
+	return ServiceResponse{
+		ID:         e.ID,
+		Code:       e.Code,
+		Name:       e.Name,
+		UnspscCode: e.UnspscCode,
+		UnitPrice:  e.UnitPrice,
+		IsActive:   e.IsActive,
+	}
+}

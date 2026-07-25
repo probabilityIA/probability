@@ -29,6 +29,8 @@ func (uc *UseCase) buildInvoice(ctx context.Context, conceptID uint, taxIDs []ui
 		}
 		amount := round2(item.Quantity * item.UnitPrice)
 		inv.Items = append(inv.Items, entities.InvoiceItem{
+			ServiceID:   item.ServiceID,
+			UnspscCode:  strings.TrimSpace(item.UnspscCode),
 			Description: desc,
 			Quantity:    item.Quantity,
 			UnitPrice:   item.UnitPrice,

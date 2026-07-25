@@ -3,6 +3,7 @@ import {
     getAccountingConceptsAction,
     getAccountingInvoiceAction,
     getAccountingInvoicesAction,
+    getAccountingServicesAction,
     getAccountingTaxesAction,
 } from '@/services/modules/accounting/infra/actions';
 import { InvoiceStatus } from '@/services/modules/accounting/domain/types';
@@ -37,7 +38,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
     const detailId = Number(params.ver) || 0;
     const openEditDetail = params.editar === '1';
 
-    const [invoicesResult, conceptsResult, taxesResult, detailResult] = await Promise.all([
+    const [invoicesResult, conceptsResult, taxesResult, servicesResult, detailResult] = await Promise.all([
         getAccountingInvoicesAction({
             page,
             page_size: pageSize,
@@ -47,6 +48,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
         }),
         getAccountingConceptsAction(),
         getAccountingTaxesAction(),
+        getAccountingServicesAction(),
         detailId > 0 ? getAccountingInvoiceAction(detailId) : Promise.resolve(null),
     ]);
 
@@ -55,6 +57,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
         : { data: [], total: 0, page, page_size: pageSize, total_pages: 0 };
     const concepts = conceptsResult.success ? conceptsResult.data : [];
     const taxes = taxesResult.success ? taxesResult.data : [];
+    const services = servicesResult.success ? servicesResult.data : [];
     const detailInvoice = detailResult?.success ? detailResult.data : null;
     const error = !invoicesResult.success
         ? invoicesResult.error
@@ -73,6 +76,7 @@ export default async function FacturasPage({ searchParams }: FacturasPageProps) 
                     invoices={invoices}
                     concepts={concepts}
                     taxes={taxes}
+                    services={services}
                     filters={{ page, page_size: pageSize, status, business_id: businessId, is_test: isTest }}
                     detailInvoice={detailInvoice}
                     openEditDetail={openEditDetail}

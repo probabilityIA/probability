@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ConfirmModal, Modal } from '@/shared/ui';
-import { Concept, Invoice, Tax } from '../../domain/types';
+import { AccountingService, Concept, Invoice, Tax } from '../../domain/types';
 import {
     cancelAccountingInvoiceAction,
     deleteAccountingInvoiceAction,
@@ -22,6 +22,7 @@ interface InvoiceDetailModalProps {
     invoice: Invoice;
     concepts: Concept[];
     taxes: Tax[];
+    services: AccountingService[];
     openEdit?: boolean;
 }
 
@@ -57,7 +58,7 @@ const printStyles = `
 
 const fieldClass = 'w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500';
 
-export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, concepts, taxes, openEdit = false }: InvoiceDetailModalProps) {
+export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, concepts, taxes, services, openEdit = false }: InvoiceDetailModalProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [showSend, setShowSend] = useState(false);
@@ -558,6 +559,7 @@ export function InvoiceDetailModal({ isOpen, onClose, onCloseEdit, invoice, conc
                     onClose={closeEdit}
                     concepts={concepts}
                     taxes={taxes}
+                    services={services}
                     invoice={invoice}
                     onSaved={() => {
                         closeEdit();

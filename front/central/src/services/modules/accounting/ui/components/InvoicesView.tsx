@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { SuperAdminBusinessSelector, Table } from '@/shared/ui';
-import { Concept, Invoice, InvoicesListResponse, InvoiceStatus, Tax } from '../../domain/types';
+import { AccountingService, Concept, Invoice, InvoicesListResponse, InvoiceStatus, Tax } from '../../domain/types';
 import { formatCOP, formatEntryDate, invoiceStatusBadgeClass, invoiceStatusLabel } from '../format';
 import { InvoiceFormModal } from './InvoiceFormModal';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
@@ -20,6 +20,7 @@ interface InvoicesViewProps {
     invoices: InvoicesListResponse;
     concepts: Concept[];
     taxes: Tax[];
+    services: AccountingService[];
     filters: InvoicesFilters;
     detailInvoice: Invoice | null;
     openEditDetail?: boolean;
@@ -39,7 +40,7 @@ function buildListUrl(filters: InvoicesFilters): string {
     return `/accounting/facturas?${params.toString()}`;
 }
 
-export function InvoicesView({ invoices, concepts, taxes, filters, detailInvoice, openEditDetail = false, error, openCreate = false }: InvoicesViewProps) {
+export function InvoicesView({ invoices, concepts, taxes, services, filters, detailInvoice, openEditDetail = false, error, openCreate = false }: InvoicesViewProps) {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [showForm, setShowForm] = useState(openCreate);
@@ -250,6 +251,7 @@ export function InvoicesView({ invoices, concepts, taxes, filters, detailInvoice
                     onClose={closeForm}
                     concepts={concepts}
                     taxes={taxes}
+                    services={services}
                     onSaved={(invoice) => {
                         setShowForm(false);
                         openDetail(invoice.id);
@@ -266,6 +268,7 @@ export function InvoicesView({ invoices, concepts, taxes, filters, detailInvoice
                     invoice={detailInvoice}
                     concepts={concepts}
                     taxes={taxes}
+                    services={services}
                     openEdit={openEditDetail}
                 />
             )}

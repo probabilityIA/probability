@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Modal, SuperAdminBusinessSelector } from '@/shared/ui';
-import { ClientProfile, Concept, Invoice, InvoiceItemInputDTO, Tax } from '../../domain/types';
+import { AccountingService, ClientProfile, Concept, Invoice, InvoiceItemInputDTO, Tax } from '../../domain/types';
 import { createAccountingInvoiceAction, getAccountingClientProfileAction, updateAccountingInvoiceAction } from '../../infra/actions';
 import { formatCOP, todayISO } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -11,6 +11,8 @@ interface ItemRow {
     description: string;
     quantity: string;
     unit_price: string;
+    service_id: number;
+    unspsc_code: string;
 }
 
 interface InvoiceFormModalProps {
@@ -19,13 +21,14 @@ interface InvoiceFormModalProps {
     onSaved: (invoice: Invoice) => void;
     concepts: Concept[];
     taxes: Tax[];
+    services: AccountingService[];
     invoice?: Invoice;
 }
 
 const inputClass = 'w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500';
 
 function emptyRow(): ItemRow {
-    return { description: '', quantity: '1', unit_price: '' };
+    return { description: '', quantity: '1', unit_price: '', service_id: 0, unspsc_code: '' };
 }
 
 function rowAmount(row: ItemRow): number {
@@ -34,9 +37,10 @@ function rowAmount(row: ItemRow): number {
     return quantity * unitPrice;
 }
 
-export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, invoice }: InvoiceFormModalProps) {
+export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, services, invoice }: InvoiceFormModalProps) {
     const { showToast } = useToast();
     const isEdit = Boolean(invoice);
+    const activeServices = useMemo(() => services.filter((s) => s.is_active), [services]);
 
     const incomeConcepts = useMemo(
         () => concepts.filter((c) => c.kind === 'INCOME' && c.is_active),
@@ -78,6 +82,8 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                 description: item.description,
                 quantity: String(item.quantity),
                 unit_price: String(item.unit_price),
+                service_id: item.service_id || 0,
+                unspsc_code: item.unspsc_code || '',
             }));
         }
         return [emptyRow()];
@@ -127,6 +133,26 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
         setRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
     };
 
+    const selectService = (index: number, serviceId: number) => {
+        if (!serviceId) {
+            updateRow(index, { service_id: 0, unspsc_code: '' });
+            return;
+        }
+        const service = activeServices.find((s) => s.id === serviceId);
+        if (!service) return;
+        setRows((prev) => prev.map((row, i) => {
+            if (i !== index) return row;
+            const currentPrice = Number(row.unit_price) || 0;
+            return {
+                ...row,
+                service_id: service.id,
+                unspsc_code: service.unspsc_code,
+                description: service.name,
+                unit_price: currentPrice === 0 && service.unit_price > 0 ? String(service.unit_price) : row.unit_price,
+            };
+        }));
+    };
+
     const removeRow = (index: number) => {
         setRows((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
     };
@@ -165,7 +191,13 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                 showToast('Cada item debe tener precio unitario mayor a cero', 'error');
                 return;
             }
-            items.push({ description, quantity, unit_price: unitPrice });
+            items.push({
+                description,
+                quantity,
+                unit_price: unitPrice,
+                service_id: row.service_id || undefined,
+                unspsc_code: row.service_id ? row.unspsc_code || undefined : undefined,
+            });
         }
         if (items.length === 0) {
             showToast('Agrega al menos un item', 'error');
@@ -408,6 +440,7 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase">
+                                    <th className="pb-2 font-medium w-44">Servicio</th>
                                     <th className="pb-2 font-medium">Descripcion</th>
                                     <th className="pb-2 font-medium w-24">Cantidad</th>
                                     <th className="pb-2 font-medium w-40">Precio unitario</th>
@@ -418,6 +451,18 @@ export function InvoiceFormModal({ isOpen, onClose, onSaved, concepts, taxes, in
                             <tbody>
                                 {rows.map((row, index) => (
                                     <tr key={index} className="align-top">
+                                        <td className="py-1 pr-2">
+                                            <select
+                                                value={row.service_id || 0}
+                                                onChange={(e) => selectService(index, Number(e.target.value))}
+                                                className={inputClass}
+                                            >
+                                                <option value={0}>-- Manual --</option>
+                                                {activeServices.map((service) => (
+                                                    <option key={service.id} value={service.id}>{service.name}</option>
+                                                ))}
+                                            </select>
+                                        </td>
                                         <td className="py-1 pr-2">
                                             <input
                                                 type="text"

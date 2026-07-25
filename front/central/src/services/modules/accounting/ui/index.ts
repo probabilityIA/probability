@@ -5,6 +5,7 @@ export { EntryFormModal } from './components/EntryFormModal';
 export { ConfigView } from './components/ConfigView';
 export { ConceptFormModal } from './components/ConceptFormModal';
 export { TaxFormModal } from './components/TaxFormModal';
+export { ServiceFormModal } from './components/ServiceFormModal';
 export { DianConfigModal } from './components/DianConfigModal';
 export { InvoicesView } from './components/InvoicesView';
 export { InvoiceFormModal } from './components/InvoiceFormModal';

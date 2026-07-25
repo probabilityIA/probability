@@ -2,21 +2,25 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Concept, DianConfig, Tax } from '../../domain/types';
+import { ConfirmModal } from '@/shared/ui';
+import { AccountingService, Concept, DianConfig, Tax } from '../../domain/types';
 import {
+    deleteAccountingServiceAction,
     setAccountingConceptTaxAction,
     updateAccountingConceptAction,
     updateAccountingTaxAction,
 } from '../../infra/actions';
-import { kindLabel, taxKindBadgeClass, taxKindLabel } from '../format';
+import { formatCOP, kindLabel, taxKindBadgeClass, taxKindLabel } from '../format';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConceptFormModal } from './ConceptFormModal';
 import { TaxFormModal } from './TaxFormModal';
+import { ServiceFormModal } from './ServiceFormModal';
 import { DianConfigModal } from './DianConfigModal';
 
 interface ConfigViewProps {
     concepts: Concept[];
     taxes: Tax[];
+    services: AccountingService[];
     dianConfig: DianConfig | null;
     error: string | null;
 }
@@ -38,17 +42,30 @@ function Switch({ checked, disabled, onChange, label }: { checked: boolean; disa
     );
 }
 
-export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewProps) {
+export function ConfigView({ concepts, taxes, services, dianConfig, error }: ConfigViewProps) {
     const router = useRouter();
     const { showToast } = useToast();
     const [conceptModalOpen, setConceptModalOpen] = useState(false);
     const [conceptToEdit, setConceptToEdit] = useState<Concept | null>(null);
     const [taxModalOpen, setTaxModalOpen] = useState(false);
     const [taxToEdit, setTaxToEdit] = useState<Tax | null>(null);
+    const [serviceModalOpen, setServiceModalOpen] = useState(false);
+    const [serviceToEdit, setServiceToEdit] = useState<AccountingService | null>(null);
+    const [serviceToDelete, setServiceToDelete] = useState<AccountingService | null>(null);
     const [dianModalOpen, setDianModalOpen] = useState(false);
     const [busyKey, setBusyKey] = useState<string | null>(null);
 
     const refresh = () => router.refresh();
+
+    const handleDeleteService = async (service: AccountingService) => {
+        const result = await deleteAccountingServiceAction(service.id);
+        if (result.success) {
+            showToast('Servicio eliminado', 'success');
+            refresh();
+        } else {
+            showToast(result.error, 'error');
+        }
+    };
 
     const toggleConcept = async (concept: Concept, field: 'is_active' | 'is_real_income') => {
         const key = `concept-${concept.id}-${field}`;
@@ -302,6 +319,91 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
             </section>
 
             <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">Servicios facturables</h2>
+                    <button
+                        onClick={() => {
+                            setServiceToEdit(null);
+                            setServiceModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo servicio
+                    </button>
+                </div>
+
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-gray-900/40">
+                                    <th className="px-4 py-2 font-medium">Codigo</th>
+                                    <th className="px-4 py-2 font-medium">Nombre</th>
+                                    <th className="px-4 py-2 font-medium">Codigo UNSPSC</th>
+                                    <th className="px-4 py-2 font-medium text-right">Precio base</th>
+                                    <th className="px-4 py-2 font-medium text-center">Activo</th>
+                                    <th className="px-4 py-2 font-medium text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {services.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                                            No hay servicios registrados
+                                        </td>
+                                    </tr>
+                                )}
+                                {services.map((service) => (
+                                    <tr key={service.id} className="text-gray-800 dark:text-gray-200">
+                                        <td className="px-4 py-2 font-mono text-xs">{service.code}</td>
+                                        <td className="px-4 py-2 font-medium">{service.name}</td>
+                                        <td className="px-4 py-2 font-mono text-xs">{service.unspsc_code || '-'}</td>
+                                        <td className="px-4 py-2 text-right">
+                                            {service.unit_price > 0 ? formatCOP(service.unit_price) : '-'}
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${service.is_active
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                            }`}>
+                                                {service.is_active ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-2 text-right whitespace-nowrap">
+                                            <button
+                                                onClick={() => {
+                                                    setServiceToEdit(service);
+                                                    setServiceModalOpen(true);
+                                                }}
+                                                className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                title="Editar servicio"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() => setServiceToDelete(service)}
+                                                className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                                title="Eliminar servicio"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section className="space-y-3">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">Facturacion electronica (DIAN)</h2>
                 <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -356,6 +458,28 @@ export function ConfigView({ concepts, taxes, dianConfig, error }: ConfigViewPro
                     refresh();
                 }}
                 tax={taxToEdit}
+            />
+
+            <ServiceFormModal
+                isOpen={serviceModalOpen}
+                onClose={() => setServiceModalOpen(false)}
+                onSaved={() => {
+                    setServiceModalOpen(false);
+                    refresh();
+                }}
+                service={serviceToEdit}
+            />
+
+            <ConfirmModal
+                isOpen={serviceToDelete !== null}
+                onClose={() => setServiceToDelete(null)}
+                onConfirm={() => {
+                    if (serviceToDelete) handleDeleteService(serviceToDelete);
+                }}
+                title="Eliminar servicio"
+                message={`Se eliminara el servicio ${serviceToDelete?.name || ''}. Esta accion no se puede deshacer.`}
+                confirmText="Eliminar"
+                type="danger"
             />
 
             <DianConfigModal

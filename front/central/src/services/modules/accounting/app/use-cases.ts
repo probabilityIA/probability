@@ -7,6 +7,7 @@ import {
     EmitDianDTO,
     GetEntriesParams,
     GetInvoicesParams,
+    SaveServiceDTO,
     UpdateConceptDTO,
     UpdateDianConfigDTO,
     UpdateInvoiceDTO,
@@ -42,6 +43,22 @@ export class AccountingUseCases {
 
     async updateTax(id: number, data: UpdateTaxDTO) {
         return this.repository.updateTax(id, data);
+    }
+
+    async getServices() {
+        return this.repository.getServices();
+    }
+
+    async createService(data: SaveServiceDTO) {
+        return this.repository.createService(data);
+    }
+
+    async updateService(id: number, data: SaveServiceDTO) {
+        return this.repository.updateService(id, data);
+    }
+
+    async deleteService(id: number) {
+        return this.repository.deleteService(id);
     }
 
     async getEntries(params?: GetEntriesParams) {

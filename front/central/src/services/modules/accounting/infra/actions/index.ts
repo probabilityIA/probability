@@ -13,6 +13,7 @@ import {
     EmitDianDTO,
     GetEntriesParams,
     GetInvoicesParams,
+    SaveServiceDTO,
     UpdateConceptDTO,
     UpdateDianConfigDTO,
     UpdateInvoiceDTO,
@@ -77,6 +78,35 @@ export const updateAccountingTaxAction = async (id: number, data: UpdateTaxDTO) 
         const result = await (await getUseCases()).updateTax(id, data);
         revalidatePath('/accounting/configuracion');
         return result;
+    });
+
+function revalidateServices() {
+    revalidatePath('/accounting/configuracion');
+    revalidatePath('/accounting/facturas');
+}
+
+export const getAccountingServicesAction = async () =>
+    run(async () => (await getUseCases()).getServices());
+
+export const createAccountingServiceAction = async (data: SaveServiceDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).createService(data);
+        revalidateServices();
+        return result;
+    });
+
+export const updateAccountingServiceAction = async (id: number, data: SaveServiceDTO) =>
+    run(async () => {
+        const result = await (await getUseCases()).updateService(id, data);
+        revalidateServices();
+        return result;
+    });
+
+export const deleteAccountingServiceAction = async (id: number) =>
+    run(async () => {
+        await (await getUseCases()).deleteService(id);
+        revalidateServices();
+        return true;
     });
 
 export const getAccountingEntriesAction = async (params?: GetEntriesParams) =>

@@ -154,6 +154,23 @@ export interface SyncResult {
     by_source: Record<string, number> | null;
 }
 
+export interface AccountingService {
+    id: number;
+    code: string;
+    name: string;
+    unspsc_code: string;
+    unit_price: number;
+    is_active: boolean;
+}
+
+export interface SaveServiceDTO {
+    code: string;
+    name: string;
+    unspsc_code?: string;
+    unit_price?: number;
+    is_active?: boolean;
+}
+
 export type InvoiceStatus = 'DRAFT' | 'SENT' | 'PAID' | 'CANCELLED';
 
 export type DianStatus = 'NONE' | 'VALIDATED';
@@ -171,6 +188,8 @@ export interface InvoiceItem {
     quantity: number;
     unit_price: number;
     amount: number;
+    service_id?: number;
+    unspsc_code?: string;
 }
 
 export interface Invoice {
@@ -211,6 +230,8 @@ export interface InvoiceItemInputDTO {
     description: string;
     quantity: number;
     unit_price: number;
+    service_id?: number;
+    unspsc_code?: string;
 }
 
 export interface CreateInvoiceDTO {

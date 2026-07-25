@@ -31,5 +31,6 @@ var (
 	ErrDianNotConfigured    = errors.New("facturacion electronica no configurada: guarda las credenciales de Factus primero")
 	ErrDianAlreadyEmitted   = errors.New("la factura ya fue emitida electronicamente")
 	ErrDianDocumentRequired = errors.New("el documento de identificacion del cliente (NIT/CC) es requerido para emitir")
+	ErrServiceNotFound      = errors.New("servicio no encontrado en el catalogo")
 	ErrDianCredentials      = errors.New("credenciales de Factus incompletas: client_id, client_secret, username y password son requeridos")
 )

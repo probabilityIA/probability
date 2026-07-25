@@ -60,4 +60,11 @@ type IRepository interface {
 	GetBusinessName(ctx context.Context, id uint) (string, error)
 	GetBusinessDefaultEmail(ctx context.Context, id uint) (string, error)
 	GetClientProfile(ctx context.Context, businessID uint) (*dtos.ClientProfileDTO, error)
+
+	ListServices(ctx context.Context) ([]entities.Service, error)
+	GetServiceByID(ctx context.Context, id uint) (*entities.Service, error)
+	ServiceCodeExists(ctx context.Context, code string, excludeID *uint) (bool, error)
+	CreateService(ctx context.Context, dto dtos.SaveServiceDTO) (*entities.Service, error)
+	UpdateService(ctx context.Context, dto dtos.SaveServiceDTO) (*entities.Service, error)
+	DeleteService(ctx context.Context, id uint) error
 }
