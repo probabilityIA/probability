@@ -9,6 +9,7 @@ type ManifestFilter struct {
 	BusinessID      uint
 	IncludeChildren bool
 	Carrier         string
+	OnlyWithGuide   bool
 	Page            int
 	PageSize        int
 }

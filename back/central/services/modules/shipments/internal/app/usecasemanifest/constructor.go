@@ -21,6 +21,7 @@ type PendingFilter struct {
 	BusinessID      uint
 	IncludeChildren bool
 	Carrier         string
+	OnlyWithGuide   bool
 	Page            int
 	PageSize        int
 }
@@ -89,6 +90,7 @@ func (uc *UseCaseManifest) ListPending(ctx context.Context, f PendingFilter) (*P
 		BusinessID:      f.BusinessID,
 		IncludeChildren: f.IncludeChildren,
 		Carrier:         f.Carrier,
+		OnlyWithGuide:   f.OnlyWithGuide,
 		Page:            f.Page,
 		PageSize:        f.PageSize,
 	})
