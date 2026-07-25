@@ -686,7 +686,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const [filters, setFilters] = useState<GetOrdersParams>({
         page: 1,
-        page_size: 20,
+        page_size: 10,
     });
 
     const { showToast } = useToast();
@@ -1566,8 +1566,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
                                 <p className="text-xs sm:text-sm text-white">
-                                    Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
-                                    <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
+                                    Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 10) + 1}</span> a{' '}
+                                    <span className="font-medium">{Math.min(page * (filters.page_size || 10), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-1">
@@ -1575,7 +1575,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         Mostrar:
                                     </label>
                                     <select
-                                        value={filters.page_size || 20}
+                                        value={filters.page_size || 10}
                                         onChange={(e) => {
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
@@ -1683,7 +1683,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     Mostrar:
                                 </label>
                                 <select
-                                    value={filters.page_size || 20}
+                                    value={filters.page_size || 10}
                                     onChange={(e) => {
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
