@@ -5,13 +5,13 @@ import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
-import { Modal } from '@/shared/ui';
+import { Modal, IconActionButton } from '@/shared/ui';
+import { PlusIcon, ArrowUpTrayIcon, TruckIcon } from '@heroicons/react/24/outline';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
 import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
-
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
@@ -29,24 +29,27 @@ export default function OrdersPage() {
     useEffect(() => {
         const actionButtons = (
             <>
-                <button
+                <IconActionButton
+                    label="Nueva orden"
+                    variant="tertiary"
+                    tooltipAlign="right"
                     onClick={() => setShowCreateModal(true)}
-                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
-                >
-                    + Nueva Orden
-                </button>
-                <button
+                    icon={<PlusIcon className="w-4 h-4" />}
+                />
+                <IconActionButton
+                    label="Carga masiva de ordenes"
+                    variant="tertiary"
+                    tooltipAlign="right"
                     onClick={() => setShowMassUploadModal(true)}
-                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
-                >
-                    Carga Masiva
-                </button>
-                <button
+                    icon={<ArrowUpTrayIcon className="w-4 h-4" />}
+                />
+                <IconActionButton
+                    label="Generacion masiva de guias"
+                    variant="tertiary"
+                    tooltipAlign="right"
                     onClick={() => setShowMassGuideModal(true)}
-                    className="btn btn-tertiary px-4 py-2 text-sm font-semibold text-white rounded-lg"
-                >
-                    Guías Masivas
-                </button>
+                    icon={<TruckIcon className="w-4 h-4" />}
+                />
             </>
         );
         setActionButtons(actionButtons);
@@ -134,14 +137,11 @@ export default function OrdersPage() {
                 selectedBusinessId={selectedBusinessId}
             />
 
-            {/* Test Guide Modal */}
-            {/* Test Guide Modal (No specific order) */}
             <ShipmentGuideModal
                 isOpen={showTestGuideModal}
                 onClose={() => setShowTestGuideModal(false)}
             />
 
-            {/* Guide Modal (Selected order) */}
             <ShipmentGuideModal
                 isOpen={showGuideModal}
                 onClose={() => {
@@ -150,7 +150,7 @@ export default function OrdersPage() {
                 }}
                 order={selectedOrder || undefined}
                 onGuideGenerated={(guideData) => {
-                    // Cache guide data in sessionStorage so OrderForm can use it
+
                     console.log('🎯 onGuideGenerated callback received:', guideData);
                     if (selectedOrder?.order_number && guideData?.tracking_number) {
                         const key = `guide_${selectedOrder.order_number}`;
@@ -159,13 +159,11 @@ export default function OrdersPage() {
                     } else {
                         console.warn('⚠️ Missing order_number or tracking_number:', { selectedOrder: selectedOrder?.order_number, guideData });
                     }
-                    // Reload orders list after guide generation to refresh shipment data
-                    // Modal stays open - user can close it manually when ready
+
                     handleSuccess();
                 }}
             />
 
-            {/* Create Modal */}
             <Modal
                 isOpen={showCreateModal}
                 onClose={handleCancel}
@@ -179,7 +177,6 @@ export default function OrdersPage() {
                 />
             </Modal>
 
-            {/* View Modal - Dynamic Title based on mode */}
             <Modal
                 isOpen={showViewModal}
                 onClose={handleCancel}
@@ -191,12 +188,11 @@ export default function OrdersPage() {
                     <OrderDetails
                         initialOrder={selectedOrder}
                         onClose={handleCancel}
-                        mode={viewMode} // Pass mode prop
+                        mode={viewMode}
                     />
                 )}
             </Modal>
 
-            {/* Edit Modal */}
             <Modal
                 isOpen={showEditModal}
                 onClose={handleCancel}
@@ -212,7 +208,6 @@ export default function OrdersPage() {
                 )}
             </Modal>
 
-            {/* Mass Upload Modal */}
             <MassOrderUploadModal
                 isOpen={showMassUploadModal}
                 onClose={() => setShowMassUploadModal(false)}
@@ -223,7 +218,6 @@ export default function OrdersPage() {
                 selectedBusinessId={selectedBusinessId}
             />
 
-            {/* Mass Guide Generation Modal */}
             <MassGuideGenerationModal
                 isOpen={showMassGuideModal}
                 onClose={() => setShowMassGuideModal(false)}

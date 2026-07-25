@@ -12,7 +12,8 @@ import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 
 import { Order, GetOrdersParams } from '../../domain/types';
 import { ProbabilityTooltip } from './ProbabilityTooltip';
-import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter, ORDERS_FILTERS_SLOT_ID } from '@/shared/ui';
+import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter, IconActionButton, ORDERS_FILTERS_SLOT_ID, ORDERS_ACTIONS_SLOT_ID } from '@/shared/ui';
+import { ChartBarIcon, ArrowPathRoundedSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -525,9 +526,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [isQuotationExpresOpen, setIsQuotationExpresOpen] = useState(false);
     const [changeStatusOrder, setChangeStatusOrder] = useState<Order | null>(null);
     const [filtersSlot, setFiltersSlot] = useState<HTMLElement | null>(null);
+    const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
         setFiltersSlot(document.getElementById(ORDERS_FILTERS_SLOT_ID));
+        setActionsSlot(document.getElementById(ORDERS_ACTIONS_SLOT_ID));
     }, []);
 
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
@@ -1363,40 +1366,43 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 { value: 'total_amount', label: 'Por monto' },
                 { value: 'order_number', label: 'Por ID' },
             ]}
-            onDownload={() => setIsDownloadModalOpen(true)}
-            downloadButtonText="↓ Descargar Ordenes"
-            extraActions={
-                <>
-                    <button
-                        onClick={() => setIsQuotationExpresOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Cotizador Expres
-                    </button>
-                    <button
-                        onClick={() => setIsStatusFlowOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Flujo de Estados
-                    </button>
-                </>
-            }
         />
+    );
+
+    const barActions = (
+        <>
+            <IconActionButton
+                label="Cotizador Expres"
+                variant="secondary"
+                onClick={() => setIsQuotationExpresOpen(true)}
+                icon={<ChartBarIcon className="w-4 h-4" />}
+            />
+            <IconActionButton
+                label="Flujo de Estados"
+                variant="secondary"
+                onClick={() => setIsStatusFlowOpen(true)}
+                icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}
+            />
+            <IconActionButton
+                label="Descargar ordenes en Excel"
+                variant="tertiary"
+                onClick={() => setIsDownloadModalOpen(true)}
+                icon={<ArrowDownTrayIcon className="w-4 h-4" />}
+            />
+        </>
     );
 
     return (
         <div>
+            {actionsSlot
+                ? createPortal(barActions, actionsSlot)
+                : <div className="mb-2 flex items-center gap-2">{barActions}</div>}
+
             {filtersSlot
                 ? createPortal(filtersBar, filtersSlot)
                 : <div className="mb-4">{filtersBar}</div>}
 
-            <div className="ordersTable relative">
+            <div className="ordersTable relative rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
 
                 {tableLoading && (
                     <div className="absolute inset-0 bg-white dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
@@ -1410,13 +1416,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     <table className={`min-w-full transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
                         <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                             <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
 
                                 </th>
                                 <th
                                     className="px-3s sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest cursor-pointer transition-all group"
                                     onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
-                                    style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}
+                                    style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}
                                 >
                                     <div className="flex items-center gap-1">
                                         Orden
@@ -1427,37 +1433,37 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         )}
                                     </div>
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Cliente
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Total
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Estatus Pago
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Probabilidad
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Confirmado
                                 </th>
 
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Fecha
                                 </th>
                                 {isSuperAdmin && (
-                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                         Business
                                     </th>
                                 )}
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Transportadora
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
+                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Acciones
                                 </th>
                             </tr>
@@ -1499,7 +1505,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 </div>
 
                 {(totalPages > 1 || total > 0) && (
-                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3" style={{ backgroundColor: 'var(--color-primary)' }}>
 
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button
@@ -1522,13 +1528,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                                <p className="text-xs sm:text-sm text-white">
                                     Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-1">
-                                    <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                                    <label className="text-xs sm:text-sm text-white whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -1629,7 +1635,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                         <div className="flex items-center justify-between w-full sm:hidden pt-2">
                             <div className="flex items-center gap-1">
-                                <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                                <label className="text-xs text-white whitespace-nowrap">
                                     Mostrar:
                                 </label>
                                 <select
@@ -1646,7 +1652,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-white/80">
                                 Página {page} de {totalPages}
                             </p>
                         </div>

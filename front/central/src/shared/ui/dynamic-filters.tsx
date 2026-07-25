@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, ReactNode } from 'react';
 import { FunnelIcon, XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Button } from './button';
+import { IconActionButton } from './icon-action-button';
 import { DateRangePicker } from './date-range-picker';
 
 export interface FilterOption {
@@ -173,7 +174,6 @@ export function DynamicFilters({
         ? 'btn btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:shadow-md transition-all'
         : 'btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all';
 
-    const tooltipClass = 'pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 whitespace-nowrap rounded-md bg-gray-900 dark:bg-gray-700 px-2 py-1 text-[10px] font-semibold text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100';
 
     const barSelectBase = 'px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-xs';
     const cardSelectClass = 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm';
@@ -223,18 +223,13 @@ export function DynamicFilters({
                     <div className="relative">
                         <div className="flex items-center gap-2">
                             {isBar ? (
-                                <span className="relative group inline-flex">
-                                    <button
-                                        ref={buttonRef}
-                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                        className="btn-primary inline-flex items-center justify-center rounded-lg hover:shadow-md transition-all"
-                                        style={{ width: '2rem', height: '2rem', padding: 0 }}
-                                        aria-label="A&#241;adir filtro"
-                                    >
-                                        <FunnelIcon className="w-4 h-4" />
-                                    </button>
-                                    <span className={tooltipClass}>A{'ñ'}adir filtro</span>
-                                </span>
+                                <IconActionButton
+                                    ref={buttonRef}
+                                    label={`A${'ñ'}adir filtro`}
+                                    variant="primary"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    icon={<FunnelIcon className="w-4 h-4" />}
+                                />
                             ) : (
                                 <button
                                     ref={buttonRef}
@@ -286,22 +281,17 @@ export function DynamicFilters({
 
                             {onDownload && (
                                 isBar ? (
-                                    <span className="relative group inline-flex">
-                                        <button
-                                            onClick={() => {
-                                                onDownload();
-                                                setIsDropdownOpen(false);
-                                                setSelectedFilterKey(null);
-                                                setTempValue('');
-                                            }}
-                                            className="btn-tertiary inline-flex items-center justify-center text-white rounded-lg hover:shadow-md transition-all"
-                                            style={{ width: '2rem', height: '2rem', padding: 0 }}
-                                            aria-label={downloadTooltip}
-                                        >
-                                            <ArrowDownTrayIcon className="w-4 h-4" />
-                                        </button>
-                                        <span className={tooltipClass}>{downloadTooltip}</span>
-                                    </span>
+                                    <IconActionButton
+                                        label={downloadTooltip}
+                                        variant="tertiary"
+                                        onClick={() => {
+                                            onDownload();
+                                            setIsDropdownOpen(false);
+                                            setSelectedFilterKey(null);
+                                            setTempValue('');
+                                        }}
+                                        icon={<ArrowDownTrayIcon className="w-4 h-4" />}
+                                    />
                                 ) : (
                                     <button
                                         onClick={() => {

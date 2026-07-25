@@ -10,6 +10,7 @@ import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 export const ORDERS_FILTERS_SLOT_ID = 'orders-filters-slot';
+export const ORDERS_ACTIONS_SLOT_ID = 'orders-actions-slot';
 
 export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const pathname = usePathname();
@@ -90,6 +91,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
                             variant="navbar"
                             placeholder="— Selecciona un negocio —"
                         />
+                        <span id={ORDERS_ACTIONS_SLOT_ID} className="inline-flex items-center gap-2 empty:hidden" />
                         {actionButtons}
                     </div>
                 </div>
