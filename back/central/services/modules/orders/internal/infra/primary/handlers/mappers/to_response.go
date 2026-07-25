@@ -213,6 +213,8 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 	return &response.OrderSummary{
 		QuotedShipping:         buildQuotedShipping(dto.ShippingDetails),
 		FreeShipping:           dto.FreeShipping,
+		StatusSource:           dto.StatusSource,
+		StatusChangedBy:        dto.StatusChangedBy,
 		ID:                     dto.ID,
 		CreatedAt:              dto.CreatedAt,
 		BusinessID:             dto.BusinessID,

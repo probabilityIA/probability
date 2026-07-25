@@ -71,6 +71,9 @@ func (uc *UseCaseUpdateStatus) ChangeStatus(ctx context.Context, orderID string,
 		order.StatusID = statusID
 	}
 
+	order.StatusSource = entities.StatusSourceUser
+	order.StatusChangedBy = req.UserName
+
 	// 8. Persistir cambios
 	if err := uc.repo.UpdateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)
@@ -157,6 +160,7 @@ func (uc *UseCaseUpdateStatus) saveOrderHistory(ctx context.Context, order *enti
 		NewStatus:      req.Status,
 		ChangedBy:      req.UserID,
 		ChangedByName:  req.UserName,
+		Source:         entities.StatusSourceUser,
 		Reason:         reason,
 		Metadata:       metadataBytes,
 	}

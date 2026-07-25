@@ -207,6 +207,8 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		ID:                     order.ID,
 		ShippingDetails:        order.ShippingDetails,
 		FreeShipping:           order.FreeShipping,
+		StatusSource:           order.StatusSource,
+		StatusChangedBy:        order.StatusChangedBy,
 		CreatedAt:              order.CreatedAt,
 		BusinessID:             businessID,
 		IntegrationID:          order.IntegrationID,

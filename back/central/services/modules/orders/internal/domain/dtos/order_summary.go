@@ -56,6 +56,8 @@ type OrderSummary struct {
 	Shipment               *ShipmentSummary
 	ShippingDetails        []byte
 	FreeShipping           bool
+	StatusSource           string
+	StatusChangedBy        string
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos

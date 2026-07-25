@@ -101,6 +101,8 @@ export interface Order {
     };
 
     free_shipping?: boolean;
+    status_source?: 'user' | 'sales_channel' | 'carrier' | 'inventory' | 'system';
+    status_changed_by?: string;
 
     quoted_shipping?: {
         carrier: string;

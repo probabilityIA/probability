@@ -97,11 +97,13 @@ type Order struct {
 	Length *float64 `gorm:"type:decimal(10,2)"`
 	Boxes  *string  `gorm:"type:text"`
 
-	OrderTypeID    *uint  `gorm:"index"`
-	OrderTypeName  string `gorm:"size:64"`
-	Status         string `gorm:"size:64;not null;index;default:'pending'"`
-	OriginalStatus string `gorm:"size:64"`
-	StatusID       *uint  `gorm:"index"`
+	OrderTypeID     *uint  `gorm:"index"`
+	OrderTypeName   string `gorm:"size:64"`
+	Status          string `gorm:"size:64;not null;index;default:'pending'"`
+	StatusSource    string `gorm:"column:status_source;size:32;index"`
+	StatusChangedBy string `gorm:"column:status_changed_by;size:128"`
+	OriginalStatus  string `gorm:"size:64"`
+	StatusID        *uint  `gorm:"index"`
 
 	PaymentStatusID     *uint `gorm:"index"`
 	FulfillmentStatusID *uint `gorm:"index"`
@@ -183,6 +185,7 @@ type OrderHistory struct {
 	OrderID        string         `gorm:"type:varchar(36);not null;index"`
 	PreviousStatus string         `gorm:"size:64"`
 	NewStatus      string         `gorm:"size:64;not null"`
+	Source         string         `gorm:"column:source;size:32;index"`
 	ChangedBy      *uint          `gorm:"index"`
 	ChangedByName  string         `gorm:"size:255"`
 	Reason         *string        `gorm:"type:text"`

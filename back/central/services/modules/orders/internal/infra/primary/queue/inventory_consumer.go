@@ -106,9 +106,19 @@ func (c *InventoryConsumer) handleMessage(ctx context.Context, body []byte) {
 		return
 	}
 
-	if err := c.repo.UpdateOrderStatus(ctx, msg.OrderID, targetCode, statusID); err != nil {
+	if err := c.repo.UpdateOrderStatusWithSource(ctx, msg.OrderID, targetCode, statusID, entities.StatusSourceInventory, "Inventario"); err != nil {
 		c.logger.Error(ctx).Err(err).Str("order_id", msg.OrderID).Str("status", targetCode).Msg("Failed to update order status")
 		return
+	}
+
+	if err := c.repo.CreateOrderHistory(ctx, &entities.OrderHistory{
+		OrderID:        msg.OrderID,
+		PreviousStatus: previousStatus,
+		NewStatus:      targetCode,
+		ChangedByName:  "Inventario",
+		Source:         entities.StatusSourceInventory,
+	}); err != nil {
+		c.logger.Warn(ctx).Err(err).Str("order_id", msg.OrderID).Msg("No se pudo registrar el historial del cambio de estado")
 	}
 
 	if c.rabbitPublisher == nil {

@@ -263,6 +263,11 @@ func (m *RepositoryMock) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	return args.Get(0).(*uint), args.Error(1)
 }
 
+func (m *RepositoryMock) UpdateOrderStatusWithSource(ctx context.Context, orderID string, status string, statusID *uint, source string, changedBy string) error {
+	args := m.Called(ctx, orderID, status, statusID, source, changedBy)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
 	args := m.Called(ctx, orderID, status, statusID)
 	return args.Error(0)

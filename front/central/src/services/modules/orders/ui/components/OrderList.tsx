@@ -167,6 +167,15 @@ const OrderRow = memo(({
                 {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color) || (
                     <span className="text-xs text-gray-400">-</span>
                 )}
+                {order.status_changed_by && (
+                    <span
+                        className="mt-1 block text-[9px] leading-tight text-gray-500 dark:text-gray-400"
+                        title={`Ultimo cambio de estado hecho por: ${order.status_changed_by}`}
+                    >
+                        {order.status_source === 'user' ? 'Modificado por' : 'Modificado desde'}{' '}
+                        <span className="font-semibold">{order.status_changed_by}</span>
+                    </span>
+                )}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                 <div className="flex flex-col items-center gap-1">

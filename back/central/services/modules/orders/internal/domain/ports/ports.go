@@ -60,6 +60,7 @@ type IRepository interface {
 	CheckStockForOrder(ctx context.Context, businessID uint, warehouseID *uint, items []dtos.StockCheckItem) ([]dtos.StockCheckResult, error)
 
 	CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error
+	UpdateOrderStatusWithSource(ctx context.Context, orderID string, status string, statusID *uint, source string, changedBy string) error
 	GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error)
 
 	ResolveOrderGeozone(ctx context.Context, orderID string, businessID uint) error

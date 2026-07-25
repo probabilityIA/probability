@@ -264,6 +264,10 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return nil
 }
+func (m *mockRepository) UpdateOrderStatusWithSource(ctx context.Context, orderID string, status string, statusID *uint, source string, changedBy string) error {
+	return nil
+}
+
 func (m *mockRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, statusID *uint) error {
 	return nil
 }

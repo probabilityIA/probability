@@ -9,6 +9,13 @@ import (
 	"gorm.io/gorm"
 )
 
+// El nombre del proveedor de transporte nunca se expone al negocio:
+// todo cambio que llega del tracking se atribuye a "Transportadora".
+const (
+	orderStatusSourceCarrier = "carrier"
+	orderStatusCarrierLabel  = "Transportadora"
+)
+
 func (r *Repository) GetOrderBusinessID(ctx context.Context, orderUUID string) (uint, error) {
 	var result struct {
 		BusinessID uint `gorm:"column:business_id"`
@@ -171,7 +178,21 @@ func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID str
 		return nil
 	}
 
-	updates := map[string]any{"status": status}
+	var current struct {
+		Status string `gorm:"column:status"`
+	}
+	_ = r.db.Conn(ctx).
+		Table("orders").
+		Select("status").
+		Where("id = ? AND deleted_at IS NULL", orderID).
+		Limit(1).
+		Scan(&current).Error
+
+	updates := map[string]any{
+		"status":            status,
+		"status_source":     orderStatusSourceCarrier,
+		"status_changed_by": orderStatusCarrierLabel,
+	}
 
 	var statusID struct{ ID uint }
 	err := r.db.Conn(ctx).
@@ -184,11 +205,22 @@ func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID str
 		updates["status_id"] = statusID.ID
 	}
 
-	return r.db.Conn(ctx).
+	if err := r.db.Conn(ctx).
 		Model(&models.Order{}).
 		Where("id = ?", orderID).
 		Where("deleted_at IS NULL").
-		Updates(updates).Error
+		Updates(updates).Error; err != nil {
+		return err
+	}
+
+	if current.Status == status {
+		return nil
+	}
+
+	return r.db.Conn(ctx).Exec(`
+		INSERT INTO order_history (created_at, updated_at, order_id, previous_status, new_status, changed_by_name, source)
+		VALUES (NOW(), NOW(), ?, ?, ?, ?, ?)`,
+		orderID, current.Status, status, orderStatusCarrierLabel, orderStatusSourceCarrier).Error
 }
 
 func (r *Repository) ClearOrderGuideData(ctx context.Context, orderID string) error {

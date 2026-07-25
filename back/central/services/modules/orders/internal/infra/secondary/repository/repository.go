@@ -1083,6 +1083,7 @@ func (r *Repository) CreateOrderHistory(ctx context.Context, history *entities.O
 		NewStatus:      history.NewStatus,
 		ChangedBy:      history.ChangedBy,
 		ChangedByName:  history.ChangedByName,
+		Source:         history.Source,
 		Reason:         history.Reason,
 		Metadata:       datatypes.JSON(history.Metadata),
 	}

@@ -94,12 +94,14 @@ type ProbabilityOrder struct {
 	Boxes  *string
 
 	// Tipo y estado
-	OrderTypeID    *uint
-	OrderTypeName  string
-	Status         string
-	OriginalStatus string
-	StatusID       *uint
-	OrderStatus    *OrderStatusInfo
+	OrderTypeID     *uint
+	OrderTypeName   string
+	Status          string
+	StatusSource    string
+	StatusChangedBy string
+	OriginalStatus  string
+	StatusID        *uint
+	OrderStatus     *OrderStatusInfo
 
 	// Estados independientes
 	PaymentStatusID     *uint

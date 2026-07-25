@@ -24,8 +24,26 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 		return uc.mapOrderToResponse(existingOrder), nil
 	}
 
+	statusChanged := previousStatus != existingOrder.Status
+	if statusChanged && !dto.IsManualOrder {
+		existingOrder.StatusSource = entities.StatusSourceSalesChannel
+		existingOrder.StatusChangedBy = entities.SalesChannelChangedBy(existingOrder.Platform)
+	}
+
 	if err := uc.repo.UpdateOrder(ctx, existingOrder); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)
+	}
+
+	if statusChanged {
+		if err := uc.repo.CreateOrderHistory(ctx, &entities.OrderHistory{
+			OrderID:        existingOrder.ID,
+			PreviousStatus: previousStatus,
+			NewStatus:      existingOrder.Status,
+			ChangedByName:  existingOrder.StatusChangedBy,
+			Source:         existingOrder.StatusSource,
+		}); err != nil {
+			uc.logger.Warn(ctx).Err(err).Str("order_id", existingOrder.ID).Msg("No se pudo registrar el historial del cambio de estado")
+		}
 	}
 
 	if existingOrder.BusinessID != nil {
