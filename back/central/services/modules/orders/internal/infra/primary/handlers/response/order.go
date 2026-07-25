@@ -142,6 +142,7 @@ type Order struct {
 	Metadata           datatypes.JSON  `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON  `json:"financial_details,omitempty"`
 	ShippingDetails    datatypes.JSON  `json:"shipping_details,omitempty"`
+	QuotedShipping     *QuotedShipping `json:"quoted_shipping,omitempty"`
 	PaymentDetails     datatypes.JSON  `json:"payment_details,omitempty"`
 	FulfillmentDetails datatypes.JSON  `json:"fulfillment_details,omitempty"`
 	NegativeFactors    []string        `json:"negative_factors,omitempty"`

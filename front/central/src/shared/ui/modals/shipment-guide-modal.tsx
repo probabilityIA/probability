@@ -262,6 +262,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const normalizeCarrierKey = (s: string) =>
         (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
+    const quotedCarrierKey = normalizeCarrierKey((order?.quoted_shipping?.carrier || '').split(' - ')[0]);
+
     useEffect(() => {
         if (currentStep !== 2 || !order?.id || !order?.business_id) return;
         let cancelled = false;
@@ -1386,6 +1388,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         );
                                     }
                                     return (
+                                    <>
+                                    {order?.quoted_shipping && (
+                                        <div className="mb-3 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 dark:border-indigo-800 dark:bg-indigo-900/20">
+                                            <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                                                Cotizado
+                                            </span>
+                                            <span className="text-[12px] text-indigo-900 dark:text-indigo-200">
+                                                El cliente eligio <strong>{order.quoted_shipping.title}</strong> por{' '}
+                                                <strong>${order.quoted_shipping.price.toLocaleString('es-CO')}</strong> en el checkout.
+                                                Genera la guia sobre esa transportadora.
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-2 gap-4 auto-rows-max">
                                         {filteredRates.map((rate) => {
                                             const minIns = rate.minimumInsurance ?? 0;
@@ -1418,13 +1433,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             if (isMostEffective) badges.push('mostEffective');
 
                                             const isSameDay = rate.deliveryDays === 0;
-                                            const hasSpecialBadge = isMostEffective || isCheapest || isFastest || isSameDay;
+                                            const isQuotedInCheckout = !!quotedCarrierKey &&
+                                                normalizeCarrierKey(rate.carrier) === quotedCarrierKey;
+                                            const hasSpecialBadge = isQuotedInCheckout || isMostEffective || isCheapest || isFastest || isSameDay;
 
                                             let badgeColor = businessColors.quaternary;
                                             let badgeLabel = '';
                                             let borderColor = businessColors.tertiary;
 
-                                            if (isMostEffective) {
+                                            if (isQuotedInCheckout) {
+                                                badgeColor = '#4f46e5';
+                                                badgeLabel = 'COTIZADA EN EL CHECKOUT';
+                                                borderColor = '#4f46e5';
+                                            } else if (isMostEffective) {
                                                 badgeColor = businessColors.primary;
                                                 badgeLabel = 'RECOMENDADO';
                                             } else if (isCheapest) {
@@ -1618,6 +1639,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             );
                                         })}
                                     </div>
+                                    </>
                                     );
                                 })()}
                                 </div>

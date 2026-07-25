@@ -100,6 +100,14 @@ export interface Order {
         total_cost?: number;
     };
 
+    quoted_shipping?: {
+        carrier: string;
+        title: string;
+        price: number;
+        quote_id: string;
+        rate_index: string;
+    };
+
     warehouse_id?: number;
     warehouse_name: string;
     driver_id?: number;

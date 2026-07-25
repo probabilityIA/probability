@@ -322,14 +322,22 @@ const OrderRow = memo(({
                     const logo = getCarrierLogo(order.shipment.carrier);
                     const hasGuide = !!order.shipment.tracking_number;
                     const isFreeShipping = normalizeCarrierLabel(order.shipment.carrier) === 'ENVIOGRATUITO';
+                    const isQuoted = !!order.quoted_shipping && !hasGuide;
                     const title = hasGuide
                         ? order.shipment.carrier
-                        : `${order.shipment.carrier} (preseleccionada, sin guia generada)`;
+                        : isQuoted
+                            ? `Cotizado en el checkout: ${order.quoted_shipping!.title} ($${order.quoted_shipping!.price.toLocaleString('es-CO')}). Falta generar la guia.`
+                            : `${order.shipment.carrier} (preseleccionada, sin guia generada)`;
                     return (
                         <div
-                            className={`flex items-center justify-center rounded-md py-1 ${isFreeShipping ? '' : hasGuide ? '' : 'bg-amber-50 dark:bg-amber-900/20'}`}
+                            className={`flex flex-col items-center justify-center rounded-md py-1 ${isFreeShipping ? '' : hasGuide ? '' : 'bg-amber-50 dark:bg-amber-900/20'}`}
                             title={title}
                         >
+                            {isQuoted && (
+                                <span className="mb-0.5 rounded-full bg-indigo-100 px-1.5 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                    Cotizado
+                                </span>
+                            )}
                             {logo ? (
                                 <img
                                     src={logo}
