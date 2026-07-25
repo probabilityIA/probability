@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -93,6 +94,15 @@ func (c *InventoryConsumer) handleMessage(ctx context.Context, body []byte) {
 
 	previousStatus := order.Status
 	if previousStatus == targetCode {
+		return
+	}
+
+	if !entities.OrderStatus(previousStatus).CanTransitionTo(entities.OrderStatus(targetCode)) {
+		c.logger.Info(ctx).
+			Str("order_id", msg.OrderID).
+			Str("current_status", previousStatus).
+			Str("target_status", targetCode).
+			Msg("Inventory feedback ignored: the order already moved past the picking stage")
 		return
 	}
 

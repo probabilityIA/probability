@@ -15,8 +15,8 @@ func (r *Repository) migrateWooCommerceStatusMappings(ctx context.Context) error
 	}{
 		{"pending", "pending", "Pedido creado, esperando pago"},
 		{"checkout-draft", "pending", "Borrador de checkout en WooCommerce"},
-		{"processing", "processing", "Pago recibido, pedido en preparacion"},
-		{"addi-approved", "processing", "Financiacion aprobada por Addi"},
+		{"processing", "pending", "Pago recibido, entra al flujo de almacen"},
+		{"addi-approved", "pending", "Financiacion aprobada por Addi, entra al flujo"},
 		{"on-hold", "on_hold", "Pedido en espera de confirmacion de pago"},
 		{"completed", "completed", "Pedido despachado y completado"},
 		{"cancelled", "cancelled", "Pedido cancelado"},

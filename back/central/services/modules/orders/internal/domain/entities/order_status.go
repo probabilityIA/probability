@@ -56,7 +56,6 @@ const (
 	// OrderStatusRejected - Rechazado por el cliente
 	OrderStatusRejected OrderStatus = "rejected"
 
-
 	// OrderStatusReturnInTransit - Devolución en camino al almacén
 	OrderStatusReturnInTransit OrderStatus = "return_in_transit"
 
@@ -88,26 +87,26 @@ const (
 
 // validStatuses contiene todos los estados válidos del sistema
 var validStatuses = map[OrderStatus]bool{
-	OrderStatusPending:         true,
-	OrderStatusOnHold:          true,
-	OrderStatusPicking:         true,
-	OrderStatusPacking:         true,
-	OrderStatusReadyToShip:     true,
-	OrderStatusInventoryIssue:  true,
+	OrderStatusPending:          true,
+	OrderStatusOnHold:           true,
+	OrderStatusPicking:          true,
+	OrderStatusPacking:          true,
+	OrderStatusReadyToShip:      true,
+	OrderStatusInventoryIssue:   true,
 	OrderStatusAssignedToDriver: true,
-	OrderStatusPickedUp:        true,
-	OrderStatusInTransit:       true,
-	OrderStatusOutForDelivery:  true,
-	OrderStatusDelivered:       true,
-	OrderStatusDeliveryNovelty: true,
-	OrderStatusDeliveryFailed:  true,
-	OrderStatusRejected:        true,
-	OrderStatusReturnInTransit: true,
-	OrderStatusReturned:        true,
-	OrderStatusCompleted:       true,
-	OrderStatusCancelled:       true,
-	OrderStatusRefunded:        true,
-	OrderStatusFailed:          true,
+	OrderStatusPickedUp:         true,
+	OrderStatusInTransit:        true,
+	OrderStatusOutForDelivery:   true,
+	OrderStatusDelivered:        true,
+	OrderStatusDeliveryNovelty:  true,
+	OrderStatusDeliveryFailed:   true,
+	OrderStatusRejected:         true,
+	OrderStatusReturnInTransit:  true,
+	OrderStatusReturned:         true,
+	OrderStatusCompleted:        true,
+	OrderStatusCancelled:        true,
+	OrderStatusRefunded:         true,
+	OrderStatusFailed:           true,
 	// Deprecados - aún válidos para órdenes históricas
 	OrderStatusProcessing: true,
 	OrderStatusShipped:    true,

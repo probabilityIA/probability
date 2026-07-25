@@ -269,10 +269,8 @@ func mapWooPaymentMethod(method string) uint {
 // mapWooStatus mapea el estado de WooCommerce al estado canónico de Probability.
 func mapWooStatus(wooStatus string) string {
 	switch wooStatus {
-	case "pending", "checkout-draft":
+	case "pending", "checkout-draft", "processing", "addi-approved":
 		return "pending"
-	case "processing", "addi-approved":
-		return "processing"
 	case "on-hold":
 		return "on_hold"
 	case "completed":

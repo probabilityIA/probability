@@ -107,8 +107,8 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	}
 
 	// Status mapping
-	if dto.Status != "processing" {
-		t.Errorf("Status esperado 'processing', recibí '%s'", dto.Status)
+	if dto.Status != "pending" {
+		t.Errorf("Status esperado 'pending', recibí '%s'", dto.Status)
 	}
 	if dto.OriginalStatus != "processing" {
 		t.Errorf("OriginalStatus esperado 'processing', recibí '%s'", dto.OriginalStatus)
@@ -300,8 +300,8 @@ func TestMapWooStatus_AllStatuses(t *testing.T) {
 	}{
 		{"pending", "pending"},
 		{"checkout-draft", "pending"},
-		{"processing", "processing"},
-		{"addi-approved", "processing"},
+		{"processing", "pending"},
+		{"addi-approved", "pending"},
 		{"on-hold", "on_hold"},
 		{"completed", "completed"},
 		{"cancelled", "cancelled"},
