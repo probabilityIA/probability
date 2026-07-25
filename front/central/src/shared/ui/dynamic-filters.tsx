@@ -187,8 +187,8 @@ export function DynamicFilters({
             key={filter.key}
             className={
                 isBar
-                    ? 'inline-flex items-center gap-1 pl-2.5 pr-1 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-xs font-medium whitespace-nowrap'
-                    : 'inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium'
+                    ? 'chip-business inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+                    : 'chip-business inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium'
             }
         >
             <span>
@@ -196,7 +196,7 @@ export function DynamicFilters({
             </span>
             <button
                 onClick={() => onRemoveFilter(filter.key)}
-                className="hover:bg-purple-100 dark:hover:bg-purple-800/50 rounded-full p-0.5 transition-colors"
+                className="rounded-full p-0.5 transition-colors"
                 aria-label={`Eliminar filtro ${filter.label}`}
             >
                 <XMarkIcon className={isBar ? 'w-3.5 h-3.5' : 'w-4 h-4'} />

@@ -1558,7 +1558,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-md border border-white/40 bg-white/95 dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-white disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Primera página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
@@ -1567,7 +1567,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-md border border-white/40 bg-white/95 dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-white disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Anterior"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -1606,9 +1606,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                                     onClick={() => setFilters({ ...filters, page: p })}
                                                     className={`relative inline-flex items-center justify-center min-w-9 px-3 py-2 rounded-md border text-sm font-semibold transition-all ${
                                                         p === page
-                                                            ? 'z-10 bg-purple-600 border-purple-600 text-white shadow-md scale-105'
-                                                            : 'border-white/40 bg-white/95 dark:bg-gray-800 text-purple-700 hover:bg-white'
+                                                            ? 'page-btn-active z-10 shadow-md scale-105'
+                                                            : 'page-btn'
                                                     }`}
+                                                    style={p === page
+                                                        ? { backgroundColor: 'var(--color-secondary)', borderColor: 'var(--color-secondary)', color: 'white' }
+                                                        : undefined}
                                                 >
                                                     {p}
                                                 </button>
@@ -1619,7 +1622,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-md border border-white/40 bg-white/95 dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-white disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Siguiente"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -1628,7 +1631,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-md border border-white/40 bg-white/95 dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-white disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Última página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
