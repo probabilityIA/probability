@@ -283,7 +283,7 @@ func buildCoordinadoraLabel(c *domain.GuidePDFContext, format *domain.GuideForma
 		// cajas, dejar el resto de la pagina en blanco como en la guia real.
 		footerH = maxFooterH
 	}
-	drawCoordFooterRow(pdf, tr, c, margin, y, usableW, footerH, scale, black)
+	drawCoordFooterRow(pdf, tr, c, margin, y, usableW, footerH, scale, black, c.CodTotal > 0)
 
 	var buf bytes.Buffer
 	if err := pdf.Output(&buf); err != nil {
@@ -373,7 +373,7 @@ func drawCoordAddressBlock(pdf *gofpdf.Fpdf, tr func(string) string, label, name
 // + codigo de hub en dos lineas), QR de tracking con la fecha debajo, caja
 // Destino con el valor grande, y una sola caja Zona Hub/Equipo Reparto
 // dividida en dos mitades — igual que en la guia real de COORDINADORA.
-func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h, scale float64, black color.RGBA) {
+func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.GuidePDFContext, x, y, w, h, scale float64, black color.RGBA, noTopBorder bool) {
 	gap := 2.0
 	origenW := w * 0.17
 	qrColW := w * 0.22
@@ -390,7 +390,7 @@ func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guid
 	if len(origenParts) > 1 {
 		origenLine2 = strings.Join(origenParts[1:], " ")
 	}
-	drawCoordBoxTwoLine(pdf, tr, "Origen", origenLine1, origenLine2, x, y, origenW, boxH, scale)
+	drawCoordBoxTwoLine(pdf, tr, "Origen", origenLine1, origenLine2, x, y, origenW, boxH, scale, noTopBorder)
 
 	qrX := x + origenW + gap
 	qrSize := qrColW
@@ -423,7 +423,7 @@ func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guid
 	if destinoVal == "" {
 		destinoVal = "-"
 	}
-	drawCoordBoxBig(pdf, tr, "Destino", destinoVal, destinoX, y, destinoW, boxH, scale)
+	drawCoordBoxBig(pdf, tr, "Destino", destinoVal, destinoX, y, destinoW, boxH, scale, noTopBorder)
 
 	statX := destinoX + destinoW + gap
 	zonaVal := strings.TrimSpace(c.ZonaHub)
@@ -434,15 +434,29 @@ func drawCoordFooterRow(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.Guid
 	if equipoVal == "" {
 		equipoVal = "-"
 	}
-	drawCoordSplitBox(pdf, tr, "Zona Hub", zonaVal, "Equipo Reparto", equipoVal, statX, y, statW, boxH, scale)
+	drawCoordSplitBox(pdf, tr, "Zona Hub", zonaVal, "Equipo Reparto", equipoVal, statX, y, statW, boxH, scale, noTopBorder)
+}
+
+// drawCoordBoxBorder dibuja el marco de una caja, opcionalmente sin el lado
+// superior. Se usa en la fila Origen/Destino/Zona Hub de envios contra
+// entrega: ahi el banner negro ya marca la separacion visual y una linea
+// extra justo encima de las cajas se ve redundante.
+func drawCoordBoxBorder(pdf *gofpdf.Fpdf, x, y, w, h float64, noTopBorder bool) {
+	if noTopBorder {
+		pdf.Line(x, y, x, y+h)
+		pdf.Line(x+w, y, x+w, y+h)
+		pdf.Line(x, y+h, x+w, y+h)
+		return
+	}
+	pdf.Rect(x, y, w, h, "D")
 }
 
 // drawCoordBoxTwoLine es como drawCoordBox pero el valor va en dos lineas
 // grandes centradas (el numero de Origen y su codigo de hub, ej. "28"/"FLA").
-func drawCoordBoxTwoLine(pdf *gofpdf.Fpdf, tr func(string) string, label, line1, line2 string, x, y, w, h, scale float64) {
+func drawCoordBoxTwoLine(pdf *gofpdf.Fpdf, tr func(string) string, label, line1, line2 string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
-	pdf.Rect(x, y, w, h, "D")
+	drawCoordBoxBorder(pdf, x, y, w, h, noTopBorder)
 
 	pdf.SetXY(x, y+1*scale)
 	pdf.SetFont("Helvetica", "", 5.5*scale)
@@ -463,10 +477,10 @@ func drawCoordBoxTwoLine(pdf *gofpdf.Fpdf, tr func(string) string, label, line1,
 
 // drawCoordBoxBig es como drawCoordBox pero con el valor en un tamano de
 // fuente mucho mayor (el "Destino" real se imprime muy grande y bold).
-func drawCoordBoxBig(pdf *gofpdf.Fpdf, tr func(string) string, label, value string, x, y, w, h, scale float64) {
+func drawCoordBoxBig(pdf *gofpdf.Fpdf, tr func(string) string, label, value string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
-	pdf.Rect(x, y, w, h, "D")
+	drawCoordBoxBorder(pdf, x, y, w, h, noTopBorder)
 
 	pdf.SetXY(x, y+1*scale)
 	pdf.SetFont("Helvetica", "B", 6*scale)
@@ -480,10 +494,10 @@ func drawCoordBoxBig(pdf *gofpdf.Fpdf, tr func(string) string, label, value stri
 // drawCoordSplitBox dibuja una sola caja partida por una linea horizontal
 // en dos mitades, cada una con su propia etiqueta y valor — el estilo real
 // de la caja combinada "Zona Hub" / "Equipo Reparto".
-func drawCoordSplitBox(pdf *gofpdf.Fpdf, tr func(string) string, label1, val1, label2, val2 string, x, y, w, h, scale float64) {
+func drawCoordSplitBox(pdf *gofpdf.Fpdf, tr func(string) string, label1, val1, label2, val2 string, x, y, w, h, scale float64, noTopBorder bool) {
 	pdf.SetDrawColor(0, 0, 0)
 	pdf.SetLineWidth(0.3)
-	pdf.Rect(x, y, w, h, "D")
+	drawCoordBoxBorder(pdf, x, y, w, h, noTopBorder)
 	halfH := h / 2
 	pdf.Line(x, y+halfH, x+w, y+halfH)
 

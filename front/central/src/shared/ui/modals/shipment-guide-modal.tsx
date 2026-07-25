@@ -135,6 +135,19 @@ interface ShipmentGuideModalProps {
     recommendedCarrier?: string;
 }
 
+function normalizeColombianPhone(raw: string | undefined | null): string {
+    if (!raw) return "";
+    let digits = raw.replace(/\D/g, "");
+    if (digits.length === 12 && digits.startsWith("57")) {
+        digits = digits.slice(2);
+    } else if (digits.length === 13 && digits.startsWith("0057")) {
+        digits = digits.slice(4);
+    } else if (digits.length === 11 && digits.startsWith("0")) {
+        digits = digits.slice(1);
+    }
+    return digits;
+}
+
 const step1Schema = z.object({
     originDaneCode: z.string().min(1, "Código DANE de origen requerido"),
     originAddress: z.string().min(2, "Dirección de origen requerida").max(50),
@@ -155,21 +168,21 @@ const step1Schema = z.object({
 // Step 3: Detailed Contact Info Schema
 const step3Schema = z.object({
     originCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
-    originFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
-    originLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    originFirstName: z.string().min(2, "Min 2 caracteres").max(40, "Max 40 caracteres"),
+    originLastName: z.string().min(2, "Min 2 caracteres").max(40, "Max 40 caracteres"),
     originEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
     originPhone: z.string().length(10, "Debe tener 10 digitos"),
     originSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres"),
     originCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
     originReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres"),
     destCompany: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres").optional(),
-    destFirstName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
-    destLastName: z.string().min(2, "Min 2 caracteres").max(14, "Max 14 caracteres"),
+    destFirstName: z.string().min(2, "Min 2 caracteres").max(40, "Max 40 caracteres"),
+    destLastName: z.string().min(2, "Min 2 caracteres").max(40, "Max 40 caracteres"),
     destEmail: z.string().email("Email invalido").min(8, "Min 8 caracteres").max(60, "Max 60 caracteres"),
     destPhone: z.string().length(10, "Debe tener 10 digitos"),
-    destSuburb: z.string().min(2, "Min 2 caracteres").max(30, "Max 30 caracteres").optional(),
+    destSuburb: z.string().max(30, "Max 30 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
     destCrossStreet: z.string().min(2, "Min 2 caracteres").max(35, "Max 35 caracteres"),
-    destReference: z.string().min(2, "Min 2 caracteres").max(25, "Max 25 caracteres").optional(),
+    destReference: z.string().max(25, "Max 25 caracteres").refine((v) => !v || v.length >= 2, "Min 2 caracteres").optional(),
     requestPickup: z.boolean(),
     myShipmentReference: z.string().min(2, "Min 2 caracteres").max(28, "Max 28 caracteres"),
     external_order_id: z.string().min(1, "Requerido").max(28, "Max 28 caracteres").optional(),
@@ -392,7 +405,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         step3Form.setValue("originFirstName", wh.first_name || wh.contact_name?.split(' ')[0] || "");
         step3Form.setValue("originLastName", wh.last_name || wh.contact_name?.split(' ').slice(1).join(' ') || "");
         step3Form.setValue("originEmail", wh.email || wh.contact_email || "");
-        step3Form.setValue("originPhone", wh.phone || "");
+        step3Form.setValue("originPhone", normalizeColombianPhone(wh.phone));
         step3Form.setValue("originSuburb", wh.suburb || "");
         step3Form.setValue("originCrossStreet", wh.street || wh.address || "");
         step3Form.setValue("originReference", buildingRef);
@@ -457,7 +470,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destFirstName", order.customer_name.split(" ")[0] || "");
             step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             step3Form.setValue("destEmail", order.customer_email);
-            step3Form.setValue("destPhone", order.customer_phone);
+            step3Form.setValue("destPhone", normalizeColombianPhone(order.customer_phone));
             const streetParts = (order.shipping_street || "").split(" | ");
             step3Form.setValue("destCrossStreet", (streetParts[0] || "").substring(0, 35));
             if (streetParts[1]) step3Form.setValue("destReference", streetParts[1].substring(0, 25));
@@ -585,9 +598,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 });
                 if (!cancelled && response.ok) {
                     const data = await response.json();
-                    setGuideFormats(data.data || []);
-                    if (data.data && data.data.length > 0) {
-                        setSelectedGuideFormat(data.data[0].code);
+                    const allFormats = data.data || [];
+                    const customFormats = allFormats.filter((f: any) => f.strategy === 'rebuild');
+                    setGuideFormats(customFormats);
+                    if (customFormats.length > 0) {
+                        setSelectedGuideFormat(customFormats[0].code);
                     }
                 }
             } catch (err) {
@@ -1785,6 +1800,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         Abrir
                                                     </a>
                                                     <div ref={formatDropdownRef} className="relative">
+                                                        {guideFormats.length > 0 && (
                                                         <button
                                                             onClick={() => setShowGuideFormatDropdown(!showGuideFormatDropdown)}
                                                             className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors text-xs"
@@ -1792,13 +1808,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                             </svg>
-                                                            Descargar
-                                                            {guideFormats.length > 0 && (
-                                                                <svg className={`w-3 h-3 transition-transform ${showGuideFormatDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                                                </svg>
-                                                            )}
+                                                            Guías personalizadas
+                                                            <svg className={`w-3 h-3 transition-transform ${showGuideFormatDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                                            </svg>
                                                         </button>
+                                                        )}
                                                         {showGuideFormatDropdown && guideFormats.length > 0 && (
                                                             <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg overflow-hidden">
                                                                 {guideFormats.map((format) => (
