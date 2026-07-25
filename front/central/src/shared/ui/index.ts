@@ -4,6 +4,7 @@ export * from './badge';
 export * from './button';
 export * from './filters';
 export * from './dynamic-filters';
+export * from './icon-action-button';
 export * from './confirm-modal';
 export * from './date-picker';
 export * from './date-range-picker';

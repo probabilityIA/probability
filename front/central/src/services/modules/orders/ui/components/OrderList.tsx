@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx';
 import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
@@ -13,7 +14,8 @@ import { Order, GetOrdersParams } from '../../domain/types';
 import { ProbabilityTooltip } from './ProbabilityTooltip';
 import { NotificationBadge } from './NotificationBadge';
 import { OrderNotificationsModal } from './OrderNotificationsModal';
-import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
+import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter, IconActionButton, ORDERS_FILTERS_SLOT_ID, ORDERS_ACTIONS_SLOT_ID } from '@/shared/ui';
+import { ChartBarIcon, ArrowPathRoundedSquareIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -40,7 +42,6 @@ function normalizeCarrierLabel(value: string): string {
     return out.toUpperCase().replace(/[\s\-_]/g, '');
 }
 
-// Componente memoizado para las filas de la tabla
 const OrderRow = memo(({
     order,
     onView,
@@ -405,7 +406,7 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex flex-row justify-end gap-2">
-                    {/* Botón de Recomendación Inteligente (Robot) */}
+
                     {onViewRecommendation && (
                         <button
                             onClick={() => onViewRecommendation(order)}
@@ -537,34 +538,36 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const isFirstLoad = useRef(true);
     const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
 
-    // Guide Modal
     const [guideUrl, setGuideUrl] = useState<string | null>(null);
     const [notificationsOrder, setNotificationsOrder] = useState<Order | null>(null);
 
-    // Raw Data Modal
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [selectedOrderLogo, setSelectedOrderLogo] = useState<string | undefined>(undefined);
     const [selectedOrderPlatform, setSelectedOrderPlatform] = useState<string | undefined>(undefined);
     const [isRawModalOpen, setIsRawModalOpen] = useState(false);
 
-    // Download Orders Modal
     const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
     const [isStatusFlowOpen, setIsStatusFlowOpen] = useState(false);
     const [isQuotationExpresOpen, setIsQuotationExpresOpen] = useState(false);
     const [changeStatusOrder, setChangeStatusOrder] = useState<Order | null>(null);
+    const [filtersSlot, setFiltersSlot] = useState<HTMLElement | null>(null);
+    const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
 
-    // Integrations for filter
+    useEffect(() => {
+        setFiltersSlot(document.getElementById(ORDERS_FILTERS_SLOT_ID));
+        setActionsSlot(document.getElementById(ORDERS_ACTIONS_SLOT_ID));
+    }, []);
+
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
-    // Order statuses for filter
+
     const [orderStatusesList, setOrderStatusesList] = useState<{ value: string; label: string }[]>([]);
-    // Payment statuses for filter
+
     const [paymentStatusesList, setPaymentStatusesList] = useState<{ value: string; label: string }[]>([]);
-    // Fulfillment statuses for filter
+
     const [fulfillmentStatusesList, setFulfillmentStatusesList] = useState<{ value: string; label: string }[]>([]);
-    // Businesses for mapping (only load if super admin)
+
     const [businessesList, setBusinessesList] = useState<{ id: number; name: string }[]>([]);
 
-    // Business map for quick lookup (memoized)
     const showNotificationsColumn = useMemo(
         () => orders.some((o) => (o.notifications?.length ?? 0) > 0),
         [orders]
@@ -597,7 +600,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     }, []);
 
     useEffect(() => {
-        // Solo cargar businesses si el usuario es super admin
+
         if (!isSuperAdmin) return;
 
         const fetchBusinesses = async () => {
@@ -620,15 +623,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     useEffect(() => {
         const fetchOrderStatuses = async () => {
             try {
-                const response = await getOrderStatusesAction(true); // Solo estados activos
+                const response = await getOrderStatusesAction(true);
                 if (response.success && response.data) {
                     const options = response.data
-                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .filter((status) => status?.name)
                         .map((status) => ({
                             value: String(status.id),
                             label: status.name,
                         }));
-                    // Ordenar por nombre
+
                     options.sort((a, b) => a.label.localeCompare(b.label));
                     setOrderStatusesList(options);
                 }
@@ -642,10 +645,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     useEffect(() => {
         const fetchPaymentStatuses = async () => {
             try {
-                const response = await getPaymentStatusesAction({ is_active: true }); // Solo estados activos
+                const response = await getPaymentStatusesAction({ is_active: true });
                 if (response.success && response.data) {
                     const options = response.data
-                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .filter((status) => status?.name)
                         .map((status) => ({
                             value: String(status.id),
                             label: status.name,
@@ -663,10 +666,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     useEffect(() => {
         const fetchFulfillmentStatuses = async () => {
             try {
-                const response = await getFulfillmentStatusesAction(true); // Solo estados activos
+                const response = await getFulfillmentStatusesAction(true);
                 if (response.success && response.data) {
                     const options = response.data
-                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .filter((status) => status?.name)
                         .map((status) => ({
                             value: String(status.id),
                             label: status.name,
@@ -681,7 +684,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         fetchFulfillmentStatuses();
     }, []);
 
-    // Filters
     const [filters, setFilters] = useState<GetOrdersParams>({
         page: 1,
         page_size: 20,
@@ -689,7 +691,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const { showToast } = useToast();
 
-    // Definir filtros disponibles (usar useMemo para actualizar cuando cambian las listas)
     const availableFilters: FilterOption[] = useMemo(() => [
         {
             key: 'order_number',
@@ -794,7 +795,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
     ], [orderStatusesList, integrationsList, paymentStatusesList, fulfillmentStatusesList]);
 
-    // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
         const active: ActiveFilter[] = [];
 
@@ -844,7 +844,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
 
         if (filters.status) {
-            // Buscar el label del estado seleccionado
+
             const statusOption = orderStatusesList.find(opt => opt.value === String(filters.status));
             active.push({
                 key: 'status',
@@ -951,7 +951,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         return active;
     }, [filters, orderStatusesList, integrationsList, paymentStatusesList, fulfillmentStatusesList]);
 
-    // Manejar adición de filtro
     const handleAddFilter = useCallback((filterKey: string, value: any) => {
         setFilters((prev) => {
             const newFilters = { ...prev, page: 1 };
@@ -977,7 +976,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         });
     }, []);
 
-    // Manejar eliminación de filtro
     const handleRemoveFilter = useCallback((filterKey: string) => {
         setFilters((prev) => {
             const newFilters = { ...prev, page: 1 };
@@ -993,7 +991,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         });
     }, []);
 
-    // Manejar cambio de ordenamiento
     const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
         setFilters((prev) => ({
             ...prev,
@@ -1003,45 +1000,35 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }));
     }, []);
 
-    // SSE Integration - Agregar nueva orden sin recargar toda la tabla
     useSSE({
         eventTypes: ['order.created'],
-        // Super admin (business_id=0) recibe eventos de todos los businesses
+
         businessId: isSuperAdmin ? 0 : permissions?.business_id,
         onMessage: async (event) => {
             try {
                 const data = JSON.parse(event.data);
-                // El evento SSE tiene order_id en data.data o data.metadata
+
                 const orderId = data.data?.order_id || data.metadata?.order_id;
                 const orderNumber = data.data?.order_number || 'Desconocida';
 
                 if (data.type === 'order.created' && orderId) {
-                    // Obtener la orden completa
+
                     try {
                         const response = await getOrderByIdAction(orderId);
                         if (response.success && response.data) {
                             const newOrder = response.data;
 
-                            // Security Filter: Ignore orders from other businesses for non-super admins
                             if (!isSuperAdmin && permissions?.business_id && newOrder.business_id !== permissions.business_id) {
                                 return;
                             }
 
-                            // Optional: Filter for Super Admin if business filter is active (assuming filters.business_id exists)
-                            // if (isSuperAdmin && filters.business_id && newOrder.business_id !== Number(filters.business_id)) {
-                            //    return;
-                            // }
-
-                            // Verificar que la orden no esté ya en la lista
                             setOrders(prevOrders => {
                                 if (prevOrders.some(o => o.id === newOrder.id)) {
-                                    return prevOrders; // Ya existe, no hacer nada
+                                    return prevOrders;
                                 }
 
-                                // Marcar como nueva para la animación
                                 setNewOrderIds(prev => new Set(prev).add(newOrder.id));
 
-                                // Remover el flag de "nueva" después de la animación
                                 setTimeout(() => {
                                     setNewOrderIds(prev => {
                                         const updated = new Set(prev);
@@ -1050,22 +1037,18 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     });
                                 }, 2000);
 
-                                // Agregar al principio de la lista
                                 return [newOrder, ...prevOrders];
                             });
 
-                            // Actualizar el total solo si realmente agregamos una nueva orden
                             setTotal(prev => prev + 1);
 
-                            // Reproducir sonido de notificación
                             playNotificationSound();
 
-                            // Mostrar toast
                             showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
                         }
                     } catch (err) {
                         console.error('Error al obtener orden completa:', err);
-                        // Si falla, recargar la tabla como fallback
+
                         refreshTableOnly();
                     }
                 }
@@ -1075,7 +1058,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
     });
 
-    // SSE Integration - Actualizar score/probabilidad cuando se calcula en background
     useSSE({
         eventTypes: ['order.score_calculated'],
         businessId: isSuperAdmin ? 0 : permissions?.business_id,
@@ -1087,7 +1069,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 const orderId = data.data?.order_id || data.metadata?.order_id;
                 if (!orderId) return;
 
-                // Recargar la orden completa para obtener score y negative_factors
                 const response = await getOrderByIdAction(orderId);
                 if (response.success && response.data) {
                     setOrders(prev => prev.map(o =>
@@ -1095,12 +1076,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     ));
                 }
             } catch {
-                // Ignore parse errors
             }
         },
     });
 
-    // SSE Integration - Actualizar orden cuando cambia estado (ej: confirmación WhatsApp)
     useSSE({
         eventTypes: ['order.status_changed'],
         businessId: isSuperAdmin ? 0 : permissions?.business_id,
@@ -1112,7 +1091,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 const orderId = data.data?.order_id || data.metadata?.order_id;
                 if (!orderId) return;
 
-                // Recargar la orden completa para reflejar el nuevo estado
                 const response = await getOrderByIdAction(orderId);
                 if (response.success && response.data) {
                     const updatedOrder = response.data;
@@ -1121,18 +1099,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         o.id === orderId ? updatedOrder : o
                     ));
 
-                    // Notificar si la orden fue confirmada por WhatsApp
                     if (updatedOrder.is_confirmed === true) {
                         showToast(`Pedido #${updatedOrder.order_number} confirmado por WhatsApp`, 'success');
                     }
                 }
             } catch {
-                // Ignore parse errors
             }
         },
     });
 
-    // Función para actualizar solo la tabla (sin mostrar loading inicial)
     const refreshTableOnly = useCallback(async () => {
         setTableLoading(true);
         try {
@@ -1154,7 +1129,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     }, [filters, isSuperAdmin, selectedBusinessId]);
 
-    // Función unificada para cargar órdenes
     const loadOrders = useCallback(async (showInitialLoading = false) => {
         if (showInitialLoading) {
             setInitialLoading(true);
@@ -1184,21 +1158,18 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     }, [filters, isSuperAdmin, selectedBusinessId]);
 
-    // Función asincrónica para descargar órdenes en Excel
     const handleDownloadOrders = useCallback(async (startDate: string, endDate: string) => {
         try {
             let ordersToDownload: Order[] = [];
             let page = 1;
             let hasMore = true;
 
-            // Obtener todas las órdenes con paginación (sin filtros adicionales)
             while (hasMore) {
                 const params: GetOrdersParams = {
                     page,
-                    page_size: 50000, // Máximo permitido
+                    page_size: 50000,
                     start_date: startDate,
                     end_date: endDate,
-                    // NO incluir otros filtros - obtener TODAS las órdenes en el rango de fechas
                 };
 
                 if (isSuperAdmin && selectedBusinessId !== null) {
@@ -1213,14 +1184,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                 ordersToDownload = [...ordersToDownload, ...response.data];
 
-                // Verificar si hay más páginas
                 const currentPage = response.page || 1;
                 const totalPages = response.total_pages || 1;
                 hasMore = currentPage < totalPages;
                 page++;
             }
 
-            // Preparar datos para Excel
             const excelData = ordersToDownload.map((order: Order) => ({
                 'ID Orden': order.order_number || order.external_id || order.id,
                 'Cliente': order.customer_name || '',
@@ -1240,33 +1209,30 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
             }));
 
-            // Crear workbook
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Órdenes');
 
-            // Ajustar ancho de columnas
             const colWidths = [
-                { wch: 15 }, // ID Orden
-                { wch: 20 }, // Cliente
-                { wch: 25 }, // Email
-                { wch: 15 }, // Teléfono
-                { wch: 12 }, // Plataforma
-                { wch: 15 }, // Estado
-                { wch: 12 }, // Total
-                { wch: 10 }, // Moneda
-                { wch: 10 }, // Pagado
-                { wch: 15 }, // Contra Entrega
-                { wch: 30 }, // Dirección
-                { wch: 15 }, // Ciudad
-                { wch: 15 }, // Departamento
-                { wch: 12 }, // Valor Envío
-                { wch: 30 }, // Guía
-                { wch: 20 }, // Fecha Creación
+                { wch: 15 },
+                { wch: 20 },
+                { wch: 25 },
+                { wch: 15 },
+                { wch: 12 },
+                { wch: 15 },
+                { wch: 12 },
+                { wch: 10 },
+                { wch: 10 },
+                { wch: 15 },
+                { wch: 30 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 12 },
+                { wch: 30 },
+                { wch: 20 },
             ];
             ws['!cols'] = colWidths;
 
-            // Descargar archivo
             const fileName = `ordenes_${startDate}_a_${endDate}.xlsx`;
             XLSX.writeFile(wb, fileName);
 
@@ -1277,14 +1243,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     }, [filters, isSuperAdmin, selectedBusinessId, showToast]);
 
-    // Reset a página 1 cuando el super admin cambia el negocio seleccionado
     useEffect(() => {
         if (isSuperAdmin) {
             setFilters(prev => ({ ...prev, page: 1 }));
         }
     }, [selectedBusinessId, isSuperAdmin]);
 
-    // Carga inicial - solo una vez
     useEffect(() => {
         if (isFirstLoad.current) {
             isFirstLoad.current = false;
@@ -1292,14 +1256,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     }, [loadOrders]);
 
-    // Actualizar cuando cambian los filtros (sin loading inicial, solo tabla)
     useEffect(() => {
         if (!isFirstLoad.current) {
             loadOrders(false);
         }
     }, [filters, loadOrders]);
 
-    // Refresh cuando cambia el refreshKey (desde el padre, después de crear/editar)
     useEffect(() => {
         if (refreshKey !== undefined && refreshKey > 0) {
             refreshTableOnly();
@@ -1322,7 +1284,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     };
 
     const formatCurrency = useCallback((amount: number, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
-        // Priorizar moneda local (presentment) si está disponible
+
         const finalAmount = (amountPresentment && amountPresentment > 0 && currencyPresentment) ? amountPresentment : amount;
         return new Intl.NumberFormat('es-CO', {
             style: 'decimal',
@@ -1333,14 +1295,14 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const formatDate = useCallback((dateString: string): { date: string; time: string } => {
         const date = new Date(dateString);
-        // Formato compacto: "20 dic 2025" (sin "de")
+
         const parts = date.toLocaleDateString('es-CO', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
         }).split(' ');
-        const dateStr = `${parts[0]} ${parts[2]} ${parts[parts.length - 1]}`; // "20 dic 2025"
-        // Hora compacta: "12:07 a.m."
+        const dateStr = `${parts[0]} ${parts[2]} ${parts[parts.length - 1]}`;
+
         const timeStr = date.toLocaleTimeString('es-CO', {
             hour: '2-digit',
             minute: '2-digit',
@@ -1350,20 +1312,19 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     }, []);
 
     const getStatusBadge = useCallback((status: string | undefined | null, color?: string) => {
-        // Si no hay status o no es un string válido, retornar null
+
         const cleanStatus = status && typeof status === 'string' ? status.trim() : '';
         if (!cleanStatus) {
             return null;
         }
 
-        // Si hay color configurado en la BD, usarlo
         if (color) {
-            // Convertir hex a RGB para calcular si es claro u oscuro
+
             const hex = color.replace('#', '');
             const r = parseInt(hex.substr(0, 2), 16);
             const g = parseInt(hex.substr(2, 2), 16);
             const b = parseInt(hex.substr(4, 2), 16);
-            // Calcular luminosidad
+
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
             const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
 
@@ -1380,7 +1341,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             );
         }
 
-        // Fallback a colores por defecto si no hay color configurado
         const statusColors: Record<string, string> = {
             pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
             processing: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
@@ -1420,52 +1380,60 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         );
     }
 
+    const filtersBar = (
+        <DynamicFilters
+            variant="bar"
+            availableFilters={availableFilters}
+            activeFilters={activeFilters}
+            onAddFilter={handleAddFilter}
+            onRemoveFilter={handleRemoveFilter}
+            sortBy={filters.sort_by || 'created_at'}
+            sortOrder={filters.sort_order || 'desc'}
+            onSortChange={handleSortChange}
+            sortOptions={[
+                { value: 'created_at', label: 'Por fecha' },
+                { value: 'updated_at', label: 'Por actualizacion' },
+                { value: 'total_amount', label: 'Por monto' },
+                { value: 'order_number', label: 'Por ID' },
+            ]}
+        />
+    );
+
+    const barActions = (
+        <>
+            <IconActionButton
+                label="Cotizador Expres"
+                variant="secondary"
+                onClick={() => setIsQuotationExpresOpen(true)}
+                icon={<ChartBarIcon className="w-4 h-4" />}
+            />
+            <IconActionButton
+                label="Flujo de Estados"
+                variant="secondary"
+                onClick={() => setIsStatusFlowOpen(true)}
+                icon={<ArrowPathRoundedSquareIcon className="w-4 h-4" />}
+            />
+            <IconActionButton
+                label="Descargar ordenes en Excel"
+                variant="tertiary"
+                onClick={() => setIsDownloadModalOpen(true)}
+                icon={<ArrowDownTrayIcon className="w-4 h-4" />}
+            />
+        </>
+    );
+
     return (
         <div>
-            {/* Dynamic Filters */}
-            <div className="mb-4">
-                <DynamicFilters
-                    availableFilters={availableFilters}
-                    activeFilters={activeFilters}
-                    onAddFilter={handleAddFilter}
-                    onRemoveFilter={handleRemoveFilter}
-                    sortBy={filters.sort_by || 'created_at'}
-                    sortOrder={filters.sort_order || 'desc'}
-                    onSortChange={handleSortChange}
-                    sortOptions={[
-                        { value: 'created_at', label: 'Ordenar por fecha' },
-                        { value: 'updated_at', label: 'Ordenar por actualización' },
-                        { value: 'total_amount', label: 'Ordenar por monto' },
-                        { value: 'order_number', label: 'Ordenar por ID' },
-                    ]}
-                    onDownload={() => setIsDownloadModalOpen(true)}
-                    downloadButtonText="↓ Descargar Ordenes"
-                />
-                <div className="flex justify-between items-center mt-2 gap-2">
-                    <button
-                        onClick={() => setIsQuotationExpresOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                        Cotizador Expres
-                    </button>
-                    <button
-                        onClick={() => setIsStatusFlowOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Flujo de Estados
-                    </button>
-                </div>
-            </div>
+            {actionsSlot
+                ? createPortal(barActions, actionsSlot)
+                : <div className="mb-2 flex items-center gap-2">{barActions}</div>}
 
-            {/* Table */}
-            <div className="ordersTable relative">
-                {/* Overlay de carga solo para la tabla */}
+            {filtersSlot
+                ? createPortal(filtersBar, filtersSlot)
+                : <div className="mb-4">{filtersBar}</div>}
+
+            <div className="ordersTable relative rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
+
                 {tableLoading && (
                     <div className="absolute inset-0 bg-white dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
                         <div className="flex flex-col items-center gap-2">
@@ -1478,13 +1446,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     <table className={`min-w-full transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
                         <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                             <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
-                                    {/* Columna del logo - sin título */}
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
+
                                 </th>
                                 <th
                                     className="px-3s sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest cursor-pointer transition-all group"
                                     onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
-                                    style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}
+                                    style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}
                                 >
                                     <div className="flex items-center gap-1">
                                         Orden
@@ -1495,42 +1463,42 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         )}
                                     </div>
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Cliente
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Total
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Estatus Pago
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Probabilidad
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Confirmado
                                 </th>
 
                                 {showNotificationsColumn && (
-                                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                         Notif.
                                     </th>
                                 )}
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Fecha
                                 </th>
                                 {isSuperAdmin && (
-                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                         Business
                                     </th>
                                 )}
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Transportadora
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
+                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Acciones
                                 </th>
                             </tr>
@@ -1573,10 +1541,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     </table>
                 </div>
 
-                {/* Pagination */}
                 {(totalPages > 1 || total > 0) && (
-                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-                        {/* Mobile: Simple pagination */}
+                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3" style={{ backgroundColor: 'var(--color-primary)' }}>
+
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button
                                 variant="outline"
@@ -1596,16 +1563,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             </Button>
                         </div>
 
-                        {/* Desktop: Full pagination with page numbers */}
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                                <p className="text-xs sm:text-sm text-white">
                                     Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-1">
-                                    <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                                    <label className="text-xs sm:text-sm text-white whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -1624,78 +1590,85 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    {/* First page */}
+                                <nav className="relative z-0 inline-flex items-center gap-1.5 flex-wrap justify-end">
+
                                     <button
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-l-md border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Primera página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                                     </button>
-                                    {/* Previous */}
+
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Anterior"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                     </button>
-                                    {/* Page numbers */}
+
                                     {(() => {
                                         const pages: (number | string)[] = [];
-                                        const maxVisible = 7;
+                                        const maxVisible = 8;
 
                                         if (totalPages <= maxVisible) {
                                             for (let i = 1; i <= totalPages; i++) pages.push(i);
                                         } else {
+                                            const windowSize = maxVisible - 2;
+                                            let start = Math.max(2, page - Math.floor(windowSize / 2));
+                                            let end = start + windowSize - 1;
+                                            if (end >= totalPages) {
+                                                end = totalPages - 1;
+                                                start = Math.max(2, end - windowSize + 1);
+                                            }
+
                                             pages.push(1);
-                                            if (page > 3) pages.push('...');
-
-                                            const start = Math.max(2, page - 1);
-                                            const end = Math.min(totalPages - 1, page + 1);
+                                            if (start > 2) pages.push('...');
                                             for (let i = start; i <= end; i++) pages.push(i);
-
-                                            if (page < totalPages - 2) pages.push('...');
+                                            if (end < totalPages - 1) pages.push('...');
                                             pages.push(totalPages);
                                         }
 
                                         return pages.map((p, idx) =>
                                             typeof p === 'string' ? (
-                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-1.5 py-2 text-xs font-bold text-white/70">
                                                     ...
                                                 </span>
                                             ) : (
                                                 <button
                                                     key={p}
                                                     onClick={() => setFilters({ ...filters, page: p })}
-                                                    className={`relative inline-flex items-center px-3.5 py-2 border text-sm font-medium transition-all ${
+                                                    className={`relative inline-flex items-center justify-center min-w-9 px-3 py-2 rounded-md border text-sm font-semibold transition-all ${
                                                         p === page
-                                                            ? 'z-10 bg-purple-600 border-purple-600 text-white'
-                                                            : 'border-purple-200 bg-white dark:bg-gray-800 text-purple-700 hover:bg-purple-50'
+                                                            ? 'page-btn-active z-10 shadow-md scale-105'
+                                                            : 'page-btn'
                                                     }`}
+                                                    style={p === page
+                                                        ? { backgroundColor: 'var(--color-secondary)', borderColor: 'var(--color-secondary)', color: 'white' }
+                                                        : undefined}
                                                 >
                                                     {p}
                                                 </button>
                                             )
                                         );
                                     })()}
-                                    {/* Next */}
+
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Siguiente"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                     </button>
-                                    {/* Last page */}
+
                                     <button
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-r-md border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
                                         title="Última página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
@@ -1704,10 +1677,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             </div>
                         </div>
 
-                        {/* Mobile: Page size selector */}
                         <div className="flex items-center justify-between w-full sm:hidden pt-2">
                             <div className="flex items-center gap-1">
-                                <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                                <label className="text-xs text-white whitespace-nowrap">
                                     Mostrar:
                                 </label>
                                 <select
@@ -1724,7 +1696,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-white/80">
                                 Página {page} de {totalPages}
                             </p>
                         </div>
@@ -1820,7 +1792,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 />
             )}
 
-            {/* Guide Modal */}
             {notificationsOrder && (
                 <OrderNotificationsModal
                     orderId={notificationsOrder.id}
@@ -1842,7 +1813,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         style={{ width: '480px', maxWidth: '90vw' }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Header */}
+
                         <div className="flex items-center justify-between px-5 py-4 border-b bg-gray-50">
                             <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1860,7 +1831,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </svg>
                             </button>
                         </div>
-                        {/* PDF download/open UI — iframes can't embed S3 PDFs reliably */}
+
                         <div className="p-8 flex flex-col items-center gap-6">
                             <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center">
                                 <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
@@ -1900,27 +1871,23 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 </div>
             )}
 
-            {/* Download Orders Modal */}
             <DownloadOrdersModal
                 isOpen={isDownloadModalOpen}
                 onClose={() => setIsDownloadModalOpen(false)}
                 onDownload={handleDownloadOrders}
             />
 
-            {/* Status Flow Info Modal */}
             <OrderStatusFlowModal
                 isOpen={isStatusFlowOpen}
                 onClose={() => setIsStatusFlowOpen(false)}
             />
 
-            {/* Quotation Expres Modal */}
             <QuotationExpresModal
                 isOpen={isQuotationExpresOpen}
                 onClose={() => setIsQuotationExpresOpen(false)}
                 business_id={selectedBusinessId || undefined}
             />
 
-            {/* Change Status Modal */}
             {changeStatusOrder && (
                 <ChangeStatusModal
                     isOpen={!!changeStatusOrder}

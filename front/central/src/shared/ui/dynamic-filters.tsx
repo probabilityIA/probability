@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useState, useRef, useEffect, ReactNode } from 'react';
+import { FunnelIcon, XMarkIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Button } from './button';
+import { IconActionButton } from './icon-action-button';
 import { DateRangePicker } from './date-range-picker';
 
 export interface FilterOption {
@@ -26,17 +27,19 @@ interface DynamicFiltersProps {
     onAddFilter: (filterKey: string, value: any) => void;
     onRemoveFilter: (filterKey: string) => void;
     onCreate?: () => void;
-    createButtonText?: string; // Texto del botón crear (opcional, default: "+ Crear Orden")
-    createButtonIconOnly?: boolean; // Si true, solo muestra el ícono +
+    createButtonText?: string;
+    createButtonIconOnly?: boolean;
     onTestGuide?: () => void;
-    onDownload?: () => void; // Callback para descargar
-    downloadButtonText?: string; // Texto del botón descargar
+    onDownload?: () => void;
+    downloadButtonText?: string;
+    downloadTooltip?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
     sortOptions?: Array<{ value: string; label: string }>;
     className?: string;
-    embedded?: boolean;
+    variant?: 'card' | 'bar';
+    extraActions?: ReactNode;
 }
 
 export function DynamicFilters({
@@ -50,16 +53,18 @@ export function DynamicFilters({
     onTestGuide,
     onDownload,
     downloadButtonText = '↓ Descargar Ordenes',
+    downloadTooltip = 'Descargar ordenes en Excel',
     sortBy = 'created_at',
     sortOrder = 'desc',
     onSortChange,
     sortOptions = [
         { value: 'created_at', label: 'Ordenar por fecha' },
-        { value: 'updated_at', label: 'Ordenar por actualización' },
+        { value: 'updated_at', label: 'Ordenar por actualizacion' },
         { value: 'total_amount', label: 'Ordenar por monto' },
     ],
     className = '',
-    embedded = false,
+    variant = 'card',
+    extraActions,
 }: DynamicFiltersProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(null);
@@ -67,7 +72,8 @@ export function DynamicFilters({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
-    // Cerrar dropdown al hacer clic fuera
+    const isBar = variant === 'bar';
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
@@ -86,9 +92,7 @@ export function DynamicFilters({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Obtener filtros disponibles (que no estén ya activos)
     const availableFilterOptions = availableFilters.filter((filter) => {
-        // Para date-range, verificar si ya hay un filtro de fecha activo
         if (filter.type === 'date-range') {
             return !activeFilters.some((active) => active.type === 'date-range');
         }
@@ -102,7 +106,6 @@ export function DynamicFilters({
         setSelectedFilterKey(filterKey);
         setTempValue('');
 
-        // Si es boolean, aplicar directamente
         if (filter.type === 'boolean') {
             onAddFilter(filterKey, true);
             setIsDropdownOpen(false);
@@ -124,10 +127,8 @@ export function DynamicFilters({
 
     const handleDateRangeChange = (start: string | undefined, end: string | undefined) => {
         if (!selectedFilterKey) return;
-        // Permitir aplicar incluso si solo hay una fecha (el usuario puede completar después)
         if (start || end) {
             onAddFilter(selectedFilterKey, { start, end });
-            // Solo cerrar si ambas fechas están completas
             if (start && end) {
                 setSelectedFilterKey(null);
                 setIsDropdownOpen(false);
@@ -152,7 +153,7 @@ export function DynamicFilters({
             return 'Rango de fechas';
         }
         if (filter.type === 'boolean') {
-            return filter.value === true ? 'Sí' : 'No';
+            return filter.value === true ? 'Si' : 'No';
         }
         if (filter.type === 'select') {
             const filterOption = availableFilters.find((f) => f.key === filter.key);
@@ -169,27 +170,76 @@ export function DynamicFilters({
         return filter?.label || key;
     };
 
+    const primaryButtonClass = isBar
+        ? 'btn btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:shadow-md transition-all'
+        : 'btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all';
+
+
+    const barSelectBase = 'px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-xs';
+    const cardSelectClass = 'px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm';
+    const sortBySelectClass = isBar ? barSelectBase : cardSelectClass;
+    const sortOrderSelectClass = isBar ? barSelectBase : cardSelectClass;
+    const sortBySelectStyle = isBar ? { width: '11rem' } : undefined;
+    const sortOrderSelectStyle = isBar ? { width: '8.5rem' } : undefined;
+
+    const chips = activeFilters.map((filter) => (
+        <div
+            key={filter.key}
+            className={
+                isBar
+                    ? 'chip-business inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-full text-xs font-medium whitespace-nowrap'
+                    : 'chip-business inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium'
+            }
+        >
+            <span>
+                {getFilterLabel(filter.key)}: {getFilterDisplayValue(filter)}
+            </span>
+            <button
+                onClick={() => onRemoveFilter(filter.key)}
+                className="rounded-full p-0.5 transition-colors"
+                aria-label={`Eliminar filtro ${filter.label}`}
+            >
+                <XMarkIcon className={isBar ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+            </button>
+        </div>
+    ));
+
     return (
         <div
-          className={
-            embedded
-                ? `px-4 sm:px-6 lg:px-8 py-2.5 ${className}`
-                : `p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 bg-primary-50 dark:bg-gray-900 border-primary-200 dark:border-gray-800 ${className}`
-          }
+            className={
+                isBar
+                    ? `w-full ${className}`
+                    : `p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-b-0 bg-primary-50 dark:bg-gray-900 border-primary-200 dark:border-gray-800 ${className}`
+            }
         >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* Botón Añadir Filtro y Chips */}
-                <div className="flex-1 flex flex-wrap items-center gap-2">
+            <div
+                className={
+                    isBar
+                        ? 'flex flex-wrap items-center gap-x-3 gap-y-2'
+                        : 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'
+                }
+            >
+                <div className={isBar ? 'flex flex-wrap items-center gap-2' : 'flex-1 flex flex-wrap items-center gap-2'}>
                     <div className="relative">
                         <div className="flex items-center gap-2">
-                            <button
-                                ref={buttonRef}
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
-                            >
-                                <FunnelIcon className="w-4 h-4" />
-                                Añadir Filtro
-                            </button>
+                            {isBar ? (
+                                <IconActionButton
+                                    ref={buttonRef}
+                                    label={`A${'ñ'}adir filtro`}
+                                    variant="primary"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    icon={<FunnelIcon className="w-4 h-4" />}
+                                />
+                            ) : (
+                                <button
+                                    ref={buttonRef}
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className={primaryButtonClass}
+                                >
+                                    <FunnelIcon className="w-4 h-4" />
+                                    A{'ñ'}adir Filtro
+                                </button>
+                            )}
 
                             {onTestGuide && (
                                 <button
@@ -197,9 +247,9 @@ export function DynamicFilters({
                                         onTestGuide();
                                         setIsDropdownOpen(false);
                                     }}
-                                    className="btn btn-primary flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                    className={primaryButtonClass}
                                 >
-                                    Guía Envío
+                                    Gu{'í'}a Env{'í'}o
                                 </button>
                             )}
 
@@ -208,12 +258,15 @@ export function DynamicFilters({
                                     style={{ background: 'var(--color-tertiary-500)' }}
                                     onClick={() => {
                                         onCreate();
-                                        // close dropdown state
                                         setIsDropdownOpen(false);
                                         setSelectedFilterKey(null);
                                         setTempValue('');
                                     }}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                    className={
+                                        isBar
+                                            ? 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg hover:shadow-md transition-all'
+                                            : 'flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all'
+                                    }
                                     title={createButtonIconOnly ? 'Crear nuevo' : undefined}
                                 >
                                     {createButtonIconOnly ? (
@@ -227,30 +280,41 @@ export function DynamicFilters({
                             )}
 
                             {onDownload && (
-                                <button
-                                    onClick={() => {
-                                        onDownload();
-                                        // close dropdown state
-                                        setIsDropdownOpen(false);
-                                        setSelectedFilterKey(null);
-                                        setTempValue('');
-                                    }}
-                                    className="btn btn-tertiary flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg"
-                                    title="Descargar órdenes en Excel"
-                                >
-                                    {downloadButtonText}
-                                </button>
+                                isBar ? (
+                                    <IconActionButton
+                                        label={downloadTooltip}
+                                        variant="tertiary"
+                                        onClick={() => {
+                                            onDownload();
+                                            setIsDropdownOpen(false);
+                                            setSelectedFilterKey(null);
+                                            setTempValue('');
+                                        }}
+                                        icon={<ArrowDownTrayIcon className="w-4 h-4" />}
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            onDownload();
+                                            setIsDropdownOpen(false);
+                                            setSelectedFilterKey(null);
+                                            setTempValue('');
+                                        }}
+                                        className="btn btn-tertiary flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg"
+                                        title={downloadTooltip}
+                                    >
+                                        {downloadButtonText}
+                                    </button>
+                                )
                             )}
                         </div>
 
-                        {/* Dropdown de filtros */}
                         {isDropdownOpen && (
                             <div
                                 ref={dropdownRef}
                                 className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-3"
                             >
                                 {selectedFilterKey ? (
-                                    // Mostrar input para el filtro seleccionado
                                     (() => {
                                         const filter = availableFilters.find(
                                             (f) => f.key === selectedFilterKey
@@ -260,7 +324,7 @@ export function DynamicFilters({
                                         if (filter.type === 'text') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <input
@@ -268,7 +332,7 @@ export function DynamicFilters({
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
                                                         placeholder={filter.placeholder}
-                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -305,13 +369,13 @@ export function DynamicFilters({
                                         if (filter.type === 'select') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <select
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                     >
                                                         <option value="">Seleccionar...</option>
@@ -350,7 +414,7 @@ export function DynamicFilters({
                                         if (filter.type === 'date-range') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <DateRangePicker
@@ -390,18 +454,17 @@ export function DynamicFilters({
                                         return null;
                                     })()
                                 ) : (
-                                    // Mostrar lista de filtros disponibles
                                     <div className="space-y-1">
                                         {availableFilterOptions.length === 0 ? (
                                             <p className="text-sm text-gray-500 dark:text-gray-400 p-2">
-                                                Todos los filtros están aplicados
+                                                Todos los filtros est{'á'}n aplicados
                                             </p>
                                         ) : (
                                             availableFilterOptions.map((filter) => (
                                                 <button
                                                     key={filter.key}
                                                     onClick={() => handleFilterSelect(filter.key)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                                 >
                                                     {filter.label}
                                                 </button>
@@ -413,49 +476,45 @@ export function DynamicFilters({
                         )}
                     </div>
 
-                    {/* Chips de filtros activos */}
-                    {activeFilters.map((filter) => (
-                        <div
-                            key={filter.key}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium"
-                        >
-                            <span>
-                                {getFilterLabel(filter.key)}: {getFilterDisplayValue(filter)}
-                            </span>
-                            <button
-                                onClick={() => onRemoveFilter(filter.key)}
-                                className="hover:bg-purple-100 dark:hover:bg-purple-800/50 rounded-full p-0.5 transition-colors"
-                                aria-label={`Eliminar filtro ${filter.label}`}
-                            >
-                                <XMarkIcon className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
+                    {extraActions}
+
+                    {!isBar && chips}
                 </div>
 
-                {/* Selectores de ordenamiento */}
-                {onSortChange && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => onSortChange(e.target.value, sortOrder)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
-                        >
-                            {sortOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            value={sortOrder}
-                            onChange={(e) => onSortChange(sortBy, e.target.value as 'asc' | 'desc')}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
-                        >
-                            <option value="desc">Descendente</option>
-                            <option value="asc">Ascendente</option>
-                        </select>
-                    </div>
+                {(isBar || onSortChange) && (
+                <div className={isBar ? 'flex items-center gap-2 ml-auto flex-shrink-0' : 'flex items-center gap-2 flex-shrink-0'}>
+                    {isBar && chips.length > 0 && (
+                        <div className="flex flex-wrap items-center justify-end gap-1.5 max-w-[38vw]">{chips}</div>
+                    )}
+                    {onSortChange && (
+                        <>
+                            {isBar && (
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">Ordenar</span>
+                            )}
+                            <select
+                                value={sortBy}
+                                onChange={(e) => onSortChange(e.target.value, sortOrder)}
+                                className={sortBySelectClass}
+                                style={sortBySelectStyle}
+                            >
+                                {sortOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                value={sortOrder}
+                                onChange={(e) => onSortChange(sortBy, e.target.value as 'asc' | 'desc')}
+                                className={sortOrderSelectClass}
+                                style={sortOrderSelectStyle}
+                            >
+                                <option value="desc">Descendente</option>
+                                <option value="asc">Ascendente</option>
+                            </select>
+                        </>
+                    )}
+                </div>
                 )}
             </div>
         </div>

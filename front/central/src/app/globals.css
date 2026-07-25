@@ -519,6 +519,48 @@ textarea:focus {
   color: var(--gray-300);
 }
 
+.chip-business {
+  background: color-mix(in srgb, var(--color-primary) 12%, white);
+  color: color-mix(in srgb, var(--color-primary) 88%, black);
+}
+
+.dark .chip-business {
+  background: color-mix(in srgb, var(--color-primary) 45%, black);
+  color: white;
+}
+
+.chip-business button:hover {
+  background: color-mix(in srgb, var(--color-primary) 24%, white);
+}
+
+.dark .chip-business button:hover {
+  background: color-mix(in srgb, var(--color-primary) 60%, black);
+}
+
+.page-btn {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--color-primary);
+}
+
+.page-btn:hover:not(:disabled) {
+  background: white;
+}
+
+.dark .page-btn {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.page-btn-active {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: white;
+}
+
+.page-btn-active:hover {
+  background: var(--color-secondary);
+}
+
 .pagination-alt .pagination-button {
   @apply px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200;
   background: #0f1729;

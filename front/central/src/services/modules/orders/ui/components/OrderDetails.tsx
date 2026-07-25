@@ -32,8 +32,6 @@ interface OrderDetailsProps {
     mode?: 'details' | 'recommendation';
 }
 
-// Color por origen del cambio de estado: canal de venta, transportadora,
-// inventario o un usuario de la plataforma.
 function statusSourceStyle(source?: string): string {
     switch (source) {
         case 'sales_channel':
@@ -66,7 +64,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const tertiaryColor = businessColors?.tertiary_color || '#c4b5fd';
     const quaternaryColor = businessColors?.quaternary_color || '#ede9fe';
 
-    // Fetch full order details and history on mount
     const fetchDetails = async () => {
         if (!initialOrder.id) return;
 
@@ -97,11 +94,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         fetchDetails();
     }, [initialOrder.id, initialOrder.updated_at]);
 
-    // Derived order object (prefer full, fallback to initial)
     const order = fullOrder || initialOrder;
 
-    // AI Logic - Triggers when fullOrder (with address) is available
-    // AI Logic - Triggers when fullOrder (with address) is available AND mode is 'recommendation'
     useEffect(() => {
         if (mode === 'recommendation' && fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
             setLoadingAI(true);
@@ -119,23 +113,20 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                 })
                 .finally(() => setLoadingAI(false));
         } else if (mode !== 'recommendation') {
-            // Reset AI state if leaving recommendation mode (opt)
+
             setAIRecommendation(null);
             setLoadingAI(false);
         }
     }, [fullOrder, mode]);
 
-    // Management State
     const [isConfirmed, setIsConfirmed] = useState<boolean | null>(false);
     const [novelty, setNovelty] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // WhatsApp Confirmation State
     const [hasWhatsApp, setHasWhatsApp] = useState(false);
     const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
     const [whatsAppSent, setWhatsAppSent] = useState(false);
 
-    // Initialize management state
     useEffect(() => {
         if (order) {
             setIsConfirmed(order.is_confirmed ?? null);
@@ -143,7 +134,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         }
     }, [order]);
 
-    // Check if business has WhatsApp integration
     useEffect(() => {
         if (order?.business_id != null && order.business_id > 0) {
             checkWhatsAppIntegrationAction(order.business_id).then((result) => {
@@ -182,8 +172,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
             });
 
             if (result.success && result.data) {
-                // Update local state with the FULL updated order returned by backend
-                // This ensures calculated fields like delivery_probability and negative_factors are updated
+
                 setFullOrder(result.data);
 
                 alert('Cambios guardados correctamente');
@@ -202,7 +191,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
         if (isNaN(num) || num === undefined) return '-';
 
-        // Priorizar moneda local (presentment) si está disponible
         if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
             return new Intl.NumberFormat('es-CO', {
                 style: 'currency',
@@ -210,7 +198,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
             }).format(amountPresentment);
         }
 
-        // Fallback a USD si no hay moneda local
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
             currency: currency || 'USD',
@@ -233,7 +220,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         return { date: dateOnly, time: timeOnly };
     };
 
-    // Helper para calcular color del texto basado en luminosidad
     const getTextColor = (bgColor: string): string => {
         const hex = bgColor.replace('#', '');
         const r = parseInt(hex.substr(0, 2), 16);
@@ -243,19 +229,16 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         return luminance > 0.5 ? '#000000' : '#FFFFFF';
     };
 
-    // Parse items if they are JSON string or access directly
     const items = Array.isArray(order.items) ? order.items : [];
 
-    // Address for Map
     const fullAddress = `${order.shipping_street || ''}`;
     const city = order.shipping_city || '';
 
-    // If loading details, show a skeleton or loading state for critical sections
     const isReady = !loadingDetails && fullOrder;
 
     return (
         <div className="flex flex-col h-full bg-white">
-            {/* AI Recommendation Section - Only shown in recommendation mode */}
+
             {mode === 'recommendation' && businessColors && (
                 <div
                     className="p-3 rounded-xl border shadow-sm relative overflow-hidden transition-all hover:shadow-md"
@@ -395,7 +378,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 order={order}
                                 recommendedCarrier={aiRecommendation?.recommended_carrier}
                                 onGuideGenerated={() => {
-                                    // Reload order details after guide is generated to get updated shipment data
+
                                     setShowGuideModal(false);
                                     fetchDetails();
                                 }}
@@ -405,7 +388,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                 </div>
             )}
 
-            {/* Header */}
             {mode === 'details' && (
                 <>
                     <div
@@ -450,9 +432,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         </div>
                     </div>
 
-                    {/* Main Content - 3 Column Layout */}
                     <div className="flex flex-1 overflow-hidden">
-                        {/* Sidebar Izquierdo - Información General */}
+
                         <div
                             className="w-48 text-white p-3 overflow-y-auto"
                             style={{
@@ -542,10 +523,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                             )}
                         </div>
 
-                        {/* Centro - Contenido Principal */}
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-3 space-y-3">
-                                {/* Resumen Financiero - 4 tarjetas */}
+
                                 <div className="flex gap-3">
                                     <div className="flex-1 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Subtotal</p>
@@ -610,7 +590,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </div>
                                 </div>
 
-                                {/* Productos del Pedido */}
                                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                                     <div
                                         className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 rounded-t-lg"
@@ -730,72 +709,74 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     )}
                                 </div>
 
-                                {/* Cliente y Dirección */}
-                                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                                    <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Cliente y Dirección</h3>
-                                    {loadingDetails ? (
-                                        <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
-                                    ) : (
-                                        <div className="grid grid-cols-4 gap-3">
-                                            <div>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nombre</p>
-                                                <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.customer_name || '-'}</p>
-                                            </div>
-                                            <div className="col-span-1">
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</p>
-                                                <p className="text-xs font-semibold text-gray-900 dark:text-white break-all">{order.customer_email || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Teléfono</p>
-                                                <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.customer_phone || '-'}</p>
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-stretch">
+                                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
+                                        <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Cliente</h3>
+                                        {loadingDetails ? (
+                                            <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-3">
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Nombre</p>
+                                                    <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.customer_name || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Email</p>
+                                                    <p className="text-xs font-semibold text-gray-900 dark:text-white break-all">{order.customer_email || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Teléfono</p>
+                                                    <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.customer_phone || '-'}</p>
+                                                </div>
                                                 {order.customer_dni && (
-                                                    <>
-                                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-2 mb-1">DNI</p>
+                                                    <div>
+                                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">DNI</p>
                                                         <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.customer_dni}</p>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Dirección</p>
-                                                <div className="space-y-1">
-                                                    <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.shipping_street || '-'}</p>
-                                                    <p className="text-xs text-gray-700 dark:text-gray-200">
-                                                        {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
-                                                    </p>
-                                                    {order.shipping_geo_confidence && (
-                                                        <span
-                                                            className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                            style={
-                                                                order.shipping_geo_confidence === 'high'
-                                                                    ? { backgroundColor: '#dcfce7', color: '#166534' }
-                                                                    : order.shipping_geo_confidence === 'medium'
-                                                                        ? { backgroundColor: '#fef9c3', color: '#854d0e' }
-                                                                        : { backgroundColor: '#fee2e2', color: '#991b1b' }
-                                                            }
-                                                            title="Confianza del geocode de la direccion"
-                                                        >
-                                                            {order.shipping_geo_confidence === 'high'
-                                                                ? 'Direccion confiable'
-                                                                : order.shipping_geo_confidence === 'medium'
-                                                                    ? 'Verificar direccion'
-                                                                    : 'Direccion dudosa'}
-                                                        </span>
-                                                    )}
-                                                    {order.business_id && order.business_id > 0 && order.id && (
-                                                        <>
-                                                            <div className="pt-2">
-                                                                <GeozoneMiniMap businessId={order.business_id} orderId={order.id} lat={order.shipping_lat ?? null} lng={order.shipping_lng ?? null} height="200px" />
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                        )}
+                                    </div>
 
-                                {/* Gestión y Novedades */}
-                                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <div className="lg:col-span-1 lg:row-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 h-full">
+                                        <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Dirección</h3>
+                                        {loadingDetails ? (
+                                            <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.shipping_street || '-'}</p>
+                                                <p className="text-xs text-gray-700 dark:text-gray-200">
+                                                    {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
+                                                </p>
+                                                {order.shipping_geo_confidence && (
+                                                    <span
+                                                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                        style={
+                                                            order.shipping_geo_confidence === 'high'
+                                                                ? { backgroundColor: '#dcfce7', color: '#166534' }
+                                                                : order.shipping_geo_confidence === 'medium'
+                                                                    ? { backgroundColor: '#fef9c3', color: '#854d0e' }
+                                                                    : { backgroundColor: '#fee2e2', color: '#991b1b' }
+                                                        }
+                                                        title="Confianza del geocode de la direccion"
+                                                    >
+                                                        {order.shipping_geo_confidence === 'high'
+                                                            ? 'Direccion confiable'
+                                                            : order.shipping_geo_confidence === 'medium'
+                                                                ? 'Verificar direccion'
+                                                                : 'Direccion dudosa'}
+                                                    </span>
+                                                )}
+                                                {order.business_id && order.business_id > 0 && order.id && (
+                                                    <div className="pt-2">
+                                                        <GeozoneMiniMap businessId={order.business_id} orderId={order.id} lat={order.shipping_lat ?? null} lng={order.shipping_lng ?? null} height="200px" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                                     <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">Gestión y Novedades</h3>
                                     <div className="grid grid-cols-2 gap-3 mb-3">
                                         <div className="flex flex-col">
@@ -857,9 +838,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             </button>
                                         )}
                                     </div>
+                                    </div>
                                 </div>
 
-                                {/* Historial de Estados */}
                                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                                     <h3 className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase mb-3">Historial de Estados</h3>
                                     {loadingHistory ? (
@@ -937,11 +918,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                             </div>
                         </div>
 
-                        {/* Sidebar Derecho - Cronología y Pago */}
                         <div className="w-64 bg-gray-50 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 p-4 overflow-y-auto">
                             <h3 className="text-sm font-black uppercase tracking-wider mb-4 pb-2 border-b border-gray-200 dark:border-gray-700" style={{ color: primaryColor }}>Cronología y Pago</h3>
 
-                            {/* Timeline */}
                             <div className="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                                 <div className="flex gap-2">
                                     <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: secondaryColor }}></div>
@@ -968,7 +947,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 )}
                             </div>
 
-                            {/* Estado de Pago */}
                             <div>
                                 <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Estado de Pago</p>
                                 <span className={`inline-block px-2 py-1 text-sm font-bold rounded-full text-white uppercase ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-600' :
@@ -989,8 +967,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                 </>
             )}
 
-
-            {/* Change Status Modal */}
             {showChangeStatus && (
                 <ChangeStatusModal
                     isOpen={showChangeStatus}
