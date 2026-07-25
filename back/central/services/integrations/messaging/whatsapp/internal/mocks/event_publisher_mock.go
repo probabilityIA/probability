@@ -4,10 +4,10 @@ import "context"
 
 // EventPublisherMock implementa ports.IEventPublisher para tests unitarios
 type EventPublisherMock struct {
-	PublishOrderConfirmedFn    func(ctx context.Context, orderNumber, phoneNumber string, businessID uint) error
-	PublishOrderCancelledFn    func(ctx context.Context, orderNumber, reason, phoneNumber string, businessID uint) error
-	PublishNoveltyRequestedFn  func(ctx context.Context, orderNumber, noveltyType, phoneNumber string, businessID uint) error
-	PublishHandoffRequestedFn  func(ctx context.Context, orderNumber, phoneNumber string, businessID uint, conversationID string) error
+	PublishOrderConfirmedFn   func(ctx context.Context, orderNumber, phoneNumber string, businessID uint) error
+	PublishOrderCancelledFn   func(ctx context.Context, orderNumber, reason, phoneNumber string, businessID uint) error
+	PublishNoveltyRequestedFn func(ctx context.Context, orderNumber, noveltyType, phoneNumber string, businessID uint) error
+	PublishHandoffRequestedFn func(ctx context.Context, orderNumber, phoneNumber string, businessID uint, conversationID string) error
 }
 
 func (m *EventPublisherMock) PublishOrderConfirmed(ctx context.Context, orderNumber, phoneNumber string, businessID uint) error {

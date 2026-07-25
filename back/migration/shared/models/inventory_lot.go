@@ -29,18 +29,18 @@ func (InventoryLot) TableName() string {
 
 type InventorySerial struct {
 	gorm.Model
-	BusinessID         uint   `gorm:"not null;index;uniqueIndex:idx_serial_business_product_serial,priority:1"`
-	ProductID          string `gorm:"type:varchar(64);not null;index;uniqueIndex:idx_serial_business_product_serial,priority:2"`
-	SerialNumber       string `gorm:"size:100;not null;uniqueIndex:idx_serial_business_product_serial,priority:3"`
-	LotID              *uint  `gorm:"index"`
-	CurrentLocationID  *uint  `gorm:"index"`
-	CurrentStateID     *uint  `gorm:"index"`
-	ReceivedAt         *time.Time
-	SoldAt             *time.Time
+	BusinessID        uint   `gorm:"not null;index;uniqueIndex:idx_serial_business_product_serial,priority:1"`
+	ProductID         string `gorm:"type:varchar(64);not null;index;uniqueIndex:idx_serial_business_product_serial,priority:2"`
+	SerialNumber      string `gorm:"size:100;not null;uniqueIndex:idx_serial_business_product_serial,priority:3"`
+	LotID             *uint  `gorm:"index"`
+	CurrentLocationID *uint  `gorm:"index"`
+	CurrentStateID    *uint  `gorm:"index"`
+	ReceivedAt        *time.Time
+	SoldAt            *time.Time
 
-	Product  Product        `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Business Business       `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Lot      *InventoryLot  `gorm:"foreignKey:LotID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Product  Product       `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Business Business      `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Lot      *InventoryLot `gorm:"foreignKey:LotID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 func (InventorySerial) TableName() string {

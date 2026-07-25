@@ -25,21 +25,18 @@ import (
 func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue, database db.IDatabase) {
 	shopifyClient := client.New()
 
-	// Habilitar debug del cliente HTTP si está configurado
 	debugMode := os.Getenv("SHOPIFY_DEBUG")
 	if debugMode == "true" || debugMode == "1" {
 		shopifyClient.SetDebug(true)
 		logger.Info(context.Background()).Msg("🔍 Shopify HTTP client debug mode ENABLED")
 	}
 
-	// Crear publisher solo si RabbitMQ está disponible
 	var orderPublisher domain.OrderPublisher
 	if rabbitMQ != nil {
 		orderPublisher = queue.New(rabbitMQ, logger, config)
 	} else {
 		logger.Warn(context.Background()).
 			Msg("RabbitMQ not available, Shopify orders will not be published to queue")
-		// Crear un publisher no-op para evitar panics
 		orderPublisher = queue.NewNoOpPublisher(logger)
 	}
 
@@ -51,12 +48,14 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	if rabbitMQ != nil {
 		inventoryPushConsumer := shopifyqueue.NewInventoryPushConsumer(rabbitMQ, useCase, logger)
 		inventoryPushConsumer.Start(context.Background())
+
+		webhookConsumer := shopifyqueue.NewWebhookConsumer(rabbitMQ, useCase, logger)
+		webhookConsumer.Start(context.Background())
 	}
 
 	shopifyCore := shopifycore.New(useCase)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)
 
-	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
 	baseURL := config.Get("WEBHOOK_BASE_URL")
 	if baseURL == "" {
 		baseURL = config.Get("URL_BASE_SWAGGER")
@@ -85,6 +84,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER están configuradas, no se crearán webhooks automáticamente para Shopify")
 	}
 
-	shopifyHandler := handlers.New(useCase, logger, config, coreIntegration)
+	shopifyHandler := handlers.New(useCase, logger, config, coreIntegration, rabbitMQ)
 	shopifyHandler.RegisterRoutes(router, logger)
 }

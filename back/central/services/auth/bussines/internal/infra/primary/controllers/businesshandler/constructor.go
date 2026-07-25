@@ -11,6 +11,8 @@ import (
 type IBusinessHandler interface {
 	GetBusinesses(c *gin.Context)
 	GetBusinessesSimple(c *gin.Context)
+	GetFiscalProfileHandler(c *gin.Context)
+	UpsertFiscalProfileHandler(c *gin.Context)
 	GetBusinessByIDHandler(c *gin.Context)
 	CreateBusinessHandler(c *gin.Context)
 	UpdateBusinessHandler(c *gin.Context)

@@ -15,12 +15,12 @@ type IWebhookUseCase interface {
 }
 
 type WebhookRequest struct {
-	URL         string
-	Method      string
-	RemoteIP    string
-	Headers     map[string][]string
-	RawBody     []byte
-	Payload     domain.WebhookPayload
+	URL      string
+	Method   string
+	RemoteIP string
+	Headers  map[string][]string
+	RawBody  []byte
+	Payload  domain.WebhookPayload
 }
 
 type WebhookResult struct {

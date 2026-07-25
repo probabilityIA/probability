@@ -8,18 +8,14 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// DeleteIntegration elimina una integración
 func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint, requesterBusinessID uint) error {
 	ctx = log.WithFunctionCtx(ctx, "DeleteIntegration")
 
-	// Verificar que existe
 	integration, err := uc.repo.GetIntegrationByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
 	}
 
-	// Aislamiento multi-tenant: un business (requesterBusinessID > 0) solo puede
-	// eliminar su propia integración. Super admin (requesterBusinessID == 0) elimina cualquiera.
 	if requesterBusinessID > 0 {
 		if integration.BusinessID == nil || *integration.BusinessID != requesterBusinessID {
 			uc.log.Warn(ctx).
@@ -30,12 +26,10 @@ func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint, re
 		}
 	}
 
-	// Validación: No se puede eliminar WhatsApp si es la única integración de ese tipo
 	if integration.IntegrationType != nil && integration.IntegrationType.Code == "whatsapp" {
 		return domain.ErrIntegrationCannotDeleteWhatsApp
 	}
 
-	// Eliminar
 	if err := uc.repo.DeleteIntegration(ctx, id); err != nil {
 		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al eliminar integración")
 		return fmt.Errorf("error al eliminar integración: %w", err)
@@ -54,6 +48,12 @@ func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint, re
 	if integration.BusinessID != nil {
 		if err := uc.cache.InvalidateBusinessTypeIndex(ctx, *integration.BusinessID, integration.IntegrationTypeID); err != nil {
 			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate business+type index")
+		}
+	}
+
+	if integration.StoreID != "" {
+		if err := uc.cache.InvalidateStoreTypeIndex(ctx, integration.StoreID, integration.IntegrationTypeID); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate store+type index")
 		}
 	}
 

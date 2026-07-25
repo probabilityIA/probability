@@ -5,6 +5,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type IHandler interface {
@@ -20,12 +21,14 @@ type IHandler interface {
 type wooCommerceHandler struct {
 	useCase usecases.IWooCommerceUseCase
 	logger  log.ILogger
+	rabbit  rabbitmq.IQueue
 }
 
-func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger) IHandler {
+func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger, rabbit rabbitmq.IQueue) IHandler {
 	return &wooCommerceHandler{
 		useCase: useCase,
 		logger:  logger.WithModule("woocommerce"),
+		rabbit:  rabbit,
 	}
 }
 

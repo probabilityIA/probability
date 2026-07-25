@@ -76,10 +76,10 @@ func Init(ctx context.Context) error {
 	events.New(v1Group, logger, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module first so core is available for modules
-	integrationCore := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
+	integrationCore, dianEmitter := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
 	// Initialize Order Module (and others) — receives integrationCore for shared platform-credentials access
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

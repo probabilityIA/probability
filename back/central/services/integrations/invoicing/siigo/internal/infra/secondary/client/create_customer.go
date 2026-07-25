@@ -43,15 +43,15 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 	}
 
 	customerBody := struct {
-		Type                   string                          `json:"type"`
-		PersonType             string                          `json:"person_type"`
-		IDType                 string                          `json:"id_type"`
-		Identification         string                          `json:"identification"`
-		Name                   []string                        `json:"name"`
+		Type                   string                              `json:"type"`
+		PersonType             string                              `json:"person_type"`
+		IDType                 string                              `json:"id_type"`
+		Identification         string                              `json:"identification"`
+		Name                   []string                            `json:"name"`
 		FiscalResponsibilities []request.SiigoFiscalResponsibility `json:"fiscal_responsibilities"`
-		Address                *request.SiigoAddress           `json:"address,omitempty"`
-		Phones                 []request.SiigoPhone            `json:"phones,omitempty"`
-		Contacts               []request.SiigoContact          `json:"contacts,omitempty"`
+		Address                *request.SiigoAddress               `json:"address,omitempty"`
+		Phones                 []request.SiigoPhone                `json:"phones,omitempty"`
+		Contacts               []request.SiigoContact              `json:"contacts,omitempty"`
 	}{
 		Type:                   "Customer",
 		PersonType:             personType,

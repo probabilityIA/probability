@@ -11,7 +11,8 @@ import {
     CreateBusinessTypeDTO,
     UpdateBusinessTypeDTO,
     BusinessesSimpleResponse,
-    BusinessesSimpleParams
+    BusinessesSimpleParams,
+    UpdateFiscalProfileDTO
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
@@ -21,7 +22,6 @@ async function getUseCases() {
     return new BusinessUseCases(repository);
 }
 
-// Business Actions
 export const getBusinessesAction = async (params?: GetBusinessesParams) => {
     try {
         return (await getUseCases()).getBusinesses(params);
@@ -67,7 +67,6 @@ export const deleteBusinessAction = async (id: number) => {
     }
 };
 
-// Configured Resources Actions
 export const getConfiguredResourcesAction = async (params?: GetConfiguredResourcesParams) => {
     try {
         return (await getUseCases()).getConfiguredResources(params);
@@ -122,7 +121,24 @@ export const deactivateBusinessAction = async (id: number) => {
     }
 };
 
-// Business Types Actions
+export const getBusinessFiscalProfileAction = async (businessId: number) => {
+    try {
+        return (await getUseCases()).getFiscalProfile(businessId);
+    } catch (error: any) {
+        console.error('Get Business Fiscal Profile Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const updateBusinessFiscalProfileAction = async (businessId: number, data: UpdateFiscalProfileDTO) => {
+    try {
+        return (await getUseCases()).updateFiscalProfile(businessId, data);
+    } catch (error: any) {
+        console.error('Update Business Fiscal Profile Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 export const getBusinessTypesAction = async () => {
     try {
         return (await getUseCases()).getBusinessTypes();
@@ -168,9 +184,6 @@ export const deleteBusinessTypeAction = async (id: number) => {
     }
 };
 
-// ============================================
-// Simple Actions - Para Dropdowns/Selectores
-// ============================================
 
 export const getBusinessesSimpleAction = async (params?: BusinessesSimpleParams): Promise<BusinessesSimpleResponse> => {
     try {

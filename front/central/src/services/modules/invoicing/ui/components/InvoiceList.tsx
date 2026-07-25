@@ -22,6 +22,7 @@ import {
   getInvoicesAction,
   getInvoiceByIdAction,
   cancelInvoiceAction,
+  retryFailedInvoicesAction,
   requestInvoiceComparisonAction,
   syncCancellationsAction,
   getCompareResultAction,
@@ -54,6 +55,8 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRetryFailedModal, setShowRetryFailedModal] = useState(false);
+  const [retryFailedLoading, setRetryFailedLoading] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -252,6 +255,26 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const handleRowDoubleClick = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setShowDetailModal(true);
+  };
+
+  const handleRetryFailed = async () => {
+    try {
+      setRetryFailedLoading(true);
+      const effectiveBusinessId = isSuperAdmin
+        ? (selectedBusinessId ?? undefined)
+        : undefined;
+      const result = await retryFailedInvoicesAction(effectiveBusinessId);
+      if (result.queued === 0) {
+        showToast('No hay facturas fallidas para reintentar', 'info');
+      } else {
+        showToast(`${result.queued} facturas fallidas en reconciliación: las ya creadas en el proveedor se actualizarán y el resto se reintentará`, 'success');
+      }
+      setShowRetryFailedModal(false);
+    } catch (error: any) {
+      showToast('Error al reintentar fallidas: ' + error.message, 'error');
+    } finally {
+      setRetryFailedLoading(false);
+    }
   };
 
   const compareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -772,6 +795,15 @@ export const InvoiceList = forwardRef(function InvoiceList(
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
+        <button
+          onClick={() => setShowRetryFailedModal(true)}
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-orange-500 text-orange-500 hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Reintentar Fallidas (verifica primero en el proveedor)"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
       {/* Tabla con paginación */}
@@ -939,6 +971,18 @@ export const InvoiceList = forwardRef(function InvoiceList(
         confirmText="Sí, cancelar"
         cancelText="No, volver"
         type="danger"
+      />
+
+      {/* Modal de confirmación de reintento masivo de fallidas */}
+      <ConfirmModal
+        isOpen={showRetryFailedModal}
+        onClose={() => setShowRetryFailedModal(false)}
+        onConfirm={handleRetryFailed}
+        title="Reintentar Facturas Fallidas"
+        message="Se consultarán los documentos del proveedor: las facturas que ya existan allá se traerán y actualizarán como emitidas, y solo las que no existan se enviarán a un nuevo intento de creación. ¿Continuar?"
+        confirmText={retryFailedLoading ? 'Procesando...' : 'Sí, reintentar fallidas'}
+        cancelText="Volver"
+        type="warning"
       />
 
       {/* Modal de creación masiva */}

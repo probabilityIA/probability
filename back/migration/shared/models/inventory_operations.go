@@ -27,16 +27,16 @@ func (PutawayRule) TableName() string {
 
 type PutawaySuggestion struct {
 	gorm.Model
-	BusinessID           uint   `gorm:"not null;index"`
-	ProductID            string `gorm:"type:varchar(64);not null;index"`
-	RecommendedLocationID uint  `gorm:"not null;index"`
-	Quantity             int    `gorm:"not null"`
-	Status               string `gorm:"size:20;default:'pending';index"`
-	RuleID               *uint  `gorm:"index"`
-	Reason               string `gorm:"size:255"`
-	ActualLocationID     *uint  `gorm:"index"`
-	ConfirmedAt          *time.Time
-	ConfirmedByID        *uint
+	BusinessID            uint   `gorm:"not null;index"`
+	ProductID             string `gorm:"type:varchar(64);not null;index"`
+	RecommendedLocationID uint   `gorm:"not null;index"`
+	Quantity              int    `gorm:"not null"`
+	Status                string `gorm:"size:20;default:'pending';index"`
+	RuleID                *uint  `gorm:"index"`
+	Reason                string `gorm:"size:255"`
+	ActualLocationID      *uint  `gorm:"index"`
+	ConfirmedAt           *time.Time
+	ConfirmedByID         *uint
 
 	Business            Business          `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	RecommendedLocation WarehouseLocation `gorm:"foreignKey:RecommendedLocationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -71,14 +71,14 @@ func (ReplenishmentTask) TableName() string {
 
 type CrossDockLink struct {
 	gorm.Model
-	BusinessID         uint   `gorm:"not null;index"`
-	InboundShipmentID  *uint  `gorm:"index"`
-	OutboundOrderID    string `gorm:"type:varchar(64);not null;index"`
-	ProductID          string `gorm:"type:varchar(64);not null;index"`
-	Quantity           int    `gorm:"not null"`
-	Status             string `gorm:"size:20;default:'pending';index"`
-	ExecutedAt         *time.Time
-	Metadata           datatypes.JSON `gorm:"type:jsonb"`
+	BusinessID        uint   `gorm:"not null;index"`
+	InboundShipmentID *uint  `gorm:"index"`
+	OutboundOrderID   string `gorm:"type:varchar(64);not null;index"`
+	ProductID         string `gorm:"type:varchar(64);not null;index"`
+	Quantity          int    `gorm:"not null"`
+	Status            string `gorm:"size:20;default:'pending';index"`
+	ExecutedAt        *time.Time
+	Metadata          datatypes.JSON `gorm:"type:jsonb"`
 
 	Business Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

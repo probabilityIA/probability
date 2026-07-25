@@ -10,8 +10,8 @@ import (
 // Permite simular las respuestas de GetIntegrationByID y DecryptCredential
 // sin necesidad de conectarse a base de datos ni servicios externos.
 type IntegrationServiceMock struct {
-	GetIntegrationByIDFn    func(ctx context.Context, integrationID string) (*domain.Integration, error)
-	DecryptCredentialFn     func(ctx context.Context, integrationID string, fieldName string) (string, error)
+	GetIntegrationByIDFn      func(ctx context.Context, integrationID string) (*domain.Integration, error)
+	DecryptCredentialFn       func(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfigFn func(ctx context.Context, integrationID string, config map[string]interface{}) error
 }
 

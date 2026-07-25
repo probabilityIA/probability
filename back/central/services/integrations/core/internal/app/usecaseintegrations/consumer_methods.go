@@ -11,9 +11,15 @@ import (
 	"gorm.io/datatypes"
 )
 
-// GetIntegrationByExternalID busca una integración por su identificador externo (ej: shop domain) y tipo.
 func (uc *IntegrationUseCase) GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error) {
 	ctx = log.WithFunctionCtx(ctx, "GetIntegrationByExternalID")
+
+	if integrationType > 0 && externalID != "" {
+		if cached, err := uc.cache.GetByStoreAndType(ctx, externalID, uint(integrationType)); err == nil && cached != nil && cached.IsActive {
+			uc.log.Debug(ctx).Str("external_id", externalID).Msg("Cache hit - store index")
+			return uc.mapToPublicIntegration(cachedToIntegration(cached)), nil
+		}
+	}
 
 	var typeID *uint
 	if integrationType > 0 {
@@ -36,10 +42,77 @@ func (uc *IntegrationUseCase) GetIntegrationByExternalID(ctx context.Context, ex
 		return nil, fmt.Errorf("integration not found for external_id %s", externalID)
 	}
 
+	uc.cacheIntegrationMeta(ctx, integrations[0])
+
 	return uc.mapToPublicIntegration(integrations[0]), nil
 }
 
-// UpdateIntegrationConfig actualiza el config de una integración haciendo merge con el config existente.
+func cachedToIntegration(cached *domain.CachedIntegration) *domain.Integration {
+	configJSON, _ := json.Marshal(cached.Config)
+	return &domain.Integration{
+		ID:                cached.ID,
+		Name:              cached.Name,
+		Code:              cached.Code,
+		Category:          cached.Category,
+		IntegrationTypeID: cached.IntegrationTypeID,
+		BusinessID:        cached.BusinessID,
+		StoreID:           cached.StoreID,
+		IsActive:          cached.IsActive,
+		IsDefault:         cached.IsDefault,
+		IsTesting:         cached.IsTesting,
+		Config:            datatypes.JSON(configJSON),
+		Description:       cached.Description,
+		CreatedAt:         cached.CreatedAt,
+		UpdatedAt:         cached.UpdatedAt,
+		IntegrationType: &domain.IntegrationType{
+			ID:          cached.IntegrationTypeID,
+			Code:        cached.IntegrationTypeCode,
+			BaseURL:     cached.BaseURL,
+			BaseURLTest: cached.BaseURLTest,
+		},
+	}
+}
+
+func (uc *IntegrationUseCase) cacheIntegrationMeta(ctx context.Context, integration *domain.Integration) {
+	configMap := make(map[string]interface{})
+	if len(integration.Config) > 0 {
+		json.Unmarshal(integration.Config, &configMap)
+	}
+
+	integrationTypeCode := ""
+	baseURL := ""
+	baseURLTest := ""
+	if integration.IntegrationType != nil {
+		integrationTypeCode = integration.IntegrationType.Code
+		baseURL = integration.IntegrationType.BaseURL
+		baseURLTest = integration.IntegrationType.BaseURLTest
+	}
+
+	cachedMeta := &domain.CachedIntegration{
+		ID:                  integration.ID,
+		Name:                integration.Name,
+		Code:                integration.Code,
+		Category:            integration.Category,
+		IntegrationTypeID:   integration.IntegrationTypeID,
+		IntegrationTypeCode: integrationTypeCode,
+		BusinessID:          integration.BusinessID,
+		StoreID:             integration.StoreID,
+		IsActive:            integration.IsActive,
+		IsDefault:           integration.IsDefault,
+		IsTesting:           integration.IsTesting,
+		Config:              configMap,
+		Description:         integration.Description,
+		CreatedAt:           integration.CreatedAt,
+		UpdatedAt:           integration.UpdatedAt,
+		BaseURL:             baseURL,
+		BaseURLTest:         baseURLTest,
+	}
+
+	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {
+		uc.log.Warn(ctx).Err(err).Msg("Failed to cache integration metadata")
+	}
+}
+
 func (uc *IntegrationUseCase) UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error {
 	ctx = log.WithFunctionCtx(ctx, "UpdateIntegrationConfig")
 
@@ -53,18 +126,15 @@ func (uc *IntegrationUseCase) UpdateIntegrationConfig(ctx context.Context, integ
 		return fmt.Errorf("error al obtener integración: %w", err)
 	}
 
-	// Obtener config existente
 	existingConfig := existing.Config
 	if existingConfig == nil {
 		existingConfig = make(map[string]interface{})
 	}
 
-	// Hacer merge
 	for k, v := range newConfig {
 		existingConfig[k] = v
 	}
 
-	// Convertir a JSON
 	configBytes, err := json.Marshal(existingConfig)
 	if err != nil {
 		return fmt.Errorf("error al serializar config: %w", err)
@@ -85,11 +155,9 @@ func (uc *IntegrationUseCase) UpdateIntegrationConfig(ctx context.Context, integ
 	return nil
 }
 
-// TestConnectionFromConfig prueba la conexión con datos de config/credentials proporcionados directamente.
 func (uc *IntegrationUseCase) TestConnectionFromConfig(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
 	ctx = log.WithFunctionCtx(ctx, "TestConnectionFromConfig")
 
-	// Intentar obtener como int primero, luego como string para compatibilidad
 	var integrationType int
 	if intVal, ok := config["integration_type"].(int); ok {
 		integrationType = intVal
@@ -112,7 +180,6 @@ func (uc *IntegrationUseCase) TestConnectionFromConfig(ctx context.Context, conf
 	return provider.TestConnection(ctx, config, credentials)
 }
 
-// OnIntegrationCreated registra un observador que se ejecuta cuando se crea una integración del tipo especificado.
 func (uc *IntegrationUseCase) OnIntegrationCreated(integrationType int, observer func(context.Context, *domain.PublicIntegration)) {
 	uc.RegisterObserver(func(ctx context.Context, integration *domain.Integration) {
 		var integrationTypeCode int

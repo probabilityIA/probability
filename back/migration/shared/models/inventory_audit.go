@@ -8,13 +8,13 @@ import (
 
 type CycleCountPlan struct {
 	gorm.Model
-	BusinessID     uint   `gorm:"not null;index"`
-	WarehouseID    uint   `gorm:"not null;index"`
-	Name           string `gorm:"size:255;not null"`
-	Strategy       string `gorm:"size:20;default:'abc';index"`
-	FrequencyDays  int    `gorm:"default:30"`
-	NextRunAt      *time.Time
-	IsActive       bool `gorm:"default:true;index"`
+	BusinessID    uint   `gorm:"not null;index"`
+	WarehouseID   uint   `gorm:"not null;index"`
+	Name          string `gorm:"size:255;not null"`
+	Strategy      string `gorm:"size:20;default:'abc';index"`
+	FrequencyDays int    `gorm:"default:30"`
+	NextRunAt     *time.Time
+	IsActive      bool `gorm:"default:true;index"`
 
 	Business  Business  `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Warehouse Warehouse `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/domain/ports"
 )
 
@@ -19,4 +20,8 @@ func New(useCase ports.IInvoiceUseCase) *FactusCore {
 
 func (f *FactusCore) TestConnection(ctx context.Context, config, credentials map[string]interface{}) error {
 	return f.useCase.TestConnection(ctx, config, credentials)
+}
+
+func (f *FactusCore) ProcessInvoice(ctx context.Context, req *dtos.ProcessInvoiceRequest) (*dtos.ProcessInvoiceResult, error) {
+	return f.useCase.CreateInvoice(ctx, req)
 }

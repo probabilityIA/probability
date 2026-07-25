@@ -2,19 +2,19 @@ package response
 
 // CreateInvoiceResponse representa la respuesta de Siigo al crear una factura
 type CreateInvoiceResponse struct {
-	ID           string               `json:"id"`
-	Document     InvoiceDocumentRef   `json:"document"`
-	Date         string               `json:"date"`
-	Number       int                  `json:"number"`
-	Name         string               `json:"name"`         // Número completo: "FV-123"
-	Customer     InvoiceCustomerInfo  `json:"customer"`
-	Total        float64              `json:"total"`
-	TotalTax     float64              `json:"total_tax"`
-	Balance      float64              `json:"balance"`
-	ErrorCode    string               `json:"error_code,omitempty"`
-	Errors       []SiigoError         `json:"Errors,omitempty"`
-	PublicURL    string               `json:"public_url,omitempty"`
-	Metadata     InvoiceMetadata      `json:"metadata,omitempty"`
+	ID        string              `json:"id"`
+	Document  InvoiceDocumentRef  `json:"document"`
+	Date      string              `json:"date"`
+	Number    int                 `json:"number"`
+	Name      string              `json:"name"` // Número completo: "FV-123"
+	Customer  InvoiceCustomerInfo `json:"customer"`
+	Total     float64             `json:"total"`
+	TotalTax  float64             `json:"total_tax"`
+	Balance   float64             `json:"balance"`
+	ErrorCode string              `json:"error_code,omitempty"`
+	Errors    []SiigoError        `json:"Errors,omitempty"`
+	PublicURL string              `json:"public_url,omitempty"`
+	Metadata  InvoiceMetadata     `json:"metadata,omitempty"`
 }
 
 // InvoiceDocumentRef referencia al tipo de documento

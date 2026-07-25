@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/request"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerwebhook"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// VerifyWebhook maneja la verificación inicial del webhook (GET request)
 // @Summary Verifica el webhook de WhatsApp
 // @Description Endpoint para verificación del webhook por Meta. Retorna el challenge si el token es válido.
 // @Tags WhatsApp Webhooks
@@ -40,7 +40,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 		Str("challenge", challenge).
 		Msg("[Webhook Handler] - solicitud de verificación de webhook")
 
-	// Verificar que el modo sea "subscribe"
 	if mode != "subscribe" {
 		h.log.Warn(ctx).
 			Str("mode", mode).
@@ -49,7 +48,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 		return
 	}
 
-	// Obtener token de verificación desde Redis cache (platform_creds) o fallback a env
 	expectedToken := h.getVerifyToken(ctx)
 	if expectedToken == "" {
 		h.log.Error(ctx).Msg("[Webhook Handler] - verify_token no encontrado en cache ni en env")
@@ -57,7 +55,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 		return
 	}
 
-	// Verificar que el token coincida
 	if token != expectedToken {
 		h.log.Warn(ctx).
 			Str("received_token", token).
@@ -66,7 +63,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 		return
 	}
 
-	// Retornar el challenge para completar la verificación
 	h.log.Info(ctx).
 		Str("challenge", challenge).
 		Msg("[Webhook Handler] - webhook verificado exitosamente")
@@ -74,7 +70,6 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 	c.String(http.StatusOK, challenge)
 }
 
-// ReceiveWebhook maneja los eventos entrantes del webhook (POST request)
 // @Summary Recibe eventos de WhatsApp
 // @Description Endpoint para recibir eventos de mensajes y estados desde Meta WhatsApp Business API
 // @Tags WhatsApp Webhooks
@@ -92,7 +87,6 @@ func (h *handler) ReceiveWebhook(c *gin.Context) {
 
 	h.log.Info(ctx).Msg("[Webhook Handler] - recibiendo webhook de WhatsApp")
 
-	// 1. Leer el body completo para validar firma
 	bodyBytes, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error leyendo body")
@@ -103,7 +97,6 @@ func (h *handler) ReceiveWebhook(c *gin.Context) {
 		return
 	}
 
-	// 2. Validar firma HMAC-SHA256
 	signature := c.GetHeader("X-Hub-Signature-256")
 	if signature == "" {
 		h.log.Warn(ctx).Msg("[Webhook Handler] - falta header X-Hub-Signature-256")
@@ -125,7 +118,6 @@ func (h *handler) ReceiveWebhook(c *gin.Context) {
 		return
 	}
 
-	// 3. Parsear payload
 	var webhook request.WebhookPayload
 	if err := json.Unmarshal(bodyBytes, &webhook); err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error parseando webhook")
@@ -142,61 +134,28 @@ func (h *handler) ReceiveWebhook(c *gin.Context) {
 		Int("entries", len(webhook.Entry)).
 		Msg("[Webhook Handler] - webhook parseado correctamente")
 
-	// 4. Retornar 200 inmediatamente (requisito de Meta: responder en <5s)
 	c.JSON(http.StatusOK, gin.H{
 		"status": "received",
 	})
 
-	// 5. Procesar en background (goroutine)
-	go h.processWebhookAsync(webhook)
+	h.enqueueWebhook(bodyBytes, webhook)
 }
 
-// processWebhookAsync procesa el webhook de forma asíncrona
-func (h *handler) processWebhookAsync(webhook request.WebhookPayload) {
-	// Crear nuevo contexto para operación asíncrona
+func (h *handler) enqueueWebhook(bodyBytes []byte, webhook request.WebhookPayload) {
 	ctx := context.Background()
 
-	h.log.Info(ctx).
-		Str("object", webhook.Object).
-		Int("entries", len(webhook.Entry)).
-		Msg("[Webhook Handler] - procesando webhook de forma asíncrona")
-
-	// Mapear de infra -> domain ANTES de invocar use case
-	webhookDTO := mappers.WebhookPayloadToDomain(webhook)
-
-	// Determinar tipo de evento y procesar
-	for _, entry := range webhookDTO.Entry {
-		for _, change := range entry.Changes {
-			switch change.Field {
-			case "messages":
-				// Procesar mensajes entrantes o cambios de estado
-				if len(change.Value.Messages) > 0 {
-					if err := h.useCase.HandleIncomingMessage(ctx, webhookDTO); err != nil {
-						h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error procesando mensajes entrantes")
-					}
-				}
-				if len(change.Value.Statuses) > 0 {
-					if err := h.useCase.HandleMessageStatus(ctx, webhookDTO); err != nil {
-						h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error procesando estados de mensajes")
-					}
-				}
-			case "message_template_status_update":
-				h.log.Info(ctx).Msg("[Webhook Handler] - actualización de estado de plantilla recibida")
-				// TODO: Implementar si se necesita tracking de estado de plantillas
-			default:
-				h.log.Warn(ctx).
-					Str("field", change.Field).
-					Msg("[Webhook Handler] - campo de webhook no reconocido")
-			}
+	if h.rabbit != nil {
+		if err := h.rabbit.Publish(ctx, rabbitmq.QueueWebhooksWhatsappReceived, bodyBytes); err == nil {
+			return
 		}
+		h.log.Warn(ctx).Msg("[Webhook Handler] - no se pudo encolar el webhook, procesando inline como fallback")
 	}
 
-	h.log.Info(ctx).Msg("[Webhook Handler] - procesamiento asíncrono completado")
+	go consumerwebhook.Dispatch(ctx, h.useCase, h.log, webhook)
 }
 
 const whatsAppTypeID = uint(2)
 
-// getPlatformCredField obtiene un campo de las credenciales de plataforma via core cache (sin fallback a env)
 func (h *handler) getPlatformCredField(ctx context.Context, field string) string {
 	if h.platformCredsGetter == nil {
 		return ""
@@ -211,26 +170,21 @@ func (h *handler) getPlatformCredField(ctx context.Context, field string) string
 	return ""
 }
 
-// getVerifyToken obtiene el verify_token desde platform_creds cache
 func (h *handler) getVerifyToken(ctx context.Context) string {
 	return h.getPlatformCredField(ctx, "verify_token")
 }
 
-// getWebhookSecret obtiene el webhook_secret desde platform_creds cache
 func (h *handler) getWebhookSecret(ctx context.Context) string {
 	return h.getPlatformCredField(ctx, "webhook_secret")
 }
 
-// verifySignature verifica la firma HMAC-SHA256 del webhook
 func (h *handler) verifySignature(payload []byte, signatureHeader string) bool {
-	// Obtener secret desde Redis cache (platform_creds) o fallback a env
 	secret := h.getWebhookSecret(context.Background())
 	if secret == "" {
 		h.log.Error().Msg("[Webhook Handler] - webhook_secret no encontrado en cache ni en env")
 		return false
 	}
 
-	// La firma viene en formato "sha256=<hex>"
 	signatureParts := strings.Split(signatureHeader, "=")
 	if len(signatureParts) != 2 || signatureParts[0] != "sha256" {
 		h.log.Warn().
@@ -241,12 +195,10 @@ func (h *handler) verifySignature(payload []byte, signatureHeader string) bool {
 
 	expectedSignature := signatureParts[1]
 
-	// Calcular HMAC-SHA256
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write(payload)
 	calculatedSignature := hex.EncodeToString(mac.Sum(nil))
 
-	// Comparar firmas
 	valid := hmac.Equal([]byte(calculatedSignature), []byte(expectedSignature))
 
 	if !valid {

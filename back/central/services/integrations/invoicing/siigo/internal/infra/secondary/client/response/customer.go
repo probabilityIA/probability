@@ -1,21 +1,21 @@
 package response
 
 type Customer struct {
-	ID                     string                   `json:"id"`
-	Type                   string                   `json:"type"`
-	PersonType             string                   `json:"person_type"`
-	IDType                 CustomerIDType           `json:"id_type"`
-	Identification         string                   `json:"identification"`
-	BranchOffice           int                      `json:"branch_office"`
-	Name                   []string                 `json:"name"`
-	CommercialName         string                   `json:"commercial_name,omitempty"`
-	Active                 bool                     `json:"active"`
-	VatResponsible         bool                     `json:"vat_responsible"`
-	FiscalResponsibilities []FiscalResponsibility   `json:"fiscal_responsibilities,omitempty"`
-	Address                *CustomerAddress         `json:"address,omitempty"`
-	Phones                 []CustomerPhone          `json:"phones,omitempty"`
-	Contacts               []CustomerContact        `json:"contacts,omitempty"`
-	Metadata               map[string]interface{}   `json:"metadata,omitempty"`
+	ID                     string                 `json:"id"`
+	Type                   string                 `json:"type"`
+	PersonType             string                 `json:"person_type"`
+	IDType                 CustomerIDType         `json:"id_type"`
+	Identification         string                 `json:"identification"`
+	BranchOffice           int                    `json:"branch_office"`
+	Name                   []string               `json:"name"`
+	CommercialName         string                 `json:"commercial_name,omitempty"`
+	Active                 bool                   `json:"active"`
+	VatResponsible         bool                   `json:"vat_responsible"`
+	FiscalResponsibilities []FiscalResponsibility `json:"fiscal_responsibilities,omitempty"`
+	Address                *CustomerAddress       `json:"address,omitempty"`
+	Phones                 []CustomerPhone        `json:"phones,omitempty"`
+	Contacts               []CustomerContact      `json:"contacts,omitempty"`
+	Metadata               map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type CustomerIDType struct {
@@ -42,9 +42,9 @@ type CustomerPhone struct {
 }
 
 type CustomerAddress struct {
-	Address    string             `json:"address"`
-	City       *CustomerCityRef   `json:"city,omitempty"`
-	PostalCode string             `json:"postal_code,omitempty"`
+	Address    string           `json:"address"`
+	City       *CustomerCityRef `json:"city,omitempty"`
+	PostalCode string           `json:"postal_code,omitempty"`
 }
 
 type CustomerCityRef struct {

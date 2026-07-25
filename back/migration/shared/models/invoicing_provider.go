@@ -19,7 +19,7 @@ type InvoicingProvider struct {
 	Business   Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	// Relación con InvoicingProviderType
-	ProviderTypeID uint                   `gorm:"not null;index;uniqueIndex:idx_business_provider,priority:2"`
+	ProviderTypeID uint                  `gorm:"not null;index;uniqueIndex:idx_business_provider,priority:2"`
 	ProviderType   InvoicingProviderType `gorm:"foreignKey:ProviderTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Identificación
@@ -45,10 +45,10 @@ type InvoicingProvider struct {
 	UpdatedByID *uint `gorm:"index"`
 
 	// Relaciones
-	CreatedBy       User                 `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	UpdatedBy       *User                `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	InvoicingConfigs []InvoicingConfig   `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Invoices        []Invoice            `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	CreatedBy        User              `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	UpdatedBy        *User             `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	InvoicingConfigs []InvoicingConfig `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Invoices         []Invoice         `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
 // TableName especifica el nombre de la tabla para InvoicingProvider

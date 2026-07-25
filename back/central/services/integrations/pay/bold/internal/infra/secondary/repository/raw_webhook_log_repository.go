@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	boldWebhookSource           = "bold"
-	boldIntegrationTypeCodeRaw  = "bold_pay"
-	boldWebhookRetentionDays    = 15
+	boldWebhookSource          = "bold"
+	boldIntegrationTypeCodeRaw = "bold_pay"
+	boldWebhookRetentionDays   = 15
 )
 
 type webhookLogRow struct {

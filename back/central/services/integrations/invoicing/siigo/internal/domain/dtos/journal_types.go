@@ -2,19 +2,19 @@ package dtos
 
 // JournalItemData datos de un item para un comprobante contable en Siigo
 type JournalItemData struct {
-	SKU             string
-	Name            string
-	Quantity        float64
-	TotalPrice      float64
-	CustomerDNI     string
-	AccountCode     string
-	Movement        string
-	WarehouseID     int
-	CostCenter      int
-	TaxID           int
-	TaxName         string
-	TaxType         string
-	TaxPercentage   float64
+	SKU           string
+	Name          string
+	Quantity      float64
+	TotalPrice    float64
+	CustomerDNI   string
+	AccountCode   string
+	Movement      string
+	WarehouseID   int
+	CostCenter    int
+	TaxID         int
+	TaxName       string
+	TaxType       string
+	TaxPercentage float64
 }
 
 // CreateJournalRequest datos tipados para crear un comprobante contable en Siigo
@@ -30,10 +30,10 @@ type CreateJournalRequest struct {
 
 // CreateJournalResult resultado de crear un comprobante contable en Siigo
 type CreateJournalResult struct {
-	JournalName string
-	JournalID   string
-	Number      int
-	Date        string
+	JournalName  string
+	JournalID    string
+	Number       int
+	Date         string
 	ProviderInfo map[string]interface{}
-	AuditData   *AuditData
+	AuditData    *AuditData
 }

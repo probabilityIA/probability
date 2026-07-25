@@ -7,7 +7,7 @@ import (
 )
 
 type Geozone struct {
-	ID         uint           `gorm:"primaryKey"`
+	ID         uint `gorm:"primaryKey"`
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  *time.Time     `gorm:"index"`

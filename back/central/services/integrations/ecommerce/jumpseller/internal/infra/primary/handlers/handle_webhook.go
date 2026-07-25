@@ -5,11 +5,14 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/domain"
+	jumpsellerqueue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/infra/primary/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 func (h *jumpsellerHandler) HandleWebhook(c *gin.Context) {
@@ -62,8 +65,31 @@ func (h *jumpsellerHandler) HandleWebhook(c *gin.Context) {
 	c.Status(http.StatusOK)
 
 	if event != "" && len(rawBody) > 0 {
-		go h.processWebhookAsync(event, storeCode, integrationID, rawBody)
+		h.enqueueWebhook(event, storeCode, integrationID, rawBody)
 	}
+}
+
+func (h *jumpsellerHandler) enqueueWebhook(event, storeCode, integrationID string, rawBody []byte) {
+	ctx := context.Background()
+
+	if h.rabbit != nil {
+		msg := jumpsellerqueue.WebhookMessage{
+			Event:         event,
+			StoreCode:     storeCode,
+			IntegrationID: integrationID,
+			Body:          rawBody,
+		}
+		payload, err := json.Marshal(msg)
+		if err == nil {
+			if err := h.rabbit.Publish(ctx, rabbitmq.QueueWebhooksJumpsellerReceived, payload); err == nil {
+				return
+			}
+			h.logger.Warn(ctx).Str("event", event).Str("store_code", storeCode).
+				Msg("No se pudo encolar el webhook, procesando inline como fallback")
+		}
+	}
+
+	go h.processWebhookAsync(event, storeCode, integrationID, rawBody)
 }
 
 func (h *jumpsellerHandler) processWebhookAsync(event, storeCode, integrationID string, rawBody []byte) {

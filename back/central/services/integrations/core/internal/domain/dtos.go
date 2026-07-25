@@ -17,7 +17,7 @@ type CreateIntegrationTypeDTO struct {
 	InDevelopment       bool
 	ConfigSchema        datatypes.JSON
 	CredentialsSchema   datatypes.JSON
-	ImageFile           *multipart.FileHeader  // Archivo de imagen para subir a S3
+	ImageFile           *multipart.FileHeader // Archivo de imagen para subir a S3
 	BaseURL             string
 	BaseURLTest         string
 	PlatformCredentials map[string]interface{} // Credenciales de plataforma (se encriptarán)
@@ -34,8 +34,8 @@ type UpdateIntegrationTypeDTO struct {
 	InDevelopment       *bool
 	ConfigSchema        *datatypes.JSON
 	CredentialsSchema   *datatypes.JSON
-	ImageFile           *multipart.FileHeader   // Archivo de imagen para subir a S3
-	RemoveImage         bool                    // Flag para eliminar la imagen existente
+	ImageFile           *multipart.FileHeader // Archivo de imagen para subir a S3
+	RemoveImage         bool                  // Flag para eliminar la imagen existente
 	BaseURL             *string
 	BaseURLTest         *string
 	PlatformCredentials *map[string]interface{} // Credenciales de plataforma (se encriptarán)

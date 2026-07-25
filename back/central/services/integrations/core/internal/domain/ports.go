@@ -168,4 +168,6 @@ type IIntegrationCache interface {
 	GetByCode(ctx context.Context, code string) (*CachedIntegration, error)
 	GetByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (*CachedIntegration, error)
 	SetBusinessTypeIndex(ctx context.Context, businessID, integrationTypeID, integrationID uint) error
+	GetByStoreAndType(ctx context.Context, storeID string, integrationTypeID uint) (*CachedIntegration, error)
+	InvalidateStoreTypeIndex(ctx context.Context, storeID string, integrationTypeID uint) error
 }

@@ -35,10 +35,11 @@ func (h *Handlers) ListCODShipments(c *gin.Context) {
 	}
 
 	filter := domain.CODFilter{
-		BusinessID: businessID,
-		Status:     strings.TrimSpace(c.Query("status")),
-		Page:       page,
-		PageSize:   pageSize,
+		BusinessID:     businessID,
+		Status:         strings.TrimSpace(c.Query("status")),
+		TrackingNumber: strings.TrimSpace(c.Query("tracking_number")),
+		Page:           page,
+		PageSize:       pageSize,
 	}
 
 	if isPaidStr := c.Query("is_paid"); isPaidStr != "" {

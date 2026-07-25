@@ -32,5 +32,4 @@ var (
 	ErrIntegrationTypeHasIntegrations   = errors.New("no se puede eliminar un tipo de integración que tiene integraciones asociadas")
 	ErrIntegrationTypeImageUploadFailed = errors.New("error al subir imagen del tipo de integración")
 	ErrIntegrationTypeImageDeleteFailed = errors.New("error al eliminar imagen del tipo de integración")
-
 )

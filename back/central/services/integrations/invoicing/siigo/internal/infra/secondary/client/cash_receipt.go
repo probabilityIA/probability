@@ -46,9 +46,9 @@ type voucherRequest struct {
 }
 
 type voucherResponse struct {
-	ID     string               `json:"id"`
-	Name   string               `json:"name"`
-	Number int                  `json:"number"`
+	ID     string                `json:"id"`
+	Name   string                `json:"name"`
+	Number int                   `json:"number"`
 	Errors []response.SiigoError `json:"Errors,omitempty"`
 }
 

@@ -1,7 +1,3 @@
-/**
- * Barrel de componentes UI compartidos
- */
-
 export * from './alert';
 export * from './avatar-upload';
 export * from './badge';
@@ -28,10 +24,10 @@ export * from './delivery-subnavbar';
 export * from './storefront-subnavbar';
 export * from './iam-subnavbar';
 export * from './wallet-subnavbar';
+export * from './accounting-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';
-// IAM and Orders sidebars have been integrated into the main `sidebar` component
 export * from './user-profile-modal';
 export * from './footer';
 export * from './shopify-iframe-detector';
@@ -41,8 +37,6 @@ export * from './theme-toggle';
 export * from './dashboard-panel';
 export * from './login-hero-panel';
 
-
-// Re-exportar tipos útiles
 export type {
   TableColumn,
   PaginationProps,

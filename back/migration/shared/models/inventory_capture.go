@@ -9,11 +9,11 @@ import (
 
 type LicensePlate struct {
 	gorm.Model
-	BusinessID        uint   `gorm:"not null;index;uniqueIndex:idx_lpn_business_code,priority:1"`
-	Code              string `gorm:"size:100;not null;uniqueIndex:idx_lpn_business_code,priority:2"`
-	LpnType           string `gorm:"size:20;default:'pallet';index"`
-	CurrentLocationID *uint  `gorm:"index"`
-	Status            string `gorm:"size:20;default:'active';index"`
+	BusinessID        uint           `gorm:"not null;index;uniqueIndex:idx_lpn_business_code,priority:1"`
+	Code              string         `gorm:"size:100;not null;uniqueIndex:idx_lpn_business_code,priority:2"`
+	LpnType           string         `gorm:"size:20;default:'pallet';index"`
+	CurrentLocationID *uint          `gorm:"index"`
+	Status            string         `gorm:"size:20;default:'active';index"`
 	Metadata          datatypes.JSON `gorm:"type:jsonb"`
 
 	Business Business           `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -62,13 +62,13 @@ func (ScanEvent) TableName() string {
 
 type InventorySyncLog struct {
 	gorm.Model
-	BusinessID    uint   `gorm:"not null;index"`
-	IntegrationID *uint  `gorm:"index"`
-	Direction     string `gorm:"size:3;not null;index"`
-	PayloadHash   string `gorm:"size:64;index;uniqueIndex:idx_sync_hash_direction,priority:1"`
-	DirectionKey  string `gorm:"size:3;index;uniqueIndex:idx_sync_hash_direction,priority:2"`
-	Status        string `gorm:"size:20;default:'pending';index"`
-	Error         string `gorm:"type:text"`
+	BusinessID    uint           `gorm:"not null;index"`
+	IntegrationID *uint          `gorm:"index"`
+	Direction     string         `gorm:"size:3;not null;index"`
+	PayloadHash   string         `gorm:"size:64;index;uniqueIndex:idx_sync_hash_direction,priority:1"`
+	DirectionKey  string         `gorm:"size:3;index;uniqueIndex:idx_sync_hash_direction,priority:2"`
+	Status        string         `gorm:"size:20;default:'pending';index"`
+	Error         string         `gorm:"type:text"`
 	Payload       datatypes.JSON `gorm:"type:jsonb"`
 	SyncedAt      *time.Time
 

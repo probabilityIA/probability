@@ -47,6 +47,18 @@ const (
 )
 
 const (
+	QueueWebhooksShopifyReceived = "webhooks.shopify.received"
+
+	QueueWebhooksWoocommerceReceived = "webhooks.woocommerce.received"
+
+	QueueWebhooksJumpsellerReceived = "webhooks.jumpseller.received"
+
+	QueueWebhooksEnvioclickReceived = "webhooks.envioclick.received"
+
+	QueueWebhooksWhatsappReceived = "webhooks.whatsapp.received"
+)
+
+const (
 	RoutingKeyOrderCreated = "orders.events.created"
 
 	RoutingKeyOrderUpdated = "orders.events.updated"

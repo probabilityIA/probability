@@ -109,6 +109,7 @@ func (h *jumpsellerHandler) InitiateOAuth(c *gin.Context) {
 	if scopes == "" {
 		scopes = domain.DefaultScopes
 	}
+	scopes = ensureRequiredScopes(scopes)
 
 	redirectURI := h.resolveRedirectURI(c, testMode)
 
@@ -299,6 +300,24 @@ func exchangeCodeForToken(ctx context.Context, clientID, clientSecret, code, red
 		ExpiresIn:    parsed.ExpiresIn,
 		CreatedAt:    parsed.CreatedAt,
 	}, nil
+}
+
+func ensureRequiredScopes(scopes string) string {
+	present := map[string]bool{}
+	var ordered []string
+	for _, s := range strings.Fields(scopes) {
+		if !present[s] {
+			present[s] = true
+			ordered = append(ordered, s)
+		}
+	}
+	for _, req := range domain.RequiredScopes {
+		if !present[req] {
+			present[req] = true
+			ordered = append(ordered, req)
+		}
+	}
+	return strings.Join(ordered, " ")
 }
 
 func generateRandomToken(n int) (string, error) {

@@ -68,14 +68,14 @@ type MeliOrderItemResponse struct {
 }
 
 type MeliItemResponse struct {
-	ID                  string                        `json:"id"`
-	Title               string                        `json:"title"`
-	CategoryID          string                        `json:"category_id"`
-	VariationID         *int64                        `json:"variation_id"`
-	SellerCustomField   *string                       `json:"seller_custom_field"`
-	SellerSKU           *string                       `json:"seller_sku"`
-	Condition           string                        `json:"condition"`
-	VariationAttributes []MeliVariationAttrResponse   `json:"variation_attributes"`
+	ID                  string                      `json:"id"`
+	Title               string                      `json:"title"`
+	CategoryID          string                      `json:"category_id"`
+	VariationID         *int64                      `json:"variation_id"`
+	SellerCustomField   *string                     `json:"seller_custom_field"`
+	SellerSKU           *string                     `json:"seller_sku"`
+	Condition           string                      `json:"condition"`
+	VariationAttributes []MeliVariationAttrResponse `json:"variation_attributes"`
 }
 
 type MeliVariationAttrResponse struct {

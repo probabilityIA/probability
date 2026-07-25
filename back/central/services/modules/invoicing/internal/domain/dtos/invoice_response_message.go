@@ -38,7 +38,8 @@ type InvoiceResponseMessage struct {
 
 // Response statuses
 const (
-	ResponseStatusSuccess            = "success"
-	ResponseStatusError              = "error"
-	ResponseStatusPendingValidation  = "pending_validation"
+	ResponseStatusSuccess           = "success"
+	ResponseStatusError             = "error"
+	ResponseStatusPendingValidation = "pending_validation"
+	ResponseStatusRetryRequeued     = "retry_requeued"
 )

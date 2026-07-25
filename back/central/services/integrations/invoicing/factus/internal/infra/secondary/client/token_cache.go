@@ -8,11 +8,11 @@ import (
 // TokenCache maneja el cache de tokens de autenticación de Factus
 // Factus tiene TTL de access_token = 10 min, refresh_token = 1h
 type TokenCache struct {
-	accessToken        string
-	accessTokenExpires time.Time
-	refreshToken       string
+	accessToken         string
+	accessTokenExpires  time.Time
+	refreshToken        string
 	refreshTokenExpires time.Time
-	mu                 sync.RWMutex
+	mu                  sync.RWMutex
 }
 
 // NewTokenCache crea un nuevo cache de tokens para Factus

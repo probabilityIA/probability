@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	goredis "github.com/redis/go-redis/v9"
 )
 
 // ============================================

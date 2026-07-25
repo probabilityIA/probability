@@ -28,6 +28,10 @@ func businessTypeIndexKey(businessID, typeID uint) string {
 	return fmt.Sprintf("integration:idx:biz:%d:type:%d", businessID, typeID)
 }
 
+func storeTypeIndexKey(storeID string, typeID uint) string {
+	return fmt.Sprintf("integration:idx:store:%s:type:%d", storeID, typeID)
+}
+
 func platformCredentialsKey(integrationTypeID uint) string {
 	return fmt.Sprintf("integration:platform_creds:%d", integrationTypeID)
 }

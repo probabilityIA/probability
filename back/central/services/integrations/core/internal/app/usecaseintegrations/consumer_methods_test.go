@@ -39,6 +39,8 @@ func TestGetIntegrationByExternalID_Exitoso(t *testing.T) {
 		StoreID:           externalID,
 	}
 
+	cache.On("GetByStoreAndType", mock.Anything, externalID, uint(1)).Return(nil, errors.New("cache miss"))
+	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)
 	repo.On("ListIntegrations", mock.Anything, mock.MatchedBy(func(f domain.IntegrationFilters) bool {
 		return f.StoreID != nil && *f.StoreID == externalID && f.Page == 1 && f.PageSize == 1
 	})).Return([]*domain.Integration{integracion}, int64(1), nil)
@@ -66,6 +68,7 @@ func TestGetIntegrationByExternalID_NoEncontrado(t *testing.T) {
 	uc := newTestUseCase(repo, enc, cache, logger, cfg)
 	ctx := context.Background()
 
+	cache.On("GetByStoreAndType", mock.Anything, mock.Anything, uint(1)).Return(nil, errors.New("cache miss"))
 	repo.On("ListIntegrations", mock.Anything, mock.Anything).Return([]*domain.Integration{}, int64(0), nil)
 
 	// Act
@@ -89,6 +92,7 @@ func TestGetIntegrationByExternalID_ErrorDeRepositorio(t *testing.T) {
 	uc := newTestUseCase(repo, enc, cache, logger, cfg)
 	ctx := context.Background()
 
+	cache.On("GetByStoreAndType", mock.Anything, mock.Anything, uint(1)).Return(nil, errors.New("cache miss"))
 	repo.On("ListIntegrations", mock.Anything, mock.Anything).Return(nil, int64(0), errors.New("db error"))
 
 	// Act

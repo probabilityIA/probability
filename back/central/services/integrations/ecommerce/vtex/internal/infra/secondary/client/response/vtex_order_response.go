@@ -8,25 +8,25 @@ import (
 
 // VTEXOrderDetailResponse es la respuesta JSON de GET /api/oms/pvt/orders/{orderId}.
 type VTEXOrderDetailResponse struct {
-	OrderID            string                      `json:"orderId"`
-	Sequence           string                      `json:"sequence"`
-	MarketplaceOrderID string                      `json:"marketplaceOrderId"`
-	Status             string                      `json:"status"`
-	StatusDescription  string                      `json:"statusDescription"`
-	Value              int                         `json:"value"`
-	TotalItems         int                         `json:"totalItems"`
-	TotalDiscount      int                         `json:"totalDiscount"`
-	TotalFreight       int                         `json:"totalFreight"`
-	CreationDate       string                      `json:"creationDate"`
-	LastChange         string                      `json:"lastChange"`
-	Items              []VTEXItemResponse          `json:"items"`
-	ShippingData       *VTEXShippingDataResponse   `json:"shippingData"`
-	PaymentData        *VTEXPaymentDataResponse    `json:"paymentData"`
-	ClientProfileData  *VTEXClientProfileResponse  `json:"clientProfileData"`
-	RatesAndBenefits   []VTEXRateAndBenefitResp    `json:"ratesAndBenefitsData"`
-	Sellers            []VTEXSellerResponse        `json:"sellers"`
-	Totals             []VTEXTotalResponse         `json:"totals"`
-	PackageAttachment  *VTEXPackageAttachmentResp  `json:"packageAttachment"`
+	OrderID            string                     `json:"orderId"`
+	Sequence           string                     `json:"sequence"`
+	MarketplaceOrderID string                     `json:"marketplaceOrderId"`
+	Status             string                     `json:"status"`
+	StatusDescription  string                     `json:"statusDescription"`
+	Value              int                        `json:"value"`
+	TotalItems         int                        `json:"totalItems"`
+	TotalDiscount      int                        `json:"totalDiscount"`
+	TotalFreight       int                        `json:"totalFreight"`
+	CreationDate       string                     `json:"creationDate"`
+	LastChange         string                     `json:"lastChange"`
+	Items              []VTEXItemResponse         `json:"items"`
+	ShippingData       *VTEXShippingDataResponse  `json:"shippingData"`
+	PaymentData        *VTEXPaymentDataResponse   `json:"paymentData"`
+	ClientProfileData  *VTEXClientProfileResponse `json:"clientProfileData"`
+	RatesAndBenefits   []VTEXRateAndBenefitResp   `json:"ratesAndBenefitsData"`
+	Sellers            []VTEXSellerResponse       `json:"sellers"`
+	Totals             []VTEXTotalResponse        `json:"totals"`
+	PackageAttachment  *VTEXPackageAttachmentResp `json:"packageAttachment"`
 }
 
 type VTEXItemResponse struct {
@@ -49,10 +49,10 @@ type VTEXItemResponse struct {
 }
 
 type VTEXShippingDataResponse struct {
-	Address       *VTEXAddressResponse       `json:"address"`
-	LogisticsInfo []VTEXLogisticsInfoResp    `json:"logisticsInfo"`
-	SelectedSLA   string                     `json:"selectedSla"`
-	TrackingHints []VTEXTrackingHintResp     `json:"trackingHints"`
+	Address       *VTEXAddressResponse    `json:"address"`
+	LogisticsInfo []VTEXLogisticsInfoResp `json:"logisticsInfo"`
+	SelectedSLA   string                  `json:"selectedSla"`
+	TrackingHints []VTEXTrackingHintResp  `json:"trackingHints"`
 }
 
 type VTEXAddressResponse struct {
@@ -71,17 +71,17 @@ type VTEXAddressResponse struct {
 }
 
 type VTEXLogisticsInfoResp struct {
-	ItemIndex            int                        `json:"itemIndex"`
-	SelectedSLA          string                     `json:"selectedSla"`
-	LockTTL              string                     `json:"lockTTL"`
-	Price                int                        `json:"price"`
-	ListPrice            int                        `json:"listPrice"`
-	SellingPrice         int                        `json:"sellingPrice"`
-	DeliveryWindow       *VTEXDeliveryWindowResp    `json:"deliveryWindow"`
-	ShippingEstimate     string                     `json:"shippingEstimate"`
-	ShippingEstimateDate *string                    `json:"shippingEstimateDate"`
-	DeliveryCompany      string                     `json:"deliveryCompany"`
-	DeliveryIDs          []VTEXDeliveryIDResp       `json:"deliveryIds"`
+	ItemIndex            int                     `json:"itemIndex"`
+	SelectedSLA          string                  `json:"selectedSla"`
+	LockTTL              string                  `json:"lockTTL"`
+	Price                int                     `json:"price"`
+	ListPrice            int                     `json:"listPrice"`
+	SellingPrice         int                     `json:"sellingPrice"`
+	DeliveryWindow       *VTEXDeliveryWindowResp `json:"deliveryWindow"`
+	ShippingEstimate     string                  `json:"shippingEstimate"`
+	ShippingEstimateDate *string                 `json:"shippingEstimateDate"`
+	DeliveryCompany      string                  `json:"deliveryCompany"`
+	DeliveryIDs          []VTEXDeliveryIDResp    `json:"deliveryIds"`
 }
 
 type VTEXDeliveryWindowResp struct {
@@ -110,10 +110,10 @@ type VTEXPaymentDataResponse struct {
 }
 
 type VTEXTransactionResp struct {
-	IsActive      bool                `json:"isActive"`
-	TransactionID string              `json:"transactionId"`
-	MerchantName  string              `json:"merchantName"`
-	Payments      []VTEXPaymentResp   `json:"payments"`
+	IsActive      bool              `json:"isActive"`
+	TransactionID string            `json:"transactionId"`
+	MerchantName  string            `json:"merchantName"`
+	Payments      []VTEXPaymentResp `json:"payments"`
 }
 
 type VTEXPaymentResp struct {
@@ -185,9 +185,9 @@ type VTEXPackageItemResp struct {
 }
 
 type VTEXCourierStatusResp struct {
-	Status   string                  `json:"status"`
-	Finished bool                    `json:"finished"`
-	Data     []VTEXCourierEventResp  `json:"data"`
+	Status   string                 `json:"status"`
+	Finished bool                   `json:"finished"`
+	Data     []VTEXCourierEventResp `json:"data"`
 }
 
 type VTEXCourierEventResp struct {
@@ -223,13 +223,13 @@ type VTEXPagingResp struct {
 
 // VTEXWebhookBody es el body JSON que VTEX envía al webhook (Hook v1).
 type VTEXWebhookBody struct {
-	Domain        string              `json:"Domain"`
-	OrderID       string              `json:"OrderId"`
-	State         string              `json:"State"`
-	LastState     string              `json:"LastState"`
-	LastChange    string              `json:"LastChange"`
-	CurrentChange string              `json:"CurrentChange"`
-	Origin        *VTEXOriginResp     `json:"Origin"`
+	Domain        string          `json:"Domain"`
+	OrderID       string          `json:"OrderId"`
+	State         string          `json:"State"`
+	LastState     string          `json:"LastState"`
+	LastChange    string          `json:"LastChange"`
+	CurrentChange string          `json:"CurrentChange"`
+	Origin        *VTEXOriginResp `json:"Origin"`
 }
 
 type VTEXOriginResp struct {

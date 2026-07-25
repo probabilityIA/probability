@@ -74,6 +74,8 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
     const [statusFilter, setStatusFilter] = useState('');
     const [paidFilter, setPaidFilter] = useState<'' | 'true' | 'false'>('');
     const [search, setSearch] = useState('');
+    const [guideFilter, setGuideFilter] = useState('');
+    const [debouncedGuide, setDebouncedGuide] = useState('');
     const [selected, setSelected] = useState<Shipment | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -84,6 +86,7 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
             const params: any = { page, page_size: pageSize };
             if (statusFilter) params.status = statusFilter;
             if (paidFilter) params.is_paid = paidFilter === 'true';
+            if (debouncedGuide) params.tracking_number = debouncedGuide;
             if (selectedBusinessId) params.business_id = selectedBusinessId;
             const resp = await getCODShipmentsAction(params);
             if ((resp as any).success === false) {
@@ -99,11 +102,19 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, statusFilter, paidFilter, selectedBusinessId]);
+    }, [page, pageSize, statusFilter, paidFilter, debouncedGuide, selectedBusinessId]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    useEffect(() => {
+        const t = setTimeout(() => {
+            setDebouncedGuide(guideFilter.trim());
+            setPage(1);
+        }, 400);
+        return () => clearTimeout(t);
+    }, [guideFilter]);
 
     const filtered = shipments.filter(s => {
         if (!search.trim()) return true;
@@ -132,6 +143,15 @@ export default function CODShipmentList({ selectedBusinessId }: Props) {
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar cliente, orden, tracking..."
                         className="pl-9 pr-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-64"
+                    />
+                </div>
+                <div className="relative">
+                    <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                        value={guideFilter}
+                        onChange={e => setGuideFilter(e.target.value)}
+                        placeholder="N° de guía..."
+                        className="pl-9 pr-3 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-44"
                     />
                 </div>
                 <select

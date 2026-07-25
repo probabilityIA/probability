@@ -18,6 +18,8 @@ type IUseCaseBusiness interface {
 	GetBusinessConfiguredResourcesByID(ctx context.Context, businessID uint) (*domain.BusinessWithConfiguredResourcesResponse, error)
 	ToggleBusinessResourceActive(ctx context.Context, businessID uint, resourceID uint, active bool) error
 	ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error
+	GetFiscalProfile(ctx context.Context, businessID uint) (*domain.FiscalProfile, error)
+	UpsertFiscalProfile(ctx context.Context, profile *domain.FiscalProfile) (*domain.FiscalProfile, error)
 }
 
 type BusinessUseCase struct {

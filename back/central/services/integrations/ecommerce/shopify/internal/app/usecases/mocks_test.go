@@ -11,7 +11,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-
 type mockIntegrationService struct {
 	GetIntegrationByIDFn         func(ctx context.Context, integrationID string) (*domain.Integration, error)
 	GetIntegrationByExternalIDFn func(ctx context.Context, externalID string, integrationType int) (*domain.Integration, error)
@@ -46,7 +45,6 @@ func (m *mockIntegrationService) UpdateIntegrationConfig(ctx context.Context, in
 	}
 	return nil
 }
-
 
 type mockShopifyClient struct {
 	ValidateTokenFn  func(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error)
@@ -151,7 +149,6 @@ func (m *mockShopifyClient) CreateProduct(ctx context.Context, storeName, access
 	return "", nil
 }
 
-
 type mockOrderPublisher struct {
 	PublishFn       func(ctx context.Context, order *domain.ProbabilityOrderDTO) error
 	PublishedOrders []*domain.ProbabilityOrderDTO
@@ -164,7 +161,6 @@ func (m *mockOrderPublisher) Publish(ctx context.Context, order *domain.Probabil
 	m.PublishedOrders = append(m.PublishedOrders, order)
 	return nil
 }
-
 
 // mockLoggerILogger implementa log.ILogger usando zerolog.Nop() para que los
 // logs de los use cases no emitan salida ni fallen durante la ejecucion de tests.
@@ -209,7 +205,6 @@ func (m *mockLoggerILogger) WithService(service string) log.ILogger     { return
 func (m *mockLoggerILogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLoggerILogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
-
 type capturedSyncEvent struct {
 	IntegrationID uint
 	BusinessID    *uint
@@ -229,7 +224,6 @@ func (m *mockSyncEventPublisher) PublishSyncEvent(ctx context.Context, integrati
 		Data:          data,
 	})
 }
-
 
 // newTestUseCase construye una instancia de SyncOrdersUseCase con todos los mocks
 // inyectados directamente, sin depender de infraestructura real (DB, logger, etc.).

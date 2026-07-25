@@ -48,7 +48,11 @@ func (c *shopifyClient) GetOrdersByURL(ctx context.Context, nextPageURL, accessT
 }
 
 // parseOrdersResponse parses the HTTP response from Shopify orders endpoint.
-func (c *shopifyClient) parseOrdersResponse(resp interface{ StatusCode() int; Body() []byte; Header() http.Header }) ([]domain.ShopifyOrder, string, error) {
+func (c *shopifyClient) parseOrdersResponse(resp interface {
+	StatusCode() int
+	Body() []byte
+	Header() http.Header
+}) ([]domain.ShopifyOrder, string, error) {
 	if resp.StatusCode() != http.StatusOK {
 		return nil, "", fmt.Errorf("error al obtener órdenes de Shopify (código %d)", resp.StatusCode())
 	}

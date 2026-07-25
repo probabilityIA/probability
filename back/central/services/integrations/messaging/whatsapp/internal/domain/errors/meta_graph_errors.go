@@ -4,10 +4,10 @@ import "fmt"
 
 // MetaGraphError representa un error parseado de la Graph API de Meta
 type MetaGraphError struct {
-	Code         int
-	Subcode      int
-	Message      string
-	StatusCode   int
+	Code          int
+	Subcode       int
+	Message       string
+	StatusCode    int
 	PhoneNumberID uint
 }
 

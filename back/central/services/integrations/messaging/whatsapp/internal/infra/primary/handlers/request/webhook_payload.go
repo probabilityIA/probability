@@ -46,14 +46,14 @@ type WebhookProfile struct {
 
 // WebhookMessage representa un mensaje recibido
 type WebhookMessage struct {
-	From        string               `json:"from"`                    // Número de teléfono del remitente
-	ID          string               `json:"id"`                      // ID del mensaje
-	Timestamp   string               `json:"timestamp"`               // Unix timestamp
-	Type        string               `json:"type"`                    // "text", "button", "interactive"
-	Text        *TextContent         `json:"text,omitempty"`          // Solo si type="text"
-	Button      *ButtonResponse      `json:"button,omitempty"`        // Solo si type="button"
-	Interactive *InteractiveResponse `json:"interactive,omitempty"`   // Solo si type="interactive"
-	Context     *MessageContext      `json:"context,omitempty"`       // Contexto del mensaje (reply)
+	From        string               `json:"from"`                  // Número de teléfono del remitente
+	ID          string               `json:"id"`                    // ID del mensaje
+	Timestamp   string               `json:"timestamp"`             // Unix timestamp
+	Type        string               `json:"type"`                  // "text", "button", "interactive"
+	Text        *TextContent         `json:"text,omitempty"`        // Solo si type="text"
+	Button      *ButtonResponse      `json:"button,omitempty"`      // Solo si type="button"
+	Interactive *InteractiveResponse `json:"interactive,omitempty"` // Solo si type="interactive"
+	Context     *MessageContext      `json:"context,omitempty"`     // Contexto del mensaje (reply)
 }
 
 // TextContent representa contenido de texto
@@ -95,11 +95,11 @@ type MessageContext struct {
 
 // WebhookStatus representa un cambio de estado de mensaje
 type WebhookStatus struct {
-	ID                 string            `json:"id"`                      // ID del mensaje
-	Status             string            `json:"status"`                  // "sent", "delivered", "read", "failed"
-	Timestamp          string            `json:"timestamp"`               // Unix timestamp
-	RecipientID        string            `json:"recipient_id"`            // Número de teléfono del destinatario
-	RecipientLogicalID string            `json:"recipient_logical_id"`    // ID lógico del destinatario
+	ID                 string            `json:"id"`                   // ID del mensaje
+	Status             string            `json:"status"`               // "sent", "delivered", "read", "failed"
+	Timestamp          string            `json:"timestamp"`            // Unix timestamp
+	RecipientID        string            `json:"recipient_id"`         // Número de teléfono del destinatario
+	RecipientLogicalID string            `json:"recipient_logical_id"` // ID lógico del destinatario
 	Conversation       *ConversationInfo `json:"conversation,omitempty"`
 	Pricing            *PricingInfo      `json:"pricing,omitempty"`
 	Errors             []WebhookError    `json:"errors,omitempty"`
@@ -107,9 +107,9 @@ type WebhookStatus struct {
 
 // ConversationInfo contiene información de la conversación
 type ConversationInfo struct {
-	ID                  string             `json:"id"`                              // ID de la conversación
-	Origin              ConversationOrigin `json:"origin"`                          // Objeto con tipo de origen
-	ExpirationTimestamp string             `json:"expiration_timestamp,omitempty"`  // Timestamp de expiración
+	ID                  string             `json:"id"`                             // ID de la conversación
+	Origin              ConversationOrigin `json:"origin"`                         // Objeto con tipo de origen
+	ExpirationTimestamp string             `json:"expiration_timestamp,omitempty"` // Timestamp de expiración
 }
 
 // ConversationOrigin representa el origen de la conversación (Meta envía un objeto)

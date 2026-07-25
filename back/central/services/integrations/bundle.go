@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
+	factusinv "github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
 	storefrontprovider "github.com/secamc93/probability/back/central/services/integrations/storefront"
@@ -25,7 +26,7 @@ import (
 
 // New inicializa todos los servicios de integraciones.
 // Retorna core.IIntegrationCore para que otros módulos puedan usarlo.
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, emailService email.IEmailService) core.IIntegrationCore {
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, emailService email.IEmailService) (core.IIntegrationCore, *factusinv.PlatformEmitter) {
 	// Events publisher se inicializa en init.go (módulo unificado services/events)
 
 	// Inicializar Integration Core (hub central de integraciones)
@@ -40,7 +41,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)
 
 	// Invoicing: todos los proveedores de facturación electrónica + router de colas
-	invoicing.New(router, db, config, logger, rabbitMQ, integrationCore)
+	dianEmitter := invoicing.New(router, db, config, logger, rabbitMQ, integrationCore)
 
 	// Transport: todos los proveedores de transporte + router de colas
 	transport.New(router, db, logger, rabbitMQ, integrationCore)
@@ -70,5 +71,5 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 		}
 	})
 
-	return integrationCore
+	return integrationCore, dianEmitter
 }

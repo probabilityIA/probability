@@ -167,7 +167,6 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		SetAuthToken(token).
 		SetHeader("Referer", referer).
 		SetBody(customerReq).
-		SetDebug(true).
 		Post(c.resolveURL(baseURL, "/app/integration/customer"))
 
 	if err != nil {

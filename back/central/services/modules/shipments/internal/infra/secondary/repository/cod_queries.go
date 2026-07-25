@@ -40,6 +40,9 @@ func (r *Repository) ListCODShipments(ctx context.Context, filter domain.CODFilt
 	if filter.IsPaid != nil {
 		query = query.Where("orders.is_paid = ?", *filter.IsPaid)
 	}
+	if filter.TrackingNumber != "" {
+		query = query.Where("shipments.tracking_number ILIKE ?", "%"+filter.TrackingNumber+"%")
+	}
 
 	var total int64
 	if err := query.Count(&total).Error; err != nil {

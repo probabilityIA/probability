@@ -32,9 +32,9 @@ func NewPersistencePublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.I
 
 // conversationEvent es el payload para eventos de conversación
 type conversationEvent struct {
-	EventType    string                 `json:"event_type"`
-	Conversation conversationPayload    `json:"conversation"`
-	Timestamp    int64                  `json:"timestamp"`
+	EventType    string              `json:"event_type"`
+	Conversation conversationPayload `json:"conversation"`
+	Timestamp    int64               `json:"timestamp"`
 }
 
 type conversationPayload struct {
