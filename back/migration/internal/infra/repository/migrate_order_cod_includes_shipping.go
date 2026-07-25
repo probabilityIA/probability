@@ -22,5 +22,14 @@ func (r *Repository) migrateOrderCodIncludesShipping(ctx context.Context) error 
 		return fmt.Errorf("backfill orders.cod_includes_shipping: %w", err)
 	}
 
+	seedPlatform := `UPDATE integrations
+		SET config = jsonb_set(COALESCE(config, '{}'::jsonb), '{cod_includes_shipping}', 'false'::jsonb)
+		WHERE integration_type_id = 6
+		  AND deleted_at IS NULL
+		  AND (config -> 'cod_includes_shipping') IS NULL`
+	if err := r.db.Conn(ctx).Exec(seedPlatform).Error; err != nil {
+		return fmt.Errorf("seed cod_includes_shipping en integraciones Plataforma: %w", err)
+	}
+
 	return nil
 }

@@ -7,11 +7,6 @@ import (
 )
 
 func (uc *UseCaseCreateOrder) resolveCodIncludesShipping(ctx context.Context, dto *dtos.ProbabilityOrderDTO) {
-	if dto.IsManualOrder {
-		dto.CodIncludesShipping = false
-		return
-	}
-
 	dto.CodIncludesShipping = true
 
 	if dto.IntegrationID == 0 {

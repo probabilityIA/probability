@@ -1182,31 +1182,31 @@ func TestMapOrderToResponse_MapeaTodosLosCamposPrincipales(t *testing.T) {
 func TestResolveCodIncludesShipping(t *testing.T) {
 	tests := []struct {
 		name          string
-		isManualOrder bool
 		integrationID uint
 		configValue   bool
 		configErr     error
 		want          bool
 	}{
 		{
-			name:          "orden manual: el total es solo productos, hay que sumarle el flete",
-			isManualOrder: true,
+			name:          "integracion Plataforma: guia interna, hay que sumarle el flete",
+			integrationID: 81,
+			configValue:   false,
 			want:          false,
 		},
 		{
-			name:          "canal con switch activado: el total ya trae el envio",
+			name:          "canal con el switch activado: el total ya trae el envio",
 			integrationID: 197,
 			configValue:   true,
 			want:          true,
 		},
 		{
-			name:          "canal con switch desactivado: hay que sumarle el flete",
+			name:          "canal con el switch desactivado: hay que sumarle el flete",
 			integrationID: 197,
 			configValue:   false,
 			want:          false,
 		},
 		{
-			name:          "canal sin integracion resuelta: asume que ya lo incluye",
+			name:          "sin integracion resuelta: asume que ya lo incluye",
 			integrationID: 0,
 			want:          true,
 		},
@@ -1229,10 +1229,7 @@ func TestResolveCodIncludesShipping(t *testing.T) {
 				},
 			}
 			uc := newTestCreateUseCase(repo, nil, nil, nil)
-			dto := &dtos.ProbabilityOrderDTO{
-				IntegrationID: tt.integrationID,
-				IsManualOrder: tt.isManualOrder,
-			}
+			dto := &dtos.ProbabilityOrderDTO{IntegrationID: tt.integrationID}
 
 			uc.resolveCodIncludesShipping(context.Background(), dto)
 
