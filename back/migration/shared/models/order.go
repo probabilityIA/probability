@@ -25,14 +25,15 @@ type Order struct {
 	OrderNumber    string `gorm:"size:128;index"`
 	InternalNumber string `gorm:"size:128;unique;index"`
 
-	Subtotal     float64  `gorm:"type:decimal(12,2);not null;default:0"`
-	Tax          float64  `gorm:"type:decimal(12,2);not null;default:0"`
-	Discount     float64  `gorm:"type:decimal(12,2);not null;default:0"`
-	ShippingCost float64  `gorm:"type:decimal(12,2);not null;default:0"`
-	TotalAmount  float64  `gorm:"type:decimal(12,2);not null"`
-	Currency     string   `gorm:"size:10;default:'USD'"`
-	IsCod        bool     `gorm:"column:is_cod;not null;default:false;index"`
-	CodTotal     *float64 `gorm:"type:decimal(12,2)"`
+	Subtotal            float64  `gorm:"type:decimal(12,2);not null;default:0"`
+	Tax                 float64  `gorm:"type:decimal(12,2);not null;default:0"`
+	Discount            float64  `gorm:"type:decimal(12,2);not null;default:0"`
+	ShippingCost        float64  `gorm:"type:decimal(12,2);not null;default:0"`
+	TotalAmount         float64  `gorm:"type:decimal(12,2);not null"`
+	Currency            string   `gorm:"size:10;default:'USD'"`
+	IsCod               bool     `gorm:"column:is_cod;not null;default:false;index"`
+	CodTotal            *float64 `gorm:"type:decimal(12,2)"`
+	CodIncludesShipping bool     `gorm:"column:cod_includes_shipping;not null;default:true"`
 
 	SubtotalPresentment         float64 `gorm:"column:subtotal_presentment;type:decimal(12,2);not null;default:0"`
 	TaxPresentment              float64 `gorm:"column:tax_presentment;type:decimal(12,2);not null;default:0"`

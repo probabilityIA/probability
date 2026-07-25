@@ -151,7 +151,7 @@ func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, g
 	if shippingCost > 0 {
 		updates["shipping_cost"] = shippingCost
 		updates["cod_total"] = gorm.Expr(
-			"CASE WHEN cod_total > 0 AND platform = 'manual' THEN total_amount + ? ELSE cod_total END",
+			"CASE WHEN cod_total > 0 AND cod_includes_shipping = false THEN total_amount + ? ELSE cod_total END",
 			shippingCost,
 		)
 	}

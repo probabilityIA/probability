@@ -25,14 +25,15 @@ type ProbabilityOrder struct {
 	InternalNumber string
 
 	// Información financiera
-	Subtotal     float64
-	Tax          float64
-	Discount     float64
-	ShippingCost float64
-	TotalAmount  float64
-	Currency     string
-	IsCod        bool
-	CodTotal     *float64
+	Subtotal            float64
+	Tax                 float64
+	Discount            float64
+	ShippingCost        float64
+	TotalAmount         float64
+	Currency            string
+	IsCod               bool
+	CodTotal            *float64
+	CodIncludesShipping bool
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment         float64

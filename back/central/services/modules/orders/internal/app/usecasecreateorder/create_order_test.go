@@ -1170,3 +1170,43 @@ func TestMapOrderToResponse_MapeaTodosLosCamposPrincipales(t *testing.T) {
 		t.Error("se esperaba Invoiceable = true en la respuesta")
 	}
 }
+
+func TestBuildOrderEntity_CodIncludesShipping(t *testing.T) {
+	tests := []struct {
+		name          string
+		isManualOrder bool
+		want          bool
+	}{
+		{
+			name:          "orden de canal: el total ya trae el envio que cobro la tienda",
+			isManualOrder: false,
+			want:          true,
+		},
+		{
+			name:          "orden manual: el total es solo productos, hay que sumarle el flete",
+			isManualOrder: true,
+			want:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
+			bID := uint(42)
+			dto := &dtos.ProbabilityOrderDTO{
+				BusinessID:    &bID,
+				IntegrationID: 10,
+				ExternalID:    "EXT-COD-01",
+				TotalAmount:   100.0,
+				IsCod:         true,
+				IsManualOrder: tt.isManualOrder,
+			}
+
+			order := uc.buildOrderEntity(dto, nil, orderStatusMapping{})
+
+			if order.CodIncludesShipping != tt.want {
+				t.Errorf("CodIncludesShipping = %v, se esperaba %v", order.CodIncludesShipping, tt.want)
+			}
+		})
+	}
+}
