@@ -63,7 +63,7 @@ ensure_session() {
 }
 
 window_exists() {
-    tmux list-windows -t "$TMUX_SESSION" 2>/dev/null | grep -q " $1 "
+    tmux list-windows -t "$TMUX_SESSION" -F "#{window_name}" 2>/dev/null | grep -qx "$1"
 }
 
 is_running() {
