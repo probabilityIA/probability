@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Alert, Modal, SecretInput } from '@/shared/ui';
+import { Alert, Modal, SecretInput, CodIncludesShippingToggle } from '@/shared/ui';
 import { VTEXCredentials, VTEXConfig } from '../../domain/types';
 import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction, syncOrdersAction } from '@/services/integrations/core/infra/actions';
 import { VTEXWarehouseSection, VTEXWarehouseMapping, VTEXWarehousesInfo } from './VTEXWarehouseSection';
@@ -91,6 +91,7 @@ interface VTEXConfigFormProps {
 export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: VTEXConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
 
@@ -295,6 +296,7 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                 }));
 
             const config = {
+                cod_includes_shipping: codIncludesShipping,
                 account_name: cleanAccountName(formData.account_name),
                 is_seller: isSeller,
                 inventory_sync_enabled: inventorySyncEnabled,
@@ -683,6 +685,8 @@ export function VTEXConfigForm({ onSuccess, onCancel, isEdit, integrationId, ini
                     <VTEXWebhookManager integrationId={integrationId} businessId={selectedBusinessId} />
                 </SectionCard>
             )}
+
+            <CodIncludesShippingToggle checked={codIncludesShipping} onToggle={() => setCodIncludesShipping((v) => !v)} />
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

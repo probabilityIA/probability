@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
+import { Button, Input, Alert, Select, Modal, SecretInput, CodIncludesShippingToggle } from '@/shared/ui';
 import { AmazonCredentials, AmazonConfig } from '../../domain/types';
 import { createIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -24,6 +24,7 @@ interface AmazonConfigFormProps {
 export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(true);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
     // Business selection for super admins
@@ -120,6 +121,7 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
             };
 
             const config: AmazonConfig = {
+                cod_includes_shipping: codIncludesShipping,
                 marketplace_id: formData.marketplace_id || undefined,
                 region: formData.region || undefined,
             };
@@ -354,6 +356,8 @@ export function AmazonConfigForm({ onSuccess, onCancel }: AmazonConfigFormProps)
                     </ol>
                 </div>
             </div>
+
+            <CodIncludesShippingToggle checked={codIncludesShipping} onToggle={() => setCodIncludesShipping((v) => !v)} />
 
             {/* Action Buttons */}
             <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">

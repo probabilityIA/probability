@@ -1,6 +1,7 @@
 // Tiendanube Ecommerce Integration Configuration Types
 
 export interface TiendanubeConfig {
+    cod_includes_shipping?: boolean;
     store_id?: string;        // ID de la tienda en Tiendanube
 }
 

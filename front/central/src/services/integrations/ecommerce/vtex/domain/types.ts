@@ -4,6 +4,7 @@ export interface VTEXWarehouseMappingConfig {
 }
 
 export interface VTEXConfig {
+    cod_includes_shipping?: boolean;
     account_name?: string;
     is_seller?: boolean;
     inventory_sync_enabled?: boolean;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Select, Modal, Alert, SecretInput } from '@/shared/ui';
+import { Select, Modal, Alert, SecretInput, CodIncludesShippingToggle } from '@/shared/ui';
 import { MercadoLibreCredentials, MercadoLibreConfig } from '../../domain/types';
 import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -58,6 +58,7 @@ const GUIDE_STEPS = [
 export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integrationId, initialData }: MercadoLibreConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -220,6 +221,7 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
 
             const config: any = {
                 ...(initialData?.config || {}),
+                cod_includes_shipping: codIncludesShipping,
                 seller_id: formData.seller_id || undefined,
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
@@ -625,6 +627,8 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                     businessId={selectedBusinessId}
                 />
             )}
+
+            <CodIncludesShippingToggle checked={codIncludesShipping} onToggle={() => setCodIncludesShipping((v) => !v)} />
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

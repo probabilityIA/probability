@@ -1,6 +1,7 @@
 // Magento / Adobe Commerce Integration Configuration Types
 
 export interface MagentoConfig {
+    cod_includes_shipping?: boolean;
     store_url?: string;       // URL de la tienda Magento
 }
 

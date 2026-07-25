@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Alert, Modal, SecretInput } from '@/shared/ui';
+import { Alert, Modal, SecretInput, CodIncludesShippingToggle } from '@/shared/ui';
 import { JumpsellerCredentials } from '../../domain/types';
 import { createIntegrationAction, updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { JumpsellerProductSyncModal } from './JumpsellerProductSyncModal';
@@ -82,6 +82,7 @@ interface JumpsellerConfigFormProps {
 export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTest, isEdit, integrationId, initialData }: JumpsellerConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [codIncludesShipping, setCodIncludesShipping] = useState<boolean>(initialData?.config?.cod_includes_shipping !== false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [isTesting, setIsTesting] = useState<boolean>(!!initialData?.is_testing);
@@ -244,6 +245,7 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                 }));
 
             const config = {
+                cod_includes_shipping: codIncludesShipping,
                 inventory_sync_enabled: inventorySyncEnabled,
                 status_sync_enabled: statusSyncEnabled,
                 inventory_warehouse_mode: inventorySync.mode,
@@ -665,6 +667,8 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                     />
                 </>
             )}
+
+            <CodIncludesShippingToggle checked={codIncludesShipping} onToggle={() => setCodIncludesShipping((v) => !v)} />
 
             <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (

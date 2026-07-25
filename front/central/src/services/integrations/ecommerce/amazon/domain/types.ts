@@ -1,4 +1,5 @@
 export interface AmazonConfig {
+    cod_includes_shipping?: boolean;
     marketplace_id?: string;   // ID del marketplace (ej: A1AM78C64UM0Y8 para Mexico)
     region?: string;           // Region (na, eu, fe)
 }
