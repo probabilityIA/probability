@@ -32,6 +32,8 @@ func (u *usecases) SendTemplate(
 		return "", &errors.ErrTemplateNotFound{TemplateName: templateName}
 	}
 
+	variables = SanitizeTemplateVariables(variables)
+
 	if err := entities.ValidateTemplateVariables(templateName, variables); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("template_name", templateName).
@@ -152,6 +154,8 @@ func (u *usecases) SendTemplateWithConversation(
 	if !exists {
 		return "", &errors.ErrTemplateNotFound{TemplateName: templateName}
 	}
+
+	variables = SanitizeTemplateVariables(variables)
 
 	if err := entities.ValidateTemplateVariables(templateName, variables); err != nil {
 		return "", err

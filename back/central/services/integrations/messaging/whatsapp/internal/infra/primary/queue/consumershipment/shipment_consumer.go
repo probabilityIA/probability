@@ -180,6 +180,7 @@ func isNonRetryableError(err error) bool {
 		"131008",
 		"132001",
 		"131009",
+		"132018",
 	}
 	for _, phrase := range nonRetryablePhrases {
 		if strings.Contains(errMsg, phrase) {
