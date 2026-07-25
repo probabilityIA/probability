@@ -9,7 +9,8 @@ import {
     CreateOrderDTO,
     UpdateOrderDTO,
     ChangeOrderStatusDTO,
-    ActionResponse
+    ActionResponse,
+    OrderNotifications
 } from '../../domain/types';
 
 export class OrderApiRepository implements IOrderRepository {
@@ -103,6 +104,18 @@ export class OrderApiRepository implements IOrderRepository {
     deleteOrder(id: string): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/orders/${id}`, {
             method: 'DELETE',
+        });
+    }
+
+    async getOrderNotifications(orderId: string, businessId?: number): Promise<OrderNotifications> {
+        const qs = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<OrderNotifications>(`/orders/${orderId}/notifications${qs}`);
+    }
+
+    async resendOrderNotification(orderId: string, action: string, businessId?: number): Promise<ActionResponse> {
+        const qs = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<ActionResponse>(`/orders/${orderId}/${action}${qs}`, {
+            method: 'POST',
         });
     }
 

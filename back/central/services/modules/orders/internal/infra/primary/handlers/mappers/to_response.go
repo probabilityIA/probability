@@ -215,6 +215,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		FreeShipping:           dto.FreeShipping,
 		StatusSource:           dto.StatusSource,
 		StatusChangedBy:        dto.StatusChangedBy,
+		Notifications:          toNotificationCounters(dto.Notifications),
 		ID:                     dto.ID,
 		CreatedAt:              dto.CreatedAt,
 		BusinessID:             dto.BusinessID,
@@ -359,4 +360,21 @@ func mapFulfillmentStatusToResponse(status *entities.FulfillmentStatusInfo) *res
 		Category:    status.Category,
 		Color:       status.Color,
 	}
+}
+
+func toNotificationCounters(counters []dtos.NotificationCounter) []response.NotificationCounter {
+	if len(counters) == 0 {
+		return nil
+	}
+	out := make([]response.NotificationCounter, 0, len(counters))
+	for _, c := range counters {
+		out = append(out, response.NotificationCounter{
+			Channel:  c.Channel,
+			Sent:     c.Sent,
+			Expected: c.Expected,
+			Failed:   c.Failed,
+			State:    c.State,
+		})
+	}
+	return out
 }

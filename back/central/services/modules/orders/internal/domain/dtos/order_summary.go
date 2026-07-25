@@ -58,6 +58,15 @@ type OrderSummary struct {
 	FreeShipping           bool
 	StatusSource           string
 	StatusChangedBy        string
+	Notifications          []NotificationCounter
+}
+
+type NotificationCounter struct {
+	Channel  string
+	Sent     int
+	Expected int
+	Failed   int
+	State    string
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos
@@ -74,4 +83,33 @@ type OrdersListResponse struct {
 	Page       int
 	PageSize   int
 	TotalPages int
+}
+
+type OrderNotificationEvent struct {
+	EventCode    string
+	Status       string
+	ResendAction string
+	CanResend    bool
+}
+
+type OrderNotificationMessage struct {
+	ID           string
+	Channel      string
+	TemplateName string
+	Direction    string
+	Status       string
+	Content      string
+	CreatedAt    time.Time
+}
+
+type OrderNotificationsResponse struct {
+	OrderID     string
+	OrderNumber string
+	Channel     string
+	Sent        int
+	Expected    int
+	Failed      int
+	State       string
+	Events      []OrderNotificationEvent
+	Messages    []OrderNotificationMessage
 }

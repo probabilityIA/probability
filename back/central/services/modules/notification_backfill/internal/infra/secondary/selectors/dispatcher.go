@@ -7,11 +7,11 @@ import (
 )
 
 type GuideDispatcher interface {
-	SendGuideNotification(ctx context.Context, orderID string) error
+	SendGuideNotification(ctx context.Context, orderID string, businessID uint) error
 }
 
 type ConfirmationDispatcher interface {
-	RequestConfirmation(ctx context.Context, orderID string) error
+	RequestConfirmation(ctx context.Context, orderID string, businessID uint) error
 }
 
 type guideDispatchAdapter struct {
@@ -24,7 +24,7 @@ func NewGuideDispatchAdapter(inner GuideDispatcher) func(context.Context, entiti
 }
 
 func (a *guideDispatchAdapter) dispatch(ctx context.Context, c entities.Candidate) error {
-	return a.inner.SendGuideNotification(ctx, c.OrderID)
+	return a.inner.SendGuideNotification(ctx, c.OrderID, c.BusinessID)
 }
 
 type confirmationDispatchAdapter struct {
@@ -37,5 +37,5 @@ func NewConfirmationDispatchAdapter(inner ConfirmationDispatcher) func(context.C
 }
 
 func (a *confirmationDispatchAdapter) dispatch(ctx context.Context, c entities.Candidate) error {
-	return a.inner.RequestConfirmation(ctx, c.OrderID)
+	return a.inner.RequestConfirmation(ctx, c.OrderID, c.BusinessID)
 }

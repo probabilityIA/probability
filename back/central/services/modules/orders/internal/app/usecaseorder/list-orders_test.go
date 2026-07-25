@@ -334,6 +334,14 @@ func TestListOrders_WithFilters(t *testing.T) {
 	mockRepo.On("ListOrders", ctx, page, pageSize, filters).
 		Return(orders, int64(1), nil)
 
+	expectedKeys := []entities.OrderNotificationKey{
+		{OrderID: "order-1", OrderNumber: "ORD-001", IntegrationID: 10},
+	}
+	mockRepo.On("GetOrderNotificationCounters", ctx, businessID, expectedKeys).
+		Return(map[string][]entities.OrderNotificationCounter{
+			"order-1": {entities.NewOrderNotificationCounter(entities.NotificationChannelWhatsApp, 1, 2, 0)},
+		}, nil)
+
 	// Act
 	result, err := useCase.ListOrders(ctx, page, pageSize, filters)
 
@@ -342,6 +350,10 @@ func TestListOrders_WithFilters(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Len(t, result.Data, 1)
 	assert.Equal(t, "john@example.com", result.Data[0].CustomerEmail)
+	assert.Len(t, result.Data[0].Notifications, 1)
+	assert.Equal(t, 1, result.Data[0].Notifications[0].Sent)
+	assert.Equal(t, 2, result.Data[0].Notifications[0].Expected)
+	assert.Equal(t, entities.NotificationStatePartial, result.Data[0].Notifications[0].State)
 
 	mockRepo.AssertExpectations(t)
 	mockRepo.AssertCalled(t, "ListOrders", ctx, page, pageSize, filters)

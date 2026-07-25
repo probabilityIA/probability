@@ -57,6 +57,30 @@ func (m *RepositoryMock) ListOrders(ctx context.Context, page, pageSize int, fil
 	return args.Get(0).([]entities.ProbabilityOrder), args.Get(1).(int64), args.Error(2)
 }
 
+func (m *RepositoryMock) GetOrderNotificationCounters(ctx context.Context, businessID uint, keys []entities.OrderNotificationKey) (map[string][]entities.OrderNotificationCounter, error) {
+	args := m.Called(ctx, businessID, keys)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string][]entities.OrderNotificationCounter), args.Error(1)
+}
+
+func (m *RepositoryMock) GetOrderNotificationMessages(ctx context.Context, businessID uint, orderNumber string) ([]entities.OrderNotificationMessage, error) {
+	args := m.Called(ctx, businessID, orderNumber)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.OrderNotificationMessage), args.Error(1)
+}
+
+func (m *RepositoryMock) GetWhatsAppEventCodes(ctx context.Context, businessID, integrationID uint) ([]string, error) {
+	args := m.Called(ctx, businessID, integrationID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (m *RepositoryMock) UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	args := m.Called(ctx, order)
 	return args.Error(0)

@@ -103,6 +103,7 @@ export interface Order {
     free_shipping?: boolean;
     status_source?: 'user' | 'sales_channel' | 'carrier' | 'inventory' | 'system';
     status_changed_by?: string;
+    notifications?: NotificationCounter[];
 
     quoted_shipping?: {
         carrier: string;
@@ -430,4 +431,45 @@ export interface UpdateOrderDTO {
 export interface ChangeOrderStatusDTO {
     status: string;
     metadata?: Record<string, unknown>;
+}
+
+export type NotificationChannel = 'whatsapp' | 'email' | 'sms';
+export type NotificationState = 'none' | 'partial' | 'done';
+export type NotificationEventStatus = 'pending' | 'sent' | 'failed';
+
+export interface NotificationCounter {
+    channel: NotificationChannel;
+    sent: number;
+    expected: number;
+    failed: number;
+    state: NotificationState;
+}
+
+export interface OrderNotificationEvent {
+    event_code: string;
+    status: NotificationEventStatus;
+    resend_action?: string;
+    can_resend: boolean;
+}
+
+export interface OrderNotificationMessage {
+    id: string;
+    channel: NotificationChannel;
+    template_name: string;
+    direction: 'inbound' | 'outbound';
+    status: string;
+    content: string;
+    created_at: string;
+}
+
+export interface OrderNotifications {
+    order_id: string;
+    order_number: string;
+    channel: NotificationChannel;
+    sent: number;
+    expected: number;
+    failed: number;
+    state: NotificationState;
+    events: OrderNotificationEvent[];
+    messages: OrderNotificationMessage[];
 }

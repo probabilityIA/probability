@@ -8,14 +8,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// SendGuideNotificationUseCase implementa el caso de uso de envio de notificacion de guia
 type SendGuideNotificationUseCase struct {
 	repository      ports.IRepository
 	rabbitPublisher ports.IOrderRabbitPublisher
 	log             log.ILogger
 }
 
-// NewSendGuideNotificationUseCase crea una nueva instancia del caso de uso
 func NewSendGuideNotificationUseCase(
 	repo ports.IRepository,
 	rabbitPublisher ports.IOrderRabbitPublisher,
@@ -28,9 +26,7 @@ func NewSendGuideNotificationUseCase(
 	}
 }
 
-// SendGuideNotification envia la notificacion de guia de envio por WhatsApp
-func (uc *SendGuideNotificationUseCase) SendGuideNotification(ctx context.Context, orderID string) error {
-	// 1. Obtener la orden
+func (uc *SendGuideNotificationUseCase) SendGuideNotification(ctx context.Context, orderID string, businessID uint) error {
 	order, err := uc.repository.GetOrderByID(ctx, orderID)
 	if err != nil {
 		uc.log.Error().
@@ -40,7 +36,18 @@ func (uc *SendGuideNotificationUseCase) SendGuideNotification(ctx context.Contex
 		return fmt.Errorf("error getting order: %w", err)
 	}
 
-	// 2. Validar que tenga telefono del cliente
+	if order == nil {
+		return fmt.Errorf("order not found")
+	}
+
+	if order.BusinessID == nil || *order.BusinessID != businessID {
+		uc.log.Warn().
+			Str("order_id", orderID).
+			Uint("business_id", businessID).
+			Msg("Cannot send guide notification: order belongs to another business")
+		return fmt.Errorf("la orden no pertenece al negocio")
+	}
+
 	if order.CustomerPhone == "" {
 		uc.log.Warn().
 			Str("order_id", orderID).
@@ -49,7 +56,6 @@ func (uc *SendGuideNotificationUseCase) SendGuideNotification(ctx context.Contex
 		return fmt.Errorf("order does not have customer phone")
 	}
 
-	// 3. Validar que tenga tracking number (guia generada)
 	if order.TrackingNumber == nil || *order.TrackingNumber == "" {
 		uc.log.Warn().
 			Str("order_id", orderID).
@@ -58,7 +64,6 @@ func (uc *SendGuideNotificationUseCase) SendGuideNotification(ctx context.Contex
 		return fmt.Errorf("order does not have tracking number")
 	}
 
-	// 4. Publicar evento a RabbitMQ
 	if err := uc.rabbitPublisher.PublishGuideNotificationRequested(ctx, order); err != nil {
 		uc.log.Error().
 			Err(err).

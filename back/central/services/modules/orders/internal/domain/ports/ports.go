@@ -14,6 +14,9 @@ type IRepository interface {
 	GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*entities.ProbabilityOrder, error)
 	GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error)
 	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error)
+	GetOrderNotificationCounters(ctx context.Context, businessID uint, keys []entities.OrderNotificationKey) (map[string][]entities.OrderNotificationCounter, error)
+	GetOrderNotificationMessages(ctx context.Context, businessID uint, orderNumber string) ([]entities.OrderNotificationMessage, error)
+	GetWhatsAppEventCodes(ctx context.Context, businessID, integrationID uint) ([]string, error)
 	UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error
 	DeleteOrder(ctx context.Context, id string) error
 	GetOrderRaw(ctx context.Context, id string) (*entities.ProbabilityOrderChannelMetadata, error)
@@ -80,11 +83,11 @@ type IOrderUpdateUseCase interface {
 }
 
 type IRequestConfirmationUseCase interface {
-	RequestConfirmation(ctx context.Context, orderID string) error
+	RequestConfirmation(ctx context.Context, orderID string, businessID uint) error
 }
 
 type ISendGuideNotificationUseCase interface {
-	SendGuideNotification(ctx context.Context, orderID string) error
+	SendGuideNotification(ctx context.Context, orderID string, businessID uint) error
 }
 
 type IOrderStatusUseCase interface {
@@ -95,6 +98,7 @@ type IOrderUseCase interface {
 	GetOrderByID(ctx context.Context, id string) (*dtos.OrderResponse, error)
 	GetOrderRaw(ctx context.Context, id string) (*dtos.OrderRawResponse, error)
 	GetOrderHistory(ctx context.Context, orderID string) ([]dtos.OrderHistoryResponse, error)
+	GetOrderNotifications(ctx context.Context, orderID string, businessID uint) (*dtos.OrderNotificationsResponse, error)
 	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*dtos.OrdersListResponse, error)
 	UpdateOrder(ctx context.Context, id string, req *dtos.UpdateOrderRequest) (*dtos.OrderResponse, error)
 	DeleteOrder(ctx context.Context, id string) error

@@ -54,4 +54,13 @@ type OrderSummary struct {
 	FreeShipping           bool                   `json:"free_shipping"`
 	StatusSource           string                 `json:"status_source,omitempty"`
 	StatusChangedBy        string                 `json:"status_changed_by,omitempty"`
+	Notifications          []NotificationCounter  `json:"notifications,omitempty"`
+}
+
+type NotificationCounter struct {
+	Channel  string `json:"channel"`
+	Sent     int    `json:"sent"`
+	Expected int    `json:"expected"`
+	Failed   int    `json:"failed"`
+	State    string `json:"state"`
 }

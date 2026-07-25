@@ -10,12 +10,12 @@ import (
 
 // Handlers contiene todos los handlers del módulo orders
 type Handlers struct {
-	orderCRUD                ports.IOrderUseCase
-	createUC                 ports.IOrderCreateUseCase
-	requestConfirmationUC    ports.IRequestConfirmationUseCase
-	sendGuideNotificationUC  ports.ISendGuideNotificationUseCase
-	statusUC                 ports.IOrderStatusUseCase
-	logger                   log.ILogger
+	orderCRUD               ports.IOrderUseCase
+	createUC                ports.IOrderCreateUseCase
+	requestConfirmationUC   ports.IRequestConfirmationUseCase
+	sendGuideNotificationUC ports.ISendGuideNotificationUseCase
+	statusUC                ports.IOrderStatusUseCase
+	logger                  log.ILogger
 }
 
 // resolveBusinessID obtiene el business_id efectivo.
@@ -46,11 +46,11 @@ func New(
 	logger log.ILogger,
 ) *Handlers {
 	return &Handlers{
-		orderCRUD:                orderCRUD,
-		createUC:                 createUC,
-		requestConfirmationUC:    requestConfirmationUC,
-		sendGuideNotificationUC:  sendGuideNotificationUC,
-		statusUC:                 statusUC,
-		logger:                   logger,
+		orderCRUD:               orderCRUD,
+		createUC:                createUC,
+		requestConfirmationUC:   requestConfirmationUC,
+		sendGuideNotificationUC: sendGuideNotificationUC,
+		statusUC:                statusUC,
+		logger:                  logger,
 	}
 }

@@ -28,5 +28,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 
 		// Notificación de guía de envío vía WhatsApp
 		orders.POST("/:id/send-guide-notification", middleware.JWT(), h.SendGuideNotification)
+
+		orders.GET("/:id/notifications", middleware.JWT(), h.GetOrderNotifications)
 	}
 }

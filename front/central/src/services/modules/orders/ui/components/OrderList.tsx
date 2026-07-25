@@ -11,6 +11,8 @@ import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 
 import { Order, GetOrdersParams } from '../../domain/types';
 import { ProbabilityTooltip } from './ProbabilityTooltip';
+import { NotificationBadge } from './NotificationBadge';
+import { OrderNotificationsModal } from './OrderNotificationsModal';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
@@ -54,7 +56,9 @@ const OrderRow = memo(({
     getProbabilityColor,
     isNew,
     businessesMap,
-    isSuperAdmin
+    isSuperAdmin,
+    showNotifications,
+    onShowNotifications
 }: {
     order: Order;
     onView?: (order: Order) => void;
@@ -71,6 +75,8 @@ const OrderRow = memo(({
     isNew?: boolean;
     businessesMap: Map<number, string>;
     isSuperAdmin: boolean;
+    showNotifications: boolean;
+    onShowNotifications: (order: Order) => void;
 }) => {
     return (
         <tr className={`bg-white dark:bg-gray-800 transition-all duration-300 hover:bg-purple-50 dark:hover:bg-gray-700 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
@@ -316,6 +322,24 @@ const OrderRow = memo(({
                 </div>
             </td>
 
+            {showNotifications && (
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
+                    {order.notifications && order.notifications.length > 0 ? (
+                        <div className="flex items-center justify-center gap-1">
+                            {order.notifications.map((counter) => (
+                                <NotificationBadge
+                                    key={counter.channel}
+                                    counter={counter}
+                                    onClick={() => onShowNotifications(order)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                    )}
+                </td>
+            )}
+
             <td className="px-3 sm:px-6 py-4 text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
                 <div className="leading-tight">
                     <div className="text-gray-900 dark:text-white">{formatDate(order.created_at).date}</div>
@@ -515,6 +539,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     // Guide Modal
     const [guideUrl, setGuideUrl] = useState<string | null>(null);
+    const [notificationsOrder, setNotificationsOrder] = useState<Order | null>(null);
 
     // Raw Data Modal
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -540,6 +565,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [businessesList, setBusinessesList] = useState<{ id: number; name: string }[]>([]);
 
     // Business map for quick lookup (memoized)
+    const showNotificationsColumn = useMemo(
+        () => orders.some((o) => (o.notifications?.length ?? 0) > 0),
+        [orders]
+    );
+
     const businessesMap = useMemo(() => {
         const map = new Map<number, string>();
         businessesList.forEach(business => {
@@ -1484,6 +1514,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     Confirmado
                                 </th>
 
+                                {showNotificationsColumn && (
+                                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
+                                        Notif.
+                                    </th>
+                                )}
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(6, 182, 212, 0.18)' }}>
                                     Fecha
                                 </th>
@@ -1529,6 +1564,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         isNew={newOrderIds.has(order.id)}
                                         businessesMap={businessesMap}
                                         isSuperAdmin={isSuperAdmin}
+                                        showNotifications={showNotificationsColumn}
+                                        onShowNotifications={setNotificationsOrder}
                                     />
                                 ))
                             )}
@@ -1784,6 +1821,16 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             )}
 
             {/* Guide Modal */}
+            {notificationsOrder && (
+                <OrderNotificationsModal
+                    orderId={notificationsOrder.id}
+                    orderNumber={notificationsOrder.order_number}
+                    businessId={isSuperAdmin ? notificationsOrder.business_id : undefined}
+                    onClose={() => setNotificationsOrder(null)}
+                    onChanged={() => loadOrders()}
+                />
+            )}
+
             {guideUrl && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center"

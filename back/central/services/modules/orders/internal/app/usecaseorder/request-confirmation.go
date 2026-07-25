@@ -8,14 +8,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// RequestConfirmationUseCase implementa el caso de uso de solicitud de confirmación
 type RequestConfirmationUseCase struct {
 	repository      ports.IRepository
 	rabbitPublisher ports.IOrderRabbitPublisher
 	log             log.ILogger
 }
 
-// NewRequestConfirmationUseCase crea una nueva instancia del caso de uso
 func NewRequestConfirmationUseCase(
 	repo ports.IRepository,
 	rabbitPublisher ports.IOrderRabbitPublisher,
@@ -28,9 +26,7 @@ func NewRequestConfirmationUseCase(
 	}
 }
 
-// RequestConfirmation solicita confirmación de una orden
-func (uc *RequestConfirmationUseCase) RequestConfirmation(ctx context.Context, orderID string) error {
-	// 1. Obtener la orden
+func (uc *RequestConfirmationUseCase) RequestConfirmation(ctx context.Context, orderID string, businessID uint) error {
 	order, err := uc.repository.GetOrderByID(ctx, orderID)
 	if err != nil {
 		uc.log.Error().
@@ -40,7 +36,18 @@ func (uc *RequestConfirmationUseCase) RequestConfirmation(ctx context.Context, o
 		return fmt.Errorf("error getting order: %w", err)
 	}
 
-	// 2. Validar que tenga teléfono del cliente
+	if order == nil {
+		return fmt.Errorf("order not found")
+	}
+
+	if order.BusinessID == nil || *order.BusinessID != businessID {
+		uc.log.Warn().
+			Str("order_id", orderID).
+			Uint("business_id", businessID).
+			Msg("Cannot request confirmation: order belongs to another business")
+		return fmt.Errorf("la orden no pertenece al negocio")
+	}
+
 	if order.CustomerPhone == "" {
 		uc.log.Warn().
 			Str("order_id", orderID).
@@ -49,7 +56,6 @@ func (uc *RequestConfirmationUseCase) RequestConfirmation(ctx context.Context, o
 		return fmt.Errorf("order does not have customer phone")
 	}
 
-	// 3. Validar que no esté ya confirmada
 	if order.IsConfirmed != nil && *order.IsConfirmed {
 		uc.log.Warn().
 			Str("order_id", orderID).
@@ -58,7 +64,6 @@ func (uc *RequestConfirmationUseCase) RequestConfirmation(ctx context.Context, o
 		return fmt.Errorf("order is already confirmed")
 	}
 
-	// 4. Publicar evento a RabbitMQ
 	if err := uc.rabbitPublisher.PublishConfirmationRequested(ctx, order); err != nil {
 		uc.log.Error().
 			Err(err).

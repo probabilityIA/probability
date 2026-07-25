@@ -76,6 +76,18 @@ func (m *mockRepository) GetOrderByOrderNumber(ctx context.Context, orderNumber 
 func (m *mockRepository) GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error) {
 	return m.GetOrderByOrderNumber(ctx, orderNumber)
 }
+func (m *mockRepository) GetOrderNotificationCounters(ctx context.Context, businessID uint, keys []entities.OrderNotificationKey) (map[string][]entities.OrderNotificationCounter, error) {
+	return map[string][]entities.OrderNotificationCounter{}, nil
+}
+
+func (m *mockRepository) GetOrderNotificationMessages(ctx context.Context, businessID uint, orderNumber string) ([]entities.OrderNotificationMessage, error) {
+	return nil, nil
+}
+
+func (m *mockRepository) GetWhatsAppEventCodes(ctx context.Context, businessID, integrationID uint) ([]string, error) {
+	return nil, nil
+}
+
 func (m *mockRepository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	if m.ListOrdersFn != nil {
 		return m.ListOrdersFn(ctx, page, pageSize, filters)
