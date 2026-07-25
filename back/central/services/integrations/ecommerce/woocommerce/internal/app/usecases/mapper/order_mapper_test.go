@@ -314,9 +314,9 @@ func TestMapWooStatus_AllStatuses(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.wooStatus, func(t *testing.T) {
-			result := mapWooStatus(tt.wooStatus)
+			result := MapWooStatus(tt.wooStatus)
 			if result != tt.expectedStatus {
-				t.Errorf("mapWooStatus(%s) = '%s', esperaba '%s'", tt.wooStatus, result, tt.expectedStatus)
+				t.Errorf("MapWooStatus(%s) = '%s', esperaba '%s'", tt.wooStatus, result, tt.expectedStatus)
 			}
 		})
 	}

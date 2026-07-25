@@ -63,7 +63,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	}
 
 	// Map status
-	status := mapWooStatus(order.Status)
+	status := MapWooStatus(order.Status)
 
 	dto := &canonical.ProbabilityOrderDTO{
 		IntegrationType: "woocommerce",
@@ -267,7 +267,7 @@ func mapWooPaymentMethod(method string) uint {
 }
 
 // mapWooStatus mapea el estado de WooCommerce al estado canónico de Probability.
-func mapWooStatus(wooStatus string) string {
+func MapWooStatus(wooStatus string) string {
 	switch wooStatus {
 	case "pending", "checkout-draft", "processing", "addi-approved":
 		return "pending"

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -19,16 +20,18 @@ type IHandler interface {
 }
 
 type wooCommerceHandler struct {
-	useCase usecases.IWooCommerceUseCase
-	logger  log.ILogger
-	rabbit  rabbitmq.IQueue
+	useCase        usecases.IWooCommerceUseCase
+	logger         log.ILogger
+	rabbit         rabbitmq.IQueue
+	webhookLogRepo domain.IWebhookLogRepository
 }
 
-func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger, rabbit rabbitmq.IQueue) IHandler {
+func New(useCase usecases.IWooCommerceUseCase, logger log.ILogger, rabbit rabbitmq.IQueue, webhookLogRepo domain.IWebhookLogRepository) IHandler {
 	return &wooCommerceHandler{
-		useCase: useCase,
-		logger:  logger.WithModule("woocommerce"),
-		rabbit:  rabbit,
+		useCase:        useCase,
+		logger:         logger.WithModule("woocommerce"),
+		rabbit:         rabbit,
+		webhookLogRepo: webhookLogRepo,
 	}
 }
 

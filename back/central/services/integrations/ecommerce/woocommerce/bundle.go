@@ -32,6 +32,7 @@ func New(
 	httpClient := client.New()
 	integrationService := woocore.NewIntegrationService(coreIntegration)
 	productRepo := wooproductrepo.New(database, logger)
+	webhookLogRepo := wooproductrepo.NewWebhookLogRepository(database, logger)
 
 	var orderPublisher = queue.NewNoOpPublisher(logger)
 	if rabbitMQ != nil {
@@ -43,7 +44,7 @@ func New(
 
 	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
-	handler := handlers.New(uc, logger, rabbitMQ)
+	handler := handlers.New(uc, logger, rabbitMQ, webhookLogRepo)
 	handler.RegisterRoutes(router, logger)
 
 	if rabbitMQ != nil {
