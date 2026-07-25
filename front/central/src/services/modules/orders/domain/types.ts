@@ -100,6 +100,8 @@ export interface Order {
         total_cost?: number;
     };
 
+    free_shipping?: boolean;
+
     quoted_shipping?: {
         carrier: string;
         title: string;

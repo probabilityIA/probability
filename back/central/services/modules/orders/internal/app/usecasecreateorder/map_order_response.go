@@ -117,6 +117,7 @@ func (uc *UseCaseCreateOrder) mapOrderToResponse(order *entities.ProbabilityOrde
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
 		ShippingDetails:    order.ShippingDetails,
+		FreeShipping:       order.FreeShipping,
 		PaymentDetails:     order.PaymentDetails,
 		FulfillmentDetails: order.FulfillmentDetails,
 

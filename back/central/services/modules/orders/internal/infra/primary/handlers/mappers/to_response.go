@@ -171,6 +171,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		FinancialDetails:            financialDetailsJSON,
 		ShippingDetails:             shippingDetailsJSON,
 		QuotedShipping:              buildQuotedShipping(dto.ShippingDetails),
+		FreeShipping:                dto.FreeShipping,
 		PaymentDetails:              paymentDetailsJSON,
 		FulfillmentDetails:          fulfillmentDetailsJSON,
 		NegativeFactors:             dto.NegativeFactors,
@@ -211,6 +212,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 
 	return &response.OrderSummary{
 		QuotedShipping:         buildQuotedShipping(dto.ShippingDetails),
+		FreeShipping:           dto.FreeShipping,
 		ID:                     dto.ID,
 		CreatedAt:              dto.CreatedAt,
 		BusinessID:             dto.BusinessID,

@@ -145,6 +145,7 @@ type OrderResponse struct {
 	Metadata           []byte
 	FinancialDetails   []byte
 	ShippingDetails    []byte
+	FreeShipping       bool
 	PaymentDetails     []byte
 	FulfillmentDetails []byte
 	NegativeFactors    []string

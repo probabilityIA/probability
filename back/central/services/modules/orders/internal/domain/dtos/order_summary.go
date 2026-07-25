@@ -55,6 +55,7 @@ type OrderSummary struct {
 	InvoiceStatus          string // "", "pending", "issued", "failed", "cancelled"
 	Shipment               *ShipmentSummary
 	ShippingDetails        []byte
+	FreeShipping           bool
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos

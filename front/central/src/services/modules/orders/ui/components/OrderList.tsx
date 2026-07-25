@@ -141,6 +141,14 @@ const OrderRow = memo(({
                 <div className="text-xs text-gray-500 dark:text-gray-400">{order.customer_email}</div>
             </td>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
+                {order.free_shipping && (
+                    <span
+                        className="mb-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        title="El canal no le cobro el envio al cliente"
+                    >
+                        Envio gratis
+                    </span>
+                )}
                 <div className="flex items-center gap-1.5">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${(order.currency_presentment || order.currency) === 'COP'
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'

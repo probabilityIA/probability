@@ -104,6 +104,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateOrderFreeShipping(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateWooCommerceStatusMappings(ctx); err != nil {
+		return err
+	}
 	if err := r.backfillGeocodePendingOrders(ctx); err != nil {
 		return err
 	}

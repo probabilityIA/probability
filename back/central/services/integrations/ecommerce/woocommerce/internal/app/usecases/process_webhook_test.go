@@ -40,8 +40,8 @@ func TestProcessWebhookOrder_Success_OrderCreated(t *testing.T) {
 	if dto.IntegrationType != "woocommerce" {
 		t.Errorf("IntegrationType esperado 'woocommerce', recibí '%s'", dto.IntegrationType)
 	}
-	if dto.Status != "paid" {
-		t.Errorf("Status esperado 'paid' (processing->paid), recibí '%s'", dto.Status)
+	if dto.Status != "processing" {
+		t.Errorf("Status esperado 'processing', recibí '%s'", dto.Status)
 	}
 	if dto.OriginalStatus != "processing" {
 		t.Errorf("OriginalStatus esperado 'processing', recibí '%s'", dto.OriginalStatus)

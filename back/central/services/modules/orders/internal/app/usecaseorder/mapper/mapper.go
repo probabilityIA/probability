@@ -141,6 +141,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
 		ShippingDetails:    order.ShippingDetails,
+		FreeShipping:       order.FreeShipping,
 		PaymentDetails:     order.PaymentDetails,
 		FulfillmentDetails: order.FulfillmentDetails,
 
@@ -205,6 +206,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 	return dtos.OrderSummary{
 		ID:                     order.ID,
 		ShippingDetails:        order.ShippingDetails,
+		FreeShipping:           order.FreeShipping,
 		CreatedAt:              order.CreatedAt,
 		BusinessID:             businessID,
 		IntegrationID:          order.IntegrationID,
