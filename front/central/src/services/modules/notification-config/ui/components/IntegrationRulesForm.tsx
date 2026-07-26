@@ -31,7 +31,6 @@ export function IntegrationRulesForm({
   const { showToast } = useToast();
   const { orderStatuses, loading: loadingOrderStatuses } = useOrderStatuses(true);
 
-  // Load existing configs for this integration
   useEffect(() => {
     const loadExisting = async () => {
       setLoadingExisting(true);
@@ -49,6 +48,7 @@ export function IntegrationRulesForm({
             enabled: config.enabled,
             description: config.description || "",
             order_status_ids: config.order_status_ids || [],
+            cod_only: config.cod_only ?? false,
             _deleted: false,
           }));
           setRules(existingRules);
@@ -73,6 +73,7 @@ export function IntegrationRulesForm({
         enabled: true,
         description: "",
         order_status_ids: [],
+        cod_only: false,
         _deleted: false,
       },
     ]);
@@ -86,21 +87,20 @@ export function IntegrationRulesForm({
     setRules((prev) =>
       prev.map((r, i) => {
         if (i !== index) return r;
-        // If it has an id (exists in DB), mark as deleted
+
         if (r.id) return { ...r, _deleted: true };
-        // If new (no id), remove from array
+
         return r;
       }).filter((r) => !(!r.id && r._deleted))
     );
-    // Remove new rules without id that were marked deleted
+
     setRules((prev) => prev.filter((r) => r.id || !r._deleted));
   };
 
   const handleSave = async () => {
-    // Filter out deleted rules - these will be deleted by the backend (not in the sync rules)
+
     const activeRules = rules.filter((r) => !r._deleted);
 
-    // Validate rules
     for (let i = 0; i < activeRules.length; i++) {
       const rule = activeRules[i];
       if (!rule.notification_type_id) {
@@ -113,7 +113,6 @@ export function IntegrationRulesForm({
       }
     }
 
-    // Check for duplicates (same notification_type_id + notification_event_type_id)
     const seen = new Set<string>();
     for (const rule of activeRules) {
       const key = `${rule.notification_type_id}-${rule.notification_event_type_id}`;
@@ -135,6 +134,7 @@ export function IntegrationRulesForm({
           enabled: r.enabled,
           description: r.description,
           order_status_ids: r.order_status_ids,
+          cod_only: r.cod_only,
         })),
       };
 
@@ -161,7 +161,7 @@ export function IntegrationRulesForm({
 
   return (
     <div className="space-y-4">
-      {/* Integration header */}
+
       <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
         {integration.image_url ? (
           <img
@@ -182,12 +182,11 @@ export function IntegrationRulesForm({
         </div>
       </div>
 
-      {/* Loading state */}
       {loadingExisting ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando reglas...</div>
       ) : (
         <>
-          {/* Rules table */}
+
           <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
             {rules.filter((r) => !r._deleted).length === 0 ? (
               <div className="text-center py-8 text-gray-400">
@@ -201,6 +200,7 @@ export function IntegrationRulesForm({
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[120px]">Canal</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[160px]">Evento</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left">Estados</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[90px]">Contra entrega</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[70px]">Activo</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[50px]"></th>
                   </tr>
@@ -223,7 +223,6 @@ export function IntegrationRulesForm({
             )}
           </div>
 
-          {/* Add rule button */}
           <div className="flex justify-center">
             <button
               type="button"
@@ -239,7 +238,6 @@ export function IntegrationRulesForm({
         </>
       )}
 
-      {/* Footer actions */}
       <div className="flex items-center justify-between pt-4 border-t">
         <span className="text-sm text-gray-500 dark:text-gray-400">
           {activeRulesCount} regla(s) activa(s)

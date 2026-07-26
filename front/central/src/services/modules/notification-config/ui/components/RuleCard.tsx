@@ -18,6 +18,7 @@ export interface LocalRule {
   enabled: boolean;
   description: string;
   order_status_ids: number[];
+  cod_only: boolean;
   _deleted: boolean;
 }
 
@@ -92,7 +93,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
 
   const selectedEvent = eventTypes.find((e) => e.id === rule.notification_event_type_id);
   const allowedStatusIds = selectedEvent?.allowed_order_status_ids;
-  // Si el evento tiene estados permitidos configurados, filtrar; si no tiene ninguno, no mostrar estados
+
   const hasStatusFilter = allowedStatusIds && allowedStatusIds.length > 0;
   const filteredStatuses = hasStatusFilter
     ? orderStatuses.filter((s) => allowedStatusIds.includes(s.id))
@@ -107,14 +108,13 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
 
   return (
     <tr className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors align-top">
-      {/* # */}
+
       <td className="py-3 px-3 text-center">
         <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-full w-5 h-5 inline-flex items-center justify-center">
           {index + 1}
         </span>
       </td>
 
-      {/* Canal */}
       <td className="py-3 px-3">
         {isNew ? (
           <div className="flex flex-wrap gap-1">
@@ -154,7 +154,6 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         )}
       </td>
 
-      {/* Evento */}
       <td className="py-3 px-3">
         {isNew ? (
           rule.notification_type_id > 0 ? (
@@ -182,7 +181,6 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         )}
       </td>
 
-      {/* Estados */}
       <td className="py-3 px-3">
         {(isNew && rule.notification_event_type_id === 0) ? (
           <span className="text-[10px] text-gray-300 italic">
@@ -198,8 +196,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                   key={status.id}
                   type="button"
                   onClick={() => {
-                    // Solo UN estado configurable: click deselecciona si ya está seleccionado,
-                    // o reemplaza la selección actual con el nuevo estado
+
                     const newIds = isChecked ? [] : [status.id];
                     onChange({ ...rule, order_status_ids: newIds });
                   }}
@@ -223,7 +220,19 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         )}
       </td>
 
-      {/* Activo */}
+      <td className="py-3 px-3 text-center">
+        <button
+          type="button"
+          onClick={() => onChange({ ...rule, cod_only: !rule.cod_only })}
+          className="inline-flex items-center gap-1"
+          title={rule.cod_only ? "Solo se notifican ordenes contra entrega" : "Se notifican todas las ordenes"}
+        >
+          <div className={`relative w-8 h-[18px] rounded-full transition-colors ${rule.cod_only ? "bg-amber-500 dark:bg-amber-600" : "bg-gray-300 dark:bg-gray-600"}`}>
+            <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white dark:bg-gray-800 shadow transition-transform ${rule.cod_only ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+          </div>
+        </button>
+      </td>
+
       <td className="py-3 px-3 text-center">
         <button
           type="button"
@@ -237,7 +246,6 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         </button>
       </td>
 
-      {/* Eliminar */}
       <td className="py-3 px-3 text-center">
         <button
           type="button"

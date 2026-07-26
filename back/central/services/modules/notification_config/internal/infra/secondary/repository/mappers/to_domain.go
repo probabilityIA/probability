@@ -17,6 +17,7 @@ func ToDomain(model *IntegrationNotificationConfigModel) (*entities.IntegrationN
 		ID:          model.ID,
 		BusinessID:  &model.BusinessID,
 		Enabled:     model.Enabled,
+		CODOnly:     model.CODOnly,
 		Description: model.Description,
 		CreatedAt:   model.CreatedAt,
 		UpdatedAt:   model.UpdatedAt,

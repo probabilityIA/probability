@@ -60,6 +60,7 @@ func (h *handler) SyncByIntegration(c *gin.Context) {
 			Enabled:                 rule.Enabled,
 			Description:             rule.Description,
 			OrderStatusIDs:          rule.OrderStatusIDs,
+			CODOnly:                 rule.CODOnly,
 		}
 	}
 

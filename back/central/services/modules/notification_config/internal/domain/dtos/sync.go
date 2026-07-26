@@ -8,6 +8,7 @@ type SyncRuleDTO struct {
 	Enabled                 bool   // Estado de la regla
 	Description             string // Descripción opcional
 	OrderStatusIDs          []uint // Filtro de estados de orden
+	CODOnly                 bool   // Solo ordenes contra entrega
 }
 
 // SyncNotificationConfigsDTO representa el request de sync batch

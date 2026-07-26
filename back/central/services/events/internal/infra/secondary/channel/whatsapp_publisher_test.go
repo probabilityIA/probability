@@ -41,9 +41,9 @@ func TestIsCODEventUsaFlagIsCod(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isCODEvent(entities.Event{Data: tt.data})
+			got := entities.Event{Data: tt.data}.IsCOD()
 			if got != tt.want {
-				t.Errorf("isCODEvent() = %v, se esperaba %v", got, tt.want)
+				t.Errorf("IsCOD() = %v, se esperaba %v", got, tt.want)
 			}
 		})
 	}

@@ -110,6 +110,11 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 // validateConditions valida si un evento cumple las condiciones de una config
 func (d *EventDispatcher) validateConditions(event entities.Event, config entities.CachedNotificationConfig) bool {
+	// Config restringida a contra entrega -> descartar ordenes que no son COD
+	if config.CODOnly && !event.IsCOD() {
+		return false
+	}
+
 	// Si no hay filtros de estado configurados -> aceptar todo
 	if len(config.OrderStatusCodes) == 0 && len(config.OrderStatusIDs) == 0 {
 		return true

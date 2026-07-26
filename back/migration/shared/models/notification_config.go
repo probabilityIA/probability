@@ -42,6 +42,9 @@ type BusinessNotificationConfig struct {
 	// Si la notificación está habilitada
 	Enabled bool `gorm:"default:true;index"`
 
+	// Si es true, la notificación solo se envía para órdenes contra entrega (COD)
+	CODOnly bool `gorm:"column:cod_only;not null;default:false"`
+
 	// DEPRECATED: EventType - Ahora se usa NotificationEventType relationship
 	// Mantener temporalmente para migración de datos existentes
 	EventType string `gorm:"size:64"`

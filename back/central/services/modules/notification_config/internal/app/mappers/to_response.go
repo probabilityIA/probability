@@ -23,6 +23,7 @@ func ToResponseDTO(entity *entities.IntegrationNotificationConfig) *dtos.Notific
 		Enabled:                 entity.Enabled,
 		Description:             entity.Description,
 		OrderStatusIDs:          orderStatusIDs,
+		CODOnly:                 entity.CODOnly,
 		CreatedAt:               entity.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:               entity.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}

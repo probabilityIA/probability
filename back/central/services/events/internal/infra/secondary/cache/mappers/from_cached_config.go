@@ -17,6 +17,7 @@ type CachedNotificationConfigJSON struct {
 	OrderStatusIDs          []uint   `json:"order_status_ids"`
 	EventCode               string   `json:"event_code,omitempty"`
 	OrderStatusCodes        []string `json:"order_status_codes,omitempty"`
+	CODOnly                 bool     `json:"cod_only,omitempty"`
 }
 
 // FromCachedConfig convierte la representación JSON a la entidad de dominio
@@ -32,5 +33,6 @@ func FromCachedConfig(cached *CachedNotificationConfigJSON) entities.CachedNotif
 		OrderStatusIDs:          cached.OrderStatusIDs,
 		EventCode:               cached.EventCode,
 		OrderStatusCodes:        cached.OrderStatusCodes,
+		CODOnly:                 cached.CODOnly,
 	}
 }

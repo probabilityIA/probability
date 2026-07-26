@@ -11,6 +11,7 @@ type NotificationConfigResponseDTO struct {
 	Enabled                 bool     `json:"enabled"`
 	Description             string   `json:"description"`
 	OrderStatusIDs          []uint   `json:"order_status_ids"`
+	CODOnly                 bool     `json:"cod_only"`
 	CreatedAt               string   `json:"created_at"`
 	UpdatedAt               string   `json:"updated_at"`
 

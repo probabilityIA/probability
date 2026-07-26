@@ -8,6 +8,7 @@ type SyncRule struct {
 	Enabled                 bool   `json:"enabled"`                                        // Estado
 	Description             string `json:"description"`                                    // Descripción opcional
 	OrderStatusIDs          []uint `json:"order_status_ids"`                              // Filtro de estados
+	CODOnly                 bool   `json:"cod_only"`                                      // Solo contra entrega
 }
 
 // SyncNotificationConfigs es el DTO de transporte HTTP para sync batch

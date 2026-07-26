@@ -75,6 +75,7 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 				Enabled:                 rule.Enabled,
 				Description:             rule.Description,
 				OrderStatusIDs:          rule.OrderStatusIDs,
+				CODOnly:                 rule.CODOnly,
 			}
 			toUpdate = append(toUpdate, entity)
 		} else {
@@ -87,6 +88,7 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 				Enabled:                 rule.Enabled,
 				Description:             rule.Description,
 				OrderStatusIDs:          rule.OrderStatusIDs,
+				CODOnly:                 rule.CODOnly,
 			}
 			toCreate = append(toCreate, entity)
 		}

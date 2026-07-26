@@ -35,31 +35,6 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	}
 }
 
-const paymentMethodIDCOD uint = 6
-
-func isCODEvent(event entities.Event) bool {
-	if flag, ok := event.Data["is_cod"].(bool); ok && flag {
-		return true
-	}
-
-	val, ok := event.Data["payment_method_id"]
-	if !ok || val == nil {
-		return false
-	}
-	switch v := val.(type) {
-	case uint:
-		return v == paymentMethodIDCOD
-	case int:
-		return uint(v) == paymentMethodIDCOD
-	case int64:
-		return uint(v) == paymentMethodIDCOD
-	case float64:
-		return uint(v) == paymentMethodIDCOD
-	default:
-		return false
-	}
-}
-
 func eventCodeToTemplateName(eventCode string, isCOD bool) string {
 	switch eventCode {
 	case "order.shipped":
@@ -81,7 +56,7 @@ func eventCodeToTemplateName(eventCode string, isCOD bool) string {
 }
 
 func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	templateName := eventCodeToTemplateName(config.EventCode, isCODEvent(event))
+	templateName := eventCodeToTemplateName(config.EventCode, event.IsCOD())
 
 	payload := map[string]any{
 		"event_type":        "order.confirmation_requested",
