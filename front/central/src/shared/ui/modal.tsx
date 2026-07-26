@@ -5,7 +5,8 @@
 
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -35,6 +36,12 @@ const sizeClasses = {
 export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50 }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Cerrar con ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -58,12 +65,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const backdropZIndex = zIndex - 10;
   const modalZIndex = zIndex;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div className="modal-backdrop" style={{ zIndex: backdropZIndex }} onClick={onClose} />
@@ -143,7 +150,8 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
