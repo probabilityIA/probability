@@ -9,7 +9,7 @@ set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TMUX_SESSION="prob"
-NEXT_HEAP_MB="${NEXT_HEAP_MB:-3072}"
+NEXT_HEAP_MB="${NEXT_HEAP_MB:-6144}"
 
 BACKEND_DIR="$PROJECT_ROOT/back/central"
 FRONTEND_DIR="$PROJECT_ROOT/front/central"
@@ -74,7 +74,7 @@ is_running() {
     [ -n "$win" ] && window_exists "$win"
 }
 
-MEM_WARN_MB=3500
+MEM_WARN_MB=7000
 
 descendants() {
     local pid="$1" child
