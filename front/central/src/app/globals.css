@@ -1491,3 +1491,30 @@ textarea:focus {
   background: color-mix(in oklab, var(--color-primary, #7c3aed) 30%, transparent);
   color: color-mix(in oklab, var(--color-primary, #7c3aed) 30%, white);
 }
+
+.sidebar-surface {
+  background-color: var(--color-sidebar, #ffffff);
+}
+
+:is(.dark) .sidebar-surface {
+  background-color: var(--color-sidebar, #1f2937);
+}
+
+.sidebar-surface a,
+.sidebar-surface button {
+  color: var(--color-sidebar-text, inherit);
+}
+
+.subnav-surface {
+  background-color: var(--color-topbar, #ffffff);
+}
+
+:is(.dark) .subnav-surface {
+  background-color: var(--color-topbar, #1f2937);
+}
+
+.subnav-surface a,
+.subnav-surface > div > span,
+.subnav-surface label {
+  color: var(--color-topbar-text, inherit);
+}

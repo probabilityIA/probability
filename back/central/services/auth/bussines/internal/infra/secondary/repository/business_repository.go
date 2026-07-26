@@ -190,6 +190,18 @@ func (r *Repository) UpdateBusiness(ctx context.Context, id uint, business domai
 		r.logger.Error().Uint("id", id).Err(err).Msg("Error al actualizar negocio")
 		return "", err
 	}
+
+	if err := r.database.Conn(ctx).
+		Model(&models.Business{}).
+		Where("id = ?", id).
+		Updates(map[string]interface{}{
+			"sidebar_color": business.SidebarColor,
+			"topbar_color":  business.TopbarColor,
+		}).Error; err != nil {
+		r.logger.Error().Uint("id", id).Err(err).Msg("Error al actualizar los colores de las barras")
+		return "", err
+	}
+
 	return fmt.Sprintf("Negocio actualizado con ID: %d", id), nil
 }
 

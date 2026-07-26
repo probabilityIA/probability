@@ -28,6 +28,8 @@ type BusinessDetailResponse struct {
 	SecondaryColor     string                     `json:"secondary_color"`
 	TertiaryColor      string                     `json:"tertiary_color"`
 	QuaternaryColor    string                     `json:"quaternary_color"`
+	SidebarColor       string                     `json:"sidebar_color"`
+	TopbarColor        string                     `json:"topbar_color"`
 	NavbarImageURL     string                     `json:"navbar_image_url"`
 	CustomDomain       string                     `json:"custom_domain"`
 	IsActive           bool                       `json:"is_active"`

@@ -70,6 +70,8 @@ func (uc *BusinessUseCase) GetBusinessByID(ctx context.Context, id uint) (*domai
 		SecondaryColor:     business.SecondaryColor,
 		TertiaryColor:      business.TertiaryColor,
 		QuaternaryColor:    business.QuaternaryColor,
+		SidebarColor:       business.SidebarColor,
+		TopbarColor:        business.TopbarColor,
 		NavbarImageURL:     fullNavbarImageURL,
 		CustomDomain:       business.CustomDomain,
 		IsActive:           business.IsActive,

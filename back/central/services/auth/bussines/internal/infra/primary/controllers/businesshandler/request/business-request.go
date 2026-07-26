@@ -17,6 +17,8 @@ type BusinessRequest struct {
 	SecondaryColor  string                `form:"secondary_color"`
 	TertiaryColor   string                `form:"tertiary_color"`
 	QuaternaryColor string                `form:"quaternary_color"`
+	SidebarColor    string                `form:"sidebar_color"`
+	TopbarColor     string                `form:"topbar_color"`
 	NavbarImageFile *multipart.FileHeader `form:"navbar_image_file"`
 	CustomDomain    string                `form:"custom_domain"`
 	IsActive        bool                  `form:"is_active"`

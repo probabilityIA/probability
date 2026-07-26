@@ -143,5 +143,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateOrderStatusChangedAt(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateBusinessBarColors(ctx); err != nil {
+		return err
+	}
 	return r.migrateBackfillBusinessSubscriptions(ctx)
 }

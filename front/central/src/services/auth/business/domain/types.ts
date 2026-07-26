@@ -12,6 +12,8 @@ export interface Business {
     secondary_color?: string;
     tertiary_color?: string;
     quaternary_color?: string;
+    sidebar_color?: string;
+    topbar_color?: string;
     navbar_image_url?: string;
     custom_domain?: string;
     is_active: boolean;
@@ -98,6 +100,8 @@ export interface CreateBusinessDTO {
     secondary_color?: string;
     tertiary_color?: string;
     quaternary_color?: string;
+    sidebar_color?: string;
+    topbar_color?: string;
     navbar_image_file?: File;
     custom_domain?: string;
     is_active?: boolean;
@@ -174,6 +178,8 @@ export interface BusinessSimple {
     secondary_color?: string;
     tertiary_color?: string;
     quaternary_color?: string;
+    sidebar_color?: string;
+    topbar_color?: string;
 }
 
 export interface BusinessesSimpleParams {

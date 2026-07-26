@@ -10,6 +10,8 @@ export interface BusinessColors {
     secondary?: string;
     tertiary?: string;
     quaternary?: string;
+    sidebar?: string;
+    topbar?: string;
 }
 
 export interface BusinessData {

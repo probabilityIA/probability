@@ -41,6 +41,8 @@ type BusinessRequest struct {
 	SecondaryColor  string
 	TertiaryColor   string
 	QuaternaryColor string
+	SidebarColor    string
+	TopbarColor     string
 	NavbarImageFile *multipart.FileHeader // Imagen de navbar para subir a S3
 	CustomDomain    string
 	IsActive        bool
@@ -65,6 +67,8 @@ type UpdateBusinessRequest struct {
 	SecondaryColor     *string
 	TertiaryColor      *string
 	QuaternaryColor    *string
+	SidebarColor       *string
+	TopbarColor        *string
 	NavbarImageFile    *multipart.FileHeader
 	CustomDomain       *string
 	IsActive           *bool
@@ -89,6 +93,8 @@ type BusinessResponse struct {
 	SecondaryColor  string
 	TertiaryColor   string
 	QuaternaryColor string
+	SidebarColor    string
+	TopbarColor     string
 	NavbarImageURL  string
 	CustomDomain    string
 	IsActive        bool

@@ -59,6 +59,8 @@ type Business struct {
 	SecondaryColor  string  `gorm:"size:7;default:'#3b82f6'"` // Hex color
 	TertiaryColor   string  `gorm:"size:7;default:'#10b981'"` // Hex color adicional
 	QuaternaryColor string  `gorm:"size:7;default:'#fbbf24'"` // Hex color adicional
+	SidebarColor    string  `gorm:"size:7"`                   // Color de la barra lateral
+	TopbarColor     string  `gorm:"size:7"`                   // Color de la barra superior
 	NavbarImageURL  string  `gorm:"size:255"`                 // Imagen de fondo para la barra de navegación
 	CustomDomain    *string `gorm:"size:100;unique"`          // dominio personalizado
 	IsActive        bool    `gorm:"default:true"`

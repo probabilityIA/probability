@@ -26,6 +26,18 @@ interface Colors {
     quaternary: string;
 }
 
+type ColorKey = keyof Colors;
+
+interface BarTokens {
+    sidebar: ColorKey;
+    topbar: ColorKey;
+}
+
+const DEFAULT_BAR_TOKENS: BarTokens = {
+    sidebar: 'primary',
+    topbar: 'primary',
+};
+
 const DEFAULT_COLORS: Colors = {
     primary: '#0f172a',
     secondary: '#be185d',
@@ -39,6 +51,14 @@ const COLOR_LABELS: Record<keyof Colors, string> = {
     tertiary: 'Terciario',
     quaternary: 'Cuaternario',
 };
+
+function matchToken(palette: Colors, color?: string): ColorKey {
+    if (!color) return 'primary';
+    const found = (Object.keys(palette) as ColorKey[]).find(
+        key => palette[key].toLowerCase() === color.toLowerCase(),
+    );
+    return found || 'primary';
+}
 
 interface SwatchProps {
     label: string;
@@ -112,6 +132,8 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
     const [description, setDescription] = useState('');
     const [address, setAddress] = useState('');
     const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
+    const [barTokens, setBarTokens] = useState<BarTokens>(DEFAULT_BAR_TOKENS);
+    const [tintBars, setTintBars] = useState(false);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -141,6 +163,17 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                 tertiary: data.tertiary_color || DEFAULT_COLORS.tertiary,
                 quaternary: data.quaternary_color || DEFAULT_COLORS.quaternary,
             });
+            const paletteColors: Colors = {
+                primary: data.primary_color || DEFAULT_COLORS.primary,
+                secondary: data.secondary_color || DEFAULT_COLORS.secondary,
+                tertiary: data.tertiary_color || DEFAULT_COLORS.tertiary,
+                quaternary: data.quaternary_color || DEFAULT_COLORS.quaternary,
+            };
+            setBarTokens({
+                sidebar: matchToken(paletteColors, data.sidebar_color),
+                topbar: matchToken(paletteColors, data.topbar_color),
+            });
+            setTintBars(Boolean(data.sidebar_color || data.topbar_color));
             setLogoPreview(data.logo_url || null);
         } catch (err) {
             setError(getActionError(err, 'Error cargando el negocio'));
@@ -170,6 +203,16 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
         setSaved(false);
     };
 
+    const setBarToken = (bar: keyof BarTokens, token: ColorKey) => {
+        setBarTokens(prev => ({ ...prev, [bar]: token }));
+        setSaved(false);
+    };
+
+    const bars = {
+        sidebar: colors[barTokens.sidebar],
+        topbar: colors[barTokens.topbar],
+    };
+
     const handleSave = async () => {
         if (!business) return;
 
@@ -185,6 +228,8 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                 secondary_color: colors.secondary,
                 tertiary_color: colors.tertiary,
                 quaternary_color: colors.quaternary,
+                sidebar_color: tintBars ? bars.sidebar : '',
+                topbar_color: tintBars ? bars.topbar : '',
             };
             if (logoFile) payload.logo_file = logoFile;
 
@@ -203,6 +248,8 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                 secondary_color: colors.secondary,
                 tertiary_color: colors.tertiary,
                 quaternary_color: colors.quaternary,
+                sidebar_color: tintBars ? bars.sidebar : undefined,
+                topbar_color: tintBars ? bars.topbar : undefined,
             });
 
             setSaved(true);
@@ -310,7 +357,57 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                                 </div>
                             </div>
 
-                            <BusinessThemePreview colors={colors} businessName={name} logoUrl={logoPreview} />
+                            <div className="rounded-xl border border-gray-200 dark:border-gray-600 p-2.5">
+                                <label className="flex cursor-pointer items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                        Colorear barras de navegacion
+                                    </span>
+                                    <input
+                                        type="checkbox"
+                                        checked={tintBars}
+                                        onChange={e => {
+                                            setTintBars(e.target.checked);
+                                            setSaved(false);
+                                        }}
+                                        className="h-4 w-4 cursor-pointer"
+                                    />
+                                </label>
+
+                                {tintBars && (
+                                    <div className="mt-2 space-y-2">
+                                        {(['sidebar', 'topbar'] as (keyof BarTokens)[]).map(bar => (
+                                            <div key={bar} className="flex items-center justify-between gap-2">
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                                                    {bar === 'sidebar' ? 'Barra izquierda' : 'Barra superior'}
+                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    {(Object.keys(COLOR_LABELS) as ColorKey[]).map(token => (
+                                                        <button
+                                                            key={token}
+                                                            type="button"
+                                                            title={COLOR_LABELS[token]}
+                                                            onClick={() => setBarToken(bar, token)}
+                                                            className={`h-6 w-6 rounded-md border transition-transform hover:scale-110 ${
+                                                                barTokens[bar] === token
+                                                                    ? 'border-gray-900 dark:border-white ring-2 ring-offset-1 ring-gray-300 dark:ring-gray-500'
+                                                                    : 'border-black/10'
+                                                            }`}
+                                                            style={{ backgroundColor: colors[token] }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <BusinessThemePreview
+                                colors={colors}
+                                bars={tintBars ? bars : null}
+                                businessName={name}
+                                logoUrl={logoPreview}
+                            />
                         </div>
                     </div>
 

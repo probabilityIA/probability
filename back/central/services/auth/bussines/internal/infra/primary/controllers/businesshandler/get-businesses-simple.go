@@ -56,6 +56,8 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 			SecondaryColor:  business.SecondaryColor,
 			TertiaryColor:   business.TertiaryColor,
 			QuaternaryColor: business.QuaternaryColor,
+			SidebarColor:    business.SidebarColor,
+			TopbarColor:     business.TopbarColor,
 		})
 	}
 

@@ -15,6 +15,8 @@ type UpdateBusinessRequest struct {
 	SecondaryColor  *string               `form:"secondary_color" json:"secondary_color"`
 	TertiaryColor   *string               `form:"tertiary_color" json:"tertiary_color"`
 	QuaternaryColor *string               `form:"quaternary_color" json:"quaternary_color"`
+	SidebarColor    *string               `form:"sidebar_color" json:"sidebar_color"`
+	TopbarColor     *string               `form:"topbar_color" json:"topbar_color"`
 	NavbarImageFile *multipart.FileHeader `form:"navbar_image_file" json:"-"`
 	CustomDomain    *string               `form:"custom_domain" json:"custom_domain"`
 	IsActive        *bool                 `form:"is_active" json:"is_active"`

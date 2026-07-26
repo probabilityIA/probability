@@ -32,6 +32,8 @@ type Business struct {
 	SecondaryColor  string
 	TertiaryColor   string
 	QuaternaryColor string
+	SidebarColor    string
+	TopbarColor     string
 	NavbarImageURL  string
 	CustomDomain    string
 	IsActive        bool

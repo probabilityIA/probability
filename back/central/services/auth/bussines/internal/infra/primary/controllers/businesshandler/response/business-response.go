@@ -16,6 +16,8 @@ type BusinessResponse struct {
 	SecondaryColor  string    `json:"secondary_color"`
 	TertiaryColor   string    `json:"tertiary_color"`
 	QuaternaryColor string    `json:"quaternary_color"`
+	SidebarColor    string    `json:"sidebar_color"`
+	TopbarColor     string    `json:"topbar_color"`
 	NavbarImageURL  string    `json:"navbar_image_url"`
 	IsActive        bool      `json:"is_active"`
 	BusinessTypeID  uint      `json:"business_type_id"`

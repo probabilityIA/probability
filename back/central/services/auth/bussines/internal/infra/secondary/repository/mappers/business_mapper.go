@@ -20,6 +20,8 @@ func ToBusinessEntity(model models.Business) domain.Business {
 		SecondaryColor:  model.SecondaryColor,
 		TertiaryColor:   model.TertiaryColor,
 		QuaternaryColor: model.QuaternaryColor,
+		SidebarColor:    model.SidebarColor,
+		TopbarColor:     model.TopbarColor,
 		NavbarImageURL:  model.NavbarImageURL,
 		CustomDomain: func() string {
 			if model.CustomDomain != nil {
@@ -82,6 +84,8 @@ func ToBusinessModel(entity domain.Business) models.Business {
 		SecondaryColor:  entity.SecondaryColor,
 		TertiaryColor:   entity.TertiaryColor,
 		QuaternaryColor: entity.QuaternaryColor,
+		SidebarColor:    entity.SidebarColor,
+		TopbarColor:     entity.TopbarColor,
 		NavbarImageURL:  entity.NavbarImageURL,
 		CustomDomain: func() *string {
 			if entity.CustomDomain != "" {

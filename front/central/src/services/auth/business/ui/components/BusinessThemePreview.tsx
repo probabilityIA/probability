@@ -7,8 +7,14 @@ interface PreviewColors {
     quaternary: string;
 }
 
+interface PreviewBars {
+    sidebar: string;
+    topbar: string;
+}
+
 interface BusinessThemePreviewProps {
     colors: PreviewColors;
+    bars?: PreviewBars | null;
     businessName?: string;
     logoUrl?: string | null;
 }
@@ -33,8 +39,10 @@ const ROWS = [
     { order: '145831', client: 'Ricardo Lizarazo', total: '31.376', status: 'Pendiente' },
 ];
 
-export function BusinessThemePreview({ colors, businessName, logoUrl }: BusinessThemePreviewProps) {
+export function BusinessThemePreview({ colors, bars, businessName, logoUrl }: BusinessThemePreviewProps) {
     const onPrimary = readableText(colors.primary);
+    const topbarStyle = bars ? { backgroundColor: bars.topbar, color: readableText(bars.topbar) } : undefined;
+    const sidebarStyle = bars ? { backgroundColor: bars.sidebar, color: readableText(bars.sidebar) } : undefined;
     const onSecondary = readableText(colors.secondary);
     const onTertiary = readableText(colors.tertiary);
     const onQuaternary = readableText(colors.quaternary);
@@ -45,31 +53,53 @@ export function BusinessThemePreview({ colors, businessName, logoUrl }: Business
                 Vista previa
             </span>
 
-            <div className="mt-2 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 shadow-sm">
-                <div className="flex items-center justify-between gap-2 bg-white dark:bg-gray-800 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700">
+            <div className="mt-2 flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 shadow-sm">
+                <div
+                    className={`flex w-7 flex-shrink-0 flex-col items-center gap-1.5 py-2 border-r border-gray-200 dark:border-gray-700 ${
+                        sidebarStyle ? '' : 'bg-white dark:bg-gray-800'
+                    }`}
+                    style={sidebarStyle}
+                >
+                    <span
+                        className="flex h-4 w-4 items-center justify-center overflow-hidden rounded"
+                        style={{ backgroundColor: colors.primary, color: onPrimary }}
+                    >
+                        {logoUrl ? (
+                            <img src={logoUrl} alt="" className="max-h-full max-w-full object-contain" />
+                        ) : (
+                            <span className="text-[7px] font-bold">{(businessName || 'P').charAt(0)}</span>
+                        )}
+                    </span>
+                    {[0, 1, 2, 3, 4].map(item => (
+                        <span
+                            key={item}
+                            className="h-1.5 w-3 rounded-full"
+                            style={{
+                                backgroundColor: item === 1 ? colors.primary : 'currentColor',
+                                opacity: item === 1 ? 1 : 0.25,
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                <div
+                    className={`flex items-center justify-between gap-2 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 ${
+                        topbarStyle ? '' : 'bg-white dark:bg-gray-800'
+                    }`}
+                    style={topbarStyle}
+                >
                     <div className="flex items-center gap-1.5">
-                        <span className="flex h-4 w-4 items-center justify-center overflow-hidden rounded">
-                            {logoUrl ? (
-                                <img src={logoUrl} alt="" className="max-h-full max-w-full object-contain" />
-                            ) : (
-                                <span
-                                    className="flex h-full w-full items-center justify-center rounded text-[7px] font-bold"
-                                    style={{ backgroundColor: colors.primary, color: onPrimary }}
-                                >
-                                    {(businessName || 'P').charAt(0)}
-                                </span>
-                            )}
-                        </span>
                         <span
                             className="rounded-md px-1.5 py-0.5 text-[8px] font-semibold"
                             style={{ backgroundColor: colors.primary, color: onPrimary }}
                         >
                             Ordenes
                         </span>
-                        <span className="rounded-md px-1.5 py-0.5 text-[8px] font-medium text-gray-500 dark:text-gray-400">
+                        <span className={`rounded-md px-1.5 py-0.5 text-[8px] font-medium ${topbarStyle ? 'opacity-80' : 'text-gray-500 dark:text-gray-400'}`}>
                             Envios
                         </span>
-                        <span className="rounded-md px-1.5 py-0.5 text-[8px] font-medium text-gray-500 dark:text-gray-400">
+                        <span className={`rounded-md px-1.5 py-0.5 text-[8px] font-medium ${topbarStyle ? 'opacity-80' : 'text-gray-500 dark:text-gray-400'}`}>
                             Cotizaciones
                         </span>
                     </div>
@@ -162,6 +192,7 @@ export function BusinessThemePreview({ colors, businessName, logoUrl }: Business
                             Exportar
                         </span>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

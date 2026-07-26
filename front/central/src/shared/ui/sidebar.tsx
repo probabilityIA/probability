@@ -218,7 +218,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       <aside
         className={`
-          fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-tr-lg rounded-br-lg
+          fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 dark:border-gray-700 sidebar-surface rounded-tr-lg rounded-br-lg
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
         style={{

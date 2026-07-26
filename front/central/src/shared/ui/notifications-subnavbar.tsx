@@ -32,7 +32,7 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     ];
 
     return (
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
+        <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
             <div className="px-4 sm:px-6 lg:px-8 py-2">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-wrap">

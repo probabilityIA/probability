@@ -60,6 +60,8 @@ func (uc *BusinessUseCase) UpdateBusiness(ctx context.Context, id uint, request 
 	secondaryColor := existing.SecondaryColor
 	tertiaryColor := existing.TertiaryColor
 	quaternaryColor := existing.QuaternaryColor
+	sidebarColor := existing.SidebarColor
+	topbarColor := existing.TopbarColor
 	navbarImageURL := existing.NavbarImageURL
 	customDomain := existing.CustomDomain
 	isActive := existing.IsActive
@@ -97,6 +99,12 @@ func (uc *BusinessUseCase) UpdateBusiness(ctx context.Context, id uint, request 
 	}
 	if request.QuaternaryColor != nil {
 		quaternaryColor = *request.QuaternaryColor
+	}
+	if request.SidebarColor != nil {
+		sidebarColor = *request.SidebarColor
+	}
+	if request.TopbarColor != nil {
+		topbarColor = *request.TopbarColor
 	}
 	if request.NavbarImageFile != nil {
 		uc.log.Info().Uint("business_id", id).Str("filename", request.NavbarImageFile.Filename).Msg("Subiendo nueva imagen de navbar a S3")
@@ -157,6 +165,8 @@ func (uc *BusinessUseCase) UpdateBusiness(ctx context.Context, id uint, request 
 		SecondaryColor:     secondaryColor,
 		TertiaryColor:      tertiaryColor,
 		QuaternaryColor:    quaternaryColor,
+		SidebarColor:       sidebarColor,
+		TopbarColor:        topbarColor,
 		NavbarImageURL:     navbarImageURL,
 		CustomDomain:       customDomain,
 		IsActive:           isActive,
@@ -226,6 +236,8 @@ func (uc *BusinessUseCase) UpdateBusiness(ctx context.Context, id uint, request 
 		SecondaryColor:     updated.SecondaryColor,
 		TertiaryColor:      updated.TertiaryColor,
 		QuaternaryColor:    updated.QuaternaryColor,
+		SidebarColor:       updated.SidebarColor,
+		TopbarColor:        updated.TopbarColor,
 		NavbarImageURL:     fullNavbarImageURL,
 		CustomDomain:       updated.CustomDomain,
 		IsActive:           updated.IsActive,

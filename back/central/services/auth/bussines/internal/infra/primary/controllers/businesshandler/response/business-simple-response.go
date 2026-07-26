@@ -9,6 +9,8 @@ type BusinessSimpleResponse struct {
 	SecondaryColor  string `json:"secondary_color,omitempty"`
 	TertiaryColor   string `json:"tertiary_color,omitempty"`
 	QuaternaryColor string `json:"quaternary_color,omitempty"`
+	SidebarColor    string `json:"sidebar_color,omitempty"`
+	TopbarColor     string `json:"topbar_color,omitempty"`
 }
 
 type GetBusinessesSimpleResponse struct {

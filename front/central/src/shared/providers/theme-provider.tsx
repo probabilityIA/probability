@@ -3,12 +3,15 @@
 import { useEffect } from 'react';
 import { TokenStorage } from '@/shared/config';
 import { updateAllColorScales } from '@/shared/utils/color-scales';
+import { readableTextColor } from '@/shared/utils/apply-business-theme';
 
 interface BusinessColors {
   primary: string;
   secondary: string;
   tertiary: string;
   quaternary: string;
+  sidebar?: string;
+  topbar?: string;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -53,6 +56,21 @@ function applyBusinessColors() {
   const quaternaryColor = colors?.quaternary || DEFAULT_COLORS.quaternary;
 
   updateAllColorScales(primaryColor, secondaryColor, tertiaryColor, quaternaryColor);
+
+  const root = document.documentElement;
+  applyBarColor(root, 'sidebar', colors?.sidebar);
+  applyBarColor(root, 'topbar', colors?.topbar);
+}
+
+function applyBarColor(root: HTMLElement, name: 'sidebar' | 'topbar', color?: string) {
+  if (color) {
+    root.style.setProperty(`--color-${name}`, color);
+    root.style.setProperty(`--color-${name}-text`, readableTextColor(color));
+    return;
+  }
+
+  root.style.removeProperty(`--color-${name}`);
+  root.style.removeProperty(`--color-${name}-text`);
 }
 
 /**
@@ -73,6 +91,8 @@ export function useTheme() {
       secondary: colors.secondary || '',
       tertiary: colors.tertiary || '',
       quaternary: colors.quaternary || '',
+      sidebar: colors.sidebar || '',
+      topbar: colors.topbar || '',
     };
   };
 
