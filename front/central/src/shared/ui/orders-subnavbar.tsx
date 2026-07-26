@@ -8,6 +8,7 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+import { OrdersEffectivenessKpis } from '@/services/modules/orders/ui';
 
 export const ORDERS_FILTERS_SLOT_ID = 'orders-filters-slot';
 export const ORDERS_ACTIONS_SLOT_ID = 'orders-actions-slot';
@@ -84,6 +85,7 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
                         ))}
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
+                        <OrdersEffectivenessKpis businessId={selectedBusinessId} />
                         <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
