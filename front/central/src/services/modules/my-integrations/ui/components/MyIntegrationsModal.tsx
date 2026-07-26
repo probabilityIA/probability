@@ -63,25 +63,39 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             const intParams: Record<string, unknown> = { page_size: 100 };
             if (effectiveBusinessId) intParams.business_id = effectiveBusinessId;
 
-            const [catRes, intRes, resourcesRes, statsRes] = await Promise.all([
+            const settled = await Promise.allSettled([
                 getIntegrationCategoriesAction(),
                 getIntegrationsAction(intParams),
                 effectiveBusinessId ? getBusinessConfiguredResourcesAction(effectiveBusinessId) : Promise.resolve(null),
                 getIntegrationStatsAction(effectiveBusinessId ?? undefined),
             ]);
 
-            if (catRes.success && catRes.data) {
+            const settledValue = <T,>(index: number): T | null => {
+                const item = settled[index];
+                if (item.status === 'rejected') {
+                    console.error('Error cargando datos de integraciones:', item.reason);
+                    return null;
+                }
+                return item.value as T;
+            };
+
+            const catRes = settledValue<Awaited<ReturnType<typeof getIntegrationCategoriesAction>>>(0);
+            const intRes = settledValue<Awaited<ReturnType<typeof getIntegrationsAction>>>(1);
+            const resourcesRes = settledValue<Awaited<ReturnType<typeof getBusinessConfiguredResourcesAction>>>(2);
+            const statsRes = settledValue<Awaited<ReturnType<typeof getIntegrationStatsAction>>>(3);
+
+            if (catRes?.success && catRes.data) {
                 const visible = (catRes.data as IntegrationCategory[])
                     .filter(c => c.is_visible && c.is_active)
                     .sort((a, b) => a.display_order - b.display_order);
                 setCategories(visible);
             }
 
-            if (intRes.success && intRes.data) {
+            if (intRes?.success && intRes.data) {
                 setIntegrations(intRes.data as Integration[]);
             }
 
-            if (statsRes.success && statsRes.data) {
+            if (statsRes?.success && statsRes.data) {
                 const map: Record<number, IntegrationStatsItem> = {};
                 for (const item of statsRes.data) {
                     map[item.integration_id] = item;

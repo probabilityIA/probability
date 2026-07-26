@@ -59,6 +59,10 @@ const KEYS = {
     ACTIVE_BUSINESS_ID: 'active_business_id',
     PERMISSIONS: 'permissions',
     BUSINESS_COLORS: 'business_colors',
+    SELECTED_BUSINESS_ID: 'selected_business_id',
+    STOREFRONT_BUSINESS_ID: 'storefront_business_id',
+    SELECTED_BUSINESS_NAME: 'selected_business_name',
+    SELECTED_BUSINESS_LOGO: 'selected_business_logo',
 };
 
 /**
@@ -319,5 +323,11 @@ export const CookieStorage = {
         removeItem(KEYS.ACTIVE_BUSINESS_ID);
         removeItem(KEYS.PERMISSIONS);
         removeItem(KEYS.BUSINESS_COLORS);
+        removeItem(KEYS.SELECTED_BUSINESS_ID);
+        removeItem(KEYS.STOREFRONT_BUSINESS_ID);
+        removeItem(KEYS.SELECTED_BUSINESS_NAME);
+        removeItem(KEYS.SELECTED_BUSINESS_LOGO);
+        deleteCookie(KEYS.SELECTED_BUSINESS_ID);
+        deleteCookie(KEYS.STOREFRONT_BUSINESS_ID);
     }
 };

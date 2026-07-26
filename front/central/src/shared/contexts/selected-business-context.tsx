@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { usePermissions } from './permissions-context';
 
 const STORAGE_KEY = 'selected_business_id';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
@@ -43,13 +44,25 @@ function persistBusinessId(id: number | null) {
 }
 
 export function SelectedBusinessProvider({ children }: { children: ReactNode }) {
+    const { permissions, isSuperAdmin } = usePermissions();
     const [selectedBusinessId, setSelectedBusinessIdState] = useState<number | null>(null);
+    const ownBusinessId = permissions?.business_id ?? null;
 
     useEffect(() => {
-        setSelectedBusinessIdState(readStoredBusinessId());
-    }, []);
+        if (isSuperAdmin) {
+            setSelectedBusinessIdState(readStoredBusinessId());
+            return;
+        }
+
+        if (!permissions) return;
+
+        const own = ownBusinessId && ownBusinessId > 0 ? ownBusinessId : null;
+        setSelectedBusinessIdState(own);
+        if (own !== readStoredBusinessId()) persistBusinessId(own);
+    }, [isSuperAdmin, permissions, ownBusinessId]);
 
     const setSelectedBusinessId = (id: number | null) => {
+        if (!isSuperAdmin) return;
         setSelectedBusinessIdState(id);
         persistBusinessId(id);
     };

@@ -16,19 +16,24 @@ export function MyIntegrationsButton({ businessId }: MyIntegrationsButtonProps) 
 
     return (
         <>
-            <button
-                onClick={() => setIsModalOpen(true)}
-                disabled={disabled}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
-                    disabled
-                        ? 'text-gray-400 dark:text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
-                        : 'subnav-active hover:opacity-90'
-                }`}
-                title={disabled ? 'Selecciona un negocio primero' : 'Ver tus integraciones'}
-            >
-                <span>🔗</span>
-                <span className="hidden sm:inline">Tus Integraciones</span>
-            </button>
+            <span className="relative group inline-flex">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    disabled={disabled}
+                    aria-label="Tus Integraciones"
+                    className={`inline-flex items-center justify-center rounded-lg text-sm transition-colors ${
+                        disabled
+                            ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
+                            : 'subnav-active hover:opacity-90'
+                    }`}
+                    style={{ width: '2rem', height: '2rem', padding: 0 }}
+                >
+                    <span>🔗</span>
+                </button>
+                <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-1.5 z-50 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:bg-gray-700">
+                    {disabled ? 'Selecciona un negocio primero' : 'Tus Integraciones'}
+                </span>
+            </span>
 
             <MyIntegrationsModal
                 isOpen={isModalOpen}
