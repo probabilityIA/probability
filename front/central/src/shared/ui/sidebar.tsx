@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { TokenStorage } from '@/shared/config';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { UserProfileModal } from './user-profile-modal';
+import { BusinessSettingsModal } from '@/services/auth/business/ui/components/BusinessSettingsModal';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getMyModulesAction } from '@/services/modules/wallet/infra/subscription-actions';
 
@@ -48,18 +49,29 @@ export function Sidebar({ user }: SidebarProps) {
   }, [isSuperAdmin, permissions]);
 
   const [superAdminBusinessLogo, setSuperAdminBusinessLogo] = useState<string | null>(null);
+  const [superAdminBusinessId, setSuperAdminBusinessId] = useState<number | null>(null);
+  const [showBusinessModal, setShowBusinessModal] = useState(false);
 
   useEffect(() => {
     if (!isSuperAdmin) return;
 
     const updateLogo = () => {
       setSuperAdminBusinessLogo(localStorage.getItem('selected_business_logo'));
+      const stored = localStorage.getItem('selected_business_id');
+      const parsed = stored ? parseInt(stored, 10) : NaN;
+      setSuperAdminBusinessId(Number.isNaN(parsed) ? null : parsed);
     };
 
     updateLogo();
     window.addEventListener('businessChanged', updateLogo);
-    return () => window.removeEventListener('businessChanged', updateLogo);
+    window.addEventListener('storage', updateLogo);
+    return () => {
+      window.removeEventListener('businessChanged', updateLogo);
+      window.removeEventListener('storage', updateLogo);
+    };
   }, [isSuperAdmin]);
+
+  const activeBusinessId = isSuperAdmin ? superAdminBusinessId : permissions?.business_id ?? null;
 
   useEffect(() => {
     if (!primaryExpanded) {
@@ -224,20 +236,27 @@ export function Sidebar({ user }: SidebarProps) {
         }}
       >
         <div className="flex flex-col h-full">
-          <a
-            href="https://www.probabilityia.com.co/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-col items-center py-4 transition-all duration-300 gap-2 hover:opacity-80"
-          >
-            <div className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
-              {businessLogo ? (
+          <div className="flex flex-col items-center py-4 gap-2">
+            {businessLogo ? (
+              <button
+                type="button"
+                onClick={() => setShowBusinessModal(true)}
+                title="Informacion del negocio"
+                className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
+              >
                 <img
                   src={businessLogo}
                   alt="Business Logo"
                   className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-8 h-8 rounded'}`}
                 />
-              ) : (
+              </button>
+            ) : (
+              <a
+                href="https://www.probabilityia.com.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
+              >
                 <Image
                   src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
                   alt="Probability Logo"
@@ -246,18 +265,23 @@ export function Sidebar({ user }: SidebarProps) {
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-              )}
-            </div>
+              </a>
+            )}
             {isSuperAdmin && superAdminBusinessLogo && (
-              <div className={`transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}>
+              <button
+                type="button"
+                onClick={() => setShowBusinessModal(true)}
+                title="Informacion del negocio"
+                className={`transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}
+              >
                 <img
                   src={superAdminBusinessLogo}
                   alt="Negocio seleccionado"
                   className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-7 h-7 rounded'}`}
                 />
-              </div>
+              </button>
             )}
-          </a>
+          </div>
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent" />
 
           <button
@@ -754,6 +778,12 @@ export function Sidebar({ user }: SidebarProps) {
         onUpdate={() => {
           window.location.reload();
         }}
+      />
+
+      <BusinessSettingsModal
+        isOpen={showBusinessModal}
+        onClose={() => setShowBusinessModal(false)}
+        businessId={activeBusinessId}
       />
     </>
   );
