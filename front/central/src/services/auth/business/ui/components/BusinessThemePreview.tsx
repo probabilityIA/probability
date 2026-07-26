@@ -17,6 +17,7 @@ interface BusinessThemePreviewProps {
     bars?: PreviewBars | null;
     businessName?: string;
     logoUrl?: string | null;
+    showLabel?: boolean;
 }
 
 function readableText(hex: string): string {
@@ -39,7 +40,7 @@ const ROWS = [
     { order: '145831', client: 'Ricardo Lizarazo', total: '31.376', status: 'Pendiente' },
 ];
 
-export function BusinessThemePreview({ colors, bars, businessName, logoUrl }: BusinessThemePreviewProps) {
+export function BusinessThemePreview({ colors, bars, businessName, logoUrl, showLabel = true }: BusinessThemePreviewProps) {
     const onPrimary = readableText(colors.primary);
     const topbarStyle = bars ? { backgroundColor: bars.topbar, color: readableText(bars.topbar) } : undefined;
     const sidebarStyle = bars ? { backgroundColor: bars.sidebar, color: readableText(bars.sidebar) } : undefined;
@@ -49,9 +50,11 @@ export function BusinessThemePreview({ colors, bars, businessName, logoUrl }: Bu
 
     return (
         <div>
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Vista previa
-            </span>
+            {showLabel && (
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    Vista previa
+                </span>
+            )}
 
             <div className="mt-2 flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 shadow-sm">
                 <div

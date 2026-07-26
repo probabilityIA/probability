@@ -547,7 +547,7 @@ export const BusinessList: React.FC = () => {
                 isOpen={showCreateModal}
                 onClose={() => { setShowCreateModal(false); setEditingBusiness(null); }}
                 title={editingBusiness ? "Editar Negocio" : "Crear Negocio"}
-                size="4xl"
+                size="6xl"
             >
                 <BusinessForm
                     initialData={editingBusiness || undefined}

@@ -10,6 +10,7 @@ import { Spinner } from '@/shared/ui/spinner';
 import { Business } from '../../domain/types';
 import { COLOR_PALETTES } from '../../domain/color-palettes';
 import { BusinessThemePreview } from './BusinessThemePreview';
+import { BusinessBarColors, matchPaletteToken, type PaletteToken } from './BusinessBarColors';
 import { useBusinessForm } from '../hooks/useBusinessForm';
 import { BusinessFiscalSection } from './BusinessFiscalSection';
 
@@ -146,6 +147,36 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [navbarPreview, setNavbarPreview] = useState<string | null>(null);
 
+    const paletteColors = {
+        primary: formData.primary_color || '#000000',
+        secondary: formData.secondary_color || '#ffffff',
+        tertiary: formData.tertiary_color || '#cccccc',
+        quaternary: formData.quaternary_color || '#eeeeee',
+    };
+
+    const [tintBars, setTintBars] = useState(Boolean(initialData?.sidebar_color || initialData?.topbar_color));
+    const [barTokens, setBarTokens] = useState<{ sidebar: PaletteToken; topbar: PaletteToken }>({
+        sidebar: matchPaletteToken(paletteColors, initialData?.sidebar_color),
+        topbar: matchPaletteToken(paletteColors, initialData?.topbar_color),
+    });
+
+    const handleToggleBars = (enabled: boolean) => {
+        setTintBars(enabled);
+        handleChange('sidebar_color', enabled ? paletteColors[barTokens.sidebar] : '');
+        handleChange('topbar_color', enabled ? paletteColors[barTokens.topbar] : '');
+    };
+
+    const handleBarToken = (bar: 'sidebar' | 'topbar', token: PaletteToken) => {
+        setBarTokens(prev => ({ ...prev, [bar]: token }));
+        handleChange(bar === 'sidebar' ? 'sidebar_color' : 'topbar_color', paletteColors[token]);
+    };
+
+    useEffect(() => {
+        if (!tintBars) return;
+        handleChange('sidebar_color', paletteColors[barTokens.sidebar]);
+        handleChange('topbar_color', paletteColors[barTokens.topbar]);
+    }, [formData.primary_color, formData.secondary_color, formData.tertiary_color, formData.quaternary_color]);
+
     useEffect(() => {
         return () => {
             if (logoPreview && logoPreview.startsWith('blob:')) {
@@ -202,7 +233,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
         <form onSubmit={handleSubmit} className="space-y-6">
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide border-b pb-2">
                         Información del Negocio
@@ -236,13 +267,13 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                                 onChange={(file: File | null) => handleChange('logo_file', file)}
                                 helperText="JPG, PNG, WEBP"
                             />
-                            {logoPreview && (
-                                <img
-                                    src={logoPreview}
-                                    alt="Logo preview"
-                                    className="w-full h-20 object-contain border rounded-lg bg-gray-50"
-                                />
-                            )}
+                            <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-700">
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Logo actual" className="max-h-full max-w-full object-contain" />
+                                ) : (
+                                    <span className="text-[11px] text-gray-400">Sin logo</span>
+                                )}
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <FileInput
@@ -252,13 +283,13 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                                 onChange={(file: File | null) => handleChange('navbar_image_file', file)}
                                 helperText="JPG, PNG, WEBP"
                             />
-                            {navbarPreview && (
-                                <img
-                                    src={navbarPreview}
-                                    alt="Navbar preview"
-                                    className="w-full h-20 object-contain border rounded-lg bg-gray-50"
-                                />
-                            )}
+                            <div className="flex h-20 w-full items-center justify-center overflow-hidden rounded-lg border bg-gray-50 dark:bg-gray-700">
+                                {navbarPreview ? (
+                                    <img src={navbarPreview} alt="Navbar actual" className="max-h-full max-w-full object-contain" />
+                                ) : (
+                                    <span className="text-[11px] text-gray-400">Sin imagen</span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -346,7 +377,24 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                         </div>
                     </div>
 
+                    <BusinessBarColors
+                        colors={paletteColors}
+                        enabled={tintBars}
+                        sidebarToken={barTokens.sidebar}
+                        topbarToken={barTokens.topbar}
+                        onToggle={handleToggleBars}
+                        onTokenChange={handleBarToken}
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide border-b pb-2">
+                        Vista Previa
+                    </h3>
+
                     <BusinessThemePreview
+                        showLabel={false}
+                        bars={tintBars ? { sidebar: paletteColors[barTokens.sidebar], topbar: paletteColors[barTokens.topbar] } : null}
                         colors={{
                             primary: formData.primary_color || '#000000',
                             secondary: formData.secondary_color || '#ffffff',

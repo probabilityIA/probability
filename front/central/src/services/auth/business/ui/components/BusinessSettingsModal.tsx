@@ -12,6 +12,7 @@ import type { Business } from '../../domain/types';
 import { applyBusinessTheme } from '@/shared/utils/apply-business-theme';
 import { getActionError } from '@/shared/utils/action-result';
 import { BusinessThemePreview } from './BusinessThemePreview';
+import { BusinessBarColors, matchPaletteToken } from './BusinessBarColors';
 
 interface BusinessSettingsModalProps {
     isOpen: boolean;
@@ -51,14 +52,6 @@ const COLOR_LABELS: Record<keyof Colors, string> = {
     tertiary: 'Terciario',
     quaternary: 'Cuaternario',
 };
-
-function matchToken(palette: Colors, color?: string): ColorKey {
-    if (!color) return 'primary';
-    const found = (Object.keys(palette) as ColorKey[]).find(
-        key => palette[key].toLowerCase() === color.toLowerCase(),
-    );
-    return found || 'primary';
-}
 
 interface SwatchProps {
     label: string;
@@ -170,8 +163,8 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                 quaternary: data.quaternary_color || DEFAULT_COLORS.quaternary,
             };
             setBarTokens({
-                sidebar: matchToken(paletteColors, data.sidebar_color),
-                topbar: matchToken(paletteColors, data.topbar_color),
+                sidebar: matchPaletteToken(paletteColors, data.sidebar_color),
+                topbar: matchPaletteToken(paletteColors, data.topbar_color),
             });
             setTintBars(Boolean(data.sidebar_color || data.topbar_color));
             setLogoPreview(data.logo_url || null);
@@ -357,50 +350,17 @@ export function BusinessSettingsModal({ isOpen, onClose, businessId }: BusinessS
                                 </div>
                             </div>
 
-                            <div className="rounded-xl border border-gray-200 dark:border-gray-600 p-2.5">
-                                <label className="flex cursor-pointer items-center justify-between gap-2">
-                                    <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                        Colorear barras de navegacion
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={tintBars}
-                                        onChange={e => {
-                                            setTintBars(e.target.checked);
-                                            setSaved(false);
-                                        }}
-                                        className="h-4 w-4 cursor-pointer"
-                                    />
-                                </label>
-
-                                {tintBars && (
-                                    <div className="mt-2 space-y-2">
-                                        {(['sidebar', 'topbar'] as (keyof BarTokens)[]).map(bar => (
-                                            <div key={bar} className="flex items-center justify-between gap-2">
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                                                    {bar === 'sidebar' ? 'Barra izquierda' : 'Barra superior'}
-                                                </span>
-                                                <div className="flex items-center gap-1.5">
-                                                    {(Object.keys(COLOR_LABELS) as ColorKey[]).map(token => (
-                                                        <button
-                                                            key={token}
-                                                            type="button"
-                                                            title={COLOR_LABELS[token]}
-                                                            onClick={() => setBarToken(bar, token)}
-                                                            className={`h-6 w-6 rounded-md border transition-transform hover:scale-110 ${
-                                                                barTokens[bar] === token
-                                                                    ? 'border-gray-900 dark:border-white ring-2 ring-offset-1 ring-gray-300 dark:ring-gray-500'
-                                                                    : 'border-black/10'
-                                                            }`}
-                                                            style={{ backgroundColor: colors[token] }}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <BusinessBarColors
+                                colors={colors}
+                                enabled={tintBars}
+                                sidebarToken={barTokens.sidebar}
+                                topbarToken={barTokens.topbar}
+                                onToggle={value => {
+                                    setTintBars(value);
+                                    setSaved(false);
+                                }}
+                                onTokenChange={setBarToken}
+                            />
 
                             <BusinessThemePreview
                                 colors={colors}
