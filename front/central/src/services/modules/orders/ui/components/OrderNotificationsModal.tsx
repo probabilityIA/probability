@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { OrderApiRepository } from '../../infra/repository/api-repository';
 import { OrderNotifications, OrderNotificationEvent } from '../../domain/types';
+import { WhatsAppIcon } from '@/shared/ui';
 
 interface Props {
     orderId: string;
@@ -93,7 +94,9 @@ export function OrderNotificationsModal({ orderId, orderNumber, businessId, onCl
             >
                 <div className="flex items-center justify-between border-b px-5 py-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-xl" aria-hidden>&#128172;</span>
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#25D366]/10 text-[#25D366]">
+                            <WhatsAppIcon className="h-5 w-5" />
+                        </span>
                         <div>
                             <h3 className="text-sm font-bold text-gray-900">Notificaciones WhatsApp</h3>
                             <p className="text-xs text-gray-500">Orden {orderNumber}</p>
