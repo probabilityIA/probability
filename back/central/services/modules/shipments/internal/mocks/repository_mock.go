@@ -338,6 +338,10 @@ func (m *RepositoryMock) GetBusinessActiveIntegration(ctx context.Context, busin
 	return 0, "", nil
 }
 
+func (m *RepositoryMock) ListBusinessesWithActiveProvider(ctx context.Context, providerCode string) ([]uint, error) {
+	return nil, nil
+}
+
 func (m *RepositoryMock) DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string, shipmentID *uint) error {
 	return nil
 }

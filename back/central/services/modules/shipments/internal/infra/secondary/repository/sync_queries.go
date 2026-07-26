@@ -94,3 +94,33 @@ func (r *Repository) GetBusinessActiveIntegration(ctx context.Context, businessI
 	}
 	return result.ID, result.BaseURL, nil
 }
+
+func (r *Repository) ListBusinessesWithActiveProvider(ctx context.Context, providerCode string) ([]uint, error) {
+	var ids []uint
+	err := r.db.Conn(ctx).
+		Table("integrations i").
+		Distinct("i.business_id").
+		Joins("JOIN integration_types it ON it.id = i.integration_type_id").
+		Where("it.code = ?", providerCode).
+		Where("i.is_active = TRUE").
+		Where("i.deleted_at IS NULL").
+		Where("it.deleted_at IS NULL").
+		Where("i.business_id IS NOT NULL").
+		Where(`EXISTS (
+			SELECT 1
+			FROM shipments s
+			JOIN orders o ON o.id::text = s.order_id
+			WHERE o.business_id = i.business_id
+			  AND s.deleted_at IS NULL
+			  AND o.deleted_at IS NULL
+			  AND s.tracking_number IS NOT NULL
+			  AND s.tracking_number != ''
+			  AND s.status IN ('pending','picked_up','in_transit','out_for_delivery','on_hold')
+			  AND s.created_at >= NOW() - INTERVAL '30 days'
+		)`).
+		Pluck("i.business_id", &ids).Error
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}

@@ -20,9 +20,11 @@ type ProbabilityShipment struct {
 	GuideID  *string
 	GuideURL *string
 
-	Status      string
-	ShippedAt   *time.Time
-	DeliveredAt *time.Time
+	Status              string
+	CarrierStatus       *string
+	CarrierStatusDetail *string
+	ShippedAt           *time.Time
+	DeliveredAt         *time.Time
 
 	ShippingAddressID *uint
 

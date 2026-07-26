@@ -132,6 +132,7 @@ type IRepository interface {
 
 	ListShipmentsForSync(ctx context.Context, filter SyncShipmentsFilter) ([]SyncShipmentRow, error)
 	GetBusinessActiveIntegration(ctx context.Context, businessID uint, providerCode string) (uint, string, error)
+	ListBusinessesWithActiveProvider(ctx context.Context, providerCode string) ([]uint, error)
 
 	DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string, shipmentID *uint) error
 	FindUnchargedGuides(ctx context.Context, createdAfter, createdBefore time.Time, limit int) ([]UnchargedGuide, error)

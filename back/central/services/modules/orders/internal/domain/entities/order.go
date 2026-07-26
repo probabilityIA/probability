@@ -99,6 +99,7 @@ type ProbabilityOrder struct {
 	Status          string
 	StatusSource    string
 	StatusChangedBy string
+	StatusChangedAt *time.Time
 	OriginalStatus  string
 	StatusID        *uint
 	OrderStatus     *OrderStatusInfo

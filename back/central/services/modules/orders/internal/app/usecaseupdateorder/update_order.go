@@ -3,6 +3,7 @@ package usecaseupdateorder
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -28,6 +29,8 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 	if statusChanged && !dto.IsManualOrder {
 		existingOrder.StatusSource = entities.StatusSourceSalesChannel
 		existingOrder.StatusChangedBy = entities.SalesChannelChangedBy(existingOrder.Platform)
+		statusChangedAt := time.Now()
+		existingOrder.StatusChangedAt = &statusChangedAt
 	}
 
 	if err := uc.repo.UpdateOrder(ctx, existingOrder); err != nil {

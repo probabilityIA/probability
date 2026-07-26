@@ -58,6 +58,7 @@ type OrderSummary struct {
 	FreeShipping           bool
 	StatusSource           string
 	StatusChangedBy        string
+	StatusChangedAt        *time.Time
 	Notifications          []NotificationCounter
 }
 

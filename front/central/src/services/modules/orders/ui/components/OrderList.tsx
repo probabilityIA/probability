@@ -42,6 +42,49 @@ function normalizeCarrierLabel(value: string): string {
     return out.toUpperCase().replace(/[\s\-_]/g, '');
 }
 
+const SHIPMENT_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+    pending: { label: 'Pendiente', className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' },
+    picked_up: { label: 'Recolectado', className: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700' },
+    in_transit: { label: 'En transito', className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700' },
+    out_for_delivery: { label: 'En reparto', className: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' },
+    delivered: { label: 'Entregado', className: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' },
+    on_hold: { label: 'Novedad', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700' },
+    returned: { label: 'Devuelto', className: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-700' },
+    failed: { label: 'Fallido', className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700' },
+    cancelled: { label: 'Cancelado', className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700' },
+};
+
+const SHIPMENT_STATUS_FALLBACK = {
+    className: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600',
+};
+
+const STATUS_SOURCE_STYLES: Record<string, string> = {
+    user: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 ring-emerald-200 dark:ring-emerald-800',
+    sales_channel: 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 ring-indigo-200 dark:ring-indigo-800',
+    carrier: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800',
+    inventory: 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 ring-sky-200 dark:ring-sky-800',
+    system: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 ring-gray-200 dark:ring-gray-600',
+};
+
+const STATUS_SOURCE_LABELS: Record<string, string> = {
+    user: 'Cambiado por',
+    sales_channel: 'Cambiado desde',
+    carrier: 'Cambiado desde',
+    inventory: 'Cambiado desde',
+    system: 'Cambiado desde',
+};
+
+function formatStatusChangedAt(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString('es-CO', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
 const OrderRow = memo(({
     order,
     onView,
@@ -170,17 +213,19 @@ const OrderRow = memo(({
                     </span>
                 </div>
             </td>
-            <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
+            <td className="px-2 sm:px-3 py-2 whitespace-nowrap text-center">
                 {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color) || (
                     <span className="text-xs text-gray-400">-</span>
                 )}
                 {order.status_changed_by && (
                     <span
-                        className="mt-1 block text-[9px] leading-tight text-gray-500 dark:text-gray-400"
-                        title={`Ultimo cambio de estado hecho por: ${order.status_changed_by}`}
+                        className={`mt-1 mx-auto flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-tight ring-1 ${STATUS_SOURCE_STYLES[order.status_source || 'system'] || STATUS_SOURCE_STYLES.system}`}
+                        title={`${STATUS_SOURCE_LABELS[order.status_source || 'system']} ${order.status_changed_by}${order.status_changed_at ? ` el ${formatStatusChangedAt(order.status_changed_at)}` : ''}`}
                     >
-                        {order.status_source === 'user' ? 'Modificado por' : 'Modificado desde'}{' '}
-                        <span className="font-semibold">{order.status_changed_by}</span>
+                        {order.status_changed_by}
+                        {order.status_changed_at && (
+                            <span className="font-normal opacity-75">{formatStatusChangedAt(order.status_changed_at)}</span>
+                        )}
                     </span>
                 )}
             </td>
@@ -370,9 +415,13 @@ const OrderRow = memo(({
                         : isQuoted
                             ? `Cotizado en el checkout: ${order.quoted_shipping!.title} ($${order.quoted_shipping!.price.toLocaleString('es-CO')}). Falta generar la guia.`
                             : `${order.shipment.carrier} (preseleccionada, sin guia generada)`;
+                    const shipmentStatus = order.shipment.status || '';
+                    const statusConfig = SHIPMENT_STATUS_CONFIG[shipmentStatus];
+                    const carrierDetail = order.shipment.carrier_status_detail || order.shipment.carrier_status;
+                    const carrierShortName = order.shipment.carrier.split(' - ')[0];
                     return (
                         <div
-                            className={`flex flex-col items-center justify-center rounded-md py-1 ${isFreeShipping ? '' : hasGuide ? '' : 'bg-amber-50 dark:bg-amber-900/20'}`}
+                            className="flex flex-col items-center justify-center gap-0.5 rounded-md py-1"
                             title={title}
                         >
                             {isQuoted && (
@@ -395,7 +444,23 @@ const OrderRow = memo(({
                                             ? 'text-gray-600 dark:text-gray-300 bg-gray-100'
                                             : 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40'
                                 }`}>
-                                    {order.shipment.carrier.split(' - ')[0].substring(0, 12)}
+                                    {carrierShortName.substring(0, 12)}
+                                </span>
+                            )}
+                            {hasGuide && shipmentStatus && (
+                                <span
+                                    className={`mt-0.5 inline-flex max-w-[150px] items-center rounded-full border px-1.5 py-px text-[9px] font-semibold leading-tight ${statusConfig?.className || SHIPMENT_STATUS_FALLBACK.className}`}
+                                    title={`Estado del envio en Probability: ${statusConfig?.label || shipmentStatus}`}
+                                >
+                                    {statusConfig?.label || shipmentStatus}
+                                </span>
+                            )}
+                            {hasGuide && carrierDetail && (
+                                <span
+                                    className={`inline-flex max-w-[150px] items-center gap-1 rounded-full border border-dashed px-1.5 py-px text-[9px] font-medium leading-tight ${statusConfig?.className || SHIPMENT_STATUS_FALLBACK.className}`}
+                                    title={`${carrierShortName}: ${carrierDetail}`}
+                                >
+                                    <span className="truncate">{carrierDetail}</span>
                                 </span>
                             )}
                         </div>
@@ -404,8 +469,8 @@ const OrderRow = memo(({
                     <span className="text-xs text-gray-400 text-center block">Sin envío</span>
                 )}
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex flex-row justify-end gap-2">
+            <td className="px-2 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex flex-row justify-end gap-1">
 
                     {onViewRecommendation && (
                         <button
@@ -1469,7 +1534,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Total
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
                                     Estado
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
@@ -1542,7 +1607,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 </div>
 
                 {(totalPages > 1 || total > 0) && (
-                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3" style={{ backgroundColor: 'var(--color-primary)' }}>
+                    <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)' }}>
 
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button
@@ -1565,13 +1630,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-white">
+                                <p className="text-[11px] text-white">
                                     Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 10) + 1}</span> a{' '}
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 10), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-1">
-                                    <label className="text-xs sm:text-sm text-white whitespace-nowrap">
+                                    <label className="text-[11px] text-white whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -1580,7 +1645,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                                        className="px-1.5 py-1 text-[11px] border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -1590,24 +1655,24 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <nav className="relative z-0 inline-flex items-center gap-1.5 flex-wrap justify-end">
+                                <nav className="relative z-0 inline-flex items-center gap-1 flex-wrap justify-end">
 
                                     <button
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
-                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
                                         title="Primera página"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
                                     </button>
 
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
                                         title="Anterior"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                     </button>
 
                                     {(() => {
@@ -1634,14 +1699,14 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                                         return pages.map((p, idx) =>
                                             typeof p === 'string' ? (
-                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-1.5 py-2 text-xs font-bold text-white/70">
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-1 py-1 text-[11px] font-bold text-white/70">
                                                     ...
                                                 </span>
                                             ) : (
                                                 <button
                                                     key={p}
                                                     onClick={() => setFilters({ ...filters, page: p })}
-                                                    className={`relative inline-flex items-center justify-center min-w-9 px-3 py-2 rounded-md border text-sm font-semibold transition-all ${
+                                                    className={`relative inline-flex items-center justify-center min-w-7 px-2 py-1 rounded-md border text-[11px] font-semibold transition-all ${
                                                         p === page
                                                             ? 'page-btn-active z-10 shadow-md scale-105'
                                                             : 'page-btn'
@@ -1659,19 +1724,19 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
                                         title="Siguiente"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                     </button>
 
                                     <button
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
-                                        className="page-btn relative inline-flex items-center px-2.5 py-2 rounded-md border text-xs font-medium disabled:opacity-40 transition-all"
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
                                         title="Última página"
                                     >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                                     </button>
                                 </nav>
                             </div>
@@ -1704,6 +1769,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 )}
 
                 <style jsx>{`
+                    .ordersTable :global(table) {
+                        zoom: 0.95;
+                    }
+
                     /* Tabla más "card-like" fila por fila */
                     .ordersTable :global(.table) {
                         border-collapse: separate;

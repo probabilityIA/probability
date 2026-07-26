@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
@@ -192,6 +193,7 @@ func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID str
 		"status":            status,
 		"status_source":     orderStatusSourceCarrier,
 		"status_changed_by": orderStatusCarrierLabel,
+		"status_changed_at": time.Now(),
 	}
 
 	var statusID struct{ ID uint }

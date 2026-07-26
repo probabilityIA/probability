@@ -109,8 +109,8 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center mb-6 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Carga Masiva de Órdenes</h2>
                     <button

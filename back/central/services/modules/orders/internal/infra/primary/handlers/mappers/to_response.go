@@ -56,12 +56,14 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 	var shipment *response.ShipmentSummary
 	if dto.Shipment != nil {
 		shipment = &response.ShipmentSummary{
-			ID:             dto.Shipment.ID,
-			Carrier:        dto.Shipment.Carrier,
-			TrackingNumber: dto.Shipment.TrackingNumber,
-			GuideURL:       dto.Shipment.GuideURL,
-			Status:         dto.Shipment.Status,
-			TotalCost:      dto.Shipment.TotalCost,
+			ID:                  dto.Shipment.ID,
+			Carrier:             dto.Shipment.Carrier,
+			TrackingNumber:      dto.Shipment.TrackingNumber,
+			GuideURL:            dto.Shipment.GuideURL,
+			Status:              dto.Shipment.Status,
+			CarrierStatus:       dto.Shipment.CarrierStatus,
+			CarrierStatusDetail: dto.Shipment.CarrierStatusDetail,
+			TotalCost:           dto.Shipment.TotalCost,
 		}
 	}
 
@@ -201,12 +203,14 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 	var shipment *response.ShipmentSummary
 	if dto.Shipment != nil {
 		shipment = &response.ShipmentSummary{
-			ID:             dto.Shipment.ID,
-			Carrier:        dto.Shipment.Carrier,
-			TrackingNumber: dto.Shipment.TrackingNumber,
-			GuideURL:       dto.Shipment.GuideURL,
-			Status:         dto.Shipment.Status,
-			TotalCost:      dto.Shipment.TotalCost,
+			ID:                  dto.Shipment.ID,
+			Carrier:             dto.Shipment.Carrier,
+			TrackingNumber:      dto.Shipment.TrackingNumber,
+			GuideURL:            dto.Shipment.GuideURL,
+			Status:              dto.Shipment.Status,
+			CarrierStatus:       dto.Shipment.CarrierStatus,
+			CarrierStatusDetail: dto.Shipment.CarrierStatusDetail,
+			TotalCost:           dto.Shipment.TotalCost,
 		}
 	}
 
@@ -215,6 +219,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		FreeShipping:           dto.FreeShipping,
 		StatusSource:           dto.StatusSource,
 		StatusChangedBy:        dto.StatusChangedBy,
+		StatusChangedAt:        dto.StatusChangedAt,
 		Notifications:          toNotificationCounters(dto.Notifications),
 		ID:                     dto.ID,
 		CreatedAt:              dto.CreatedAt,

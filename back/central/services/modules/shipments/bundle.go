@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/handlers"
 	queueconsumer "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/queue/consumer"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/worker"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/geocoder"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/queue"
@@ -63,6 +64,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	reconciliationWorker := queueconsumer.NewWalletReconciliationWorker(repo, logger)
 	go reconciliationWorker.Start(context.Background())
+
+	syncStatusWorker := worker.NewSyncStatusWorker(repo, transportPub, logger)
+	go syncStatusWorker.Start(context.Background())
 
 	// 6. Init Handlers (repo satisfies ICarrierResolver via GetActiveShippingCarrier)
 	tokenSecret := environment.Get("JWT_SECRET")

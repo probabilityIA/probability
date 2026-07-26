@@ -173,12 +173,14 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 
 	s := shipments[0]
 	return &dtos.ShipmentData{
-		ID:             s.ID,
-		Carrier:        s.Carrier,
-		TrackingNumber: s.TrackingNumber,
-		GuideURL:       s.GuideURL,
-		Status:         s.Status,
-		TotalCost:      s.TotalCost,
+		ID:                  s.ID,
+		Carrier:             s.Carrier,
+		TrackingNumber:      s.TrackingNumber,
+		GuideURL:            s.GuideURL,
+		Status:              s.Status,
+		CarrierStatus:       s.CarrierStatus,
+		CarrierStatusDetail: s.CarrierStatusDetail,
+		TotalCost:           s.TotalCost,
 	}
 }
 
@@ -194,12 +196,14 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 	if len(order.Shipments) > 0 {
 		s := order.Shipments[0]
 		shipment = &dtos.ShipmentSummary{
-			ID:             s.ID,
-			Carrier:        s.Carrier,
-			TrackingNumber: s.TrackingNumber,
-			GuideURL:       s.GuideURL,
-			Status:         s.Status,
-			TotalCost:      s.TotalCost,
+			ID:                  s.ID,
+			Carrier:             s.Carrier,
+			TrackingNumber:      s.TrackingNumber,
+			GuideURL:            s.GuideURL,
+			Status:              s.Status,
+			CarrierStatus:       s.CarrierStatus,
+			CarrierStatusDetail: s.CarrierStatusDetail,
+			TotalCost:           s.TotalCost,
 		}
 	}
 
@@ -209,6 +213,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		FreeShipping:           order.FreeShipping,
 		StatusSource:           order.StatusSource,
 		StatusChangedBy:        order.StatusChangedBy,
+		StatusChangedAt:        order.StatusChangedAt,
 		CreatedAt:              order.CreatedAt,
 		BusinessID:             businessID,
 		IntegrationID:          order.IntegrationID,

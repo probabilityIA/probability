@@ -54,6 +54,7 @@ type OrderSummary struct {
 	FreeShipping           bool                   `json:"free_shipping"`
 	StatusSource           string                 `json:"status_source,omitempty"`
 	StatusChangedBy        string                 `json:"status_changed_by,omitempty"`
+	StatusChangedAt        *time.Time             `json:"status_changed_at,omitempty"`
 	Notifications          []NotificationCounter  `json:"notifications,omitempty"`
 }
 

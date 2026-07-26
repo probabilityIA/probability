@@ -97,12 +97,15 @@ export interface Order {
         tracking_number?: string;
         guide_url?: string;
         status: string;
+        carrier_status?: string;
+        carrier_status_detail?: string;
         total_cost?: number;
     };
 
     free_shipping?: boolean;
     status_source?: 'user' | 'sales_channel' | 'carrier' | 'inventory' | 'system';
     status_changed_by?: string;
+    status_changed_at?: string;
     notifications?: NotificationCounter[];
 
     quoted_shipping?: {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
@@ -25,5 +26,6 @@ func (r *Repository) UpdateOrderStatusWithSource(ctx context.Context, orderID st
 			"status_id":         statusID,
 			"status_source":     source,
 			"status_changed_by": changedBy,
+			"status_changed_at": time.Now(),
 		}).Error
 }

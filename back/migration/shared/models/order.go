@@ -97,13 +97,14 @@ type Order struct {
 	Length *float64 `gorm:"type:decimal(10,2)"`
 	Boxes  *string  `gorm:"type:text"`
 
-	OrderTypeID     *uint  `gorm:"index"`
-	OrderTypeName   string `gorm:"size:64"`
-	Status          string `gorm:"size:64;not null;index;default:'pending'"`
-	StatusSource    string `gorm:"column:status_source;size:32;index"`
-	StatusChangedBy string `gorm:"column:status_changed_by;size:128"`
-	OriginalStatus  string `gorm:"size:64"`
-	StatusID        *uint  `gorm:"index"`
+	OrderTypeID     *uint      `gorm:"index"`
+	OrderTypeName   string     `gorm:"size:64"`
+	Status          string     `gorm:"size:64;not null;index;default:'pending'"`
+	StatusSource    string     `gorm:"column:status_source;size:32;index"`
+	StatusChangedBy string     `gorm:"column:status_changed_by;size:128"`
+	StatusChangedAt *time.Time `gorm:"column:status_changed_at"`
+	OriginalStatus  string     `gorm:"size:64"`
+	StatusID        *uint      `gorm:"index"`
 
 	PaymentStatusID     *uint `gorm:"index"`
 	FulfillmentStatusID *uint `gorm:"index"`

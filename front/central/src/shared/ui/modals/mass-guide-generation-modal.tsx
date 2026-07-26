@@ -339,7 +339,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Generación Masiva de Guías</h2>
@@ -650,7 +650,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
             {/* Details Modal */}
             {selectedOrderForDetails && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[60] p-4">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-bold">Detalles de Cotización - {selectedOrderForDetails.order_number}</h3>
@@ -709,7 +709,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
             {/* Edit Modal */}
             {selectedOrderForEdit && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[70] p-4">
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-bold">Editar Orden - {selectedOrderForEdit.order_number}</h3>

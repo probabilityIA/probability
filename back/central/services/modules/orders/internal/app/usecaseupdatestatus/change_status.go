@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
@@ -73,6 +74,8 @@ func (uc *UseCaseUpdateStatus) ChangeStatus(ctx context.Context, orderID string,
 
 	order.StatusSource = entities.StatusSourceUser
 	order.StatusChangedBy = req.UserName
+	now := time.Now()
+	order.StatusChangedAt = &now
 
 	// 8. Persistir cambios
 	if err := uc.repo.UpdateOrder(ctx, order); err != nil {

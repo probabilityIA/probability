@@ -158,12 +158,14 @@ type OrderResponse struct {
 
 // ShipmentData contiene información del envío asociado a la orden
 type ShipmentData struct {
-	ID             uint
-	Carrier        *string
-	TrackingNumber *string
-	GuideURL       *string
-	Status         string
-	TotalCost      *float64
+	ID                  uint
+	Carrier             *string
+	TrackingNumber      *string
+	GuideURL            *string
+	Status              string
+	CarrierStatus       *string
+	CarrierStatusDetail *string
+	TotalCost           *float64
 }
 
 // InvoiceData contiene información de la factura asociada a la orden
