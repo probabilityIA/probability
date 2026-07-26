@@ -9,6 +9,7 @@ set -eo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TMUX_SESSION="prob"
+NEXT_HEAP_MB="${NEXT_HEAP_MB:-3072}"
 
 BACKEND_DIR="$PROJECT_ROOT/back/central"
 FRONTEND_DIR="$PROJECT_ROOT/front/central"
@@ -37,9 +38,9 @@ get_svc_window() {
 get_svc_cmd() {
     case "$1" in
         backend) echo "cd $BACKEND_DIR && mkdir -p log && go run cmd/main.go" ;;
-        frontend) echo "cd $FRONTEND_DIR && pnpm dev" ;;
+        frontend) echo "cd $FRONTEND_DIR && NODE_OPTIONS='--max-old-space-size=$NEXT_HEAP_MB' pnpm dev" ;;
         testing) echo "cd $TESTING_DIR && go run cmd/main.go" ;;
-        test-front) echo "cd $FRONTEND_TESTING_DIR && pnpm dev -p 3051" ;;
+        test-front) echo "cd $FRONTEND_TESTING_DIR && NODE_OPTIONS='--max-old-space-size=$NEXT_HEAP_MB' pnpm dev -p 3051" ;;
         mobile-web) echo "cd $PROJECT_ROOT/mobile/mobile_central && flutter run -d chrome --dart-define=APP_ENV=development --dart-define=API_BASE_URL=http://localhost:3050/api/v1" ;;
         *) echo "" ;;
     esac
@@ -73,15 +74,82 @@ is_running() {
     [ -n "$win" ] && window_exists "$win"
 }
 
+MEM_WARN_MB=3500
+
+descendants() {
+    local pid="$1" child
+    for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+        descendants "$child"
+        echo "$child"
+    done
+}
+
+kill_tree() {
+    local pid="$1" signal="${2:--TERM}" p
+    [ -z "$pid" ] && return 0
+    for p in $(descendants "$pid") "$pid"; do
+        kill "$signal" "$p" 2>/dev/null || true
+    done
+}
+
+port_listeners() {
+    local port="$1" pids
+    pids=$(lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null || true)
+    if [ -z "$pids" ]; then
+        pids=$(ss -ltnp 2>/dev/null | grep -E "[:.]$port[[:space:]]" | grep -oP 'pid=\K[0-9]+' | sort -u || true)
+    fi
+    echo "$pids"
+}
+
 kill_port() {
     local port="$1"
-    local pids
-    pids=$(lsof -ti ":$port" 2>/dev/null || true)
+    local pids pid
+
+    pids=$(port_listeners "$port")
+    if [ -z "$pids" ]; then
+        return 0
+    fi
+
+    echo -e "  ${YELLOW}Puerto $port ocupado por: $pids${NC}"
+    for pid in $pids; do
+        kill_tree "$pid" -TERM
+    done
+    sleep 2
+
+    pids=$(port_listeners "$port")
     if [ -n "$pids" ]; then
-        echo -e "  ${YELLOW}Matando procesos en puerto $port: $pids${NC}"
-        echo "$pids" | xargs kill -9 2>/dev/null || true
+        echo -e "  ${YELLOW}No cedieron, forzando: $pids${NC}"
+        for pid in $pids; do
+            kill_tree "$pid" -KILL
+        done
         sleep 1
     fi
+
+    pids=$(port_listeners "$port")
+    if [ -n "$pids" ]; then
+        fuser -k "$port/tcp" 2>/dev/null || true
+        sleep 1
+    fi
+
+    if [ -n "$(port_listeners "$port")" ]; then
+        echo -e "  ${RED}Puerto $port sigue ocupado por $(port_listeners "$port")${NC}"
+        return 1
+    fi
+}
+
+proc_mem_mb() {
+    local pid="$1" total=0 rss p
+    [ -z "$pid" ] && { echo 0; return; }
+    for p in "$pid" $(descendants "$pid"); do
+        rss=$(ps -o rss= -p "$p" 2>/dev/null | tr -d ' ' || true)
+        [ -n "$rss" ] && total=$((total + rss))
+    done
+    echo $((total / 1024))
+}
+
+svc_pane_pid() {
+    local win="$1"
+    tmux list-panes -t "$TMUX_SESSION:$win" -F '#{pane_pid}' 2>/dev/null | head -1 || true
 }
 
 start_infra() {
@@ -156,13 +224,22 @@ stop_service() {
 
     echo -e "${BLUE}[$svc]${NC} Deteniendo..."
 
+    local pane_pid
+    pane_pid=$(svc_pane_pid "$win")
+
     tmux send-keys -t "$TMUX_SESSION:$win" C-c 2>/dev/null || true
     sleep 2
+
+    if [ -n "$pane_pid" ]; then
+        kill_tree "$pane_pid" -TERM
+        sleep 1
+        kill_tree "$pane_pid" -KILL
+    fi
 
     tmux kill-window -t "$TMUX_SESSION:$win" 2>/dev/null || true
 
     if [ -n "$port" ]; then
-        kill_port "$port"
+        kill_port "$port" || true
     fi
 
     echo -e "${GREEN}[$svc]${NC} Detenido"
@@ -213,15 +290,34 @@ show_status() {
         [ -n "$port" ] && port_info=" :$port"
 
         if is_running "$svc"; then
-            if [ -n "$port" ] && lsof -i ":$port" &>/dev/null; then
-                echo -e "  ${GREEN}●${NC} ${svc}$(printf '%*s' $((13 - ${#svc})) '')Corriendo${port_info}"
+            local win mem mem_info
+            win=$(get_svc_window "$svc")
+            mem=$(proc_mem_mb "$(svc_pane_pid "$win")")
+            mem_info=""
+            if [ "$mem" -gt 0 ]; then
+                if [ "$mem" -ge "$MEM_WARN_MB" ]; then
+                    mem_info="  ${RED}${mem} MB (reinicialo)${NC}"
+                else
+                    mem_info="  ${CYAN}${mem} MB${NC}"
+                fi
+            fi
+
+            if [ -n "$port" ] && [ -n "$(port_listeners "$port")" ]; then
+                echo -e "  ${GREEN}●${NC} ${svc}$(printf '%*s' $((13 - ${#svc})) '')Corriendo${port_info}${mem_info}"
             else
-                echo -e "  ${YELLOW}◐${NC} ${svc}$(printf '%*s' $((13 - ${#svc})) '')Iniciando...${port_info}"
+                echo -e "  ${YELLOW}◐${NC} ${svc}$(printf '%*s' $((13 - ${#svc})) '')Iniciando...${port_info}${mem_info}"
             fi
         else
             echo -e "  ${RED}○${NC} ${svc}$(printf '%*s' $((13 - ${#svc})) '')Detenido${port_info}"
         fi
     done
+
+    local huerfanos
+    huerfanos=$(pgrep -f "next-server|next dev|go run cmd/main.go" 2>/dev/null | wc -l)
+    if [ "$huerfanos" -gt 4 ]; then
+        echo ""
+        echo -e "  ${YELLOW}Hay $huerfanos procesos next/go vivos: revisa con '$0 mem'${NC}"
+    fi
 
     echo ""
 
@@ -247,19 +343,23 @@ kill_zombies() {
     fi
 
     local next_pids
-    next_pids=$(pgrep -f "next dev" 2>/dev/null || true)
+    next_pids=$(pgrep -f "next-server|next dev|next start" 2>/dev/null || true)
     if [ -n "$next_pids" ]; then
         echo -e "  ${YELLOW}Next.js:${NC} $next_pids"
-        echo "$next_pids" | xargs kill -9 2>/dev/null || true
+        for pid in $next_pids; do
+            kill_tree "$pid" -KILL
+        done
         found=1
     fi
 
     for port in 3000 3050 3051 9090 9091 9092; do
         local port_pids
-        port_pids=$(lsof -ti ":$port" 2>/dev/null || true)
+        port_pids=$(port_listeners "$port")
         if [ -n "$port_pids" ]; then
             echo -e "  ${YELLOW}Puerto $port:${NC} $port_pids"
-            echo "$port_pids" | xargs kill -9 2>/dev/null || true
+            for pid in $port_pids; do
+                kill_tree "$pid" -KILL
+            done
             found=1
         fi
     done
@@ -269,6 +369,62 @@ kill_zombies() {
     else
         echo -e "${GREEN}Limpieza completa${NC}"
     fi
+}
+
+guard_services() {
+    local limit="${1:-$MEM_WARN_MB}"
+    local interval="${2:-60}"
+
+    echo -e "${CYAN}Vigilando frontend: limite ${limit} MB, revision cada ${interval}s${NC}"
+    echo -e "${YELLOW}Ctrl-C para detener${NC}"
+
+    while true; do
+        if is_running "frontend"; then
+            local mem
+            mem=$(proc_mem_mb "$(svc_pane_pid frontend)")
+            if [ "$mem" -ge "$limit" ]; then
+                echo -e "$(date +%T) ${RED}frontend en ${mem} MB, reiniciando${NC}"
+                restart_service "frontend"
+                sleep 30
+            else
+                echo -e "$(date +%T) frontend ${mem} MB"
+            fi
+        else
+            echo -e "$(date +%T) frontend detenido"
+        fi
+        sleep "$interval"
+    done
+}
+
+show_mem() {
+    echo ""
+    echo -e "${CYAN}═══ Memoria de los procesos del proyecto ═══${NC}"
+    echo ""
+    printf "  %-8s %-10s %-9s %s\n" "PID" "RSS(MB)" "TIEMPO" "COMANDO"
+
+    local pids pid rss etime args mb total=0
+    pids=$(pgrep -f "next-server|next dev|go run cmd/main.go|pnpm dev|/exe/main" 2>/dev/null || true)
+    for pid in $pids; do
+        rss=$(ps -o rss= -p "$pid" 2>/dev/null | tr -d ' ' || true)
+        [ -z "$rss" ] && continue
+        mb=$((rss / 1024))
+        total=$((total + mb))
+        etime=$(ps -o etime= -p "$pid" 2>/dev/null | tr -d ' ' || echo "?")
+        args=$(ps -o args= -p "$pid" 2>/dev/null | cut -c1-45 || echo "?")
+        if [ "$mb" -ge "$MEM_WARN_MB" ]; then
+            printf "  ${RED}%-8s %-10s %-9s %s${NC}\n" "$pid" "$mb" "$etime" "$args"
+        else
+            printf "  %-8s %-10s %-9s %s\n" "$pid" "$mb" "$etime" "$args"
+        fi
+    done
+
+    echo ""
+    echo -e "  Total procesos del proyecto: ${CYAN}${total} MB${NC}"
+    free -h 2>/dev/null | awk 'NR==2 {printf "  RAM del equipo: usada %s de %s, disponible %s\n", $3, $2, $7}'
+    echo ""
+    echo -e "  ${YELLOW}Un next-server sobre ${MEM_WARN_MB} MB o con horas encima conviene reiniciarlo:${NC}"
+    echo -e "    $0 restart frontend"
+    echo ""
 }
 
 show_ports() {
@@ -360,6 +516,12 @@ case "$CMD" in
     ports)
         show_ports
         ;;
+    mem|memoria)
+        show_mem
+        ;;
+    guard)
+        guard_services "${SVC:-}" "${ARG3:-}"
+        ;;
     help|--help|-h|"")
         echo ""
         echo -e "${CYAN}dev-services.sh${NC} — Gestor de servicios de desarrollo"
@@ -373,6 +535,8 @@ case "$CMD" in
         echo "  tail <svc>          Log resumido (40 líneas)"
         echo "  kill-zombies        Matar procesos huérfanos"
         echo "  ports               Ver puertos en uso"
+        echo "  mem                 Ver memoria de los procesos del proyecto"
+        echo "  guard [MB] [seg]    Vigila el frontend y lo reinicia si se pasa de MB"
         echo ""
         echo "Servicios:"
         echo "  infra       Docker (PostgreSQL, Redis, RabbitMQ, MinIO)"
