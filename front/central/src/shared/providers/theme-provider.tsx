@@ -66,11 +66,13 @@ function applyBarColor(root: HTMLElement, name: 'sidebar' | 'topbar', color?: st
   if (color) {
     root.style.setProperty(`--color-${name}`, color);
     root.style.setProperty(`--color-${name}-text`, readableTextColor(color));
+    root.classList.add(`${name}-tinted`);
     return;
   }
 
   root.style.removeProperty(`--color-${name}`);
   root.style.removeProperty(`--color-${name}-text`);
+  root.classList.remove(`${name}-tinted`);
 }
 
 /**

@@ -1500,9 +1500,12 @@ textarea:focus {
   background-color: var(--color-sidebar, #1f2937);
 }
 
-.sidebar-surface a,
-.sidebar-surface button {
-  color: var(--color-sidebar-text, inherit);
+.sidebar-tinted .sidebar-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {
+  color: var(--color-sidebar-text);
+}
+
+.sidebar-tinted.sidebar-tinted .sidebar-surface.sidebar-surface :is([class^="bg-"], [class*=" bg-"], [style*="background"]) :is(a, span, p, label, small, h2, h3) {
+  color: revert-layer;
 }
 
 .subnav-surface {
@@ -1513,8 +1516,10 @@ textarea:focus {
   background-color: var(--color-topbar, #1f2937);
 }
 
-.subnav-surface a,
-.subnav-surface > div > span,
-.subnav-surface label {
-  color: var(--color-topbar-text, inherit);
+.topbar-tinted .subnav-surface :is(a, span, p, label, small, h2, h3):not([class^="bg-"]):not([class*=" bg-"]):not([style*="background"]) {
+  color: var(--color-topbar-text);
+}
+
+.topbar-tinted.topbar-tinted .subnav-surface.subnav-surface :is([class^="bg-"], [class*=" bg-"], [style*="background"]) :is(a, span, p, label, small, h2, h3) {
+  color: revert-layer;
 }
