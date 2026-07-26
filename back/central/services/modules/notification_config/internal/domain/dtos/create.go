@@ -12,7 +12,6 @@ type CreateNotificationConfigDTO struct {
 	Enabled                 bool   // Estado de la configuración
 	Description             string // Descripción opcional
 	OrderStatusIDs          []uint // Filtro opcional de estados
-	CODOnly                 bool   // Solo ordenes contra entrega
 }
 
 // ============================================

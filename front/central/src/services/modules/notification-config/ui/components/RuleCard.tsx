@@ -18,7 +18,6 @@ export interface LocalRule {
   enabled: boolean;
   description: string;
   order_status_ids: number[];
-  cod_only: boolean;
   _deleted: boolean;
 }
 
@@ -105,6 +104,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
   const channelCode = selectedType?.code?.toLowerCase() || "";
   const channelName = selectedType?.name || "";
   const eventName = selectedEvent?.event_name || "";
+  const isOrderConfirmation = selectedEvent?.event_code === "order.created" && channelCode === "whatsapp";
 
   return (
     <tr className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors align-top">
@@ -177,7 +177,14 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
             <span className="text-xs text-gray-300 italic">Selecciona canal</span>
           )
         ) : (
-          <span className="text-xs text-gray-700 dark:text-gray-200">{eventName || "—"}</span>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs text-gray-700 dark:text-gray-200">{eventName || "—"}</span>
+            {isOrderConfirmation && (
+              <span className="inline-flex w-fit items-center rounded-full bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-300">
+                Solo contra entrega
+              </span>
+            )}
+          </div>
         )}
       </td>
 
@@ -218,19 +225,6 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         ) : (
           <span className="text-[10px] text-gray-400 italic">Sin filtro de estado</span>
         )}
-      </td>
-
-      <td className="py-3 px-3 text-center">
-        <button
-          type="button"
-          onClick={() => onChange({ ...rule, cod_only: !rule.cod_only })}
-          className="inline-flex items-center gap-1"
-          title={rule.cod_only ? "Solo se notifican ordenes contra entrega" : "Se notifican todas las ordenes"}
-        >
-          <div className={`relative w-8 h-[18px] rounded-full transition-colors ${rule.cod_only ? "bg-amber-500 dark:bg-amber-600" : "bg-gray-300 dark:bg-gray-600"}`}>
-            <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white dark:bg-gray-800 shadow transition-transform ${rule.cod_only ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
-          </div>
-        </button>
       </td>
 
       <td className="py-3 px-3 text-center">

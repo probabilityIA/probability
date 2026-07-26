@@ -17,7 +17,6 @@ type CachedNotificationConfig struct {
 	OrderStatusIDs          []uint   `json:"order_status_ids"`
 	EventCode               string   `json:"event_code,omitempty"`
 	OrderStatusCodes        []string `json:"order_status_codes,omitempty"`
-	CODOnly                 bool     `json:"cod_only,omitempty"`
 }
 
 // ToCachedConfig convierte una entidad de dominio a estructura cacheada
@@ -33,7 +32,6 @@ func ToCachedConfig(entity *entities.IntegrationNotificationConfig) *CachedNotif
 		Enabled:                 entity.Enabled,
 		Description:             entity.Description,
 		OrderStatusIDs:          entity.OrderStatusIDs,
-		CODOnly:                 entity.CODOnly,
 	}
 
 	// Extraer EventCode del preload si está disponible

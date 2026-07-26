@@ -60,7 +60,6 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfig
 		Enabled:                 dto.Enabled,
 		Description:             dto.Description,
 		OrderStatusIDs:          dto.OrderStatusIDs,
-		CODOnly:                 dto.CODOnly,
 	}
 
 	// Persistir

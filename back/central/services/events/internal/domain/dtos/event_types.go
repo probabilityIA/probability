@@ -103,6 +103,9 @@ const (
 	WhatsAppMessageStatusUpdated = "whatsapp.message_status_updated"
 )
 
+// EventCodeOrderCreated es el codigo del evento que dispara la confirmacion de pedido
+const EventCodeOrderCreated = "order.created"
+
 // NotificationTypeSSE es el ID del tipo de notificación SSE
 const NotificationTypeSSE = 1
 

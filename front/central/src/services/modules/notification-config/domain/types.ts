@@ -77,7 +77,6 @@ export interface NotificationConfig {
     notification_type?: NotificationType;
     notification_event_type?: NotificationEventType;
     order_status_ids?: number[];
-    cod_only?: boolean;
 
     notification_type_name?: string;
     notification_event_name?: string;
@@ -95,7 +94,6 @@ export interface CreateConfigDTO {
     filters?: Record<string, any>;
     description?: string;
     order_status_ids?: number[];
-    cod_only?: boolean;
 }
 
 export interface UpdateConfigDTO {
@@ -106,7 +104,6 @@ export interface UpdateConfigDTO {
     filters?: Record<string, any>;
     description?: string;
     order_status_ids?: number[];
-    cod_only?: boolean;
 }
 
 export interface ConfigFilter {
@@ -150,7 +147,6 @@ export interface SyncRule {
     enabled: boolean;
     description: string;
     order_status_ids: number[];
-    cod_only: boolean;
 }
 
 export interface SyncConfigsDTO {

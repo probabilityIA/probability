@@ -13,5 +13,4 @@ type CachedNotificationConfig struct {
 	OrderStatusIDs          []uint
 	EventCode               string
 	OrderStatusCodes        []string
-	CODOnly                 bool
 }

@@ -17,7 +17,6 @@ func ToModel(entity *entities.IntegrationNotificationConfig) (*IntegrationNotifi
 		NotificationTypeID:      &entity.NotificationTypeID,
 		NotificationEventTypeID: &entity.NotificationEventTypeID,
 		Enabled:                 entity.Enabled,
-		CODOnly:                 entity.CODOnly,
 		Description:             entity.Description,
 	}
 

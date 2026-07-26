@@ -75,7 +75,6 @@ func (r *repository) SyncConfigs(
 					"notification_type_id":       model.NotificationTypeID,
 					"notification_event_type_id": model.NotificationEventTypeID,
 					"enabled":                    model.Enabled,
-					"cod_only":                   model.CODOnly,
 					"description":                model.Description,
 				}).Error; err != nil {
 				return fmt.Errorf("failed to update config %d: %w", entity.ID, err)

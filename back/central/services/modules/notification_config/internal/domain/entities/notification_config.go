@@ -13,7 +13,6 @@ type IntegrationNotificationConfig struct {
 	Enabled                 bool   // Estado de la configuración
 	Description             string // Descripción opcional
 	OrderStatusIDs          []uint // IDs de estados de orden (filtro opcional)
-	CODOnly                 bool   // Solo notificar ordenes contra entrega
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 

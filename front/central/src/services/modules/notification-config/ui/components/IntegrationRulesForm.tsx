@@ -48,7 +48,6 @@ export function IntegrationRulesForm({
             enabled: config.enabled,
             description: config.description || "",
             order_status_ids: config.order_status_ids || [],
-            cod_only: config.cod_only ?? false,
             _deleted: false,
           }));
           setRules(existingRules);
@@ -73,7 +72,6 @@ export function IntegrationRulesForm({
         enabled: true,
         description: "",
         order_status_ids: [],
-        cod_only: false,
         _deleted: false,
       },
     ]);
@@ -134,7 +132,6 @@ export function IntegrationRulesForm({
           enabled: r.enabled,
           description: r.description,
           order_status_ids: r.order_status_ids,
-          cod_only: r.cod_only,
         })),
       };
 
@@ -200,7 +197,6 @@ export function IntegrationRulesForm({
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[120px]">Canal</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[160px]">Evento</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left">Estados</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[90px]">Contra entrega</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[70px]">Activo</th>
                     <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[50px]"></th>
                   </tr>

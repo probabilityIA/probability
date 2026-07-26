@@ -110,8 +110,8 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 // validateConditions valida si un evento cumple las condiciones de una config
 func (d *EventDispatcher) validateConditions(event entities.Event, config entities.CachedNotificationConfig) bool {
-	// Config restringida a contra entrega -> descartar ordenes que no son COD
-	if config.CODOnly && !event.IsCOD() {
+	// La confirmacion de pedido por WhatsApp solo aplica a ordenes contra entrega
+	if isOrderConfirmation(config) && !event.IsCOD() {
 		return false
 	}
 
@@ -156,4 +156,10 @@ func (d *EventDispatcher) validateConditions(event entities.Event, config entiti
 
 	// Si no hay información de estado en el evento -> no filtrar (backward compatible)
 	return true
+}
+
+// isOrderConfirmation identifica la regla de confirmacion de pedido por WhatsApp
+func isOrderConfirmation(config entities.CachedNotificationConfig) bool {
+	return config.NotificationTypeID == dtos.NotificationTypeWhatsApp &&
+		config.EventCode == dtos.EventCodeOrderCreated
 }
