@@ -9,6 +9,7 @@ import { Alert } from '@/shared/ui/alert';
 import { Spinner } from '@/shared/ui/spinner';
 import { Business } from '../../domain/types';
 import { COLOR_PALETTES } from '../../domain/color-palettes';
+import { BusinessThemePreview } from './BusinessThemePreview';
 import { useBusinessForm } from '../hooks/useBusinessForm';
 import { BusinessFiscalSection } from './BusinessFiscalSection';
 
@@ -345,35 +346,16 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                         </div>
                     </div>
 
-                    <div className="p-3 border rounded-lg bg-gray-50">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tu paleta actual:</span>
-                        <div className="flex gap-1 mt-2 h-8 rounded overflow-hidden shadow-sm">
-                            <div
-                                className="flex-1 flex items-center justify-center"
-                                style={{ backgroundColor: formData.primary_color || '#000000' }}
-                            >
-                                <span className="text-[8px] font-medium" style={{ color: formData.secondary_color || '#ffffff' }}>P</span>
-                            </div>
-                            <div
-                                className="flex-1 flex items-center justify-center"
-                                style={{ backgroundColor: formData.secondary_color || '#ffffff' }}
-                            >
-                                <span className="text-[8px] font-medium" style={{ color: formData.primary_color || '#000000' }}>S</span>
-                            </div>
-                            <div
-                                className="flex-1 flex items-center justify-center"
-                                style={{ backgroundColor: formData.tertiary_color || '#cccccc' }}
-                            >
-                                <span className="text-[8px] font-medium" style={{ color: formData.primary_color || '#000000' }}>T</span>
-                            </div>
-                            <div
-                                className="flex-1 flex items-center justify-center"
-                                style={{ backgroundColor: formData.quaternary_color || '#eeeeee' }}
-                            >
-                                <span className="text-[8px] font-medium" style={{ color: formData.primary_color || '#000000' }}>C</span>
-                            </div>
-                        </div>
-                    </div>
+                    <BusinessThemePreview
+                        colors={{
+                            primary: formData.primary_color || '#000000',
+                            secondary: formData.secondary_color || '#ffffff',
+                            tertiary: formData.tertiary_color || '#cccccc',
+                            quaternary: formData.quaternary_color || '#eeeeee',
+                        }}
+                        businessName={formData.name}
+                        logoUrl={logoPreview}
+                    />
                 </div>
             </div>
 

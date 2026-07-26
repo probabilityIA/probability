@@ -28,7 +28,7 @@ export const IconActionButton = forwardRef<HTMLButtonElement, IconActionButtonPr
                     onClick={onClick}
                     disabled={disabled}
                     aria-label={label}
-                    className={`btn-${variant} inline-flex items-center justify-center rounded-lg text-white hover:shadow-md transition-all disabled:opacity-50 ${className}`}
+                    className={`btn-${variant} inline-flex items-center justify-center rounded-lg hover:shadow-md transition-all disabled:opacity-50 ${className}`}
                     style={{ width: '2rem', height: '2rem', padding: 0 }}
                 >
                     {icon}

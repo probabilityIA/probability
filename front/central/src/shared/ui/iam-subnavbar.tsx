@@ -57,7 +57,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
                                     isActive(item.href)
                                         ? {
                                             backgroundColor: 'var(--color-secondary-500)',
-                                            color: 'white',
+                                            color: 'var(--color-on-secondary, white)',
                                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                                           }
                                         : {

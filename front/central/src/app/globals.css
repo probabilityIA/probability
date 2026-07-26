@@ -153,7 +153,7 @@
 /* Botones usando colores dinámicos del negocio */
 .btn-primary {
   background: var(--color-primary);
-  color: white;
+  color: var(--color-on-primary, white);
   @apply hover:shadow-lg hover:scale-105 transition-all;
 }
 
@@ -163,7 +163,7 @@
 
 .btn-secondary {
   background: var(--color-secondary);
-  color: white;
+  color: var(--color-on-secondary, white);
   @apply hover:shadow-lg hover:scale-105 transition-all;
 }
 
@@ -173,7 +173,7 @@
 
 .btn-tertiary {
   background: var(--color-tertiary);
-  color: white;
+  color: var(--color-on-tertiary, white);
   @apply hover:shadow-lg hover:scale-105 transition-all;
 }
 
@@ -183,7 +183,7 @@
 
 .btn-quaternary {
   background: var(--color-quaternary);
-  color: white;
+  color: var(--color-on-quaternary, white);
   @apply hover:shadow-lg hover:scale-105 transition-all;
 }
 

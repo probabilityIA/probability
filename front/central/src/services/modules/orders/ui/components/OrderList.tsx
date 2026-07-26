@@ -1509,7 +1509,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 )}
                 <div className="overflow-x-auto">
                     <table className={`min-w-full transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
-                        <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+                        <thead style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
                             <tr>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em' }}>
 
@@ -1607,7 +1607,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 </div>
 
                 {(totalPages > 1 || total > 0) && (
-                    <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)' }}>
+                    <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
 
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button

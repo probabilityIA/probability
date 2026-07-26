@@ -1,5 +1,10 @@
 import tinycolor from 'tinycolor2';
 
+export function onColor(baseColor: string): string {
+  const base = tinycolor(baseColor);
+  return base.getLuminance() > 0.55 ? '#1f2937' : '#ffffff';
+}
+
 export function generateColorScale(baseColor: string): { [key: string]: string } {
   const base = tinycolor(baseColor);
   const scale: { [key: string]: string } = {};
@@ -35,6 +40,11 @@ export function updateAllColorScales(
   root.style.setProperty('--color-secondary', secondaryColor);
   root.style.setProperty('--color-tertiary', tertiaryColor);
   root.style.setProperty('--color-quaternary', quaternaryColor);
+
+  root.style.setProperty('--color-on-primary', onColor(primaryColor));
+  root.style.setProperty('--color-on-secondary', onColor(secondaryColor));
+  root.style.setProperty('--color-on-tertiary', onColor(tertiaryColor));
+  root.style.setProperty('--color-on-quaternary', onColor(quaternaryColor));
 
   Object.entries(primaryScale).forEach(([level, color]) => {
     root.style.setProperty(`--color-primary-${level}`, color);

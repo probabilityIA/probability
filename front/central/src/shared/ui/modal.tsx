@@ -91,11 +91,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             {/* Header for full screen */}
             {title && (
               <div className="flex items-center justify-between px-8 py-6 border-b" style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}>
-                <h2 className="text-2xl font-bold text-white">{title}</h2>
+                <h2 className="text-2xl font-bold" style={{ color: 'var(--color-on-primary, white)' }}>{title}</h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="text-white hover:opacity-80 transition-opacity p-2 rounded-lg"
+                    className="hover:opacity-80 transition-opacity p-2 rounded-lg"
+                    style={{ color: 'var(--color-on-primary, white)' }}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -131,11 +132,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             {/* Header */}
             {title && (
               <div className="relative mb-4 flex-shrink-0 px-6 py-4 -mx-6 -mt-6 sm:-mx-8 sm:-mt-8 rounded-t-2xl" style={{ backgroundColor: 'var(--color-primary)' }}>
-                <h3 className="text-xl font-bold text-center text-white">{title}</h3>
+                <h3 className="text-xl font-bold text-center" style={{ color: 'var(--color-on-primary, white)' }}>{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="absolute right-2 top-2 text-white hover:opacity-80 transition-opacity"
+                    className="absolute right-2 top-2 hover:opacity-80 transition-opacity"
+                    style={{ color: 'var(--color-on-primary, white)' }}
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -1,5 +1,6 @@
 import { TokenStorage } from '@/shared/config';
 import type { BusinessColors } from './cookie-storage';
+import { onColor } from './color-scales';
 
 interface Business {
   primary_color?: string;
@@ -59,6 +60,10 @@ export function applyBusinessTheme(business: Business): void {
     root.style.setProperty('--color-secondary', colors.secondary || '#be185d');
     root.style.setProperty('--color-tertiary', colors.tertiary || '#06b6d4');
     root.style.setProperty('--color-quaternary', colors.quaternary || '#f59e0b');
+    root.style.setProperty('--color-on-primary', onColor(colors.primary || '#0f172a'));
+    root.style.setProperty('--color-on-secondary', onColor(colors.secondary || '#be185d'));
+    root.style.setProperty('--color-on-tertiary', onColor(colors.tertiary || '#06b6d4'));
+    root.style.setProperty('--color-on-quaternary', onColor(colors.quaternary || '#f59e0b'));
     applyBarVariables(root, 'sidebar', colors.sidebar);
     applyBarVariables(root, 'topbar', colors.topbar);
 
