@@ -3,16 +3,9 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar, WalletSubNavbar, AccountingSubNavbar } from '@/shared/ui';
+import { SelectedBusinessProvider } from '@/shared/contexts/selected-business-context';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
-import { IntegrationsBusinessProvider } from '@/shared/contexts/integrations-business-context';
-import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
-import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
-import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
-import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-context';
-import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-business-context';
-import { WalletBusinessProvider } from '@/shared/contexts/wallet-business-context';
 import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
 import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
 import AnnouncementModal from '@/services/modules/announcements/ui/components/AnnouncementModal';
@@ -81,14 +74,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content flex flex-col"
         onMouseEnter={handleMainMouseEnter}
       >
-        <OrdersBusinessProvider>
-          <InventoryBusinessProvider>
-            <IntegrationsBusinessProvider>
-            <NotificationBusinessProvider>
-              <InvoicingBusinessProvider>
-                <DeliveryBusinessProvider>
-                  <StorefrontBusinessProvider>
-                    <WalletBusinessProvider>
+        <SelectedBusinessProvider>
                       <AnnouncementTicker />
                       <OrdersSubNavbar />
                       <InventorySubNavbar />
@@ -105,14 +91,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                           {children}
                         </SubscriptionGuard>
                       </div>
-                    </WalletBusinessProvider>
-                  </StorefrontBusinessProvider>
-                </DeliveryBusinessProvider>
-              </InvoicingBusinessProvider>
-            </NotificationBusinessProvider>
-            </IntegrationsBusinessProvider>
-          </InventoryBusinessProvider>
-        </OrdersBusinessProvider>
+        </SelectedBusinessProvider>
         <style jsx>{`
           .main-content {
             margin-left: 0;
@@ -124,7 +103,6 @@ function LayoutContent({ user, children }: LayoutContentProps) {
           }
         `}</style>
       </main>
-
 
       <AnnouncementModal />
     </div>

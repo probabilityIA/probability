@@ -86,7 +86,8 @@ export function SuperAdminBusinessSelector({
 
     const trimmedSearch = search.trim();
     const showMinSearchHint = trimmedSearch.length > 0 && trimmedSearch.length < minSearchLength;
-    const label = selected ? selected.name : (value ? `Negocio #${value}` : placeholder);
+    const storedName = typeof window !== 'undefined' ? window.localStorage.getItem('selected_business_name') : null;
+    const label = selected ? selected.name : (value ? (storedName || `Negocio #${value}`) : placeholder);
 
     const isNavbar = variant === 'navbar';
 

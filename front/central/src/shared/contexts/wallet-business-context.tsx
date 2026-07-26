@@ -1,28 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
-
-interface WalletBusinessContextType {
-    selectedBusinessId: number | null;
-    setSelectedBusinessId: (id: number | null) => void;
-}
-
-const WalletBusinessContext = createContext<WalletBusinessContextType | null>(null);
+import type { ReactNode } from 'react';
+import { useSelectedBusiness } from './selected-business-context';
 
 export function WalletBusinessProvider({ children }: { children: ReactNode }) {
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
-
-    return (
-        <WalletBusinessContext.Provider value={{ selectedBusinessId, setSelectedBusinessId }}>
-            {children}
-        </WalletBusinessContext.Provider>
-    );
+    return <>{children}</>;
 }
 
 export function useWalletBusiness() {
-    const ctx = useContext(WalletBusinessContext);
-    if (!ctx) {
-        throw new Error('useWalletBusiness must be used within WalletBusinessProvider');
-    }
-    return ctx;
+    return useSelectedBusiness();
 }
