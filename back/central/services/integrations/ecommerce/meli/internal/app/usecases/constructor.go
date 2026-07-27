@@ -20,6 +20,7 @@ type IMeliUseCase interface {
 	EnsureValidToken(ctx context.Context, integrationID string) (string, error)
 
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string)
 	ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error

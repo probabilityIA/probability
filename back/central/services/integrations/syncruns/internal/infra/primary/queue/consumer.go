@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/syncruns/internal/domain"
@@ -10,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const queueName = "integrations.sync_runs"
+const queueName = rabbitmq.QueueIntegrationSyncRuns
 
 var inventoryRoutingKeys = []string{
 	"shopify.inventory.sync.completed",
@@ -88,6 +89,11 @@ func (c *Consumer) handle(ctx context.Context, body []byte) {
 		finished = time.Now()
 	}
 
+	if strings.Contains(msg.Type, "product.reconcile") {
+		c.recordProducts(ctx, msg, finished)
+		return
+	}
+
 	updated := intOf(msg.Data, "updated")
 	if updated == 0 {
 		updated = intOf(msg.Data, "synced")
@@ -115,6 +121,53 @@ func (c *Consumer) handle(ctx context.Context, body []byte) {
 			Uint("integration_id", run.IntegrationID).
 			Msg("No se guardo el resultado de la sincronizacion de inventario")
 	}
+}
+
+func (c *Consumer) recordProducts(ctx context.Context, msg envelope, finished time.Time) {
+	run := domain.SyncRun{
+		BusinessID:        msg.BusinessID,
+		IntegrationID:     msg.IntegrationID,
+		Kind:              domain.KindProducts,
+		CorrelationID:     stringOf(msg.Data, "correlation_id"),
+		StartedAt:         finished,
+		FinishedAt:        &finished,
+		Matched:           intOf(msg.Data, "matched"),
+		NotAssociated:     intOf(msg.Data, "not_associated"),
+		OnlyInProbability: intOf(msg.Data, "only_in_probability"),
+		OnlyInChannel:     intOf(msg.Data, "only_in_channel"),
+		Status:            domain.StatusCompleted,
+		Message:           stringOf(msg.Data, "error"),
+		Detail:            reconcileDetail(msg.Data),
+	}
+	if run.Message != "" {
+		run.Status = domain.StatusFailed
+	}
+
+	if err := c.useCase.Record(ctx, &run); err != nil {
+		c.logger.Warn(ctx).Err(err).
+			Uint("integration_id", run.IntegrationID).
+			Msg("No se guardo el resultado de la comparacion de catalogo")
+	}
+}
+
+func reconcileDetail(data map[string]interface{}) []domain.DetailItem {
+	raw, ok := data["detail"].([]interface{})
+	if !ok {
+		return nil
+	}
+	detail := make([]domain.DetailItem, 0, len(raw))
+	for _, item := range raw {
+		obj, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		sku, _ := obj["sku"].(string)
+		label, _ := obj["label"].(string)
+		tone, _ := obj["tone"].(string)
+		group, _ := obj["group"].(string)
+		detail = append(detail, domain.DetailItem{SKU: sku, Label: label, Tone: tone, Group: group})
+	}
+	return detail
 }
 
 func failedDetail(data map[string]interface{}) []domain.DetailItem {

@@ -13,7 +13,7 @@ import {
 import { useSSE } from '@/shared/hooks/use-sse';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { SyncRunKind, SyncRunRecord } from '../domain/types';
-import { listSyncRunsAction, recordSyncRunAction } from '../infra/actions/sync-runs';
+import { listSyncRunsAction } from '../infra/actions/sync-runs';
 import { getSyncProvider, GLOBAL_INVENTORY_EVENT_TYPES } from './providers';
 
 export type SyncNodeState = 'idle' | 'queued' | 'active' | 'scan' | 'done' | 'error';
@@ -93,10 +93,6 @@ interface SyncStartResult {
     success?: boolean;
     correlation_id?: string;
     message?: string;
-}
-
-function countOf(value: unknown): number {
-    return Array.isArray(value) ? value.length : Number(value) || 0;
 }
 
 interface ProviderProps {
@@ -179,6 +175,29 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                     ...prev,
                     [id]: { processed: Number(data.processed) || 0, total: Number(data.total) || prev[id]?.total || 0 },
                 }));
+            } else if (eventType.endsWith('.product.reconcile.started')) {
+                patchNode(id, 'scan');
+            } else if (eventType.endsWith('.product.reconcile.completed')) {
+                if (data.error) {
+                    patchNode(id, 'error');
+                    setResults(prev => ({
+                        ...prev,
+                        [id]: { kind: 'error', message: String(data.error) },
+                    }));
+                } else {
+                    setResults(prev => ({
+                        ...prev,
+                        [id]: {
+                            kind: 'products',
+                            matched: Number(data.matched) || 0,
+                            notAssociated: Number(data.not_associated) || 0,
+                            onlyInProbability: Number(data.only_in_probability) || 0,
+                            onlyInChannel: Number(data.only_in_channel) || 0,
+                        },
+                    }));
+                    patchNode(id, 'done');
+                }
+                completion.current.get(id)?.();
             } else if (eventType.endsWith('.inventory.sync.completed')) {
                 const total = Number(data.total) || 0;
                 setProgress(prev => ({ ...prev, [id]: { processed: total, total } }));
@@ -310,69 +329,47 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
     const reconcileOne = useCallback(async (integration: Integration) => {
         const provider = getSyncProvider(integration.integration_type_id);
         if (!provider) return;
+
         patchNode(integration.id, 'scan');
+        setDetails(prev => ({ ...prev, [integration.id]: [] }));
+
+        let start: SyncStartResult | null = null;
         try {
-            const res = await provider.reconcileProducts(
+            start = await provider.reconcileProducts(
                 integration.id,
                 businessId ?? undefined,
-            ) as Record<string, unknown>;
-
-            if (res?.success === false) {
-                patchNode(integration.id, 'error');
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: { kind: 'error', message: String(res?.message || 'No se pudo comparar') },
-                }));
-                return;
-            }
-
-            const detail: SyncDetailItem[] = [];
-            const seen = new Set<string>();
-            const push = (arr: unknown, tone: SyncDetailItem['tone'], label: string, group: DetailGroup) => {
-                if (!Array.isArray(arr)) return;
-                for (const raw of arr.slice(0, 200)) {
-                    const obj = raw as Record<string, unknown>;
-                    const sku = String(obj?.sku ?? '');
-                    const key = `${group}:${sku}`;
-                    if (seen.has(key)) continue;
-                    seen.add(key);
-                    detail.push({ sku, label: `${label}${obj?.name ? ` · ${obj.name}` : ''}`, tone, group });
-                }
-            };
-            push(res?.matched_not_associated, 'warn', 'sin asociar', 'not_associated');
-            push(res?.matched_items, 'ok', 'en ambos', 'both');
-            push(res?.only_in_probability, 'warn', 'solo en Probability', 'only_probability');
-            push(res?.[provider.onlyInChannelField], 'warn', `solo en ${provider.label}`, 'only_channel');
-            setDetails(prev => ({ ...prev, [integration.id]: detail }));
-
-            const summary: ProductsResult = {
-                kind: 'products',
-                matched: Number(res?.matched) || 0,
-                notAssociated: countOf(res?.matched_not_associated),
-                onlyInProbability: countOf(res?.only_in_probability),
-                onlyInChannel: countOf(res?.[provider.onlyInChannelField]),
-            };
-            setResults(prev => ({ ...prev, [integration.id]: summary }));
-            patchNode(integration.id, 'done');
-
-            await recordSyncRunAction({
-                integration_id: integration.id,
-                business_id: businessId ?? undefined,
-                kind: 'products',
-                status: 'completed',
-                matched: summary.matched,
-                not_associated: summary.notAssociated,
-                only_in_probability: summary.onlyInProbability,
-                only_in_channel: summary.onlyInChannel,
-                detail: detail.slice(0, 200),
-            });
+            ) as SyncStartResult;
         } catch {
+            start = null;
+        }
+
+        if (!start?.success || !start?.correlation_id) {
             patchNode(integration.id, 'error');
             setResults(prev => ({
                 ...prev,
-                [integration.id]: { kind: 'error', message: 'No se pudo comparar' },
+                [integration.id]: { kind: 'error', message: start?.message || 'No se pudo comparar' },
             }));
+            return;
         }
+
+        corrToIntegration.current.set(start.correlation_id, integration.id);
+
+        await new Promise<void>(resolve => {
+            const timer = window.setTimeout(() => {
+                patchNode(integration.id, 'error');
+                setResults(prev => ({
+                    ...prev,
+                    [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
+                }));
+                completion.current.delete(integration.id);
+                resolve();
+            }, SYNC_TIMEOUT_MS);
+            completion.current.set(integration.id, () => {
+                window.clearTimeout(timer);
+                completion.current.delete(integration.id);
+                resolve();
+            });
+        });
     }, [businessId, patchNode]);
 
     const runProducts = useCallback(async () => {
@@ -382,6 +379,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setResults({});
         setProgress({});
         setDetails({});
+        corrToIntegration.current.clear();
 
         const scanning: Record<number, SyncNodeState> = {};
         for (const integration of eligible) scanning[integration.id] = 'scan';

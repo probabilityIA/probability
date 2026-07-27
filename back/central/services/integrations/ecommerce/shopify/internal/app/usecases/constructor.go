@@ -42,6 +42,7 @@ type IShopifyUseCase interface {
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string)
 	ApplyProductsToShopify(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error

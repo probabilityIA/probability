@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import type { SyncRunRecord, SyncRunPayload } from '../../domain/types';
+import type { SyncRunRecord } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
 
@@ -29,18 +29,5 @@ export async function listSyncRunsAction(businessId?: number): Promise<SyncRunRe
         return Array.isArray(body?.data) ? (body.data as SyncRunRecord[]) : [];
     } catch {
         return [];
-    }
-}
-
-export async function recordSyncRunAction(payload: SyncRunPayload): Promise<boolean> {
-    try {
-        const response = await fetch(`${API_BASE_URL}/integrations/sync-runs`, {
-            method: 'POST',
-            headers: await authHeaders(),
-            body: JSON.stringify(payload),
-        });
-        return response.ok;
-    } catch {
-        return false;
     }
 }

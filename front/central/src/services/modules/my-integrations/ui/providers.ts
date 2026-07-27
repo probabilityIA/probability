@@ -124,9 +124,11 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
 
 const INVENTORY_EVENT_SUFFIXES = ['started', 'item', 'progress', 'completed'];
 
-export const GLOBAL_INVENTORY_EVENT_TYPES = Object.values(SYNC_PROVIDERS).flatMap(p =>
-    INVENTORY_EVENT_SUFFIXES.map(s => `${p.inventoryEventPrefix}.inventory.sync.${s}`)
-);
+export const GLOBAL_INVENTORY_EVENT_TYPES = Object.values(SYNC_PROVIDERS).flatMap(p => [
+    ...INVENTORY_EVENT_SUFFIXES.map(s => `${p.inventoryEventPrefix}.inventory.sync.${s}`),
+    `${p.inventoryEventPrefix}.product.reconcile.started`,
+    `${p.inventoryEventPrefix}.product.reconcile.completed`,
+]);
 
 export function getSyncProvider(integrationTypeId: number | string | undefined): SyncProvider | null {
     if (integrationTypeId === undefined || integrationTypeId === null) return null;

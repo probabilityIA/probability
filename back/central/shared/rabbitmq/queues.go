@@ -173,6 +173,8 @@ const (
 
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
 
+	QueueIntegrationSyncRuns = "integrations.sync_runs"
+
 	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"
 )
 

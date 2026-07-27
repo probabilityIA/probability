@@ -53,21 +53,16 @@ func (h *ShopifyHandler) ReconcileProducts(c *gin.Context) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
-	result, err := h.useCase.ReconcileProducts(c.Request.Context(), integrationID, businessID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
-		return
-	}
+	correlationID := uuid.New().String()
 
-	c.JSON(http.StatusOK, gin.H{
-		"success":                true,
-		"matched":                result.Matched,
-		"matched_items":          productBriefsToResponse(result.MatchedItems),
-		"matched_not_associated": productBriefsToResponse(result.MatchedNotAssociated),
-		"only_in_probability":    productBriefsToResponse(result.OnlyInProbability),
-		"only_in_shopify":        productBriefsToResponse(result.OnlyInShopify),
-		"probability_no_sku":     result.ProbabilityNoSKU,
-		"shopify_no_sku":         result.ShopifyNoSKU,
+	go func() {
+		h.useCase.ReconcileProductsAsync(context.Background(), integrationID, businessID, req.IntegrationID, correlationID)
+	}()
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"success":        true,
+		"correlation_id": correlationID,
+		"message":        "Comparacion de catalogo iniciada",
 	})
 }
 

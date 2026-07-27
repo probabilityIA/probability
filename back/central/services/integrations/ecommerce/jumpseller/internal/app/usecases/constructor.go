@@ -34,6 +34,7 @@ type IJumpsellerUseCase interface {
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
+	ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string)
 
 	GetLocations(ctx context.Context, integrationID string, businessID uint) (*domain.LocationsInfo, error)
 
