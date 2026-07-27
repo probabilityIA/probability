@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
@@ -47,7 +48,10 @@ func (c *MeliClient) predictCategory(ctx context.Context, accessToken, siteID, t
 		return "", fmt.Errorf("meli client: parsing category predict: %w", err)
 	}
 	if len(results) == 0 || results[0].CategoryID == "" {
-		return "", fmt.Errorf("meli client: no category predicted for %q", title)
+		if strings.TrimSpace(title) == "" {
+			return "", fmt.Errorf("el producto no tiene nombre, Mercado Libre no puede deducir la categoria")
+		}
+		return "", fmt.Errorf("Mercado Libre no encontro una categoria para %q", truncateForMessage(title, 60))
 	}
 	return results[0].CategoryID, nil
 }
@@ -105,7 +109,7 @@ func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, inpu
 		return "", domain.ErrInvalidCredentials
 	}
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("meli client: create item status %d: %s", resp.StatusCode, string(respBody))
+		return "", fmt.Errorf("%s", describeMeliError(resp.StatusCode, respBody))
 	}
 
 	var result struct {
