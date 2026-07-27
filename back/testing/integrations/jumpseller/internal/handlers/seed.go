@@ -47,6 +47,7 @@ func (h *Handler) handleSeedProducts(c *gin.Context) {
 			Price:  price,
 			Stock:  p.Stock,
 			Status: "available",
+			Images: []productImage{{ID: id, URL: "https://mock.probability.test/jumpseller/" + p.SKU + ".jpg"}},
 		}
 		created++
 	}

@@ -30,6 +30,23 @@ type meliItemDetail struct {
 		ID        string `json:"id"`
 		ValueName string `json:"value_name"`
 	} `json:"attributes"`
+	Thumbnail string `json:"thumbnail"`
+	Pictures  []struct {
+		SecureURL string `json:"secure_url"`
+		URL       string `json:"url"`
+	} `json:"pictures"`
+}
+
+func itemImageURL(d meliItemDetail) string {
+	for _, picture := range d.Pictures {
+		if picture.SecureURL != "" {
+			return picture.SecureURL
+		}
+		if picture.URL != "" {
+			return picture.URL
+		}
+	}
+	return d.Thumbnail
 }
 
 type meliMultigetItem struct {
@@ -104,6 +121,7 @@ func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, seller
 				Name:          d.Title,
 				Price:         d.Price,
 				StockQuantity: d.AvailableQuantity,
+				ImageURL:      itemImageURL(d),
 			})
 		}
 	}
@@ -112,7 +130,7 @@ func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, seller
 }
 
 func (c *MeliClient) multigetItems(ctx context.Context, accessToken string, ids []string) ([]meliItemDetail, error) {
-	attrs := "id,title,price,available_quantity,seller_custom_field,attributes"
+	attrs := "id,title,price,available_quantity,seller_custom_field,attributes,pictures,thumbnail"
 	endpoint := fmt.Sprintf("%s/items?ids=%s&attributes=%s", c.baseURL, strings.Join(ids, ","), attrs)
 	req, err := c.newAuthorizedRequest(ctx, http.MethodGet, endpoint, accessToken)
 	if err != nil {

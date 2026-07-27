@@ -51,6 +51,7 @@ func (h *Handler) handleSeedProducts(c *gin.Context) {
 				h.products[parentID] = &wooProduct{
 					ID: parentID, Name: p.Name, SKU: "", Type: "variable",
 					Price: price, ManageStock: false, Status: "publish",
+					Images: []wooImage{{ID: parentID, Src: mockImageURL(p.SKU)}},
 				}
 			}
 			h.variations[parentID] = append(h.variations[parentID], &wooVariation{
@@ -67,6 +68,7 @@ func (h *Handler) handleSeedProducts(c *gin.Context) {
 		h.products[id] = &wooProduct{
 			ID: id, Name: p.Name, SKU: p.SKU, Type: "simple",
 			Price: price, StockQuantity: intPtr(stock), ManageStock: true, Status: "publish",
+			Images: []wooImage{{ID: id, Src: mockImageURL(p.SKU)}},
 		}
 		created++
 	}
@@ -80,4 +82,11 @@ func (h *Handler) handleSeedProducts(c *gin.Context) {
 		"seeded_variations": variations,
 		"total_products":    total,
 	})
+}
+
+func mockImageURL(sku string) string {
+	if sku == "" {
+		return ""
+	}
+	return "https://mock.probability.test/woocommerce/" + sku + ".jpg"
 }

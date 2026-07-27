@@ -29,6 +29,7 @@ type providerUpsertMsg struct {
 	Width          *float64 `json:"width,omitempty"`
 	Height         *float64 `json:"height,omitempty"`
 	DimensionUnit  string   `json:"dimension_unit,omitempty"`
+	ImageURL       string   `json:"image_url,omitempty"`
 }
 
 type reconcileData struct {
@@ -208,6 +209,7 @@ func (uc *vtexUseCase) upsertMsgFromVTEX(businessID, integrationID uint, sku dom
 		Length:         sku.Length,
 		Width:          sku.Width,
 		Height:         sku.Height,
+		ImageURL:       sku.ImageURL,
 	}
 
 	if sku.Weight != nil {

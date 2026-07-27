@@ -30,6 +30,7 @@ type WooProduct struct {
 	Name          string
 	Price         float64
 	StockQuantity int
+	ImageURL      string
 }
 
 type ProductBrief struct {

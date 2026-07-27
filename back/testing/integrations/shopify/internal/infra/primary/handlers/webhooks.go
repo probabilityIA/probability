@@ -22,9 +22,9 @@ type mockWebhook struct {
 }
 
 var (
-	webhookStore   = make([]mockWebhook, 0)
-	webhookMu      sync.RWMutex
-	webhookSeq     int64 = 900000000
+	webhookStore = make([]mockWebhook, 0)
+	webhookMu    sync.RWMutex
+	webhookSeq   int64 = 900000000
 )
 
 // handleGetShop simula GET /admin/api/2024-10/shop.json (validación de token).
@@ -50,24 +50,24 @@ func (h *Handler) handleGetShop(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"shop": gin.H{
-			"id":                      1,
-			"name":                    "Tienda Mock Probability",
-			"email":                   "mock@probability.test",
-			"domain":                  "mock-probability.myshopify.com",
-			"province":                "Cundinamarca",
-			"country":                 "CO",
-			"address1":                "Calle 123",
-			"zip":                     "110111",
-			"city":                    "Bogotá",
-			"phone":                   "+573001234567",
-			"currency":                shopCurrency,
-			"money_format":            moneyFormat,
-			"plan_name":               "developer",
-			"myshopify_domain":        "mock-probability.myshopify.com",
-			"iana_timezone":           "America/Bogota",
-			"primary_locale":          "es",
-			"created_at":              "2024-01-01T00:00:00-05:00",
-			"updated_at":              time.Now().Format(time.RFC3339),
+			"id":               1,
+			"name":             "Tienda Mock Probability",
+			"email":            "mock@probability.test",
+			"domain":           "mock-probability.myshopify.com",
+			"province":         "Cundinamarca",
+			"country":          "CO",
+			"address1":         "Calle 123",
+			"zip":              "110111",
+			"city":             "Bogotá",
+			"phone":            "+573001234567",
+			"currency":         shopCurrency,
+			"money_format":     moneyFormat,
+			"plan_name":        "developer",
+			"myshopify_domain": "mock-probability.myshopify.com",
+			"iana_timezone":    "America/Bogota",
+			"primary_locale":   "es",
+			"created_at":       "2024-01-01T00:00:00-05:00",
+			"updated_at":       time.Now().Format(time.RFC3339),
 		},
 	})
 }

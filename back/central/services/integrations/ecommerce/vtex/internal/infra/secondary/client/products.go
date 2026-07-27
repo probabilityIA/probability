@@ -53,6 +53,14 @@ func (c *VTEXClient) ListSKUs(ctx context.Context, cred domain.Credential) ([]do
 	return all, nil
 }
 
+func absoluteImageURL(raw string) string {
+	value := strings.TrimSpace(raw)
+	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
+		return value
+	}
+	return ""
+}
+
 func (c *VTEXClient) getSKUByID(ctx context.Context, cred domain.Credential, skuID int) (*domain.VTEXSKU, error) {
 	endpoint := fmt.Sprintf("%s/api/catalog/pvt/stockkeepingunit/%d", baseURL(cred), skuID)
 
@@ -72,6 +80,10 @@ func (c *VTEXClient) getSKUByID(ctx context.Context, cred domain.Credential, sku
 		Width           float64 `json:"Width"`
 		Height          float64 `json:"Height"`
 		MeasurementUnit string  `json:"MeasurementUnit"`
+		ImageURL        string  `json:"ImageUrl"`
+		Images          []struct {
+			ImageURL string `json:"ImageUrl"`
+		} `json:"Images"`
 	}
 	if err := json.Unmarshal(body, &raw); err != nil {
 		return nil, fmt.Errorf("vtex client: parsing sku %d: %w", skuID, err)
@@ -84,6 +96,15 @@ func (c *VTEXClient) getSKUByID(ctx context.Context, cred domain.Credential, sku
 		RefID:           strings.TrimSpace(raw.RefID),
 		IsActive:        raw.IsActive,
 		MeasurementUnit: raw.MeasurementUnit,
+		ImageURL:        absoluteImageURL(raw.ImageURL),
+	}
+	if sku.ImageURL == "" {
+		for _, image := range raw.Images {
+			if url := absoluteImageURL(image.ImageURL); url != "" {
+				sku.ImageURL = url
+				break
+			}
+		}
 	}
 	if raw.WeightKg > 0 {
 		w := raw.WeightKg

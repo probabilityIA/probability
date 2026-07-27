@@ -12,20 +12,33 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
 
+type wooImageResponse struct {
+	Src string `json:"src"`
+}
+
 type wooProductResponse struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	SKU           string `json:"sku"`
-	Type          string `json:"type"`
-	Price         string `json:"price"`
-	StockQuantity *int   `json:"stock_quantity"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	SKU           string             `json:"sku"`
+	Type          string             `json:"type"`
+	Price         string             `json:"price"`
+	StockQuantity *int               `json:"stock_quantity"`
+	Images        []wooImageResponse `json:"images"`
 }
 
 type wooVariationResponse struct {
-	ID            int64  `json:"id"`
-	SKU           string `json:"sku"`
-	Price         string `json:"price"`
-	StockQuantity *int   `json:"stock_quantity"`
+	ID            int64             `json:"id"`
+	SKU           string            `json:"sku"`
+	Price         string            `json:"price"`
+	StockQuantity *int              `json:"stock_quantity"`
+	Image         *wooImageResponse `json:"image"`
+}
+
+func firstImage(images []wooImageResponse) string {
+	if len(images) == 0 {
+		return ""
+	}
+	return images[0].Src
 }
 
 func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error) {
@@ -84,6 +97,10 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 					if v.StockQuantity != nil {
 						vstock = *v.StockQuantity
 					}
+					image := firstImage(p.Images)
+					if v.Image != nil && v.Image.Src != "" {
+						image = v.Image.Src
+					}
 					products = append(products, domain.WooProduct{
 						ID:            strconv.FormatInt(v.ID, 10),
 						ParentID:      parentID,
@@ -91,6 +108,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 						Name:          p.Name,
 						Price:         vprice,
 						StockQuantity: vstock,
+						ImageURL:      image,
 					})
 				}
 				continue
@@ -110,6 +128,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 				Name:          p.Name,
 				Price:         price,
 				StockQuantity: stock,
+				ImageURL:      firstImage(p.Images),
 			})
 		}
 

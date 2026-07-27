@@ -401,29 +401,16 @@ func (g *RandomDataGenerator) GenerateDualCurrencyShippingLines(exchangeRate flo
 
 	return []domain.ShippingLine{
 		{
-			ID:                 int64(rand.Intn(999999999) + 100000000),
-			Title:              method.Title,
-			Code:               g.stringPtr(method.Code),
-			Price:              usdPriceStr, // shop currency (USD)
-			PriceSet:           g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
-			DiscountedPrice:    usdPriceStr,
-			DiscountedPriceSet: g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
-			Source:             g.stringPtr("shopify"),
-			TaxLines:           []domain.TaxLine{},
+			ID:                  int64(rand.Intn(999999999) + 100000000),
+			Title:               method.Title,
+			Code:                g.stringPtr(method.Code),
+			Price:               usdPriceStr, // shop currency (USD)
+			PriceSet:            g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
+			DiscountedPrice:     usdPriceStr,
+			DiscountedPriceSet:  g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
+			Source:              g.stringPtr("shopify"),
+			TaxLines:            []domain.TaxLine{},
 			DiscountAllocations: []domain.DiscountAllocation{},
 		},
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -33,11 +33,13 @@ type providerUpsertMsg struct {
 	Width          *float64 `json:"width,omitempty"`
 	Height         *float64 `json:"height,omitempty"`
 	DimensionUnit  string   `json:"dimension_unit,omitempty"`
+	ImageURL       string   `json:"image_url,omitempty"`
 }
 
 type jumpsellerSKU struct {
 	SKU        string
 	Name       string
+	ImageURL   string
 	Price      float64
 	ExternalID string
 	ProductID  int64
@@ -66,6 +68,7 @@ func flattenProductSKUs(products []domain.JumpsellerProduct) []jumpsellerSKU {
 			flat = append(flat, jumpsellerSKU{
 				SKU:        product.SKU,
 				Name:       product.Name,
+				ImageURL:   product.ImageURL,
 				Price:      product.Price,
 				ExternalID: strconv.FormatInt(product.ID, 10),
 				ProductID:  product.ID,
@@ -80,6 +83,7 @@ func flattenProductSKUs(products []domain.JumpsellerProduct) []jumpsellerSKU {
 			flat = append(flat, jumpsellerSKU{
 				SKU:        variant.SKU,
 				Name:       product.Name,
+				ImageURL:   product.ImageURL,
 				Price:      variant.Price,
 				ExternalID: strconv.FormatInt(product.ID, 10) + ":" + strconv.FormatInt(variant.ID, 10),
 				ProductID:  product.ID,
@@ -249,6 +253,7 @@ func (uc *jumpsellerUseCase) upsertMsgFromJumpseller(ctx context.Context, busine
 	msg := providerUpsertMsg{
 		BusinessID:     businessID,
 		IntegrationID:  integrationID,
+		ImageURL:       j.ImageURL,
 		SKU:            j.SKU,
 		Name:           j.Name,
 		TrackInventory: true,

@@ -47,6 +47,14 @@ type item struct {
 	Shipping          itemShipping    `json:"shipping"`
 	Attributes        []itemAttribute `json:"attributes"`
 	Variations        []itemVariation `json:"variations"`
+	Thumbnail         string          `json:"thumbnail"`
+	Pictures          []itemPicture   `json:"pictures"`
+}
+
+type itemPicture struct {
+	ID        string `json:"id"`
+	URL       string `json:"url"`
+	SecureURL string `json:"secure_url"`
 }
 
 type itemShipping struct {
@@ -112,6 +120,9 @@ func (h *Handler) seed(title, sku string, price float64, qty int) *item {
 	}
 	if sku != "" {
 		it.Attributes = append(it.Attributes, itemAttribute{ID: "SELLER_SKU", ValueName: sku})
+		image := "https://mock.probability.test/meli/" + sku + ".jpg"
+		it.Thumbnail = image
+		it.Pictures = []itemPicture{{ID: id + "-1", URL: image, SecureURL: image}}
 	}
 
 	h.items[id] = it

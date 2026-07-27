@@ -27,6 +27,7 @@ type productUpsertMessage struct {
 	Width          *float64 `json:"width,omitempty"`
 	Height         *float64 `json:"height,omitempty"`
 	DimensionUnit  string   `json:"dimension_unit,omitempty"`
+	ImageURL       string   `json:"image_url,omitempty"`
 }
 
 type ProductUpsertConsumer struct {
@@ -92,6 +93,7 @@ func (c *ProductUpsertConsumer) handle(ctx context.Context, body []byte) {
 		Width:          msg.Width,
 		Height:         msg.Height,
 		DimensionUnit:  msg.DimensionUnit,
+		ImageURL:       msg.ImageURL,
 	})
 	if err != nil {
 		c.logger.Error(ctx).Err(err).Str("sku", msg.SKU).Uint("business_id", msg.BusinessID).Msg("Error al hacer upsert de producto desde proveedor")

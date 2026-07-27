@@ -24,7 +24,12 @@ type ProductResponse struct {
 	Length         float64                  `json:"length"`
 	Diameter       float64                  `json:"diameter"`
 	PackageFormat  string                   `json:"package_format"`
+	Images         []ProductImageResponse   `json:"images"`
 	Variants       []ProductVariantResponse `json:"variants"`
+}
+
+type ProductImageResponse struct {
+	URL string `json:"url"`
 }
 
 type ProductVariantResponse struct {
@@ -62,8 +67,18 @@ func (p ProductResponse) ToDomain() domain.JumpsellerProduct {
 		Length:         p.Length,
 		Diameter:       p.Diameter,
 		PackageFormat:  p.PackageFormat,
+		ImageURL:       p.firstImageURL(),
 		Variants:       variants,
 	}
+}
+
+func (p ProductResponse) firstImageURL() string {
+	for _, image := range p.Images {
+		if image.URL != "" {
+			return image.URL
+		}
+	}
+	return ""
 }
 
 type UpdateProductStockRequest struct {

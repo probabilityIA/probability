@@ -43,6 +43,7 @@ type providerUpsertMsg struct {
 	TrackInventory bool    `json:"track_inventory"`
 	Price          float64 `json:"price"`
 	ExternalID     string  `json:"external_id"`
+	ImageURL       string  `json:"image_url,omitempty"`
 }
 
 func (uc *wooCommerceUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (storeURL, ck, cs string, probProducts []domain.ProductForSync, wooProducts []domain.WooProduct, err error) {
@@ -262,6 +263,7 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 			TrackInventory: true,
 			Price:          w.Price,
 			ExternalID:     wooExternalRef(w),
+			ImageURL:       w.ImageURL,
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {

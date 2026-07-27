@@ -383,23 +383,23 @@ func (s *OrderSimulator) generateDualCurrencyOrder(orderNumber string, createdAt
 	}
 
 	order := &domain.Order{
-		ID:                    orderID,
-		AdminGraphQLAPIID:     fmt.Sprintf("gid://shopify/Order/%d", orderID),
-		AppID:                 int64Ptr(int64(rand.Intn(999999) + 100000)),
-		BrowserIP:             s.dataGenerator.stringPtr(fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))),
-		BuyerAcceptsMarketing: rand.Float32() < 0.3,
-		CancelReason:          nil,
-		CancelledAt:           nil,
-		CartToken:             s.dataGenerator.stringPtr(fmt.Sprintf("%x", rand.Int63())),
-		CheckoutID:            int64Ptr(int64(rand.Intn(9999999999) + 1000000000)),
-		CheckoutToken:         s.dataGenerator.stringPtr(fmt.Sprintf("ct_%x", rand.Int63())),
-		ClientDetails:         s.generateClientDetails(),
-		ClosedAt:              nil,
-		Confirmed:             true,
-		ContactEmail:          customer.Email,
-		CreatedAt:             now.Add(-time.Duration(rand.Intn(30)) * time.Minute),
-		Currency:              "USD",                                                            // Shop currency
-		CurrentSubtotalPrice:  subtotalUSDStr,                                                   // USD
+		ID:                       orderID,
+		AdminGraphQLAPIID:        fmt.Sprintf("gid://shopify/Order/%d", orderID),
+		AppID:                    int64Ptr(int64(rand.Intn(999999) + 100000)),
+		BrowserIP:                s.dataGenerator.stringPtr(fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))),
+		BuyerAcceptsMarketing:    rand.Float32() < 0.3,
+		CancelReason:             nil,
+		CancelledAt:              nil,
+		CartToken:                s.dataGenerator.stringPtr(fmt.Sprintf("%x", rand.Int63())),
+		CheckoutID:               int64Ptr(int64(rand.Intn(9999999999) + 1000000000)),
+		CheckoutToken:            s.dataGenerator.stringPtr(fmt.Sprintf("ct_%x", rand.Int63())),
+		ClientDetails:            s.generateClientDetails(),
+		ClosedAt:                 nil,
+		Confirmed:                true,
+		ContactEmail:             customer.Email,
+		CreatedAt:                now.Add(-time.Duration(rand.Intn(30)) * time.Minute),
+		Currency:                 "USD",          // Shop currency
+		CurrentSubtotalPrice:     subtotalUSDStr, // USD
 		CurrentSubtotalPriceSet:  s.dataGenerator.GenerateDualCurrencyMoneySet(subtotalCOP, exchangeRate),
 		CurrentTotalDiscounts:    "0.00",
 		CurrentTotalDiscountsSet: s.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),
@@ -429,7 +429,7 @@ func (s *OrderSimulator) generateDualCurrencyOrder(orderNumber string, createdAt
 		OriginalTotalDutiesSet:   nil,
 		PaymentGatewayNames:      []string{"shopify_payments"},
 		Phone:                    customer.Phone,
-		PresentmentCurrency:      "COP",                                                         // Comprador paga en COP
+		PresentmentCurrency:      "COP", // Comprador paga en COP
 		ProcessedAt:              now.Add(-time.Duration(rand.Intn(30)) * time.Minute),
 		ProcessingMethod:         s.dataGenerator.stringPtr("direct"),
 		Reference:                nil,

@@ -10,16 +10,22 @@ import (
 const MockAccountName = "probabilitymock"
 
 type sku struct {
-	ID              int     `json:"Id"`
-	ProductID       int     `json:"ProductId"`
-	Name            string  `json:"Name"`
-	RefID           string  `json:"RefId"`
-	IsActive        bool    `json:"IsActive"`
-	WeightKg        float64 `json:"WeightKg"`
-	Length          float64 `json:"Length"`
-	Width           float64 `json:"Width"`
-	Height          float64 `json:"Height"`
-	MeasurementUnit string  `json:"MeasurementUnit"`
+	ID              int        `json:"Id"`
+	ProductID       int        `json:"ProductId"`
+	Name            string     `json:"Name"`
+	RefID           string     `json:"RefId"`
+	IsActive        bool       `json:"IsActive"`
+	WeightKg        float64    `json:"WeightKg"`
+	Length          float64    `json:"Length"`
+	Width           float64    `json:"Width"`
+	Height          float64    `json:"Height"`
+	MeasurementUnit string     `json:"MeasurementUnit"`
+	ImageURL        string     `json:"ImageUrl"`
+	Images          []skuImage `json:"Images"`
+}
+
+type skuImage struct {
+	ImageURL string `json:"ImageUrl"`
 }
 
 type warehouse struct {
@@ -81,6 +87,8 @@ func (h *Handler) seed(name, refID string, quantity int) *sku {
 		Width:           20,
 		Height:          10,
 		MeasurementUnit: "un",
+		ImageURL:        "https://mock.probability.test/vtex/" + refID + ".jpg",
+		Images:          []skuImage{{ImageURL: "https://mock.probability.test/vtex/" + refID + ".jpg"}},
 	}
 	h.skus[id] = item
 	h.stock[stockKey(id, h.warehouses[0].ID)] = quantity

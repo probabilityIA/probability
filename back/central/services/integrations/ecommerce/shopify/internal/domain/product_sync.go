@@ -32,6 +32,7 @@ type ShopifyProductForSync struct {
 	ProductID string
 	SKU       string
 	Name      string
+	ImageURL  string
 }
 
 type CreateProductInput struct {

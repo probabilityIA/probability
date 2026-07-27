@@ -32,9 +32,17 @@ func (c *shopifyClient) ListProducts(ctx context.Context, storeName, accessToken
 				ID       int64  `json:"id"`
 				Title    string `json:"title"`
 				Variants []struct {
-					ID  int64  `json:"id"`
-					SKU string `json:"sku"`
+					ID      int64  `json:"id"`
+					SKU     string `json:"sku"`
+					ImageID *int64 `json:"image_id"`
 				} `json:"variants"`
+				Image *struct {
+					Src string `json:"src"`
+				} `json:"image"`
+				Images []struct {
+					ID  int64  `json:"id"`
+					Src string `json:"src"`
+				} `json:"images"`
 			} `json:"products"`
 		}
 		if err := json.Unmarshal(resp.Body(), &parsed); err != nil {
@@ -43,11 +51,28 @@ func (c *shopifyClient) ListProducts(ctx context.Context, storeName, accessToken
 
 		for _, p := range parsed.Products {
 			productID := strconv.FormatInt(p.ID, 10)
+			mainImage := ""
+			if p.Image != nil {
+				mainImage = p.Image.Src
+			} else if len(p.Images) > 0 {
+				mainImage = p.Images[0].Src
+			}
+			byImageID := make(map[int64]string, len(p.Images))
+			for _, img := range p.Images {
+				byImageID[img.ID] = img.Src
+			}
 			for _, v := range p.Variants {
+				image := mainImage
+				if v.ImageID != nil {
+					if src, ok := byImageID[*v.ImageID]; ok && src != "" {
+						image = src
+					}
+				}
 				products = append(products, domain.ShopifyProductForSync{
 					ProductID: productID,
 					SKU:       v.SKU,
 					Name:      p.Title,
+					ImageURL:  image,
 				})
 			}
 		}

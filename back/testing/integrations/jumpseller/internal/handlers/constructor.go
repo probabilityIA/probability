@@ -21,18 +21,24 @@ type hook struct {
 }
 
 type product struct {
-	ID             int64   `json:"id"`
-	Name           string  `json:"name"`
-	SKU            string  `json:"sku"`
-	Price          float64 `json:"price"`
-	Stock          int     `json:"stock"`
-	StockUnlimited bool    `json:"stock_unlimited"`
-	Status         string  `json:"status"`
-	Weight         float64 `json:"weight"`
-	Height         float64 `json:"height"`
-	Width          float64 `json:"width"`
-	Length         float64 `json:"length"`
-	PackageFormat  string  `json:"package_format"`
+	ID             int64          `json:"id"`
+	Name           string         `json:"name"`
+	SKU            string         `json:"sku"`
+	Price          float64        `json:"price"`
+	Stock          int            `json:"stock"`
+	StockUnlimited bool           `json:"stock_unlimited"`
+	Status         string         `json:"status"`
+	Weight         float64        `json:"weight"`
+	Height         float64        `json:"height"`
+	Width          float64        `json:"width"`
+	Length         float64        `json:"length"`
+	PackageFormat  string         `json:"package_format"`
+	Images         []productImage `json:"images"`
+}
+
+type productImage struct {
+	ID  int64  `json:"id"`
+	URL string `json:"url"`
 }
 
 type Handler struct {
@@ -67,6 +73,7 @@ func New(logger log.ILogger) *Handler {
 		Width:         20,
 		Length:        30,
 		PackageFormat: "box",
+		Images:        []productImage{{ID: 100, URL: "https://mock.probability.test/jumpseller/JS-MOCK-001.jpg"}},
 	}
 	h.nextProdID = 101
 	return h

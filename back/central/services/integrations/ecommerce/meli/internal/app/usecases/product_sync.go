@@ -25,6 +25,7 @@ type providerUpsertMsg struct {
 	TrackInventory bool    `json:"track_inventory"`
 	Price          float64 `json:"price"`
 	ExternalID     string  `json:"external_id"`
+	ImageURL       string  `json:"image_url,omitempty"`
 }
 
 func resolveSellerID(integration *domain.Integration) (int64, error) {
@@ -277,6 +278,7 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 			TrackInventory: true,
 			Price:          m.Price,
 			ExternalID:     m.ID,
+			ImageURL:       m.ImageURL,
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {

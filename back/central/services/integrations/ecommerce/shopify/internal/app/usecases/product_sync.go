@@ -21,6 +21,7 @@ type providerUpsertMsg struct {
 	TrackInventory bool    `json:"track_inventory"`
 	Price          float64 `json:"price"`
 	ExternalID     string  `json:"external_id"`
+	ImageURL       string  `json:"image_url,omitempty"`
 }
 
 func normalizeSKU(sku string) string {
@@ -289,6 +290,7 @@ func (uc *SyncOrdersUseCase) ApplyProductsToProbability(ctx context.Context, int
 			TrackInventory: true,
 			Price:          0,
 			ExternalID:     shopifyExternalRef(s),
+			ImageURL:       s.ImageURL,
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {

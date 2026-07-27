@@ -20,11 +20,18 @@ type shopifyVariant struct {
 	InventoryManagem  string `json:"inventory_management"`
 }
 
+type shopifyImage struct {
+	ID  int64  `json:"id"`
+	Src string `json:"src"`
+}
+
 type shopifyProduct struct {
 	ID       int64             `json:"id"`
 	Title    string            `json:"title"`
 	Handle   string            `json:"handle"`
 	Status   string            `json:"status"`
+	Image    *shopifyImage     `json:"image,omitempty"`
+	Images   []shopifyImage    `json:"images"`
 	Variants []*shopifyVariant `json:"variants"`
 }
 
@@ -72,11 +79,14 @@ func (c *catalog) seed(title, sku, price string, qty int) *shopifyProduct {
 	itemID := c.nextItemID
 	c.nextItemID++
 
+	image := shopifyImage{ID: productID, Src: "https://mock.probability.test/shopify/" + sku + ".jpg"}
 	product := &shopifyProduct{
 		ID:     productID,
 		Title:  title,
 		Handle: sku,
 		Status: "active",
+		Image:  &image,
+		Images: []shopifyImage{image},
 		Variants: []*shopifyVariant{
 			{
 				ID:                variantID,

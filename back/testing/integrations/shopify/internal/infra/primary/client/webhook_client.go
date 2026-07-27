@@ -102,13 +102,13 @@ func (c *WebhookClient) BuildWebhook(topic string, shopDomain string, payload in
 	hmacValue := c.generateHMAC(payloadBytes)
 
 	headers := map[string]string{
-		"Content-Type":            "application/json",
-		"X-Shopify-Topic":         topic,
-		"X-Shopify-Shop-Domain":   shopDomain,
-		"X-Shopify-Hmac-Sha256":   hmacValue,
-		"X-Shopify-API-Version":   c.config.GetWithDefault("SHOPIFY_API_VERSION", "2024-01"),
-		"X-Shopify-Webhook-Id":    fmt.Sprintf("test-%d", time.Now().Unix()),
-		"X-Probability-Testing":   "true",
+		"Content-Type":          "application/json",
+		"X-Shopify-Topic":       topic,
+		"X-Shopify-Shop-Domain": shopDomain,
+		"X-Shopify-Hmac-Sha256": hmacValue,
+		"X-Shopify-API-Version": c.config.GetWithDefault("SHOPIFY_API_VERSION", "2024-01"),
+		"X-Shopify-Webhook-Id":  fmt.Sprintf("test-%d", time.Now().Unix()),
+		"X-Probability-Testing": "true",
 	}
 
 	// Unmarshal back to map so the body is a JSON object in the response
@@ -143,16 +143,3 @@ func (c *WebhookClient) generateHMAC(payload []byte) string {
 	mac.Write(payload)
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

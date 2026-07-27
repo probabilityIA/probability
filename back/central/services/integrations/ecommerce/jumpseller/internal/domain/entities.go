@@ -154,6 +154,7 @@ type JumpsellerProduct struct {
 	Length         float64
 	Diameter       float64
 	PackageFormat  string
+	ImageURL       string
 	Variants       []ProductVariant
 }
 

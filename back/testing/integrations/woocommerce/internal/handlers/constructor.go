@@ -17,15 +17,21 @@ type webhook struct {
 	DateCreated string `json:"date_created"`
 }
 
+type wooImage struct {
+	ID  int64  `json:"id"`
+	Src string `json:"src"`
+}
+
 type wooProduct struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	SKU           string `json:"sku"`
-	Type          string `json:"type"`
-	Price         string `json:"price"`
-	StockQuantity *int   `json:"stock_quantity"`
-	ManageStock   bool   `json:"manage_stock"`
-	Status        string `json:"status"`
+	ID            int64      `json:"id"`
+	Name          string     `json:"name"`
+	SKU           string     `json:"sku"`
+	Type          string     `json:"type"`
+	Price         string     `json:"price"`
+	StockQuantity *int       `json:"stock_quantity"`
+	ManageStock   bool       `json:"manage_stock"`
+	Status        string     `json:"status"`
+	Images        []wooImage `json:"images"`
 }
 
 type wooVariation struct {

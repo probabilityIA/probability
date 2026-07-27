@@ -14,10 +14,13 @@ func (h *Handler) seedCatalog() {
 		{ID: 103, Name: "Producto sin SKU", SKU: "", Type: "simple", Price: "12000.00", StockQuantity: intPtr(5), ManageStock: true, Status: "publish"},
 	}
 	for _, p := range simple {
+		if p.SKU != "" {
+			p.Images = []wooImage{{ID: p.ID, Src: mockImageURL(p.SKU)}}
+		}
 		h.products[p.ID] = p
 	}
 
-	variable := &wooProduct{ID: 110, Name: "Pantalon Mock", SKU: "MOCK-PANT", Type: "variable", Price: "90000.00", ManageStock: false, Status: "publish"}
+	variable := &wooProduct{ID: 110, Name: "Pantalon Mock", SKU: "MOCK-PANT", Type: "variable", Price: "90000.00", ManageStock: false, Status: "publish", Images: []wooImage{{ID: 110, Src: mockImageURL("MOCK-PANT")}}}
 	h.products[variable.ID] = variable
 	h.variations[variable.ID] = []*wooVariation{
 		{ID: 1101, SKU: "MOCK-PANT-S", Price: "90000.00", StockQuantity: intPtr(4), ManageStock: true},

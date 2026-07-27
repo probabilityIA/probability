@@ -365,16 +365,3 @@ type ShippingLine struct {
 	TaxLines                      []TaxLine            `json:"tax_lines"`
 	DiscountAllocations           []DiscountAllocation `json:"discount_allocations"`
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

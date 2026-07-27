@@ -63,6 +63,7 @@ type VTEXSKU struct {
 	Width           *float64
 	Height          *float64
 	MeasurementUnit string
+	ImageURL        string
 }
 
 type Warehouse struct {

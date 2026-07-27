@@ -31,6 +31,7 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 				Width:          dto.Width,
 				Height:         dto.Height,
 				DimensionUnit:  dto.DimensionUnit,
+				ImageURL:       dto.ImageURL,
 			})
 			if cerr != nil {
 				return cerr
@@ -59,6 +60,10 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 	if (dto.Length != nil || dto.Width != nil || dto.Height != nil) && dto.DimensionUnit != "" {
 		dimensionUnit := dto.DimensionUnit
 		req.DimensionUnit = &dimensionUnit
+	}
+	if dto.ImageURL != "" && existing.ImageURL == "" {
+		imageURL := dto.ImageURL
+		req.ImageURL = &imageURL
 	}
 	if _, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, req); uerr != nil {
 		return uerr
