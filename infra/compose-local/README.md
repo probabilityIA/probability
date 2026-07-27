@@ -4,7 +4,6 @@ Este docker-compose levanta los servicios necesarios para desarrollo local:
 
 - **PostgreSQL** (puerto 5432)
 - **Redis** (puerto 6379)
-- **MinIO** (puertos 9000 API, 9001 Console)
 - **RabbitMQ** (puertos 5672 AMQP, 15672 Management UI)
 
 ## Uso
@@ -48,18 +47,6 @@ docker-compose down -v
 - **Puerto:** 6379
 - **Sin contraseña** (solo local)
 
-### MinIO
-- **API Endpoint:** http://localhost:9000
-- **Console:** http://localhost:9001
-- **Access Key:** minioadmin
-- **Secret Key:** minioadmin
-
-**Primera vez:**
-1. Abre http://localhost:9001
-2. Login con `minioadmin` / `minioadmin`
-3. Crea el bucket `probability`
-4. Configura el bucket como público (Access Policy → Public)
-
 ### RabbitMQ
 - **AMQP:** localhost:5672
 - **Management UI:** http://localhost:15672
@@ -85,14 +72,6 @@ REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
 
-# MinIO (S3)
-S3_ENDPOINT=http://localhost:9000
-S3_BUCKET=probability
-S3_REGION=us-east-1
-S3_KEY=minioadmin
-S3_SECRET=minioadmin
-URL_BASE_DOMAIN_S3=http://localhost:9000/probability
-
 # RabbitMQ
 RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
@@ -108,9 +87,6 @@ docker exec -it postgres_local psql -U postgres -d probability -c "SELECT versio
 
 # Redis
 docker exec -it redis_local redis-cli ping
-
-# MinIO
-curl http://localhost:9000/minio/health/live
 
 # RabbitMQ
 curl -u admin:admin http://localhost:15672/api/overview

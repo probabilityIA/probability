@@ -158,7 +158,7 @@ start_infra() {
         echo -e "${GREEN}[infra]${NC} Ya corriendo"
         return 0
     fi
-    echo -e "${BLUE}[infra]${NC} Iniciando PostgreSQL, Redis, RabbitMQ, MinIO..."
+    echo -e "${BLUE}[infra]${NC} Iniciando PostgreSQL, Redis, RabbitMQ..."
     docker-compose -f "$DOCKER_LOCAL/docker-compose.yaml" up -d 2>&1 | tail -5
     echo -e "${BLUE}[infra]${NC} Esperando inicialización (3s)..."
     sleep 3
@@ -278,7 +278,7 @@ show_status() {
     echo ""
 
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "redis_local"; then
-        echo -e "  ${GREEN}●${NC} infra        Docker (PG:5433 Redis:6379 RMQ:5672 MinIO:9000)"
+        echo -e "  ${GREEN}●${NC} infra        Docker (PG:5433 Redis:6379 RMQ:5672)"
     else
         echo -e "  ${RED}○${NC} infra        Docker (detenido)"
     fi
@@ -432,7 +432,7 @@ show_ports() {
     echo -e "${CYAN}═══ Puertos del proyecto ═══${NC}"
     echo ""
 
-    for port in 3000 3050 3051 5433 5672 6379 9000 9001 9090 9091 9092 15672; do
+    for port in 3000 3050 3051 5433 5672 6379 9090 9091 9092 15672; do
         local pid proc
         pid=$(lsof -ti ":$port" 2>/dev/null | head -1 || true)
         if [ -n "$pid" ]; then
@@ -539,7 +539,7 @@ case "$CMD" in
         echo "  guard [MB] [seg]    Vigila el frontend y lo reinicia si se pasa de MB"
         echo ""
         echo "Servicios:"
-        echo "  infra       Docker (PostgreSQL, Redis, RabbitMQ, MinIO)"
+        echo "  infra       Docker (PostgreSQL, Redis, RabbitMQ)"
         echo "  backend     Go API (puerto 3050)"
         echo "  frontend    Next.js dashboard (puerto 3000)"
         echo "  testing     Go testing server (puertos 9090-9092)"

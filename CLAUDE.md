@@ -16,7 +16,7 @@ Archivos 500+ lineas: CERO non-ASCII (acentos, box-drawing, emojis). Archivos co
 
 **Back:** Go 1.23 + Gin + GORM + RabbitMQ + Redis + JWT | `/back/central` API :3050
 **Front:** Next.js 16 + React 19 + TailwindCSS 4 | `/front/central` :3000 | `/front/website` Astro 5
-**Infra:** PostgreSQL 15 :5433 | Redis :6379 | RabbitMQ :5672 | MinIO :9000 | Docker Compose
+**Infra:** PostgreSQL 15 :5433 | Redis :6379 | RabbitMQ :5672 | Docker Compose (S3: AWS, sin MinIO local)
 
 Monorepo multi-tenant: ordenes, productos, pagos, envios desde Shopify, Amazon, MercadoLibre, WhatsApp.
 

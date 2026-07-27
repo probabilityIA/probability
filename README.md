@@ -16,7 +16,7 @@ Plataforma de gestión de e-commerce multi-tenant que permite centralizar y admi
 - **PostgreSQL 15** (GORM)
 - **Redis 7** (Cache)
 - **RabbitMQ 3** (Cola de mensajes)
-- **MinIO/S3** (Almacenamiento)
+- **AWS S3** (Almacenamiento)
 - **DynamoDB** (NoSQL)
 - **Swagger** (Documentación API)
 
@@ -112,8 +112,6 @@ pnpm dev
 | Redis          | 6379   | Cache                  |
 | RabbitMQ       | 5672   | Cola de mensajes       |
 | RabbitMQ UI    | 15672  | Consola de gestión     |
-| MinIO API      | 9000   | Almacenamiento         |
-| MinIO UI       | 9001   | Consola MinIO          |
 
 ## Arquitectura
 

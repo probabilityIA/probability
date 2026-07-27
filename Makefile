@@ -169,7 +169,7 @@ run-mock: run-testing ## Alias de run-testing
 # Docker
 # ======================
 
-docker-up: ## Iniciar servicios Docker locales (PostgreSQL, Redis, RabbitMQ, MinIO)
+docker-up: ## Iniciar servicios Docker locales (PostgreSQL, Redis, RabbitMQ)
 	@echo "🐳 Iniciando servicios Docker..."
 	docker-compose -f $(DOCKER_LOCAL)/docker-compose.yaml up -d
 
@@ -194,7 +194,6 @@ dev: docker-up ## Iniciar entorno completo de desarrollo
 	@echo "  PostgreSQL:  localhost:5433"
 	@echo "  Redis:       localhost:6379"
 	@echo "  RabbitMQ:    localhost:5672 (UI: http://localhost:15672)"
-	@echo "  MinIO:       localhost:9000 (UI: http://localhost:9001)"
 	@echo ""
 	@echo "Para iniciar backend:          make run-backend"
 	@echo "Para iniciar frontend:         make run-frontend"
