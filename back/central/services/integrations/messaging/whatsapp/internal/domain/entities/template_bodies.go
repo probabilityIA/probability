@@ -15,6 +15,8 @@ var templateBodies = map[string]string{
 
 	"confirmacion_pedido": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\n🧾 Orden: {{3}}\n📍 Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n\n¿Confirmas tu pedido?",
 
+	"confirmacion_pedido_contraentrega_sin_valor": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\n🧾Orden: {{3}}\n📍Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n- método de pago: {{8}} 🚚\n\n¿Confirmas tu pedido?",
+
 	"confirmacion_pedido_contraentrega": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\n🧾Orden: {{3}}\n📍Dirección: {{4}}, Ciudad: {{5}},\nDepartamento: {{6}}, Colombia\nProductos:\n{{7}}\n- método de pago: {{8}} 🚚\n- valor a recaudar: {{9}}\n\n¿Confirmas tu pedido?",
 }
 

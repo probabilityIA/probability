@@ -30,7 +30,7 @@ meli/
     +-- infra/
         +-- primary/handlers/
         |   +-- constructor.go         # IHandler + RegisterRoutes
-        |   +-- handle_notification.go # POST /meli/notifications — respond 200, process async
+        |   +-- handle_notification.go # POST /meli/notification — respond 200, process async
         +-- secondary/
             +-- client/                # HTTP client for MeLi REST API
             |   +-- constructor.go     # MeliClient + newAuthorizedRequest helper
@@ -89,7 +89,7 @@ Token management is **lazy** — `EnsureValidToken()` checks expiration before e
 
 ## Notification Flow (IPN)
 
-MercadoLibre sends IPN notifications to `POST /integrations/meli/notifications`:
+MercadoLibre sends IPN notifications to `POST /api/v1/meli/notification`:
 
 ```
 MeLi IPN -> Handler (respond 200) -> goroutine ->
@@ -185,7 +185,7 @@ To create a MercadoLibre integration:
    - **config**: `{ "app_id": "...", "seller_id": 123456, "token_expires_at": "..." }`
    - **credentials**: `{ "access_token": "APP_USR-...", "refresh_token": "TG-...", "client_secret": "..." }`
 4. Configure notification URL in MeLi developer portal:
-   - URL: `https://api.yourdomain.com/integrations/meli/notifications`
+   - URL: `https://api.yourdomain.com/api/v1/meli/notification`
    - Topics: `orders_v2`
 
 ## Testing
@@ -195,7 +195,7 @@ To create a MercadoLibre integration:
 POST /api/integrations/{id}/test
 
 # Manual notification simulation
-POST /api/integrations/meli/notifications
+POST /api/v1/meli/notification
 Content-Type: application/json
 
 {

@@ -26,30 +26,31 @@ type orderEventMessage struct {
 }
 
 type orderSnapshot struct {
-	ID                string   `json:"id"`
-	OrderNumber       string   `json:"order_number"`
-	InternalNumber    string   `json:"internal_number"`
-	ExternalID        string   `json:"external_id"`
-	TotalAmount       float64  `json:"total_amount"`
-	CodTotal          *float64 `json:"cod_total,omitempty"`
-	IsCod             bool     `json:"is_cod"`
-	Currency          string   `json:"currency"`
-	CustomerName      string   `json:"customer_name"`
-	CustomerEmail     string   `json:"customer_email,omitempty"`
-	CustomerPhone     string   `json:"customer_phone,omitempty"`
-	Platform          string   `json:"platform"`
-	IntegrationID     uint     `json:"integration_id"`
-	BusinessName      string   `json:"business_name,omitempty"`
-	ItemsSummary      string   `json:"items_summary,omitempty"`
-	ShippingAddress   string   `json:"shipping_address,omitempty"`
-	ShippingStreet    string   `json:"shipping_street,omitempty"`
-	ShippingCity      string   `json:"shipping_city,omitempty"`
-	ShippingState     string   `json:"shipping_state,omitempty"`
-	PaymentMethodID   uint     `json:"payment_method_id,omitempty"`
-	PaymentMethodName string   `json:"payment_method_name,omitempty"`
-	TrackingNumber    string   `json:"tracking_number,omitempty"`
-	Carrier           string   `json:"carrier,omitempty"`
-	OrderStatusID     *uint    `json:"order_status_id,omitempty"`
+	ID                  string   `json:"id"`
+	OrderNumber         string   `json:"order_number"`
+	InternalNumber      string   `json:"internal_number"`
+	ExternalID          string   `json:"external_id"`
+	TotalAmount         float64  `json:"total_amount"`
+	CodTotal            *float64 `json:"cod_total,omitempty"`
+	IsCod               bool     `json:"is_cod"`
+	CodIncludesShipping bool     `json:"cod_includes_shipping"`
+	Currency            string   `json:"currency"`
+	CustomerName        string   `json:"customer_name"`
+	CustomerEmail       string   `json:"customer_email,omitempty"`
+	CustomerPhone       string   `json:"customer_phone,omitempty"`
+	Platform            string   `json:"platform"`
+	IntegrationID       uint     `json:"integration_id"`
+	BusinessName        string   `json:"business_name,omitempty"`
+	ItemsSummary        string   `json:"items_summary,omitempty"`
+	ShippingAddress     string   `json:"shipping_address,omitempty"`
+	ShippingStreet      string   `json:"shipping_street,omitempty"`
+	ShippingCity        string   `json:"shipping_city,omitempty"`
+	ShippingState       string   `json:"shipping_state,omitempty"`
+	PaymentMethodID     uint     `json:"payment_method_id,omitempty"`
+	PaymentMethodName   string   `json:"payment_method_name,omitempty"`
+	TrackingNumber      string   `json:"tracking_number,omitempty"`
+	Carrier             string   `json:"carrier,omitempty"`
+	OrderStatusID       *uint    `json:"order_status_id,omitempty"`
 }
 
 type OrderEventConsumer struct {
@@ -109,6 +110,7 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["external_id"] = msg.Order.ExternalID
 		data["total_amount"] = msg.Order.TotalAmount
 		data["is_cod"] = msg.Order.IsCod
+		data["cod_includes_shipping"] = msg.Order.CodIncludesShipping
 		if msg.Order.CodTotal != nil {
 			data["cod_total"] = *msg.Order.CodTotal
 		}

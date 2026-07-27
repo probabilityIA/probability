@@ -39,6 +39,7 @@ func New(useCase usecases.IMeliUseCase, logger log.ILogger, config env.IConfig, 
 func (h *meliHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
 	meli := router.Group("/meli")
 	{
+		meli.POST("/notification", h.HandleNotification)
 		meli.POST("/notifications", h.HandleNotification)
 	}
 

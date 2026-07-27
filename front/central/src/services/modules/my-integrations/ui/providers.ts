@@ -30,6 +30,7 @@ export interface SyncProvider {
     key: string;
     label: string;
     inventoryEventPrefix: string;
+    productEventPrefix?: string;
     syncInventory: (integrationId: number, businessId?: number) => Promise<unknown>;
     reconcileProducts: (integrationId: number, businessId?: number) => Promise<unknown>;
     associateProducts: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
@@ -77,6 +78,7 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         key: 'woocommerce',
         label: 'WooCommerce',
         inventoryEventPrefix: 'woo',
+        productEventPrefix: 'woocommerce',
         syncInventory: syncWooInventoryAction,
         reconcileProducts: reconcileWooProductsAction,
         associateProducts: associateWooProductsAction,
@@ -124,10 +126,13 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
 
 const INVENTORY_EVENT_SUFFIXES = ['started', 'item', 'progress', 'completed'];
 
+const PRODUCT_SYNC_SUFFIXES = ['started', 'progress', 'completed'];
+
 export const GLOBAL_INVENTORY_EVENT_TYPES = Object.values(SYNC_PROVIDERS).flatMap(p => [
     ...INVENTORY_EVENT_SUFFIXES.map(s => `${p.inventoryEventPrefix}.inventory.sync.${s}`),
     `${p.inventoryEventPrefix}.product.reconcile.started`,
     `${p.inventoryEventPrefix}.product.reconcile.completed`,
+    ...PRODUCT_SYNC_SUFFIXES.map(s => `${p.productEventPrefix ?? p.inventoryEventPrefix}.product.sync.${s}`),
 ]);
 
 export function getSyncProvider(integrationTypeId: number | string | undefined): SyncProvider | null {

@@ -166,6 +166,17 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 			"9":  orDefault(event.Carrier, "Transportadora"),
 			"10": trackingURL,
 		}
+	case "confirmacion_pedido_contraentrega_sin_valor":
+		return map[string]string{
+			"1": orDefault(event.CustomerName, "Cliente"),
+			"2": orDefault(event.BusinessName, "Probability"),
+			"3": orDefault(event.OrderNumber, "N/A"),
+			"4": orDefault(event.ShippingStreet, orDefault(event.ShippingAddress, "No especificada")),
+			"5": orDefault(event.ShippingCity, ""),
+			"6": orDefault(event.ShippingState, ""),
+			"7": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
+			"8": orDefault(event.PaymentMethodName, "contra entrega"),
+		}
 	case "confirmacion_pedido":
 		return map[string]string{
 			"1": orDefault(event.CustomerName, "Cliente"),

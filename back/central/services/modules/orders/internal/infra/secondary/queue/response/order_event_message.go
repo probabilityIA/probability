@@ -20,12 +20,13 @@ type OrderSnapshot struct {
 	InternalNumber string `json:"internal_number"`
 	ExternalID     string `json:"external_id"`
 
-	TotalAmount     float64  `json:"total_amount"`
-	CodTotal        *float64 `json:"cod_total,omitempty"`
-	IsCod           bool     `json:"is_cod"`
-	Currency        string   `json:"currency"`
-	PaymentMethodID uint     `json:"payment_method_id"`
-	PaymentStatusID *uint   `json:"payment_status_id,omitempty"`
+	TotalAmount         float64  `json:"total_amount"`
+	CodTotal            *float64 `json:"cod_total,omitempty"`
+	IsCod               bool     `json:"is_cod"`
+	CodIncludesShipping bool     `json:"cod_includes_shipping"`
+	Currency            string   `json:"currency"`
+	PaymentMethodID     uint     `json:"payment_method_id"`
+	PaymentStatusID     *uint    `json:"payment_status_id,omitempty"`
 
 	Subtotal     float64 `json:"subtotal"`
 	Tax          float64 `json:"tax"`
@@ -56,14 +57,14 @@ type OrderSnapshot struct {
 	ShippingPostalCode  string   `json:"shipping_postal_code,omitempty"`
 	ShippingLat         *float64 `json:"shipping_lat,omitempty"`
 	ShippingLng         *float64 `json:"shipping_lng,omitempty"`
-	ItemsSummary        string  `json:"items_summary,omitempty"`
-	ShippingAddress     string  `json:"shipping_address,omitempty"`
-	PaymentMethodName   string  `json:"payment_method_name,omitempty"`
-	TrackingNumber      string  `json:"tracking_number,omitempty"`
-	Carrier             string  `json:"carrier,omitempty"`
-	IsPaid              bool    `json:"is_paid"`
-	DeliveryProbability float64 `json:"delivery_probability,omitempty"`
-	Status              string  `json:"status,omitempty"`
+	ItemsSummary        string   `json:"items_summary,omitempty"`
+	ShippingAddress     string   `json:"shipping_address,omitempty"`
+	PaymentMethodName   string   `json:"payment_method_name,omitempty"`
+	TrackingNumber      string   `json:"tracking_number,omitempty"`
+	Carrier             string   `json:"carrier,omitempty"`
+	IsPaid              bool     `json:"is_paid"`
+	DeliveryProbability float64  `json:"delivery_probability,omitempty"`
+	Status              string   `json:"status,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
