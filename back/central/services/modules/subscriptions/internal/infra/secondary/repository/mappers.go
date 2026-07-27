@@ -36,6 +36,7 @@ func subscriptionTypeToEntity(m *models.SubscriptionType) *entities.Subscription
 		Active:               m.Active,
 		ModuleCodes:          unmarshalModuleCodes(m.Features),
 		MaxEcommerceChannels: m.MaxEcommerceChannels,
+		BusinessID:           m.BusinessID,
 		CreatedAt:            m.CreatedAt,
 		UpdatedAt:            m.UpdatedAt,
 	}

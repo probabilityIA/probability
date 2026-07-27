@@ -16,6 +16,7 @@ type SubscriptionTypeResponse struct {
 	Active               bool      `json:"active"`
 	ModuleCodes          []string  `json:"module_codes"`
 	MaxEcommerceChannels int       `json:"max_ecommerce_channels"`
+	BusinessID           *uint     `json:"business_id,omitempty"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 }
@@ -31,6 +32,7 @@ func FromSubscriptionType(t *entities.SubscriptionType) SubscriptionTypeResponse
 		Active:               t.Active,
 		ModuleCodes:          t.ModuleCodes,
 		MaxEcommerceChannels: t.MaxEcommerceChannels,
+		BusinessID:           t.BusinessID,
 		CreatedAt:            t.CreatedAt,
 		UpdatedAt:            t.UpdatedAt,
 	}

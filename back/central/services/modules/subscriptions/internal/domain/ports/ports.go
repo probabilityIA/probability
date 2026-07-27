@@ -13,6 +13,7 @@ type IRepository interface {
 	DeleteSubscriptionType(ctx context.Context, id uint) error
 	GetSubscriptionType(ctx context.Context, id uint) (*entities.SubscriptionType, error)
 	ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
+	ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
 
 	CreateBusinessSubscription(ctx context.Context, subscription *entities.BusinessSubscription) error
 	GetLatestByBusinessID(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)

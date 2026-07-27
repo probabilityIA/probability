@@ -21,6 +21,7 @@ export interface SubscriptionType {
     active: boolean;
     module_codes: string[];
     max_ecommerce_channels: number;
+    business_id?: number;
     created_at?: string;
     updated_at?: string;
 }
@@ -136,6 +137,91 @@ export async function deleteSubscriptionTypeAction(id: number): Promise<{ succes
     try {
         const headers = await buildHeaders();
         const res = await fetch(`${env.API_BASE_URL}/subscriptions/types/${id}`, {
+            method: 'DELETE',
+            headers,
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function listCustomPlansAction(businessId?: number): Promise<{ success: boolean; data?: SubscriptionType[]; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const url = businessId
+            ? `${env.API_BASE_URL}/subscriptions/custom-plans?business_id=${businessId}`
+            : `${env.API_BASE_URL}/subscriptions/custom-plans`;
+        const res = await fetch(url, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function createCustomPlanAction(payload: {
+    name: string;
+    code: string;
+    description?: string;
+    price: number;
+    billing_period?: string;
+    module_codes: string[];
+    max_ecommerce_channels?: number;
+    business_id: number;
+    months: number;
+    payment_reference?: string;
+    notes?: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/custom-plans`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function updateCustomPlanAction(id: number, payload: {
+    name: string;
+    description?: string;
+    price: number;
+    billing_period?: string;
+    active: boolean;
+    module_codes: string[];
+    max_ecommerce_channels?: number;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/custom-plans/${id}`, {
+            method: 'PUT',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function deleteCustomPlanAction(id: number): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/custom-plans/${id}`, {
             method: 'DELETE',
             headers,
         });

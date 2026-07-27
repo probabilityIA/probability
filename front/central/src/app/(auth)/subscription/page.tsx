@@ -16,6 +16,10 @@ import {
     listOverridesAction,
     grantOverrideAction,
     revokeOverrideAction,
+    listCustomPlansAction,
+    createCustomPlanAction,
+    updateCustomPlanAction,
+    deleteCustomPlanAction,
     BusinessSubscription,
     SubscriptionType,
     BusinessModuleOverride,
@@ -53,7 +57,7 @@ export default function SubscriptionPage() {
     const { isSuperAdmin } = usePermissions();
     const { businesses } = useBusinessesSimple();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
-    const [adminTab, setAdminTab] = useState<'businesses' | 'types'>('businesses');
+    const [adminTab, setAdminTab] = useState<'businesses' | 'types' | 'custom'>('businesses');
 
     const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId);
 
@@ -118,10 +122,16 @@ export default function SubscriptionPage() {
                                     >
                                         Tipos de Suscripción
                                     </button>
+                                    <button
+                                        onClick={() => setAdminTab('custom')}
+                                        className={`px-4 py-2 text-sm font-medium border-b-2 ${adminTab === 'custom' ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-500 dark:text-gray-400'}`}
+                                    >
+                                        Planes Personalizados
+                                    </button>
                                 </div>
-                                {adminTab === 'businesses'
-                                    ? <AdminSubscriptionsView businesses={businesses} />
-                                    : <SubscriptionTypesAdminPanel />}
+                                {adminTab === 'businesses' && <AdminSubscriptionsView businesses={businesses} />}
+                                {adminTab === 'types' && <SubscriptionTypesAdminPanel />}
+                                {adminTab === 'custom' && <CustomPlansAdminPanel businesses={businesses} />}
                             </div>
                         )
                     ) : (
@@ -612,6 +622,355 @@ function SubscriptionTypesAdminPanel() {
                                     })}
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2.5 pt-4 mt-4 border-t border-gray-100 dark:border-gray-700">
+                        <Button variant="secondary" onClick={() => setEditModal({ open: false })}>Cancelar</Button>
+                        <Button variant="purple" onClick={handleSave}>Guardar</Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
+    const [plans, setPlans] = useState<SubscriptionType[]>([]);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [editModal, setEditModal] = useState<{ open: boolean; plan?: SubscriptionType }>({ open: false });
+
+    const [form, setForm] = useState({
+        name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true,
+        module_codes: [] as string[], max_ecommerce_channels: '0', business_id: '', months: '1', notes: '',
+    });
+
+    const businessName = (id?: number) => businesses.find((b) => b.id === id)?.name ?? `Negocio ${id}`;
+
+    const load = useCallback(async () => {
+        setLoading(true);
+        const [plansRes, catalogRes] = await Promise.all([listCustomPlansAction(), getModuleCatalogAction()]);
+        if (plansRes.success && plansRes.data) setPlans(plansRes.data);
+        if (catalogRes.success && catalogRes.data) setModuleCatalog(catalogRes.data);
+        setLoading(false);
+    }, []);
+
+    useEffect(() => { load(); }, [load]);
+
+    const openCreate = () => {
+        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [], max_ecommerce_channels: '0', business_id: '', months: '1', notes: '' });
+        setEditModal({ open: true });
+    };
+
+    const openEdit = (p: SubscriptionType) => {
+        setForm({ name: p.name, code: p.code, description: p.description, price: String(p.price), billing_period: p.billing_period, active: p.active, module_codes: p.module_codes ?? [], max_ecommerce_channels: String(p.max_ecommerce_channels ?? 0), business_id: String(p.business_id ?? ''), months: '1', notes: '' });
+        setEditModal({ open: true, plan: p });
+    };
+
+    const toggleModule = (code: string) => {
+        setForm((prev) => ({
+            ...prev,
+            module_codes: prev.module_codes.includes(code)
+                ? prev.module_codes.filter((c) => c !== code)
+                : [...prev.module_codes, code],
+        }));
+    };
+
+    const handleSave = async () => {
+        if (!form.name || !form.price) return;
+        if (!editModal.plan && !form.business_id) {
+            setMessage({ type: 'error', text: 'Selecciona el negocio al que se atará este plan' });
+            return;
+        }
+
+        const res = editModal.plan
+            ? await updateCustomPlanAction(editModal.plan.id, {
+                name: form.name,
+                description: form.description,
+                price: Number(form.price),
+                billing_period: form.billing_period,
+                active: form.active,
+                module_codes: form.module_codes,
+                max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
+            })
+            : await createCustomPlanAction({
+                name: form.name,
+                code: form.code,
+                description: form.description,
+                price: Number(form.price),
+                billing_period: form.billing_period,
+                module_codes: form.module_codes,
+                max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
+                business_id: Number(form.business_id),
+                months: Number(form.months) || 1,
+                notes: form.notes || undefined,
+            });
+
+        if (res.success) {
+            setMessage({ type: 'success', text: editModal.plan ? 'Plan personalizado actualizado' : 'Plan personalizado creado y asociado al negocio' });
+            setEditModal({ open: false });
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al guardar' });
+        }
+    };
+
+    const handleDelete = async (p: SubscriptionType) => {
+        if (!confirm(`¿Eliminar el plan personalizado "${p.name}" de ${businessName(p.business_id)}?`)) return;
+        const res = await deleteCustomPlanAction(p.id);
+        if (res.success) {
+            setMessage({ type: 'success', text: 'Plan personalizado eliminado' });
+            load();
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al eliminar' });
+        }
+    };
+
+    const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
+
+    if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
+
+    return (
+        <div className="space-y-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+                Planes a la medida, atados a un negocio específico. Al crearlos quedan activados de inmediato para ese negocio.
+            </p>
+
+            {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
+
+            <div className="flex justify-end">
+                <Button variant="primary" onClick={openCreate}>+ Nuevo plan personalizado</Button>
+            </div>
+
+            {plans.length === 0 && (
+                <div className="text-center py-10 text-sm text-gray-400">Aún no hay planes personalizados creados.</div>
+            )}
+
+            <div className="grid gap-5 lg:grid-cols-3">
+                {plans.map((p) => (
+                    <div
+                        key={p.id}
+                        className={`relative flex flex-col rounded-2xl border bg-white dark:bg-gray-800 overflow-hidden transition-opacity ${
+                            p.active ? 'border-violet-200 dark:border-violet-800/60 shadow-sm shadow-violet-500/5' : 'border-gray-200 dark:border-gray-700 opacity-60'
+                        }`}
+                    >
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wide py-1.5 bg-gradient-to-r from-indigo-700 to-blue-500 text-white">
+                            {businessName(p.business_id)}
+                        </div>
+
+                        <div className="pt-5 px-6 pb-5">
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-lg font-bold text-gray-900 dark:text-white">{p.name}</h4>
+                                <span className="text-[11px] font-mono text-gray-400">{p.code}</span>
+                            </div>
+
+                            <div className="flex items-end gap-1 mb-3">
+                                <span className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">{formatCurrency(p.price)}</span>
+                                <span className="text-sm font-semibold text-gray-400 pb-1">/{p.billing_period === 'monthly' ? 'mes' : 'año'}</span>
+                            </div>
+
+                            {p.description && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed mb-2">{p.description}</p>
+                            )}
+
+                            <div className="flex items-center gap-3 rounded-xl p-3 bg-indigo-50 dark:bg-indigo-900/20">
+                                <div className="w-[34px] h-[34px] rounded-lg flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-800/40 text-indigo-600 dark:text-indigo-300">
+                                    <ChannelsIcon />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                                        {p.max_ecommerce_channels > 0 ? `Hasta ${p.max_ecommerce_channels}` : 'Ilimitados'}
+                                    </div>
+                                    <div className="text-xs text-gray-400 leading-tight">canales de ecommerce conectados</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-indigo-100 dark:border-indigo-900/40 mx-6" />
+
+                        <div className="px-6 pt-4 pb-2 flex-1">
+                            <div className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-3">Módulos incluidos</div>
+                            <div className="flex flex-col gap-2.5">
+                                {(p.module_codes ?? []).length === 0 && (
+                                    <span className="text-xs text-gray-400 italic">Sin módulos asignados</span>
+                                )}
+                                {(p.module_codes ?? []).map((m) => (
+                                    <div key={m} className="flex items-center gap-2.5">
+                                        <span className="w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 bg-indigo-100 dark:bg-indigo-800/40 text-indigo-600 dark:text-indigo-300">
+                                            <CheckIcon />
+                                        </span>
+                                        <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200">{moduleName(m)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="px-6 pt-5 pb-6 flex gap-2">
+                            <Button size="sm" variant="outline-purple" onClick={() => openEdit(p)} className="flex-1">Editar</Button>
+                            <Button size="sm" variant="danger" onClick={() => handleDelete(p)} className="flex-1">Eliminar</Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <Modal isOpen={editModal.open} onClose={() => setEditModal({ open: false })} size="4xl">
+                <div className="flex flex-col">
+                    <div className="flex items-start justify-between gap-4 pb-4 mb-4 border-b border-gray-100 dark:border-gray-700">
+                        <div>
+                            <div className="flex items-center gap-2.5">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                    {editModal.plan ? `Editar ${editModal.plan.name}` : 'Nuevo plan personalizado'}
+                                </h3>
+                                {editModal.plan && (
+                                    <span className="font-mono text-[11.5px] font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2.5 py-0.5 rounded-full">
+                                        {editModal.plan.code}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-1">
+                                {editModal.plan ? 'El negocio asociado no se puede cambiar una vez creado el plan.' : 'Elige el negocio, define permisos y el valor a pagar.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setEditModal({ open: false })}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 5L19 19M19 5L5 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="space-y-4">
+                            <div className="flex items-baseline justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">Datos básicos</span>
+                                <span className="text-xs text-gray-400">Cómo se cobra</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Negocio</label>
+                                <select
+                                    value={form.business_id}
+                                    onChange={(e) => setForm({ ...form, business_id: e.target.value })}
+                                    disabled={!!editModal.plan}
+                                    className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                >
+                                    <option value="">Selecciona un negocio</option>
+                                    {businesses.map((b) => (
+                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                            {!editModal.plan && (
+                                <Input label="Código (único)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: vip-negocio-x" className="font-mono" />
+                            )}
+                            <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                    <input
+                                        type="number"
+                                        value={form.price}
+                                        onChange={(e) => setForm({ ...form, price: e.target.value })}
+                                        className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 mt-1.5">
+                                    ${(Number(form.price) || 0).toLocaleString('es-CO')} COP / {form.billing_period === 'monthly' ? 'mes' : 'año'}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Periodo de facturación</label>
+                                <select value={form.billing_period} onChange={(e) => setForm({ ...form, billing_period: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+                                    <option value="monthly">Mensual</option>
+                                    <option value="annual">Anual</option>
+                                </select>
+                            </div>
+
+                            {!editModal.plan && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Meses a activar de una vez</label>
+                                    <select value={form.months} onChange={(e) => setForm({ ...form, months: e.target.value })} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
+                                        <option value="1">1 mes</option>
+                                        <option value="3">3 meses</option>
+                                        <option value="6">6 meses</option>
+                                        <option value="12">12 meses (anual)</option>
+                                    </select>
+                                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">Al guardar, el plan queda activo de inmediato para el negocio seleccionado por esta cantidad de meses.</p>
+                                </div>
+                            )}
+
+                            {editModal.plan && (
+                                <div
+                                    onClick={() => setForm({ ...form, active: !form.active })}
+                                    className="flex items-start gap-2.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg px-3.5 py-3 cursor-pointer"
+                                >
+                                    <span className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 border-[1.5px] ${form.active ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-transparent'}`}>
+                                        <CheckIcon />
+                                    </span>
+                                    <div>
+                                        <div className="text-[13.5px] font-semibold text-gray-900 dark:text-white">Plan activo</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">Si lo desactivas, no afecta la suscripción ya asociada, solo impide reutilizarlo.</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-4 sm:border-l sm:border-gray-100 dark:sm:border-gray-700 sm:pl-8">
+                            <div className="flex items-baseline justify-between">
+                                <span className="text-xs font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">Alcance del plan</span>
+                                <span className="text-xs text-gray-400">Qué incluye</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Límite de canales e-commerce <span className="font-normal text-gray-400">— 0 sin límite</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    value={form.max_ecommerce_channels}
+                                    onChange={(e) => setForm({ ...form, max_ecommerce_channels: e.target.value })}
+                                    className="w-32 px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-2.5">
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Módulos incluidos</label>
+                                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{form.module_codes.length} de {moduleCatalog.length}</span>
+                                </div>
+                                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                                    {moduleCatalog.map(({ code, name }) => {
+                                        const checked = form.module_codes.includes(code);
+                                        return (
+                                            <div
+                                                key={code}
+                                                onClick={() => toggleModule(code)}
+                                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border-[1.5px] cursor-pointer transition-colors ${
+                                                    checked
+                                                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500'
+                                                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'
+                                                }`}
+                                            >
+                                                <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-[1.5px] ${checked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-gray-300 dark:border-gray-600 text-transparent'}`}>
+                                                    <CheckIcon />
+                                                </span>
+                                                <span className="text-[13px] font-medium text-gray-700 dark:text-gray-200 truncate">{name}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {!editModal.plan && (
+                                <Input label="Notas (opcional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Observaciones internas sobre este plan..." />
+                            )}
                         </div>
                     </div>
 
