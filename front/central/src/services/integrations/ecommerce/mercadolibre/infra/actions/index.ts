@@ -46,8 +46,9 @@ export async function associateMeliProductsAction(integrationId: number, busines
     return postWithAuth('/integrations/meli/products/associate', body);
 }
 
-export async function applyMeliProductsAction(integrationId: number, direction: 'to_meli' | 'to_probability', businessId?: number) {
+export async function applyMeliProductsAction(integrationId: number, direction: 'to_meli' | 'to_probability', businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction };
+    if (skus && skus.length > 0) body.skus = skus;
     if (businessId) body.business_id = businessId;
     return postWithAuth('/integrations/meli/products/apply', body);
 }

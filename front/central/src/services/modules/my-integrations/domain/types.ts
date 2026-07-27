@@ -18,6 +18,7 @@ export interface SyncRunDetail {
     sku: string;
     label: string;
     tone: 'ok' | 'warn' | 'error';
+    group?: string;
 }
 
 export interface SyncRunRecord {

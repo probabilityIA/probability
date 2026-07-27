@@ -126,14 +126,14 @@ func failedDetail(data map[string]interface{}) []domain.DetailItem {
 	for _, item := range raw {
 		switch value := item.(type) {
 		case string:
-			detail = append(detail, domain.DetailItem{SKU: value, Label: "fallo al actualizar", Tone: "error"})
+			detail = append(detail, domain.DetailItem{SKU: value, Label: "fallo al actualizar", Tone: "error", Group: "failed"})
 		case map[string]interface{}:
 			sku, _ := value["sku"].(string)
 			message, _ := value["error"].(string)
 			if message == "" {
 				message = "fallo al actualizar"
 			}
-			detail = append(detail, domain.DetailItem{SKU: sku, Label: message, Tone: "error"})
+			detail = append(detail, domain.DetailItem{SKU: sku, Label: message, Tone: "error", Group: "failed"})
 		}
 	}
 	return detail

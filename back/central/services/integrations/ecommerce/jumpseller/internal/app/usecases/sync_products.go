@@ -170,6 +170,7 @@ func (uc *jumpsellerUseCase) ReconcileProducts(ctx context.Context, integrationI
 	}
 
 	result := &domain.ReconcileResult{
+		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInJumpseller:     []domain.ProductBrief{},
@@ -198,6 +199,7 @@ func (uc *jumpsellerUseCase) ReconcileProducts(ctx context.Context, integrationI
 			result.OnlyInJumpseller = append(result.OnlyInJumpseller, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
 			continue
 		}
+		result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
 		if associated[key] {
 			result.Matched++
 		} else {
@@ -277,7 +279,20 @@ func (uc *jumpsellerUseCase) upsertMsgFromJumpseller(ctx context.Context, busine
 	return msg
 }
 
-func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func selectedSKUs(skus []string) map[string]bool {
+	if len(skus) == 0 {
+		return nil
+	}
+	set := make(map[string]bool, len(skus))
+	for _, s := range skus {
+		if key := normalizeSKU(s); key != "" {
+			set[key] = true
+		}
+	}
+	return set
+}
+
+func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -287,11 +302,14 @@ func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, inte
 
 	jsBySKU := indexJumpsellerBySKU(data.jumpseller)
 
+	only := selectedSKUs(skus)
 	targets := make([]domain.ProductForSync, 0, len(data.probability))
 	for _, p := range data.probability {
-		if normalizeSKU(p.SKU) != "" {
-			targets = append(targets, p)
+		key := normalizeSKU(p.SKU)
+		if key == "" || (only != nil && !only[key]) {
+			continue
 		}
+		targets = append(targets, p)
 	}
 
 	total := len(targets)
@@ -361,7 +379,7 @@ func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, inte
 	return nil
 }
 
-func (uc *jumpsellerUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *jumpsellerUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -371,10 +389,11 @@ func (uc *jumpsellerUseCase) ApplyProductsToProbability(ctx context.Context, int
 
 	probBySKU := indexProbabilityBySKU(data.probability)
 
+	only := selectedSKUs(skus)
 	missing := make([]jumpsellerSKU, 0)
 	for _, j := range data.jumpseller {
 		key := normalizeSKU(j.SKU)
-		if key == "" {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		if _, exists := probBySKU[key]; exists {
@@ -386,7 +405,7 @@ func (uc *jumpsellerUseCase) ApplyProductsToProbability(ctx context.Context, int
 	return uc.publishUpserts(ctx, businessID, uint(integIDUint), correlationID, ModeCreate, missing, data.storeWeightUnit)
 }
 
-func (uc *jumpsellerUseCase) UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *jumpsellerUseCase) UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -396,10 +415,11 @@ func (uc *jumpsellerUseCase) UpdateProductsToProbability(ctx context.Context, in
 
 	probBySKU := indexProbabilityBySKU(data.probability)
 
+	only := selectedSKUs(skus)
 	existing := make([]jumpsellerSKU, 0)
 	for _, j := range data.jumpseller {
 		key := normalizeSKU(j.SKU)
-		if key == "" {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		if _, ok := probBySKU[key]; !ok {
@@ -468,7 +488,7 @@ func (uc *jumpsellerUseCase) publishUpserts(ctx context.Context, businessID, int
 	return nil
 }
 
-func (uc *jumpsellerUseCase) UpdateProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *jumpsellerUseCase) UpdateProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -478,10 +498,11 @@ func (uc *jumpsellerUseCase) UpdateProductsToJumpseller(ctx context.Context, int
 
 	jsBySKU := indexJumpsellerBySKU(data.jumpseller)
 
+	only := selectedSKUs(skus)
 	targets := make([]domain.ProductForSync, 0)
 	for _, p := range data.probability {
 		key := normalizeSKU(p.SKU)
-		if key == "" {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		if _, ok := jsBySKU[key]; ok {

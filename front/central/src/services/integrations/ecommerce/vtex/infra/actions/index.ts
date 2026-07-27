@@ -98,8 +98,9 @@ export async function reconcileVTEXProductsAction(integrationId: number, busines
     return postWithAuth('/vtex/products/reconcile', body);
 }
 
-export async function applyVTEXProductsAction(integrationId: number, businessId?: number, mode: 'create' | 'update' = 'create') {
+export async function applyVTEXProductsAction(integrationId: number, businessId?: number, mode: 'create' | 'update' = 'create', skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction: 'to_probability', mode };
+    if (skus && skus.length > 0) body.skus = skus;
     if (businessId) body.business_id = businessId;
     return postWithAuth('/vtex/products/apply', body);
 }

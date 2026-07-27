@@ -39,8 +39,9 @@ export async function reconcileShopifyProductsAction(integrationId: number, busi
     return postWithAuth('/integrations/shopify/products/reconcile', body);
 }
 
-export async function applyShopifyProductsAction(integrationId: number, direction: 'to_shopify' | 'to_probability', businessId?: number) {
+export async function applyShopifyProductsAction(integrationId: number, direction: 'to_shopify' | 'to_probability', businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction };
+    if (skus && skus.length > 0) body.skus = skus;
     if (businessId) body.business_id = businessId;
     return postWithAuth('/integrations/shopify/products/apply', body);
 }

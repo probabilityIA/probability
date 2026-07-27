@@ -31,8 +31,8 @@ type IWooCommerceUseCase interface {
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error
 
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error)
-	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error
-	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 }
 

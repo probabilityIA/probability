@@ -39,10 +39,20 @@ export interface ProductsResult {
 
 export type SyncResult = InventoryResult | ProductsResult | { kind: 'error'; message: string };
 
+export type DetailGroup =
+    | 'both'
+    | 'not_associated'
+    | 'only_probability'
+    | 'only_channel'
+    | 'updated'
+    | 'skipped'
+    | 'failed';
+
 export interface SyncDetailItem {
     sku: string;
     label: string;
     tone: 'ok' | 'warn' | 'error';
+    group: DetailGroup;
 }
 
 export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbability' | 'updateInProbability';
@@ -65,7 +75,7 @@ interface SyncActivityValue {
     lastRuns: Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>;
     actionBusy: Record<number, ProductActionKey | null>;
     actionResult: Record<number, ProductActionResult | null>;
-    runProductAction: (integrationId: number, action: ProductActionKey) => void;
+    runProductAction: (integrationId: number, action: ProductActionKey, skus?: string[]) => void;
     runCurrent: () => void;
     runInventory: () => void;
     runProducts: () => void;
@@ -154,12 +164,14 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             } else if (eventType.endsWith('.inventory.sync.item')) {
                 const action = String(data.action || '');
                 const failed = /fail|error/i.test(action);
+                const skipped = /skip|omit|unchanged/i.test(action);
                 pushDetail(id, {
                     sku: String(data.sku || '(sin sku)'),
                     label: failed
                         ? String(data.error || data.message || 'fallo al actualizar')
                         : `${action || 'actualizado'} · ${data.quantity ?? '-'} u.`,
-                    tone: failed ? 'error' : /skip|omit|unchanged/i.test(action) ? 'warn' : 'ok',
+                    tone: failed ? 'error' : skipped ? 'warn' : 'ok',
+                    group: failed ? 'failed' : skipped ? 'skipped' : 'updated',
                 });
             } else if (eventType.endsWith('.inventory.sync.progress')) {
                 setProgress(prev => ({
@@ -184,7 +196,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                 for (const raw of failedSkus) {
                     const sku = typeof raw === 'string' ? raw : String((raw as Record<string, unknown>)?.sku ?? '');
                     const msg = typeof raw === 'string' ? 'fallo al actualizar' : String((raw as Record<string, unknown>)?.error ?? 'fallo al actualizar');
-                    pushDetail(id, { sku: sku || '(sin sku)', label: msg, tone: 'error' });
+                    pushDetail(id, { sku: sku || '(sin sku)', label: msg, tone: 'error', group: 'failed' });
                 }
                 patchNode(id, 'done');
                 completion.current.get(id)?.();
@@ -290,16 +302,22 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             }
 
             const detail: SyncDetailItem[] = [];
-            const push = (arr: unknown, tone: SyncDetailItem['tone'], label: string) => {
+            const seen = new Set<string>();
+            const push = (arr: unknown, tone: SyncDetailItem['tone'], label: string, group: DetailGroup) => {
                 if (!Array.isArray(arr)) return;
-                for (const raw of arr.slice(0, 120)) {
+                for (const raw of arr.slice(0, 200)) {
                     const obj = raw as Record<string, unknown>;
-                    detail.push({ sku: String(obj?.sku ?? ''), label: `${label}${obj?.name ? ` · ${obj.name}` : ''}`, tone });
+                    const sku = String(obj?.sku ?? '');
+                    const key = `${group}:${sku}`;
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    detail.push({ sku, label: `${label}${obj?.name ? ` · ${obj.name}` : ''}`, tone, group });
                 }
             };
-            push(res?.matched_not_associated, 'warn', 'sin asociar');
-            push(res?.only_in_probability, 'warn', 'solo en Probability');
-            push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal');
+            push(res?.matched_not_associated, 'warn', 'sin asociar', 'not_associated');
+            push(res?.matched_items, 'ok', 'en ambos', 'both');
+            push(res?.only_in_probability, 'warn', 'solo en Probability', 'only_probability');
+            push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal', 'only_channel');
             setDetails(prev => ({ ...prev, [integration.id]: detail }));
 
             const summary: ProductsResult = {
@@ -351,20 +369,20 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         loadLastRuns();
     }, [running, eligible, reconcileOne, loadLastRuns]);
 
-    const runProductAction = useCallback(async (integrationId: number, action: ProductActionKey) => {
+    const runProductAction = useCallback(async (integrationId: number, action: ProductActionKey, skus?: string[]) => {
         const integration = eligible.find(i => i.id === integrationId);
         const provider = integration ? getSyncProvider(integration.integration_type_id) : null;
         if (!integration || !provider || actionBusy[integrationId]) return;
 
         const run = action === 'associate'
-            ? (id: number, bid?: number) => provider.associateProducts(id, bid)
+            ? (id: number, bid?: number, only?: string[]) => provider.associateProducts(id, bid, only)
             : provider.apply[action];
         if (!run) return;
 
         setActionBusy(prev => ({ ...prev, [integrationId]: action }));
         setActionResult(prev => ({ ...prev, [integrationId]: null }));
         try {
-            const res = await run(integrationId, businessId ?? undefined) as Record<string, unknown>;
+            const res = await run(integrationId, businessId ?? undefined, skus) as Record<string, unknown>;
             const ok = res?.success !== false;
             setActionResult(prev => ({
                 ...prev,

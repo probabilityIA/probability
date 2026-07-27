@@ -45,8 +45,9 @@ export async function reconcileWooProductsAction(integrationId: number, business
     return postWithAuth('/woocommerce/products/reconcile', body);
 }
 
-export async function applyWooProductsAction(integrationId: number, direction: 'to_woo' | 'to_probability', businessId?: number) {
+export async function applyWooProductsAction(integrationId: number, direction: 'to_woo' | 'to_probability', businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction };
+    if (skus && skus.length > 0) body.skus = skus;
     if (businessId) body.business_id = businessId;
     return postWithAuth('/woocommerce/products/apply', body);
 }

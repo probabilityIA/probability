@@ -13,6 +13,7 @@ type detailRequest struct {
 	SKU   string `json:"sku"`
 	Label string `json:"label"`
 	Tone  string `json:"tone"`
+	Group string `json:"group"`
 }
 
 type recordRequest struct {
@@ -75,7 +76,7 @@ func (h *handler) Record(c *gin.Context) {
 		Message:           req.Message,
 	}
 	for _, d := range req.Detail {
-		run.Detail = append(run.Detail, domain.DetailItem{SKU: d.SKU, Label: d.Label, Tone: d.Tone})
+		run.Detail = append(run.Detail, domain.DetailItem{SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group})
 	}
 
 	if err := h.useCase.Record(c.Request.Context(), &run); err != nil {

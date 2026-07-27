@@ -17,7 +17,7 @@ export interface ProductSyncModalProps {
     onCompleted?: () => void;
 }
 
-export type ProductApply = (integrationId: number, businessId?: number) => Promise<unknown>;
+export type ProductApply = (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
 
 export interface ProductApplyActions {
     createInChannel?: ProductApply;
@@ -49,8 +49,8 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         reconcileProducts: reconcileShopifyProductsAction,
         associateProducts: associateShopifyProductsAction,
         apply: {
-            createInChannel: (id, bid) => applyShopifyProductsAction(id, 'to_shopify', bid),
-            createInProbability: (id, bid) => applyShopifyProductsAction(id, 'to_probability', bid),
+            createInChannel: (id, bid, skus) => applyShopifyProductsAction(id, 'to_shopify', bid, skus),
+            createInProbability: (id, bid, skus) => applyShopifyProductsAction(id, 'to_probability', bid, skus),
         },
         onlyInChannelField: 'only_in_shopify',
         channelNoSkuField: 'shopify_no_sku',
@@ -65,8 +65,8 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         reconcileProducts: reconcileMeliProductsAction,
         associateProducts: associateMeliProductsAction,
         apply: {
-            createInChannel: (id, bid) => applyMeliProductsAction(id, 'to_meli', bid),
-            createInProbability: (id, bid) => applyMeliProductsAction(id, 'to_probability', bid),
+            createInChannel: (id, bid, skus) => applyMeliProductsAction(id, 'to_meli', bid, skus),
+            createInProbability: (id, bid, skus) => applyMeliProductsAction(id, 'to_probability', bid, skus),
         },
         onlyInChannelField: 'only_in_meli',
         channelNoSkuField: 'meli_no_sku',
@@ -81,8 +81,8 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         reconcileProducts: reconcileWooProductsAction,
         associateProducts: associateWooProductsAction,
         apply: {
-            createInChannel: (id, bid) => applyWooProductsAction(id, 'to_woo', bid),
-            createInProbability: (id, bid) => applyWooProductsAction(id, 'to_probability', bid),
+            createInChannel: (id, bid, skus) => applyWooProductsAction(id, 'to_woo', bid, skus),
+            createInProbability: (id, bid, skus) => applyWooProductsAction(id, 'to_probability', bid, skus),
         },
         onlyInChannelField: 'only_in_woocommerce',
         channelNoSkuField: 'woocommerce_no_sku',
@@ -97,8 +97,8 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         reconcileProducts: reconcileVTEXProductsAction,
         associateProducts: associateVTEXProductsAction,
         apply: {
-            createInProbability: (id, bid) => applyVTEXProductsAction(id, bid, 'create'),
-            updateInProbability: (id, bid) => applyVTEXProductsAction(id, bid, 'update'),
+            createInProbability: (id, bid, skus) => applyVTEXProductsAction(id, bid, 'create', skus),
+            updateInProbability: (id, bid, skus) => applyVTEXProductsAction(id, bid, 'update', skus),
         },
         onlyInChannelField: 'only_in_vtex',
         channelNoSkuField: 'vtex_no_sku',
@@ -112,9 +112,9 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         reconcileProducts: reconcileJumpsellerProductsAction,
         associateProducts: associateJumpsellerProductsAction,
         apply: {
-            createInChannel: (id, bid) => applyJumpsellerProductsAction(id, 'to_jumpseller', bid, 'create'),
-            createInProbability: (id, bid) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'create'),
-            updateInProbability: (id, bid) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'update'),
+            createInChannel: (id, bid, skus) => applyJumpsellerProductsAction(id, 'to_jumpseller', bid, 'create', skus),
+            createInProbability: (id, bid, skus) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'create', skus),
+            updateInProbability: (id, bid, skus) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'update', skus),
         },
         onlyInChannelField: 'only_in_jumpseller',
         channelNoSkuField: 'jumpseller_no_sku',

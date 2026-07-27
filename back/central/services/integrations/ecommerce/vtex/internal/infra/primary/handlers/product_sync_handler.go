@@ -18,10 +18,11 @@ type syncRequest struct {
 }
 
 type applyRequest struct {
-	IntegrationID uint   `json:"integration_id" binding:"required"`
-	BusinessID    *uint  `json:"business_id"`
-	Direction     string `json:"direction" binding:"required"`
-	Mode          string `json:"mode"`
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Direction     string   `json:"direction" binding:"required"`
+	Mode          string   `json:"mode"`
+	SKUs          []string `json:"skus"`
 }
 
 type associateRequest struct {
@@ -90,6 +91,7 @@ func (h *vtexHandler) ReconcileProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":                true,
 		"matched":                result.Matched,
+		"matched_items":          briefsToResponse(result.MatchedItems),
 		"matched_not_associated": briefsToResponse(result.MatchedNotAssociated),
 		"only_in_probability":    briefsToResponse(result.OnlyInProbability),
 		"only_in_vtex":           briefsToResponse(result.OnlyInVTEX),
@@ -158,14 +160,15 @@ func (h *vtexHandler) ApplyProducts(c *gin.Context) {
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
 	correlationID := uuid.New().String()
+	skus := req.SKUs
 
 	go func() {
 		ctx := context.Background()
 		var err error
 		if mode == domain.ModeCreate {
-			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		} else {
-			err = h.useCase.UpdateProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.UpdateProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		}
 		if err != nil {
 			h.logger.Error(ctx).Err(err).Msg("Error aplicando productos de VTEX hacia Probability")

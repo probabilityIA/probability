@@ -62,6 +62,7 @@ func (h *meliHandler) ReconcileProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":                true,
 		"matched":                result.Matched,
+		"matched_items":          briefsToResponse(result.MatchedItems),
 		"matched_not_associated": briefsToResponse(result.MatchedNotAssociated),
 		"only_in_probability":    briefsToResponse(result.OnlyInProbability),
 		"only_in_meli":           briefsToResponse(result.OnlyInMeli),
@@ -106,9 +107,10 @@ func (h *meliHandler) AssociateProducts(c *gin.Context) {
 }
 
 type applyRequest struct {
-	IntegrationID uint   `json:"integration_id" binding:"required"`
-	BusinessID    *uint  `json:"business_id"`
-	Direction     string `json:"direction" binding:"required"`
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Direction     string   `json:"direction" binding:"required"`
+	SKUs          []string `json:"skus"`
 }
 
 func (h *meliHandler) ApplyProducts(c *gin.Context) {
@@ -129,14 +131,15 @@ func (h *meliHandler) ApplyProducts(c *gin.Context) {
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
 	correlationID := uuid.New().String()
 	direction := req.Direction
+	skus := req.SKUs
 
 	go func() {
 		ctx := context.Background()
 		var err error
 		if direction == "to_meli" {
-			err = h.useCase.ApplyProductsToMeli(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToMeli(ctx, integrationID, businessID, correlationID, skus...)
 		} else {
-			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		}
 		if err != nil {
 			h.logger.Error(ctx).Err(err).Str("direction", direction).Msg("Error aplicando reconciliacion de productos MeLi")

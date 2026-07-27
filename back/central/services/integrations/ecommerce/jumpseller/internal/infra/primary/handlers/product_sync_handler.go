@@ -19,10 +19,11 @@ type syncRequest struct {
 }
 
 type applyRequest struct {
-	IntegrationID uint   `json:"integration_id" binding:"required"`
-	BusinessID    *uint  `json:"business_id"`
-	Direction     string `json:"direction" binding:"required"`
-	Mode          string `json:"mode"`
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Direction     string   `json:"direction" binding:"required"`
+	Mode          string   `json:"mode"`
+	SKUs          []string `json:"skus"`
 }
 
 type associateRequest struct {
@@ -81,6 +82,7 @@ func (h *jumpsellerHandler) ReconcileProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":                true,
 		"matched":                result.Matched,
+		"matched_items":          briefsToResponse(result.MatchedItems),
 		"matched_not_associated": briefsToResponse(result.MatchedNotAssociated),
 		"only_in_probability":    briefsToResponse(result.OnlyInProbability),
 		"only_in_jumpseller":     briefsToResponse(result.OnlyInJumpseller),
@@ -153,19 +155,20 @@ func (h *jumpsellerHandler) ApplyProducts(c *gin.Context) {
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
 	correlationID := uuid.New().String()
 	direction := req.Direction
+	skus := req.SKUs
 
 	go func() {
 		ctx := context.Background()
 		var err error
 		switch {
 		case direction == usecases.DirectionToJumpseller && mode == usecases.ModeCreate:
-			err = h.useCase.ApplyProductsToJumpseller(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToJumpseller(ctx, integrationID, businessID, correlationID, skus...)
 		case direction == usecases.DirectionToJumpseller && mode == usecases.ModeUpdate:
-			err = h.useCase.UpdateProductsToJumpseller(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.UpdateProductsToJumpseller(ctx, integrationID, businessID, correlationID, skus...)
 		case direction == usecases.DirectionToProbability && mode == usecases.ModeCreate:
-			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		default:
-			err = h.useCase.UpdateProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.UpdateProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		}
 		if err != nil {
 			h.logger.Error(ctx).Err(err).

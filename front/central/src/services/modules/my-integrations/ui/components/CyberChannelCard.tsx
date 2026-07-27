@@ -4,8 +4,9 @@ import { useState, type CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { Clock, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { useSyncActivity, type ProductActionKey } from '../sync-activity-context';
+import { useSyncActivity, type DetailGroup, type SyncDetailItem } from '../sync-activity-context';
 import { getSyncProvider } from '../providers';
+import { SyncDetailPanel } from './SyncDetailPanel';
 
 interface CyberChannelCardProps {
     integration: Integration;
@@ -25,6 +26,15 @@ const BUCKETS = [
     { key: 'orders_cancelled', label: 'canceladas', dot: '#ef4444' },
     { key: 'orders_returned', label: 'devueltas', dot: '#f59e0b' },
 ] as const;
+
+function groupOf(group: string | undefined, label: string, tone: string): DetailGroup {
+    if (group) return group as DetailGroup;
+    if (label.startsWith('sin asociar')) return 'not_associated';
+    if (label.startsWith('solo en Probability')) return 'only_probability';
+    if (label.startsWith('solo en el canal')) return 'only_channel';
+    if (label.startsWith('en ambos')) return 'both';
+    return tone === 'error' ? 'failed' : tone === 'warn' ? 'skipped' : 'updated';
+}
 
 function relativeTime(iso?: string): string | null {
     if (!iso) return null;
@@ -67,65 +77,19 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
     const lastRunTime = relativeTime(lastRun?.finished_at);
     const inventoryEnabled = integration.config?.inventory_sync_enabled === true;
     const liveDetail = details[integration.id] || [];
-    const syncDetail = liveDetail.length > 0 ? liveDetail : (lastRun?.detail ?? []);
+    const syncDetail: SyncDetailItem[] = liveDetail.length > 0
+        ? liveDetail
+        : (lastRun?.detail ?? []).map(item => ({
+            sku: item.sku,
+            label: item.label,
+            tone: item.tone,
+            group: groupOf(item.group, item.label, item.tone),
+        }));
     const syncPct = syncProgress.total > 0
         ? Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))
         : 0;
-    const productCounts = envView !== 'products' ? null
-        : syncResult?.kind === 'products'
-            ? {
-                matched: syncResult.matched,
-                notAssociated: syncResult.notAssociated,
-                onlyInProbability: syncResult.onlyInProbability,
-                onlyInChannel: syncResult.onlyInChannel,
-            }
-            : lastRun
-                ? {
-                    matched: lastRun.matched,
-                    notAssociated: lastRun.not_associated,
-                    onlyInProbability: lastRun.only_in_probability,
-                    onlyInChannel: lastRun.only_in_channel,
-                }
-                : null;
-
     const busyAction = actionBusy[integration.id] ?? null;
     const feedback = actionResult[integration.id] ?? null;
-    const productActions: { key: ProductActionKey; label: string; count: number; tone: string }[] = [];
-    if (productCounts && provider) {
-        if (productCounts.notAssociated > 0) {
-            productActions.push({
-                key: 'associate',
-                label: 'Asociar al canal',
-                count: productCounts.notAssociated,
-                tone: 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/40 dark:bg-blue-900/30 dark:text-blue-300',
-            });
-        }
-        if (productCounts.onlyInProbability > 0 && provider.apply.createInChannel) {
-            productActions.push({
-                key: 'createInChannel',
-                label: `Crear en ${provider.label}`,
-                count: productCounts.onlyInProbability,
-                tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-500/40 dark:bg-orange-900/30 dark:text-orange-300',
-            });
-        }
-        if (productCounts.onlyInChannel > 0 && provider.apply.createInProbability) {
-            productActions.push({
-                key: 'createInProbability',
-                label: 'Crear en Probability',
-                count: productCounts.onlyInChannel,
-                tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100 dark:border-fuchsia-500/40 dark:bg-fuchsia-900/30 dark:text-fuchsia-300',
-            });
-        }
-        if (productCounts.matched > 0 && provider.apply.updateInProbability) {
-            productActions.push({
-                key: 'updateInProbability',
-                label: 'Actualizar en Probability',
-                count: productCounts.matched,
-                tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-900/30 dark:text-emerald-300',
-            });
-        }
-    }
-
     const stateRing =
         syncState === 'active' ? '0 0 0 4px rgba(59,130,246,.16), 0 12px 32px rgba(37,99,235,.22)'
         : syncState === 'scan' ? '0 0 0 4px rgba(139,92,246,.16), 0 12px 32px rgba(124,58,237,.20)'
@@ -408,30 +372,11 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                 </button>
             </div>
             </div>
-            {envView === 'products' && (productActions.length > 0 || feedback) && (
-                <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-100 px-3 py-2 dark:border-gray-700">
-                    {productActions.map(action => (
-                        <button
-                            key={action.key}
-                            onClick={() => runProductAction(integration.id, action.key)}
-                            disabled={busyAction !== null || syncState === 'scan'}
-                            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${action.tone}`}
-                        >
-                            {busyAction === action.key && (
-                                <span className="h-3 w-3 animate-spin rounded-full border border-transparent border-t-current" />
-                            )}
-                            {action.label}
-                            <span className="rounded-full bg-white/70 px-1.5 tabular-nums dark:bg-black/20">{action.count}</span>
-                        </button>
-                    ))}
-                    {productActions.length === 0 && (
-                        <span className="text-[11px] italic text-gray-400 dark:text-gray-500">Nada por aplicar</span>
-                    )}
-                    {feedback && (
-                        <span className={`ml-auto text-[11px] font-semibold ${feedback.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
-                            {feedback.message}
-                        </span>
-                    )}
+            {envView === 'products' && feedback && (
+                <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-1.5 dark:border-gray-700">
+                    <span className={`text-[11px] font-semibold ${feedback.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                        {feedback.message}
+                    </span>
                 </div>
             )}
             {syncDetail.length > 0 && (
@@ -443,25 +388,15 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                         <ChevronDown size={12} className={`transition-transform ${openDetail ? 'rotate-180' : ''}`} />
                         {openDetail ? 'Ocultar detalle' : `Ver detalle (${syncDetail.length})`}
                     </button>
-                    {openDetail && (
-                        <div className="max-h-40 overflow-y-auto rounded-lg bg-gray-50 p-1.5 dark:bg-gray-900/40">
-                            {syncDetail.map((d, i) => (
-                                <div
-                                    key={`${d.sku}-${i}`}
-                                    className="flex items-start gap-2 border-b border-gray-100 px-1 py-1 text-[11px] last:border-0 dark:border-gray-700/60"
-                                >
-                                    <span
-                                        className={`mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full ${
-                                            d.tone === 'error' ? 'bg-red-500' : d.tone === 'warn' ? 'bg-amber-500' : 'bg-emerald-500'
-                                        }`}
-                                    />
-                                    <span className="w-28 flex-shrink-0 truncate font-mono font-semibold text-gray-700 dark:text-gray-200">{d.sku}</span>
-                                    <span className={`min-w-0 flex-1 truncate ${d.tone === 'error' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                        {d.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+                    {openDetail && provider && (
+                        <SyncDetailPanel
+                            items={syncDetail}
+                            providerLabel={provider.label}
+                            apply={provider.apply}
+                            isProducts={envView === 'products'}
+                            busyAction={busyAction}
+                            onApply={(action, skus) => runProductAction(integration.id, action, skus)}
+                        />
                     )}
                 </div>
             )}

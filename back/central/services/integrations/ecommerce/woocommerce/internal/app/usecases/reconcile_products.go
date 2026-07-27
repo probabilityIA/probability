@@ -81,6 +81,7 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 
 	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
+		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInWoo:            []domain.ProductBrief{},
@@ -103,6 +104,7 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		}
 		wooSKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
+			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
 			if associatedSKUs[key] {
 				result.Matched++
 			} else {
@@ -122,7 +124,20 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 	return result, nil
 }
 
-func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func selectedSKUs(skus []string) map[string]bool {
+	if len(skus) == 0 {
+		return nil
+	}
+	set := make(map[string]bool, len(skus))
+	for _, s := range skus {
+		if key := normalizeSKU(s); key != "" {
+			set[key] = true
+		}
+	}
+	return set
+}
+
+func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	storeURL, ck, cs, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -136,9 +151,11 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		}
 	}
 
+	only := selectedSKUs(skus)
 	targets := make([]domain.ProductForSync, 0)
 	for _, p := range probProducts {
-		if normalizeSKU(p.SKU) == "" {
+		key := normalizeSKU(p.SKU)
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		targets = append(targets, p)
@@ -200,7 +217,7 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 	return nil
 }
 
-func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	_, _, _, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -214,10 +231,11 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 		}
 	}
 
+	only := selectedSKUs(skus)
 	missing := make([]domain.WooProduct, 0)
 	for _, w := range wooProducts {
 		key := normalizeSKU(w.SKU)
-		if key == "" || probSKUs[key] {
+		if key == "" || probSKUs[key] || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, w)

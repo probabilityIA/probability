@@ -18,6 +18,7 @@ type DetailItem struct {
 	SKU   string `json:"sku"`
 	Label string `json:"label"`
 	Tone  string `json:"tone"`
+	Group string `json:"group,omitempty"`
 }
 
 type SyncRun struct {

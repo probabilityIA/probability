@@ -101,6 +101,7 @@ func (uc *SyncOrdersUseCase) ReconcileProducts(ctx context.Context, integrationI
 	}
 
 	result := &domain.ReconcileResult{
+		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInShopify:        []domain.ProductBrief{},
@@ -125,6 +126,7 @@ func (uc *SyncOrdersUseCase) ReconcileProducts(ctx context.Context, integrationI
 		}
 		shopifySKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
+			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: s.SKU, Name: s.Name})
 			if associatedSKUs[key] {
 				result.Matched++
 			} else {
@@ -144,7 +146,20 @@ func (uc *SyncOrdersUseCase) ReconcileProducts(ctx context.Context, integrationI
 	return result, nil
 }
 
-func (uc *SyncOrdersUseCase) ApplyProductsToShopify(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func selectedSKUs(skus []string) map[string]bool {
+	if len(skus) == 0 {
+		return nil
+	}
+	set := make(map[string]bool, len(skus))
+	for _, s := range skus {
+		if key := normalizeSKU(s); key != "" {
+			set[key] = true
+		}
+	}
+	return set
+}
+
+func (uc *SyncOrdersUseCase) ApplyProductsToShopify(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	probProducts, shopifyProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -170,9 +185,11 @@ func (uc *SyncOrdersUseCase) ApplyProductsToShopify(ctx context.Context, integra
 		}
 	}
 
+	only := selectedSKUs(skus)
 	targets := make([]domain.ProductForSync, 0)
 	for _, p := range probProducts {
-		if normalizeSKU(p.SKU) == "" {
+		key := normalizeSKU(p.SKU)
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		targets = append(targets, p)
@@ -224,7 +241,7 @@ func (uc *SyncOrdersUseCase) ApplyProductsToShopify(ctx context.Context, integra
 	return nil
 }
 
-func (uc *SyncOrdersUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *SyncOrdersUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	probProducts, shopifyProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -241,11 +258,12 @@ func (uc *SyncOrdersUseCase) ApplyProductsToProbability(ctx context.Context, int
 		}
 	}
 
+	only := selectedSKUs(skus)
 	missing := make([]domain.ShopifyProductForSync, 0)
 	seen := make(map[string]bool)
 	for _, s := range shopifyProducts {
 		key := normalizeSKU(s.SKU)
-		if key == "" || probSKUs[key] || seen[key] {
+		if key == "" || probSKUs[key] || seen[key] || (only != nil && !only[key]) {
 			continue
 		}
 		seen[key] = true

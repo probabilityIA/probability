@@ -36,6 +36,7 @@ type ProductBrief struct {
 
 type ReconcileResult struct {
 	Matched              int
+	MatchedItems         []ProductBrief
 	MatchedNotAssociated []ProductBrief
 	OnlyInProbability    []ProductBrief
 	OnlyInVTEX           []ProductBrief

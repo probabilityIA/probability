@@ -12,6 +12,7 @@ type detailResponse struct {
 	SKU   string `json:"sku"`
 	Label string `json:"label"`
 	Tone  string `json:"tone"`
+	Group string `json:"group,omitempty"`
 }
 
 type runResponse struct {
@@ -82,7 +83,7 @@ func toRunResponses(runs []domain.SyncRun) []runResponse {
 			item.FinishedAt = run.FinishedAt.Format("2006-01-02T15:04:05Z07:00")
 		}
 		for _, d := range run.Detail {
-			item.Detail = append(item.Detail, detailResponse{SKU: d.SKU, Label: d.Label, Tone: d.Tone})
+			item.Detail = append(item.Detail, detailResponse{SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group})
 		}
 		out = append(out, item)
 	}

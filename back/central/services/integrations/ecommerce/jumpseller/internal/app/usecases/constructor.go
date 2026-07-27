@@ -37,13 +37,13 @@ type IJumpsellerUseCase interface {
 
 	GetLocations(ctx context.Context, integrationID string, businessID uint) (*domain.LocationsInfo, error)
 
-	ApplyProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ApplyProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 
-	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 
-	UpdateProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	UpdateProductsToJumpseller(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 
-	UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 

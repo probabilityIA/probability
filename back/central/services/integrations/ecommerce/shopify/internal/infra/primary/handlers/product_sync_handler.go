@@ -62,6 +62,7 @@ func (h *ShopifyHandler) ReconcileProducts(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":                true,
 		"matched":                result.Matched,
+		"matched_items":          productBriefsToResponse(result.MatchedItems),
 		"matched_not_associated": productBriefsToResponse(result.MatchedNotAssociated),
 		"only_in_probability":    productBriefsToResponse(result.OnlyInProbability),
 		"only_in_shopify":        productBriefsToResponse(result.OnlyInShopify),
@@ -71,9 +72,10 @@ func (h *ShopifyHandler) ReconcileProducts(c *gin.Context) {
 }
 
 type productApplyRequest struct {
-	IntegrationID uint   `json:"integration_id" binding:"required"`
-	BusinessID    *uint  `json:"business_id"`
-	Direction     string `json:"direction" binding:"required"`
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	Direction     string   `json:"direction" binding:"required"`
+	SKUs          []string `json:"skus"`
 }
 
 func (h *ShopifyHandler) ApplyProducts(c *gin.Context) {
@@ -94,14 +96,15 @@ func (h *ShopifyHandler) ApplyProducts(c *gin.Context) {
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
 	correlationID := uuid.New().String()
 	direction := req.Direction
+	skus := req.SKUs
 
 	go func() {
 		ctx := context.Background()
 		var err error
 		if direction == "to_shopify" {
-			err = h.useCase.ApplyProductsToShopify(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToShopify(ctx, integrationID, businessID, correlationID, skus...)
 		} else {
-			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID)
+			err = h.useCase.ApplyProductsToProbability(ctx, integrationID, businessID, correlationID, skus...)
 		}
 		if err != nil {
 			h.logger.Error(ctx).Err(err).Str("direction", direction).Msg("Error aplicando reconciliacion de productos Shopify")

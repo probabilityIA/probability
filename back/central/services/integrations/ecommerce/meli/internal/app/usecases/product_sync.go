@@ -102,6 +102,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 
 	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
+		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInMeli:           []domain.ProductBrief{},
@@ -124,6 +125,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		}
 		meliSKUs[key] = true
 		if _, ok := probBySKU[key]; ok {
+			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
 			if associatedSKUs[key] {
 				result.Matched++
 			} else {
@@ -143,7 +145,20 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 	return result, nil
 }
 
-func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func selectedSKUs(skus []string) map[string]bool {
+	if len(skus) == 0 {
+		return nil
+	}
+	set := make(map[string]bool, len(skus))
+	for _, s := range skus {
+		if key := normalizeSKU(s); key != "" {
+			set[key] = true
+		}
+	}
+	return set
+}
+
+func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	accessToken, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -157,10 +172,11 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 		}
 	}
 
+	only := selectedSKUs(skus)
 	missing := make([]domain.ProductForSync, 0)
 	for _, p := range probProducts {
 		key := normalizeSKU(p.SKU)
-		if key == "" || meliSKUs[key] {
+		if key == "" || meliSKUs[key] || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, p)
@@ -216,7 +232,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 	return nil
 }
 
-func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	_, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
@@ -230,10 +246,11 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 		}
 	}
 
+	only := selectedSKUs(skus)
 	missing := make([]domain.MeliProduct, 0)
 	for _, m := range meliProducts {
 		key := normalizeSKU(m.SKU)
-		if key == "" || probSKUs[key] {
+		if key == "" || probSKUs[key] || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, m)

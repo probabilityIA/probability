@@ -108,6 +108,7 @@ func (uc *vtexUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 
 		if _, ok := vtexBySKU[key]; ok {
 			result.Matched++
+			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 			if !associated[key] {
 				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 			}
@@ -133,7 +134,20 @@ func (uc *vtexUseCase) SyncProducts(ctx context.Context, integrationID string, b
 	return uc.AssociateProducts(ctx, integrationID, businessID, correlationID, nil)
 }
 
-func (uc *vtexUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func selectedSKUs(skus []string) map[string]bool {
+	if len(skus) == 0 {
+		return nil
+	}
+	set := make(map[string]bool, len(skus))
+	for _, s := range skus {
+		if key := normalizeSKU(s); key != "" {
+			set[key] = true
+		}
+	}
+	return set
+}
+
+func (uc *vtexUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
@@ -144,10 +158,11 @@ func (uc *vtexUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 		existing[normalizeSKU(p.SKU)] = true
 	}
 
+	only := selectedSKUs(skus)
 	var toCreate []domain.VTEXSKU
 	for _, sku := range data.vtex {
 		key := normalizeSKU(sku.RefID)
-		if key == "" || existing[key] {
+		if key == "" || existing[key] || (only != nil && !only[key]) {
 			continue
 		}
 		toCreate = append(toCreate, sku)
@@ -156,7 +171,7 @@ func (uc *vtexUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 	return uc.publishUpserts(ctx, businessID, data.integration.ID, correlationID, domain.ModeCreate, toCreate)
 }
 
-func (uc *vtexUseCase) UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *vtexUseCase) UpdateProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	data, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
@@ -167,10 +182,11 @@ func (uc *vtexUseCase) UpdateProductsToProbability(ctx context.Context, integrat
 		existing[normalizeSKU(p.SKU)] = true
 	}
 
+	only := selectedSKUs(skus)
 	var toUpdate []domain.VTEXSKU
 	for _, sku := range data.vtex {
 		key := normalizeSKU(sku.RefID)
-		if key == "" || !existing[key] {
+		if key == "" || !existing[key] || (only != nil && !only[key]) {
 			continue
 		}
 		toUpdate = append(toUpdate, sku)

@@ -80,8 +80,9 @@ export async function reconcileJumpsellerProductsAction(integrationId: number, b
     return postWithAuth('/jumpseller/products/reconcile', body);
 }
 
-export async function applyJumpsellerProductsAction(integrationId: number, direction: 'to_jumpseller' | 'to_probability', businessId?: number, mode: 'create' | 'update' = 'create') {
+export async function applyJumpsellerProductsAction(integrationId: number, direction: 'to_jumpseller' | 'to_probability', businessId?: number, mode: 'create' | 'update' = 'create', skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId, direction, mode };
+    if (skus && skus.length > 0) body.skus = skus;
     if (businessId) body.business_id = businessId;
     return postWithAuth('/jumpseller/products/apply', body);
 }
