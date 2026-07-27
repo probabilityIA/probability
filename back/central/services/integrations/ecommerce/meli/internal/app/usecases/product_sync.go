@@ -259,6 +259,8 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 			ListingTypeID: listingTypeID,
 			Brand:         p.Brand,
 			ImageURL:      p.ImageURL,
+			CategoryID:    p.MeliCategoryID,
+			VariantAttrs:  p.VariantAttrs,
 		})
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en MercadoLibre")

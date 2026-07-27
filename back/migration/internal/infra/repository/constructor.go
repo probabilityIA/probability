@@ -59,6 +59,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateIntegrationSyncRuns(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateProductChannelCategories(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateWarehouseLayout(ctx); err != nil {
 		return err
 	}

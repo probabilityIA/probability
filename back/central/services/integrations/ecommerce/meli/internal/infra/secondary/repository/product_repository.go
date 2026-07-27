@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 
 	"gorm.io/gorm"
 
@@ -115,23 +117,27 @@ func (r *ProductRepository) GetInventoryByWarehouses(ctx context.Context, produc
 
 func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, businessID uint) ([]domain.ProductForSync, error) {
 	var rows []struct {
-		ID             string
-		SKU            string
-		Name           string
-		Description    string
-		Price          float64
-		StockQuantity  int
-		TrackInventory bool
-		ImageURL       string
-		Brand          string
-		Category       string
+		ID                string
+		SKU               string
+		Name              string
+		Description       string
+		Price             float64
+		StockQuantity     int
+		TrackInventory    bool
+		ImageURL          string
+		Brand             string
+		Category          string
+		MeliCategoryID    string
+		VariantAttributes []byte
 	}
 
 	err := r.db.Conn(ctx).
 		Table("products AS p").
 		Select(`p.id, p.sku, p.name, p.description, p.price, p.stock_quantity, p.track_inventory, p.image_url,
 			COALESCE(NULLIF(p.brand, ''), NULLIF(f.brand, ''), '') AS brand,
-			COALESCE(NULLIF(p.category, ''), NULLIF(f.category, ''), '') AS category`).
+			COALESCE(NULLIF(p.category, ''), NULLIF(f.category, ''), '') AS category,
+			COALESCE(p.channel_categories->>'meli', '') AS meli_category_id,
+			p.variant_attributes AS variant_attributes`).
 		Joins("LEFT JOIN product_families f ON f.id = p.family_id AND f.deleted_at IS NULL").
 		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = ?", businessID, true).
 		Order("p.created_at ASC").
@@ -153,6 +159,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 			ImageURL:       row.ImageURL,
 			Brand:          row.Brand,
 			Category:       row.Category,
+			MeliCategoryID: row.MeliCategoryID,
+			VariantAttrs:   decodeVariantAttrs(row.VariantAttributes),
 		})
 	}
 	return products, nil
@@ -198,4 +206,21 @@ func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context,
 
 	existing.ExternalProductID = externalProductID
 	return r.db.Conn(ctx).Save(&existing).Error
+}
+
+func decodeVariantAttrs(raw []byte) map[string]string {
+	if len(raw) == 0 {
+		return nil
+	}
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return nil
+	}
+	attrs := make(map[string]string, len(parsed))
+	for key, value := range parsed {
+		if text, ok := value.(string); ok && strings.TrimSpace(text) != "" {
+			attrs[strings.ToUpper(strings.TrimSpace(key))] = text
+		}
+	}
+	return attrs
 }

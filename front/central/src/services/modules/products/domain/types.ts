@@ -7,6 +7,7 @@ export interface ProductFamilySummary {
     slug?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     image_url?: string;
     status: string;
     is_active: boolean;
@@ -24,6 +25,7 @@ export interface ProductFamily {
     slug?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     image_url?: string;
     status: string;
     is_active: boolean;
@@ -88,6 +90,7 @@ export interface Product {
     category?: string;
     tags?: any;
     brand?: string;
+    channel_categories?: Record<string, string>;
 
     status: string;
     is_active: boolean;
@@ -185,6 +188,7 @@ export interface CreateProductDTO {
     thumbnail?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     status?: string;
     is_active?: boolean;
     is_featured?: boolean;
@@ -224,6 +228,7 @@ export interface UpdateProductDTO {
     thumbnail?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     status?: string;
     is_active?: boolean;
     is_featured?: boolean;
@@ -237,6 +242,7 @@ export interface GetFamiliesParams {
     name?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     status?: string;
     sort_by?: string;
     sort_order?: 'asc' | 'desc';
@@ -249,6 +255,7 @@ export interface CreateProductFamilyDTO {
     slug?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     image_url?: string;
     status?: string;
     is_active?: boolean;
@@ -263,6 +270,7 @@ export interface UpdateProductFamilyDTO {
     slug?: string;
     category?: string;
     brand?: string;
+    channel_categories?: Record<string, string>;
     image_url?: string;
     status?: string;
     is_active?: boolean;

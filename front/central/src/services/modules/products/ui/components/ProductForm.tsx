@@ -68,6 +68,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         image_url: (product as any)?.image_url || product?.family?.image_url || '',
         brand: product?.brand || '',
         category: product?.category || '',
+        channel_categories: product?.channel_categories || undefined,
     });
 
     const [skuPrefix, setSkuPrefix] = useState('PROD');
@@ -211,6 +212,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     family_id: formData.family_id || undefined,
                     brand: formData.brand || undefined,
                     category: formData.category || undefined,
+                    channel_categories: formData.channel_categories,
                     variant_label: formData.variant_label || undefined,
                     variant_attributes: formData.variant_attributes || undefined,
                     weight: formData.weight,
@@ -438,8 +440,50 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                     )}
                                 </div>
                             </div>
+                            <div className="mt-3 grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className={lc}>Talla</label>
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        placeholder="Ej: L"
+                                        value={formData.variant_attributes?.SIZE || ''}
+                                        onChange={e => setFormData(f => ({
+                                            ...f,
+                                            variant_attributes: { ...f.variant_attributes, SIZE: e.target.value },
+                                        }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={lc}>Color</label>
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        placeholder="Ej: Negro"
+                                        value={formData.variant_attributes?.COLOR || ''}
+                                        onChange={e => setFormData(f => ({
+                                            ...f,
+                                            variant_attributes: { ...f.variant_attributes, COLOR: e.target.value },
+                                        }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={lc}>Categoria en Mercado Libre</label>
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        placeholder="Ej: MCO1234"
+                                        value={formData.channel_categories?.meli || ''}
+                                        onChange={e => setFormData(f => ({
+                                            ...f,
+                                            channel_categories: { ...f.channel_categories, meli: e.target.value },
+                                        }))}
+                                    />
+                                </div>
+                            </div>
                             <p className="mt-2 text-[11px] text-gray-400">
                                 Mercado Libre exige la marca para publicar. Si el producto pertenece a una familia, se usa la de la familia salvo que cargues otra aqui.
+                                Sin categoria de Mercado Libre, se deduce del nombre del producto al publicar.
                             </p>
                         </div>
 

@@ -1,8 +1,10 @@
 package mappers
 
 import (
+	"encoding/json"
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"time"
 )
@@ -62,9 +64,10 @@ func ToDBProduct(p *domain.Product) *models.Product {
 		DimensionUnit: p.DimensionUnit,
 
 		// Categorización
-		Category: p.Category,
-		Tags:     p.Tags,
-		Brand:    p.Brand,
+		Category:          p.Category,
+		ChannelCategories: encodeChannelCategories(p.ChannelCategories),
+		Tags:              p.Tags,
+		Brand:             p.Brand,
 
 		// Estado
 		Status:     p.Status,
@@ -165,9 +168,10 @@ func ToDomainProduct(p *models.Product) *domain.Product {
 		DimensionUnit: p.DimensionUnit,
 
 		// Categorización
-		Category: p.Category,
-		Tags:     p.Tags,
-		Brand:    p.Brand,
+		Category:          p.Category,
+		ChannelCategories: decodeChannelCategories(p.ChannelCategories),
+		Tags:              p.Tags,
+		Brand:             p.Brand,
 
 		// Estado
 		Status:     p.Status,
@@ -210,4 +214,26 @@ func ToDomainProductFamily(f *models.ProductFamily) *domain.ProductFamily {
 		Metadata:     f.Metadata,
 		VariantCount: f.VariantCount,
 	}
+}
+
+func encodeChannelCategories(values map[string]string) datatypes.JSON {
+	if len(values) == 0 {
+		return nil
+	}
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(raw)
+}
+
+func decodeChannelCategories(raw datatypes.JSON) map[string]string {
+	if len(raw) == 0 {
+		return nil
+	}
+	values := make(map[string]string)
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return nil
+	}
+	return values
 }
