@@ -36,7 +36,7 @@ export function CyberChannelsCluster({
                         Sin configurar
                     </p>
                 ) : (
-                    <div className="grid gap-2.5 xl:grid-cols-2">
+                    <div className="grid gap-y-3 xl:grid-cols-2 xl:gap-x-[110px]">
                         {integrations.map(integration => (
                             <CyberChannelCard
                                 key={integration.id}

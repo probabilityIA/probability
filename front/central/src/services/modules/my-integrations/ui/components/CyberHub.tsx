@@ -1,9 +1,10 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, type CSSProperties } from 'react';
 import { RefreshCw, Package, Truck, Bell, Users, Store, ReceiptText, Cog, type LucideIcon } from 'lucide-react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { INTERNAL_MODULE_RESOURCE_NAME } from '../../domain/types';
+import { useSyncActivity } from '../sync-activity-context';
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
     inventory: Package,
@@ -26,6 +27,24 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
     { integrations, resourceActive, onSyncClick },
     ref,
 ) {
+    const { mode, nodes, running, environment, runCurrent } = useSyncActivity();
+    const states = Object.values(nodes);
+    const busy = mode !== 'idle' || states.some(s => s === 'active' || s === 'scan');
+    const finished = !busy && states.length > 0 && states.every(s => s === 'done' || s === 'error');
+    const statusText = mode === 'inventory'
+        ? 'Enviando stock a los canales...'
+        : mode === 'products'
+            ? 'Recibiendo catalogos de los canales...'
+            : finished
+                ? 'Sincronizacion completada'
+                : '';
+    const chargeColor = (mode === 'products' || (mode === 'idle' && environment === 'products')) ? '#8b5cf6' : '#22d3ee';
+    const statusColor = mode === 'inventory'
+        ? 'text-blue-600 dark:text-blue-400'
+        : mode === 'products'
+            ? 'text-violet-600 dark:text-violet-400'
+            : 'text-emerald-600 dark:text-emerald-400';
+
     const visibleModules = integrations.filter(integration => {
         const typeCode = integration.integration_type?.code || '';
         const resourceName = INTERNAL_MODULE_RESOURCE_NAME[typeCode];
@@ -75,6 +94,44 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                     </div>
                 )}
 
+                {busy && (
+                    <div className="pointer-events-none absolute inset-10">
+                        <div
+                            className="absolute inset-0 rounded-full"
+                            style={{
+                                background: `conic-gradient(from 0deg, transparent 0deg, ${chargeColor} 18deg, transparent 40deg, transparent 160deg, ${chargeColor} 182deg, transparent 205deg)`,
+                                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px))',
+                                mask: 'radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px))',
+                                filter: 'blur(1px)',
+                                animation: 'cyber-arc .7s linear infinite, cyber-flicker .45s steps(3) infinite',
+                            }}
+                        />
+                        <div
+                            className="absolute inset-2 rounded-full"
+                            style={{
+                                background: `conic-gradient(from 180deg, transparent 0deg, ${chargeColor} 12deg, transparent 30deg)`,
+                                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+                                mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
+                                animation: 'cyber-arc .45s linear infinite reverse, cyber-flicker .3s steps(2) infinite',
+                            }}
+                        />
+                        {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+                            <span
+                                key={deg}
+                                className="absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full"
+                                style={{
+                                    background: chargeColor,
+                                    boxShadow: `0 0 10px 3px ${chargeColor}`,
+                                    transform: `rotate(${deg}deg) translateY(-52%) translateX(74px)`,
+                                    transformOrigin: '0 0',
+                                    animation: `cyber-spark ${(0.7 + i * 0.11).toFixed(2)}s ease-out infinite`,
+                                    animationDelay: `-${(i * 0.17).toFixed(2)}s`,
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
+
                 <div className="absolute inset-16">
                     <div
                         className="absolute inset-0 rounded-full"
@@ -83,27 +140,38 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                                 'conic-gradient(from 0deg, transparent 0%, #22d3ee 12%, transparent 28%, transparent 50%, #a855f7 62%, transparent 78%)',
                             WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
                             mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px))',
-                            animation: 'cyber-spin 5s linear infinite',
+                            animation: `cyber-spin ${busy ? '1.1s' : '5s'} linear infinite`,
                         }}
                     />
                     <div
                         className="absolute inset-3 rounded-full border border-dashed border-gray-300 dark:border-gray-600"
                         style={{ animation: 'cyber-spin 20s linear infinite reverse' }}
                     />
-                    <div className="absolute inset-6 flex flex-col items-center justify-center gap-1 rounded-full border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                    <div
+                        className="absolute inset-6 flex flex-col items-center justify-center gap-1 rounded-full border border-gray-100 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                        style={busy
+                            ? ({ '--charge': chargeColor, animation: 'cyber-charge 1s ease-in-out infinite' } as CSSProperties)
+                            : undefined}
+                    >
                         <span className="text-[9px] uppercase tracking-[0.3em] text-gray-400">nucleo</span>
                         <span className="text-sm font-bold tracking-wide text-gray-800 dark:text-white">
                             Probability
                         </span>
                         <button
-                            onClick={onSyncClick}
-                            title="Sincronizacion global"
+                            onClick={onSyncClick ?? runCurrent}
+                            disabled={running}
+                            title={environment === 'products' ? 'Iniciar comparacion de productos' : 'Iniciar sincronizacion de inventario'}
                             className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >
-                            <RefreshCw size={14} />
+                            <RefreshCw size={14} className={busy ? 'animate-spin' : ''} />
                         </button>
                     </div>
                 </div>
+            </div>
+            <div className="absolute -bottom-3 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2">
+                {statusText && (
+                    <span className={`whitespace-nowrap text-[11.5px] font-semibold ${statusColor}`}>{statusText}</span>
+                )}
             </div>
         </div>
     );

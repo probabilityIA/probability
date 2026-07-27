@@ -3,6 +3,7 @@ import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateSh
 import { syncMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
 import { syncWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
 import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
+import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
 import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopify/ui/components/ShopifyProductSyncModal';
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
 import { WooProductSyncModal } from '@/services/integrations/ecommerce/woocommerce/ui/components/WooProductSyncModal';
@@ -26,7 +27,7 @@ export interface SyncProvider {
     associateProducts: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
     onlyInChannelField: string;
     channelNoSkuField: string;
-    ProductSyncModal: ComponentType<ProductSyncModalProps>;
+    ProductSyncModal?: ComponentType<ProductSyncModalProps>;
 }
 
 export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
@@ -65,6 +66,17 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         onlyInChannelField: 'only_in_woocommerce',
         channelNoSkuField: 'woocommerce_no_sku',
         ProductSyncModal: WooProductSyncModal,
+    },
+    16: {
+        typeId: 16,
+        key: 'vtex',
+        label: 'VTEX',
+        inventoryEventPrefix: 'vtex',
+        syncInventory: syncVTEXInventoryAction,
+        reconcileProducts: reconcileVTEXProductsAction,
+        associateProducts: associateVTEXProductsAction,
+        onlyInChannelField: 'only_in_vtex',
+        channelNoSkuField: 'vtex_no_sku',
     },
     33: {
         typeId: 33,

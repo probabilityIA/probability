@@ -18,8 +18,9 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
-import { GlobalSyncModal } from './GlobalSyncModal';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
+import { SyncActivityProvider } from '../sync-activity-context';
+import { SyncActions } from './SyncActions';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
@@ -31,6 +32,14 @@ const WIDE_FORM_TYPE_IDS = [1, 3, 4, 8, 16, 33];
 
 const HUB_KEYFRAMES = `
 @keyframes cyber-dash { to { stroke-dashoffset: -24; } }
+@keyframes cyber-dashflow { to { stroke-dashoffset: -32; } }
+@keyframes cyber-travel { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+@keyframes cyber-shimmer { to { background-position: -200% 0; } }
+@keyframes cyber-arc { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes cyber-flicker { 0%,100% { opacity: .95; } 12% { opacity: .35; } 24% { opacity: 1; } 40% { opacity: .5; } 55% { opacity: .9; } 70% { opacity: .3; } 85% { opacity: .85; } }
+@keyframes cyber-charge { 0%,100% { box-shadow: 0 0 18px 2px var(--charge), inset 0 0 12px -4px var(--charge); } 50% { box-shadow: 0 0 42px 10px var(--charge), inset 0 0 22px -2px var(--charge); } }
+@keyframes cyber-spark { 0% { transform: scale(.4); opacity: 0; } 15% { opacity: 1; } 45% { transform: scale(1.15); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes cyber-core-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,.28), 0 18px 44px rgba(15,50,110,.16); } 50% { box-shadow: 0 0 0 16px rgba(37,99,235,0), 0 18px 44px rgba(15,50,110,.16); } }
 @keyframes cyber-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes cyber-sweep { from { background-position: 200% 0; } to { background-position: -100% 0; } }
 .orbit-ring:has(.orbit-chip:hover) { animation-play-state: paused !important; }
@@ -50,10 +59,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [togglingId, setTogglingId] = useState<number | null>(null);
     const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
     const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
-    const [syncModalOpen, setSyncModalOpen] = useState(false);
     const [createModalOpen, setCreateModalOpen] = useState(false);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const channelNodesRef = useRef<HTMLDivElement | null>(null);
     const hubRef = useRef<HTMLDivElement | null>(null);
     const clusterRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -179,12 +188,28 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const getTargets = useCallback((): NetworkTarget[] => {
         const targets: NetworkTarget[] = [];
         clusterRefs.current.forEach((el, code) => {
-            const isChannel = code === 'channels';
+            if (code === 'channels') {
+                const cards = Array.from(el.querySelectorAll<HTMLElement>('[data-node-id]'));
+                cards.forEach((card, index) => {
+                    const nodeId = Number(card.getAttribute('data-node-id'));
+                    if (!Number.isFinite(nodeId)) return;
+                    targets.push({
+                        key: `channel-${nodeId}`,
+                        el: card,
+                        dir: 'in',
+                        color: CHANNELS_COLOR,
+                        nodeId,
+                        lane: index,
+                        laneCount: cards.length,
+                    });
+                });
+                return;
+            }
             targets.push({
                 key: code,
                 el,
-                dir: isChannel ? 'in' : 'out',
-                color: isChannel ? CHANNELS_COLOR : CATEGORY_COLORS[code] || '#6366f1',
+                dir: 'out',
+                color: CATEGORY_COLORS[code] || '#6366f1',
             });
         });
         return targets;
@@ -207,7 +232,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const createCategories = categories.filter(c => c.code === 'ecommerce' || c.code === 'invoicing');
 
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
-    const revision = loading ? 0 : categories.length * 1000 + integrations.length + 1;
+    const revision = loading ? 0 : categories.length * 1000 + integrations.length * 10 + channelIntegrations.length + 1;
 
     const editIsWide = editingIntegration
         ? WIDE_FORM_TYPE_IDS.includes(Number(editingIntegration.integration_type_id))
@@ -228,12 +253,15 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     );
 
     return (
-        <>
+        <SyncActivityProvider integrations={channelIntegrations} businessId={effectiveBusinessId}>
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}
                 title={(
                     <span className="relative block w-full">
+                        <span className="absolute left-8 top-1/2 -translate-y-1/2">
+                            <SyncActions />
+                        </span>
                         Tus Integraciones
                         <button
                             onClick={() => setCreateModalOpen(true)}
@@ -278,12 +306,13 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 editingId={editLoadingId}
                                 anchorRef={setClusterRef('channels')}
                             />
+                            <div className="pb-12">
                             <CyberHub
                                 ref={hubRef}
                                 integrations={internalIntegrations}
                                 resourceActive={resourceActive}
-                                onSyncClick={() => setSyncModalOpen(true)}
                             />
+                            </div>
                             <div className="flex flex-wrap gap-8 lg:flex-nowrap">
                                 {services.map(renderCluster)}
                             </div>
@@ -316,13 +345,6 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 </div>
             </Modal>
 
-            <GlobalSyncModal
-                isOpen={syncModalOpen}
-                onClose={() => setSyncModalOpen(false)}
-                integrations={integrations}
-                businessId={effectiveBusinessId}
-            />
-
             <CreateIntegrationModal
                 isOpen={createModalOpen}
                 onClose={() => setCreateModalOpen(false)}
@@ -333,6 +355,6 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     fetchData();
                 }}
             />
-        </>
+        </SyncActivityProvider>
     );
 }
