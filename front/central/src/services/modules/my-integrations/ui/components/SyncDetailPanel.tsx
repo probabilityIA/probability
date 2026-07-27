@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import type { SyncRunKind } from '../../domain/types';
-import { listSyncRunItemsAction } from '../../infra/actions/sync-runs';
+import { fetchSyncRunItems } from '../../infra/repository/sync-run-items';
 import type { ProductApplyActions } from '../providers';
 import type { DetailGroup, ProductActionKey, SyncDetailItem } from '../sync-activity-context';
 
@@ -120,6 +120,7 @@ export function SyncDetailPanel({
     const [remoteTotal, setRemoteTotal] = useState(0);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [reloading, setReloading] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const sentinel = useRef<HTMLDivElement | null>(null);
 
@@ -132,10 +133,19 @@ export function SyncDetailPanel({
         return () => clearTimeout(timer);
     }, [search]);
 
+    const requestSeq = useRef(0);
+    const inFlight = useRef<AbortController | null>(null);
+
     const loadPage = useCallback(async (nextPage: number, replace: boolean) => {
+        inFlight.current?.abort();
+        const controller = new AbortController();
+        inFlight.current = controller;
+        const seq = ++requestSeq.current;
+
         setLoading(true);
+        if (replace) setReloading(true);
         try {
-            const result = await listSyncRunItemsAction({
+            const result = await fetchSyncRunItems({
                 integration_id: integrationId,
                 kind,
                 group: filter === 'all' ? undefined : filter,
@@ -143,7 +153,10 @@ export function SyncDetailPanel({
                 page: nextPage,
                 page_size: PAGE_SIZE,
                 business_id: businessId,
-            });
+            }, controller.signal);
+
+            if (seq !== requestSeq.current) return;
+
             const incoming = result.items.map(item => ({
                 sku: item.sku,
                 label: item.label,
@@ -154,17 +167,24 @@ export function SyncDetailPanel({
             setRemoteTotal(result.total);
             setPage(result.page);
             setHasMore(result.page < result.total_pages);
+        } catch {
+            if (seq !== requestSeq.current) return;
+            setHasMore(false);
         } finally {
-            setLoading(false);
+            if (seq === requestSeq.current) {
+                setLoading(false);
+                setReloading(false);
+            }
         }
     }, [integrationId, kind, filter, term, businessId]);
 
     useEffect(() => {
         if (isLive) return;
-        setRemoteItems([]);
         setHasMore(false);
         loadPage(1, true);
     }, [isLive, loadPage]);
+
+    useEffect(() => () => inFlight.current?.abort(), []);
 
     useEffect(() => {
         if (isLive || !hasMore || loading) return;
@@ -194,6 +214,7 @@ export function SyncDetailPanel({
         ? totalItems
         : isLive ? (liveCounts.get(filter) ?? 0) : (counts[filter] ?? 0);
     const shownTotal = isLive ? liveVisible.length : remoteTotal;
+    const staleDetail = !isLive && !loading && remoteTotal === 0 && groupTotal > 0;
 
     const elsewhere = !isLive || term === '' || liveVisible.length > 0
         ? []
@@ -294,14 +315,16 @@ export function SyncDetailPanel({
             <div className="max-h-40 overflow-y-auto rounded-lg bg-gray-50 p-1.5 dark:bg-gray-900/40">
                 {visible.length === 0 && !loading && (
                     <p className="px-1 py-2 text-[11px] italic text-gray-400 dark:text-gray-500">
-                        {term === ''
-                            ? 'Sin productos en este grupo'
-                            : elsewhere.length > 0
+                        {term !== ''
+                            ? elsewhere.length > 0
                                 ? `Sin resultados aqui. "${term}" aparece en: ${elsewhere.map(group => groupLabel(group, providerLabel)).join(', ')}`
-                                : `Sin resultados para "${term}"`}
+                                : `Sin resultados para "${term}"`
+                            : staleDetail
+                                ? `Los ${groupTotal} productos son de una comparacion anterior. Vuelve a comparar para ver el listado.`
+                                : 'Sin productos en este grupo'}
                     </p>
                 )}
-                {visible.map((item, index) => {
+                {!reloading && visible.map((item, index) => {
                     const style = GROUP_STYLES[item.group];
                     return (
                         <label
@@ -323,8 +346,8 @@ export function SyncDetailPanel({
                     );
                 })}
                 {!isLive && loading && (
-                    <div className="space-y-1 px-1 py-1">
-                        {[0, 1, 2].map(row => (
+                    <div className="space-y-1.5 px-1 py-1">
+                        {(reloading ? [0, 1, 2, 3, 4] : [0, 1, 2]).map(row => (
                             <div key={row} className="h-3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
                         ))}
                     </div>
