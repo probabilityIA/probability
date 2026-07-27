@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -159,6 +160,23 @@ func selectedSKUs(skus []string) map[string]bool {
 	return set
 }
 
+func missingPublishData(p domain.ProductForSync) string {
+	missing := make([]string, 0, 3)
+	if strings.TrimSpace(p.Name) == "" {
+		missing = append(missing, "nombre")
+	}
+	if p.Price <= 0 {
+		missing = append(missing, "precio")
+	}
+	if strings.TrimSpace(p.Brand) == "" {
+		missing = append(missing, "marca")
+	}
+	if len(missing) == 0 {
+		return ""
+	}
+	return "falta " + strings.Join(missing, ", ") + " en el producto"
+}
+
 const maxFailedItemsReported = 10
 
 type failedItem struct {
@@ -222,6 +240,14 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 	created, failed := 0, 0
 	failures := make([]failedItem, 0)
 	for i, p := range missing {
+		if reason := missingPublishData(p); reason != "" {
+			uc.logger.Warn(ctx).Str("sku", p.SKU).Str("motivo", reason).Msg("Producto sin datos para publicar en MercadoLibre")
+			failures = appendFailure(failures, p.SKU, errors.New(reason))
+			failed++
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, failed)
+			continue
+		}
+
 		newID, cerr := cli.CreateProduct(ctx, accessToken, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
@@ -231,6 +257,8 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 			SiteID:        siteID,
 			CurrencyID:    currencyID,
 			ListingTypeID: listingTypeID,
+			Brand:         p.Brand,
+			ImageURL:      p.ImageURL,
 		})
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en MercadoLibre")

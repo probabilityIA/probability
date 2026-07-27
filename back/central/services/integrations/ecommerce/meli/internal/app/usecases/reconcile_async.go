@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	channelLabel        = "Mercado Libre"
-	reconcileEventType  = "meli.product.reconcile.completed"
+	channelLabel       = "Mercado Libre"
+	reconcileEventType = "meli.product.reconcile.completed"
 )
 
 type reconcileDetailItem struct {

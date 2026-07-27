@@ -66,6 +66,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         width: product?.width || undefined,
         length: product?.length || undefined,
         image_url: (product as any)?.image_url || product?.family?.image_url || '',
+        brand: product?.brand || '',
+        category: product?.category || '',
     });
 
     const [skuPrefix, setSkuPrefix] = useState('PROD');
@@ -121,6 +123,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
     const batchFamily = families.find(f => f.id === selectedFamilyId);
     const activeFamily = mode === 'single' ? singleFamily : batchFamily;
     const familyAxes: { key: string; label: string }[] = activeFamily?.variant_axes ?? [];
+    const inheritedBrand = (activeFamily as { brand?: string } | undefined)?.brand ?? '';
+    const inheritedCategory = (activeFamily as { category?: string } | undefined)?.category ?? '';
 
     const addVariant = async () => {
         setSkuSearchLoading(true);
@@ -205,6 +209,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     is_active: formData.is_active,
                     status: formData.status,
                     family_id: formData.family_id || undefined,
+                    brand: formData.brand || undefined,
+                    category: formData.category || undefined,
                     variant_label: formData.variant_label || undefined,
                     variant_attributes: formData.variant_attributes || undefined,
                     weight: formData.weight,
@@ -400,6 +406,41 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                     <span className="text-sm text-gray-700 dark:text-gray-200">Gestionar inventario</span>
                                 </label>
                             </div>
+                        </div>
+
+                        <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">
+                            <h4 style={{ color: primaryColor }} className="text-xs font-bold uppercase tracking-wider mb-3">Catalogo</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={lc}>Marca</label>
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        placeholder={inheritedBrand || 'Ej: Vpro'}
+                                        value={formData.brand || ''}
+                                        onChange={e => setFormData(f => ({ ...f, brand: e.target.value }))}
+                                    />
+                                    {inheritedBrand && !formData.brand && (
+                                        <p className="mt-1 text-[11px] text-gray-400">Hereda &quot;{inheritedBrand}&quot; de la familia</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className={lc}>Categoria</label>
+                                    <input
+                                        className={ic}
+                                        type="text"
+                                        placeholder={inheritedCategory || 'Ej: Suplementos'}
+                                        value={formData.category || ''}
+                                        onChange={e => setFormData(f => ({ ...f, category: e.target.value }))}
+                                    />
+                                    {inheritedCategory && !formData.category && (
+                                        <p className="mt-1 text-[11px] text-gray-400">Hereda &quot;{inheritedCategory}&quot; de la familia</p>
+                                    )}
+                                </div>
+                            </div>
+                            <p className="mt-2 text-[11px] text-gray-400">
+                                Mercado Libre exige la marca para publicar. Si el producto pertenece a una familia, se usa la de la familia salvo que cargues otra aqui.
+                            </p>
                         </div>
 
                         <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">

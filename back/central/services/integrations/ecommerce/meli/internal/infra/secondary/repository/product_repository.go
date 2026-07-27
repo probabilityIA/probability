@@ -123,13 +123,18 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 		StockQuantity  int
 		TrackInventory bool
 		ImageURL       string
+		Brand          string
+		Category       string
 	}
 
 	err := r.db.Conn(ctx).
-		Table("products").
-		Select("id, sku, name, description, price, stock_quantity, track_inventory, image_url").
-		Where("business_id = ? AND deleted_at IS NULL AND is_active = ?", businessID, true).
-		Order("created_at ASC").
+		Table("products AS p").
+		Select(`p.id, p.sku, p.name, p.description, p.price, p.stock_quantity, p.track_inventory, p.image_url,
+			COALESCE(NULLIF(p.brand, ''), NULLIF(f.brand, ''), '') AS brand,
+			COALESCE(NULLIF(p.category, ''), NULLIF(f.category, ''), '') AS category`).
+		Joins("LEFT JOIN product_families f ON f.id = p.family_id AND f.deleted_at IS NULL").
+		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = ?", businessID, true).
+		Order("p.created_at ASC").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err
@@ -146,6 +151,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 			StockQuantity:  row.StockQuantity,
 			TrackInventory: row.TrackInventory,
 			ImageURL:       row.ImageURL,
+			Brand:          row.Brand,
+			Category:       row.Category,
 		})
 	}
 	return products, nil

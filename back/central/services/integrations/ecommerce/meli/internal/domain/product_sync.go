@@ -11,6 +11,8 @@ type CreateProductInput struct {
 	SiteID        string
 	CurrencyID    string
 	ListingTypeID string
+	Brand         string
+	ImageURL      string
 }
 
 type ProductForSync struct {
@@ -22,6 +24,8 @@ type ProductForSync struct {
 	StockQuantity  int
 	TrackInventory bool
 	ImageURL       string
+	Brand          string
+	Category       string
 }
 
 type MeliProduct struct {

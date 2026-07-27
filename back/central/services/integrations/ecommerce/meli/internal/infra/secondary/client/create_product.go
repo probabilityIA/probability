@@ -56,6 +56,16 @@ func (c *MeliClient) predictCategory(ctx context.Context, accessToken, siteID, t
 	return results[0].CategoryID, nil
 }
 
+func attributesFor(input domain.CreateProductInput) []map[string]interface{} {
+	attributes := []map[string]interface{}{
+		{"id": "SELLER_SKU", "value_name": input.SKU},
+	}
+	if brand := strings.TrimSpace(input.Brand); brand != "" {
+		attributes = append(attributes, map[string]interface{}{"id": "BRAND", "value_name": brand})
+	}
+	return attributes
+}
+
 func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, input domain.CreateProductInput) (string, error) {
 	siteID := firstNonEmpty(input.SiteID, meliSiteID)
 	currencyID := firstNonEmpty(input.CurrencyID, meliCurrencyID)
@@ -80,9 +90,11 @@ func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, inpu
 		"buying_mode":        "buy_it_now",
 		"listing_type_id":    listingTypeID,
 		"condition":          "new",
-		"attributes": []map[string]interface{}{
-			{"id": "SELLER_SKU", "value_name": input.SKU},
-		},
+		"attributes":         attributesFor(input),
+	}
+
+	if url := strings.TrimSpace(input.ImageURL); url != "" {
+		payload["pictures"] = []map[string]string{{"source": url}}
 	}
 
 	bodyBytes, err := json.Marshal(payload)
