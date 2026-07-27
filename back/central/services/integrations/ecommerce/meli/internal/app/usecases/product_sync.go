@@ -159,6 +159,27 @@ func selectedSKUs(skus []string) map[string]bool {
 	return set
 }
 
+const maxFailedItemsReported = 10
+
+type failedItem struct {
+	SKU   string `json:"sku"`
+	Error string `json:"error"`
+}
+
+func appendFailure(items []failedItem, sku string, err error) []failedItem {
+	if len(items) >= maxFailedItemsReported {
+		return items
+	}
+	message := "error desconocido"
+	if err != nil {
+		message = err.Error()
+	}
+	if len(message) > 200 {
+		message = message[:200]
+	}
+	return append(items, failedItem{SKU: sku, Error: message})
+}
+
 func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 	accessToken, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
@@ -199,6 +220,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 	cli := uc.clientFor(ctx, integration)
 
 	created, failed := 0, 0
+	failures := make([]failedItem, 0)
 	for i, p := range missing {
 		newID, cerr := cli.CreateProduct(ctx, accessToken, domain.CreateProductInput{
 			Name:          p.Name,
@@ -212,6 +234,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 		})
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en MercadoLibre")
+			failures = appendFailure(failures, p.SKU, cerr)
 			failed++
 		} else {
 			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
@@ -229,6 +252,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 		"created":        created,
 		"updated":        0,
 		"failed":         failed,
+		"failed_items":   failures,
 	})
 	return nil
 }
@@ -269,6 +293,7 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 	}
 
 	created, failed := 0, 0
+	failures := make([]failedItem, 0)
 	for i, m := range missing {
 		msg := providerUpsertMsg{
 			BusinessID:     businessID,
@@ -282,9 +307,11 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {
+			failures = appendFailure(failures, m.SKU, merr)
 			failed++
 		} else if perr := uc.rabbit.Publish(ctx, rabbitmq.QueueProductsProviderUpsert, data); perr != nil {
 			uc.logger.Error(ctx).Err(perr).Str("sku", m.SKU).Msg("Error al publicar producto para crear en Probability")
+			failures = appendFailure(failures, m.SKU, perr)
 			failed++
 		} else {
 			created++
@@ -299,6 +326,7 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 		"created":        created,
 		"updated":        0,
 		"failed":         failed,
+		"failed_items":   failures,
 	})
 	return nil
 }

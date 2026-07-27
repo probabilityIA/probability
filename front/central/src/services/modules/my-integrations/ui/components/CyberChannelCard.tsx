@@ -423,8 +423,25 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
             </div>
             </div>
             {envView === 'products' && feedback && (
-                <div className="flex items-center gap-1.5 border-t border-gray-100 px-3 py-1.5 dark:border-gray-700">
-                    <span className={`text-[11px] font-semibold ${feedback.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
+                <div className="flex items-start gap-1.5 border-t border-gray-100 px-3 py-1.5 dark:border-gray-700">
+                    <span
+                        className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            feedback.pending
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                                : feedback.ok
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                    : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300'
+                        }`}
+                    >
+                        {feedback.pending ? 'En curso' : feedback.ok ? 'Listo' : 'Error'}
+                    </span>
+                    <span className={`text-[11px] font-semibold ${
+                        feedback.pending
+                            ? 'text-blue-600 dark:text-blue-300'
+                            : feedback.ok
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-500'
+                    }`}>
                         {feedback.message}
                     </span>
                 </div>

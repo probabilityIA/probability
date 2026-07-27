@@ -60,6 +60,7 @@ export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbab
 export interface ProductActionResult {
     ok: boolean;
     message: string;
+    pending?: boolean;
 }
 
 interface SyncActivityValue {
@@ -89,6 +90,37 @@ const SyncActivityContext = createContext<SyncActivityValue | null>(null);
 const SYNC_TIMEOUT_MS = 6 * 60 * 1000;
 
 const APPLY_SETTLE_MS = 4000;
+
+const APPLY_TIMEOUT_MS = 10 * 60 * 1000;
+
+interface FailedItem {
+    sku?: string;
+    error?: string;
+}
+
+export function buildApplyMessage(
+    total: number,
+    created: number,
+    updated: number,
+    failed: number,
+    failedItems?: unknown,
+): string {
+    const parts: string[] = [];
+    if (created > 0) parts.push(`${created} creados`);
+    if (updated > 0) parts.push(`${updated} actualizados`);
+    if (failed > 0) parts.push(`${failed} con error`);
+    if (parts.length === 0) return total === 0 ? 'No habia productos por aplicar' : 'Sin cambios';
+
+    let message = `${parts.join(', ')} de ${total}`;
+    const items = Array.isArray(failedItems) ? (failedItems as FailedItem[]) : [];
+    const firstError = items.find(item => item?.error)?.error;
+    if (firstError) {
+        const sample = items[0]?.sku ? `${items[0].sku}: ${firstError}` : firstError;
+        message += ` — ${sample}`;
+        if (items.length > 1) message += ` (y ${items.length - 1} mas)`;
+    }
+    return message;
+}
 
 interface SyncStartResult {
     success?: boolean;
@@ -137,6 +169,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
 
     const corrToIntegration = useRef<Map<string, number>>(new Map());
     const completion = useRef<Map<number, () => void>>(new Map());
+    const applyCompletion = useRef<Map<number, () => void>>(new Map());
 
     const eligible = useMemo(
         () => integrations.filter(i => i.is_active && getSyncProvider(i.integration_type_id)),
@@ -176,6 +209,28 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                     ...prev,
                     [id]: { processed: Number(data.processed) || 0, total: Number(data.total) || prev[id]?.total || 0 },
                 }));
+            } else if (eventType.endsWith('.product.sync.started')) {
+                patchNode(id, 'active');
+                setProgress(prev => ({ ...prev, [id]: { processed: 0, total: Number(data.total) || 0 } }));
+            } else if (eventType.endsWith('.product.sync.progress')) {
+                setProgress(prev => ({
+                    ...prev,
+                    [id]: { processed: Number(data.processed) || 0, total: Number(data.total) || prev[id]?.total || 0 },
+                }));
+            } else if (eventType.endsWith('.product.sync.completed')) {
+                const created = Number(data.created) || 0;
+                const updated = Number(data.updated) || 0;
+                const failed = Number(data.failed) || 0;
+                const total = Number(data.total) || created + updated + failed;
+                setActionResult(prev => ({
+                    ...prev,
+                    [id]: {
+                        ok: failed === 0 && total > 0,
+                        message: buildApplyMessage(total, created, updated, failed, data.failed_items),
+                    },
+                }));
+                patchNode(id, failed > 0 ? 'error' : 'done');
+                applyCompletion.current.get(id)?.();
             } else if (eventType.endsWith('.product.reconcile.started')) {
                 patchNode(id, 'scan');
             } else if (eventType.endsWith('.product.reconcile.completed')) {
@@ -424,8 +479,31 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                     break;
                 }
                 message = String(res?.message || 'Aplicado');
+
+                const correlationID = typeof res?.correlation_id === 'string' ? res.correlation_id : '';
+                if (correlationID === '') continue;
+
+                corrToIntegration.current.set(correlationID, integrationId);
+                setActionResult(prev => ({ ...prev, [integrationId]: { ok: true, pending: true, message: 'Aplicando...' } }));
+                await new Promise<void>(resolve => {
+                    const timer = window.setTimeout(() => {
+                        applyCompletion.current.delete(integrationId);
+                        setActionResult(prev => ({
+                            ...prev,
+                            [integrationId]: { ok: true, pending: true, message: 'Sigue aplicandose en segundo plano' },
+                        }));
+                        resolve();
+                    }, APPLY_TIMEOUT_MS);
+                    applyCompletion.current.set(integrationId, () => {
+                        window.clearTimeout(timer);
+                        applyCompletion.current.delete(integrationId);
+                        resolve();
+                    });
+                });
             }
-            setActionResult(prev => ({ ...prev, [integrationId]: { ok, message } }));
+            setActionResult(prev => (prev[integrationId]?.message === 'Aplicando...' || !prev[integrationId]
+                ? { ...prev, [integrationId]: { ok, message } }
+                : prev));
             if (ok) {
                 await new Promise(resolve => setTimeout(resolve, APPLY_SETTLE_MS));
                 await reconcileOne(integration);
