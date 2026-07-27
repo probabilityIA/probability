@@ -21,10 +21,10 @@ func (h *Handler) handleHealth(c *gin.Context) {
 func (h *Handler) handleSystemStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"environment": gin.H{
-			"home_url":            "http://woocommerce-mock.local",
-			"site_url":            "http://woocommerce-mock.local",
-			"wc_version":          "9.0.0-mock",
-			"wp_version":          "6.5-mock",
+			"home_url":              "http://woocommerce-mock.local",
+			"site_url":              "http://woocommerce-mock.local",
+			"wc_version":            "9.0.0-mock",
+			"wp_version":            "6.5-mock",
 			"external_object_cache": nil,
 		},
 		"settings": gin.H{"currency": "COP"},
@@ -73,30 +73,86 @@ func (h *Handler) handleGetOrder(c *gin.Context) {
 }
 
 func (h *Handler) handleCreateProduct(c *gin.Context) {
-	var body map[string]interface{}
+	var body struct {
+		Name          string `json:"name"`
+		SKU           string `json:"sku"`
+		Type          string `json:"type"`
+		RegularPrice  string `json:"regular_price"`
+		Price         string `json:"price"`
+		ManageStock   bool   `json:"manage_stock"`
+		StockQuantity *int   `json:"stock_quantity"`
+		Status        string `json:"status"`
+	}
 	_ = c.ShouldBindJSON(&body)
+
+	price := body.RegularPrice
+	if price == "" {
+		price = body.Price
+	}
+	kind := body.Type
+	if kind == "" {
+		kind = "simple"
+	}
+	status := body.Status
+	if status == "" {
+		status = "publish"
+	}
 
 	h.mu.Lock()
 	id := h.nextProdID
 	h.nextProdID++
+	item := &wooProduct{
+		ID:            id,
+		Name:          body.Name,
+		SKU:           body.SKU,
+		Type:          kind,
+		Price:         price,
+		ManageStock:   body.ManageStock,
+		StockQuantity: body.StockQuantity,
+		Status:        status,
+	}
+	h.products[id] = item
 	h.mu.Unlock()
 
-	if body == nil {
-		body = map[string]interface{}{}
-	}
-	body["id"] = id
-	c.JSON(http.StatusCreated, body)
+	c.JSON(http.StatusCreated, item)
 }
 
 func (h *Handler) handleUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
-	var body map[string]interface{}
-	_ = c.ShouldBindJSON(&body)
-	if body == nil {
-		body = map[string]interface{}{}
+
+	var body struct {
+		Name          *string `json:"name"`
+		SKU           *string `json:"sku"`
+		ManageStock   *bool   `json:"manage_stock"`
+		StockQuantity *int    `json:"stock_quantity"`
 	}
-	body["id"] = id
-	c.JSON(http.StatusOK, body)
+	_ = c.ShouldBindJSON(&body)
+
+	h.mu.Lock()
+	item, ok := h.products[id]
+	if ok {
+		if body.Name != nil {
+			item.Name = *body.Name
+		}
+		if body.SKU != nil {
+			item.SKU = *body.SKU
+		}
+		if body.ManageStock != nil {
+			item.ManageStock = *body.ManageStock
+		}
+		if body.StockQuantity != nil {
+			item.StockQuantity = body.StockQuantity
+		}
+	}
+	h.mu.Unlock()
+
+	if !ok {
+		c.JSON(http.StatusNotFound, gin.H{"code": "woocommerce_rest_product_invalid_id", "message": "producto no existe"})
+		return
+	}
+
+	h.logger.Info().Msgf("WooCommerce mock: producto %d con stock %v", id, item.StockQuantity)
+	c.JSON(http.StatusOK, item)
 }
 
 func (h *Handler) handleListWebhooks(c *gin.Context) {
@@ -179,10 +235,15 @@ func (h *Handler) handleSimulateOrder(c *gin.Context) {
 	fired := 0
 	errs := []string{}
 	client := &http.Client{Timeout: 15 * time.Second}
+	override := c.Query("target")
 	for _, w := range targets {
-		req, err := http.NewRequest(http.MethodPost, w.DeliveryURL, bytes.NewReader(body))
+		deliveryURL := w.DeliveryURL
+		if override != "" {
+			deliveryURL = override
+		}
+		req, err := http.NewRequest(http.MethodPost, deliveryURL, bytes.NewReader(body))
 		if err != nil {
-			errs = append(errs, w.DeliveryURL+": "+err.Error())
+			errs = append(errs, deliveryURL+": "+err.Error())
 			continue
 		}
 		req.Header.Set("Content-Type", "application/json")
@@ -195,7 +256,7 @@ func (h *Handler) handleSimulateOrder(c *gin.Context) {
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			errs = append(errs, w.DeliveryURL+": "+err.Error())
+			errs = append(errs, deliveryURL+": "+err.Error())
 			continue
 		}
 		resp.Body.Close()

@@ -322,10 +322,15 @@ func (h *Handler) handleSimulateOrder(c *gin.Context) {
 	errs := make([]string, 0)
 	client := &http.Client{Timeout: 15 * time.Second}
 
+	override := c.Query("target")
 	for _, target := range targets {
-		req, err := http.NewRequest(http.MethodPost, target.URL, bytes.NewReader(body))
+		deliveryURL := target.URL
+		if override != "" {
+			deliveryURL = override
+		}
+		req, err := http.NewRequest(http.MethodPost, deliveryURL, bytes.NewReader(body))
 		if err != nil {
-			errs = append(errs, target.URL+": "+err.Error())
+			errs = append(errs, deliveryURL+": "+err.Error())
 			continue
 		}
 
@@ -339,7 +344,7 @@ func (h *Handler) handleSimulateOrder(c *gin.Context) {
 
 		resp, err := client.Do(req)
 		if err != nil {
-			errs = append(errs, target.URL+": "+err.Error())
+			errs = append(errs, deliveryURL+": "+err.Error())
 			continue
 		}
 		resp.Body.Close()

@@ -92,4 +92,5 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	router.PUT("/products/:id/variants/:vid", h.handleUpdateVariant)
 
 	router.POST("/simulate/order", h.handleSimulateOrder)
+	router.POST("/mock/seed-products", h.handleSeedProducts)
 }

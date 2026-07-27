@@ -13,9 +13,11 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/bold"
 	"github.com/secamc93/probability/back/testing/integrations/envioclick"
 	"github.com/secamc93/probability/back/testing/integrations/jumpseller"
+	"github.com/secamc93/probability/back/testing/integrations/mercadolibre"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
+	"github.com/secamc93/probability/back/testing/integrations/vtex"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
 	"github.com/secamc93/probability/back/testing/integrations/woocommerce"
 	"github.com/secamc93/probability/back/testing/modules/orders"
@@ -95,6 +97,28 @@ func main() {
 		}
 	}()
 
+	meliPort := getEnv("MELI_MOCK_PORT", "9098")
+	meliWebhookTarget := getEnv("MELI_MOCK_WEBHOOK_TARGET", "http://localhost:3050/api/v1/meli/notifications")
+	meliServer := mercadolibre.New(logger, meliPort, meliWebhookTarget)
+
+	go func() {
+		if err := meliServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting MercadoLibre mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
+	vtexPort := getEnv("VTEX_MOCK_PORT", "9099")
+	vtexWebhookTarget := getEnv("VTEX_MOCK_WEBHOOK_TARGET", "")
+	vtexServer := vtex.New(logger, vtexPort, vtexWebhookTarget)
+
+	go func() {
+		if err := vtexServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting VTEX mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	jumpsellerPort := getEnv("JUMPSELLER_MOCK_PORT", "9097")
 	jumpsellerServer := jumpseller.New(logger, jumpsellerPort)
 
@@ -140,6 +164,8 @@ func main() {
 	fmt.Printf("Siigo HTTP:        http://localhost:%s\n", siigoPort)
 	fmt.Printf("WooCommerce HTTP:  http://localhost:%s\n", woocommercePort)
 	fmt.Printf("Jumpseller HTTP:   http://localhost:%s\n", jumpsellerPort)
+	fmt.Printf("MercadoLibre HTTP: http://localhost:%s\n", meliPort)
+	fmt.Printf("VTEX HTTP:         http://localhost:%s\n", vtexPort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")
