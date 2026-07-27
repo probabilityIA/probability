@@ -258,14 +258,14 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 isOpen={isOpen}
                 onClose={onClose}
                 title={(
-                    <span className="relative block w-full">
-                        <span className="absolute left-8 top-1/2 -translate-y-1/2">
+                    <span className="flex w-full items-center gap-4 px-8">
+                        <span className="flex-shrink-0">
                             <SyncActions />
                         </span>
-                        Tus Integraciones
+                        <span className="min-w-0 flex-1 truncate text-center">Tus Integraciones</span>
                         <button
                             onClick={() => setCreateModalOpen(true)}
-                            className="absolute right-8 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/25"
+                            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/25"
                         >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { RefreshCw, ArrowRightLeft, ReceiptText, type LucideIcon } from 'lucide-react';
+import { RefreshCw, ArrowRightLeft, ReceiptText, LayoutGrid, type LucideIcon } from 'lucide-react';
 import { useSyncActivity, type SyncEnvironment } from '../sync-activity-context';
 
 interface EnvironmentAction {
@@ -40,6 +40,19 @@ export function SyncActions() {
 
     return (
         <span className="flex items-center gap-2">
+            <button
+                onClick={() => { reset(); setEnvironment(null); }}
+                disabled={running}
+                title="Vista general: ordenes y productos de cada canal, sin acciones sobre el nucleo"
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                    environment === null
+                        ? 'border-white bg-white text-[#0d5c80] shadow-sm'
+                        : 'border-white/30 bg-white/15 text-white hover:bg-white/25'
+                }`}
+            >
+                <LayoutGrid size={13} />
+                Vista general
+            </button>
             {ACTIONS.map(action => {
                 const Icon = action.icon;
                 const active = environment === action.key;

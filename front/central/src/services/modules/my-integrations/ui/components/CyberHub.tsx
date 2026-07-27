@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, type CSSProperties } from 'react';
-import { RefreshCw, Package, Truck, Bell, Users, Store, ReceiptText, Cog, type LucideIcon } from 'lucide-react';
+import { Package, Truck, Bell, Users, Store, ReceiptText, Cog, type LucideIcon } from 'lucide-react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { INTERNAL_MODULE_RESOURCE_NAME } from '../../domain/types';
 import { useSyncActivity } from '../sync-activity-context';
@@ -167,9 +167,9 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                                         ? 'Iniciar sincronizacion de inventario'
                                         : 'Elige arriba que quieres sincronizar'
                             }
-                            className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                            className="mt-1 flex h-7 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 px-3.5 text-[11px] font-bold uppercase tracking-wider text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >
-                            <RefreshCw size={14} className={busy ? 'animate-spin' : ''} />
+                            <span className={busy ? 'animate-pulse' : ''}>Iniciar</span>
                         </button>
                     </div>
                 </div>
