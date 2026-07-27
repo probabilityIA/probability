@@ -35,3 +35,20 @@ func (uc *useCase) Record(ctx context.Context, run *domain.SyncRun) error {
 func (uc *useCase) ListLast(ctx context.Context, businessID uint) ([]domain.SyncRun, error) {
 	return uc.repo.ListLastByBusiness(ctx, businessID)
 }
+
+func (uc *useCase) ListDetail(ctx context.Context, query domain.DetailQuery) (*domain.DetailPage, error) {
+	if query.BusinessID == 0 || query.IntegrationID == 0 {
+		return nil, domain.ErrIntegrationNotOwned
+	}
+
+	owned, err := uc.repo.IntegrationBelongsToBusiness(ctx, query.IntegrationID, query.BusinessID)
+	if err != nil {
+		return nil, err
+	}
+	if !owned {
+		return nil, domain.ErrIntegrationNotOwned
+	}
+
+	query.Normalize()
+	return uc.repo.ListDetail(ctx, query)
+}

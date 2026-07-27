@@ -47,7 +47,6 @@ const GeozoneMiniMap = dynamic(
     },
 );
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
     pending: { label: 'Pendiente', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-600', icon: <Clock size={12} />, border: 'border-amber-400' },
@@ -114,27 +113,19 @@ function formatMoney(amount?: number) {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 }
 
-// Extract city from destination_address.
-// Tries multiple strategies:
-// 1. Last segment after a comma (e.g., "Calle 28 # 85-36, Montería")
-// 2. Second-to-last segment if last is a country (e.g., "..., Montería, Colombia")
-// 3. Falls back to the full address as city hint (Nominatim handles fuzzy matching)
 function extractCity(destination?: string): string | null {
     if (!destination) return null;
     const parts = destination.split(',').map(s => s.trim()).filter(Boolean);
     if (parts.length >= 2) {
-        // If last part is "Colombia" (country), use the one before it
         const last = parts[parts.length - 1];
         if (last.toLowerCase() === 'colombia' && parts.length >= 3) {
             return parts[parts.length - 2];
         }
         return last;
     }
-    // No commas: return the full address string and let Nominatim figure it out
     return destination.trim() || null;
 }
 
-// ─── Tracking Detail Panel ──────────────────────────────────────────────────
 
 interface TrackingDetailProps {
     shipment: Shipment;
@@ -153,7 +144,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
     const [tracking, setTracking] = useState<{ loading: boolean; data?: any; error?: string }>({ loading: false });
     const [carrierProbabilities, setCarrierProbabilities] = useState<ProbabilityResult[]>([]);
 
-    // Parse destination address for map
     const destination = shipment.destination_address || '';
     const city = extractCity(destination) || '';
 
@@ -241,9 +231,7 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                 </button>
             </div>
 
-            {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
-                {/* Direcciones — 2 columns */}
                 <div className="px-4 pt-4 pb-2 border-b border-gray-50 dark:border-gray-700">
                     <div className="flex items-center gap-1.5 mb-2">
                         <MapPin size={12} className="text-gray-400 dark:text-gray-500" />
@@ -312,9 +300,7 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     </div>
                 </div>
 
-                {/* Info compacta: Cliente + Tracking + Estado + Fechas + Acciones */}
                 <div className="px-4 py-3 border-b border-gray-50 dark:border-gray-700 space-y-3">
-                    {/* Cliente + Tracking en una fila */}
                     {(shipment.customer_name || shipment.client_name || shipment.tracking_number) && (
                         <div className="grid grid-cols-2 gap-2">
                             {(shipment.customer_name || shipment.client_name) && (
@@ -352,7 +338,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                         </div>
                     )}
 
-                    {/* Fechas en fila compacta */}
                     <div className="grid grid-cols-3 gap-2">
                         {shipment.created_at && (
                             <div className="bg-gray-50 dark:bg-gray-700/50 rounded p-2">
@@ -379,7 +364,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                         ) : null}
                     </div>
 
-                    {/* Botones compactos */}
                     <div className="flex gap-1.5 pt-1">
                         {shipment.guide_url && (
                             <a
@@ -422,8 +406,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     </div>
                 </div>
 
-                {/* ─── Costos ─────────────────────────────────────────── */}
-                {/* Costos + Paquete combinados en una fila */}
                 {(shipment.shipping_cost != null || shipment.insurance_cost != null || shipment.total_cost != null || shipment.weight != null || shipment.length != null) && (
                     <div className="px-4 py-3 border-t border-gray-50 dark:border-gray-700">
                         <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
@@ -456,7 +438,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     </div>
                 )}
 
-                {/* ─── Logística ───────────────────────────────────────── */}
                 {(shipment.warehouse_name || shipment.driver_name || shipment.is_last_mile) && (
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
@@ -492,7 +473,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     </div>
                 )}
 
-                {/* ─── Notas de entrega ────────────────────────────────── */}
                 {shipment.delivery_notes && (
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
@@ -505,7 +485,6 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     </div>
                 )}
 
-                {/* Tracking Timeline */}
                 <div className="px-4 py-3">
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Historial de rastreo</p>
                     {tracking.loading ? (
@@ -563,22 +542,42 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
     );
 }
 
-interface OrderNumberFilterProps {
-    value: string;
-    onChange: (orderNumber: string | undefined) => void;
+type ReferenceFilterMode = 'customer_name' | 'order_number' | 'tracking_number';
+
+interface ReferenceFilterProps {
+    customerName: string;
+    orderNumber: string;
+    trackingNumber: string;
+    onChange: (values: { customer_name?: string; order_number?: string; tracking_number?: string }) => void;
     businessId?: number;
 }
 
-function OrderNumberFilter({ value, onChange, businessId }: OrderNumberFilterProps) {
-    const [input, setInput] = useState(value);
+const REFERENCE_FILTER_MODES: { value: ReferenceFilterMode; label: string; placeholder: string }[] = [
+    { value: 'customer_name', label: 'Cliente', placeholder: 'Buscar por nombre del cliente...' },
+    { value: 'order_number', label: '# Orden', placeholder: 'Filtrar por # de orden...' },
+    { value: 'tracking_number', label: '# Gu\u00eda', placeholder: 'Filtrar por # de gu\u00eda...' },
+];
+
+const EMPTY_REFERENCE_FILTERS = { customer_name: undefined, order_number: undefined, tracking_number: undefined };
+
+function ReferenceFilter({ customerName, orderNumber, trackingNumber, onChange, businessId }: ReferenceFilterProps) {
+    const [mode, setMode] = useState<ReferenceFilterMode>(
+        trackingNumber ? 'tracking_number' : orderNumber ? 'order_number' : 'customer_name'
+    );
+    const [input, setInput] = useState(trackingNumber || orderNumber || customerName);
     const [suggestions, setSuggestions] = useState<{ order_number: string; customer_name?: string }[]>([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => { setInput(value); }, [value]);
+    const isOrderMode = mode === 'order_number';
+    const isTrackingMode = mode === 'tracking_number';
+    const config = REFERENCE_FILTER_MODES.find((m) => m.value === mode) ?? REFERENCE_FILTER_MODES[0];
+    const applied = isTrackingMode ? trackingNumber : isOrderMode ? orderNumber : customerName;
+
+    useEffect(() => { setInput(applied); }, [applied]);
 
     useEffect(() => {
-        if (!open) return;
+        if (!open || !isOrderMode) { setSuggestions([]); return; }
         const term = input.trim();
         if (term.length < 2) { setSuggestions([]); return; }
         const t = setTimeout(async () => {
@@ -602,67 +601,106 @@ function OrderNumberFilter({ value, onChange, businessId }: OrderNumberFilterPro
             }
         }, 250);
         return () => clearTimeout(t);
-    }, [input, open, businessId]);
+    }, [input, open, businessId, isOrderMode]);
+
+    const apply = (raw: string | undefined) => {
+        const term = raw?.trim() || undefined;
+        onChange({ ...EMPTY_REFERENCE_FILTERS, [mode]: term });
+    };
+
+    useEffect(() => {
+        if (isOrderMode) return;
+        const term = input.trim();
+        if (term === (applied || '')) return;
+        const t = setTimeout(() => onChange({ ...EMPTY_REFERENCE_FILTERS, [mode]: term || undefined }), 500);
+        return () => clearTimeout(t);
+    }, [input, applied, mode, isOrderMode]);
+
+    const switchMode = (next: ReferenceFilterMode) => {
+        if (next === mode) return;
+        setMode(next);
+        setInput('');
+        setSuggestions([]);
+        setOpen(false);
+        if (customerName || orderNumber || trackingNumber) {
+            onChange({ ...EMPTY_REFERENCE_FILTERS });
+        }
+    };
+
+    const Icon = isTrackingMode ? Truck : isOrderMode ? Hash : Search;
 
     return (
-        <div className="relative min-w-[220px]">
-            <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-            <input
-                type="text"
-                placeholder="Filtrar por # de orden..."
-                className="w-full pl-9 pr-8 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:text-gray-500 transition-colors"
-                value={input}
-                onChange={(e) => { setInput(e.target.value); setOpen(true); }}
-                onFocus={() => setOpen(true)}
-                onBlur={() => setTimeout(() => setOpen(false), 150)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        onChange(input.trim() || undefined);
-                        setOpen(false);
-                    } else if (e.key === 'Escape') {
-                        setOpen(false);
-                    }
-                }}
-            />
-            {input && (
-                <button
-                    type="button"
-                    onClick={() => { setInput(''); onChange(undefined); }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                    <X size={14} />
-                </button>
-            )}
-            {open && (suggestions.length > 0 || loading || input.trim().length >= 2) && (
-                <div className="absolute z-30 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {loading && (
-                        <div className="px-3 py-2 text-xs text-gray-400 flex items-center gap-2">
-                            <RefreshCw size={12} className="animate-spin" /> Buscando...
-                        </div>
-                    )}
-                    {!loading && suggestions.length === 0 && input.trim().length >= 2 && (
-                        <div className="px-3 py-2 text-xs text-gray-400">Sin coincidencias</div>
-                    )}
-                    {suggestions.map((s) => (
-                        <button
-                            key={s.order_number}
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                                setInput(s.order_number);
-                                onChange(s.order_number);
-                                setOpen(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
-                        >
-                            <span className="font-semibold text-gray-700 dark:text-gray-200">{s.order_number}</span>
-                            {s.customer_name && (
-                                <span className="text-xs text-gray-400 truncate">{s.customer_name}</span>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            )}
+        <div className="relative flex flex-shrink-0" style={{ width: 400 }}>
+            <select
+                value={mode}
+                onChange={(e) => switchMode(e.target.value as ReferenceFilterMode)}
+                style={{ width: 112 }}
+                className="flex-shrink-0 px-2 py-2 border border-r-0 border-gray-200 dark:border-gray-600 rounded-l-lg rounded-r-none text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                title={'Elige por cual campo filtrar'}
+            >
+                {REFERENCE_FILTER_MODES.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+            </select>
+            <div className="relative flex-1">
+                <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                <input
+                    type="text"
+                    placeholder={config.placeholder}
+                    className="w-full pl-9 pr-8 py-2 border border-gray-200 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:text-gray-500 transition-colors"
+                    value={input}
+                    onChange={(e) => { setInput(e.target.value); setOpen(true); }}
+                    onFocus={() => setOpen(true)}
+                    onBlur={() => setTimeout(() => setOpen(false), 150)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            apply(input);
+                            setOpen(false);
+                        } else if (e.key === 'Escape') {
+                            setOpen(false);
+                        }
+                    }}
+                />
+                {input && (
+                    <button
+                        type="button"
+                        onClick={() => { setInput(''); apply(undefined); }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                        <X size={14} />
+                    </button>
+                )}
+                {isOrderMode && open && (suggestions.length > 0 || loading || input.trim().length >= 2) && (
+                    <div className="absolute z-30 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {loading && (
+                            <div className="px-3 py-2 text-xs text-gray-400 flex items-center gap-2">
+                                <RefreshCw size={12} className="animate-spin" /> Buscando...
+                            </div>
+                        )}
+                        {!loading && suggestions.length === 0 && input.trim().length >= 2 && (
+                            <div className="px-3 py-2 text-xs text-gray-400">Sin coincidencias</div>
+                        )}
+                        {suggestions.map((s) => (
+                            <button
+                                key={s.order_number}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => {
+                                    setInput(s.order_number);
+                                    apply(s.order_number);
+                                    setOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between gap-2"
+                            >
+                                <span className="font-semibold text-gray-700 dark:text-gray-200">{s.order_number}</span>
+                                {s.customer_name && (
+                                    <span className="text-xs text-gray-400 truncate">{s.customer_name}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -692,11 +730,9 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     const [isCancelingBatch, setIsCancelingBatch] = useState(false);
     const [cancelModalData, setCancelModalData] = useState<{ isOpen: boolean; type: 'single' | 'batch'; shipmentId?: string } | null>(null);
 
-    // Auto-inject business_id for non-super-admins
     const defaultBusinessId = (!isSuperAdmin && permissions?.business_id) ? permissions.business_id : undefined;
     const sseBusinessId = permissions?.business_id || 0;
 
-    // Optimistic local cancellation via SSE: mark shipment as cancelled without full reload
     useShipmentSSE({
         businessId: sseBusinessId,
         onShipmentCancelled: (data) => {
@@ -770,7 +806,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
         router.push(`?${params.toString()}`);
     };
 
-    // Resolve business_id for transport operations (super admin needs explicit business context)
 
     const handleCancel = async (id: string) => {
         setCancelModalData({ isOpen: true, type: 'single', shipmentId: id });
@@ -841,9 +876,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     return (
         <div className="flex flex-col h-full gap-4" style={{ height: 'calc(100vh - 120px)' }}>
 
-            {/* ─── Top bar ─── */}
             <div className="flex items-start flex-shrink-0">
-                {/* Left: icon + title + subtitle */}
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                         <Package size={20} className="text-blue-600" />
@@ -862,9 +895,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 </div>
             </div>
 
-            {/* ─── Status chips ─── */}
             <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-0.5">
-                {/* Chip "Todos" */}
                 <button
                     onClick={() => updateFilters({ status: undefined })}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-purple-600 text-white dark:bg-purple-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:bg-gray-600'
@@ -872,7 +903,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 >
                     Todos <span className="opacity-70">{total}</span>
                 </button>
-                {/* Chips por estado */}
                 {CHIP_STATUS_OPTIONS.map(({ value, label, icon: Icon, activeClass }) => {
                     const count = shipments.filter((s) => s.status === value).length;
                     const isActive = filters.status === value;
@@ -891,26 +921,15 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 })}
             </div>
 
-            {/* ─── Filters ─── */}
             <div className="flex-shrink-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 px-4 py-3">
                 <div className="flex gap-3">
-                    {/* Búsqueda por nombre del cliente */}
-                    <div className="relative flex-1">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nombre del cliente..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-600 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:text-gray-500 transition-colors"
-                            value={filters.customer_name || ''}
-                            onChange={(e) => updateFilters({ customer_name: e.target.value || undefined })}
-                        />
-                    </div>
-                    <OrderNumberFilter
-                        value={filters.order_number || ''}
-                        onChange={(v) => updateFilters({ order_number: v })}
+                    <ReferenceFilter
+                        customerName={filters.customer_name || ''}
+                        orderNumber={filters.order_number || ''}
+                        trackingNumber={filters.tracking_number || ''}
+                        onChange={(v) => updateFilters(v)}
                         businessId={isSuperAdmin ? (selectedBusinessId ?? undefined) : defaultBusinessId}
                     />
-                    {/* Select estado */}
                     <select
                         className="px-3 py-2 border border-gray-200 dark:border-gray-600 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
                         value={filters.status || ''}
@@ -959,13 +978,10 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 </div>
             </div>
 
-            {/* ─── Split Panel ─── */}
             <div className="flex gap-4 flex-1 min-h-0">
 
-                {/* LEFT — Shipment cards list */}
                 <div className="w-1/3 flex flex-col min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     
-                    {/* Batch Actions Header */}
                     {shipments.length > 0 && (
                         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex-shrink-0">
                             <div className="flex items-center gap-2">
@@ -992,7 +1008,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         </div>
                     )}
 
-                    {/* List */}
                     <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-400 dark:text-gray-500">
@@ -1021,7 +1036,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                             }`}
                                     >
                                         <div className="flex items-stretch w-full">
-                                            {/* Checkbox zone */}
                                             <div 
                                                 className="px-3 py-4 flex items-start justify-center cursor-pointer border-r border-transparent hover:border-gray-100 dark:hover:border-gray-600"
                                                 onClick={(e) => { e.stopPropagation(); toggleSelection(shipment.id); }}
@@ -1029,17 +1043,15 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                                 <input 
                                                     type="checkbox" 
                                                     checked={selectedIds.has(shipment.id)} 
-                                                    onChange={() => {}} // Controlled by the div click
+                                                    onChange={() => {}}
                                                     className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
                                                 />
                                             </div>
                                             
-                                            {/* Main content click zone */}
                                             <div 
                                                 className="flex-1 px-3 py-3.5 min-w-0"
                                                 onClick={() => setSelectedShipment(isSelected ? null : shipment)}
                                             >
-                                                {/* Row 1: Client name + destination city */}
                                         <div className="flex items-center justify-between gap-2 mb-1.5">
                                             <div className="flex items-center gap-1.5 min-w-0">
                                                 {!clientName && <Package size={11} className="text-gray-300 flex-shrink-0" />}
@@ -1061,7 +1073,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                             </div>
                                         </div>
 
-                                        {/* Row 2: Status + TEST badge */}
                                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                                             <StatusBadge status={shipment.status} />
                                             <SubStatusBadge status={shipment.status} carrier={shipment.carrier} detail={shipment.carrier_status_detail} />
@@ -1070,7 +1081,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                             )}
                                         </div>
 
-                                        {/* Row 3: Order number + Tracking + carrier + date */}
                                         <div className="flex items-center gap-2 flex-wrap">
                                             {shipment.order_number && (
                                                 <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded border border-purple-100 dark:border-purple-800">
@@ -1106,7 +1116,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         )}
                     </div>
 
-                    {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex-shrink-0">
                             <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
@@ -1132,7 +1141,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     )}
                 </div>
 
-                {/* RIGHT — Detail panel */}
                 <div className="w-2/3 min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                     {selectedShipment ? (
                         <TrackingDetail
@@ -1161,7 +1169,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 </div>
             </div>
 
-            {/* Modal para envío manual */}
             <ManualShipmentModal
                 isOpen={isManualModalOpen}
                 onClose={() => setIsManualModalOpen(false)}
@@ -1181,7 +1188,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 businessId={isSuperAdmin ? (selectedBusinessId ?? null) : (defaultBusinessId ?? null)}
             />
 
-            {/* Modal de confirmación de cancelación */}
             {cancelModalData?.isOpen && (
                 <Modal 
                     isOpen={cancelModalData.isOpen} 
@@ -1190,7 +1196,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     size="md"
                 >
                     <div className="p-5">
-                        {/* Icon + message */}
                         <div className="flex items-start gap-4 mb-5">
                             <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0 shadow-sm">
                                 <AlertTriangle size={22} className="text-red-600 dark:text-red-400" />
@@ -1209,7 +1214,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                             </div>
                         </div>
 
-                        {/* Shipment details card */}
                         {cancelModalData.type === 'single' && cancelModalData.shipmentId && (() => {
                             const s = shipments.find(sh => (sh.tracking_number || sh.id.toString()) === cancelModalData.shipmentId);
                             if (!s) return null;
@@ -1242,7 +1246,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                             );
                         })()}
 
-                        {/* 72h refund notice */}
                         <div className="flex gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 mb-5">
                             <span className="text-lg leading-none flex-shrink-0">⏰</span>
                             <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
@@ -1251,7 +1254,6 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                             </p>
                         </div>
 
-                        {/* Action buttons */}
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setCancelModalData(null)}>
                                 Mantener

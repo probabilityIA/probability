@@ -12,7 +12,6 @@ import (
 const (
 	channelLabel        = "Shopify"
 	reconcileEventType  = "shopify.product.reconcile.completed"
-	maxReconcileDetails = 200
 )
 
 type reconcileDetailItem struct {
@@ -64,13 +63,10 @@ func (uc *SyncOrdersUseCase) ReconcileProductsAsync(ctx context.Context, integra
 }
 
 func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
-	detail := make([]reconcileDetailItem, 0, maxReconcileDetails)
+	detail := make([]reconcileDetailItem, 0)
 
 	add := func(items []domain.ProductBrief, label, tone, group string) {
 		for _, item := range items {
-			if len(detail) >= maxReconcileDetails {
-				return
-			}
 			text := label
 			if item.Name != "" {
 				text = label + " · " + item.Name

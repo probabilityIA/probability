@@ -64,6 +64,7 @@ export interface ProductActionResult {
 
 interface SyncActivityValue {
     mode: SyncMode;
+    businessId: number | null;
     running: boolean;
     nodes: Record<number, SyncNodeState>;
     progress: Record<number, { processed: number; total: number }>;
@@ -449,6 +450,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
 
     const value = useMemo<SyncActivityValue>(() => ({
         mode,
+        businessId,
         running,
         nodes,
         progress,
@@ -466,13 +468,14 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         runInventory,
         runProducts,
         reset,
-    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, runCurrent, runInventory, runProducts, reset]);
+    }), [mode, businessId, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, runCurrent, runInventory, runProducts, reset]);
 
     return <SyncActivityContext.Provider value={value}>{children}</SyncActivityContext.Provider>;
 }
 
 const EMPTY: SyncActivityValue = {
     mode: 'idle',
+    businessId: null,
     running: false,
     nodes: {},
     progress: {},

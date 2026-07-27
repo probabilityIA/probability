@@ -4,7 +4,8 @@ import { useState, type CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { Clock, SlidersHorizontal, ChevronDown, RefreshCw } from 'lucide-react';
-import { useSyncActivity, type DetailGroup, type SyncDetailItem } from '../sync-activity-context';
+import { useSyncActivity, type DetailGroup, type SyncDetailItem, type SyncEnvironment, type SyncResult } from '../sync-activity-context';
+import type { SyncRunRecord } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { SyncDetailPanel } from './SyncDetailPanel';
 
@@ -29,14 +30,35 @@ const BUCKETS = [
     { key: 'orders_returned', label: 'devueltas', dot: '#f59e0b' },
 ] as const;
 
-function groupOf(group: string | undefined, label: string, tone: string): DetailGroup {
-    if (group) return group as DetailGroup;
-    if (label.startsWith('sin asociar')) return 'not_associated';
-    if (label.startsWith('solo en Probability')) return 'only_probability';
-    if (label.startsWith('solo en el canal')) return 'only_channel';
-    if (label.startsWith('solo en ')) return 'only_channel';
-    if (label.startsWith('en ambos')) return 'both';
-    return tone === 'error' ? 'failed' : tone === 'warn' ? 'skipped' : 'updated';
+function detailCountsOf(
+    envView: SyncEnvironment | null,
+    result: SyncResult | undefined,
+    lastRun: SyncRunRecord | undefined,
+): Partial<Record<DetailGroup, number>> {
+    if (envView === 'products') {
+        if (result?.kind === 'products') {
+            return {
+                both: result.matched,
+                not_associated: result.notAssociated,
+                only_probability: result.onlyInProbability,
+                only_channel: result.onlyInChannel,
+            };
+        }
+        return {
+            both: lastRun?.matched ?? 0,
+            not_associated: lastRun?.not_associated ?? 0,
+            only_probability: lastRun?.only_in_probability ?? 0,
+            only_channel: lastRun?.only_in_channel ?? 0,
+        };
+    }
+    if (result?.kind === 'inventory') {
+        return { updated: result.updated, skipped: result.skipped, failed: result.failed };
+    }
+    return {
+        updated: lastRun?.updated ?? 0,
+        skipped: lastRun?.skipped ?? 0,
+        failed: lastRun?.failed ?? 0,
+    };
 }
 
 function relativeTime(iso?: string): string | null {
@@ -65,7 +87,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
     const total = stats?.orders_count ?? 0;
     const hasBreakdown = stats !== undefined && total > 0;
 
-    const { nodes, progress, results, details, environment, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, running } = useSyncActivity();
+    const { nodes, progress, results, details, environment, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, running, businessId } = useSyncActivity();
     const [openDetail, setOpenDetail] = useState(false);
     const syncState = nodes[integration.id] || 'idle';
     const syncProgress = progress[integration.id] || { processed: 0, total: 0 };
@@ -79,15 +101,10 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
         : undefined;
     const lastRunTime = relativeTime(lastRun?.finished_at);
     const inventoryEnabled = integration.config?.inventory_sync_enabled === true;
-    const liveDetail = details[integration.id] || [];
-    const syncDetail: SyncDetailItem[] = liveDetail.length > 0
-        ? liveDetail
-        : (lastRun?.detail ?? []).map(item => ({
-            sku: item.sku,
-            label: item.label,
-            tone: item.tone,
-            group: groupOf(item.group, item.label, item.tone),
-        }));
+    const liveDetail: SyncDetailItem[] = details[integration.id] || [];
+    const detailCounts = detailCountsOf(envView, syncResult, lastRun);
+    const detailTotal = Object.values(detailCounts).reduce((sum, value) => sum + (value ?? 0), 0);
+    const hasDetail = liveDetail.length > 0 || detailTotal > 0;
     const syncPct = syncProgress.total > 0
         ? Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))
         : 0;
@@ -412,18 +429,22 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                     </span>
                 </div>
             )}
-            {syncDetail.length > 0 && (
+            {hasDetail && (
                 <div className="border-t border-gray-100 px-3 pb-2 dark:border-gray-700">
                     <button
                         onClick={() => setOpenDetail(v => !v)}
                         className="flex w-full items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
                     >
                         <ChevronDown size={12} className={`transition-transform ${openDetail ? 'rotate-180' : ''}`} />
-                        {openDetail ? 'Ocultar detalle' : `Ver detalle (${syncDetail.length})`}
+                        {openDetail ? 'Ocultar detalle' : `Ver detalle (${liveDetail.length > 0 ? liveDetail.length : detailTotal})`}
                     </button>
                     {openDetail && provider && (
                         <SyncDetailPanel
-                            items={syncDetail}
+                            integrationId={integration.id}
+                            kind={envView === 'products' ? 'products' : 'inventory'}
+                            businessId={businessId ?? undefined}
+                            counts={detailCounts}
+                            liveItems={liveDetail}
                             providerLabel={provider.label}
                             apply={provider.apply}
                             isProducts={envView === 'products'}
