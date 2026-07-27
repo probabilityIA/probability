@@ -22,7 +22,7 @@ func (uc *UseCase) RegisterPayment(ctx context.Context, dto dtos.RegisterPayment
 	}
 
 	amount := subType.Price * float64(dto.Months)
-	start, endDate := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months)
+	start, endDate := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, dto.StartDate)
 
 	sub := &entities.BusinessSubscription{
 		BusinessID:           dto.BusinessID,

@@ -12,4 +12,5 @@ var (
 	ErrInvalidModuleCode        = errors.New("invalid module code")
 	ErrOverrideNotFound         = errors.New("override not found")
 	ErrBusinessRequired         = errors.New("business_id is required for a custom plan")
+	ErrInvalidDateRange         = errors.New("end_date must be after start_date")
 )

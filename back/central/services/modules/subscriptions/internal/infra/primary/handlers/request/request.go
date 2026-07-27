@@ -45,6 +45,13 @@ type RegisterPaymentRequest struct {
 	Months             int     `json:"months" binding:"required,gt=0"`
 	PaymentReference   *string `json:"payment_reference"`
 	Notes              *string `json:"notes"`
+	StartDate          *string `json:"start_date"`
+}
+
+type EditSubscriptionDatesRequest struct {
+	BusinessID uint   `json:"business_id" binding:"required"`
+	StartDate  string `json:"start_date" binding:"required"`
+	EndDate    string `json:"end_date" binding:"required"`
 }
 
 type GrantOverrideRequest struct {

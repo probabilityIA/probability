@@ -20,6 +20,8 @@ type IRepository interface {
 	ListByBusinessID(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
 	UpdateBusinessCurrentSubscriptionType(ctx context.Context, businessID uint, subscriptionTypeID uint, status string, endDate time.Time) error
 	UpdateBusinessSubscriptionStatus(ctx context.Context, businessID uint, status string, endDate *time.Time) error
+	UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error
+	UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error
 	GetBusinessCurrentSubscriptionTypeID(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]uint, error)
 	ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]uint, error)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/dtos"
@@ -41,12 +42,58 @@ func (h *Handlers) RegisterPayment(c *gin.Context) {
 		return
 	}
 
+	var startDate *time.Time
+	if req.StartDate != nil && *req.StartDate != "" {
+		parsed, err := time.Parse("2006-01-02", *req.StartDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "fecha de inicio invalida, formato esperado YYYY-MM-DD"})
+			return
+		}
+		startDate = &parsed
+	}
+
 	sub, err := h.uc.RegisterPayment(c.Request.Context(), dtos.RegisterPaymentDTO{
 		BusinessID:         req.BusinessID,
 		SubscriptionTypeID: req.SubscriptionTypeID,
 		Months:             req.Months,
 		PaymentReference:   req.PaymentReference,
 		Notes:              req.Notes,
+		StartDate:          startDate,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscription(sub)})
+}
+
+func (h *Handlers) EditSubscriptionDates(c *gin.Context) {
+	if !h.requireSuperAdmin(c) {
+		return
+	}
+
+	var req request.EditSubscriptionDatesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "fecha de inicio invalida, formato esperado YYYY-MM-DD"})
+		return
+	}
+	endDate, err := time.Parse("2006-01-02", req.EndDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "fecha de fin invalida, formato esperado YYYY-MM-DD"})
+		return
+	}
+
+	sub, err := h.uc.EditSubscriptionDates(c.Request.Context(), dtos.EditSubscriptionDatesDTO{
+		BusinessID: req.BusinessID,
+		StartDate:  startDate,
+		EndDate:    endDate,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
