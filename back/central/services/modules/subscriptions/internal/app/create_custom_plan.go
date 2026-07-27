@@ -16,7 +16,7 @@ func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPl
 	if dto.Months <= 0 {
 		return nil, errs.ErrInvalidMonths
 	}
-	if dto.Name == "" || dto.Code == "" || dto.Price <= 0 {
+	if dto.Name == "" || dto.Code == "" || dto.Price < 0 {
 		return nil, errs.ErrInvalidSubscriptionType
 	}
 
