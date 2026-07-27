@@ -21,6 +21,11 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.PUT("/types/:id", h.UpdateSubscriptionType)
 		g.DELETE("/types/:id", h.DeleteSubscriptionType)
 
+		g.GET("/custom-plans", h.ListCustomPlans)
+		g.POST("/custom-plans", h.CreateCustomPlan)
+		g.PUT("/custom-plans/:id", h.UpdateCustomPlan)
+		g.DELETE("/custom-plans/:id", h.DeleteCustomPlan)
+
 		g.POST("/register-payment", h.RegisterPayment)
 		g.POST("/disable", h.DisableSubscription)
 

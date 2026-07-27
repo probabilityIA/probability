@@ -16,6 +16,9 @@ type IUseCase interface {
 	GetSubscriptionType(ctx context.Context, id uint) (*entities.SubscriptionType, error)
 	ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
 
+	CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPlanDTO) (*entities.SubscriptionType, error)
+	ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
+
 	PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSubscriptionDTO) (*entities.BusinessSubscription, error)
 	RegisterPayment(ctx context.Context, dto dtos.RegisterPaymentDTO) (*entities.BusinessSubscription, error)
 	DisableSubscription(ctx context.Context, businessID uint) error

@@ -12,6 +12,7 @@ type SubscriptionType struct {
 	Active               bool
 	ModuleCodes          []string
 	MaxEcommerceChannels int
+	BusinessID           *uint
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }

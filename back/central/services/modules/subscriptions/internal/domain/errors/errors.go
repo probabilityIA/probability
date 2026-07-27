@@ -11,4 +11,5 @@ var (
 	ErrSubscriptionNotFound     = errors.New("subscription not found")
 	ErrInvalidModuleCode        = errors.New("invalid module code")
 	ErrOverrideNotFound         = errors.New("override not found")
+	ErrBusinessRequired         = errors.New("business_id is required for a custom plan")
 )

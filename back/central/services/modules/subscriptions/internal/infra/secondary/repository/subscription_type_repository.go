@@ -19,6 +19,7 @@ func (r *Repository) CreateSubscriptionType(ctx context.Context, subType *entiti
 		Active:               subType.Active,
 		Features:             marshalModuleCodes(subType.ModuleCodes),
 		MaxEcommerceChannels: subType.MaxEcommerceChannels,
+		BusinessID:           subType.BusinessID,
 	}
 
 	if err := r.db.Conn(ctx).Create(typeDB).Error; err != nil {
@@ -61,9 +62,27 @@ func (r *Repository) GetSubscriptionType(ctx context.Context, id uint) (*entitie
 }
 
 func (r *Repository) ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error) {
-	query := r.db.Conn(ctx).Order("price ASC")
+	query := r.db.Conn(ctx).Where("business_id IS NULL").Order("price ASC")
 	if activeOnly {
 		query = query.Where("active = ?", true)
+	}
+
+	var typesDB []models.SubscriptionType
+	if err := query.Find(&typesDB).Error; err != nil {
+		return nil, err
+	}
+
+	types := make([]entities.SubscriptionType, len(typesDB))
+	for i, t := range typesDB {
+		types[i] = *subscriptionTypeToEntity(&t)
+	}
+	return types, nil
+}
+
+func (r *Repository) ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error) {
+	query := r.db.Conn(ctx).Where("business_id IS NOT NULL").Order("created_at DESC")
+	if businessID != nil {
+		query = query.Where("business_id = ?", *businessID)
 	}
 
 	var typesDB []models.SubscriptionType

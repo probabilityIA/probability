@@ -15,6 +15,7 @@ type SubscriptionType struct {
 	Active               bool           `gorm:"default:true"`
 	Features             datatypes.JSON `gorm:"type:jsonb;not null;default:'[]'"`
 	MaxEcommerceChannels int            `gorm:"not null;default:0"`
+	BusinessID           *uint          `gorm:"index"`
 }
 
 func (SubscriptionType) TableName() string {

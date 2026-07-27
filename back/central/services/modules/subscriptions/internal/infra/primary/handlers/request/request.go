@@ -20,6 +20,20 @@ type UpdateSubscriptionTypeRequest struct {
 	MaxEcommerceChannels int      `json:"max_ecommerce_channels"`
 }
 
+type CreateCustomPlanRequest struct {
+	Name                 string   `json:"name" binding:"required"`
+	Code                 string   `json:"code" binding:"required"`
+	Description          string   `json:"description"`
+	Price                float64  `json:"price" binding:"required,gt=0"`
+	BillingPeriod        string   `json:"billing_period"`
+	ModuleCodes          []string `json:"module_codes"`
+	MaxEcommerceChannels int      `json:"max_ecommerce_channels"`
+	BusinessID           uint     `json:"business_id" binding:"required"`
+	Months               int      `json:"months" binding:"required,gt=0"`
+	PaymentReference     *string  `json:"payment_reference"`
+	Notes                *string  `json:"notes"`
+}
+
 type PurchaseSubscriptionRequest struct {
 	SubscriptionTypeID uint `json:"subscription_type_id" binding:"required"`
 	Months             int  `json:"months" binding:"required,gt=0"`
