@@ -27,6 +27,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.DELETE("/custom-plans/:id", h.DeleteCustomPlan)
 
 		g.POST("/register-payment", h.RegisterPayment)
+		g.PUT("/edit-dates", h.EditSubscriptionDates)
 		g.POST("/disable", h.DisableSubscription)
 
 		g.GET("/overrides/:businessId", h.ListOverrides)

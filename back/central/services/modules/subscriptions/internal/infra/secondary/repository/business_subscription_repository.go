@@ -89,6 +89,16 @@ func (r *Repository) UpdateBusinessSubscriptionStatus(ctx context.Context, busin
 	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).Updates(updates).Error
 }
 
+func (r *Repository) UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error {
+	return r.db.Conn(ctx).Model(&models.BusinessSubscription{}).Where("id = ?", id).
+		Updates(map[string]interface{}{"start_date": startDate, "end_date": endDate}).Error
+}
+
+func (r *Repository) UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error {
+	return r.db.Conn(ctx).Model(&models.Business{}).Where("id = ? AND deleted_at IS NULL", businessID).
+		Update("subscription_end_date", endDate).Error
+}
+
 func (r *Repository) GetBusinessCurrentSubscriptionTypeID(ctx context.Context, businessID uint) (*uint, error) {
 	var business models.Business
 	err := r.db.Conn(ctx).Select("subscription_type_id").Where("id = ? AND deleted_at IS NULL", businessID).First(&business).Error

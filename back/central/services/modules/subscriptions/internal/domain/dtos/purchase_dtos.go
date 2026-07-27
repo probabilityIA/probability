@@ -1,5 +1,7 @@
 package dtos
 
+import "time"
+
 type PurchaseSubscriptionDTO struct {
 	BusinessID         uint
 	SubscriptionTypeID uint
@@ -13,4 +15,11 @@ type RegisterPaymentDTO struct {
 	Months             int
 	PaymentReference   *string
 	Notes              *string
+	StartDate          *time.Time
+}
+
+type EditSubscriptionDatesDTO struct {
+	BusinessID uint
+	StartDate  time.Time
+	EndDate    time.Time
 }

@@ -307,6 +307,7 @@ export async function registerSubscriptionPaymentAction(payload: {
     monthsToAdd: number;
     paymentReference?: string;
     notes?: string;
+    startDate?: string;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -319,6 +320,33 @@ export async function registerSubscriptionPaymentAction(payload: {
                 months: payload.monthsToAdd,
                 payment_reference: payload.paymentReference,
                 notes: payload.notes,
+                start_date: payload.startDate,
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function editSubscriptionDatesAction(payload: {
+    businessId: number;
+    startDate: string;
+    endDate: string;
+}): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/edit-dates`, {
+            method: 'PUT',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                business_id: payload.businessId,
+                start_date: payload.startDate,
+                end_date: payload.endDate,
             }),
         });
         if (!res.ok) {

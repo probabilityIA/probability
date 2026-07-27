@@ -6,6 +6,7 @@ import { Spinner, Button, Modal, Alert, Input } from '@/shared/ui';
 import {
     getMySubscriptionAction,
     registerSubscriptionPaymentAction,
+    editSubscriptionDatesAction,
     disableSubscriptionAction,
     listSubscriptionTypesAction,
     createSubscriptionTypeAction,
@@ -25,10 +26,18 @@ import {
     BusinessModuleOverride,
     ModuleInfo,
 } from '@/services/modules/wallet/infra/subscription-actions';
+import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions';
+import { getBoldSignatureAction } from '@/services/modules/pay/infra/actions';
+import { BoldPaymentProcessingModal } from '@/app/(auth)/wallet/bold-payment-processing-modal';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
+
+const toDateInputValue = (dateStr?: string) => {
+    if (!dateStr) return '';
+    return dateStr.slice(0, 10);
+};
 
 const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
@@ -143,20 +152,69 @@ export default function SubscriptionPage() {
     );
 }
 
+function computeMembershipProgress(startDate?: string, endDate?: string) {
+    if (!startDate || !endDate) return null;
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const now = Date.now();
+    const totalMs = end - start;
+    if (totalMs <= 0) return null;
+
+    const elapsedMs = Math.min(Math.max(now - start, 0), totalMs);
+    const percent = Math.round((elapsedMs / totalMs) * 100);
+    const totalDays = Math.max(1, Math.round(totalMs / 86400000));
+    const daysElapsed = Math.min(totalDays, Math.floor(elapsedMs / 86400000));
+    const daysRemaining = Math.max(0, totalDays - daysElapsed);
+
+    return { percent, totalDays, daysElapsed, daysRemaining, isExpired: now > end };
+}
+
+function MembershipProgress({ startDate, endDate }: { startDate?: string; endDate?: string }) {
+    const progress = computeMembershipProgress(startDate, endDate);
+    if (!progress) return null;
+
+    const barColor = progress.isExpired
+        ? 'bg-red-500'
+        : progress.daysRemaining <= 5
+            ? 'bg-amber-500'
+            : 'bg-green-500';
+
+    return (
+        <div className="pt-1">
+            <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mb-1">
+                <span>Día {progress.daysElapsed} de {progress.totalDays}</span>
+                <span>{progress.isExpired ? 'Vencida' : `Quedan ${progress.daysRemaining} días`}</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-600 overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${progress.percent}%` }} />
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-gray-400 mt-1">
+                <span>{formatDate(startDate)}</span>
+                <span>{formatDate(endDate)}</span>
+            </div>
+        </div>
+    );
+}
+
 function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
     const [filter, setFilter] = useState('all');
     const [search, setSearch] = useState('');
     const [registerModal, setRegisterModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
+    const [editDatesModal, setEditDatesModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
+    const [editStartDate, setEditStartDate] = useState('');
+    const [editEndDate, setEditEndDate] = useState('');
+    const [editingDates, setEditingDates] = useState(false);
     const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
     const [selectedTypeId, setSelectedTypeId] = useState('');
     const [months, setMonths] = useState('1');
     const [payRef, setPayRef] = useState('');
     const [notes, setNotes] = useState('');
+    const [startDate, setStartDate] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [disablingId, setDisablingId] = useState<number | null>(null);
 
-    const [subStatuses, setSubStatuses] = useState<Record<number, { status: string; endDate?: string; typeName?: string }>>({});
+    const [subStatuses, setSubStatuses] = useState<Record<number, { status: string; startDate?: string; endDate?: string; typeName?: string }>>({});
 
     useEffect(() => {
         listSubscriptionTypesAction(true).then((res) => {
@@ -173,6 +231,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                     ...prev,
                     [biz.id]: {
                         status: res.data?.status ?? 'pending',
+                        startDate: res.data?.start_date,
                         endDate: res.data?.end_date,
                         typeName: res.data?.subscription_type_name,
                     },
@@ -180,6 +239,39 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
             }
         });
     }, [businesses]);
+
+    const openEditDates = (biz: { id: number; name: string }) => {
+        const info = subStatuses[biz.id];
+        setEditStartDate(toDateInputValue(info?.startDate));
+        setEditEndDate(toDateInputValue(info?.endDate));
+        setEditDatesModal({ open: true, business: biz });
+    };
+
+    const handleEditDates = async () => {
+        if (!editDatesModal.business || !editStartDate || !editEndDate) return;
+        setEditingDates(true);
+        const res = await editSubscriptionDatesAction({
+            businessId: editDatesModal.business.id,
+            startDate: editStartDate,
+            endDate: editEndDate,
+        });
+        setEditingDates(false);
+        if (res.success) {
+            setMessage({ type: 'success', text: `Fechas actualizadas para ${editDatesModal.business.name}.` });
+            setSubStatuses((prev) => ({
+                ...prev,
+                [editDatesModal.business!.id]: {
+                    ...prev[editDatesModal.business!.id],
+                    status: prev[editDatesModal.business!.id]?.status ?? 'active',
+                    startDate: `${editStartDate}T00:00:00Z`,
+                    endDate: `${editEndDate}T00:00:00Z`,
+                },
+            }));
+            setEditDatesModal({ open: false });
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al actualizar las fechas' });
+        }
+    };
 
     const handleRegisterPayment = async () => {
         if (!registerModal.business || !selectedTypeId) return;
@@ -190,12 +282,13 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
             monthsToAdd: Number(months),
             paymentReference: payRef || undefined,
             notes: notes || undefined,
+            startDate: startDate || undefined,
         });
         setLoading(false);
         if (res.success) {
             setMessage({ type: 'success', text: `Pago registrado para ${registerModal.business.name}. Ahora puede usar la plataforma.` });
             setRegisterModal({ open: false });
-            setSelectedTypeId(''); setMonths('1'); setPayRef(''); setNotes('');
+            setSelectedTypeId(''); setMonths('1'); setPayRef(''); setNotes(''); setStartDate('');
             setSubStatuses((prev) => ({
                 ...prev,
                 [registerModal.business!.id]: { status: 'paid' },
@@ -274,16 +367,23 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                                     {subInfo?.typeName && (
                                         <p className="text-xs text-gray-400 mt-0.5">Plan: {subInfo.typeName}</p>
                                     )}
-                                    {subInfo?.endDate && (
-                                        <p className="text-xs text-gray-400 mt-0.5">Vence: {formatDate(subInfo.endDate)}</p>
-                                    )}
                                 </div>
                                 {subInfo
                                     ? <StatusBadge status={subInfo.status} />
                                     : <span className="text-xs text-gray-400 animate-pulse">Cargando...</span>
                                 }
                             </div>
+
+                            {subInfo?.startDate && subInfo?.endDate && (
+                                <MembershipProgress startDate={subInfo.startDate} endDate={subInfo.endDate} />
+                            )}
+
                             <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                                {subInfo?.startDate && subInfo?.endDate && (
+                                    <Button size="sm" variant="outline-purple" onClick={() => openEditDates(biz)} className="flex-1 text-xs">
+                                        Editar
+                                    </Button>
+                                )}
                                 <Button size="sm" variant="success" onClick={() => setRegisterModal({ open: true, business: biz })} className="flex-1 text-xs">
                                     Registrar Pago
                                 </Button>
@@ -316,11 +416,52 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                             <option value="12">12 meses (anual)</option>
                         </select>
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Fecha de inicio <span className="font-normal text-gray-400">(opcional — por defecto hoy, o el fin de la suscripción vigente)</span>
+                        </label>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        />
+                    </div>
                     <Input label="Referencia de pago (opcional)" value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Nro. de transferencia, comprobante..." />
                     <Input label="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones internas..." />
                     <div className="flex justify-end gap-2 pt-2">
                         <Button variant="secondary" onClick={() => setRegisterModal({ open: false })}>Cancelar</Button>
                         <Button variant="success" onClick={handleRegisterPayment} loading={loading} disabled={!selectedTypeId}>Confirmar Pago</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={editDatesModal.open} onClose={() => setEditDatesModal({ open: false })} title={`Editar fechas — ${editDatesModal.business?.name}`} size="sm">
+                <div className="space-y-4 p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Corrige la fecha de inicio o de vencimiento de la suscripción vigente, sin registrar un pago nuevo.
+                    </p>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de inicio</label>
+                        <input
+                            type="date"
+                            value={editStartDate}
+                            onChange={(e) => setEditStartDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de vencimiento</label>
+                        <input
+                            type="date"
+                            value={editEndDate}
+                            onChange={(e) => setEditEndDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="secondary" onClick={() => setEditDatesModal({ open: false })}>Cancelar</Button>
+                        <Button variant="purple" onClick={handleEditDates} loading={editingDates} disabled={!editStartDate || !editEndDate}>Guardar cambios</Button>
                     </div>
                 </div>
             </Modal>
@@ -1163,6 +1304,10 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
     const [months, setMonths] = useState('1');
     const [buying, setBuying] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [loadingBalance, setLoadingBalance] = useState(false);
+    const [rechargingBold, setRechargingBold] = useState(false);
+    const [boldProcessing, setBoldProcessing] = useState<{ orderId: string; amount: number; pollingEnabled: boolean } | null>(null);
 
     const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
 
@@ -1173,6 +1318,19 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
             setLoading(false);
         });
     }, []);
+
+    const fetchBalance = useCallback(async () => {
+        setLoadingBalance(true);
+        const res = await getWalletBalanceAction(businessId);
+        if (res.success && res.data) setWalletBalance(res.data.Balance);
+        setLoadingBalance(false);
+    }, [businessId]);
+
+    const openPurchaseModal = (t: SubscriptionType) => {
+        setMonths('1');
+        setPurchaseModal({ open: true, type: t });
+        fetchBalance();
+    };
 
     const handleBuy = async () => {
         if (!purchaseModal.type) return;
@@ -1185,6 +1343,49 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
             onPurchased();
         } else {
             setMessage({ type: 'error', text: res.error?.includes('insufficient') ? 'Saldo insuficiente en tu billetera. Recárgala e intenta de nuevo.' : (res.error || 'Error al procesar la compra') });
+        }
+    };
+
+    const handleRechargeBold = async (amount: number) => {
+        setRechargingBold(true);
+        try {
+            const res = await getBoldSignatureAction(Math.ceil(amount), businessId);
+            if (!res?.success) {
+                throw new Error(res?.message || 'Error al obtener firma de Bold');
+            }
+
+            const { order_id, currency, amount: boldAmount, hash, public_key, redirection_url, polling_enabled } = res.data;
+
+            if (!window.hasOwnProperty('BoldCheckout')) {
+                await new Promise<void>((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.bold.co/library/boldPaymentButton.js';
+                    script.async = true;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error('No se pudo cargar el script de Bold'));
+                    document.body.appendChild(script);
+                    setTimeout(() => reject(new Error('Timeout cargando script de Bold')), 10000);
+                });
+            }
+
+            const checkoutConfig: Record<string, unknown> = {
+                orderId: order_id,
+                currency,
+                amount: boldAmount,
+                apiKey: public_key,
+                integritySignature: hash,
+                description: `Recarga para suscripción - Orden ${order_id}`,
+            };
+            if (redirection_url) checkoutConfig.redirectionUrl = redirection_url;
+
+            // @ts-expect-error BoldCheckout is loaded from external script
+            const checkout = new BoldCheckout(checkoutConfig);
+            checkout.open();
+            setBoldProcessing({ orderId: order_id, amount: boldAmount, pollingEnabled: !!polling_enabled });
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message || 'Error al iniciar el pago con Bold' });
+        } finally {
+            setRechargingBold(false);
         }
     };
 
@@ -1294,7 +1495,7 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
                                     <Button
                                         variant={featured ? 'purple' : 'outline-purple'}
                                         className="w-full"
-                                        onClick={() => { setMonths('1'); setPurchaseModal({ open: true, type: t }); }}
+                                        onClick={() => openPurchaseModal(t)}
                                     >
                                         {ctaLabel}
                                     </Button>
@@ -1317,28 +1518,129 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
                 El cambio de plan se aplica de forma inmediata y se prorratea en tu próxima factura.
             </div>
 
-            <Modal isOpen={purchaseModal.open} onClose={() => setPurchaseModal({ open: false })} title={`Comprar ${purchaseModal.type?.name}`} size="sm">
-                <div className="space-y-4 p-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses</label>
-                        <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
-                            <option value="1">1 mes</option>
-                            <option value="3">3 meses</option>
-                            <option value="6">6 meses</option>
-                            <option value="12">12 meses (anual)</option>
-                        </select>
-                    </div>
-                    {purchaseModal.type && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                            Total a debitar de tu billetera: <strong>{formatCurrency(purchaseModal.type.price * Number(months))}</strong>
-                        </p>
-                    )}
-                    <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="secondary" onClick={() => setPurchaseModal({ open: false })}>Cancelar</Button>
-                        <Button variant="success" onClick={handleBuy} loading={buying}>Confirmar Compra</Button>
-                    </div>
-                </div>
+            <Modal isOpen={purchaseModal.open} onClose={() => setPurchaseModal({ open: false })} size="sm">
+                {purchaseModal.type && (() => {
+                    const total = purchaseModal.type!.price * Number(months);
+                    const hasBalance = walletBalance !== null;
+                    const sufficient = hasBalance && walletBalance! >= total;
+                    const missing = hasBalance ? Math.max(0, total - walletBalance!) : 0;
+
+                    return (
+                        <div className="flex flex-col">
+                            <div className="bg-gradient-to-br from-violet-600 to-purple-800 rounded-t-2xl -m-6 mb-0 px-6 pt-6 pb-5 text-white">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                                            <path d="M3 3H21V8H3V3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                            <path d="M4 8V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V8" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                                            <path d="M9 12H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-white/70 text-xs font-medium uppercase tracking-wide">Contratar plan</p>
+                                        <h3 className="text-lg font-bold leading-tight">{purchaseModal.type!.name}</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="px-6 pt-5 pb-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Duración</label>
+                                    <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500">
+                                        <option value="1">1 mes</option>
+                                        <option value="3">3 meses</option>
+                                        <option value="6">6 meses</option>
+                                        <option value="12">12 meses (anual)</option>
+                                    </select>
+                                </div>
+
+                                <div className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                    <div className="flex items-center justify-between px-4 py-2.5 text-sm">
+                                        <span className="text-gray-500 dark:text-gray-400">{formatCurrency(purchaseModal.type!.price)} × {months} {Number(months) === 1 ? 'mes' : 'meses'}</span>
+                                        <span className="font-medium text-gray-700 dark:text-gray-200">{formatCurrency(total)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between px-4 py-3 bg-violet-50 dark:bg-violet-900/20 border-t border-gray-100 dark:border-gray-700">
+                                        <span className="text-sm font-bold text-gray-900 dark:text-white">Total a pagar</span>
+                                        <span className="text-lg font-extrabold text-violet-700 dark:text-violet-300">{formatCurrency(total)}</span>
+                                    </div>
+                                </div>
+
+                                <div className={`rounded-xl px-4 py-3.5 flex items-center gap-3 ${
+                                    loadingBalance
+                                        ? 'bg-gray-50 dark:bg-gray-700/40'
+                                        : sufficient
+                                            ? 'bg-green-50 dark:bg-green-900/20'
+                                            : 'bg-amber-50 dark:bg-amber-900/20'
+                                }`}>
+                                    {loadingBalance ? (
+                                        <>
+                                            <Spinner size="sm" />
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">Consultando saldo de tu billetera...</span>
+                                        </>
+                                    ) : sufficient ? (
+                                        <>
+                                            <span className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-800/40 text-green-600 dark:text-green-300 flex items-center justify-center flex-shrink-0">
+                                                <CheckIcon />
+                                            </span>
+                                            <div className="text-sm">
+                                                <div className="font-semibold text-green-800 dark:text-green-300">Saldo suficiente</div>
+                                                <div className="text-green-700/80 dark:text-green-400/80 text-xs mt-0.5">
+                                                    Saldo actual {formatCurrency(walletBalance!)} — te quedarán {formatCurrency(walletBalance! - total)} después de la compra.
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-300 flex items-center justify-center flex-shrink-0">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                            </span>
+                                            <div className="text-sm">
+                                                <div className="font-semibold text-amber-800 dark:text-amber-300">Saldo insuficiente</div>
+                                                <div className="text-amber-700/80 dark:text-amber-400/80 text-xs mt-0.5">
+                                                    Tienes {formatCurrency(walletBalance ?? 0)}, te faltan {formatCurrency(missing)} para completar la compra.
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-1">
+                                    <Button variant="secondary" onClick={() => setPurchaseModal({ open: false })}>Cancelar</Button>
+                                    {!loadingBalance && !sufficient ? (
+                                        <Button variant="purple" onClick={() => handleRechargeBold(missing)} loading={rechargingBold}>
+                                            Recargar con Bold
+                                        </Button>
+                                    ) : (
+                                        <Button variant="success" onClick={handleBuy} loading={buying} disabled={loadingBalance}>Confirmar Compra</Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
             </Modal>
+
+            <BoldPaymentProcessingModal
+                open={boldProcessing !== null}
+                orderId={boldProcessing?.orderId || ''}
+                amount={boldProcessing?.amount || 0}
+                businessId={businessId}
+                pollingEnabled={boldProcessing?.pollingEnabled ?? false}
+                onClose={() => {
+                    setBoldProcessing(null);
+                    fetchBalance();
+                }}
+                onResolved={(status) => {
+                    if (status === 'success') {
+                        fetchBalance();
+                        setMessage({ type: 'success', text: 'Recarga confirmada por Bold. Ya puedes completar la compra.' });
+                    } else if (status === 'failed') {
+                        setMessage({ type: 'error', text: 'Bold rechazó el pago de recarga.' });
+                    } else if (status === 'timeout') {
+                        setMessage({ type: 'error', text: 'La recarga sigue en proceso. Revisa tu billetera en unos minutos.' });
+                    }
+                }}
+            />
         </div>
     );
 }

@@ -38,7 +38,7 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrInsufficientBalance
 	}
 
-	start, endDate := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months)
+	start, endDate := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil)
 
 	reference := fmt.Sprintf("SUB-%d-%s-%dM", dto.BusinessID, subType.Code, dto.Months)
 	if err := uc.wallet.Debit(ctx, dto.BusinessID, amount, reference, walletConceptSubscription, dto.UserID); err != nil {
@@ -78,7 +78,16 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 	return sub, nil
 }
 
-func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int) (time.Time, time.Time) {
+// computeSubscriptionWindow calcula el inicio y fin de una ventana de suscripción.
+// Si startOverride viene seteado, se usa tal cual (permite registrar pagos con fecha
+// de inicio manual, ej. para reflejar un pago que ya se habia hecho antes). Si no,
+// se encadena desde el fin de la suscripción vigente o arranca desde ahora.
+func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time) (time.Time, time.Time) {
+	if startOverride != nil {
+		start := *startOverride
+		return start, start.AddDate(0, months, 0)
+	}
+
 	now := time.Now()
 	start := now
 

@@ -21,6 +21,7 @@ type IUseCase interface {
 
 	PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSubscriptionDTO) (*entities.BusinessSubscription, error)
 	RegisterPayment(ctx context.Context, dto dtos.RegisterPaymentDTO) (*entities.BusinessSubscription, error)
+	EditSubscriptionDates(ctx context.Context, dto dtos.EditSubscriptionDatesDTO) (*entities.BusinessSubscription, error)
 	DisableSubscription(ctx context.Context, businessID uint) error
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 
