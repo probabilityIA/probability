@@ -45,6 +45,13 @@ export interface SyncDetailItem {
     tone: 'ok' | 'warn' | 'error';
 }
 
+export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbability' | 'updateInProbability';
+
+export interface ProductActionResult {
+    ok: boolean;
+    message: string;
+}
+
 interface SyncActivityValue {
     mode: SyncMode;
     running: boolean;
@@ -56,6 +63,9 @@ interface SyncActivityValue {
     setEnvironment: (env: SyncEnvironment | null) => void;
     canRun: boolean;
     lastRuns: Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>;
+    actionBusy: Record<number, ProductActionKey | null>;
+    actionResult: Record<number, ProductActionResult | null>;
+    runProductAction: (integrationId: number, action: ProductActionKey) => void;
     runCurrent: () => void;
     runInventory: () => void;
     runProducts: () => void;
@@ -65,6 +75,8 @@ interface SyncActivityValue {
 const SyncActivityContext = createContext<SyncActivityValue | null>(null);
 
 const SYNC_TIMEOUT_MS = 6 * 60 * 1000;
+
+const APPLY_SETTLE_MS = 4000;
 
 interface SyncStartResult {
     success?: boolean;
@@ -91,6 +103,8 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
     const [details, setDetails] = useState<Record<number, SyncDetailItem[]>>({});
     const [environment, setEnvironment] = useState<SyncEnvironment | null>(null);
     const [lastRuns, setLastRuns] = useState<Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>>({});
+    const [actionBusy, setActionBusy] = useState<Record<number, ProductActionKey | null>>({});
+    const [actionResult, setActionResult] = useState<Record<number, ProductActionResult | null>>({});
 
     const loadLastRuns = useCallback(async () => {
         const rows = await listSyncRunsAction(businessId ?? undefined);
@@ -194,6 +208,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setProgress({});
         setResults({});
         setDetails({});
+        setActionResult({});
     }, []);
 
     const runInventory = useCallback(async () => {
@@ -255,6 +270,68 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         loadLastRuns();
     }, [running, eligible, businessId, patchNode, loadLastRuns]);
 
+    const reconcileOne = useCallback(async (integration: Integration) => {
+        const provider = getSyncProvider(integration.integration_type_id);
+        if (!provider) return;
+        patchNode(integration.id, 'scan');
+        try {
+            const res = await provider.reconcileProducts(
+                integration.id,
+                businessId ?? undefined,
+            ) as Record<string, unknown>;
+
+            if (res?.success === false) {
+                patchNode(integration.id, 'error');
+                setResults(prev => ({
+                    ...prev,
+                    [integration.id]: { kind: 'error', message: String(res?.message || 'No se pudo comparar') },
+                }));
+                return;
+            }
+
+            const detail: SyncDetailItem[] = [];
+            const push = (arr: unknown, tone: SyncDetailItem['tone'], label: string) => {
+                if (!Array.isArray(arr)) return;
+                for (const raw of arr.slice(0, 120)) {
+                    const obj = raw as Record<string, unknown>;
+                    detail.push({ sku: String(obj?.sku ?? ''), label: `${label}${obj?.name ? ` · ${obj.name}` : ''}`, tone });
+                }
+            };
+            push(res?.matched_not_associated, 'warn', 'sin asociar');
+            push(res?.only_in_probability, 'warn', 'solo en Probability');
+            push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal');
+            setDetails(prev => ({ ...prev, [integration.id]: detail }));
+
+            const summary: ProductsResult = {
+                kind: 'products',
+                matched: Number(res?.matched) || 0,
+                notAssociated: countOf(res?.matched_not_associated),
+                onlyInProbability: countOf(res?.only_in_probability),
+                onlyInChannel: countOf(res?.[provider.onlyInChannelField]),
+            };
+            setResults(prev => ({ ...prev, [integration.id]: summary }));
+            patchNode(integration.id, 'done');
+
+            await recordSyncRunAction({
+                integration_id: integration.id,
+                business_id: businessId ?? undefined,
+                kind: 'products',
+                status: 'completed',
+                matched: summary.matched,
+                not_associated: summary.notAssociated,
+                only_in_probability: summary.onlyInProbability,
+                only_in_channel: summary.onlyInChannel,
+                detail: detail.slice(0, 200),
+            });
+        } catch {
+            patchNode(integration.id, 'error');
+            setResults(prev => ({
+                ...prev,
+                [integration.id]: { kind: 'error', message: 'No se pudo comparar' },
+            }));
+        }
+    }, [businessId, patchNode]);
+
     const runProducts = useCallback(async () => {
         if (running || eligible.length === 0) return;
         setRunning(true);
@@ -267,71 +344,49 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         for (const integration of eligible) scanning[integration.id] = 'scan';
         setNodes(scanning);
 
-        await Promise.all(eligible.map(async integration => {
-            const provider = getSyncProvider(integration.integration_type_id);
-            if (!provider) return;
-            try {
-                const res = await provider.reconcileProducts(
-                    integration.id,
-                    businessId ?? undefined,
-                ) as Record<string, unknown>;
-
-                if (res?.success === false) {
-                    patchNode(integration.id, 'error');
-                    setResults(prev => ({
-                        ...prev,
-                        [integration.id]: { kind: 'error', message: String(res?.message || 'No se pudo comparar') },
-                    }));
-                    return;
-                }
-
-                const detail: SyncDetailItem[] = [];
-                const push = (arr: unknown, tone: SyncDetailItem['tone'], label: string) => {
-                    if (!Array.isArray(arr)) return;
-                    for (const raw of arr.slice(0, 120)) {
-                        const obj = raw as Record<string, unknown>;
-                        detail.push({ sku: String(obj?.sku ?? ''), label: `${label}${obj?.name ? ` · ${obj.name}` : ''}`, tone });
-                    }
-                };
-                push(res?.matched_not_associated, 'warn', 'sin asociar');
-                push(res?.only_in_probability, 'warn', 'solo en Probability');
-                push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal');
-                setDetails(prev => ({ ...prev, [integration.id]: detail }));
-
-                const summary: ProductsResult = {
-                    kind: 'products',
-                    matched: Number(res?.matched) || 0,
-                    notAssociated: countOf(res?.matched_not_associated),
-                    onlyInProbability: countOf(res?.only_in_probability),
-                    onlyInChannel: countOf(res?.[provider.onlyInChannelField]),
-                };
-                setResults(prev => ({ ...prev, [integration.id]: summary }));
-                patchNode(integration.id, 'done');
-
-                await recordSyncRunAction({
-                    integration_id: integration.id,
-                    business_id: businessId ?? undefined,
-                    kind: 'products',
-                    status: 'completed',
-                    matched: summary.matched,
-                    not_associated: summary.notAssociated,
-                    only_in_probability: summary.onlyInProbability,
-                    only_in_channel: summary.onlyInChannel,
-                    detail: detail.slice(0, 200),
-                });
-            } catch {
-                patchNode(integration.id, 'error');
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: { kind: 'error', message: 'No se pudo comparar' },
-                }));
-            }
-        }));
+        await Promise.all(eligible.map(integration => reconcileOne(integration)));
 
         setRunning(false);
         setMode('idle');
         loadLastRuns();
-    }, [running, eligible, businessId, patchNode, loadLastRuns]);
+    }, [running, eligible, reconcileOne, loadLastRuns]);
+
+    const runProductAction = useCallback(async (integrationId: number, action: ProductActionKey) => {
+        const integration = eligible.find(i => i.id === integrationId);
+        const provider = integration ? getSyncProvider(integration.integration_type_id) : null;
+        if (!integration || !provider || actionBusy[integrationId]) return;
+
+        const run = action === 'associate'
+            ? (id: number, bid?: number) => provider.associateProducts(id, bid)
+            : provider.apply[action];
+        if (!run) return;
+
+        setActionBusy(prev => ({ ...prev, [integrationId]: action }));
+        setActionResult(prev => ({ ...prev, [integrationId]: null }));
+        try {
+            const res = await run(integrationId, businessId ?? undefined) as Record<string, unknown>;
+            const ok = res?.success !== false;
+            setActionResult(prev => ({
+                ...prev,
+                [integrationId]: {
+                    ok,
+                    message: String(res?.message || (ok ? 'Aplicado' : 'No se pudo aplicar')),
+                },
+            }));
+            if (ok) {
+                await new Promise(resolve => setTimeout(resolve, APPLY_SETTLE_MS));
+                await reconcileOne(integration);
+            }
+        } catch {
+            setActionResult(prev => ({
+                ...prev,
+                [integrationId]: { ok: false, message: 'No se pudo aplicar' },
+            }));
+        } finally {
+            setActionBusy(prev => ({ ...prev, [integrationId]: null }));
+            loadLastRuns();
+        }
+    }, [eligible, businessId, actionBusy, reconcileOne, loadLastRuns]);
 
     const canRun = environment === 'inventory' || environment === 'products';
 
@@ -351,11 +406,14 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setEnvironment,
         canRun,
         lastRuns,
+        actionBusy,
+        actionResult,
+        runProductAction,
         runCurrent,
         runInventory,
         runProducts,
         reset,
-    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, runCurrent, runInventory, runProducts, reset]);
+    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runCurrent, runInventory, runProducts, reset]);
 
     return <SyncActivityContext.Provider value={value}>{children}</SyncActivityContext.Provider>;
 }
@@ -371,6 +429,9 @@ const EMPTY: SyncActivityValue = {
     setEnvironment: () => undefined,
     canRun: false,
     lastRuns: {},
+    actionBusy: {},
+    actionResult: {},
+    runProductAction: () => undefined,
     runCurrent: () => undefined,
     runInventory: () => undefined,
     runProducts: () => undefined,

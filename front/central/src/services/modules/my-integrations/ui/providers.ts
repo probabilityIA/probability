@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
-import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateShopifyProductsAction } from '@/services/integrations/ecommerce/shopify/infra/actions';
-import { syncMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
-import { syncWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
-import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
-import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
+import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateShopifyProductsAction, applyShopifyProductsAction } from '@/services/integrations/ecommerce/shopify/infra/actions';
+import { syncMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction, applyMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
+import { syncWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction, applyWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
+import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction, applyJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
+import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction, applyVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
 import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopify/ui/components/ShopifyProductSyncModal';
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
 import { WooProductSyncModal } from '@/services/integrations/ecommerce/woocommerce/ui/components/WooProductSyncModal';
@@ -17,6 +17,14 @@ export interface ProductSyncModalProps {
     onCompleted?: () => void;
 }
 
+export type ProductApply = (integrationId: number, businessId?: number) => Promise<unknown>;
+
+export interface ProductApplyActions {
+    createInChannel?: ProductApply;
+    createInProbability?: ProductApply;
+    updateInProbability?: ProductApply;
+}
+
 export interface SyncProvider {
     typeId: number;
     key: string;
@@ -25,6 +33,7 @@ export interface SyncProvider {
     syncInventory: (integrationId: number, businessId?: number) => Promise<unknown>;
     reconcileProducts: (integrationId: number, businessId?: number) => Promise<unknown>;
     associateProducts: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
+    apply: ProductApplyActions;
     onlyInChannelField: string;
     channelNoSkuField: string;
     ProductSyncModal?: ComponentType<ProductSyncModalProps>;
@@ -39,6 +48,10 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         syncInventory: syncShopifyInventoryAction,
         reconcileProducts: reconcileShopifyProductsAction,
         associateProducts: associateShopifyProductsAction,
+        apply: {
+            createInChannel: (id, bid) => applyShopifyProductsAction(id, 'to_shopify', bid),
+            createInProbability: (id, bid) => applyShopifyProductsAction(id, 'to_probability', bid),
+        },
         onlyInChannelField: 'only_in_shopify',
         channelNoSkuField: 'shopify_no_sku',
         ProductSyncModal: ShopifyProductSyncModal,
@@ -51,6 +64,10 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         syncInventory: syncMeliInventoryAction,
         reconcileProducts: reconcileMeliProductsAction,
         associateProducts: associateMeliProductsAction,
+        apply: {
+            createInChannel: (id, bid) => applyMeliProductsAction(id, 'to_meli', bid),
+            createInProbability: (id, bid) => applyMeliProductsAction(id, 'to_probability', bid),
+        },
         onlyInChannelField: 'only_in_meli',
         channelNoSkuField: 'meli_no_sku',
         ProductSyncModal: MercadoLibreProductSyncModal,
@@ -63,6 +80,10 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         syncInventory: syncWooInventoryAction,
         reconcileProducts: reconcileWooProductsAction,
         associateProducts: associateWooProductsAction,
+        apply: {
+            createInChannel: (id, bid) => applyWooProductsAction(id, 'to_woo', bid),
+            createInProbability: (id, bid) => applyWooProductsAction(id, 'to_probability', bid),
+        },
         onlyInChannelField: 'only_in_woocommerce',
         channelNoSkuField: 'woocommerce_no_sku',
         ProductSyncModal: WooProductSyncModal,
@@ -75,6 +96,10 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         syncInventory: syncVTEXInventoryAction,
         reconcileProducts: reconcileVTEXProductsAction,
         associateProducts: associateVTEXProductsAction,
+        apply: {
+            createInProbability: (id, bid) => applyVTEXProductsAction(id, bid, 'create'),
+            updateInProbability: (id, bid) => applyVTEXProductsAction(id, bid, 'update'),
+        },
         onlyInChannelField: 'only_in_vtex',
         channelNoSkuField: 'vtex_no_sku',
     },
@@ -86,6 +111,11 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         syncInventory: syncJumpsellerInventoryAction,
         reconcileProducts: reconcileJumpsellerProductsAction,
         associateProducts: associateJumpsellerProductsAction,
+        apply: {
+            createInChannel: (id, bid) => applyJumpsellerProductsAction(id, 'to_jumpseller', bid, 'create'),
+            createInProbability: (id, bid) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'create'),
+            updateInProbability: (id, bid) => applyJumpsellerProductsAction(id, 'to_probability', bid, 'update'),
+        },
         onlyInChannelField: 'only_in_jumpseller',
         channelNoSkuField: 'jumpseller_no_sku',
         ProductSyncModal: JumpsellerProductSyncModal,
