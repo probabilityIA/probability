@@ -101,9 +101,22 @@ func (uc *vtexUseCase) SyncInventory(ctx context.Context, integrationID string, 
 					Str("vtex_warehouse", vtexWarehouseID).
 					Msg("Error actualizando inventario en VTEX")
 				fails.add(item.SKU)
+				uc.emitSyncEvent(ctx, businessID, integration.ID, "vtex.inventory.sync.item", map[string]interface{}{
+					"correlation_id": correlationID,
+					"sku":            item.SKU,
+					"quantity":       quantity,
+					"action":         "failed",
+					"error":          err.Error(),
+				})
 				continue
 			}
 
+			uc.emitSyncEvent(ctx, businessID, integration.ID, "vtex.inventory.sync.item", map[string]interface{}{
+				"correlation_id": correlationID,
+				"sku":            item.SKU,
+				"quantity":       quantity,
+				"action":         "updated",
+			})
 			synced++
 			uc.maybeProductProgress(ctx, businessID, integration.ID, correlationID, domain.DirectionToVTEX, processed, total, synced, 0, fails.count())
 		}

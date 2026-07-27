@@ -51,7 +51,8 @@ func (uc *meliUseCase) resolveIntegrationAndToken(ctx context.Context, userID in
 }
 
 func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.Integration, accessToken string, orderID int64) (*canonical.ProbabilityOrderDTO, error) {
-	order, rawJSON, err := uc.client.GetOrder(ctx, accessToken, orderID)
+	cli := uc.clientFor(ctx, integration)
+	order, rawJSON, err := cli.GetOrder(ctx, accessToken, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching order: %w", err)
 	}
@@ -71,7 +72,7 @@ func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.In
 
 	var shippingDetail *domain.MeliShippingDetail
 	if order.Shipping != nil && order.Shipping.ID > 0 {
-		shippingDetail, err = uc.client.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
+		shippingDetail, err = cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
 		if err != nil {
 			uc.logger.Warn(ctx).Err(err).
 				Int64("shipment_id", order.Shipping.ID).

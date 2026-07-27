@@ -34,6 +34,15 @@ func (uc *vtexUseCase) TestConnection(ctx context.Context, config map[string]int
 		AppToken:    appToken,
 	}
 
+	if isTesting, _ := config["is_testing"].(bool); isTesting {
+		if raw, terr := extractString(config, "base_url_test"); terr == nil {
+			if testURL := normalizeBaseURL(raw); testURL != "" {
+				uc.logger.Info(ctx).Str("base_url", testURL).Msg("VTEX test connection en modo pruebas")
+				cred.BaseURL = testURL
+			}
+		}
+	}
+
 	if err := uc.client.TestConnection(ctx, cred); err != nil {
 		uc.logger.Error(ctx).Err(err).Str("account", accountName).Msg("VTEX test connection failed")
 		return fmt.Errorf("vtex: test connection failed: %w", err)

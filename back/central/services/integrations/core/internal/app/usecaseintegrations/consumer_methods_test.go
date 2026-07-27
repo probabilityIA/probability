@@ -44,6 +44,11 @@ func TestGetIntegrationByExternalID_Exitoso(t *testing.T) {
 	repo.On("ListIntegrations", mock.Anything, mock.MatchedBy(func(f domain.IntegrationFilters) bool {
 		return f.StoreID != nil && *f.StoreID == externalID && f.Page == 1 && f.PageSize == 1
 	})).Return([]*domain.Integration{integracion}, int64(1), nil)
+	repo.On("GetIntegrationTypeByID", mock.Anything, uint(1)).Return(&domain.IntegrationType{
+		ID:          1,
+		Code:        "shopify",
+		BaseURLTest: "http://back-testing:9093",
+	}, nil)
 
 	// Act
 	resultado, err := uc.GetIntegrationByExternalID(ctx, externalID, integrationType)

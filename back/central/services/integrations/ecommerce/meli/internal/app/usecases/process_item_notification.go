@@ -49,16 +49,17 @@ func (uc *meliUseCase) reconcileItemStock(ctx context.Context, integration *doma
 	}
 	qty := stock[productID]
 
-	item, err := uc.client.GetItem(ctx, accessToken, itemID)
+	cli := uc.clientFor(ctx, integration)
+	item, err := cli.GetItem(ctx, accessToken, itemID)
 	if err == nil && item.AvailableQuantity == qty && len(item.Variations) == 0 {
 		return nil
 	}
 
-	if uerr := uc.client.UpdateStock(ctx, accessToken, itemID, qty); uerr != nil {
+	if uerr := cli.UpdateStock(ctx, accessToken, itemID, qty); uerr != nil {
 		if uerr == domain.ErrTokenExpired {
 			newToken, rerr := uc.EnsureValidToken(ctx, strconv.FormatUint(uint64(integration.ID), 10))
 			if rerr == nil {
-				return uc.client.UpdateStock(ctx, newToken, itemID, qty)
+				return cli.UpdateStock(ctx, newToken, itemID, qty)
 			}
 		}
 		return uerr

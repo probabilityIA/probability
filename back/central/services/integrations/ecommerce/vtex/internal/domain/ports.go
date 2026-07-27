@@ -10,6 +10,7 @@ type Credential struct {
 	AccountName string
 	AppKey      string
 	AppToken    string
+	BaseURL     string
 }
 
 type IVTEXClient interface {

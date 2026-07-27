@@ -6,7 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string) error {
+func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, cli domain.IMeliClient, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string) error {
 	warehouseIDs := make([]uint, 0, len(cfg.WarehouseMappings))
 	for _, wm := range cfg.WarehouseMappings {
 		warehouseIDs = append(warehouseIDs, wm.InternalWarehouseID)
@@ -32,11 +32,11 @@ func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, business
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
 		stockByWh := byWarehouse[m.ProductID]
-		skip, perr := uc.pushItemMultiWarehouse(ctx, accessToken, m, cfg.WarehouseMappings, stockByWh)
+		skip, perr := uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh)
 		if perr == domain.ErrTokenExpired {
 			if newToken, rerr := uc.EnsureValidToken(ctx, integrationIDStr); rerr == nil {
 				accessToken = newToken
-				skip, perr = uc.pushItemMultiWarehouse(ctx, accessToken, m, cfg.WarehouseMappings, stockByWh)
+				skip, perr = uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh)
 			}
 		}
 		switch {
@@ -62,8 +62,8 @@ func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, business
 	return nil
 }
 
-func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, accessToken string, m domain.MappedItem, mappings []domain.WarehouseMapping, stockByWh map[uint]int) (bool, error) {
-	item, err := uc.client.GetItem(ctx, accessToken, m.ExternalItemID)
+func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, cli domain.IMeliClient, accessToken string, m domain.MappedItem, mappings []domain.WarehouseMapping, stockByWh map[uint]int) (bool, error) {
+	item, err := cli.GetItem(ctx, accessToken, m.ExternalItemID)
 	if err != nil {
 		return false, err
 	}
@@ -74,7 +74,7 @@ func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, accessToken s
 		for _, wm := range mappings {
 			total += stockByWh[wm.InternalWarehouseID]
 		}
-		return false, uc.client.UpdateStock(ctx, accessToken, m.ExternalItemID, total)
+		return false, cli.UpdateStock(ctx, accessToken, m.ExternalItemID, total)
 	}
 
 	locations := make([]domain.StockLocation, 0, len(mappings))
@@ -87,12 +87,12 @@ func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, accessToken s
 		})
 	}
 
-	current, err := uc.client.GetUserProductStock(ctx, accessToken, userProductID)
+	current, err := cli.GetUserProductStock(ctx, accessToken, userProductID)
 	if err != nil {
 		return false, err
 	}
 
-	return false, uc.client.UpdateUserProductStock(ctx, accessToken, userProductID, current.Version, locations)
+	return false, cli.UpdateUserProductStock(ctx, accessToken, userProductID, current.Version, locations)
 }
 
 func resolveUserProductID(item *domain.MeliItemDetail, sku string) string {

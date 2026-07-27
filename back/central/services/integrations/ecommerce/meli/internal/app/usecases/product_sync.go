@@ -74,7 +74,7 @@ func (uc *meliUseCase) loadReconcileData(ctx context.Context, integrationID stri
 		return "", 0, nil, nil, fmt.Errorf("listing probability products: %w", err)
 	}
 
-	meliProducts, err = uc.client.GetProducts(ctx, accessToken, sellerID)
+	meliProducts, err = uc.clientFor(ctx, integration).GetProducts(ctx, accessToken, sellerID)
 	if err != nil {
 		return "", 0, nil, nil, fmt.Errorf("listing meli products: %w", err)
 	}
@@ -175,9 +175,15 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 
 	siteID, currencyID, listingTypeID := uc.resolveProductPublishConfig(ctx, integrationID)
 
+	integration, ierr := uc.service.GetIntegrationByID(ctx, integrationID)
+	if ierr != nil {
+		return ierr
+	}
+	cli := uc.clientFor(ctx, integration)
+
 	created, failed := 0, 0
 	for i, p := range missing {
-		newID, cerr := uc.client.CreateProduct(ctx, accessToken, domain.CreateProductInput{
+		newID, cerr := cli.CreateProduct(ctx, accessToken, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
 			Price:         p.Price,

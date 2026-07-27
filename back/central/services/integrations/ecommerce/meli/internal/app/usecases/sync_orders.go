@@ -67,6 +67,7 @@ func (uc *meliUseCase) SyncOrdersWithParams(ctx context.Context, integrationID s
 }
 
 func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.Integration, accessToken string, sellerID int64, params *domain.GetOrdersParams) {
+	cli := uc.clientFor(ctx, integration)
 	start := time.Now()
 	uc.emitOrderSyncEvent(ctx, integration, "integration.sync.started", map[string]interface{}{})
 
@@ -81,7 +82,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 	for {
 		params.Offset = offset
 
-		result, rawOrders, err := uc.client.GetOrders(ctx, accessToken, sellerID, params)
+		result, rawOrders, err := cli.GetOrders(ctx, accessToken, sellerID, params)
 		if err != nil {
 			if err == domain.ErrTokenExpired {
 				uc.logger.Info(ctx).Msg("Token expired during sync, refreshing...")
@@ -116,7 +117,7 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 
 			var shippingDetail *domain.MeliShippingDetail
 			if order.Shipping != nil && order.Shipping.ID > 0 {
-				detail, shErr := uc.client.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
+				detail, shErr := cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
 				if shErr != nil {
 					uc.logger.Warn(ctx).Err(shErr).
 						Int64("shipment_id", order.Shipping.ID).

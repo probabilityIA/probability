@@ -32,6 +32,8 @@ func (a *integrationServiceAdapter) GetIntegrationByID(ctx context.Context, inte
 		StoreID:         pub.StoreID,
 		IntegrationType: pub.IntegrationType,
 		Config:          pub.Config,
+		IsTesting:       pub.IsTesting,
+		BaseURLTest:     pub.BaseURLTest,
 	}, nil
 }
 

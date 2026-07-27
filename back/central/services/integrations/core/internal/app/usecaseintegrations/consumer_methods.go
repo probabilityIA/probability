@@ -79,13 +79,25 @@ func (uc *IntegrationUseCase) cacheIntegrationMeta(ctx context.Context, integrat
 		json.Unmarshal(integration.Config, &configMap)
 	}
 
+	integrationType := integration.IntegrationType
+	if integrationType == nil && integration.IntegrationTypeID > 0 {
+		loaded, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
+		if err != nil {
+			uc.log.Warn(ctx).Err(err).
+				Uint("integration_id", integration.ID).
+				Uint("integration_type_id", integration.IntegrationTypeID).
+				Msg("No se pudo cargar el tipo de integracion para cachear base_url/base_url_test")
+		}
+		integrationType = loaded
+	}
+
 	integrationTypeCode := ""
 	baseURL := ""
 	baseURLTest := ""
-	if integration.IntegrationType != nil {
-		integrationTypeCode = integration.IntegrationType.Code
-		baseURL = integration.IntegrationType.BaseURL
-		baseURLTest = integration.IntegrationType.BaseURLTest
+	if integrationType != nil {
+		integrationTypeCode = integrationType.Code
+		baseURL = integrationType.BaseURL
+		baseURLTest = integrationType.BaseURLTest
 	}
 
 	cachedMeta := &domain.CachedIntegration{

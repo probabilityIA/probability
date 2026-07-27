@@ -24,6 +24,9 @@ func New() domain.IVTEXClient {
 }
 
 func baseURL(cred domain.Credential) string {
+	if cred.BaseURL != "" {
+		return cred.BaseURL
+	}
 	return fmt.Sprintf("https://%s.vtexcommercestable.com.br", cred.AccountName)
 }
 

@@ -7,15 +7,23 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-// TestConnection verifica que las credenciales de MercadoLibre sean válidas.
-// Extrae el access_token de credentials y hace una llamada de prueba a la API.
 func (uc *meliUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
 	accessToken, err := extractString(credentials, "access_token")
 	if err != nil {
 		return domain.ErrMissingAccessToken
 	}
 
-	if err := uc.client.TestConnection(ctx, accessToken); err != nil {
+	cli := uc.client
+	if isTesting, _ := config["is_testing"].(bool); isTesting {
+		if raw, terr := extractString(config, "base_url_test"); terr == nil {
+			if baseURL := normalizeBaseURL(raw); baseURL != "" {
+				uc.logger.Info(ctx).Str("base_url", baseURL).Msg("Meli test connection en modo pruebas")
+				cli = uc.client.WithBaseURL(baseURL)
+			}
+		}
+	}
+
+	if err := cli.TestConnection(ctx, accessToken); err != nil {
 		uc.logger.Error(ctx).Err(err).Msg("MercadoLibre test connection failed")
 		return fmt.Errorf("meli: test connection failed: %w", err)
 	}
@@ -24,7 +32,6 @@ func (uc *meliUseCase) TestConnection(ctx context.Context, config map[string]int
 	return nil
 }
 
-// extractString extrae un campo string de un mapa, retornando error si falta o es vacío.
 func extractString(m map[string]interface{}, key string) (string, error) {
 	v, ok := m[key]
 	if !ok {

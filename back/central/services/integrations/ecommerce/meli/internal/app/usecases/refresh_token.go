@@ -70,7 +70,7 @@ func (uc *meliUseCase) refreshAccessToken(ctx context.Context, integrationID str
 		return "", domain.ErrMissingRefreshToken
 	}
 
-	tokenResp, err := uc.client.RefreshToken(ctx, appID, clientSecret, refreshToken)
+	tokenResp, err := uc.clientFor(ctx, integration).RefreshToken(ctx, appID, clientSecret, refreshToken)
 	if err != nil {
 		uc.logger.Error(ctx).Err(err).
 			Str("integration_id", integrationID).
@@ -83,6 +83,13 @@ func (uc *meliUseCase) refreshAccessToken(ctx context.Context, integrationID str
 	newRefreshToken := refreshToken
 	if tokenResp.RefreshToken != "" {
 		newRefreshToken = tokenResp.RefreshToken
+	}
+
+	if resolveEffectiveBaseURL(integration) != "" {
+		uc.logger.Warn(ctx).
+			Str("integration_id", integrationID).
+			Msg("Meli en modo pruebas: token del simulador usado en memoria, credenciales reales no se sobrescriben")
+		return tokenResp.AccessToken, nil
 	}
 
 	newCredentials := map[string]interface{}{

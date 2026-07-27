@@ -244,8 +244,21 @@ func (uc *SyncOrdersUseCase) SyncInventory(ctx context.Context, integrationID st
 			if serr := uc.shopifyClient.SetInventoryLevel(ctx, storeDomain, accessToken, locationID, invItemID, qty); serr != nil {
 				uc.log.Error(ctx).Err(serr).Str("sku", m.SKU).Msg("Error al fijar inventario en Shopify")
 				failed++
+				uc.emitInventoryEvent(ctx, uint(integIDUint), integration.BusinessID, "shopify.inventory.sync.item", map[string]interface{}{
+					"correlation_id": correlationID,
+					"sku":            m.SKU,
+					"quantity":       qty,
+					"action":         "failed",
+					"error":          serr.Error(),
+				})
 			} else {
 				updated++
+				uc.emitInventoryEvent(ctx, uint(integIDUint), integration.BusinessID, "shopify.inventory.sync.item", map[string]interface{}{
+					"correlation_id": correlationID,
+					"sku":            m.SKU,
+					"quantity":       qty,
+					"action":         "updated",
+				})
 			}
 			uc.progress(ctx, uint(integIDUint), integration.BusinessID, correlationID, i+1, total, updated, unchanged, skipped, failed)
 		}

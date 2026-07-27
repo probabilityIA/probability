@@ -23,13 +23,14 @@ func (uc *meliUseCase) UpdateItemStock(ctx context.Context, integrationID, itemI
 	if err != nil {
 		return err
 	}
-	if err := uc.client.UpdateStock(ctx, accessToken, itemID, quantity); err != nil {
+	cli := uc.clientFor(ctx, integration)
+	if err := cli.UpdateStock(ctx, accessToken, itemID, quantity); err != nil {
 		if err == domain.ErrTokenExpired {
 			newToken, rerr := uc.EnsureValidToken(ctx, integrationID)
 			if rerr != nil {
 				return rerr
 			}
-			return uc.client.UpdateStock(ctx, newToken, itemID, quantity)
+			return cli.UpdateStock(ctx, newToken, itemID, quantity)
 		}
 		return err
 	}

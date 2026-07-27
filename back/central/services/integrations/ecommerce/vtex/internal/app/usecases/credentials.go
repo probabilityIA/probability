@@ -95,11 +95,21 @@ func (uc *vtexUseCase) resolveCredential(ctx context.Context, integration *domai
 		return domain.Credential{}, domain.ErrMissingAppToken
 	}
 
-	return domain.Credential{
+	cred := domain.Credential{
 		AccountName: accountName,
 		AppKey:      appKey,
 		AppToken:    appToken,
-	}, nil
+	}
+
+	if testURL := resolveEffectiveBaseURL(integration); testURL != "" {
+		uc.logger.Info(ctx).
+			Uint("integration_id", integration.ID).
+			Str("base_url", testURL).
+			Msg("VTEX en modo pruebas: usando base_url_test")
+		cred.BaseURL = testURL
+	}
+
+	return cred, nil
 }
 
 func (uc *vtexUseCase) inventoryConfigFrom(config map[string]interface{}) domain.InventoryConfig {

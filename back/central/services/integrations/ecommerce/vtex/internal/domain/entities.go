@@ -9,6 +9,8 @@ type Integration struct {
 	StoreID         string
 	IntegrationType int
 	Config          map[string]interface{}
+	IsTesting       bool
+	BaseURLTest     string
 }
 
 type VTEXOrder struct {

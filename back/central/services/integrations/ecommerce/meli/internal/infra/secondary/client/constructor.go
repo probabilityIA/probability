@@ -35,6 +35,17 @@ func New() domain.IMeliClient {
 	}
 }
 
+func (c *MeliClient) WithBaseURL(baseURL string) domain.IMeliClient {
+	if baseURL == "" {
+		return c
+	}
+	return &MeliClient{
+		httpClient: c.httpClient,
+		baseURL:    baseURL,
+		limiter:    c.limiter,
+	}
+}
+
 func (c *MeliClient) newAuthorizedRequest(ctx context.Context, method, url, accessToken string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
