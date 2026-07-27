@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { Search, X } from 'lucide-react';
 import type { ProductApplyActions } from '../providers';
 import type { DetailGroup, ProductActionKey, SyncDetailItem } from '../sync-activity-context';
 
@@ -90,6 +91,7 @@ const GROUP_ACTION: Partial<Record<DetailGroup, PanelAction>> = {
 export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyAction, onApply }: SyncDetailPanelProps) {
     const [filter, setFilter] = useState<DetailGroup | 'all'>('all');
     const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [search, setSearch] = useState('');
 
     const counts = useMemo(() => {
         const map = new Map<DetailGroup, number>();
@@ -98,7 +100,15 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
     }, [items]);
 
     const order = isProducts ? PRODUCT_ORDER : INVENTORY_ORDER;
-    const visible = filter === 'all' ? items : items.filter(item => item.group === filter);
+    const term = search.trim().toLowerCase();
+    const matches = (item: SyncDetailItem) =>
+        term === '' || item.sku.toLowerCase().includes(term) || item.label.toLowerCase().includes(term);
+
+    const inGroup = filter === 'all' ? items : items.filter(item => item.group === filter);
+    const visible = inGroup.filter(matches);
+    const elsewhere = term === '' || visible.length > 0
+        ? []
+        : Array.from(new Set(items.filter(matches).map(item => item.group)));
 
     const action: PanelAction | null = !isProducts
         ? null
@@ -164,7 +174,41 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                 })}
             </div>
 
+            <div className="flex items-center gap-2">
+                <div className="relative min-w-0 flex-1">
+                    <Search size={12} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                        value={search}
+                        onChange={event => setSearch(event.target.value)}
+                        placeholder="Buscar SKU o nombre"
+                        className="w-full rounded-lg border border-gray-200 bg-white py-1 pl-6 pr-6 text-[11px] text-gray-700 outline-none transition-colors focus:border-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+                    />
+                    {search !== '' && (
+                        <button
+                            onClick={() => setSearch('')}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-700 dark:hover:text-gray-200"
+                        >
+                            <X size={11} />
+                        </button>
+                    )}
+                </div>
+                {term !== '' && (
+                    <span className="whitespace-nowrap text-[10.5px] font-semibold text-gray-400 dark:text-gray-500">
+                        {visible.length} de {inGroup.length}
+                    </span>
+                )}
+            </div>
+
             <div className="max-h-40 overflow-y-auto rounded-lg bg-gray-50 p-1.5 dark:bg-gray-900/40">
+                {visible.length === 0 && term !== '' && (
+                    <p className="px-1 py-2 text-[11px] italic text-gray-400 dark:text-gray-500">
+                        {elsewhere.length > 0
+                            ? `Sin resultados aqui. "${search.trim()}" aparece en: ${elsewhere
+                                .map(group => (group === 'only_channel' ? `Solo en ${providerLabel}` : GROUP_STYLES[group].label))
+                                .join(', ')}`
+                            : `Sin resultados para "${search.trim()}"`}
+                    </p>
+                )}
                 {visible.map((item, index) => {
                     const style = GROUP_STYLES[item.group];
                     return (
@@ -190,12 +234,14 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
 
             {action && canApply && (
                 <div className="flex flex-wrap items-center gap-2">
+                    {selectableItems.length > 0 && (
                     <button
                         onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableItems.map(item => item.sku)))}
                         className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
                         {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${selectableItems.length}`}
                     </button>
+                    )}
                     <button
                         onClick={() => onApply(action.key, Array.from(selected))}
                         disabled={selected.size === 0 || busyAction !== null}
