@@ -68,7 +68,19 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
 const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
-const GROUP_ACTION: Partial<Record<DetailGroup, { key: ProductActionKey; label: (channel: string) => string }>> = {
+interface PanelAction {
+    key: ProductActionKey;
+    label: (channel: string) => string;
+    creatable?: DetailGroup[];
+}
+
+const ALL_ACTION: PanelAction = {
+    key: 'createBothSides',
+    label: () => 'Crear en ambos lados',
+    creatable: ['only_probability', 'only_channel'],
+};
+
+const GROUP_ACTION: Partial<Record<DetailGroup, PanelAction>> = {
     not_associated: { key: 'associate', label: () => 'Asociar al canal' },
     only_probability: { key: 'createInChannel', label: channel => `Crear en ${channel}` },
     only_channel: { key: 'createInProbability', label: () => 'Crear en Probability' },
@@ -88,8 +100,21 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
     const order = isProducts ? PRODUCT_ORDER : INVENTORY_ORDER;
     const visible = filter === 'all' ? items : items.filter(item => item.group === filter);
 
-    const action = filter === 'all' ? null : GROUP_ACTION[filter] ?? null;
-    const canApply = action !== null && (action.key === 'associate' || apply[action.key] !== undefined);
+    const action: PanelAction | null = !isProducts
+        ? null
+        : filter === 'all'
+            ? ALL_ACTION
+            : GROUP_ACTION[filter] ?? null;
+    const canApply = action !== null && (
+        action.key === 'associate'
+            ? true
+            : action.key === 'createBothSides'
+                ? apply.createInChannel !== undefined || apply.createInProbability !== undefined
+                : apply[action.key as keyof ProductApplyActions] !== undefined
+    );
+    const selectable = (item: SyncDetailItem) =>
+        canApply && (action?.creatable === undefined || action.creatable.includes(item.group));
+    const selectableItems = visible.filter(selectable);
 
     const pick = (group: DetailGroup | 'all') => {
         setFilter(group);
@@ -105,7 +130,7 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
         });
     };
 
-    const allVisibleSelected = visible.length > 0 && visible.every(item => selected.has(item.sku));
+    const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
 
     return (
         <div className="space-y-1.5">
@@ -124,6 +149,7 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                     const count = counts.get(group) ?? 0;
                     if (count === 0) return null;
                     const style = GROUP_STYLES[group];
+                    const chipLabel = group === 'only_channel' ? `Solo en ${providerLabel}` : style.label;
                     return (
                         <button
                             key={group}
@@ -132,7 +158,7 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                                 filter === group ? 'ring-2 ring-offset-1 ring-current dark:ring-offset-gray-800' : 'opacity-80 hover:opacity-100'
                             }`}
                         >
-                            {style.label} {count}
+                            {chipLabel} {count}
                         </button>
                     );
                 })}
@@ -146,7 +172,7 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                             key={`${item.group}-${item.sku}-${index}`}
                             className="flex cursor-pointer items-start gap-2 border-b border-gray-100 px-1 py-1 text-[11px] last:border-0 hover:bg-white dark:border-gray-700/60 dark:hover:bg-gray-800/60"
                         >
-                            {canApply && (
+                            {selectable(item) && (
                                 <input
                                     type="checkbox"
                                     checked={selected.has(item.sku)}
@@ -165,10 +191,10 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
             {action && canApply && (
                 <div className="flex flex-wrap items-center gap-2">
                     <button
-                        onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(visible.map(item => item.sku)))}
+                        onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableItems.map(item => item.sku)))}
                         className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
-                        {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${visible.length}`}
+                        {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${selectableItems.length}`}
                     </button>
                     <button
                         onClick={() => onApply(action.key, Array.from(selected))}

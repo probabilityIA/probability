@@ -55,7 +55,7 @@ export interface SyncDetailItem {
     group: DetailGroup;
 }
 
-export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbability' | 'updateInProbability';
+export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbability' | 'updateInProbability' | 'createBothSides';
 
 export interface ProductActionResult {
     ok: boolean;
@@ -317,7 +317,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             push(res?.matched_not_associated, 'warn', 'sin asociar', 'not_associated');
             push(res?.matched_items, 'ok', 'en ambos', 'both');
             push(res?.only_in_probability, 'warn', 'solo en Probability', 'only_probability');
-            push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal', 'only_channel');
+            push(res?.[provider.onlyInChannelField], 'warn', `solo en ${provider.label}`, 'only_channel');
             setDetails(prev => ({ ...prev, [integration.id]: detail }));
 
             const summary: ProductsResult = {
@@ -374,23 +374,34 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         const provider = integration ? getSyncProvider(integration.integration_type_id) : null;
         if (!integration || !provider || actionBusy[integrationId]) return;
 
-        const run = action === 'associate'
-            ? (id: number, bid?: number, only?: string[]) => provider.associateProducts(id, bid, only)
-            : provider.apply[action];
-        if (!run) return;
+        const steps: ProductActionKey[] = action === 'createBothSides'
+            ? ['createInChannel', 'createInProbability']
+            : [action];
+
+        const runs = steps
+            .map(step => (step === 'associate'
+                ? (id: number, bid?: number, only?: string[]) => provider.associateProducts(id, bid, only)
+                : step === 'createBothSides'
+                    ? undefined
+                    : provider.apply[step]))
+            .filter(Boolean) as ((id: number, bid?: number, only?: string[]) => Promise<unknown>)[];
+        if (runs.length === 0) return;
 
         setActionBusy(prev => ({ ...prev, [integrationId]: action }));
         setActionResult(prev => ({ ...prev, [integrationId]: null }));
         try {
-            const res = await run(integrationId, businessId ?? undefined, skus) as Record<string, unknown>;
-            const ok = res?.success !== false;
-            setActionResult(prev => ({
-                ...prev,
-                [integrationId]: {
-                    ok,
-                    message: String(res?.message || (ok ? 'Aplicado' : 'No se pudo aplicar')),
-                },
-            }));
+            let ok = true;
+            let message = '';
+            for (const run of runs) {
+                const res = await run(integrationId, businessId ?? undefined, skus) as Record<string, unknown>;
+                if (res?.success === false) {
+                    ok = false;
+                    message = String(res?.message || 'No se pudo aplicar');
+                    break;
+                }
+                message = String(res?.message || 'Aplicado');
+            }
+            setActionResult(prev => ({ ...prev, [integrationId]: { ok, message } }));
             if (ok) {
                 await new Promise(resolve => setTimeout(resolve, APPLY_SETTLE_MS));
                 await reconcileOne(integration);

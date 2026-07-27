@@ -32,6 +32,7 @@ function groupOf(group: string | undefined, label: string, tone: string): Detail
     if (label.startsWith('sin asociar')) return 'not_associated';
     if (label.startsWith('solo en Probability')) return 'only_probability';
     if (label.startsWith('solo en el canal')) return 'only_channel';
+    if (label.startsWith('solo en ')) return 'only_channel';
     if (label.startsWith('en ambos')) return 'both';
     return tone === 'error' ? 'failed' : tone === 'warn' ? 'skipped' : 'updated';
 }
@@ -88,6 +89,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
     const syncPct = syncProgress.total > 0
         ? Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))
         : 0;
+    const channelLabel = provider?.label ?? 'el canal';
     const busyAction = actionBusy[integration.id] ?? null;
     const feedback = actionResult[integration.id] ?? null;
     const stateRing =
@@ -241,7 +243,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                             {syncResult.onlyInProbability} solo Prob.
                         </span>
                         <span className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10.5px] font-bold text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300">
-                            {syncResult.onlyInChannel} solo canal
+                            {syncResult.onlyInChannel} solo {channelLabel}
                         </span>
                     </div>
                 ) : syncResult?.kind === 'error' ? (
@@ -301,7 +303,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                                     {lastRun.only_in_probability} solo Prob.
                                 </span>
                                 <span className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10.5px] font-bold text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300">
-                                    {lastRun.only_in_channel} solo canal
+                                    {lastRun.only_in_channel} solo {channelLabel}
                                 </span>
                             </div>
                         ) : (
