@@ -12,13 +12,53 @@ const (
 	StatusFailed    = "failed"
 )
 
-const MaxDetailItems = 200
+const (
+	DefaultPageSize = 50
+	MaxPageSize     = 200
+)
 
 type DetailItem struct {
 	SKU   string `json:"sku"`
 	Label string `json:"label"`
 	Tone  string `json:"tone"`
 	Group string `json:"group,omitempty"`
+}
+
+type DetailQuery struct {
+	BusinessID    uint
+	IntegrationID uint
+	Kind          string
+	Group         string
+	Search        string
+	Page          int
+	PageSize      int
+}
+
+func (q *DetailQuery) Normalize() {
+	if q.Kind != KindProducts {
+		q.Kind = KindInventory
+	}
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if q.PageSize < 1 {
+		q.PageSize = DefaultPageSize
+	}
+	if q.PageSize > MaxPageSize {
+		q.PageSize = MaxPageSize
+	}
+}
+
+func (q *DetailQuery) Offset() int {
+	return (q.Page - 1) * q.PageSize
+}
+
+type DetailPage struct {
+	Items      []DetailItem
+	Total      int64
+	Page       int
+	PageSize   int
+	TotalPages int
 }
 
 type SyncRun struct {
@@ -59,9 +99,6 @@ func (r *SyncRun) Normalize() {
 	if r.FinishedAt == nil {
 		now := time.Now()
 		r.FinishedAt = &now
-	}
-	if len(r.Detail) > MaxDetailItems {
-		r.Detail = r.Detail[:MaxDetailItems]
 	}
 	if len(r.Message) > 500 {
 		r.Message = r.Message[:500]

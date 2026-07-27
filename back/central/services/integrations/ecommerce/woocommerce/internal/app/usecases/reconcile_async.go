@@ -12,7 +12,6 @@ import (
 const (
 	channelLabel        = "WooCommerce"
 	reconcileEventType  = "woo.product.reconcile.completed"
-	maxReconcileDetails = 200
 )
 
 type reconcileDetailItem struct {
@@ -66,13 +65,10 @@ func (uc *wooCommerceUseCase) ReconcileProductsAsync(ctx context.Context, integr
 }
 
 func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
-	detail := make([]reconcileDetailItem, 0, maxReconcileDetails)
+	detail := make([]reconcileDetailItem, 0)
 
 	add := func(items []domain.ProductBrief, label, tone, group string) {
 		for _, item := range items {
-			if len(detail) >= maxReconcileDetails {
-				return
-			}
 			text := label
 			if item.Name != "" {
 				text = label + " · " + item.Name

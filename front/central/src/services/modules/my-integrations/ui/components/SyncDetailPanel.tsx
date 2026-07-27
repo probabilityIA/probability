@@ -1,12 +1,18 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
+import type { SyncRunKind } from '../../domain/types';
+import { listSyncRunItemsAction } from '../../infra/actions/sync-runs';
 import type { ProductApplyActions } from '../providers';
 import type { DetailGroup, ProductActionKey, SyncDetailItem } from '../sync-activity-context';
 
 interface SyncDetailPanelProps {
-    items: SyncDetailItem[];
+    integrationId: number;
+    kind: SyncRunKind;
+    businessId?: number;
+    counts: Partial<Record<DetailGroup, number>>;
+    liveItems: SyncDetailItem[];
     providerLabel: string;
     apply: ProductApplyActions;
     isProducts: boolean;
@@ -69,6 +75,9 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
 const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
+const PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 400;
+
 interface PanelAction {
     key: ProductActionKey;
     label: (channel: string) => string;
@@ -88,27 +97,107 @@ const GROUP_ACTION: Partial<Record<DetailGroup, PanelAction>> = {
     both: { key: 'updateInProbability', label: () => 'Actualizar en Probability' },
 };
 
-export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyAction, onApply }: SyncDetailPanelProps) {
+const groupLabel = (group: DetailGroup, providerLabel: string) =>
+    group === 'only_channel' ? `Solo en ${providerLabel}` : GROUP_STYLES[group].label;
+
+export function SyncDetailPanel({
+    integrationId,
+    kind,
+    businessId,
+    counts,
+    liveItems,
+    providerLabel,
+    apply,
+    isProducts,
+    busyAction,
+    onApply,
+}: SyncDetailPanelProps) {
     const [filter, setFilter] = useState<DetailGroup | 'all'>('all');
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [search, setSearch] = useState('');
+    const [term, setTerm] = useState('');
+    const [remoteItems, setRemoteItems] = useState<SyncDetailItem[]>([]);
+    const [remoteTotal, setRemoteTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
+    const sentinel = useRef<HTMLDivElement | null>(null);
 
-    const counts = useMemo(() => {
-        const map = new Map<DetailGroup, number>();
-        for (const item of items) map.set(item.group, (map.get(item.group) ?? 0) + 1);
-        return map;
-    }, [items]);
-
+    const isLive = liveItems.length > 0;
     const order = isProducts ? PRODUCT_ORDER : INVENTORY_ORDER;
-    const term = search.trim().toLowerCase();
-    const matches = (item: SyncDetailItem) =>
-        term === '' || item.sku.toLowerCase().includes(term) || item.label.toLowerCase().includes(term);
+    const totalItems = order.reduce((sum, group) => sum + (counts[group] ?? 0), 0);
 
-    const inGroup = filter === 'all' ? items : items.filter(item => item.group === filter);
-    const visible = inGroup.filter(matches);
-    const elsewhere = term === '' || visible.length > 0
+    useEffect(() => {
+        const timer = setTimeout(() => setTerm(search.trim()), SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const loadPage = useCallback(async (nextPage: number, replace: boolean) => {
+        setLoading(true);
+        try {
+            const result = await listSyncRunItemsAction({
+                integration_id: integrationId,
+                kind,
+                group: filter === 'all' ? undefined : filter,
+                q: term || undefined,
+                page: nextPage,
+                page_size: PAGE_SIZE,
+                business_id: businessId,
+            });
+            const incoming = result.items.map(item => ({
+                sku: item.sku,
+                label: item.label,
+                tone: item.tone,
+                group: (item.group || 'both') as DetailGroup,
+            }));
+            setRemoteItems(prev => (replace ? incoming : [...prev, ...incoming]));
+            setRemoteTotal(result.total);
+            setPage(result.page);
+            setHasMore(result.page < result.total_pages);
+        } finally {
+            setLoading(false);
+        }
+    }, [integrationId, kind, filter, term, businessId]);
+
+    useEffect(() => {
+        if (isLive) return;
+        setRemoteItems([]);
+        setHasMore(false);
+        loadPage(1, true);
+    }, [isLive, loadPage]);
+
+    useEffect(() => {
+        if (isLive || !hasMore || loading) return;
+        const node = sentinel.current;
+        if (!node) return;
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0]?.isIntersecting) loadPage(page + 1, false);
+        }, { rootMargin: '80px' });
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [isLive, hasMore, loading, page, loadPage]);
+
+    const liveCounts = useMemo(() => {
+        const map = new Map<DetailGroup, number>();
+        for (const item of liveItems) map.set(item.group, (map.get(item.group) ?? 0) + 1);
+        return map;
+    }, [liveItems]);
+
+    const matches = (item: SyncDetailItem) =>
+        term === '' || item.sku.toLowerCase().includes(term.toLowerCase()) || item.label.toLowerCase().includes(term.toLowerCase());
+
+    const liveInGroup = filter === 'all' ? liveItems : liveItems.filter(item => item.group === filter);
+    const liveVisible = liveInGroup.filter(matches);
+    const visible = isLive ? liveVisible : remoteItems;
+
+    const groupTotal = filter === 'all'
+        ? totalItems
+        : isLive ? (liveCounts.get(filter) ?? 0) : (counts[filter] ?? 0);
+    const shownTotal = isLive ? liveVisible.length : remoteTotal;
+
+    const elsewhere = !isLive || term === '' || liveVisible.length > 0
         ? []
-        : Array.from(new Set(items.filter(matches).map(item => item.group)));
+        : Array.from(new Set(liveItems.filter(matches).map(item => item.group)));
 
     const action: PanelAction | null = !isProducts
         ? null
@@ -125,6 +214,10 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
     const selectable = (item: SyncDetailItem) =>
         canApply && (action?.creatable === undefined || action.creatable.includes(item.group));
     const selectableItems = visible.filter(selectable);
+
+    const applyAllTotal = action?.creatable === undefined
+        ? groupTotal
+        : action.creatable.reduce((sum, group) => sum + (counts[group] ?? 0), 0);
 
     const pick = (group: DetailGroup | 'all') => {
         setFilter(group);
@@ -153,13 +246,12 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                             : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
                     }`}
                 >
-                    Todos {items.length}
+                    Todos {totalItems}
                 </button>
                 {order.map(group => {
-                    const count = counts.get(group) ?? 0;
+                    const count = isLive ? (liveCounts.get(group) ?? 0) : (counts[group] ?? 0);
                     if (count === 0) return null;
                     const style = GROUP_STYLES[group];
-                    const chipLabel = group === 'only_channel' ? `Solo en ${providerLabel}` : style.label;
                     return (
                         <button
                             key={group}
@@ -168,7 +260,7 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                                 filter === group ? 'ring-2 ring-offset-1 ring-current dark:ring-offset-gray-800' : 'opacity-80 hover:opacity-100'
                             }`}
                         >
-                            {chipLabel} {count}
+                            {groupLabel(group, providerLabel)} {count}
                         </button>
                     );
                 })}
@@ -194,19 +286,19 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                 </div>
                 {term !== '' && (
                     <span className="whitespace-nowrap text-[10.5px] font-semibold text-gray-400 dark:text-gray-500">
-                        {visible.length} de {inGroup.length}
+                        {shownTotal} de {groupTotal}
                     </span>
                 )}
             </div>
 
             <div className="max-h-40 overflow-y-auto rounded-lg bg-gray-50 p-1.5 dark:bg-gray-900/40">
-                {visible.length === 0 && term !== '' && (
+                {visible.length === 0 && !loading && (
                     <p className="px-1 py-2 text-[11px] italic text-gray-400 dark:text-gray-500">
-                        {elsewhere.length > 0
-                            ? `Sin resultados aqui. "${search.trim()}" aparece en: ${elsewhere
-                                .map(group => (group === 'only_channel' ? `Solo en ${providerLabel}` : GROUP_STYLES[group].label))
-                                .join(', ')}`
-                            : `Sin resultados para "${search.trim()}"`}
+                        {term === ''
+                            ? 'Sin productos en este grupo'
+                            : elsewhere.length > 0
+                                ? `Sin resultados aqui. "${term}" aparece en: ${elsewhere.map(group => groupLabel(group, providerLabel)).join(', ')}`
+                                : `Sin resultados para "${term}"`}
                     </p>
                 )}
                 {visible.map((item, index) => {
@@ -230,6 +322,14 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                         </label>
                     );
                 })}
+                {!isLive && loading && (
+                    <div className="space-y-1 px-1 py-1">
+                        {[0, 1, 2].map(row => (
+                            <div key={row} className="h-3 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                        ))}
+                    </div>
+                )}
+                {!isLive && <div ref={sentinel} className="h-px" />}
             </div>
 
             {action && canApply && (
@@ -239,22 +339,40 @@ export function SyncDetailPanel({ items, providerLabel, apply, isProducts, busyA
                         onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableItems.map(item => item.sku)))}
                         className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
-                        {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${selectableItems.length}`}
+                        {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${selectableItems.length} cargados`}
                     </button>
                     )}
-                    <button
-                        onClick={() => onApply(action.key, Array.from(selected))}
-                        disabled={selected.size === 0 || busyAction !== null}
-                        className="flex items-center gap-1.5 rounded-lg bg-[#0d5c80] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#0a4964] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        {busyAction === action.key && (
-                            <span className="h-3 w-3 animate-spin rounded-full border border-transparent border-t-current" />
-                        )}
-                        {action.label(providerLabel)}
-                        {selected.size > 0 && <span className="rounded-full bg-white/25 px-1.5 tabular-nums">{selected.size}</span>}
-                    </button>
+                    {selected.size > 0 && (
+                        <button
+                            onClick={() => onApply(action.key, Array.from(selected))}
+                            disabled={busyAction !== null}
+                            className="flex items-center gap-1.5 rounded-lg bg-[#0d5c80] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#0a4964] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            {busyAction === action.key && (
+                                <span className="h-3 w-3 animate-spin rounded-full border border-transparent border-t-current" />
+                            )}
+                            {action.label(providerLabel)}
+                            <span className="rounded-full bg-white/25 px-1.5 tabular-nums">{selected.size}</span>
+                        </button>
+                    )}
+                    {selected.size === 0 && term === '' && applyAllTotal > 0 && (
+                        <button
+                            onClick={() => onApply(action.key, [])}
+                            disabled={busyAction !== null}
+                            className="flex items-center gap-1.5 rounded-lg bg-[#0d5c80] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#0a4964] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            {busyAction === action.key && (
+                                <span className="h-3 w-3 animate-spin rounded-full border border-transparent border-t-current" />
+                            )}
+                            {action.label(providerLabel)} los {applyAllTotal}
+                        </button>
+                    )}
                     {selected.size === 0 && (
-                        <span className="text-[11px] italic text-gray-400 dark:text-gray-500">Elige los productos a aplicar</span>
+                        <span className="text-[11px] italic text-gray-400 dark:text-gray-500">
+                            {term === ''
+                                ? 'o marca productos para aplicar solo a esos'
+                                : 'marca los productos que quieras aplicar'}
+                        </span>
                     )}
                 </div>
             )}

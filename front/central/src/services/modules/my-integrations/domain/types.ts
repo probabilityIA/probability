@@ -21,6 +21,24 @@ export interface SyncRunDetail {
     group?: string;
 }
 
+export interface SyncRunDetailQuery {
+    integration_id: number;
+    kind: SyncRunKind;
+    group?: string;
+    q?: string;
+    page?: number;
+    page_size?: number;
+    business_id?: number;
+}
+
+export interface SyncRunDetailPage {
+    items: SyncRunDetail[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
 export interface SyncRunRecord {
     integration_id: number;
     kind: SyncRunKind;

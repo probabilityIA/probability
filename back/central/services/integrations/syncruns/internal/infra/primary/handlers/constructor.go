@@ -11,6 +11,7 @@ import (
 
 type IHandler interface {
 	ListLast(c *gin.Context)
+	ListDetail(c *gin.Context)
 	Record(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
@@ -31,6 +32,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/integrations/sync-runs", middleware.JWT())
 	{
 		group.GET("", h.ListLast)
+		group.GET("/items", h.ListDetail)
 		group.POST("", h.Record)
 	}
 }
