@@ -69,7 +69,7 @@ const (
 )
 
 var WhatsAppEventTemplates = map[string][]string{
-	"order.created":            {"confirmacion_pedido", "confirmacion_pedido_contraentrega"},
+	"order.created":            {"confirmacion_pedido", "confirmacion_pedido_contraentrega", "confirmacion_pedido_contraentrega_sin_valor"},
 	"order.shipped":            {"pedido_en_reparto", "pedido_en_reparto_cod"},
 	"order.delivered":          {"pedido_entregado", "pedido_entregado_cod"},
 	"shipment.guide_generated": {"guia_envio_generada", "guia_envio_generada_cod"},

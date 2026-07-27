@@ -53,21 +53,43 @@ func TestEventCodeToTemplateNameCOD(t *testing.T) {
 	tests := []struct {
 		eventCode string
 		isCOD     bool
+		codFinal  bool
 		want      string
 	}{
-		{"order.created", true, "confirmacion_pedido_contraentrega"},
-		{"order.created", false, "confirmacion_pedido"},
-		{"order.shipped", true, "pedido_en_reparto_cod"},
-		{"order.shipped", false, "pedido_en_reparto"},
-		{"order.delivered", true, "pedido_entregado_cod"},
-		{"order.delivered", false, "pedido_entregado"},
+		{"order.created", true, true, "confirmacion_pedido_contraentrega"},
+		{"order.created", true, false, "confirmacion_pedido_contraentrega_sin_valor"},
+		{"order.created", false, false, "confirmacion_pedido"},
+		{"order.shipped", true, false, "pedido_en_reparto_cod"},
+		{"order.shipped", false, false, "pedido_en_reparto"},
+		{"order.delivered", true, false, "pedido_entregado_cod"},
+		{"order.delivered", false, false, "pedido_entregado"},
 	}
 
 	for _, tt := range tests {
-		got := eventCodeToTemplateName(tt.eventCode, tt.isCOD)
+		got := eventCodeToTemplateName(tt.eventCode, tt.isCOD, tt.codFinal)
 		if got != tt.want {
-			t.Errorf("eventCodeToTemplateName(%q, %v) = %q, se esperaba %q",
-				tt.eventCode, tt.isCOD, got, tt.want)
+			t.Errorf("eventCodeToTemplateName(%q, %v, %v) = %q, se esperaba %q",
+				tt.eventCode, tt.isCOD, tt.codFinal, got, tt.want)
 		}
+	}
+}
+
+func TestCodAmountIsFinal(t *testing.T) {
+	tests := []struct {
+		name string
+		data map[string]any
+		want bool
+	}{
+		{"total ya incluye el envio", map[string]any{"cod_includes_shipping": true}, true},
+		{"el envio se suma despues", map[string]any{"cod_includes_shipping": false}, false},
+		{"sin el campo", map[string]any{}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := (entities.Event{Data: tt.data}).CodAmountIsFinal(); got != tt.want {
+				t.Errorf("CodAmountIsFinal() = %v, se esperaba %v", got, tt.want)
+			}
+		})
 	}
 }

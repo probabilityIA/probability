@@ -36,6 +36,23 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
 		Description:  "Confirmacion de pedido con direccion desglosada, metodo de pago y valor a recaudar",
 	},
+	"confirmacion_pedido_contraentrega_sin_valor": {
+		Name:     "confirmacion_pedido_contraentrega_sin_valor",
+		Language: "es",
+		Variables: []string{
+			"nombre",
+			"tienda",
+			"numero_orden",
+			"direccion",
+			"ciudad",
+			"departamento",
+			"productos",
+			"metodo_pago",
+		},
+		HasButtons:   true,
+		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
+		Description:  "Confirmacion contra entrega sin valor a recaudar, para cuando el flete todavia no se conoce",
+	},
 	"pedido_confirmado_v2": {
 		Name:     "pedido_confirmado_v2",
 		Language: "es",

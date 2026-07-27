@@ -80,7 +80,7 @@ func (s *confirmationSelector) Preview(ctx context.Context, filter dtos.Backfill
 			SELECT 1
 			FROM whatsapp_message_logs ml
 			JOIN whatsapp_conversations wc ON wc.id = ml.conversation_id
-			WHERE ml.template_name = 'confirmacion_pedido_contraentrega'
+			WHERE ml.template_name IN ('confirmacion_pedido_contraentrega', 'confirmacion_pedido_contraentrega_sin_valor')
 			  AND ml.status IN ('sent','delivered','read')
 			  AND wc.business_id = orders.business_id
 			  AND wc.order_number = orders.order_number

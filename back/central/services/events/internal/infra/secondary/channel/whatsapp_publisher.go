@@ -35,7 +35,7 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	}
 }
 
-func eventCodeToTemplateName(eventCode string, isCOD bool) string {
+func eventCodeToTemplateName(eventCode string, isCOD bool, codAmountIsFinal bool) string {
 	switch eventCode {
 	case "order.shipped":
 		if isCOD {
@@ -49,14 +49,17 @@ func eventCodeToTemplateName(eventCode string, isCOD bool) string {
 		return "pedido_entregado"
 	default:
 		if isCOD {
-			return "confirmacion_pedido_contraentrega"
+			if codAmountIsFinal {
+				return "confirmacion_pedido_contraentrega"
+			}
+			return "confirmacion_pedido_contraentrega_sin_valor"
 		}
 		return "confirmacion_pedido"
 	}
 }
 
 func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
-	templateName := eventCodeToTemplateName(config.EventCode, event.IsCOD())
+	templateName := eventCodeToTemplateName(config.EventCode, event.IsCOD(), event.CodAmountIsFinal())
 
 	payload := map[string]any{
 		"event_type":        "order.confirmation_requested",

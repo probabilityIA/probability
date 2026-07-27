@@ -1,6 +1,7 @@
 package consumerorder
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
@@ -47,6 +48,22 @@ func TestValorARecaudarUsaCodTotalNoTotalAmount(t *testing.T) {
 				t.Error("se esta enviando total_amount en vez de cod_total")
 			}
 		})
+	}
+}
+
+func TestConfirmacionSinValorNoLlevaMonto(t *testing.T) {
+	vars := buildVariables("confirmacion_pedido_contraentrega_sin_valor", vigaEvent())
+
+	if len(vars) != 8 {
+		t.Errorf("variables = %d, se esperaban 8", len(vars))
+	}
+	if vars["8"] != "contra entrega" {
+		t.Errorf("metodo de pago = %q, se esperaba %q", vars["8"], "contra entrega")
+	}
+	for key, value := range vars {
+		if strings.HasPrefix(value, "$") {
+			t.Errorf("la variable %s lleva un monto (%q) y esta plantilla no debe llevarlo", key, value)
+		}
 	}
 }
 
