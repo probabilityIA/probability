@@ -34,7 +34,7 @@ func (m *MeliCore) UpdateInventory(ctx context.Context, integrationID string, pr
 }
 
 func (m *MeliCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
-	webhookURL := fmt.Sprintf("%s/meli/notifications", baseURL)
+	webhookURL := fmt.Sprintf("%s/meli/notification", baseURL)
 
 	return &integrationcore.WebhookInfo{
 		URL:    webhookURL,
