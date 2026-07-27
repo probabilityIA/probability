@@ -67,13 +67,13 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
         <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
             <div className="px-4 sm:px-6 lg:px-8 pt-2">
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-nowrap grow shrink basis-auto min-w-[220px] overflow-x-auto overflow-y-hidden subnavbar-scroll">
                         {allItems.map((item: any) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 style={isActive(item.href) ? { backgroundColor: 'var(--color-secondary-500)', color: 'var(--color-on-secondary, white)' } : {}}
-                                className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-all rounded-lg flex items-center gap-2 ${
+                                className={`shrink-0 px-3 py-2 text-sm font-medium whitespace-nowrap transition-all rounded-lg flex items-center gap-2 ${
                                     isActive(item.href)
                                         ? ''
                                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
@@ -84,8 +84,10 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
                             </Link>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2 ml-auto">
-                        <OrdersEffectivenessKpis businessId={selectedBusinessId} />
+                    <div className="flex items-center gap-2 ml-auto shrink basis-auto min-w-0 [&>*:not(:first-child)]:shrink-0">
+                        <div className="flex items-center min-w-0 shrink overflow-x-auto overflow-y-hidden subnavbar-scroll">
+                            <OrdersEffectivenessKpis businessId={selectedBusinessId} />
+                        </div>
                         <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
