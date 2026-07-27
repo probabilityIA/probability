@@ -76,6 +76,7 @@ interface SyncActivityValue {
     actionBusy: Record<number, ProductActionKey | null>;
     actionResult: Record<number, ProductActionResult | null>;
     runProductAction: (integrationId: number, action: ProductActionKey, skus?: string[]) => void;
+    runInventoryOne: (integrationId: number) => void;
     runCurrent: () => void;
     runInventory: () => void;
     runProducts: () => void;
@@ -223,6 +224,67 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setActionResult({});
     }, []);
 
+    const syncInventoryOne = useCallback(async (integration: Integration) => {
+        const provider = getSyncProvider(integration.integration_type_id);
+        if (!provider) return;
+
+        patchNode(integration.id, 'active');
+        let result: SyncStartResult | null = null;
+        try {
+            result = await provider.syncInventory(integration.id, businessId ?? undefined) as SyncStartResult;
+        } catch {
+            result = null;
+        }
+
+        if (!result?.success || !result?.correlation_id) {
+            patchNode(integration.id, 'error');
+            setResults(prev => ({
+                ...prev,
+                [integration.id]: { kind: 'error', message: result?.message || 'No se pudo iniciar' },
+            }));
+            return;
+        }
+
+        corrToIntegration.current.set(result.correlation_id, integration.id);
+
+        await new Promise<void>(resolve => {
+            const timer = window.setTimeout(() => {
+                patchNode(integration.id, 'error');
+                setResults(prev => ({
+                    ...prev,
+                    [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
+                }));
+                completion.current.delete(integration.id);
+                resolve();
+            }, SYNC_TIMEOUT_MS);
+            completion.current.set(integration.id, () => {
+                window.clearTimeout(timer);
+                completion.current.delete(integration.id);
+                resolve();
+            });
+        });
+    }, [businessId, patchNode]);
+
+    const runInventoryOne = useCallback(async (integrationId: number) => {
+        const integration = eligible.find(i => i.id === integrationId);
+        if (!integration || running) return;
+        setRunning(true);
+        setMode('inventory');
+        setResults(prev => {
+            const next = { ...prev };
+            delete next[integrationId];
+            return next;
+        });
+        setDetails(prev => ({ ...prev, [integrationId]: [] }));
+        setProgress(prev => ({ ...prev, [integrationId]: { processed: 0, total: 0 } }));
+
+        await syncInventoryOne(integration);
+
+        setRunning(false);
+        setMode('idle');
+        loadLastRuns();
+    }, [eligible, running, syncInventoryOne, loadLastRuns]);
+
     const runInventory = useCallback(async () => {
         if (running || eligible.length === 0) return;
         setRunning(true);
@@ -237,50 +299,13 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setNodes(queued);
 
         for (const integration of eligible) {
-            const provider = getSyncProvider(integration.integration_type_id);
-            if (!provider) continue;
-
-            patchNode(integration.id, 'active');
-            let result: SyncStartResult | null = null;
-            try {
-                result = await provider.syncInventory(integration.id, businessId ?? undefined) as SyncStartResult;
-            } catch {
-                result = null;
-            }
-
-            if (!result?.success || !result?.correlation_id) {
-                patchNode(integration.id, 'error');
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: { kind: 'error', message: result?.message || 'No se pudo iniciar' },
-                }));
-                continue;
-            }
-
-            corrToIntegration.current.set(result.correlation_id, integration.id);
-
-            await new Promise<void>(resolve => {
-                const timer = window.setTimeout(() => {
-                    patchNode(integration.id, 'error');
-                    setResults(prev => ({
-                        ...prev,
-                        [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
-                    }));
-                    completion.current.delete(integration.id);
-                    resolve();
-                }, SYNC_TIMEOUT_MS);
-                completion.current.set(integration.id, () => {
-                    window.clearTimeout(timer);
-                    completion.current.delete(integration.id);
-                    resolve();
-                });
-            });
+            await syncInventoryOne(integration);
         }
 
         setRunning(false);
         setMode('idle');
         loadLastRuns();
-    }, [running, eligible, businessId, patchNode, loadLastRuns]);
+    }, [running, eligible, syncInventoryOne, loadLastRuns]);
 
     const reconcileOne = useCallback(async (integration: Integration) => {
         const provider = getSyncProvider(integration.integration_type_id);
@@ -438,11 +463,12 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         actionBusy,
         actionResult,
         runProductAction,
+        runInventoryOne,
         runCurrent,
         runInventory,
         runProducts,
         reset,
-    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runCurrent, runInventory, runProducts, reset]);
+    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, runCurrent, runInventory, runProducts, reset]);
 
     return <SyncActivityContext.Provider value={value}>{children}</SyncActivityContext.Provider>;
 }
@@ -461,6 +487,7 @@ const EMPTY: SyncActivityValue = {
     actionBusy: {},
     actionResult: {},
     runProductAction: () => undefined,
+    runInventoryOne: () => undefined,
     runCurrent: () => undefined,
     runInventory: () => undefined,
     runProducts: () => undefined,

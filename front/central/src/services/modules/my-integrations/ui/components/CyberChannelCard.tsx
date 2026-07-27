@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
-import { Clock, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Clock, SlidersHorizontal, ChevronDown, RefreshCw } from 'lucide-react';
 import { useSyncActivity, type DetailGroup, type SyncDetailItem } from '../sync-activity-context';
 import { getSyncProvider } from '../providers';
 import { SyncDetailPanel } from './SyncDetailPanel';
@@ -13,8 +13,10 @@ interface CyberChannelCardProps {
     color: string;
     stats?: IntegrationStatsItem;
     onToggle: (integration: Integration) => void;
+    onToggleInventory: (integration: Integration) => void;
     onEdit: (integration: Integration) => void;
     togglingId: number | null;
+    inventoryTogglingId: number | null;
     editingId: number | null;
 }
 
@@ -54,7 +56,7 @@ function relativeTime(iso?: string): string | null {
     return `hace ${Math.floor(months / 12)} a`;
 }
 
-export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, togglingId, editingId }: CyberChannelCardProps) {
+export function CyberChannelCard({ integration, color, stats, onToggle, onToggleInventory, onEdit, togglingId, inventoryTogglingId, editingId }: CyberChannelCardProps) {
     const isToggling = togglingId === integration.id;
     const isEditing = editingId === integration.id;
     const active = integration.is_active;
@@ -63,7 +65,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
     const total = stats?.orders_count ?? 0;
     const hasBreakdown = stats !== undefined && total > 0;
 
-    const { nodes, progress, results, details, environment, lastRuns, actionBusy, actionResult, runProductAction } = useSyncActivity();
+    const { nodes, progress, results, details, environment, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, running } = useSyncActivity();
     const [openDetail, setOpenDetail] = useState(false);
     const syncState = nodes[integration.id] || 'idle';
     const syncProgress = progress[integration.id] || { processed: 0, total: 0 };
@@ -90,6 +92,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
         ? Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))
         : 0;
     const channelLabel = provider?.label ?? 'el canal';
+    const inventoryToggling = inventoryTogglingId === integration.id;
     const busyAction = actionBusy[integration.id] ?? null;
     const feedback = actionResult[integration.id] ?? null;
     const stateRing =
@@ -175,6 +178,46 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
             )}
 
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+                {envView === 'inventory' && syncState !== 'active' && syncState !== 'queued' && (
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <button
+                                onClick={() => onToggleInventory(integration)}
+                                disabled={inventoryToggling}
+                                title={inventoryEnabled
+                                    ? 'Este canal recibe stock desde Probability. Clic para apagarlo'
+                                    : 'Clic para que este canal reciba stock desde Probability'}
+                                className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-bold transition-colors ${
+                                    inventoryEnabled
+                                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                                } ${inventoryToggling ? 'cursor-wait opacity-60' : ''}`}
+                            >
+                                <span
+                                    className={`relative inline-flex h-3 w-6 flex-shrink-0 items-center rounded-full transition-colors ${
+                                        inventoryEnabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-500'
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-block h-2 w-2 rounded-full bg-white shadow-sm transition-transform ${
+                                            inventoryEnabled ? 'translate-x-3.5' : 'translate-x-0.5'
+                                        }`}
+                                    />
+                                </span>
+                                {inventoryEnabled ? 'Sync activo' : 'Sync apagado'}
+                            </button>
+                            <button
+                                onClick={() => runInventoryOne(integration.id)}
+                                disabled={!inventoryEnabled || running}
+                                title={inventoryEnabled
+                                    ? 'Enviar el stock solo de este canal'
+                                    : 'Activa la sincronizacion para poder enviar stock'}
+                                className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-blue-500/40 dark:bg-blue-900/30 dark:text-blue-300"
+                            >
+                                <RefreshCw size={10} />
+                                Sincronizar
+                            </button>
+                    </div>
+                )}
                 {syncState === 'queued' ? (
                     <div className="flex items-center justify-end gap-2">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-gray-300 dark:bg-gray-600" />
@@ -251,18 +294,6 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                 ) : envView === 'inventory' ? (
                     <div className="flex flex-col items-end gap-1">
                         <div className="flex flex-wrap items-center justify-end gap-1.5">
-                            <span
-                                title={inventoryEnabled
-                                    ? 'Este canal recibe stock desde Probability'
-                                    : 'Activa la sincronizacion de inventario en la configuracion del canal'}
-                                className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
-                                    inventoryEnabled
-                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'
-                                }`}
-                            >
-                                {inventoryEnabled ? 'Sync activo' : 'Sync apagado'}
-                            </span>
                             {lastRun ? (
                                 <>
                                     <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">

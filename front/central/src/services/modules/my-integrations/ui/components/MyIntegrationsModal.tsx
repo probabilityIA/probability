@@ -8,6 +8,7 @@ import {
     getIntegrationByIdAction,
     activateIntegrationAction,
     deactivateIntegrationAction,
+    updateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
 import { IntegrationForm, CreateIntegrationModal } from '@/services/integrations/core/ui';
 import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
@@ -57,6 +58,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const [resourceActive, setResourceActive] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [togglingId, setTogglingId] = useState<number | null>(null);
+    const [inventoryTogglingId, setInventoryTogglingId] = useState<number | null>(null);
     const [editLoadingId, setEditLoadingId] = useState<number | null>(null);
     const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -154,6 +156,29 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             console.error('Error toggling integration:', err);
         } finally {
             setTogglingId(null);
+        }
+    };
+
+    const handleToggleInventory = async (integration: Integration) => {
+        setInventoryTogglingId(integration.id);
+        const enabled = integration.config?.inventory_sync_enabled === true;
+        try {
+            const res = await updateIntegrationAction(integration.id, {
+                config: { ...(integration.config || {}), inventory_sync_enabled: !enabled },
+            });
+            if (res && (res as { success?: boolean }).success !== false) {
+                setIntegrations(prev =>
+                    prev.map(i =>
+                        i.id === integration.id
+                            ? { ...i, config: { ...(i.config || {}), inventory_sync_enabled: !enabled } }
+                            : i
+                    )
+                );
+            }
+        } catch (err) {
+            console.error('Error toggling inventory sync:', err);
+        } finally {
+            setInventoryTogglingId(null);
         }
     };
 
@@ -301,8 +326,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 statsLoaded={statsLoaded}
                                 color={CHANNELS_COLOR}
                                 onToggle={handleToggle}
+                                onToggleInventory={handleToggleInventory}
                                 onEdit={handleEdit}
                                 togglingId={togglingId}
+                                inventoryTogglingId={inventoryTogglingId}
                                 editingId={editLoadingId}
                                 anchorRef={setClusterRef('channels')}
                             />

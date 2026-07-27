@@ -11,8 +11,10 @@ interface CyberChannelsClusterProps {
     statsLoaded: boolean;
     color: string;
     onToggle: (integration: Integration) => void;
+    onToggleInventory: (integration: Integration) => void;
     onEdit: (integration: Integration) => void;
     togglingId: number | null;
+    inventoryTogglingId: number | null;
     editingId: number | null;
     anchorRef: (el: HTMLDivElement | null) => void;
 }
@@ -23,8 +25,10 @@ export function CyberChannelsCluster({
     statsLoaded,
     color,
     onToggle,
+    onToggleInventory,
     onEdit,
     togglingId,
+    inventoryTogglingId,
     editingId,
     anchorRef,
 }: CyberChannelsClusterProps) {
@@ -57,8 +61,10 @@ export function CyberChannelsCluster({
                                         : undefined)
                                 }
                                 onToggle={onToggle}
+                                onToggleInventory={onToggleInventory}
                                 onEdit={onEdit}
                                 togglingId={togglingId}
+                                inventoryTogglingId={inventoryTogglingId}
                                 editingId={editingId}
                             />
                         ))}
