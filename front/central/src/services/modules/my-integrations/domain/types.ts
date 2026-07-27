@@ -12,6 +12,50 @@ export const CATEGORY_COLORS: Record<string, string> = {
     internal: '#6366f1',
 };
 
+export type SyncRunKind = 'inventory' | 'products';
+
+export interface SyncRunDetail {
+    sku: string;
+    label: string;
+    tone: 'ok' | 'warn' | 'error';
+}
+
+export interface SyncRunRecord {
+    integration_id: number;
+    kind: SyncRunKind;
+    status: string;
+    message?: string;
+    finished_at?: string;
+    total: number;
+    updated: number;
+    unchanged: number;
+    skipped: number;
+    failed: number;
+    matched: number;
+    not_associated: number;
+    only_in_probability: number;
+    only_in_channel: number;
+    detail: SyncRunDetail[];
+}
+
+export interface SyncRunPayload {
+    integration_id: number;
+    business_id?: number;
+    kind: SyncRunKind;
+    status?: string;
+    message?: string;
+    total?: number;
+    updated?: number;
+    unchanged?: number;
+    skipped?: number;
+    failed?: number;
+    matched?: number;
+    not_associated?: number;
+    only_in_probability?: number;
+    only_in_channel?: number;
+    detail?: SyncRunDetail[];
+}
+
 export const INTERNAL_MODULE_RESOURCE_NAME: Record<string, string> = {
     inventory: 'Inventario',
     delivery: 'Ultima Milla',

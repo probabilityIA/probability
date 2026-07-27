@@ -27,7 +27,7 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
     { integrations, resourceActive, onSyncClick },
     ref,
 ) {
-    const { mode, nodes, running, environment, runCurrent } = useSyncActivity();
+    const { mode, nodes, running, environment, canRun, runCurrent } = useSyncActivity();
     const states = Object.values(nodes);
     const busy = mode !== 'idle' || states.some(s => s === 'active' || s === 'scan');
     const finished = !busy && states.length > 0 && states.every(s => s === 'done' || s === 'error');
@@ -159,9 +159,15 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                         </span>
                         <button
                             onClick={onSyncClick ?? runCurrent}
-                            disabled={running}
-                            title={environment === 'products' ? 'Iniciar comparacion de productos' : 'Iniciar sincronizacion de inventario'}
-                            className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
+                            disabled={running || (!onSyncClick && !canRun)}
+                            title={
+                                environment === 'products'
+                                    ? 'Iniciar comparacion de productos'
+                                    : environment === 'inventory'
+                                        ? 'Iniciar sincronizacion de inventario'
+                                        : 'Elige arriba que quieres sincronizar'
+                            }
+                            className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >
                             <RefreshCw size={14} className={busy ? 'animate-spin' : ''} />
                         </button>

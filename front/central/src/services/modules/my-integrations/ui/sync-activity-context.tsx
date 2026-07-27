@@ -4,6 +4,7 @@ import {
     createContext,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -11,11 +12,13 @@ import {
 } from 'react';
 import { useSSE } from '@/shared/hooks/use-sse';
 import type { Integration } from '@/services/integrations/core/domain/types';
+import type { SyncRunKind, SyncRunRecord } from '../domain/types';
+import { listSyncRunsAction, recordSyncRunAction } from '../infra/actions/sync-runs';
 import { getSyncProvider, GLOBAL_INVENTORY_EVENT_TYPES } from './providers';
 
 export type SyncNodeState = 'idle' | 'queued' | 'active' | 'scan' | 'done' | 'error';
 export type SyncMode = 'idle' | 'inventory' | 'products';
-export type SyncEnvironment = 'inventory' | 'products';
+export type SyncEnvironment = 'inventory' | 'products' | 'invoicing';
 
 export interface InventoryResult {
     kind: 'inventory';
@@ -49,8 +52,10 @@ interface SyncActivityValue {
     progress: Record<number, { processed: number; total: number }>;
     results: Record<number, SyncResult>;
     details: Record<number, SyncDetailItem[]>;
-    environment: SyncEnvironment;
-    setEnvironment: (env: SyncEnvironment) => void;
+    environment: SyncEnvironment | null;
+    setEnvironment: (env: SyncEnvironment | null) => void;
+    canRun: boolean;
+    lastRuns: Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>;
     runCurrent: () => void;
     runInventory: () => void;
     runProducts: () => void;
@@ -84,7 +89,21 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
     const [progress, setProgress] = useState<Record<number, { processed: number; total: number }>>({});
     const [results, setResults] = useState<Record<number, SyncResult>>({});
     const [details, setDetails] = useState<Record<number, SyncDetailItem[]>>({});
-    const [environment, setEnvironment] = useState<SyncEnvironment>('inventory');
+    const [environment, setEnvironment] = useState<SyncEnvironment | null>(null);
+    const [lastRuns, setLastRuns] = useState<Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>>({});
+
+    const loadLastRuns = useCallback(async () => {
+        const rows = await listSyncRunsAction(businessId ?? undefined);
+        const map: Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>> = {};
+        for (const row of rows) {
+            map[row.integration_id] = { ...(map[row.integration_id] || {}), [row.kind]: row };
+        }
+        setLastRuns(map);
+    }, [businessId]);
+
+    useEffect(() => {
+        loadLastRuns();
+    }, [loadLastRuns]);
 
     const pushDetail = useCallback((id: number, item: SyncDetailItem) => {
         setDetails(prev => {
@@ -233,7 +252,8 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
 
         setRunning(false);
         setMode('idle');
-    }, [running, eligible, businessId, patchNode]);
+        loadLastRuns();
+    }, [running, eligible, businessId, patchNode, loadLastRuns]);
 
     const runProducts = useCallback(async () => {
         if (running || eligible.length === 0) return;
@@ -278,17 +298,27 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                 push(res?.[provider.onlyInChannelField], 'warn', 'solo en el canal');
                 setDetails(prev => ({ ...prev, [integration.id]: detail }));
 
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: {
-                        kind: 'products',
-                        matched: Number(res?.matched) || 0,
-                        notAssociated: countOf(res?.matched_not_associated),
-                        onlyInProbability: countOf(res?.only_in_probability),
-                        onlyInChannel: countOf(res?.[provider.onlyInChannelField]),
-                    },
-                }));
+                const summary: ProductsResult = {
+                    kind: 'products',
+                    matched: Number(res?.matched) || 0,
+                    notAssociated: countOf(res?.matched_not_associated),
+                    onlyInProbability: countOf(res?.only_in_probability),
+                    onlyInChannel: countOf(res?.[provider.onlyInChannelField]),
+                };
+                setResults(prev => ({ ...prev, [integration.id]: summary }));
                 patchNode(integration.id, 'done');
+
+                await recordSyncRunAction({
+                    integration_id: integration.id,
+                    business_id: businessId ?? undefined,
+                    kind: 'products',
+                    status: 'completed',
+                    matched: summary.matched,
+                    not_associated: summary.notAssociated,
+                    only_in_probability: summary.onlyInProbability,
+                    only_in_channel: summary.onlyInChannel,
+                    detail: detail.slice(0, 200),
+                });
             } catch {
                 patchNode(integration.id, 'error');
                 setResults(prev => ({
@@ -300,11 +330,14 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
 
         setRunning(false);
         setMode('idle');
-    }, [running, eligible, businessId, patchNode]);
+        loadLastRuns();
+    }, [running, eligible, businessId, patchNode, loadLastRuns]);
+
+    const canRun = environment === 'inventory' || environment === 'products';
 
     const runCurrent = useCallback(() => {
         if (environment === 'products') runProducts();
-        else runInventory();
+        else if (environment === 'inventory') runInventory();
     }, [environment, runInventory, runProducts]);
 
     const value = useMemo<SyncActivityValue>(() => ({
@@ -316,11 +349,13 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         details,
         environment,
         setEnvironment,
+        canRun,
+        lastRuns,
         runCurrent,
         runInventory,
         runProducts,
         reset,
-    }), [mode, running, nodes, progress, results, details, environment, runCurrent, runInventory, runProducts, reset]);
+    }), [mode, running, nodes, progress, results, details, environment, canRun, lastRuns, runCurrent, runInventory, runProducts, reset]);
 
     return <SyncActivityContext.Provider value={value}>{children}</SyncActivityContext.Provider>;
 }
@@ -332,8 +367,10 @@ const EMPTY: SyncActivityValue = {
     progress: {},
     results: {},
     details: {},
-    environment: 'inventory',
+    environment: null,
     setEnvironment: () => undefined,
+    canRun: false,
+    lastRuns: {},
     runCurrent: () => undefined,
     runInventory: () => undefined,
     runProducts: () => undefined,

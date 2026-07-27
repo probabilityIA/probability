@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
 	storefrontprovider "github.com/secamc93/probability/back/central/services/integrations/storefront"
+	"github.com/secamc93/probability/back/central/services/integrations/syncruns"
 	"github.com/secamc93/probability/back/central/services/integrations/transport"
 	websiteprovider "github.com/secamc93/probability/back/central/services/integrations/website"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -39,6 +40,9 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	// E-commerce: todos los proveedores de e-commerce
 	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)
+
+	// Resultado de la ultima sincronizacion por integracion (inventario / productos)
+	syncruns.New(router, db, logger, rabbitMQ)
 
 	// Invoicing: todos los proveedores de facturación electrónica + router de colas
 	dianEmitter := invoicing.New(router, db, config, logger, rabbitMQ, integrationCore)

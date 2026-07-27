@@ -5,6 +5,7 @@ import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { Clock, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { useSyncActivity } from '../sync-activity-context';
+import { getSyncProvider } from '../providers';
 
 interface CyberChannelCardProps {
     integration: Integration;
@@ -51,13 +52,21 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
     const total = stats?.orders_count ?? 0;
     const hasBreakdown = stats !== undefined && total > 0;
 
-    const { nodes, progress, results, details } = useSyncActivity();
+    const { nodes, progress, results, details, environment, lastRuns } = useSyncActivity();
     const [openDetail, setOpenDetail] = useState(false);
     const syncState = nodes[integration.id] || 'idle';
     const syncProgress = progress[integration.id] || { processed: 0, total: 0 };
     const syncResult = results[integration.id];
-    const syncBusy = syncState !== 'idle' || syncResult !== undefined;
-    const syncDetail = details[integration.id] || [];
+    const syncable = getSyncProvider(integration.integration_type_id) !== null;
+    const envView = syncable ? environment : null;
+    const syncBusy = syncState !== 'idle' || syncResult !== undefined || envView !== null;
+    const lastRun = envView === 'inventory' || envView === 'products'
+        ? lastRuns[integration.id]?.[envView]
+        : undefined;
+    const lastRunTime = relativeTime(lastRun?.finished_at);
+    const inventoryEnabled = integration.config?.inventory_sync_enabled === true;
+    const liveDetail = details[integration.id] || [];
+    const syncDetail = liveDetail.length > 0 ? liveDetail : (lastRun?.detail ?? []);
     const syncPct = syncProgress.total > 0
         ? Math.min(100, Math.round((syncProgress.processed / syncProgress.total) * 100))
         : 0;
@@ -217,6 +226,75 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onEdit, 
                     </div>
                 ) : syncResult?.kind === 'error' ? (
                     <span className="text-right text-[11px] font-semibold text-red-500">{syncResult.message}</span>
+                ) : envView === 'inventory' ? (
+                    <div className="flex flex-col items-end gap-1">
+                        <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <span
+                                title={inventoryEnabled
+                                    ? 'Este canal recibe stock desde Probability'
+                                    : 'Activa la sincronizacion de inventario en la configuracion del canal'}
+                                className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
+                                    inventoryEnabled
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'
+                                }`}
+                            >
+                                {inventoryEnabled ? 'Sync activo' : 'Sync apagado'}
+                            </span>
+                            {lastRun ? (
+                                <>
+                                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                        {lastRun.updated} actualizados
+                                    </span>
+                                    {lastRun.unchanged > 0 && (
+                                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10.5px] font-bold text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                                            {lastRun.unchanged} sin cambio
+                                        </span>
+                                    )}
+                                    {lastRun.failed > 0 && (
+                                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-[10.5px] font-bold text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                                            {lastRun.failed} fallidos
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <span className="text-[11px] italic text-gray-300 dark:text-gray-600">Sin sincronizaciones registradas</span>
+                            )}
+                        </div>
+                        {lastRunTime && (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. sync {lastRunTime}</span>
+                        )}
+                    </div>
+                ) : envView === 'products' ? (
+                    <div className="flex flex-col items-end gap-1">
+                        {lastRun ? (
+                            <div className="flex flex-wrap items-center justify-end gap-1.5">
+                                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10.5px] font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                    {lastRun.matched} ok
+                                </span>
+                                {lastRun.not_associated > 0 && (
+                                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10.5px] font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                        {lastRun.not_associated} sin asociar
+                                    </span>
+                                )}
+                                <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10.5px] font-bold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                                    {lastRun.only_in_probability} solo Prob.
+                                </span>
+                                <span className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10.5px] font-bold text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300">
+                                    {lastRun.only_in_channel} solo canal
+                                </span>
+                            </div>
+                        ) : (
+                            <span className="text-[11px] italic text-gray-300 dark:text-gray-600">Sin comparaciones registradas</span>
+                        )}
+                        {lastRunTime && (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. comparacion {lastRunTime}</span>
+                        )}
+                    </div>
+                ) : envView === 'invoicing' ? (
+                    <span className="text-right text-[11px] italic text-gray-400 dark:text-gray-500">
+                        Facturacion desde el hub: proximamente
+                    </span>
                 ) : hasBreakdown ? (
                     <>
                         <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
