@@ -19,6 +19,12 @@ const (
 func SetupInfrastructure(rabbitMQ rabbitmq.IQueue, logger log.ILogger) error {
 	ctx := context.Background()
 
+	if rabbitMQ == nil {
+		logger.Warn(ctx).
+			Msg("RabbitMQ no disponible - infraestructura de eventos omitida")
+		return nil
+	}
+
 	// Declarar exchange tipo topic (durable)
 	if err := rabbitMQ.DeclareExchange(ExchangeName, "topic", true); err != nil {
 		logger.Error(ctx).

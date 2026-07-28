@@ -24,6 +24,16 @@ func New(
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redisclient.IRedis,
 ) {
+	// 0. Sin RabbitMQ el modulo levanta en modo degradado: SSE sigue disponible,
+	// los consumers y publishers por cola quedan deshabilitados.
+	if rabbitMQ == nil {
+		logger.Warn(context.Background()).
+			Msg("RabbitMQ no disponible - eventos por cola deshabilitados, SSE activo")
+		degradedManager := sse.New(logger)
+		handlers.New(degradedManager, logger).RegisterRoutes(router)
+		return
+	}
+
 	// 1. Declarar infraestructura RabbitMQ (exchange + queue + binding)
 	if err := rmqInfra.SetupInfrastructure(rabbitMQ, logger); err != nil {
 		logger.Error(context.Background()).

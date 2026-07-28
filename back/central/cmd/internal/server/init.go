@@ -37,6 +37,7 @@ func Init(ctx context.Context) error {
 		logger.Error(ctx).
 			Err(err).
 			Msg("Failed to initialize RabbitMQ - consumers will be disabled")
+		rabbitMQ = rabbitmq.NewNoop()
 	} else {
 		// RabbitMQ info mostrada en LogStartupInfo() - no duplicar aquí
 		// Configurar registry para registrar colas declaradas
