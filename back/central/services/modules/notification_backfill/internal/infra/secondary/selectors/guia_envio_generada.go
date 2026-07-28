@@ -100,6 +100,14 @@ func (s *guideSelector) Preview(ctx context.Context, filter dtos.BackfillFilter)
 			  AND ml.status IN ('sent','delivered','read')
 			  AND wc.business_id = orders.business_id
 			  AND wc.order_number = orders.order_number
+		)`).
+		Where(`NOT EXISTS (
+			SELECT 1
+			FROM whatsapp_conversations wc
+			WHERE wc.business_id = orders.business_id
+			  AND wc.order_number = orders.order_number
+			  AND wc.last_template_id LIKE 'guia_envio_generada%'
+			  AND COALESCE(wc.last_message_id, '') <> ''
 		)`)
 
 	if filter.BusinessID != nil && *filter.BusinessID > 0 {

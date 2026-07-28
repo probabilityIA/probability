@@ -84,6 +84,14 @@ func (s *confirmationSelector) Preview(ctx context.Context, filter dtos.Backfill
 			  AND ml.status IN ('sent','delivered','read')
 			  AND wc.business_id = orders.business_id
 			  AND wc.order_number = orders.order_number
+		)`).
+		Where(`NOT EXISTS (
+			SELECT 1
+			FROM whatsapp_conversations wc
+			WHERE wc.business_id = orders.business_id
+			  AND wc.order_number = orders.order_number
+			  AND wc.last_template_id IN ('confirmacion_pedido_contraentrega', 'confirmacion_pedido_contraentrega_sin_valor')
+			  AND COALESCE(wc.last_message_id, '') <> ''
 		)`)
 
 	if filter.BusinessID != nil && *filter.BusinessID > 0 {

@@ -15,15 +15,13 @@ import (
 	"gorm.io/datatypes"
 )
 
-const maxMessageLogsPerBusiness = 50
+const messageLogRetentionDays = 90
 
-// whatsAppPersister persiste eventos de WhatsApp en DB
 type whatsAppPersister struct {
 	db     db.IDatabase
 	logger log.ILogger
 }
 
-// NewWhatsAppPersister crea una nueva instancia del persister de WhatsApp
 func NewWhatsAppPersister(database db.IDatabase, logger log.ILogger) ports.IWhatsAppPersister {
 	return &whatsAppPersister{
 		db:     database,
@@ -31,7 +29,6 @@ func NewWhatsAppPersister(database db.IDatabase, logger log.ILogger) ports.IWhat
 	}
 }
 
-// CreateConversation persiste una nueva conversación de WhatsApp
 func (r *whatsAppPersister) CreateConversation(ctx context.Context, conv *entities.WhatsAppConversation) error {
 	convID, err := uuid.Parse(conv.ID)
 	if err != nil {
@@ -61,7 +58,6 @@ func (r *whatsAppPersister) CreateConversation(ctx context.Context, conv *entiti
 	return nil
 }
 
-// UpdateConversation actualiza una conversación existente de WhatsApp
 func (r *whatsAppPersister) UpdateConversation(ctx context.Context, conv *entities.WhatsAppConversation) error {
 	convID, err := uuid.Parse(conv.ID)
 	if err != nil {
@@ -71,12 +67,12 @@ func (r *whatsAppPersister) UpdateConversation(ctx context.Context, conv *entiti
 	metadataJSON, _ := json.Marshal(conv.Metadata)
 
 	updates := map[string]interface{}{
-		"current_state":   conv.CurrentState,
-		"last_message_id": conv.LastMessageID,
+		"current_state":    conv.CurrentState,
+		"last_message_id":  conv.LastMessageID,
 		"last_template_id": conv.LastTemplateID,
-		"metadata":        datatypes.JSON(metadataJSON),
-		"updated_at":      conv.UpdatedAt,
-		"expires_at":      conv.ExpiresAt,
+		"metadata":         datatypes.JSON(metadataJSON),
+		"updated_at":       conv.UpdatedAt,
+		"expires_at":       conv.ExpiresAt,
 	}
 
 	result := r.db.Conn(ctx).
@@ -89,8 +85,7 @@ func (r *whatsAppPersister) UpdateConversation(ctx context.Context, conv *entiti
 	}
 
 	if result.RowsAffected == 0 {
-		// Conversación no existe en DB aún (puede llegar update antes de create)
-		// Intentar crear
+
 		r.logger.Warn(ctx).
 			Str("conversation_id", conv.ID).
 			Msg("Conversación no encontrada para update, intentando create")
@@ -100,7 +95,6 @@ func (r *whatsAppPersister) UpdateConversation(ctx context.Context, conv *entiti
 	return nil
 }
 
-// ExpireConversation marca una conversación como expirada
 func (r *whatsAppPersister) ExpireConversation(ctx context.Context, id string) error {
 	convID, err := uuid.Parse(id)
 	if err != nil {
@@ -119,7 +113,6 @@ func (r *whatsAppPersister) ExpireConversation(ctx context.Context, id string) e
 	return nil
 }
 
-// CreateMessageLog persiste un nuevo message log de WhatsApp
 func (r *whatsAppPersister) CreateMessageLog(ctx context.Context, entry *entities.WhatsAppMessageLogEntry) error {
 	msgID := uuid.New()
 
@@ -145,21 +138,17 @@ func (r *whatsAppPersister) CreateMessageLog(ctx context.Context, entry *entitie
 		return fmt.Errorf("error creando whatsapp_message_log: %w", err)
 	}
 
-	// Mantener solo los últimos 50 message logs por business
-	if err := r.enforceMessageLogLimit(ctx, convID); err != nil {
+	if err := r.pruneExpiredMessageLogs(ctx, convID); err != nil {
 		r.logger.Warn(ctx).
 			Err(err).
 			Str("conversation_id", entry.ConversationID).
-			Msg("Error limpiando message logs antiguos")
+			Msg("Error limpiando message logs vencidos")
 	}
 
 	return nil
 }
 
-// enforceMessageLogLimit mantiene solo los últimos maxMessageLogsPerBusiness message logs
-// por business. Elimina los más antiguos cuando se supera el límite.
-func (r *whatsAppPersister) enforceMessageLogLimit(ctx context.Context, conversationID uuid.UUID) error {
-	// Obtener el business_id de la conversación
+func (r *whatsAppPersister) pruneExpiredMessageLogs(ctx context.Context, conversationID uuid.UUID) error {
 	var businessID uint
 	err := r.db.Conn(ctx).
 		Model(&models.WhatsAppConversation{}).
@@ -170,8 +159,8 @@ func (r *whatsAppPersister) enforceMessageLogLimit(ctx context.Context, conversa
 		return fmt.Errorf("no se pudo obtener business_id para conversación %s: %w", conversationID, err)
 	}
 
-	// Eliminar message logs que excedan el límite de 50 por business
-	// Mantiene los más recientes por created_at
+	cutoff := time.Now().AddDate(0, 0, -messageLogRetentionDays)
+
 	deleteQuery := `
 		DELETE FROM whatsapp_message_logs
 		WHERE id IN (
@@ -179,27 +168,26 @@ func (r *whatsAppPersister) enforceMessageLogLimit(ctx context.Context, conversa
 			FROM whatsapp_message_logs ml
 			INNER JOIN whatsapp_conversations c ON ml.conversation_id = c.id
 			WHERE c.business_id = ?
-			ORDER BY ml.created_at DESC
-			OFFSET ?
+			  AND ml.created_at < ?
 		)
 	`
 
-	result := r.db.Conn(ctx).Exec(deleteQuery, businessID, maxMessageLogsPerBusiness)
+	result := r.db.Conn(ctx).Exec(deleteQuery, businessID, cutoff)
 	if result.Error != nil {
-		return fmt.Errorf("error eliminando message logs antiguos: %w", result.Error)
+		return fmt.Errorf("error eliminando message logs vencidos: %w", result.Error)
 	}
 
 	if result.RowsAffected > 0 {
 		r.logger.Info(ctx).
 			Uint("business_id", businessID).
+			Int("retention_days", messageLogRetentionDays).
 			Int64("deleted_count", result.RowsAffected).
-			Msg("Message logs antiguos eliminados por límite de 50")
+			Msg("Message logs vencidos eliminados por retencion")
 	}
 
 	return nil
 }
 
-// UpdateMessageLogStatus actualiza el estado de un message log por WhatsApp message_id
 func (r *whatsAppPersister) UpdateMessageLogStatus(ctx context.Context, messageID, status string, deliveredAt, readAt *string) error {
 	updates := map[string]interface{}{
 		"status": status,
