@@ -83,10 +83,7 @@ const CARRIER_OPTIONS = [
     { code: 'ENVIA', label: 'Envia' },
     { code: 'SERVIENTREGA', label: 'Servientrega' },
     { code: 'TCC', label: 'TCC' },
-    { code: 'MIPAQUETE', label: 'Mipaquete' },
     { code: '99MINUTOS', label: '99 Minutos' },
-    { code: 'DHL', label: 'DHL' },
-    { code: 'FEDEX', label: 'FedEx' },
 ];
 
 const PLUGIN_STEPS = [
