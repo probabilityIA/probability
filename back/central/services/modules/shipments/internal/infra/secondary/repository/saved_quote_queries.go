@@ -208,6 +208,24 @@ func (r *Repository) GetIntegrationConfigValue(ctx context.Context, integrationI
 	return strings.TrimSpace(val), nil
 }
 
+func (r *Repository) GetIntegrationConfigStringArray(ctx context.Context, integrationID uint, key string) ([]string, error) {
+	var raw string
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("COALESCE(config->?, '[]')", key).
+		Where("id = ? AND deleted_at IS NULL", integrationID).
+		Limit(1).
+		Scan(&raw).Error
+	if err != nil {
+		return nil, err
+	}
+	var arr []string
+	if err := json.Unmarshal([]byte(raw), &arr); err != nil {
+		return nil, nil
+	}
+	return arr, nil
+}
+
 func savedQuoteModelToDomain(m *models.ShippingQuote) *domain.SavedQuote {
 	d := &domain.SavedQuote{
 		ID:                  m.ID,

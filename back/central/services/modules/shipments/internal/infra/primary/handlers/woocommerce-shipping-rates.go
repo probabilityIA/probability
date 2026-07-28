@@ -138,6 +138,12 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 
 	ratesList := toRatesList(getRatesFromData(result.Data))
 
+	allowedCarriers := resolved.AllowedCarriersPrepaid
+	if req.COD {
+		allowedCarriers = resolved.AllowedCarriersCOD
+	}
+	ratesList = filterRatesByAllowedCarriers(ratesList, allowedCarriers)
+
 	var quoteID uint
 	if len(ratesList) > 0 {
 		saved, saveErr := h.uc.Quotes.SaveQuote(ctx, domain.SaveQuoteInput{
@@ -162,6 +168,27 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"rates": rates})
+}
+
+// filterRatesByAllowedCarriers deja pasar solo las tarifas cuyo carrier esta en la
+// lista permitida. Si la lista viene vacia (el cliente no configuro un filtro para
+// ese entorno), no se filtra nada y se mantiene el comportamiento actual.
+func filterRatesByAllowedCarriers(ratesList []map[string]interface{}, allowed []string) []map[string]interface{} {
+	if len(allowed) == 0 {
+		return ratesList
+	}
+	allowedSet := make(map[string]bool, len(allowed))
+	for _, c := range allowed {
+		allowedSet[strings.ToUpper(strings.TrimSpace(c))] = true
+	}
+	out := make([]map[string]interface{}, 0, len(ratesList))
+	for _, rate := range ratesList {
+		carrierName := strings.ToUpper(strings.TrimSpace(toStr(rate["carrier"])))
+		if allowedSet[carrierName] {
+			out = append(out, rate)
+		}
+	}
+	return out
 }
 
 func normalizeDaneCode(code string) string {
