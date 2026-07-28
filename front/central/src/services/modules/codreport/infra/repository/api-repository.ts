@@ -61,6 +61,7 @@ export class CodReportApiRepository {
         if (p.has_guide !== undefined) sp.append('has_guide', String(p.has_guide));
         if (p.status) sp.append('status', p.status);
         if (p.search) sp.append('search', p.search);
+        if (p.guides) sp.append('guides', p.guides);
         return this.request<Paginated<CodOrder>>(`/cod-report/orders?${sp.toString()}`);
     }
 

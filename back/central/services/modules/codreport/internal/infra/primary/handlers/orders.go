@@ -27,6 +27,7 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		Carrier:    strings.TrimSpace(c.Query("carrier")),
 		Status:     strings.TrimSpace(c.Query("status")),
 		Search:     strings.TrimSpace(c.Query("search")),
+		Guides:     parseGuides(c.Query("guides")),
 		Page:       page,
 		PageSize:   pageSize,
 	}

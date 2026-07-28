@@ -59,6 +59,7 @@ export interface CodOrder {
     order_number: string;
     shipment_id: number;
     has_guide: boolean;
+    guide_number: string;
     customer_name: string;
     carrier: string;
     cod_total: number;
@@ -117,6 +118,7 @@ export interface CodOrdersParams extends ReportFilters {
     has_guide?: boolean;
     status?: string;
     search?: string;
+    guides?: string;
 }
 
 export interface SaveCarrierConfigInput {

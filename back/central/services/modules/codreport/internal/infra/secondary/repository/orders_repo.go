@@ -23,10 +23,13 @@ type codOrderRow struct {
 	Collected     bool
 	ShipmentID    uint
 	HasGuide      bool
+	GuideNumber   string
 	Paid          bool
 	CreatedAt     time.Time
 	DeliveredAt   *time.Time
 }
+
+const guideNumberExpr = `COALESCE(NULLIF(s.guide_id,''), NULLIF(s.tracking_number,''), NULLIF(o.tracking_number,''), '')`
 
 const hasGuideExpr = `(COALESCE(NULLIF(s.guide_id,''),'') <> '' OR COALESCE(NULLIF(s.guide_url,''),'') <> '' OR COALESCE(NULLIF(s.probability_guide_url,''),'') <> '')`
 
@@ -38,7 +41,7 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 	conds := []string{"o.deleted_at IS NULL", "o.cod_total > 0", "o.business_id = ?"}
 	args := []any{f.BusinessID}
 
-	if !f.StartDate.IsZero() && !f.EndDate.IsZero() {
+	if !f.StartDate.IsZero() && !f.EndDate.IsZero() && len(f.Guides) == 0 {
 		conds = append(conds, "COALESCE(s.delivered_at, o.created_at) BETWEEN ? AND ?")
 		args = append(args, f.StartDate, f.EndDate)
 	}
@@ -61,6 +64,21 @@ func (r *Repository) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]
 		conds = append(conds, "(o.order_number ILIKE ? OR o.customer_name ILIKE ?)")
 		like := "%" + strings.TrimSpace(f.Search) + "%"
 		args = append(args, like, like)
+	}
+	if len(f.Guides) > 0 {
+		placeholders := make([]string, 0, len(f.Guides))
+		values := make([]any, 0, len(f.Guides))
+		for _, g := range f.Guides {
+			placeholders = append(placeholders, "?")
+			values = append(values, strings.ToUpper(strings.TrimSpace(g)))
+		}
+		in := strings.Join(placeholders, ",")
+		conds = append(conds, fmt.Sprintf(
+			"(UPPER(TRIM(COALESCE(s.guide_id,''))) IN (%s) OR UPPER(TRIM(COALESCE(s.tracking_number,''))) IN (%s) OR UPPER(TRIM(COALESCE(o.tracking_number,''))) IN (%s))",
+			in, in, in))
+		args = append(args, values...)
+		args = append(args, values...)
+		args = append(args, values...)
 	}
 	if f.HasGuide != nil {
 		if *f.HasGuide {
@@ -100,7 +118,8 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	s.status, s.delivered_at,
 	(s.status = 'delivered') AS collected,
 	`+paidExpr+` AS paid,
-	`+hasGuideExpr+` AS has_guide
+	`+hasGuideExpr+` AS has_guide,
+	`+guideNumberExpr+` AS guide_number
 FROM orders o %s
 WHERE %s
 ORDER BY COALESCE(s.delivered_at, o.created_at) DESC
@@ -119,6 +138,7 @@ LIMIT ? OFFSET ?`, latestShipmentJoin, where)
 			OrderNumber:   rows[i].OrderNumber,
 			ShipmentID:    rows[i].ShipmentID,
 			HasGuide:      rows[i].HasGuide,
+			GuideNumber:   rows[i].GuideNumber,
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,

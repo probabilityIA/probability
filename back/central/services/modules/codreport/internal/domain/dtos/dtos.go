@@ -19,6 +19,7 @@ type OrdersFilter struct {
 	Collected  *bool
 	HasGuide   *bool
 	Search     string
+	Guides     []string
 	Page       int
 	PageSize   int
 }

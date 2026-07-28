@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileText, Truck, Ban,
+    RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileText, Truck, Ban, Copy, Check,
 } from 'lucide-react';
 import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction } from '../../infra/actions';
 import { CodOrder, CodState, CodSummary, ReportFilters } from '../../domain/types';
@@ -70,7 +70,12 @@ function KpiCard({ accent, label, value, sub }: KpiProps) {
     );
 }
 
-const ESTADO_TABS: { key: '' | 'false' | 'true'; label: string }[] = [
+function splitGuides(raw: string): string[] {
+    const parts = raw.split(/[\s,;]+/).map(v => v.trim()).filter(Boolean);
+    return Array.from(new Set(parts));
+}
+
+const ESTADO_TABS:{ key: '' | 'false' | 'true'; label: string }[] = [
     { key: '', label: 'Todas' },
     { key: 'false', label: 'Por pagar' },
     { key: 'true', label: 'Pagadas' },
@@ -92,6 +97,8 @@ export default function CodOrdersTab({ filters }: Props) {
     const [carriers, setCarriers] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [debounced, setDebounced] = useState('');
+    const [guides, setGuides] = useState('');
+    const [copiedGuide, setCopiedGuide] = useState('');
     const [tz, setTz] = useState('');
     const [guidePreview, setGuidePreview] = useState<CodOrder | null>(null);
 
@@ -119,10 +126,20 @@ export default function CodOrdersTab({ filters }: Props) {
             key: 'has_guide', label: 'Guia', type: 'select',
             options: [{ value: 'true', label: 'Con guia' }, { value: 'false', label: 'Sin guia' }],
         },
+        {
+            key: 'guides', label: 'Numero de guia', type: 'text',
+            placeholder: 'Una o varias separadas por coma',
+        },
     ];
+
+    const guideList = splitGuides(guides);
 
     const activeFilters: ActiveFilter[] = [];
     if (search) activeFilters.push({ key: 'search', label: 'Orden / Cliente', value: search, type: 'text' });
+    if (guideList.length) activeFilters.push({
+        key: 'guides', label: 'Numero de guia', type: 'text',
+        value: guideList.length === 1 ? guideList[0] : `${guideList.length} guias`,
+    });
     if (status) activeFilters.push({ key: 'status', label: 'Estado', value: STATUS_PILL[status]?.label || status, type: 'select' });
     if (carrier) activeFilters.push({ key: 'carrier', label: 'Transportadora', value: carrierLabel(carrier), type: 'select' });
     if (hasGuide) activeFilters.push({ key: 'has_guide', label: 'Guia', value: hasGuide === 'true' ? 'Con guia' : 'Sin guia', type: 'select' });
@@ -132,12 +149,14 @@ export default function CodOrdersTab({ filters }: Props) {
         else if (key === 'status') setStatus(String(value));
         else if (key === 'carrier') setCarrier(String(value));
         else if (key === 'has_guide') setHasGuide(String(value) as any);
+        else if (key === 'guides') setGuides(String(value));
     };
     const onRemoveFilter = (key: string) => {
         if (key === 'search') setSearch('');
         else if (key === 'status') setStatus('');
         else if (key === 'carrier') setCarrier('');
         else if (key === 'has_guide') setHasGuide('');
+        else if (key === 'guides') setGuides('');
     };
 
     useEffect(() => { setTz(browserTimeZone()); }, []);
@@ -147,7 +166,9 @@ export default function CodOrdersTab({ filters }: Props) {
         return () => clearTimeout(t);
     }, [search]);
 
-    useEffect(() => { setPage(1); }, [filters, collected, hasGuide, status, carrier, debounced]);
+    const guidesParam = guideList.join(',');
+
+    useEffect(() => { setPage(1); }, [filters, collected, hasGuide, status, carrier, debounced, guidesParam]);
 
     useEffect(() => {
         let cancelled = false;
@@ -169,6 +190,7 @@ export default function CodOrdersTab({ filters }: Props) {
             status: status || undefined,
             carrier: carrier || undefined,
             search: debounced || undefined,
+            guides: guidesParam || undefined,
         });
         if (res.success) {
             setOrders(res.data || []);
@@ -179,7 +201,7 @@ export default function CodOrdersTab({ filters }: Props) {
             setOrders([]);
         }
         setLoading(false);
-    }, [filters, page, collected, hasGuide, status, carrier, debounced]);
+    }, [filters, page, collected, hasGuide, status, carrier, debounced, guidesParam]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -243,10 +265,10 @@ export default function CodOrdersTab({ filters }: Props) {
                 )}
 
                 <div className="overflow-x-auto">
-                    <table className="w-full border-collapse min-w-[1100px]">
+                    <table className="w-full border-collapse min-w-[1250px]">
                         <thead>
                             <tr className="bg-[#fafafb] dark:bg-gray-900/40">
-                                {['Orden', 'Cliente', 'Transportadora', 'Guia PDF', 'Estado'].map(h => (
+                                {['Orden', 'Cliente', 'Transportadora', 'Numero de guia', 'Guia PDF', 'Estado'].map(h => (
                                     <th key={h} className="text-left px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">{h}</th>
                                 ))}
                                 <th className="text-right px-3 py-[11px] text-[10.5px] font-bold text-[#9a9aa5] uppercase tracking-wider">COD orden</th>
@@ -258,12 +280,12 @@ export default function CodOrdersTab({ filters }: Props) {
                         </thead>
                         <tbody>
                             {loading && (
-                                <tr><td colSpan={10} className="text-center py-12 text-gray-400">
+                                <tr><td colSpan={11} className="text-center py-12 text-gray-400">
                                     <RefreshCw size={18} className="animate-spin inline mr-2" /> Cargando...
                                 </td></tr>
                             )}
                             {!loading && orders.length === 0 && !error && (
-                                <tr><td colSpan={10} className="text-center py-12 text-gray-400 text-sm">
+                                <tr><td colSpan={11} className="text-center py-12 text-gray-400 text-sm">
                                     <Package size={28} className="mx-auto mb-2 opacity-50" />
                                     No hay ordenes que coincidan con los filtros.
                                 </td></tr>
@@ -292,6 +314,26 @@ export default function CodOrdersTab({ filters }: Props) {
                                                 )}
                                                 <span className="text-[13px] text-[#3a3a44] dark:text-gray-300 font-medium whitespace-nowrap">{carrierLabel(o.carrier)}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-3 py-3.5">
+                                            {o.guide_number ? (
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard?.writeText(o.guide_number);
+                                                        setCopiedGuide(o.guide_number);
+                                                        setTimeout(() => setCopiedGuide(''), 1500);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 text-[12.5px] font-mono font-semibold text-[#3a3a44] dark:text-gray-300 hover:text-[#6d28d9] transition-colors whitespace-nowrap"
+                                                    title="Copiar numero de guia"
+                                                >
+                                                    {o.guide_number}
+                                                    {copiedGuide === o.guide_number
+                                                        ? <Check size={12} className="text-emerald-600" />
+                                                        : <Copy size={12} className="opacity-40" />}
+                                                </button>
+                                            ) : (
+                                                <span className="text-gray-300 text-xs">-</span>
+                                            )}
                                         </td>
                                         <td className="px-3 py-3.5 text-center">
                                             {o.has_guide && o.shipment_id ? (

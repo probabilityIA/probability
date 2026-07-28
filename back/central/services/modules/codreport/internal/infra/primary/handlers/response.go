@@ -65,6 +65,7 @@ type codOrderResponse struct {
 	OrderNumber   string     `json:"order_number"`
 	ShipmentID    uint       `json:"shipment_id"`
 	HasGuide      bool       `json:"has_guide"`
+	GuideNumber   string     `json:"guide_number"`
 	CustomerName  string     `json:"customer_name"`
 	Carrier       string     `json:"carrier"`
 	CodTotal      float64    `json:"cod_total"`
@@ -183,6 +184,7 @@ func mapOrders(in []entities.CodOrder) []codOrderResponse {
 			OrderNumber:   in[i].OrderNumber,
 			ShipmentID:    in[i].ShipmentID,
 			HasGuide:      in[i].HasGuide,
+			GuideNumber:   in[i].GuideNumber,
 			CustomerName:  in[i].CustomerName,
 			Carrier:       in[i].Carrier,
 			CodTotal:      in[i].CodTotal,

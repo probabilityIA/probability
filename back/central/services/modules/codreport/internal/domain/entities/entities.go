@@ -15,6 +15,7 @@ type CodOrder struct {
 	OrderNumber   string
 	ShipmentID    uint
 	HasGuide      bool
+	GuideNumber   string
 	CustomerName  string
 	Carrier       string
 	CodTotal      float64
