@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { PublicProduct } from '../../domain/types';
+import { useCart } from '../cart/cart-context';
 
 interface PublicProductCardProps {
     product: PublicProduct;
@@ -7,6 +10,20 @@ interface PublicProductCardProps {
 }
 
 export function PublicProductCard({ product, slug }: PublicProductCardProps) {
+    const { addItem } = useCart();
+
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addItem({
+            product_id: product.id,
+            name: product.name,
+            sku: product.sku,
+            price: product.price,
+            image_url: product.image_url,
+        });
+    };
+
     return (
         <Link
             href={`/tienda/${slug}/producto/${product.id}`}
@@ -45,6 +62,13 @@ export function PublicProductCard({ product, slug }: PublicProductCardProps) {
                 {product.category && (
                     <p className="text-xs text-gray-400 mt-2">{product.category}</p>
                 )}
+                <button
+                    onClick={handleAddToCart}
+                    className="mt-3 w-full py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: 'var(--brand-secondary)' }}
+                >
+                    Agregar al carrito
+                </button>
             </div>
         </Link>
     );

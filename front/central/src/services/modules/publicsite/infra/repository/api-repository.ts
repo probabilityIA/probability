@@ -1,6 +1,6 @@
 import { env } from '@/shared/config/env';
 import { IPublicSiteRepository } from '../../domain/ports';
-import { PublicBusiness, PublicProduct, PaginatedResponse, ContactFormDTO } from '../../domain/types';
+import { PublicBusiness, PublicProduct, PaginatedResponse, ContactFormDTO, CreateCheckoutInput, CheckoutSession } from '../../domain/types';
 
 export class PublicSiteApiRepository implements IPublicSiteRepository {
     private baseUrl: string;
@@ -51,5 +51,18 @@ export class PublicSiteApiRepository implements IPublicSiteRepository {
             method: 'POST',
             body: JSON.stringify(data),
         });
+    }
+
+    async createCheckoutSession(slug: string, data: CreateCheckoutInput): Promise<CheckoutSession> {
+        const res = await this.fetch<{ data: CheckoutSession }>(`/public/tienda/${slug}/checkout/bold/signature`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return res.data;
+    }
+
+    async getCheckoutStatus(slug: string, reference: string): Promise<{ status: string }> {
+        const res = await this.fetch<{ data: { status: string } }>(`/public/tienda/${slug}/checkout/${reference}/status`);
+        return res.data;
     }
 }

@@ -2,7 +2,7 @@
 
 import { PublicSiteApiRepository } from '../repository/api-repository';
 import { PublicSiteUseCases } from '../../app/use-cases';
-import { ContactFormDTO } from '../../domain/types';
+import { ContactFormDTO, CreateCheckoutInput } from '../../domain/types';
 
 function getUseCases() {
     const repository = new PublicSiteApiRepository();
@@ -42,5 +42,25 @@ export const submitContactAction = async (slug: string, data: ContactFormDTO) =>
     } catch (error: any) {
         console.error('Submit Contact Action Error:', error.message);
         return { success: false, message: error.message || 'Error al enviar mensaje' };
+    }
+};
+
+export const createCheckoutSessionAction = async (slug: string, data: CreateCheckoutInput) => {
+    try {
+        const session = await getUseCases().createCheckoutSession(slug, data);
+        return { success: true as const, data: session };
+    } catch (error: any) {
+        console.error('Create Checkout Session Action Error:', error.message);
+        return { success: false as const, error: error.message || 'Error al iniciar el pago' };
+    }
+};
+
+export const getCheckoutStatusAction = async (slug: string, reference: string) => {
+    try {
+        const result = await getUseCases().getCheckoutStatus(slug, reference);
+        return { success: true as const, data: result };
+    } catch (error: any) {
+        console.error('Get Checkout Status Action Error:', error.message);
+        return { success: false as const, error: error.message || 'Error al consultar el estado del pago' };
     }
 };

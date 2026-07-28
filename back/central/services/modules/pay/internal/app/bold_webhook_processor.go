@@ -15,14 +15,15 @@ import (
 )
 
 const (
-	eventCategoryPay         = "pay"
-	eventWalletRechargeOK    = "wallet.recharge.completed"
-	eventWalletRechargeFail  = "wallet.recharge.failed"
+	eventCategoryPay        = "pay"
+	eventWalletRechargeOK   = "wallet.recharge.completed"
+	eventWalletRechargeFail = "wallet.recharge.failed"
 )
 
 const boldGatewayCode = "bold"
 const walletReferencePrefix = "WLT"
 const walletSandboxReferencePrefix = "BOLD_SANDBOX_WLT"
+const storefrontCheckoutReferencePrefix = "SFO"
 
 func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.BoldWebhookMessage) error {
 	if msg == nil || msg.BoldEventID == "" {
@@ -59,6 +60,15 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 
 	if isWalletRechargeReference(msg.MerchantReference) {
 		if procErr := uc.processWalletRechargeWebhook(ctx, event, msg, rawPayload); procErr != nil {
+			_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, procErr)
+			return procErr
+		}
+		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, nil)
+		return nil
+	}
+
+	if isStorefrontCheckoutReference(msg.MerchantReference) {
+		if procErr := uc.processStorefrontCheckoutWebhook(ctx, msg); procErr != nil {
 			_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, procErr)
 			return procErr
 		}
@@ -145,6 +155,159 @@ func isWalletRechargeReference(ref string) bool {
 		return false
 	}
 	return strings.HasPrefix(ref, walletReferencePrefix) || strings.HasPrefix(ref, walletSandboxReferencePrefix)
+}
+
+func isStorefrontCheckoutReference(ref string) bool {
+	return strings.HasPrefix(ref, storefrontCheckoutReferencePrefix)
+}
+
+// processStorefrontCheckoutWebhook confirma (o rechaza) un checkout de la tienda publica
+// y, si Bold aprueba el pago, publica la orden canonica a probability.orders.canonical
+// — el mismo pipeline que ya usan Shopify/WooCommerce.
+func (uc *useCase) processStorefrontCheckoutWebhook(ctx context.Context, msg *dtos.BoldWebhookMessage) error {
+	outcome := mapBoldEventToOutcome(msg.Type)
+	if outcome == "" {
+		uc.log.Warn(ctx).
+			Str("bold_event_id", msg.BoldEventID).
+			Str("type", msg.Type).
+			Msg("bold webhook: unknown event type for storefront checkout")
+		return nil
+	}
+
+	checkout, err := uc.repo.GetStorefrontCheckoutByReference(ctx, msg.MerchantReference)
+	if err != nil {
+		return fmt.Errorf("lookup storefront checkout: %w", err)
+	}
+	if checkout == nil {
+		uc.log.Warn(ctx).Str("reference", msg.MerchantReference).Msg("bold webhook: storefront checkout not found, ignoring")
+		return nil
+	}
+	if checkout.Status != "pending" {
+		uc.log.Info(ctx).
+			Str("reference", checkout.Reference).
+			Str("current_status", checkout.Status).
+			Msg("bold webhook: storefront checkout not pending, skipping")
+		return nil
+	}
+
+	if outcome == dtos.WalletRechargeOutcomeRejected {
+		if uerr := uc.repo.MarkStorefrontCheckoutStatus(ctx, checkout.Reference, "failed"); uerr != nil {
+			return fmt.Errorf("mark storefront checkout failed: %w", uerr)
+		}
+		uc.log.Info(ctx).Str("reference", checkout.Reference).Msg("storefront checkout: payment rejected")
+		return nil
+	}
+
+	if err := uc.repo.MarkStorefrontCheckoutStatus(ctx, checkout.Reference, "paid"); err != nil {
+		return fmt.Errorf("mark storefront checkout paid: %w", err)
+	}
+
+	if err := uc.publishStorefrontOrder(ctx, checkout, msg); err != nil {
+		uc.log.Error(ctx).Err(err).Str("reference", checkout.Reference).Msg("failed to publish storefront canonical order")
+		return err
+	}
+
+	uc.log.Info(ctx).
+		Str("reference", checkout.Reference).
+		Uint("business_id", checkout.BusinessID).
+		Float64("amount", checkout.Amount).
+		Msg("storefront checkout paid, order published")
+	return nil
+}
+
+func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entities.StorefrontCheckoutSnapshot, msg *dtos.BoldWebhookMessage) error {
+	if uc.queue == nil {
+		return fmt.Errorf("cola rabbitmq no disponible")
+	}
+
+	var items []entities.StorefrontCheckoutItem
+	_ = json.Unmarshal(checkout.ItemsJSON, &items)
+
+	orderItems := make([]map[string]interface{}, 0, len(items))
+	for _, it := range items {
+		orderItems = append(orderItems, map[string]interface{}{
+			"product_id":   it.ProductID,
+			"product_sku":  it.SKU,
+			"product_name": it.Name,
+			"quantity":     it.Quantity,
+			"unit_price":   it.UnitPrice,
+			"total_price":  it.UnitPrice * float64(it.Quantity),
+			"currency":     checkout.Currency,
+			"image_url":    it.ImageURL,
+		})
+	}
+
+	var addresses []map[string]interface{}
+	if len(checkout.ShippingAddressJSON) > 0 {
+		var addr entities.StorefrontCheckoutAddress
+		if err := json.Unmarshal(checkout.ShippingAddressJSON, &addr); err == nil {
+			addresses = append(addresses, map[string]interface{}{
+				"type":         "shipping",
+				"first_name":   checkout.CustomerName,
+				"phone":        checkout.CustomerPhone,
+				"street":       addr.Street,
+				"city":         addr.City,
+				"state":        addr.State,
+				"country":      addr.Country,
+				"postal_code":  addr.PostalCode,
+				"instructions": addr.Instructions,
+			})
+		}
+	}
+
+	now := time.Now()
+	paidAt := now.Format(time.RFC3339)
+	payments := []map[string]interface{}{
+		{
+			"payment_method_id": 1,
+			"amount":            checkout.Amount,
+			"currency":          checkout.Currency,
+			"status":            "completed",
+			"paid_at":           paidAt,
+			"transaction_id":    msg.PaymentID,
+			"payment_reference": checkout.Reference,
+			"gateway":           boldGatewayCode,
+		},
+	}
+
+	canonicalOrder := map[string]interface{}{
+		"business_id":      checkout.BusinessID,
+		"integration_id":   checkout.IntegrationID,
+		"integration_type": "platform",
+		"platform":         "storefront",
+		"external_id":      "sfo-" + checkout.Reference,
+		"order_number":     checkout.Reference,
+		"subtotal":         checkout.Amount,
+		"tax":              0,
+		"discount":         0,
+		"shipping_cost":    0,
+		"total_amount":     checkout.Amount,
+		"currency":         checkout.Currency,
+		"is_cod":           false,
+		"customer_name":    checkout.CustomerName,
+		"customer_email":   checkout.CustomerEmail,
+		"customer_phone":   checkout.CustomerPhone,
+		"customer_dni":     checkout.CustomerDni,
+		"status":           "processing",
+		"original_status":  "paid",
+		"invoiceable":      false,
+		"occurred_at":      now.Format(time.RFC3339),
+		"imported_at":      now.Format(time.RFC3339),
+		"order_items":      orderItems,
+		"addresses":        addresses,
+		"payments":         payments,
+		"shipments":        []interface{}{},
+	}
+
+	orderJSON, err := json.Marshal(canonicalOrder)
+	if err != nil {
+		return fmt.Errorf("marshal storefront canonical order: %w", err)
+	}
+
+	if err := uc.queue.Publish(ctx, rabbitmq.QueueOrdersCanonical, orderJSON); err != nil {
+		return fmt.Errorf("publish storefront canonical order: %w", err)
+	}
+	return nil
 }
 
 func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos.BoldWebhookEvent, msg *dtos.BoldWebhookMessage, rawPayload []byte) error {

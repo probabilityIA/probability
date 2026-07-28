@@ -1,5 +1,5 @@
 import { IPublicSiteRepository } from '../domain/ports';
-import { ContactFormDTO } from '../domain/types';
+import { ContactFormDTO, CreateCheckoutInput } from '../domain/types';
 
 export class PublicSiteUseCases {
     constructor(private repository: IPublicSiteRepository) {}
@@ -18,5 +18,13 @@ export class PublicSiteUseCases {
 
     async submitContact(slug: string, data: ContactFormDTO) {
         return this.repository.submitContact(slug, data);
+    }
+
+    async createCheckoutSession(slug: string, data: CreateCheckoutInput) {
+        return this.repository.createCheckoutSession(slug, data);
+    }
+
+    async getCheckoutStatus(slug: string, reference: string) {
+        return this.repository.getCheckoutStatus(slug, reference);
     }
 }

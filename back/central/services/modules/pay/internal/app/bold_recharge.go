@@ -135,6 +135,49 @@ func (uc *walletUseCase) BoldGenerateSignature(ctx context.Context, businessID u
 	}, nil
 }
 
+// BoldGenerateSignatureForReference genera una firma de Bold para un pago que NO es
+// recarga de billetera (ej. checkout de la tienda publica). A diferencia de
+// BoldGenerateSignature, no crea ningun WalletTransaction — el llamador es responsable
+// de persistir su propio registro de "pago pendiente" usando el OrderID devuelto como
+// referencia.
+func (uc *walletUseCase) BoldGenerateSignatureForReference(ctx context.Context, businessID uint, amount float64, currency, referencePrefix string) (*dtos.BoldSignatureResponse, error) {
+	creds, err := uc.repo.GetBoldCredentialsForBusiness(ctx, businessID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Msg("Failed to load Bold credentials")
+		return nil, err
+	}
+
+	orderID := referencePrefix + strings.ReplaceAll(uuid.New().String(), "-", "")[:25-len(referencePrefix)]
+	amountInt := int64(amount)
+
+	rawString := fmt.Sprintf("%s%d%s%s", orderID, amountInt, currency, creds.SecretKey)
+	hash := sha256.Sum256([]byte(rawString))
+	signature := hex.EncodeToString(hash[:])
+
+	isSandbox := creds.Environment == "sandbox"
+
+	uc.log.Info(ctx).
+		Str("order_id", orderID).
+		Str("reference_prefix", referencePrefix).
+		Uint("business_id", businessID).
+		Float64("amount", amount).
+		Str("currency", currency).
+		Bool("is_sandbox", isSandbox).
+		Msg("Generated Bold integrity signature (no wallet transaction)")
+
+	pollingEnabled := strings.EqualFold(uc.config.Get("BOLD_POLLING_ENABLED"), "true")
+
+	return &dtos.BoldSignatureResponse{
+		OrderID:        orderID,
+		Hash:           signature,
+		Amount:         amount,
+		Currency:       currency,
+		PublicKey:      creds.APIKey,
+		IsSandbox:      isSandbox,
+		PollingEnabled: pollingEnabled,
+	}, nil
+}
+
 func (uc *walletUseCase) GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error) {
 	creds, err := uc.repo.GetBoldCredentials(ctx)
 	if err != nil {

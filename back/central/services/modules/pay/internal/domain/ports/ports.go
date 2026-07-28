@@ -15,6 +15,12 @@ type IRepository interface {
 	GetPaymentTransactionByID(ctx context.Context, id uint) (*entities.PaymentTransaction, error)
 	GetPaymentTransactionByReference(ctx context.Context, ref string) (*entities.PaymentTransaction, error)
 	UpdatePaymentTransaction(ctx context.Context, tx *entities.PaymentTransaction) error
+
+	// Storefront checkout (tabla public_checkouts, propiedad del modulo publicsite —
+	// replicado solo lectura/actualizacion de estado para confirmar el pago desde el
+	// webhook de Bold, ver backend-conventions.md seccion 1)
+	GetStorefrontCheckoutByReference(ctx context.Context, reference string) (*entities.StorefrontCheckoutSnapshot, error)
+	MarkStorefrontCheckoutStatus(ctx context.Context, reference, status string) error
 	ListPaymentTransactions(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.PaymentTransaction, int64, error)
 
 	// PaymentSyncLogs
@@ -98,6 +104,7 @@ type IWalletUseCase interface {
 	GetFinancialStats(ctx context.Context, dto *dtos.FinancialStatsDTO) (*dtos.FinancialStatsResponse, error)
 
 	BoldGenerateSignature(ctx context.Context, businessID uint, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
+	BoldGenerateSignatureForReference(ctx context.Context, businessID uint, amount float64, currency, referencePrefix string) (*dtos.BoldSignatureResponse, error)
 	GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error)
 	SyncBoldRecharge(ctx context.Context, businessID uint, orderID string) (*dtos.BoldStatusResponse, error)
 	BoldSimulatePayment(ctx context.Context, dto *dtos.BoldSimulateDTO) (*dtos.BoldSimulateResponse, error)
