@@ -68,6 +68,10 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	trackingURL = orDefault(trackingURL, "https://www.probabilityia.com.co/rastreo")
 
 	isCOD := event.CodTotal > 0
+	amountToCollect := event.CodTotal
+	if isCOD && event.CodCarrierFee > 0 {
+		amountToCollect += event.CodCarrierFee
+	}
 
 	var templateName string
 	var variables map[string]string
@@ -79,7 +83,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 			"3": sanitizeParam(orDefault(event.OrderNumber, "N/A")),
 			"4": sanitizeParam(orDefault(event.TrackingNumber, "N/A")),
 			"5": sanitizeParam(orDefault(event.Carrier, "Transportadora")),
-			"6": formatTotalAmount(event.CodTotal),
+			"6": formatTotalAmount(amountToCollect),
 			"7": sanitizeParam(trackingURL),
 		}
 	} else {

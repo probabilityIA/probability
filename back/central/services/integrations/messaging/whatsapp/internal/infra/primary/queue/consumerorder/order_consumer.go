@@ -117,6 +117,9 @@ func buildVariables(templateName string, event request.OrderConfirmationEvent) m
 	if amountToCollect <= 0 {
 		amountToCollect = event.TotalAmount
 	}
+	if amountToCollect > 0 && event.CodCarrierFee > 0 {
+		amountToCollect += event.CodCarrierFee
+	}
 
 	switch templateName {
 	case "pedido_en_reparto_cod":

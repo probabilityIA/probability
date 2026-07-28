@@ -94,6 +94,8 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		}
 	}
 
+	h.overrideCodValue(c, raw, shipmentReq)
+
 	correlationID := uuid.New().String()
 
 	effectiveBaseURL := carrier.BaseURL
@@ -128,6 +130,34 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		"correlation_id": correlationID,
 		"shipment_id":    shipmentID,
 	})
+}
+
+func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, req *domain.CreateShipmentRequest) {
+	if v, ok := raw["codValue"].(float64); !ok || v <= 0 {
+		return
+	}
+	if req.OrderID == nil || *req.OrderID == "" {
+		return
+	}
+
+	basis, err := h.uc.Repo().GetOrderCodBasis(c.Request.Context(), *req.OrderID)
+	if err != nil || basis == nil {
+		return
+	}
+
+	totalCost := 0.0
+	if req.TotalCost != nil {
+		totalCost = *req.TotalCost
+	}
+	carrierFee := 0.0
+	if req.CodCarrierFee != nil {
+		carrierFee = *req.CodCarrierFee
+	}
+
+	amount := basis.AmountToCollect(totalCost, carrierFee)
+	if amount > 0 {
+		raw["codValue"] = amount
+	}
 }
 
 func shipmentHasActiveGuide(s *domain.Shipment) bool {

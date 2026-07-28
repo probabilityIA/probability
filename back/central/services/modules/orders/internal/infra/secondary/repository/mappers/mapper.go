@@ -9,14 +9,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// ToDBOrder convierte una orden de dominio a modelo de base de datos
 func ToDBOrder(o *entities.ProbabilityOrder) *models.Order {
 	if o == nil {
 		return nil
 	}
 
-	// Si CreatedAt está vacío pero tenemos OccurredAt, usar OccurredAt para CreatedAt
-	// Esto asegura que created_at en la BD sea la fecha original de la plataforma
 	createdAt := o.CreatedAt
 	if createdAt.IsZero() && !o.OccurredAt.IsZero() {
 		createdAt = o.OccurredAt
@@ -127,19 +124,16 @@ func ToDBOrder(o *entities.ProbabilityOrder) *models.Order {
 	}
 }
 
-// ToDomainOrder convierte una orden de base de datos a dominio
-// imageURLBase es la URL base de S3 para construir URLs completas del logo
 func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOrder {
 	if o == nil {
 		return nil
 	}
 
-	// Obtener el logo de la integración si está disponible
 	var integrationLogoURL *string
 	if o.Integration.ID > 0 && o.Integration.IntegrationType != nil &&
 		o.Integration.IntegrationType.ID > 0 && o.Integration.IntegrationType.ImageURL != "" {
 		logoURL := o.Integration.IntegrationType.ImageURL
-		// Si no es una URL completa, construirla con la base
+
 		if imageURLBase != "" && !strings.HasPrefix(logoURL, "http") {
 			logoURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(logoURL, "/")
 		}
@@ -254,7 +248,6 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		ChannelMetadata:             ToDomainChannelMetadataList(o.ChannelMetadata),
 	}
 
-	// Incluir información del OrderStatus si está cargado
 	if o.OrderStatus.ID > 0 {
 		result.OrderStatus = &entities.OrderStatusInfo{
 			ID:          o.OrderStatus.ID,
@@ -266,8 +259,6 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		}
 	}
 
-	// Incluir información del PaymentStatus si está cargado
-	// Verificar que tanto el ID de la orden como el ID del PaymentStatus sean válidos
 	if o.PaymentStatusID != nil && *o.PaymentStatusID > 0 && o.PaymentStatus.ID > 0 {
 		result.PaymentStatus = &entities.PaymentStatusInfo{
 			ID:          o.PaymentStatus.ID,
@@ -279,8 +270,6 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		}
 	}
 
-	// Incluir información del FulfillmentStatus si está cargado
-	// Verificar que tanto el ID de la orden como el ID del FulfillmentStatus sean válidos
 	if o.FulfillmentStatusID != nil && *o.FulfillmentStatusID > 0 && o.FulfillmentStatus.ID > 0 {
 		result.FulfillmentStatus = &entities.FulfillmentStatusInfo{
 			ID:          o.FulfillmentStatus.ID,
@@ -295,7 +284,6 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 	return result
 }
 
-// ToDBOrderItems convierte una lista de items de dominio a base de datos
 func ToDBOrderItems(items []entities.ProbabilityOrderItem) []models.OrderItem {
 	if items == nil {
 		return nil
@@ -307,7 +295,7 @@ func ToDBOrderItems(items []entities.ProbabilityOrderItem) []models.OrderItem {
 				ID:        item.ID,
 				CreatedAt: item.CreatedAt,
 				UpdatedAt: item.UpdatedAt,
-				DeletedAt: gorm.DeletedAt{}, // Handle DeletedAt if needed
+				DeletedAt: gorm.DeletedAt{},
 			},
 			OrderID:                  item.OrderID,
 			ProductID:                item.ProductID,
@@ -336,7 +324,6 @@ func ToDBOrderItems(items []entities.ProbabilityOrderItem) []models.OrderItem {
 	return result
 }
 
-// ToDomainOrderItems convierte una lista de items de base de datos a dominio
 func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderItem {
 	if items == nil {
 		return nil
@@ -347,7 +334,7 @@ func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderIte
 		if item.DeletedAt.Valid {
 			deletedAt = &item.DeletedAt.Time
 		}
-		// Mapear campos básicos del modelo
+
 		domainItem := entities.ProbabilityOrderItem{
 			ID:                       item.ID,
 			CreatedAt:                item.CreatedAt,
@@ -374,12 +361,10 @@ func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderIte
 			Metadata:                 item.Metadata,
 		}
 
-		// Rellenar campos de producto: primero desde OrderItem, luego desde Product si están vacíos
 		domainItem.ProductSKU = item.ProductSKU
 		domainItem.ProductName = item.ProductName
 		domainItem.VariantLabel = item.VariantLabel
 
-		// Si los campos de OrderItem están vacíos, intentar desde Product
 		if domainItem.ProductSKU == "" && item.Product.ID != "" {
 			domainItem.ProductSKU = item.Product.SKU
 		}
@@ -395,7 +380,6 @@ func ToDomainOrderItems(items []models.OrderItem) []entities.ProbabilityOrderIte
 	return result
 }
 
-// ToDBAddresses convierte una lista de direcciones de dominio a base de datos
 func ToDBAddresses(addresses []entities.ProbabilityAddress) []models.Address {
 	if addresses == nil {
 		return nil
@@ -434,7 +418,6 @@ func ToDBAddresses(addresses []entities.ProbabilityAddress) []models.Address {
 	return result
 }
 
-// ToDomainAddresses convierte una lista de direcciones de base de datos a dominio
 func ToDomainAddresses(addresses []models.Address) []entities.ProbabilityAddress {
 	if addresses == nil {
 		return nil
@@ -472,7 +455,6 @@ func ToDomainAddresses(addresses []models.Address) []entities.ProbabilityAddress
 	return result
 }
 
-// ToDBPayments convierte una lista de pagos de dominio a base de datos
 func ToDBPayments(payments []entities.ProbabilityPayment) []models.Payment {
 	if payments == nil {
 		return nil
@@ -509,7 +491,6 @@ func ToDBPayments(payments []entities.ProbabilityPayment) []models.Payment {
 	return result
 }
 
-// ToDomainPayments convierte una lista de pagos de base de datos a dominio
 func ToDomainPayments(payments []models.Payment) []entities.ProbabilityPayment {
 	if payments == nil {
 		return nil
@@ -545,7 +526,6 @@ func ToDomainPayments(payments []models.Payment) []entities.ProbabilityPayment {
 	return result
 }
 
-// ToDBShipments convierte una lista de envíos de dominio a base de datos
 func ToDBShipments(shipments []entities.ProbabilityShipment) []models.Shipment {
 	if shipments == nil {
 		return nil
@@ -596,7 +576,6 @@ func ToDBShipments(shipments []entities.ProbabilityShipment) []models.Shipment {
 	return result
 }
 
-// ToDomainShipments convierte una lista de envíos de base de datos a dominio
 func ToDomainShipments(shipments []models.Shipment) []entities.ProbabilityShipment {
 	if shipments == nil {
 		return nil
@@ -608,6 +587,7 @@ func ToDomainShipments(shipments []models.Shipment) []entities.ProbabilityShipme
 			deletedAt = &s.DeletedAt.Time
 		}
 		result[i] = entities.ProbabilityShipment{
+			CodCarrierFee:       s.CodCarrierFee,
 			ID:                  s.ID,
 			CreatedAt:           s.CreatedAt,
 			UpdatedAt:           s.UpdatedAt,
@@ -646,7 +626,6 @@ func ToDomainShipments(shipments []models.Shipment) []entities.ProbabilityShipme
 	return result
 }
 
-// ToDBChannelMetadataList convierte una lista de metadata de canal de dominio a base de datos
 func ToDBChannelMetadataList(metadata []entities.ProbabilityOrderChannelMetadata) []models.OrderChannelMetadata {
 	if metadata == nil {
 		return nil
@@ -678,7 +657,6 @@ func ToDBChannelMetadataList(metadata []entities.ProbabilityOrderChannelMetadata
 	return result
 }
 
-// ToDomainChannelMetadataList convierte una lista de metadata de canal de base de datos a dominio
 func ToDomainChannelMetadataList(metadata []models.OrderChannelMetadata) []entities.ProbabilityOrderChannelMetadata {
 	if metadata == nil {
 		return nil
@@ -709,7 +687,6 @@ func ToDomainChannelMetadataList(metadata []models.OrderChannelMetadata) []entit
 	return result
 }
 
-// ToDBChannelMetadata convierte metadata de canal de dominio a base de datos (singular)
 func ToDBChannelMetadata(m *entities.ProbabilityOrderChannelMetadata) *models.OrderChannelMetadata {
 	if m == nil {
 		return nil
@@ -739,7 +716,6 @@ func ToDBChannelMetadata(m *entities.ProbabilityOrderChannelMetadata) *models.Or
 	return result
 }
 
-// ToDomainChannelMetadata convierte metadata de canal de base de datos a dominio (singular)
 func ToDomainChannelMetadata(m *models.OrderChannelMetadata) *entities.ProbabilityOrderChannelMetadata {
 	if m == nil {
 		return nil

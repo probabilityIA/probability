@@ -73,7 +73,7 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 	dataFields := []string{
 		"order_id", "order_number", "internal_number", "external_id",
 		"customer_name", "customer_phone", "customer_email",
-		"total_amount", "cod_total", "is_cod", "currency", "platform",
+		"total_amount", "cod_total", "cod_carrier_fee", "is_cod", "currency", "platform",
 		"items_summary", "shipping_address", "shipping_street", "shipping_city", "shipping_state",
 		"business_name", "payment_method_id", "payment_method_name", "tracking_number", "carrier",
 	}
@@ -110,7 +110,7 @@ func (p *channelPublisher) publishShipmentToWhatsApp(ctx context.Context, event 
 	dataFields := []string{
 		"shipment_id", "tracking_number", "label_url", "carrier",
 		"customer_name", "customer_phone", "order_number", "business_name",
-		"correlation_id", "total_amount", "cod_total", "tracking_url",
+		"correlation_id", "total_amount", "cod_total", "cod_carrier_fee", "tracking_url",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {

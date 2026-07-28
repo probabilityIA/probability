@@ -8,13 +8,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// SSEPublisher publica eventos de envíos al dispatcher central via RabbitMQ (ExchangeEvents)
 type SSEPublisher struct {
 	queue  rabbitmq.IQueue
 	logger log.ILogger
 }
 
-// NewSSEPublisher crea un nuevo publicador SSE de envíos via RabbitMQ
 func NewSSEPublisher(queue rabbitmq.IQueue, logger log.ILogger) domain.IShipmentSSEPublisher {
 	return &SSEPublisher{
 		queue:  queue,
@@ -22,7 +20,6 @@ func NewSSEPublisher(queue rabbitmq.IQueue, logger log.ILogger) domain.IShipment
 	}
 }
 
-// PublishQuoteReceived publica evento de cotización recibida
 func (p *SSEPublisher) PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{}) {
 	p.publish(ctx, "shipment.quote_received", businessID, map[string]interface{}{
 		"correlation_id": correlationID,
@@ -30,7 +27,6 @@ func (p *SSEPublisher) PublishQuoteReceived(ctx context.Context, businessID uint
 	})
 }
 
-// PublishQuoteFailed publica evento de cotización fallida
 func (p *SSEPublisher) PublishQuoteFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string) {
 	p.publish(ctx, "shipment.quote_failed", businessID, map[string]interface{}{
 		"correlation_id": correlationID,
@@ -38,7 +34,6 @@ func (p *SSEPublisher) PublishQuoteFailed(ctx context.Context, businessID uint, 
 	})
 }
 
-// PublishGuideGenerated publica evento de guía generada exitosamente
 func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string, notification *domain.GuideNotificationData) {
 	data := map[string]interface{}{
 		"shipment_id":     shipmentID,
@@ -48,7 +43,6 @@ func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uin
 		"carrier":         carrier,
 	}
 
-	// Enrich with notification data for WhatsApp routing
 	if notification != nil {
 		data["customer_name"] = notification.CustomerName
 		data["customer_phone"] = notification.CustomerPhone
@@ -58,6 +52,9 @@ func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uin
 		if notification.CodTotal != nil {
 			data["cod_total"] = *notification.CodTotal
 		}
+		if notification.CodCarrierFee != nil {
+			data["cod_carrier_fee"] = *notification.CodCarrierFee
+		}
 		if notification.TrackingURL != "" {
 			data["tracking_url"] = notification.TrackingURL
 		}
@@ -66,7 +63,6 @@ func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uin
 	p.publish(ctx, "shipment.guide_generated", businessID, data)
 }
 
-// PublishGuideFailed publica evento de generación de guía fallida
 func (p *SSEPublisher) PublishGuideFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string) {
 	p.publish(ctx, "shipment.guide_failed", businessID, map[string]interface{}{
 		"shipment_id":    shipmentID,
@@ -75,7 +71,6 @@ func (p *SSEPublisher) PublishGuideFailed(ctx context.Context, businessID uint, 
 	})
 }
 
-// PublishTrackingUpdated publica evento de tracking actualizado
 func (p *SSEPublisher) PublishTrackingUpdated(ctx context.Context, businessID uint, correlationID string, data map[string]interface{}) {
 	p.publish(ctx, "shipment.tracking_updated", businessID, map[string]interface{}{
 		"correlation_id": correlationID,
@@ -83,7 +78,6 @@ func (p *SSEPublisher) PublishTrackingUpdated(ctx context.Context, businessID ui
 	})
 }
 
-// PublishTrackingFailed publica evento de tracking fallido
 func (p *SSEPublisher) PublishTrackingFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string) {
 	p.publish(ctx, "shipment.tracking_failed", businessID, map[string]interface{}{
 		"correlation_id": correlationID,
@@ -91,14 +85,12 @@ func (p *SSEPublisher) PublishTrackingFailed(ctx context.Context, businessID uin
 	})
 }
 
-// PublishShipmentCancelled publica evento de envío cancelado
 func (p *SSEPublisher) PublishShipmentCancelled(ctx context.Context, businessID uint, shipmentID uint) {
 	p.publish(ctx, "shipment.cancelled", businessID, map[string]interface{}{
 		"shipment_id": shipmentID,
 	})
 }
 
-// PublishCancelFailed publica evento de cancelación fallida
 func (p *SSEPublisher) PublishCancelFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string) {
 	p.publish(ctx, "shipment.cancel_failed", businessID, map[string]interface{}{
 		"shipment_id":    shipmentID,
@@ -107,9 +99,6 @@ func (p *SSEPublisher) PublishCancelFailed(ctx context.Context, businessID uint,
 	})
 }
 
-// PublishSyncBatchCompleted publica la senal definitiva de que un lote de sincronizacion termino,
-// incluyendo los envios que fallaron o no se encontraron y por lo tanto nunca emiten
-// shipment.tracking_updated individualmente.
 func (p *SSEPublisher) PublishSyncBatchCompleted(ctx context.Context, businessID uint, correlationID string, summary map[string]interface{}) {
 	data := map[string]interface{}{"correlation_id": correlationID}
 	for k, v := range summary {
@@ -118,9 +107,8 @@ func (p *SSEPublisher) PublishSyncBatchCompleted(ctx context.Context, businessID
 	p.publish(ctx, "shipment.sync_batch_completed", businessID, data)
 }
 
-// publish publica un evento al dispatcher central de forma no-bloqueante
 func (p *SSEPublisher) publish(ctx context.Context, eventType string, businessID uint, data map[string]interface{}) {
-	// Extract integration_id from data if present (enriched by response_consumer)
+
 	var integrationID uint
 	if rawID, ok := data["integration_id"]; ok {
 		switch v := rawID.(type) {
@@ -150,10 +138,8 @@ func (p *SSEPublisher) publish(ctx context.Context, eventType string, businessID
 	}()
 }
 
-// noopSSEPublisher es una implementación no-op para cuando RabbitMQ no está disponible
 type noopSSEPublisher struct{}
 
-// NewNoopSSEPublisher crea un publisher que no hace nada
 func NewNoopSSEPublisher() domain.IShipmentSSEPublisher {
 	return &noopSSEPublisher{}
 }
@@ -174,6 +160,5 @@ func (n *noopSSEPublisher) PublishCancelFailed(_ context.Context, _ uint, _ uint
 func (n *noopSSEPublisher) PublishSyncBatchCompleted(_ context.Context, _ uint, _ string, _ map[string]interface{}) {
 }
 
-// Compile-time interface checks
 var _ domain.IShipmentSSEPublisher = (*SSEPublisher)(nil)
 var _ domain.IShipmentSSEPublisher = (*noopSSEPublisher)(nil)

@@ -18,14 +18,12 @@ const (
 	QueueTransportResponses = rabbitmq.QueueTransportResponses
 )
 
-// TransportResponseMessage is the response message from a transport provider
-// (replicated locally from integrations/transport)
 type TransportResponseMessage struct {
 	ShipmentID    *uint                  `json:"shipment_id,omitempty"`
 	BusinessID    uint                   `json:"business_id"`
 	Provider      string                 `json:"provider"`
 	Operation     string                 `json:"operation"`
-	Status        string                 `json:"status"` // "success", "error"
+	Status        string                 `json:"status"`
 	CorrelationID string                 `json:"correlation_id"`
 	IsTest        bool                   `json:"is_test,omitempty"`
 	Timestamp     time.Time              `json:"timestamp"`
@@ -60,7 +58,6 @@ func NewResponseConsumer(
 	}
 }
 
-// Start begins consuming transport responses
 func (c *ResponseConsumer) Start(ctx context.Context) error {
 	if err := c.queue.DeclareQueue(QueueTransportResponses, true); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al declarar cola de transport responses")
@@ -79,7 +76,6 @@ func (c *ResponseConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleResponse processes a transport response
 func (c *ResponseConsumer) handleResponse(message []byte) error {
 	ctx := context.Background()
 
@@ -123,7 +119,6 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 	return nil
 }
 
-// handleGenerateResponse processes a guide generation response
 func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response *TransportResponseMessage) {
 	businessID := c.resolveBusinessID(ctx, response)
 
@@ -133,7 +128,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			Str("correlation_id", response.CorrelationID).
 			Msg("❌ Guide generation failed")
 
-		// If we have a shipment ID, update status to failed
 		if response.ShipmentID != nil {
 			shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 			if err == nil && shipment != nil {
@@ -147,7 +141,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 		return
 	}
 
-	// Success: extract tracking data from response
 	data := response.Data
 	if data == nil {
 		c.log.Warn(ctx).Msg("Generate response has no data")
@@ -156,7 +149,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 	c.log.Info(ctx).Interface("response_data_keys", getKeys(data)).Msg("DEBUG: Response.Data keys")
 
-	// Extract nested data field
 	dataField, _ := data["data"].(map[string]interface{})
 	if dataField == nil {
 		dataField = data
@@ -170,7 +162,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	carrier, _ := dataField["carrier"].(string)
 	idOrder, _ := dataField["idOrder"].(float64)
 
-	// Si el carrier viene vacío de la respuesta, inferirlo del tracking_number
 	if carrier == "" && trackingNumber != "" {
 		carrier = inferCarrierFromTrackingNumber(trackingNumber)
 	}
@@ -184,7 +175,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 		Interface("all_datafield_values", dataField).
 		Msg("✅ Guide generated successfully")
 
-	// If we have a shipment ID, update the shipment
 	if response.ShipmentID != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err != nil {
@@ -212,7 +202,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				shipment.Carrier = &carrier
 			}
 
-			// Store idOrder in Metadata
 			if idOrder != 0 {
 				var meta map[string]interface{}
 				if len(shipment.Metadata) > 0 {
@@ -265,7 +254,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				}
 			}
 
-			// Sync guide_link, tracking_number, carrier and shipping cost to the order immediately
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
 				orderShippingCost := 0.0
 				if shipment.TotalCost != nil {
@@ -285,13 +273,11 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 		}
 
-		// Use shipment's existing carrier as fallback when provider response has empty carrier
 		effectiveCarrier := carrier
 		if effectiveCarrier == "" && shipment != nil && shipment.Carrier != nil && *shipment.Carrier != "" {
 			effectiveCarrier = *shipment.Carrier
 		}
 
-		// Enrich with customer/business/integration data for WhatsApp notifications
 		var notification *domain.GuideNotificationData
 		if shipment != nil {
 			notification = &domain.GuideNotificationData{
@@ -299,6 +285,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				CustomerPhone: shipment.CustomerPhone,
 				OrderNumber:   shipment.OrderNumber,
 				CodTotal:      shipment.CodTotal,
+				CodCarrierFee: shipment.CodCarrierFee,
 			}
 
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
@@ -319,14 +306,12 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				notification.TrackingURL = url
 			}
 
-			// Fetch business name
 			if businessID != 0 {
 				if bName, err := c.repo.GetBusinessName(ctx, businessID); err == nil {
 					notification.BusinessName = bName
 				}
 			}
 
-			// Fetch integration_id from the order
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
 				if intID, err := c.repo.GetOrderIntegrationID(ctx, *shipment.OrderID); err == nil {
 					notification.IntegrationID = intID
@@ -338,7 +323,6 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	}
 }
 
-// handleQuoteResponse processes a quote response
 func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *TransportResponseMessage) {
 	businessID := response.BusinessID
 
@@ -363,7 +347,6 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 	c.ssePublisher.PublishQuoteReceived(ctx, businessID, response.CorrelationID, response.Data)
 }
 
-// storeQuoteResult stores the quote result in Redis so the HTTP handler can poll for it synchronously.
 func (c *ResponseConsumer) storeQuoteResult(ctx context.Context, correlationID string, data map[string]interface{}, errMsg string) {
 	if c.redisClient == nil {
 		return
@@ -392,7 +375,6 @@ func (c *ResponseConsumer) storeQuoteResult(ctx context.Context, correlationID s
 	}
 }
 
-// handleTrackResponse processes a tracking response
 func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *TransportResponseMessage) {
 	businessID := response.BusinessID
 
@@ -410,7 +392,6 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Tracking response received")
 
-	// Update shipment status based on tracking data from carrier
 	if response.ShipmentID != nil && response.Data != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
@@ -433,7 +414,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 
 			if (ok && status != "") || hasHistory {
 				if ok && status != "" {
-					shipment.Status = status // Update to: in_transit, delivered, failed, etc.
+					shipment.Status = status
 				}
 
 				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
@@ -453,7 +434,6 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
 }
 
-// handleCancelResponse processes a cancellation response
 func (c *ResponseConsumer) handleCancelResponse(ctx context.Context, response *TransportResponseMessage) {
 	businessID := c.resolveBusinessID(ctx, response)
 
@@ -696,8 +676,6 @@ func parseFlexibleTime(s string) *time.Time {
 	return nil
 }
 
-// resolveBusinessID resolves the business ID from the response message.
-// The transport router should always echo back business_id from the original request.
 func (c *ResponseConsumer) resolveBusinessID(ctx context.Context, response *TransportResponseMessage) uint {
 	if response.BusinessID != 0 {
 		return response.BusinessID
@@ -817,8 +795,6 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 	}
 }
 
-// inferCarrierFromTrackingNumber deduce la transportadora basándose en el formato del tracking_number
-// Usa prefijos conocidos de Envioclik para identificar la transportadora
 func inferCarrierFromTrackingNumber(trackingNumber string) string {
 	if trackingNumber == "" {
 		return ""
@@ -826,7 +802,6 @@ func inferCarrierFromTrackingNumber(trackingNumber string) string {
 
 	upper := strings.ToUpper(trackingNumber)
 
-	// Prefijos con guion (formato ENV-xxx, CRD-xxx, etc.)
 	if strings.HasPrefix(upper, "ENV-") {
 		return "ENVIA"
 	}
@@ -843,18 +818,14 @@ func inferCarrierFromTrackingNumber(trackingNumber string) string {
 		return "TODOCARGO"
 	}
 
-	// Prefijos numéricos (formato Envioclik)
-	// ENVIA: 034056
 	if strings.HasPrefix(trackingNumber, "034056") {
 		return "ENVIA"
 	}
 
-	// INTERRAPIDISIMO: 2400 (rango amplio: 240047, 240048, 240050, etc.)
 	if strings.HasPrefix(trackingNumber, "2400") {
 		return "INTERRAPIDISIMO"
 	}
 
-	// COORDINADORA: 4005
 	if strings.HasPrefix(trackingNumber, "4005") {
 		return "COORDINADORA"
 	}

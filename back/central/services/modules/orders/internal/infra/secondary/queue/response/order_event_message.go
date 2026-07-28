@@ -22,6 +22,7 @@ type OrderSnapshot struct {
 
 	TotalAmount         float64  `json:"total_amount"`
 	CodTotal            *float64 `json:"cod_total,omitempty"`
+	CodCarrierFee       *float64 `json:"cod_carrier_fee,omitempty"`
 	IsCod               bool     `json:"is_cod"`
 	CodIncludesShipping bool     `json:"cod_includes_shipping"`
 	Currency            string   `json:"currency"`

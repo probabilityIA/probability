@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-//
-//	REPOSITORY INTERFACE
-//
-
-// IRepository define todos los métodos de repositorio del módulo shipments
 type IPDFUploader interface {
 	UploadPDF(ctx context.Context, key string, content []byte) (string, error)
 }
@@ -68,7 +63,6 @@ type GuidePDFContext struct {
 }
 
 type IRepository interface {
-	// CRUD Operations
 	CreateShipment(ctx context.Context, shipment *Shipment) error
 	GetShipmentByID(ctx context.Context, id uint) (*Shipment, error)
 	GetShipmentByTrackingNumber(ctx context.Context, trackingNumber string) (*Shipment, error)
@@ -77,16 +71,12 @@ type IRepository interface {
 	UpdateShipment(ctx context.Context, shipment *Shipment) error
 	DeleteShipment(ctx context.Context, id uint) error
 
-	// Validation
 	ShipmentExists(ctx context.Context, orderID string, trackingNumber string) (bool, error)
 
-	// Carrier Resolution (replicated query — module isolation)
 	GetActiveShippingCarrier(ctx context.Context, businessID uint) (*CarrierInfo, error)
 
-	// Business name lookup (for descriptive error messages)
 	GetBusinessName(ctx context.Context, businessID uint) (string, error)
 
-	// Business ID Resolution (replicated queries — module isolation)
 	GetOrderBusinessID(ctx context.Context, orderUUID string) (uint, error)
 	GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
@@ -98,20 +88,17 @@ type IRepository interface {
 	ListGuideFormats(ctx context.Context) ([]GuideFormat, error)
 	GetDefaultGuideFormat(ctx context.Context, carrier string) (*GuideFormat, error)
 
-	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
 	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error
 
 	UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error
 	ClearOrderGuideData(ctx context.Context, orderID string) error
 
-	// EnsureAllBusinessesActive sets all existing businesses to 'paid' status as a one-time migration
 	EnsureAllBusinessesActive(ctx context.Context) error
 
-	// GetOrderIntegrationID retrieves the integration_id for an order (replicated query — module isolation)
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
 
-	// GetOrderCodTotal retrieves the current cod_total for an order (replicated query — module isolation)
 	GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error)
+	GetOrderCodBasis(ctx context.Context, orderUUID string) (*OrderCodBasis, error)
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
@@ -137,7 +124,6 @@ type IRepository interface {
 	DebitWalletForGuide(ctx context.Context, businessID uint, amount float64, trackingNumber string, shipmentID *uint) error
 	FindUnchargedGuides(ctx context.Context, createdAfter, createdBefore time.Time, limit int) ([]UnchargedGuide, error)
 
-	// Origin Addresses
 	CreateOriginAddress(ctx context.Context, address *OriginAddress) error
 	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)
 	ListOriginAddressesByBusiness(ctx context.Context, businessID uint) ([]OriginAddress, error)
@@ -172,16 +158,16 @@ type ShipmentStatsFilter struct {
 }
 
 type ShipmentStatsByGeozone struct {
-	GeozoneID    uint
-	Type         string
-	Code         *string
-	Name         string
-	ParentID     *uint
-	Total        int64
-	Delivered    int64
-	Cancelled    int64
-	InTransit    int64
-	SuccessRate  float64
+	GeozoneID   uint
+	Type        string
+	Code        *string
+	Name        string
+	ParentID    *uint
+	Total       int64
+	Delivered   int64
+	Cancelled   int64
+	InTransit   int64
+	SuccessRate float64
 }
 
 type OrderPublicTracking struct {
@@ -205,41 +191,30 @@ type OrderPublicTracking struct {
 }
 
 type OrderCODInfo struct {
-	OrderID            string
-	BusinessID         uint
-	CodTotal           *float64
-	TotalAmount        float64
-	Currency           string
-	IsPaid             bool
-	PaidAt             *time.Time
-	PaymentMethodID    uint
-	PaymentMethodCode  string
+	OrderID           string
+	BusinessID        uint
+	CodTotal          *float64
+	TotalAmount       float64
+	Currency          string
+	IsPaid            bool
+	PaidAt            *time.Time
+	PaymentMethodID   uint
+	PaymentMethodCode string
 }
 
-//
-//	CARRIER RESOLUTION
-//
-
-// CarrierInfo holds the resolved carrier for a business
 type CarrierInfo struct {
-	IntegrationID     uint   // integrations.id
-	IntegrationTypeID uint   // integration_types.id (e.g. 12 = EnvioClick)
-	ProviderCode      string // integration_types.code (e.g. "envioclick")
-	BaseURL           string // integration_types.base_url (production URL)
-	IsTesting         bool   // integrations.is_testing (use sandbox URL)
-	BaseURLTest       string // integrations.config->>'base_url_test' (sandbox URL)
+	IntegrationID     uint
+	IntegrationTypeID uint
+	ProviderCode      string
+	BaseURL           string
+	IsTesting         bool
+	BaseURLTest       string
 }
 
-// ICarrierResolver resolves which shipping carrier a business has active
 type ICarrierResolver interface {
 	GetActiveShippingCarrier(ctx context.Context, businessID uint) (*CarrierInfo, error)
 }
 
-//
-//	TRANSPORT REQUEST PUBLISHER
-//
-
-// TransportRequestMessage is the message published to the transport queue
 type TransportRequestMessage struct {
 	ShipmentID        *uint                  `json:"shipment_id,omitempty"`
 	Provider          string                 `json:"provider"`
@@ -254,16 +229,10 @@ type TransportRequestMessage struct {
 	Payload           map[string]interface{} `json:"payload"`
 }
 
-// ITransportRequestPublisher defines the contract for publishing transport requests
 type ITransportRequestPublisher interface {
 	PublishTransportRequest(ctx context.Context, request *TransportRequestMessage) error
 }
 
-//
-//	SSE PUBLISHER
-//
-
-// GuideNotificationData holds enriched data for guide_generated events (used for WhatsApp notifications)
 type GuideNotificationData struct {
 	CustomerName  string
 	CustomerPhone string
@@ -271,10 +240,27 @@ type GuideNotificationData struct {
 	BusinessName  string
 	IntegrationID uint
 	CodTotal      *float64
+	CodCarrierFee *float64
 	TrackingURL   string
 }
 
-// IShipmentSSEPublisher defines the contract for publishing shipment SSE events via Redis
+type OrderCodBasis struct {
+	TotalAmount         float64
+	CodTotal            float64
+	CodIncludesShipping bool
+}
+
+func (b OrderCodBasis) AmountToCollect(guideTotalCost float64, codCarrierFee float64) float64 {
+	if b.CodTotal <= 0 {
+		return 0
+	}
+	base := b.CodTotal
+	if !b.CodIncludesShipping && guideTotalCost > 0 {
+		base = b.TotalAmount + guideTotalCost
+	}
+	return base + codCarrierFee
+}
+
 type IShipmentSSEPublisher interface {
 	PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishQuoteFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)

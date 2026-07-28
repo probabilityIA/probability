@@ -115,6 +115,10 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 	if order.IsCod && order.CodTotal != nil {
 		confirmationCodTotal = *order.CodTotal
 	}
+	confirmationCodCarrierFee := 0.0
+	if order.IsCod {
+		confirmationCodCarrierFee = codCarrierFeeOf(order)
+	}
 
 	event := map[string]any{
 		"event_type":          "order.confirmation_requested",
@@ -127,6 +131,7 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 		"customer_email":      order.CustomerEmail,
 		"total_amount":        order.TotalAmount,
 		"cod_total":           confirmationCodTotal,
+		"cod_carrier_fee":     confirmationCodCarrierFee,
 		"is_cod":              order.IsCod,
 		"currency":            order.Currency,
 		"items_summary":       itemsSummary,
@@ -207,6 +212,10 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 	if order.IsCod && order.CodTotal != nil {
 		codTotal = *order.CodTotal
 	}
+	codCarrierFee := 0.0
+	if order.IsCod {
+		codCarrierFee = codCarrierFeeOf(order)
+	}
 
 	event := map[string]any{
 		"event_type":      "order.guide_notification_requested",
@@ -220,6 +229,7 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 		"carrier":         carrier,
 		"total_amount":    order.TotalAmount,
 		"cod_total":       codTotal,
+		"cod_carrier_fee": codCarrierFee,
 		"integration_id":  order.IntegrationID,
 		"platform":        order.Platform,
 		"timestamp":       time.Now().Unix(),
@@ -289,6 +299,15 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, _ string, mes
 		Msg("Order event published to fanout (invoicing, score, inventory, events, customers)")
 
 	return nil
+}
+
+func codCarrierFeeOf(order *entities.ProbabilityOrder) float64 {
+	for i := range order.Shipments {
+		if order.Shipments[i].CodCarrierFee != nil && *order.Shipments[i].CodCarrierFee > 0 {
+			return *order.Shipments[i].CodCarrierFee
+		}
+	}
+	return 0
 }
 
 func (p *OrderRabbitPublisher) getQueueForEventType(eventType entities.OrderEventType) string {

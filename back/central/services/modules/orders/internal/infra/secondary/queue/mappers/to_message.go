@@ -18,6 +18,7 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 
 		TotalAmount:         order.TotalAmount,
 		CodTotal:            order.CodTotal,
+		CodCarrierFee:       extractCodCarrierFee(order),
 		IsCod:               order.IsCod,
 		CodIncludesShipping: order.CodIncludesShipping,
 		Currency:            order.Currency,
@@ -185,6 +186,15 @@ func derefString(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+func extractCodCarrierFee(order *entities.ProbabilityOrder) *float64 {
+	for i := range order.Shipments {
+		if order.Shipments[i].CodCarrierFee != nil && *order.Shipments[i].CodCarrierFee > 0 {
+			return order.Shipments[i].CodCarrierFee
+		}
+	}
+	return nil
 }
 
 func extractCarrier(order *entities.ProbabilityOrder) string {

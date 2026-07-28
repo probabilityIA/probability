@@ -2,8 +2,6 @@ package entities
 
 import "time"
 
-// ProbabilityShipment representa un envío que se guarda en la base de datos
-// ✅ ENTIDAD PURA - SIN TAGS
 type ProbabilityShipment struct {
 	ID        uint
 	CreatedAt time.Time
@@ -31,6 +29,7 @@ type ProbabilityShipment struct {
 	ShippingCost  *float64
 	InsuranceCost *float64
 	TotalCost     *float64
+	CodCarrierFee *float64
 
 	Weight *float64
 	Height *float64

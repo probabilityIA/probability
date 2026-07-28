@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
-// El nombre del proveedor de transporte nunca se expone al negocio:
-// todo cambio que llega del tracking se atribuye a "Transportadora".
 const (
 	orderStatusSourceCarrier = "carrier"
 	orderStatusCarrierLabel  = "Transportadora"
@@ -143,6 +142,40 @@ func (r *Repository) GetOrderCodTotal(ctx context.Context, orderUUID string) (*f
 	}
 
 	return result.CodTotal, nil
+}
+
+func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*domain.OrderCodBasis, error) {
+	var result struct {
+		TotalAmount         float64  `gorm:"column:total_amount"`
+		CodTotal            *float64 `gorm:"column:cod_total"`
+		CodIncludesShipping bool     `gorm:"column:cod_includes_shipping"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("orders").
+		Select("total_amount, cod_total, cod_includes_shipping").
+		Where("id = ?", orderUUID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("orden %s no encontrada", orderUUID)
+		}
+		return nil, err
+	}
+
+	codTotal := 0.0
+	if result.CodTotal != nil {
+		codTotal = *result.CodTotal
+	}
+
+	return &domain.OrderCodBasis{
+		TotalAmount:         result.TotalAmount,
+		CodTotal:            codTotal,
+		CodIncludesShipping: result.CodIncludesShipping,
+	}, nil
 }
 
 func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {

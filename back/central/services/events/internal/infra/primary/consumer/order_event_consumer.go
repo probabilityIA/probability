@@ -32,6 +32,7 @@ type orderSnapshot struct {
 	ExternalID          string   `json:"external_id"`
 	TotalAmount         float64  `json:"total_amount"`
 	CodTotal            *float64 `json:"cod_total,omitempty"`
+	CodCarrierFee       *float64 `json:"cod_carrier_fee,omitempty"`
 	IsCod               bool     `json:"is_cod"`
 	CodIncludesShipping bool     `json:"cod_includes_shipping"`
 	Currency            string   `json:"currency"`
@@ -113,6 +114,9 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["cod_includes_shipping"] = msg.Order.CodIncludesShipping
 		if msg.Order.CodTotal != nil {
 			data["cod_total"] = *msg.Order.CodTotal
+		}
+		if msg.Order.CodCarrierFee != nil {
+			data["cod_carrier_fee"] = *msg.Order.CodCarrierFee
 		}
 		data["currency"] = msg.Order.Currency
 		data["customer_name"] = msg.Order.CustomerName
