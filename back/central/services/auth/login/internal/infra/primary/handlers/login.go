@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/login/internal/domain"
@@ -75,14 +76,30 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	isMobileClient := clientType == "mobile" || clientType == "api"
 
 	if !isMobileClient {
-		cookieValue := fmt.Sprintf(
-			"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
-			"session_token",
-			domainResponse.Token,
-			7*24*60*60,
-			"/",
-			".probabilityia.com.co",
-		)
+		cookieDomain := os.Getenv("SESSION_COOKIE_DOMAIN")
+		if cookieDomain == "" {
+			cookieDomain = ".probabilityia.com.co"
+		}
+
+		var cookieValue string
+		if cookieDomain == "none" {
+			cookieValue = fmt.Sprintf(
+				"%s=%s; Max-Age=%d; Path=%s; HttpOnly; SameSite=Lax",
+				"session_token",
+				domainResponse.Token,
+				7*24*60*60,
+				"/",
+			)
+		} else {
+			cookieValue = fmt.Sprintf(
+				"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
+				"session_token",
+				domainResponse.Token,
+				7*24*60*60,
+				"/",
+				cookieDomain,
+			)
+		}
 		c.Header("Set-Cookie", cookieValue)
 
 		loginResponse.Token = ""
