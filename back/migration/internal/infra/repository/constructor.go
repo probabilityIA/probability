@@ -152,5 +152,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateBusinessBarColors(ctx); err != nil {
 		return err
 	}
-	return r.migrateBackfillBusinessSubscriptions(ctx)
+	if err := r.migrateBackfillBusinessSubscriptions(ctx); err != nil {
+		return err
+	}
+	return r.backfillMysticMessageLogs(ctx)
 }
