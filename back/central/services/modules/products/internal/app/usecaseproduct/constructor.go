@@ -15,4 +15,3 @@ func New(repo domain.IRepository) *UseCaseProduct {
 		repo: repo,
 	}
 }
-

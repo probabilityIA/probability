@@ -79,9 +79,10 @@ type Product struct {
 	DimensionUnit string
 
 	// Categorización
-	Category string
-	Tags     datatypes.JSON
-	Brand    string
+	Category          string
+	ChannelCategories map[string]string
+	Tags              datatypes.JSON
+	Brand             string
 
 	// Estado
 	Status     string

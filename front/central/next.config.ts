@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3050/api/:path*',
+        destination: `${process.env.API_PROXY_TARGET || 'http://localhost:3050'}/api/:path*`,
       },
     ];
   },

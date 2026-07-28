@@ -56,14 +56,35 @@ func (c *MeliClient) predictCategory(ctx context.Context, accessToken, siteID, t
 	return results[0].CategoryID, nil
 }
 
+var variantAttributeIDs = []string{"SIZE", "COLOR", "GENDER", "MODEL"}
+
+func attributesFor(input domain.CreateProductInput) []map[string]interface{} {
+	attributes := []map[string]interface{}{
+		{"id": "SELLER_SKU", "value_name": input.SKU},
+	}
+	if brand := strings.TrimSpace(input.Brand); brand != "" {
+		attributes = append(attributes, map[string]interface{}{"id": "BRAND", "value_name": brand})
+	}
+	for _, id := range variantAttributeIDs {
+		if value := strings.TrimSpace(input.VariantAttrs[id]); value != "" {
+			attributes = append(attributes, map[string]interface{}{"id": id, "value_name": value})
+		}
+	}
+	return attributes
+}
+
 func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, input domain.CreateProductInput) (string, error) {
 	siteID := firstNonEmpty(input.SiteID, meliSiteID)
 	currencyID := firstNonEmpty(input.CurrencyID, meliCurrencyID)
 	listingTypeID := firstNonEmpty(input.ListingTypeID, meliListingTypeID)
 
-	categoryID, err := c.predictCategory(ctx, accessToken, siteID, input.Name)
-	if err != nil {
-		return "", err
+	categoryID := strings.TrimSpace(input.CategoryID)
+	if categoryID == "" {
+		predicted, err := c.predictCategory(ctx, accessToken, siteID, input.Name)
+		if err != nil {
+			return "", err
+		}
+		categoryID = predicted
 	}
 
 	quantity := input.StockQuantity
@@ -80,9 +101,11 @@ func (c *MeliClient) CreateProduct(ctx context.Context, accessToken string, inpu
 		"buying_mode":        "buy_it_now",
 		"listing_type_id":    listingTypeID,
 		"condition":          "new",
-		"attributes": []map[string]interface{}{
-			{"id": "SELLER_SKU", "value_name": input.SKU},
-		},
+		"attributes":         attributesFor(input),
+	}
+
+	if url := strings.TrimSpace(input.ImageURL); url != "" {
+		payload["pictures"] = []map[string]string{{"source": url}}
 	}
 
 	bodyBytes, err := json.Marshal(payload)

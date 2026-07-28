@@ -87,11 +87,22 @@ interface SyncActivityValue {
 
 const SyncActivityContext = createContext<SyncActivityValue | null>(null);
 
-const SYNC_TIMEOUT_MS = 6 * 60 * 1000;
+const SYNC_TIMEOUT_MS = 90 * 1000;
+
+const RUN_CLOCK_SKEW_MS = 60 * 1000;
 
 const APPLY_SETTLE_MS = 4000;
 
 const APPLY_TIMEOUT_MS = 10 * 60 * 1000;
+
+const MAX_PENDING_RUNS = 20;
+
+const MAX_PENDING_EVENTS_PER_RUN = 100;
+
+interface PendingEvent {
+    eventType: string;
+    data: any;
+}
 
 interface FailedItem {
     sku?: string;
@@ -180,15 +191,10 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setNodes(prev => (prev[id] === state ? prev : { ...prev, [id]: state }));
     }, []);
 
-    const handleMessage = useCallback((event: MessageEvent) => {
-        try {
-            const parsed = JSON.parse(event.data);
-            const eventType: string = parsed.type || parsed.metadata?.event_type || '';
-            const data = parsed.data;
-            if (!data?.correlation_id) return;
-            const id = corrToIntegration.current.get(data.correlation_id);
-            if (id === undefined) return;
+    const pendingEvents = useRef<Map<string, PendingEvent[]>>(new Map());
 
+    const applyEvent = useCallback((id: number, eventType: string, data: any) => {
+        try {
             if (eventType.endsWith('.inventory.sync.started')) {
                 patchNode(id, 'active');
                 setProgress(prev => ({ ...prev, [id]: { processed: 0, total: Number(data.total) || 0 } }));
@@ -282,6 +288,90 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         }
     }, [patchNode, pushDetail]);
 
+    const drainPending = useCallback((correlationID: string) => {
+        const buffered = pendingEvents.current.get(correlationID);
+        if (!buffered) return;
+        pendingEvents.current.delete(correlationID);
+        const id = corrToIntegration.current.get(correlationID);
+        if (id === undefined) return;
+        for (const item of buffered) applyEvent(id, item.eventType, item.data);
+    }, [applyEvent]);
+
+    const bufferEvent = useCallback((correlationID: string, eventType: string, data: any) => {
+        const buffered = pendingEvents.current.get(correlationID) || [];
+        if (buffered.length >= MAX_PENDING_EVENTS_PER_RUN) return;
+        buffered.push({ eventType, data });
+        pendingEvents.current.set(correlationID, buffered);
+        while (pendingEvents.current.size > MAX_PENDING_RUNS) {
+            const oldest = pendingEvents.current.keys().next().value;
+            if (oldest === undefined) break;
+            pendingEvents.current.delete(oldest);
+        }
+    }, []);
+
+    const handleMessage = useCallback((event: MessageEvent) => {
+        try {
+            const parsed = JSON.parse(event.data);
+            const eventType: string = parsed.type || parsed.metadata?.event_type || '';
+            const data = parsed.data;
+            const correlationID: string = data?.correlation_id ? String(data.correlation_id) : '';
+            if (correlationID === '') return;
+            const id = corrToIntegration.current.get(correlationID);
+            if (id === undefined) {
+                bufferEvent(correlationID, eventType, data);
+                return;
+            }
+            applyEvent(id, eventType, data);
+        } catch {
+            return;
+        }
+    }, [applyEvent, bufferEvent]);
+
+    const hydrateFromLastRun = useCallback(async (
+        integrationId: number,
+        kind: SyncRunKind,
+        launchedAt: number,
+    ): Promise<boolean> => {
+        try {
+            const rows = await listSyncRunsAction(businessId ?? undefined);
+            const row = rows.find(r => r.integration_id === integrationId && r.kind === kind);
+            if (!row?.finished_at) return false;
+            const finishedAt = new Date(row.finished_at).getTime();
+            if (!Number.isFinite(finishedAt) || finishedAt < launchedAt - RUN_CLOCK_SKEW_MS) return false;
+
+            if (kind === 'products') {
+                setResults(prev => ({
+                    ...prev,
+                    [integrationId]: {
+                        kind: 'products',
+                        matched: row.matched || 0,
+                        notAssociated: row.not_associated || 0,
+                        onlyInProbability: row.only_in_probability || 0,
+                        onlyInChannel: row.only_in_channel || 0,
+                    },
+                }));
+            } else {
+                const total = row.total || 0;
+                setProgress(prev => ({ ...prev, [integrationId]: { processed: total, total } }));
+                setResults(prev => ({
+                    ...prev,
+                    [integrationId]: {
+                        kind: 'inventory',
+                        total,
+                        updated: row.updated || 0,
+                        unchanged: row.unchanged || 0,
+                        skipped: row.skipped || 0,
+                        failed: row.failed || 0,
+                    },
+                }));
+            }
+            patchNode(integrationId, (row.failed || 0) > 0 ? 'error' : 'done');
+            return true;
+        } catch {
+            return false;
+        }
+    }, [businessId, patchNode]);
+
     useSSE({
         businessId: businessId ?? 0,
         eventTypes: GLOBAL_INVENTORY_EVENT_TYPES,
@@ -290,6 +380,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
     });
 
     const reset = useCallback(() => {
+        pendingEvents.current.clear();
         setMode('idle');
         setRunning(false);
         setNodes({});
@@ -304,6 +395,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         if (!provider) return;
 
         patchNode(integration.id, 'active');
+        const launchedAt = Date.now();
         let result: SyncStartResult | null = null;
         try {
             result = await provider.syncInventory(integration.id, businessId ?? undefined) as SyncStartResult;
@@ -320,16 +412,20 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             return;
         }
 
-        corrToIntegration.current.set(result.correlation_id, integration.id);
+        const correlationID = result.correlation_id;
+        corrToIntegration.current.set(correlationID, integration.id);
 
         await new Promise<void>(resolve => {
-            const timer = window.setTimeout(() => {
-                patchNode(integration.id, 'error');
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
-                }));
+            const timer = window.setTimeout(async () => {
                 completion.current.delete(integration.id);
+                const recovered = await hydrateFromLastRun(integration.id, 'inventory', launchedAt);
+                if (!recovered) {
+                    patchNode(integration.id, 'error');
+                    setResults(prev => ({
+                        ...prev,
+                        [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
+                    }));
+                }
                 resolve();
             }, SYNC_TIMEOUT_MS);
             completion.current.set(integration.id, () => {
@@ -337,8 +433,9 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                 completion.current.delete(integration.id);
                 resolve();
             });
+            drainPending(correlationID);
         });
-    }, [businessId, patchNode]);
+    }, [businessId, patchNode, drainPending, hydrateFromLastRun]);
 
     const runInventoryOne = useCallback(async (integrationId: number) => {
         const integration = eligible.find(i => i.id === integrationId);
@@ -389,6 +486,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         patchNode(integration.id, 'scan');
         setDetails(prev => ({ ...prev, [integration.id]: [] }));
 
+        const launchedAt = Date.now();
         let start: SyncStartResult | null = null;
         try {
             start = await provider.reconcileProducts(
@@ -408,16 +506,20 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             return;
         }
 
-        corrToIntegration.current.set(start.correlation_id, integration.id);
+        const correlationID = start.correlation_id;
+        corrToIntegration.current.set(correlationID, integration.id);
 
         await new Promise<void>(resolve => {
-            const timer = window.setTimeout(() => {
-                patchNode(integration.id, 'error');
-                setResults(prev => ({
-                    ...prev,
-                    [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
-                }));
+            const timer = window.setTimeout(async () => {
                 completion.current.delete(integration.id);
+                const recovered = await hydrateFromLastRun(integration.id, 'products', launchedAt);
+                if (!recovered) {
+                    patchNode(integration.id, 'error');
+                    setResults(prev => ({
+                        ...prev,
+                        [integration.id]: { kind: 'error', message: 'Continua en segundo plano' },
+                    }));
+                }
                 resolve();
             }, SYNC_TIMEOUT_MS);
             completion.current.set(integration.id, () => {
@@ -425,8 +527,9 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                 completion.current.delete(integration.id);
                 resolve();
             });
+            drainPending(correlationID);
         });
-    }, [businessId, patchNode]);
+    }, [businessId, patchNode, drainPending, hydrateFromLastRun]);
 
     const runProducts = useCallback(async () => {
         if (running || eligible.length === 0) return;
@@ -499,6 +602,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                         applyCompletion.current.delete(integrationId);
                         resolve();
                     });
+                    drainPending(correlationID);
                 });
             }
             setActionResult(prev => (prev[integrationId]?.message === 'Aplicando...' || !prev[integrationId]
@@ -517,7 +621,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
             setActionBusy(prev => ({ ...prev, [integrationId]: null }));
             loadLastRuns();
         }
-    }, [eligible, businessId, actionBusy, reconcileOne, loadLastRuns]);
+    }, [eligible, businessId, actionBusy, reconcileOne, loadLastRuns, drainPending]);
 
     const canRun = environment === 'inventory' || environment === 'products';
 

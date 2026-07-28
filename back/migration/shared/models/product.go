@@ -65,9 +65,10 @@ type Product struct {
 	DimensionUnit string   `gorm:"size:10;default:'cm'" json:"dimension_unit"` // Unidad de dimensiones
 
 	// Categorización
-	Category string         `gorm:"size:255;index" json:"category"`   // Categoría
-	Tags     datatypes.JSON `gorm:"type:jsonb" json:"tags,omitempty"` // Array de tags
-	Brand    string         `gorm:"size:255;index" json:"brand"`      // Marca
+	Category          string         `gorm:"size:255;index" json:"category"` // Categoría
+	ChannelCategories datatypes.JSON `gorm:"type:jsonb" json:"channel_categories,omitempty"`
+	Tags              datatypes.JSON `gorm:"type:jsonb" json:"tags,omitempty"` // Array de tags
+	Brand             string         `gorm:"size:255;index" json:"brand"`      // Marca
 
 	// Estado
 	Status     string `gorm:"size:50;default:'active';index" json:"status"` // Estado: active, draft, archived

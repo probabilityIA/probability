@@ -94,9 +94,10 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 		DimensionUnit: req.DimensionUnit,
 
 		// Categorización
-		Category: req.Category,
-		Tags:     req.Tags,
-		Brand:    req.Brand,
+		Category:          req.Category,
+		ChannelCategories: req.ChannelCategories,
+		Tags:              req.Tags,
+		Brand:             req.Brand,
 
 		// Estado
 		Status:     req.Status,
@@ -326,6 +327,9 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id
 	// Categorización
 	if req.Category != nil {
 		product.Category = *req.Category
+	}
+	if req.ChannelCategories != nil {
+		product.ChannelCategories = req.ChannelCategories
 	}
 	if req.Tags != nil {
 		product.Tags = req.Tags

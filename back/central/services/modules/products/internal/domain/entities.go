@@ -74,9 +74,10 @@ type CreateProductRequest struct {
 	DimensionUnit string   `json:"dimension_unit" binding:"omitempty,max=10"`
 
 	// Categorización
-	Category string         `json:"category" binding:"omitempty,max=255"`
-	Tags     datatypes.JSON `json:"tags" binding:"omitempty"`
-	Brand    string         `json:"brand" binding:"omitempty,max=255"`
+	Category          string            `json:"category" binding:"omitempty,max=255"`
+	ChannelCategories map[string]string `json:"channel_categories" binding:"omitempty"`
+	Tags              datatypes.JSON    `json:"tags" binding:"omitempty"`
+	Brand             string            `json:"brand" binding:"omitempty,max=255"`
 
 	// Estado
 	Status     string `json:"status" binding:"omitempty,oneof=active draft archived"`
@@ -130,9 +131,10 @@ type UpdateProductRequest struct {
 	DimensionUnit *string  `json:"dimension_unit" binding:"omitempty,max=10"`
 
 	// Categorización
-	Category *string        `json:"category" binding:"omitempty,max=255"`
-	Tags     datatypes.JSON `json:"tags" binding:"omitempty"`
-	Brand    *string        `json:"brand" binding:"omitempty,max=255"`
+	Category          *string           `json:"category" binding:"omitempty,max=255"`
+	ChannelCategories map[string]string `json:"channel_categories" binding:"omitempty"`
+	Tags              datatypes.JSON    `json:"tags" binding:"omitempty"`
+	Brand             *string           `json:"brand" binding:"omitempty,max=255"`
 
 	// Estado
 	Status     *string `json:"status" binding:"omitempty,oneof=active draft archived"`
@@ -192,9 +194,10 @@ type ProductResponse struct {
 	DimensionUnit string   `json:"dimension_unit"`
 
 	// Categorización
-	Category string         `json:"category"`
-	Tags     datatypes.JSON `json:"tags,omitempty"`
-	Brand    string         `json:"brand"`
+	Category          string            `json:"category"`
+	ChannelCategories map[string]string `json:"channel_categories,omitempty"`
+	Tags              datatypes.JSON    `json:"tags,omitempty"`
+	Brand             string            `json:"brand"`
 
 	// Estado
 	Status     string `json:"status"`
