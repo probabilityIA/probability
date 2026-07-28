@@ -37,6 +37,7 @@ type RepositoryMock struct {
 	GetOrderSelectedShippingFn        func(ctx context.Context, orderUUID string) (*domain.OrderSelectedShipping, error)
 	GetIntegrationConfigFlagFn        func(ctx context.Context, integrationID uint, key string) (bool, error)
 	GetIntegrationConfigValueFn       func(ctx context.Context, integrationID uint, key string) (string, error)
+	GetIntegrationConfigStringArrayFn func(ctx context.Context, integrationID uint, key string) ([]string, error)
 	CreateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
 	GetOriginAddressByIDFn            func(ctx context.Context, id uint) (*domain.OriginAddress, error)
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
@@ -266,6 +267,13 @@ func (m *RepositoryMock) GetIntegrationConfigValue(ctx context.Context, integrat
 		return m.GetIntegrationConfigValueFn(ctx, integrationID, key)
 	}
 	return "", nil
+}
+
+func (m *RepositoryMock) GetIntegrationConfigStringArray(ctx context.Context, integrationID uint, key string) ([]string, error) {
+	if m.GetIntegrationConfigStringArrayFn != nil {
+		return m.GetIntegrationConfigStringArrayFn(ctx, integrationID, key)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {

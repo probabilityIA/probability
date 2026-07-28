@@ -11,15 +11,17 @@ import (
 )
 
 type wooResolved struct {
-	Found               bool                  `json:"found"`
-	Salt                string                `json:"salt"`
-	Revoked             bool                  `json:"revoked"`
-	BusinessID          uint                  `json:"business_id"`
-	Carrier             *domain.CarrierInfo   `json:"carrier"`
-	Origin              *domain.OriginAddress `json:"origin"`
-	FreeShippingEnabled bool                  `json:"free_shipping_enabled"`
-	FreeShippingMin     float64               `json:"free_shipping_min"`
-	CODQuotingDisabled  bool                  `json:"cod_quoting_disabled"`
+	Found                  bool                  `json:"found"`
+	Salt                   string                `json:"salt"`
+	Revoked                bool                  `json:"revoked"`
+	BusinessID             uint                  `json:"business_id"`
+	Carrier                *domain.CarrierInfo   `json:"carrier"`
+	Origin                 *domain.OriginAddress `json:"origin"`
+	FreeShippingEnabled    bool                  `json:"free_shipping_enabled"`
+	FreeShippingMin        float64               `json:"free_shipping_min"`
+	CODQuotingDisabled     bool                  `json:"cod_quoting_disabled"`
+	AllowedCarriersCOD     []string              `json:"allowed_carriers_cod"`
+	AllowedCarriersPrepaid []string              `json:"allowed_carriers_prepaid"`
 }
 
 func wooResKey(integrationID uint) string {
@@ -69,6 +71,12 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 				r.FreeShippingMin = minVal
 			}
 		}
+	}
+	if arr, aerr := h.uc.Repo().GetIntegrationConfigStringArray(ctx, integrationID, "allowed_carriers_cod"); aerr == nil {
+		r.AllowedCarriersCOD = arr
+	}
+	if arr, aerr := h.uc.Repo().GetIntegrationConfigStringArray(ctx, integrationID, "allowed_carriers_prepaid"); aerr == nil {
+		r.AllowedCarriersPrepaid = arr
 	}
 
 	if h.redisClient != nil {

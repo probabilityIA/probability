@@ -76,6 +76,16 @@ const GUIDE_STEPS = [
     'Copia el Consumer Key y Secret',
 ];
 
+const CARRIER_OPTIONS = [
+    { code: 'COORDINADORA', label: 'Coordinadora' },
+    { code: 'DEPRISA', label: 'Deprisa' },
+    { code: 'INTERRAPIDISIMO', label: 'Interrapidisimo' },
+    { code: 'ENVIA', label: 'Envia' },
+    { code: 'SERVIENTREGA', label: 'Servientrega' },
+    { code: 'TCC', label: 'TCC' },
+    { code: '99MINUTOS', label: '99 Minutos' },
+];
+
 const PLUGIN_STEPS = [
     'Descarga el plugin con el boton de abajo',
     'En WordPress: Plugins → Anadir nuevo → Subir plugin',
@@ -160,6 +170,12 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
     const [freeShippingEnabled, setFreeShippingEnabled] = useState<boolean>(!!initialData?.config?.free_shipping_enabled);
     const [freeShippingMin, setFreeShippingMin] = useState<string>(
         initialData?.config?.free_shipping_min != null ? String(initialData.config.free_shipping_min) : ''
+    );
+    const [allowedCarriersCOD, setAllowedCarriersCOD] = useState<string[]>(
+        Array.isArray(initialData?.config?.allowed_carriers_cod) ? initialData.config.allowed_carriers_cod : []
+    );
+    const [allowedCarriersPrepaid, setAllowedCarriersPrepaid] = useState<string[]>(
+        Array.isArray(initialData?.config?.allowed_carriers_prepaid) ? initialData.config.allowed_carriers_prepaid : []
     );
 
     const handleDownloadPlugin = async () => {
@@ -320,6 +336,8 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                 free_shipping_min: freeShippingEnabled ? Number(freeShippingMin) || 0 : 0,
                 cod_quoting_disabled: codQuotingDisabled,
                 cod_includes_shipping: codIncludesShipping,
+                allowed_carriers_cod: allowedCarriersCOD,
+                allowed_carriers_prepaid: allowedCarriersPrepaid,
                 inventory_sync_enabled: inventorySync.enabled,
                 inventory_warehouse_mode: inventorySync.mode,
                 inventory_single_warehouse_id: inventorySync.single_warehouse_id,
@@ -844,6 +862,56 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                             >
                                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${codIncludesShipping ? 'translate-x-6' : 'translate-x-1'}`} />
                             </button>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-4">
+                        <span className="block text-[12px] font-semibold text-gray-900 dark:text-gray-100 mb-1">Transportadoras visibles en el checkout</span>
+                        <span className="block text-[11px] text-gray-500 dark:text-gray-400 mb-3">
+                            Elige que transportadoras puede ver tu cliente al pagar, por separado para contra entrega y para pago directo.
+                            Si no marcas ninguna en un entorno, se muestran todas las que respondan cotizacion (comportamiento actual).
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <span className="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Contra entrega</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {CARRIER_OPTIONS.map(({ code, label }) => (
+                                        <label key={code} className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={allowedCarriersCOD.includes(code)}
+                                                onChange={() =>
+                                                    setAllowedCarriersCOD((prev) =>
+                                                        prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+                                                    )
+                                                }
+                                                className="rounded border-gray-300 dark:border-gray-600"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <span className="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Pago directo</span>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {CARRIER_OPTIONS.map(({ code, label }) => (
+                                        <label key={code} className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-300 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={allowedCarriersPrepaid.includes(code)}
+                                                onChange={() =>
+                                                    setAllowedCarriersPrepaid((prev) =>
+                                                        prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+                                                    )
+                                                }
+                                                className="rounded border-gray-300 dark:border-gray-600"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
