@@ -23,7 +23,8 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	s.status, s.delivered_at,
 	true AS collected,
 	false AS paid,
-	`+hasGuideExpr+` AS has_guide
+	`+hasGuideExpr+` AS has_guide,
+	`+guideNumberExpr+` AS guide_number
 FROM orders o %s
 WHERE o.deleted_at IS NULL AND o.cod_total > 0 AND o.business_id = ?
 	AND s.status = 'delivered'
@@ -43,6 +44,7 @@ ORDER BY COALESCE(s.delivered_at, o.created_at) DESC`, latestShipmentJoin, linke
 			OrderNumber:   rows[i].OrderNumber,
 			ShipmentID:    rows[i].ShipmentID,
 			HasGuide:      rows[i].HasGuide,
+			GuideNumber:   rows[i].GuideNumber,
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,
@@ -66,7 +68,8 @@ SELECT o.id AS order_id, o.order_number, o.customer_name, o.cod_total, o.currenc
 	s.status, s.delivered_at,
 	true AS collected,
 	true AS paid,
-	`+hasGuideExpr+` AS has_guide
+	`+hasGuideExpr+` AS has_guide,
+	`+guideNumberExpr+` AS guide_number
 FROM orders o %s
 JOIN cod_payment_cut_order cpo ON cpo.order_id = o.id AND cpo.deleted_at IS NULL
 WHERE cpo.cod_payment_cut_id = ? AND o.business_id = ? AND o.deleted_at IS NULL
@@ -84,6 +87,7 @@ ORDER BY cpo.paid_at DESC, o.created_at DESC`, latestShipmentJoin)
 			OrderNumber:   rows[i].OrderNumber,
 			ShipmentID:    rows[i].ShipmentID,
 			HasGuide:      rows[i].HasGuide,
+			GuideNumber:   rows[i].GuideNumber,
 			CustomerName:  rows[i].CustomerName,
 			Carrier:       rows[i].Carrier,
 			CodTotal:      rows[i].CodTotal,

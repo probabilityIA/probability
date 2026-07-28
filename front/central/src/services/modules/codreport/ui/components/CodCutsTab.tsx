@@ -42,7 +42,8 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
     const [expanded, setExpanded] = useState<string | null>(null);
     const [feedback, setFeedback] = useState<{ ok: boolean; msg: string } | null>(null);
     const [createOpen, setCreateOpen] = useState(false);
-    const [createDate, setCreateDate] = useState('');
+    const [createStart, setCreateStart] = useState('');
+    const [createEnd, setCreateEnd] = useState('');
     const [selectionPeriod, setSelectionPeriod] = useState<{ start: string; end: string } | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<PaymentCut | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -74,11 +75,33 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
         setTimeout(() => setFeedback(null), 3500);
     };
 
+    const rangeInvalid = !createStart || !createEnd || createStart > createEnd;
+
     const continueCreate = () => {
-        if (!createDate) return;
-        const { start, end } = weekBounds(createDate);
+        if (rangeInvalid) return;
         setCreateOpen(false);
-        openSelection(start, end);
+        openSelection(createStart, createEnd);
+    };
+
+    const applyPreset = (preset: 'week' | 'lastWeek' | 'month') => {
+        const today = todayStr();
+        if (preset === 'week') {
+            const { start, end } = weekBounds(today);
+            setCreateStart(start);
+            setCreateEnd(end);
+            return;
+        }
+        if (preset === 'lastWeek') {
+            const { start } = weekBounds(today);
+            const [y, m, d] = start.split('-').map(Number);
+            const prev = new Date(Date.UTC(y, m - 1, d - 7));
+            const bounds = weekBounds(prev.toISOString().slice(0, 10));
+            setCreateStart(bounds.start);
+            setCreateEnd(bounds.end);
+            return;
+        }
+        setCreateStart(today.slice(0, 8) + '01');
+        setCreateEnd(today);
     };
 
     const confirmDraft = async (cut: PaymentCut) => {
@@ -122,7 +145,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                 <div className="flex-1" />
                 {canConfirm && (
                     <button
-                        onClick={() => { setCreateDate(todayStr()); setCreateOpen(true); }}
+                        onClick={() => { const { start, end } = weekBounds(todayStr()); setCreateStart(start); setCreateEnd(end); setCreateOpen(true); }}
                         className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-md inline-flex items-center gap-1 shrink-0"
                     >
                         <Plus size={13} /> Marcar corte de pago
@@ -158,7 +181,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
             {!loading && cuts.length === 0 && !error && (
                 <div className="text-center py-16 text-gray-400 text-sm">
                     <Calendar size={30} className="mx-auto mb-2 opacity-50" />
-                    {isAdmin ? 'No hay cortes de pago todavia.' : 'No hay semanas confirmadas todavia.'}
+                    {isAdmin ? 'No hay cortes de pago todavia.' : 'No hay cortes confirmados todavia.'}
                 </div>
             )}
 
@@ -281,7 +304,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             <Trash2 size={18} className="text-red-600" /> {deleteTarget.status === 'confirmed' ? 'Eliminar corte de pago' : 'Cancelar borrador'}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                            {deleteTarget.status === 'confirmed' ? 'Vas a eliminar el corte confirmado de la semana ' : 'Vas a cancelar el borrador de la semana '}
+                            {deleteTarget.status === 'confirmed' ? 'Vas a eliminar el corte confirmado del periodo ' : 'Vas a cancelar el borrador del periodo '}
                             <strong>{periodLabel(deleteTarget.period_start, deleteTarget.period_end)}</strong>.
                             Sus <strong>{deleteTarget.orders_count}</strong> ordenes volveran a quedar disponibles
                             (podras consignarlas en otro corte). Esta accion no se puede deshacer.
@@ -314,24 +337,57 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             <Plus size={18} className="text-emerald-600" /> Marcar corte de pago
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                            Selecciona cualquier dia de la semana que quieres cerrar. Luego eliges orden por orden
-                            cuales se pagaron al cliente (lunes a domingo).
+                            Define el periodo que quieres cerrar. Puede ser una semana, un mes o el rango que
+                            necesites. Luego eliges orden por orden cuales se pagaron al cliente.
                         </p>
-                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
-                            Dia de la semana
-                        </label>
-                        <input
-                            type="date"
-                            value={createDate}
-                            onChange={e => setCreateDate(e.target.value)}
-                            className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white mb-3"
-                        />
-                        {createDate && (
+                        <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                            {([
+                                { key: 'week', label: 'Esta semana' },
+                                { key: 'lastWeek', label: 'Semana pasada' },
+                                { key: 'month', label: 'Este mes' },
+                            ] as const).map(p => (
+                                <button
+                                    key={p.key}
+                                    onClick={() => applyPreset(p.key)}
+                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                >
+                                    {p.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Desde</label>
+                                <input
+                                    type="date"
+                                    value={createStart}
+                                    max={createEnd || undefined}
+                                    onChange={e => setCreateStart(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Hasta</label>
+                                <input
+                                    type="date"
+                                    value={createEnd}
+                                    min={createStart || undefined}
+                                    onChange={e => setCreateEnd(e.target.value)}
+                                    className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                />
+                            </div>
+                        </div>
+                        {!rangeInvalid && (
                             <div className="bg-gray-50 dark:bg-gray-900/40 rounded-lg p-3 text-sm mb-4 flex items-center gap-2">
                                 <Calendar size={14} className="text-purple-600 shrink-0" />
                                 <span className="text-gray-700 dark:text-gray-200">
-                                    Semana: <strong>{periodLabel(weekBounds(createDate).start, weekBounds(createDate).end)}</strong>
+                                    Periodo: <strong>{periodLabel(createStart, createEnd)}</strong>
                                 </span>
+                            </div>
+                        )}
+                        {createStart && createEnd && createStart > createEnd && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm mb-4 text-amber-700">
+                                La fecha inicial no puede ser posterior a la final.
                             </div>
                         )}
                         <div className="flex justify-end gap-2">
@@ -343,7 +399,7 @@ export default function CodCutsTab({ businessId, isAdmin }: Props) {
                             </button>
                             <button
                                 onClick={continueCreate}
-                                disabled={!createDate}
+                                disabled={rangeInvalid}
                                 className="px-3 py-2 text-sm rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
                             >
                                 <CheckCircle2 size={14} />
