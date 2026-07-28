@@ -99,6 +99,7 @@ type IRepository interface {
 
 	GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error)
 	GetOrderCodBasis(ctx context.Context, orderUUID string) (*OrderCodBasis, error)
+	GetOrderExternalGuide(ctx context.Context, orderUUID string) (*OrderExternalGuide, error)
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
@@ -243,6 +244,28 @@ type GuideNotificationData struct {
 	CodTotal      *float64
 	CodCarrierFee *float64
 	TrackingURL   string
+}
+
+type OrderExternalGuide struct {
+	Platform       string
+	TrackingNumber string
+	GuideID        string
+	GuideURL       string
+	Carrier        string
+	CustomerName   string
+	ShippingStreet string
+	ShippingCity   string
+	ShippingState  string
+	ShippingCost   float64
+	IsTest         bool
+	Status         string
+}
+
+func (g OrderExternalGuide) HasGuide() bool {
+	if g.Status == "cancelled" {
+		return false
+	}
+	return g.TrackingNumber != "" || g.GuideID != "" || g.GuideURL != ""
 }
 
 type OrderCodBasis struct {

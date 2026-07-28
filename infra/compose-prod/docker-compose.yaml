@@ -85,6 +85,10 @@ services:
       APP_ENV:             "${APP_ENV}"
       HTTP_PORT:           "3050"
       LOG_LEVEL:           "${LOG_LEVEL}"
+      ENABLE_FILE_LOGGING:   "${ENABLE_FILE_LOGGING:-true}"
+      LOG_DIRECTORY:         "/app/log"
+      LOG_FILE_MAX_SIZE_MB:  "${LOG_FILE_MAX_SIZE_MB:-100}"
+      LOG_FILE_MAX_BACKUPS:  "${LOG_FILE_MAX_BACKUPS:-4}"
       JWT_SECRET:          "${JWT_SECRET}"
       URL_BASE_SWAGGER:    "${URL_BASE_SWAGGER}"
       SMTP_HOST:           "${SMTP_HOST}"
@@ -137,6 +141,8 @@ services:
       WOO_STORE_INSTANCE_ID: "${WOO_STORE_INSTANCE_ID:-}"
       WOO_STORE_URL:         "${WOO_STORE_URL:-}"
     restart: unless-stopped
+    volumes:
+      - /home/ubuntu/probability/logs/back-central:/app/log
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
       interval: 30s

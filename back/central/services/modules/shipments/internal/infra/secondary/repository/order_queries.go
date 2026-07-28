@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -176,6 +177,62 @@ func (r *Repository) GetOrderCodBasis(ctx context.Context, orderUUID string) (*d
 		CodTotal:            codTotal,
 		CodIncludesShipping: result.CodIncludesShipping,
 	}, nil
+}
+
+func (r *Repository) GetOrderExternalGuide(ctx context.Context, orderUUID string) (*domain.OrderExternalGuide, error) {
+	var result struct {
+		Platform       string  `gorm:"column:platform"`
+		TrackingNumber *string `gorm:"column:tracking_number"`
+		GuideID        *string `gorm:"column:guide_id"`
+		GuideLink      *string `gorm:"column:guide_link"`
+		Carrier        *string `gorm:"column:carrier"`
+		CustomerName   string  `gorm:"column:customer_name"`
+		ShippingStreet string  `gorm:"column:shipping_street"`
+		ShippingCity   string  `gorm:"column:shipping_city"`
+		ShippingState  string  `gorm:"column:shipping_state"`
+		ShippingCost   float64 `gorm:"column:shipping_cost"`
+		IsTest         bool    `gorm:"column:is_test"`
+		Status         string  `gorm:"column:status"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("orders").
+		Select(`platform, tracking_number, guide_id, guide_link, carrier, customer_name,
+			shipping_street, shipping_city, shipping_state, COALESCE(shipping_cost,0) AS shipping_cost,
+			COALESCE(is_test,false) AS is_test, status`).
+		Where("id = ?", orderUUID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("orden %s no encontrada", orderUUID)
+		}
+		return nil, err
+	}
+
+	return &domain.OrderExternalGuide{
+		Platform:       result.Platform,
+		TrackingNumber: strings.TrimSpace(derefStr(result.TrackingNumber)),
+		GuideID:        strings.TrimSpace(derefStr(result.GuideID)),
+		GuideURL:       strings.TrimSpace(derefStr(result.GuideLink)),
+		Carrier:        strings.TrimSpace(derefStr(result.Carrier)),
+		CustomerName:   result.CustomerName,
+		ShippingStreet: result.ShippingStreet,
+		ShippingCity:   result.ShippingCity,
+		ShippingState:  result.ShippingState,
+		ShippingCost:   result.ShippingCost,
+		IsTest:         result.IsTest,
+		Status:         result.Status,
+	}, nil
+}
+
+func derefStr(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }
 
 func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error {

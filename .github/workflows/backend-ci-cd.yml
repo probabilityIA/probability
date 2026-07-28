@@ -216,6 +216,11 @@ jobs:
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
 
+            # Directorio de logs persistentes del backend (sobrevive al redeploy)
+            # El contenedor corre como appuser (UID 1000): sin este chown no puede escribir
+            sudo mkdir -p /home/ubuntu/probability/logs/back-central
+            sudo chown -R 1000:1000 /home/ubuntu/probability/logs/back-central
+
             # Instalar/reinstalar AWS CLI para ARM64
             # Verificar si AWS CLI está instalado y funciona correctamente
             if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then

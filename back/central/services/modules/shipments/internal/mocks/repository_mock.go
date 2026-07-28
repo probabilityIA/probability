@@ -28,6 +28,7 @@ type RepositoryMock struct {
 	GetOrderIntegrationIDFn           func(ctx context.Context, orderUUID string) (uint, error)
 	GetOrderCodTotalFn                func(ctx context.Context, orderUUID string) (*float64, error)
 	GetOrderCodBasisFn                func(ctx context.Context, orderUUID string) (*domain.OrderCodBasis, error)
+	GetOrderExternalGuideFn           func(ctx context.Context, orderUUID string) (*domain.OrderExternalGuide, error)
 	GetIntegrationBusinessIDFn        func(ctx context.Context, integrationID uint) (uint, error)
 	GetCityDaneByNameFn               func(ctx context.Context, city, province string) (string, error)
 	CreateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
@@ -186,6 +187,13 @@ func (m *RepositoryMock) GetOrderCodTotal(ctx context.Context, orderUUID string)
 func (m *RepositoryMock) GetOrderCodBasis(ctx context.Context, orderUUID string) (*domain.OrderCodBasis, error) {
 	if m.GetOrderCodBasisFn != nil {
 		return m.GetOrderCodBasisFn(ctx, orderUUID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetOrderExternalGuide(ctx context.Context, orderUUID string) (*domain.OrderExternalGuide, error) {
+	if m.GetOrderExternalGuideFn != nil {
+		return m.GetOrderExternalGuideFn(ctx, orderUUID)
 	}
 	return nil, nil
 }

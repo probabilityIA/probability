@@ -77,12 +77,87 @@ func (c *OrderCreatedConsumer) handle(message []byte) error {
 		c.log.Error(ctx).Err(err).Msg("Failed to unmarshal order event")
 		return nil
 	}
-	if msg.EventType != "order.created" || msg.OrderID == "" {
+	if msg.OrderID == "" {
+		return nil
+	}
+	if msg.EventType != "order.created" && msg.EventType != "order.updated" {
 		return nil
 	}
 
-	c.processAssociation(ctx, &msg)
+	c.materializeExternalGuide(ctx, &msg)
+
+	if msg.EventType == "order.created" {
+		c.processAssociation(ctx, &msg)
+	}
 	return nil
+}
+
+func (c *OrderCreatedConsumer) materializeExternalGuide(ctx context.Context, msg *orderCreatedMessage) {
+	repo := c.uc.Repo()
+
+	guide, err := repo.GetOrderExternalGuide(ctx, msg.OrderID)
+	if err != nil || guide == nil || !guide.HasGuide() {
+		return
+	}
+
+	existing, err := repo.GetShipmentsByOrderID(ctx, msg.OrderID)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to read shipments before materializing external guide")
+		return
+	}
+
+	if shouldSkipExternalGuide(existing, guide) {
+		return
+	}
+
+	req := &domain.CreateShipmentRequest{
+		OrderID:            &msg.OrderID,
+		ClientName:         guide.CustomerName,
+		DestinationAddress: guide.ShippingStreet,
+		DestinationCity:    guide.ShippingCity,
+		DestinationState:   guide.ShippingState,
+		Status:             "pending",
+	}
+	if guide.TrackingNumber != "" {
+		req.TrackingNumber = &guide.TrackingNumber
+	}
+	if guide.GuideID != "" {
+		req.GuideID = &guide.GuideID
+	}
+	if guide.GuideURL != "" {
+		req.GuideURL = &guide.GuideURL
+	}
+	carrier := guide.Carrier
+	if carrier == "" {
+		carrier = carrierFromPlatform(guide.Platform)
+	}
+	if carrier != "" {
+		req.Carrier = &carrier
+	}
+	if guide.Platform != "" {
+		platform := guide.Platform
+		req.CarrierCode = &platform
+	}
+	if guide.ShippingCost > 0 {
+		cost := guide.ShippingCost
+		req.ShippingCost = &cost
+	}
+
+	created, err := c.uc.CreateShipment(ctx, req)
+	if err != nil {
+		c.log.Error(ctx).Err(err).
+			Str("order_id", msg.OrderID).
+			Str("tracking_number", guide.TrackingNumber).
+			Msg("Failed to materialize external guide as shipment")
+		return
+	}
+
+	c.log.Info(ctx).
+		Str("order_id", msg.OrderID).
+		Uint("shipment_id", created.ID).
+		Str("platform", guide.Platform).
+		Str("tracking_number", guide.TrackingNumber).
+		Msg("External guide materialized as shipment")
 }
 
 func (c *OrderCreatedConsumer) processAssociation(ctx context.Context, msg *orderCreatedMessage) {
@@ -139,6 +214,36 @@ func (c *OrderCreatedConsumer) processAssociation(ctx context.Context, msg *orde
 		Msg("Saved quote associated to order")
 
 	c.maybeAutoGenerate(ctx, msg, quote, rateIdx)
+}
+
+func shouldSkipExternalGuide(existing []domain.Shipment, guide *domain.OrderExternalGuide) bool {
+	for i := range existing {
+		s := &existing[i]
+		if guide.TrackingNumber != "" && s.TrackingNumber != nil && strings.TrimSpace(*s.TrackingNumber) == guide.TrackingNumber {
+			return true
+		}
+		if s.GuideURL != nil && strings.TrimSpace(*s.GuideURL) != "" {
+			return true
+		}
+		if guide.GuideID != "" && s.GuideID != nil && strings.TrimSpace(*s.GuideID) == guide.GuideID {
+			return true
+		}
+		if s.Status == "pending" && (s.TrackingNumber == nil || strings.TrimSpace(*s.TrackingNumber) == "") {
+			return true
+		}
+	}
+	return false
+}
+
+func carrierFromPlatform(platform string) string {
+	switch strings.ToLower(strings.TrimSpace(platform)) {
+	case "":
+		return ""
+	case "mercadolibre":
+		return "MERCADO ENVIOS"
+	default:
+		return strings.ToUpper(strings.TrimSpace(platform))
+	}
 }
 
 func parseQuoteServiceCode(code string) (uint, int, bool) {

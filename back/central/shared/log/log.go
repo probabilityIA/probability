@@ -7,11 +7,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 type ILogger interface {
@@ -22,7 +23,7 @@ type ILogger interface {
 	Fatal(ctx ...context.Context) *zerolog.Event
 	Panic(ctx ...context.Context) *zerolog.Event
 	With() zerolog.Context
-	// Nuevos métodos para logger contextual
+
 	WithService(service string) ILogger
 	WithModule(module string) ILogger
 	WithBusinessID(businessID uint) ILogger
@@ -39,45 +40,39 @@ var defaultLogger *logger
 
 func New() ILogger {
 	if defaultLogger == nil {
-		// CARGAR .env ANTES de leer variables de entorno
+
 		_ = godotenv.Load(".env")
 
-		// Configurar el logger con formato de consola bonito
 		consoleWriter := zerolog.ConsoleWriter{
-			Out:        os.Stdout,        // Escribir a stdout para que se vea en consola
-			TimeFormat: "01-02 15:04:05", // Fecha corta (mes-día) y hora
+			Out:        os.Stdout,
+			TimeFormat: "01-02 15:04:05",
 		}
 
-		// Crear logger base con consola
 		var baseLogger zerolog.Logger
 
-		// Si está habilitado el logging a archivo, usar multi-writer con filtro de nivel
-		if os.Getenv("ENABLE_DEBUG_FILE_LOGGING") == "true" {
+		allLevelsToFile := os.Getenv("ENABLE_FILE_LOGGING") == "true"
+		debugOnlyToFile := os.Getenv("ENABLE_DEBUG_FILE_LOGGING") == "true"
+
+		if allLevelsToFile || debugOnlyToFile {
 			fileWriter, err := createFileWriter()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "⚠️  Failed to create log file writer: %v\n", err)
-				// Solo consola si falla el archivo
+				fmt.Fprintf(os.Stderr, "Failed to create log file writer: %v\n", err)
 				baseLogger = zerolog.New(consoleWriter)
 			} else {
-				logDir := os.Getenv("LOG_DIRECTORY")
-				if logDir == "" {
-					logDir = "./log"
+				var writers []io.Writer
+				writers = append(writers, consoleWriter)
+				if allLevelsToFile {
+					writers = append(writers, fileWriter)
+					fmt.Printf("File logging enabled: %s (all levels, max %d MB x %d files)\n",
+						logFilePath(), fileMaxSizeMB(), fileMaxBackups()+1)
+				} else {
+					writers = append(writers, &debugOnlyWriter{writer: fileWriter})
+					fmt.Printf("Debug file logging enabled: %s (debug only, max %d MB x %d files)\n",
+						logFilePath(), fileMaxSizeMB(), fileMaxBackups()+1)
 				}
-				today := time.Now().Format("2006-01-02")
-				fmt.Printf("✅ Debug file logging enabled: %s/app-%s.log (Debug level only)\n", logDir, today)
-
-				// Crear writer filtrado que SOLO escribe logs de Debug
-				debugWriter := &debugOnlyWriter{writer: fileWriter}
-
-				// MultiLevelWriter: consola recibe todos, archivo solo Debug
-				multiWriter := zerolog.MultiLevelWriter(
-					consoleWriter,  // Todos los niveles
-					debugWriter,    // Solo Debug
-				)
-				baseLogger = zerolog.New(multiWriter)
+				baseLogger = zerolog.New(zerolog.MultiLevelWriter(writers...))
 			}
 		} else {
-			// Solo consola
 			baseLogger = zerolog.New(consoleWriter)
 		}
 
@@ -89,7 +84,6 @@ func New() ILogger {
 				Hook(&tracingHook{}),
 		}
 
-		// Configurar el nivel de log desde variable de entorno
 		level := os.Getenv("LOG_LEVEL")
 		switch level {
 		case "debug":
@@ -102,7 +96,6 @@ func New() ILogger {
 			defaultLogger.log = defaultLogger.log.Level(zerolog.InfoLevel)
 		}
 
-		// Forzar el logger por defecto del contexto
 		zerolog.DefaultContextLogger = &defaultLogger.log
 	}
 	return defaultLogger
@@ -112,34 +105,49 @@ func NewFromZerolog(zl zerolog.Logger) ILogger {
 	return &logger{log: zl}
 }
 
-// createFileWriter crea un writer que escribe logs en formato JSON a un archivo
-// con rotación diaria (app-YYYY-MM-DD.log)
-func createFileWriter() (io.Writer, error) {
-	// Obtener directorio de logs desde variable de entorno
+func logDirectory() string {
 	logDir := os.Getenv("LOG_DIRECTORY")
 	if logDir == "" {
 		logDir = "./log"
 	}
+	return logDir
+}
 
-	// Crear directorio si no existe
-	if err := os.MkdirAll(logDir, 0755); err != nil {
+func logFilePath() string {
+	return filepath.Join(logDirectory(), "app.log")
+}
+
+func envInt(key string, fallback int) int {
+	if raw := os.Getenv(key); raw != "" {
+		if v, err := strconv.Atoi(raw); err == nil && v > 0 {
+			return v
+		}
+	}
+	return fallback
+}
+
+func fileMaxSizeMB() int {
+	return envInt("LOG_FILE_MAX_SIZE_MB", 100)
+}
+
+func fileMaxBackups() int {
+	return envInt("LOG_FILE_MAX_BACKUPS", 4)
+}
+
+func createFileWriter() (io.Writer, error) {
+	if err := os.MkdirAll(logDirectory(), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create log directory: %w", err)
 	}
 
-	// Generar nombre de archivo con fecha actual (rotación diaria)
-	today := time.Now().Format("2006-01-02")
-	logFilePath := filepath.Join(logDir, fmt.Sprintf("app-%s.log", today))
-
-	// Abrir archivo en modo APPEND (como estaba originalmente)
-	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open log file: %w", err)
-	}
-
-	return file, nil
+	return &lumberjack.Logger{
+		Filename:   logFilePath(),
+		MaxSize:    fileMaxSizeMB(),
+		MaxBackups: fileMaxBackups(),
+		Compress:   true,
+		LocalTime:  true,
+	}, nil
 }
 
-// NewWithContext crea un logger con contexto automático de servicio y módulo
 func NewWithContext() ILogger {
 	service, module := extractServiceAndModule()
 	return &logger{
@@ -198,9 +206,8 @@ func (l *logger) Panic(ctx ...context.Context) *zerolog.Event {
 	return l.addContextualFields(l.log.WithLevel(zerolog.PanicLevel), nil)
 }
 
-// addContextualFields agrega los campos contextuales al evento de log
 func (l *logger) addContextualFields(event *zerolog.Event, ctx context.Context) *zerolog.Event {
-	// Agregar campos del logger si están configurados
+
 	if l.service != "" {
 		event = event.Str("service", l.service)
 	}
@@ -211,7 +218,6 @@ func (l *logger) addContextualFields(event *zerolog.Event, ctx context.Context) 
 		event = event.Uint("business_id", l.businessID)
 	}
 
-	// Agregar nombre de función automáticamente
 	skipFunc := false
 	if ctx != nil {
 		if skip, ok := SkipFunctionFromCtx(ctx); ok && skip {
@@ -226,7 +232,6 @@ func (l *logger) addContextualFields(event *zerolog.Event, ctx context.Context) 
 		}
 	}
 
-	// Agregar campos del contexto si están disponibles
 	if ctx != nil {
 		if service, ok := ServiceFromCtx(ctx); ok {
 			event = event.Str("service", service)
@@ -258,7 +263,6 @@ func (l *logger) With() zerolog.Context {
 	return l.log.With()
 }
 
-// WithService crea un nuevo logger con el servicio especificado
 func (l *logger) WithService(service string) ILogger {
 	return &logger{
 		log:        l.log,
@@ -268,7 +272,6 @@ func (l *logger) WithService(service string) ILogger {
 	}
 }
 
-// WithModule crea un nuevo logger con el módulo especificado
 func (l *logger) WithModule(module string) ILogger {
 	return &logger{
 		log:        l.log,
@@ -278,7 +281,6 @@ func (l *logger) WithModule(module string) ILogger {
 	}
 }
 
-// WithBusinessID crea un nuevo logger con el business_id especificado
 func (l *logger) WithBusinessID(businessID uint) ILogger {
 	return &logger{
 		log:        l.log,
@@ -292,16 +294,14 @@ func Init() {
 	New()
 }
 
-// extractServiceAndModule extrae automáticamente el servicio y módulo del stack trace
 func extractServiceAndModule() (service, module string) {
-	// Obtener el stack trace
+
 	pc := make([]uintptr, 15)
-	n := runtime.Callers(2, pc) // Saltar esta función y NewWithContext
+	n := runtime.Callers(2, pc)
 	if n == 0 {
 		return "unknown", "unknown"
 	}
 
-	// Buscar la función que no sea del paquete log o runtime
 	for i := 0; i < n; i++ {
 		fn := runtime.FuncForPC(pc[i])
 		if fn == nil {
@@ -309,16 +309,14 @@ func extractServiceAndModule() (service, module string) {
 		}
 
 		funcName := fn.Name()
-		// Filtrar funciones del logger y runtime
+
 		if !strings.Contains(funcName, "log.") &&
 			!strings.Contains(funcName, "runtime.") &&
 			!strings.Contains(funcName, "zerolog.") {
 
-			// Extraer servicio y módulo del path completo
-			// Ejemplo: central/services/horizontalproperty/internal/infra/primary/handlers/handlers.CreatePropertyUnit
 			parts := strings.Split(funcName, "/")
 			if len(parts) >= 3 {
-				// Buscar el servicio en el path
+
 				for j, part := range parts {
 					if part == "services" && j+1 < len(parts) {
 						service = parts[j+1]
@@ -326,7 +324,6 @@ func extractServiceAndModule() (service, module string) {
 					}
 				}
 
-				// Buscar el módulo (handler, usecase, repository, etc.)
 				for _, part := range parts {
 					if strings.Contains(part, "handler") ||
 						strings.Contains(part, "usecase") ||
@@ -347,16 +344,14 @@ func extractServiceAndModule() (service, module string) {
 	return "unknown", "unknown"
 }
 
-// getFunctionName obtiene el nombre de la función que está ejecutando el log
 func getFunctionName() string {
-	// Obtener el stack trace
+
 	pc := make([]uintptr, 10)
 	n := runtime.Callers(0, pc)
 	if n == 0 {
 		return "unknown"
 	}
 
-	// Buscar la función que no sea del paquete log o runtime
 	for i := 0; i < n; i++ {
 		fn := runtime.FuncForPC(pc[i])
 		if fn == nil {
@@ -364,11 +359,11 @@ func getFunctionName() string {
 		}
 
 		funcName := fn.Name()
-		// Filtrar funciones del logger y runtime
+
 		if !strings.Contains(funcName, "log.") &&
 			!strings.Contains(funcName, "runtime.") &&
 			!strings.Contains(funcName, "zerolog.") {
-			// Extraer solo el nombre de la función sin el paquete completo
+
 			parts := strings.Split(funcName, ".")
 			if len(parts) > 0 {
 				return parts[len(parts)-1]
@@ -379,7 +374,6 @@ func getFunctionName() string {
 	return "unknown"
 }
 
-// debugOnlyWriter filtra y solo escribe logs de nivel Debug
 type debugOnlyWriter struct {
 	writer io.Writer
 }
@@ -389,18 +383,18 @@ func (w *debugOnlyWriter) Write(p []byte) (n int, err error) {
 }
 
 func (w *debugOnlyWriter) WriteLevel(level zerolog.Level, p []byte) (n int, err error) {
-	// Solo escribir si es nivel Debug
+
 	if level == zerolog.DebugLevel {
 		return w.writer.Write(p)
 	}
-	// Ignorar otros niveles
+
 	return len(p), nil
 }
 
 type tracingHook struct{}
 
 func (h *tracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-	// Si el mensaje es solo espacios o vacío, no agregar metadatos
+
 	if strings.TrimSpace(msg) == "" {
 		return
 	}
@@ -411,7 +405,6 @@ func (h *tracingHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 		e.Str("req_id", reqId)
 	}
 
-	// Agregar metadatos estructurados si están disponibles en el contexto
 	if service, ok := ServiceFromCtx(ctx); ok {
 		e.Str("service", service)
 	}
@@ -495,37 +488,30 @@ func FunctionFromCtx(ctx context.Context) (string, bool) {
 	return function, ok
 }
 
-// WithServiceCtx agrega el servicio al contexto
 func WithServiceCtx(ctx context.Context, service string) context.Context {
 	return context.WithValue(ctx, service, service)
 }
 
-// WithModuleCtx agrega el módulo al contexto
 func WithModuleCtx(ctx context.Context, module string) context.Context {
 	return context.WithValue(ctx, module, module)
 }
 
-// WithBusinessIDCtx agrega el business_id al contexto
 func WithBusinessIDCtx(ctx context.Context, businessID uint) context.Context {
 	return context.WithValue(ctx, businessID, businessID)
 }
 
-// WithUserIDCtx agrega el user_id al contexto
 func WithUserIDCtx(ctx context.Context, userID uint) context.Context {
 	return context.WithValue(ctx, userID, userID)
 }
 
-// WithDurationCtx agrega la duración al contexto
 func WithDurationCtx(ctx context.Context, duration string) context.Context {
 	return context.WithValue(ctx, duration, duration)
 }
 
-// WithStatusCodeCtx agrega el status code al contexto
 func WithStatusCodeCtx(ctx context.Context, statusCode int) context.Context {
 	return context.WithValue(ctx, statusCode, statusCode)
 }
 
-// WithFunctionCtx agrega el nombre de función al contexto
 func WithFunctionCtx(ctx context.Context, function string) context.Context {
 	return context.WithValue(ctx, function, function)
 }
@@ -539,7 +525,6 @@ func SkipFunctionFromCtx(ctx context.Context) (bool, bool) {
 	return skip, ok
 }
 
-// WithSkipFunctionCtx agrega la instrucción de saltar el nombre de función al contexto
 func WithSkipFunctionCtx(ctx context.Context) context.Context {
 	return context.WithValue(ctx, skipFunction, true)
 }
