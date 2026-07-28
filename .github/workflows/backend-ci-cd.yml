@@ -216,6 +216,9 @@ jobs:
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
 
+            # Directorio de logs persistentes del backend (sobrevive al redeploy)
+            mkdir -p ~/probability/logs/back-central
+
             # Instalar/reinstalar AWS CLI para ARM64
             # Verificar si AWS CLI está instalado y funciona correctamente
             if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then
