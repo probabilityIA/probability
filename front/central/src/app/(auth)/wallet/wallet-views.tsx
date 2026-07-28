@@ -52,7 +52,7 @@ export function AdminWalletView() {
     const [businesses, setBusinesses] = useState<Record<number, string>>({});
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [searchBusiness, setSearchBusiness] = useState('');
-    const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected'>('approved');
+    const [activeTab, setActiveTab] = useState<'review' | 'approved' | 'rejected' | 'history'>('approved');
     const [showBusinessSelector, setShowBusinessSelector] = useState(false);
     const [selectedBusinessesForKPI, setSelectedBusinessesForKPI] = useState<Set<number>>(new Set());
     const [savingKPI, setSavingKPI] = useState(false);
@@ -392,7 +392,7 @@ export function AdminWalletView() {
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
                     <div className="flex">
-                        {['approved', 'review', 'rejected'].map((tab) => (
+                        {['approved', 'review', 'rejected', 'history'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab as any)}
@@ -405,6 +405,7 @@ export function AdminWalletView() {
                                 {tab === 'review' && 'En Revisión'}
                                 {tab === 'approved' && 'Aprobados'}
                                 {tab === 'rejected' && 'Rechazados'}
+                                {tab === 'history' && 'Historial de transacciones'}
                             </button>
                         ))}
                     </div>
@@ -453,6 +454,22 @@ export function AdminWalletView() {
                             filterStatus="FAILED"
                             showActions={false}
                             emptyMessage="Sin rechazados"
+                            compact={false}
+                            itemsPerPage={itemsPerPage}
+                            onItemsPerPageChange={setItemsPerPage}
+                            hideTitle={false}
+                            showFiltersOnly={true}
+                        />
+                    )}
+                    {activeTab === 'history' && (
+                        <RequestsTableView
+                            title="Historial de transacciones"
+                            businesses={businesses}
+                            onRequestsChanged={fetchWalletsAndBusinesses}
+                            allWallets={wallets}
+                            fetchAction={getProcessedRequestsAction}
+                            showActions={false}
+                            emptyMessage="Sin movimientos"
                             compact={false}
                             itemsPerPage={itemsPerPage}
                             onItemsPerPageChange={setItemsPerPage}
