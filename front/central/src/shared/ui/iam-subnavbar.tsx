@@ -12,7 +12,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const { isSuperAdmin, permissions } = usePermissions();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
 
-    const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users');
+    const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users') || pathname.startsWith('/marketing-leads');
 
     const businessIdForConfig = isSuperAdmin
         ? (selectedBusinessId || 0)
@@ -42,6 +42,9 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
         { href: '/permissions', label: 'Permisos', icon: '📋', resource: 'Permisos' },
     ];
     const menuItems = allMenuItems.filter(i => isResourceActive(i.resource));
+    if (isSuperAdmin) {
+        menuItems.push({ href: '/marketing-leads', label: 'Leads de encuestas', icon: '📊', resource: 'MarketingLeads' });
+    }
 
     return (
         <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">
