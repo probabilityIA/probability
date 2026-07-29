@@ -1,8 +1,6 @@
 ---
 import { INTEGRATION_LOGOS } from '../config/images';
 
-// Definir integraciones activas (completas)
-const activeIntegrations = ['Shopify', 'Sofpymes', 'Envioclik', 'Interrapidísimo'];
 const allLogos = INTEGRATION_LOGOS;
 ---
 
@@ -11,17 +9,14 @@ const allLogos = INTEGRATION_LOGOS;
 		<p class="text-center text-xl sm:text-2xl font-semibold" style="color: #8B5CF6;">Integrado con las principales plataformas</p>
 	</div>
 	<div class="flex flex-wrap justify-center items-center gap-6 sm:gap-8 md:gap-12 lg:gap-16">
-		{allLogos.map((logo) => {
-			const isActive = activeIntegrations.includes(logo.name);
-			return (
-				<div class={`integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer ${!isActive ? 'opacity-50' : ''}`}>
-					<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
-						<img src={logo.src} alt={logo.alt} class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
-					</div>
-					<span class="text-gray-700 text-xs sm:text-sm font-medium">{logo.name}</span>
+		{allLogos.map((logo) => (
+			<div class="integration-logo flex flex-col items-center gap-3 sm:gap-4 cursor-pointer">
+				<div class="w-20 sm:w-24 h-20 sm:h-24 rounded-lg bg-white flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow">
+					<img src={logo.src} alt={logo.alt} class="w-12 sm:w-16 h-12 sm:h-16 object-contain">
 				</div>
-			);
-		})}
+				<span class="text-gray-700 text-xs sm:text-sm font-medium">{logo.name}</span>
+			</div>
+		))}
 	</div>
 	<div class="text-center mt-8 sm:mt-12 md:mt-16">
 		<p class="text-gray-600 text-xs sm:text-sm px-4">Pronto tendremos más lanzamientos de integraciones. ¡Mantente atento!</p>
