@@ -19,4 +19,7 @@ var (
 	ErrRateLimited             = errors.New("meli: rate limited by API")
 	ErrSignatureInvalid        = errors.New("meli: invalid notification signature")
 	ErrItemNotFound            = errors.New("meli: item not found")
+	ErrShipmentNotFound        = errors.New("meli: shipment not found")
+	ErrLabelNotAvailable       = errors.New("meli: shipping label not available")
+	ErrShipmentNotOwned        = errors.New("meli: shipment does not belong to the business")
 )

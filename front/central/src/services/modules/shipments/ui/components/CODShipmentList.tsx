@@ -10,6 +10,7 @@ import { getCODShipmentsAction, collectCODAction, trackShipmentAction } from '..
 import { Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { MiniAddressMap } from './MiniAddressMap';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { guideHref } from '../utils/guide-link';
 
 interface Props {
     selectedBusinessId?: number | null;
@@ -383,7 +384,7 @@ function CODDetailPanel({ shipment, businessId, onClose, onCollected }: DetailPr
                     <img src={carrierLogo} alt={shipment.carrier} className="h-5 max-w-[80px] object-contain" />
                     <span>Guía: {shipment.guide_id || '—'}</span>
                     {shipment.guide_url && (
-                        <a href={shipment.guide_url} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline inline-flex items-center gap-1">
+                        <a href={guideHref(shipment.id, shipment.guide_url, businessId)} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline inline-flex items-center gap-1">
                             <FileText size={11} /> Ver guía
                         </a>
                     )}
