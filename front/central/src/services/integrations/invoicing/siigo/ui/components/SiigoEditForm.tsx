@@ -33,6 +33,7 @@ import { SiigoInventorySection, InventorySyncConfig } from './SiigoInventorySect
 import { SiigoInventorySyncModal } from './SiigoInventorySyncModal';
 import { SiigoProductSyncModal } from './SiigoProductSyncModal';
 import { SiigoWebhookManager } from './SiigoWebhookManager';
+import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
 
 function initialInventoryConfig(config: any): InventorySyncConfig {
     const cfg = config || {};
@@ -379,6 +380,12 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                     </button>
                 </div>
             </SectionCard>
+
+            <ProductMatchRulesCard
+                integrationId={integrationId}
+                businessId={selectedBusinessId ?? undefined}
+                channelName="Siigo"
+            />
 
             <SiigoInventorySection
                 value={inventorySync}

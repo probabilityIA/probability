@@ -29,6 +29,7 @@ import {
     PhotoIcon,
     BeakerIcon,
 } from '@heroicons/react/24/outline';
+import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
 
 const HELP_IMAGES = [
     {
@@ -736,6 +737,14 @@ export function WooCommerceConfigForm({ onSuccess, onCancel, isEdit, integration
                         Sincronizar productos
                     </button>
                 </div>
+            )}
+
+            {isEdit && integrationId && (
+                <ProductMatchRulesCard
+                    integrationId={Number(integrationId)}
+                    businessId={selectedBusinessId ?? undefined}
+                    channelName="WooCommerce"
+                />
             )}
 
             <WooCommerceInventorySection

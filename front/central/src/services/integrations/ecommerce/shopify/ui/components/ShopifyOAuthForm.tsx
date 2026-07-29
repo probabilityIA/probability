@@ -26,6 +26,7 @@ import {
     disableShopifyCarrierServiceAction,
     getActiveIntegrationTypesAction,
 } from '@/services/integrations/core/infra/actions';
+import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
 
 interface ShopifyOAuthFormProps {
     onCancel?: () => void;
@@ -684,6 +685,14 @@ export default function ShopifyOAuthForm({
                         integrationId={integrationId}
                         businessId={initialData?.business_id ?? null}
                     />
+
+                    {integrationId && (
+                        <ProductMatchRulesCard
+                            integrationId={Number(integrationId)}
+                            businessId={initialData?.business_id ?? undefined}
+                            channelName="Shopify"
+                        />
+                    )}
 
                     <ShopifyInventorySection
                         value={inventorySync}

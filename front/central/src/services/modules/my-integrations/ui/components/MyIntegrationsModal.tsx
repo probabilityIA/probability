@@ -10,7 +10,7 @@ import {
     deactivateIntegrationAction,
     updateIntegrationAction,
 } from '@/services/integrations/core/infra/actions';
-import { IntegrationForm, CreateIntegrationModal, ProductMatchRulesCard } from '@/services/integrations/core/ui';
+import { IntegrationForm, CreateIntegrationModal } from '@/services/integrations/core/ui';
 import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
@@ -30,7 +30,6 @@ interface MyIntegrationsModalProps {
 }
 
 const WIDE_FORM_TYPE_IDS = [1, 3, 4, 8, 16, 33];
-const PRODUCT_MATCH_TYPE_IDS = new Set([1, 3, 4, 8, 16, 33]);
 
 const HUB_KEYFRAMES = `
 @keyframes cyber-dash { to { stroke-dashoffset: -24; } }
@@ -364,22 +363,11 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             >
                 <div style={editIsWide ? { width: 'min(768px, 92vw)' } : undefined}>
                     {editingIntegration && (
-                        <>
-                            <IntegrationForm
-                                integration={editingIntegration}
-                                onSuccess={handleEditSuccess}
-                                onCancel={handleEditClose}
-                            />
-                            {PRODUCT_MATCH_TYPE_IDS.has(Number(editingIntegration.integration_type_id)) && (
-                                <div className="mt-4">
-                                    <ProductMatchRulesCard
-                                        integrationId={editingIntegration.id}
-                                        businessId={editingIntegration.business_id ?? undefined}
-                                        channelName={editingIntegration.integration_type?.name}
-                                    />
-                                </div>
-                            )}
-                        </>
+                        <IntegrationForm
+                            integration={editingIntegration}
+                            onSuccess={handleEditSuccess}
+                            onCancel={handleEditClose}
+                        />
                     )}
                 </div>
             </Modal>

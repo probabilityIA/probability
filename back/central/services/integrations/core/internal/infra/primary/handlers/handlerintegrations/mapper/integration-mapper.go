@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -127,6 +128,16 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 		CreatedAt:         integration.CreatedAt,
 		UpdatedAt:         integration.UpdatedAt,
 	}
+
+	var typeDefaultRules, typeOptions []byte
+	if integration.IntegrationType != nil {
+		typeDefaultRules = integration.IntegrationType.DefaultProductMatchRules
+		typeOptions = integration.IntegrationType.ProductMatchOptions
+	}
+	own := productmatch.Parse(integration.ProductMatchRules)
+	resolved := productmatch.Resolve(integration.ProductMatchRules, typeDefaultRules)
+	resp.ProductMatchRules = productmatch.AllowedByOptions(resolved, productmatch.ParseOptions(typeOptions))
+	resp.ProductMatchDefault = own == nil
 
 	// Incluir información del tipo de integración si está cargado
 	if integration.IntegrationType != nil {

@@ -34,6 +34,8 @@ export interface Integration {
     created_by_id: number;
     updated_by_id: number | null;
     created_at: string;
+    product_match_rules?: ProductMatchRule[];
+    product_match_is_default?: boolean;
     updated_at: string;
     integration_type?: IntegrationTypeInfo; // Información del tipo de integración si está cargado
 }
