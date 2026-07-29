@@ -59,3 +59,32 @@ func (uc *UseCase) CreateLead(ctx context.Context, dto dtos.CreateLeadDTO) error
 
 	return nil
 }
+
+func (uc *UseCase) ListLeads(ctx context.Context, page, pageSize int) ([]entities.MarketingLead, dtos.ListLeadsResult, error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	leads, total, err := uc.repo.ListLeads(ctx, page, pageSize)
+	if err != nil {
+		return nil, dtos.ListLeadsResult{}, err
+	}
+
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize != 0 {
+		totalPages++
+	}
+	if totalPages < 1 {
+		totalPages = 1
+	}
+
+	return leads, dtos.ListLeadsResult{
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
+}

@@ -108,6 +108,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
   const canViewAnnouncements = isSuperAdmin;
+  const canViewMarketingLeads = isSuperAdmin;
   const canViewTickets = !isDemo && hasSubscriptionModule('tickets');
 
   const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
@@ -605,6 +606,34 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Anuncios</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {canViewMarketingLeads && (
+                <li>
+                  <Link
+                    href="/marketing-leads"
+                    className={`
+                      flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
+                      ${pathname.startsWith('/marketing-leads')
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white dark:text-gray-100 shadow-sm'
+                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/marketing-leads') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8zm6 3c0-1.1-1.79-2-4-2s-4 .9-4 2" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Leads de encuestas</span>
                     )}
                   </Link>
                 </li>

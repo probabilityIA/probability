@@ -9,6 +9,7 @@ import (
 type IRepository interface {
 	CreateLead(ctx context.Context, lead *entities.MarketingLead) error
 	SetWhatsAppMessageID(ctx context.Context, leadID uint, messageID string) error
+	ListLeads(ctx context.Context, page, pageSize int) ([]entities.MarketingLead, int64, error)
 }
 
 // IWhatsAppSender es satisfecha estructuralmente por *whatsapp.Bundle

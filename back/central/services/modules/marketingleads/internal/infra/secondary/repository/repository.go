@@ -35,3 +35,42 @@ func (r *Repository) SetWhatsAppMessageID(ctx context.Context, leadID uint, mess
 		Where("id = ?", leadID).
 		Update("whats_app_message_id", messageID).Error
 }
+
+func modelToLead(m *models.MarketingLead) entities.MarketingLead {
+	return entities.MarketingLead{
+		ID:                m.ID,
+		Name:              m.Name,
+		Email:             m.Email,
+		Phone:             m.Phone,
+		SurveySlug:        m.SurveySlug,
+		ScoreTotal:        m.ScoreTotal,
+		ScoreMax:          m.ScoreMax,
+		Level:             m.Level,
+		WhatsAppMessageID: m.WhatsAppMessageID,
+		CreatedAt:         m.CreatedAt,
+	}
+}
+
+func (r *Repository) ListLeads(ctx context.Context, page, pageSize int) ([]entities.MarketingLead, int64, error) {
+	var models_ []models.MarketingLead
+	var total int64
+
+	if err := r.db.Conn(ctx).Model(&models.MarketingLead{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	if err := r.db.Conn(ctx).
+		Order("id DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&models_).Error; err != nil {
+		return nil, 0, err
+	}
+
+	leads := make([]entities.MarketingLead, 0, len(models_))
+	for i := range models_ {
+		leads = append(leads, modelToLead(&models_[i]))
+	}
+	return leads, total, nil
+}

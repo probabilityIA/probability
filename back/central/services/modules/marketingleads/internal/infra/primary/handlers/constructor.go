@@ -8,6 +8,7 @@ import (
 
 type IHandlers interface {
 	CreateLead(c *gin.Context)
+	ListLeads(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

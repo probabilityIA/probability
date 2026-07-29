@@ -4,12 +4,14 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/modules/marketingleads/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/marketingleads/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/marketingleads/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
 type IUseCase interface {
 	CreateLead(ctx context.Context, dto dtos.CreateLeadDTO) error
+	ListLeads(ctx context.Context, page, pageSize int) ([]entities.MarketingLead, dtos.ListLeadsResult, error)
 }
 
 type UseCase struct {
