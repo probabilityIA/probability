@@ -7,42 +7,51 @@ import (
 
 const defaultProductMatchRulesJSON = `[{"probability":"sku","channel":"sku"}]`
 
+// Los codigos en integration_types no son homogeneos ("Shopify", "Mercado Libre"),
+// asi que se matchea por id y por cualquier alias en minusculas.
 type productMatchTypeDefaults struct {
-	TypeCode string
-	Options  string
-	Rules    string
+	TypeID  uint
+	Aliases []string
+	Options string
+	Rules   string
 }
 
 var productMatchDefaultsByType = []productMatchTypeDefaults{
 	{
-		TypeCode: "shopify",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  1,
+		Aliases: []string{"shopify"},
+		Options: `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 	{
-		TypeCode: "mercado_libre",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  3,
+		Aliases: []string{"mercado_libre", "mercado libre"},
+		Options: `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 	{
-		TypeCode: "woocommerce",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  4,
+		Aliases: []string{"woocommerce", "woocormerce"},
+		Options: `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 	{
-		TypeCode: "vtex",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  16,
+		Aliases: []string{"vtex"},
+		Options: `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 	{
-		TypeCode: "jumpseller",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  33,
+		Aliases: []string{"jumpseller"},
+		Options: `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 	{
-		TypeCode: "siigo",
-		Options:  `{"probability":["sku","barcode","name"],"channel":["sku","name"]}`,
-		Rules:    defaultProductMatchRulesJSON,
+		TypeID:  8,
+		Aliases: []string{"siigo"},
+		Options: `{"probability":["sku","barcode","name"],"channel":["sku","name"]}`,
+		Rules:   defaultProductMatchRulesJSON,
 	},
 }
 
@@ -70,10 +79,10 @@ func (r *Repository) migrateProductMatchRules(ctx context.Context) error {
 			`UPDATE integration_types
 			 SET product_match_options = ?::jsonb,
 			     default_product_match_rules = COALESCE(default_product_match_rules, ?::jsonb)
-			 WHERE code = ?`,
-			d.Options, d.Rules, d.TypeCode,
+			 WHERE id = ? OR lower(code) IN ?`,
+			d.Options, d.Rules, d.TypeID, d.Aliases,
 		).Error; err != nil {
-			return fmt.Errorf("failed to seed product match defaults for %s: %w", d.TypeCode, err)
+			return fmt.Errorf("failed to seed product match defaults for type %d: %w", d.TypeID, err)
 		}
 	}
 
