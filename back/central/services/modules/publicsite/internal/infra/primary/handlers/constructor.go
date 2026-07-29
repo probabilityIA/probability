@@ -12,6 +12,8 @@ type IHandlers interface {
 	ListCatalog(c *gin.Context)
 	GetProduct(c *gin.Context)
 	SubmitContact(c *gin.Context)
+	CreateCheckoutSession(c *gin.Context)
+	GetCheckoutStatus(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

@@ -158,5 +158,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.backfillMysticMessageLogs(ctx); err != nil {
 		return err
 	}
-	return r.fixVig0010Cod(ctx)
+	if err := r.fixVig0010Cod(ctx); err != nil {
+		return err
+	}
+	return r.migratePublicCheckout(ctx)
 }

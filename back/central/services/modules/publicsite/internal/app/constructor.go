@@ -17,13 +17,16 @@ type IUseCase interface {
 	GetProduct(ctx context.Context, slug string, productID string) (*entities.PublicProduct, error)
 	GetFeaturedProducts(ctx context.Context, slug string, limit int) ([]entities.PublicProduct, error)
 	SubmitContact(ctx context.Context, slug string, dto *dtos.ContactFormDTO) error
+	CreateCheckoutSession(ctx context.Context, slug string, dto *dtos.CreateCheckoutDTO) (*dtos.CheckoutSessionDTO, error)
+	GetCheckoutStatus(ctx context.Context, reference string) (string, error)
 }
 
 type UseCase struct {
 	repo   ports.IRepository
+	bold   ports.IBoldGateway
 	logger log.ILogger
 }
 
-func New(repo ports.IRepository, logger log.ILogger) IUseCase {
-	return &UseCase{repo: repo, logger: logger}
+func New(repo ports.IRepository, bold ports.IBoldGateway, logger log.ILogger) IUseCase {
+	return &UseCase{repo: repo, bold: bold, logger: logger}
 }

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getPublicBusinessAction } from '@/services/modules/publicsite/infra/actions';
 import { getTemplate } from '@/services/modules/publicsite/ui/templates/registry';
+import { CartProvider } from '@/services/modules/publicsite/ui/cart/cart-context';
+import { CartWidget } from '@/services/modules/publicsite/ui/cart/CartWidget';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -28,14 +30,17 @@ export default async function TiendaLayout({ children, params }: LayoutProps) {
                 '--brand-quaternary': business.quaternary_color || '#fbbf24',
             } as React.CSSProperties}
         >
-            <Nav business={business} />
-            <main className="min-h-screen">
-                {children}
-            </main>
-            <Footer business={business} />
-            {config?.show_whatsapp && config.whatsapp_content && (
-                <WhatsApp content={config.whatsapp_content} />
-            )}
+            <CartProvider slug={slug}>
+                <Nav business={business} />
+                <main className="min-h-screen">
+                    {children}
+                </main>
+                <Footer business={business} />
+                {config?.show_whatsapp && config.whatsapp_content && (
+                    <WhatsApp content={config.whatsapp_content} />
+                )}
+                <CartWidget slug={slug} />
+            </CartProvider>
         </div>
     );
 }

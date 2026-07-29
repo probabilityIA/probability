@@ -96,7 +96,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	routes.New(router, database)
 	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment)
-	publicsite.New(router, database, logger, environment)
+	publicsite.New(router, database, logger, environment, payBundle)
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
 	accounting.New(router, database, logger, environment, integrationCore, dianEmitter)

@@ -113,3 +113,41 @@ export interface ContactFormDTO {
     phone?: string;
     message: string;
 }
+
+export interface CartItem {
+    product_id: string;
+    name: string;
+    sku: string;
+    price: number;
+    image_url: string;
+    quantity: number;
+}
+
+export interface CheckoutAddressInput {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postal_code?: string;
+    instructions?: string;
+}
+
+export interface CreateCheckoutInput {
+    items: { product_id: string; quantity: number }[];
+    customer_name: string;
+    customer_email?: string;
+    customer_phone?: string;
+    customer_dni?: string;
+    address?: CheckoutAddressInput;
+}
+
+export interface CheckoutSession {
+    reference: string;
+    amount: number;
+    currency: string;
+    hash: string;
+    public_key: string;
+    redirection_url: string;
+    is_sandbox: boolean;
+    polling_enabled: boolean;
+}

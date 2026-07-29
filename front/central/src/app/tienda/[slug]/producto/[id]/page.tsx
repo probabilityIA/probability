@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getPublicBusinessAction, getPublicProductAction } from '@/services/modules/publicsite/infra/actions';
 import Link from 'next/link';
+import { ProductAddToCart } from '@/services/modules/publicsite/ui/components/ProductAddToCart';
 
 interface PageProps {
     params: Promise<{ slug: string; id: string }>;
@@ -90,13 +91,7 @@ export default async function ProductoDetailPage({ params }: PageProps) {
                         )}
                     </div>
 
-                    <Link
-                        href={`/login?redirect=/storefront/catalogo&business_code=${slug}`}
-                        className="inline-block w-full text-center px-8 py-4 rounded-lg text-white font-bold text-lg transition-transform hover:scale-[1.02]"
-                        style={{ backgroundColor: 'var(--brand-secondary)' }}
-                    >
-                        Hacer Pedido
-                    </Link>
+                    <ProductAddToCart product={product} />
                 </div>
             </div>
         </div>

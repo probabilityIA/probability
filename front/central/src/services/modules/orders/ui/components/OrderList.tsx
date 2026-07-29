@@ -1269,8 +1269,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 'Dirección': order.shipping_street || '',
                 'Ciudad': order.shipping_city || '',
                 'Departamento': order.shipping_state || '',
-                'Valor Envío': order.shipping_cost || 0,
-                'Guía': order.guide_link || '',
+                'Valor Envío': order.shipment?.total_cost || order.quoted_shipping?.price || order.shipping_cost || 0,
+                'Guía': order.tracking_number || order.shipment?.tracking_number || '',
                 'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
             }));
 

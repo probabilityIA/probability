@@ -2,6 +2,7 @@ package publicsite
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite/internal/infra/secondary/repository"
@@ -10,9 +11,9 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, payBundle *pay.Bundle) {
 	repo := repository.New(database)
-	uc := app.New(repo, logger)
+	uc := app.New(repo, payBundle, logger)
 	h := handlers.New(uc, logger, environment)
 	h.RegisterRoutes(router)
 }

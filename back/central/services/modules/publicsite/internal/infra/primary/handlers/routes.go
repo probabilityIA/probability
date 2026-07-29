@@ -9,5 +9,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		pub.GET("/:slug/catalog", h.ListCatalog)
 		pub.GET("/:slug/product/:id", h.GetProduct)
 		pub.POST("/:slug/contact", h.SubmitContact)
+		pub.POST("/:slug/checkout/bold/signature", h.CreateCheckoutSession)
+		pub.GET("/:slug/checkout/:reference/status", h.GetCheckoutStatus)
 	}
 }
