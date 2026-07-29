@@ -20,7 +20,9 @@ import {
     IntegrationCategory,
     IntegrationCategoriesResponse,
     CarrierServiceResponse,
-    WooCommerceConnectionInfo
+    WooCommerceConnectionInfo,
+    ProductMatchConfig,
+    ProductMatchRule
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -274,6 +276,22 @@ export class IntegrationApiRepository implements IIntegrationRepository {
 
     async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, unknown>; webhook_urls?: Record<string, string> }> {
         return this.fetch<{ success: boolean; message: string; data: Record<string, string>; webhook_urls?: Record<string, string> }>(`/integration-types/${id}/platform-credentials`);
+    }
+
+    async getProductMatchConfig(id: number, businessId?: number): Promise<{ success: boolean; message?: string; data?: ProductMatchConfig }> {
+        const query = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch(`/integrations/${id}/product-match${query}`);
+    }
+
+    async updateProductMatchConfig(
+        id: number,
+        rules: ProductMatchRule[],
+        businessId?: number,
+    ): Promise<{ success: boolean; message?: string; data?: ProductMatchConfig }> {
+        return this.fetch(`/integrations/${id}/product-match`, {
+            method: 'PUT',
+            body: JSON.stringify({ rules, business_id: businessId }),
+        });
     }
 
     async getWebhookUrl(id: number): Promise<WebhookResponse> {

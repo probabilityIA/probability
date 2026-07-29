@@ -7,6 +7,7 @@ export { IntegrationCategoryTabs } from './components/IntegrationCategoryTabs';
 export { CategorySelector } from './components/CategorySelector';
 export { ProviderSelector } from './components/ProviderSelector';
 export { CreateIntegrationModal } from './components/CreateIntegrationModal';
+export { ProductMatchRulesCard } from './components/ProductMatchRulesCard';
 export { useIntegrations } from './hooks/useIntegrations';
 export { useIntegrationTypes } from './hooks/useIntegrationTypes';
 export { useCategories } from './hooks/useCategories';

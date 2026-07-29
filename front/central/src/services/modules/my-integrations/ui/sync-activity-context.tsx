@@ -35,6 +35,7 @@ export interface ProductsResult {
     notAssociated: number;
     onlyInProbability: number;
     onlyInChannel: number;
+    matchRules?: ProductMatchRuleSummary[];
 }
 
 export type SyncResult = InventoryResult | ProductsResult | { kind: 'error'; message: string };
@@ -53,6 +54,13 @@ export interface SyncDetailItem {
     label: string;
     tone: 'ok' | 'warn' | 'error';
     group: DetailGroup;
+    matchedBy?: string;
+    matchedValue?: string;
+}
+
+export interface ProductMatchRuleSummary {
+    probability: string;
+    channel: string;
 }
 
 export type ProductActionKey = 'associate' | 'createInChannel' | 'createInProbability' | 'updateInProbability' | 'createBothSides';
@@ -255,6 +263,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                             notAssociated: Number(data.not_associated) || 0,
                             onlyInProbability: Number(data.only_in_probability) || 0,
                             onlyInChannel: Number(data.only_in_channel) || 0,
+                            matchRules: Array.isArray(data.match_rules) ? (data.match_rules as ProductMatchRuleSummary[]) : undefined,
                         },
                     }));
                     patchNode(id, 'done');

@@ -285,3 +285,23 @@ export interface IntegrationCategoriesResponse {
     message: string;
     data: IntegrationCategory[];
 }
+
+export type ProductMatchField = 'sku' | 'barcode' | 'external_id' | 'variant_id' | 'name';
+
+export interface ProductMatchRule {
+    probability: ProductMatchField;
+    channel: ProductMatchField;
+}
+
+export interface ProductMatchOptions {
+    probability: ProductMatchField[];
+    channel: ProductMatchField[];
+}
+
+export interface ProductMatchConfig {
+    integration_id: number;
+    rules: ProductMatchRule[];
+    default_rules: ProductMatchRule[];
+    options: ProductMatchOptions;
+    is_override: boolean;
+}

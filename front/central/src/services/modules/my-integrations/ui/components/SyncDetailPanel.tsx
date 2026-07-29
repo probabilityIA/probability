@@ -97,6 +97,21 @@ const GROUP_ACTION: Partial<Record<DetailGroup, PanelAction>> = {
     both: { key: 'updateInProbability', label: () => 'Actualizar en Probability' },
 };
 
+const MATCH_FIELD_LABELS: Record<string, string> = {
+    sku: 'SKU',
+    barcode: 'codigo de barras',
+    external_id: 'ID externo',
+    variant_id: 'ID de variante',
+    name: 'nombre',
+};
+
+export const matchRuleLabel = (rule: string) => {
+    const [probability, channel] = rule.split('->');
+    const left = MATCH_FIELD_LABELS[probability] || probability;
+    const right = MATCH_FIELD_LABELS[channel] || channel;
+    return left === right ? left : `${left} → ${right}`;
+};
+
 const groupLabel = (group: DetailGroup, providerLabel: string) =>
     group === 'only_channel' ? `Solo en ${providerLabel}` : GROUP_STYLES[group].label;
 
@@ -162,6 +177,8 @@ export function SyncDetailPanel({
                 label: item.label,
                 tone: item.tone,
                 group: (item.group || 'both') as DetailGroup,
+                matchedBy: item.matched_by,
+                matchedValue: item.matched_value,
             }));
             setRemoteItems(prev => (replace ? incoming : [...prev, ...incoming]));
             setRemoteTotal(result.total);
@@ -342,6 +359,14 @@ export function SyncDetailPanel({
                             <span className={`mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
                             <span className="w-28 flex-shrink-0 truncate font-mono font-semibold text-gray-700 dark:text-gray-200">{item.sku}</span>
                             <span className={`min-w-0 flex-1 truncate ${style.text}`}>{item.label}</span>
+                            {item.matchedBy && (
+                                <span
+                                    title={`Coincidencia por ${matchRuleLabel(item.matchedBy)}${item.matchedValue ? `: ${item.matchedValue}` : ''}`}
+                                    className="flex-shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                >
+                                    {matchRuleLabel(item.matchedBy)}
+                                </span>
+                            )}
                         </label>
                     );
                 })}
