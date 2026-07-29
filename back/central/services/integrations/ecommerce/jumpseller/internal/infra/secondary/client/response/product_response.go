@@ -35,6 +35,7 @@ type ProductImageResponse struct {
 type ProductVariantResponse struct {
 	ID             int64   `json:"id"`
 	SKU            string  `json:"sku"`
+	Barcode        string  `json:"barcode"`
 	Price          float64 `json:"price"`
 	Stock          int     `json:"stock"`
 	StockUnlimited bool    `json:"stock_unlimited"`
@@ -46,6 +47,7 @@ func (p ProductResponse) ToDomain() domain.JumpsellerProduct {
 		variants = append(variants, domain.ProductVariant{
 			ID:             v.ID,
 			SKU:            v.SKU,
+			Barcode:        v.Barcode,
 			Price:          v.Price,
 			Stock:          v.Stock,
 			StockUnlimited: v.StockUnlimited,

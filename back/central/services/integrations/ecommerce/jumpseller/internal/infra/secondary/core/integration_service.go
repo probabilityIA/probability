@@ -33,6 +33,8 @@ func (a *integrationServiceAdapter) GetIntegrationByID(ctx context.Context, inte
 		IsTesting:       pub.IsTesting,
 		BaseURL:         pub.BaseURL,
 		BaseURLTest:     pub.BaseURLTest,
+
+		ProductMatchRules: pub.ProductMatchRules,
 	}, nil
 }
 

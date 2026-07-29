@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/jumpseller/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -38,6 +39,7 @@ type providerUpsertMsg struct {
 
 type jumpsellerSKU struct {
 	SKU        string
+	Barcode    string
 	Name       string
 	ImageURL   string
 	Price      float64
@@ -55,6 +57,51 @@ type reconcileData struct {
 	storeWeightUnit string
 	probability     []domain.ProductForSync
 	jumpseller      []jumpsellerSKU
+	rules           []productmatch.Rule
+	outcome         productmatch.Outcome
+}
+
+func (j jumpsellerSKU) MatchItem() productmatch.Item {
+	variantID := ""
+	if j.VariantID != 0 {
+		variantID = strconv.FormatInt(j.VariantID, 10)
+	}
+	return productmatch.Item{
+		SKU:        j.SKU,
+		Barcode:    j.Barcode,
+		ExternalID: strconv.FormatInt(j.ProductID, 10),
+		VariantID:  variantID,
+		Name:       j.Name,
+	}
+}
+
+func jumpsellerRefs(j jumpsellerSKU) productmatch.ExternalRefs {
+	variantID := ""
+	if j.VariantID != 0 {
+		variantID = strconv.FormatInt(j.VariantID, 10)
+	}
+	return productmatch.ExternalRefs{
+		ProductID: j.ExternalID,
+		VariantID: variantID,
+		SKU:       j.SKU,
+		Barcode:   j.Barcode,
+	}
+}
+
+func probabilityItems(products []domain.ProductForSync) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+func jumpsellerItems(skus []jumpsellerSKU) []productmatch.Item {
+	items := make([]productmatch.Item, len(skus))
+	for i, j := range skus {
+		items[i] = j.MatchItem()
+	}
+	return items
 }
 
 func normalizeSKU(sku string) string {
@@ -67,6 +114,7 @@ func flattenProductSKUs(products []domain.JumpsellerProduct) []jumpsellerSKU {
 		if len(product.Variants) == 0 {
 			flat = append(flat, jumpsellerSKU{
 				SKU:        product.SKU,
+				Barcode:    product.Barcode,
 				Name:       product.Name,
 				ImageURL:   product.ImageURL,
 				Price:      product.Price,
@@ -82,6 +130,7 @@ func flattenProductSKUs(products []domain.JumpsellerProduct) []jumpsellerSKU {
 		for _, variant := range product.Variants {
 			flat = append(flat, jumpsellerSKU{
 				SKU:        variant.SKU,
+				Barcode:    variant.Barcode,
 				Name:       product.Name,
 				ImageURL:   product.ImageURL,
 				Price:      variant.Price,
@@ -98,24 +147,12 @@ func flattenProductSKUs(products []domain.JumpsellerProduct) []jumpsellerSKU {
 	return flat
 }
 
-func indexJumpsellerBySKU(products []jumpsellerSKU) map[string]jumpsellerSKU {
-	index := make(map[string]jumpsellerSKU, len(products))
-	for _, product := range products {
-		if key := normalizeSKU(product.SKU); key != "" {
-			index[key] = product
-		}
+func matchedByProbabilityIndex(data *reconcileData) map[int]jumpsellerSKU {
+	matched := make(map[int]jumpsellerSKU, len(data.outcome.Pairs))
+	for _, pair := range data.outcome.Pairs {
+		matched[pair.ProbabilityIndex] = data.jumpseller[pair.ChannelIndex]
 	}
-	return index
-}
-
-func indexProbabilityBySKU(products []domain.ProductForSync) map[string]domain.ProductForSync {
-	index := make(map[string]domain.ProductForSync, len(products))
-	for _, product := range products {
-		if key := normalizeSKU(product.SKU); key != "" {
-			index[key] = product
-		}
-	}
-	return index
+	return matched
 }
 
 func (uc *jumpsellerUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (*reconcileData, error) {
@@ -139,11 +176,20 @@ func (uc *jumpsellerUseCase) loadReconcileData(ctx context.Context, integrationI
 		return nil, fmt.Errorf("listing jumpseller products: %w", err)
 	}
 
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("getting integration: %w", err)
+	}
+
+	flat := flattenProductSKUs(jsProducts)
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
 	return &reconcileData{
 		cred:            cred,
 		storeWeightUnit: storeInfo.WeightUnit,
 		probability:     probProducts,
-		jumpseller:      flattenProductSKUs(jsProducts),
+		jumpseller:      flat,
+		rules:           rules,
+		outcome:         productmatch.Reconcile(rules, probabilityItems(probProducts), jumpsellerItems(flat)),
 	}, nil
 }
 
@@ -178,43 +224,35 @@ func (uc *jumpsellerUseCase) ReconcileProducts(ctx context.Context, integrationI
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInJumpseller:     []domain.ProductBrief{},
+		ProbabilityNoSKU:     data.outcome.ProbabilityUnmatchable,
+		JumpsellerNoSKU:      data.outcome.ChannelUnmatchable,
+		MatchRules:           data.rules,
 	}
 
-	probBySKU := make(map[string]domain.ProductForSync, len(data.probability))
-	for _, p := range data.probability {
-		key := normalizeSKU(p.SKU)
-		if key == "" {
-			result.ProbabilityNoSKU++
-			continue
+	for _, pair := range data.outcome.Pairs {
+		prob := data.probability[pair.ProbabilityIndex]
+		channel := data.jumpseller[pair.ChannelIndex]
+		brief := domain.ProductBrief{
+			SKU:          prob.SKU,
+			Name:         channel.Name,
+			MatchedBy:    pair.Rule.Key(),
+			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
 		}
-		probBySKU[key] = p
-	}
-
-	jsSKUs := make(map[string]bool, len(data.jumpseller))
-	for _, j := range data.jumpseller {
-		key := normalizeSKU(j.SKU)
-		if key == "" {
-			result.JumpsellerNoSKU++
-			continue
-		}
-		jsSKUs[key] = true
-
-		if _, ok := probBySKU[key]; !ok {
-			result.OnlyInJumpseller = append(result.OnlyInJumpseller, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
-			continue
-		}
-		result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
-		if associated[key] {
+		result.MatchedItems = append(result.MatchedItems, brief)
+		if associated[normalizeSKU(prob.SKU)] {
 			result.Matched++
 		} else {
-			result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
+			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 		}
 	}
 
-	for key, p := range probBySKU {
-		if !jsSKUs[key] {
-			result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
-		}
+	for _, idx := range data.outcome.OnlyInChannel {
+		j := data.jumpseller[idx]
+		result.OnlyInJumpseller = append(result.OnlyInJumpseller, domain.ProductBrief{SKU: j.SKU, Name: j.Name})
+	}
+	for _, idx := range data.outcome.OnlyInProbability {
+		p := data.probability[idx]
+		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
 	return result, nil
@@ -305,16 +343,16 @@ func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, inte
 		return err
 	}
 
-	jsBySKU := indexJumpsellerBySKU(data.jumpseller)
+	matched := matchedByProbabilityIndex(data)
 
 	only := selectedSKUs(skus)
-	targets := make([]domain.ProductForSync, 0, len(data.probability))
-	for _, p := range data.probability {
+	targets := make([]int, 0, len(data.probability))
+	for i, p := range data.probability {
 		key := normalizeSKU(p.SKU)
 		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
-		targets = append(targets, p)
+		targets = append(targets, i)
 	}
 
 	total := len(targets)
@@ -327,11 +365,11 @@ func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, inte
 
 	fails := &failedSKUs{}
 	created, updated := 0, 0
-	for i, p := range targets {
-		key := normalizeSKU(p.SKU)
+	for i, idx := range targets {
+		p := data.probability[idx]
 
-		if existing, ok := jsBySKU[key]; ok {
-			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), existing.ExternalID); merr != nil {
+		if existing, ok := matched[idx]; ok {
+			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), jumpsellerRefs(existing)); merr != nil {
 				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de Jumpseller")
 				fails.add(p.SKU)
 			} else {
@@ -360,7 +398,8 @@ func (uc *jumpsellerUseCase) ApplyProductsToJumpseller(ctx context.Context, inte
 			continue
 		}
 
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
+		newRefs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newRefs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Jumpseller pero fallo el mapeo")
 			fails.add(p.SKU)
 		} else {
@@ -392,16 +431,12 @@ func (uc *jumpsellerUseCase) ApplyProductsToProbability(ctx context.Context, int
 		return err
 	}
 
-	probBySKU := indexProbabilityBySKU(data.probability)
-
 	only := selectedSKUs(skus)
 	missing := make([]jumpsellerSKU, 0)
-	for _, j := range data.jumpseller {
+	for _, idx := range data.outcome.OnlyInChannel {
+		j := data.jumpseller[idx]
 		key := normalizeSKU(j.SKU)
 		if key == "" || (only != nil && !only[key]) {
-			continue
-		}
-		if _, exists := probBySKU[key]; exists {
 			continue
 		}
 		missing = append(missing, j)
@@ -418,16 +453,12 @@ func (uc *jumpsellerUseCase) UpdateProductsToProbability(ctx context.Context, in
 		return err
 	}
 
-	probBySKU := indexProbabilityBySKU(data.probability)
-
 	only := selectedSKUs(skus)
 	existing := make([]jumpsellerSKU, 0)
-	for _, j := range data.jumpseller {
+	for _, pair := range data.outcome.Pairs {
+		j := data.jumpseller[pair.ChannelIndex]
 		key := normalizeSKU(j.SKU)
 		if key == "" || (only != nil && !only[key]) {
-			continue
-		}
-		if _, ok := probBySKU[key]; !ok {
 			continue
 		}
 		existing = append(existing, j)
@@ -501,17 +532,17 @@ func (uc *jumpsellerUseCase) UpdateProductsToJumpseller(ctx context.Context, int
 		return err
 	}
 
-	jsBySKU := indexJumpsellerBySKU(data.jumpseller)
+	matched := matchedByProbabilityIndex(data)
 
 	only := selectedSKUs(skus)
-	targets := make([]domain.ProductForSync, 0)
-	for _, p := range data.probability {
+	targets := make([]int, 0)
+	for i, p := range data.probability {
 		key := normalizeSKU(p.SKU)
 		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
-		if _, ok := jsBySKU[key]; ok {
-			targets = append(targets, p)
+		if _, ok := matched[i]; ok {
+			targets = append(targets, i)
 		}
 	}
 
@@ -527,8 +558,9 @@ func (uc *jumpsellerUseCase) UpdateProductsToJumpseller(ctx context.Context, int
 	updated, skipped := 0, 0
 	touchedParents := make(map[int64]bool)
 
-	for i, p := range targets {
-		target := jsBySKU[normalizeSKU(p.SKU)]
+	for i, idx := range targets {
+		p := data.probability[idx]
+		target := matched[idx]
 
 		if target.VariantID > 0 {
 			if touchedParents[target.ProductID] {
@@ -591,27 +623,35 @@ func (uc *jumpsellerUseCase) AssociateProducts(ctx context.Context, integrationI
 		return err
 	}
 
-	jsBySKU := indexJumpsellerBySKU(data.jumpseller)
-	probBySKU := indexProbabilityBySKU(data.probability)
-
 	associated, err := uc.associatedSKUs(ctx, uint(integIDUint))
 	if err != nil {
 		return err
 	}
 
-	targets := make([]string, 0)
+	var only map[string]bool
 	if len(skus) > 0 {
+		only = make(map[string]bool, len(skus))
 		for _, sku := range skus {
 			if key := normalizeSKU(sku); key != "" {
-				targets = append(targets, key)
+				only[key] = true
 			}
 		}
-	} else {
-		for key := range probBySKU {
-			if jsBySKU[key].ExternalID != "" && !associated[key] {
-				targets = append(targets, key)
+	}
+
+	targets := make([]productmatch.Pair, 0, len(data.outcome.Pairs))
+	for _, pair := range data.outcome.Pairs {
+		key := normalizeSKU(data.probability[pair.ProbabilityIndex].SKU)
+		if only != nil {
+			if key == "" || !only[key] {
+				continue
 			}
+		} else if associated[key] {
+			continue
 		}
+		if data.jumpseller[pair.ChannelIndex].ExternalID == "" {
+			continue
+		}
+		targets = append(targets, pair)
 	}
 
 	total := len(targets)
@@ -623,20 +663,14 @@ func (uc *jumpsellerUseCase) AssociateProducts(ctx context.Context, integrationI
 
 	fails := &failedSKUs{}
 	updated := 0
-	for i, key := range targets {
-		p, okProb := probBySKU[key]
-		j, okJS := jsBySKU[key]
+	for i, pair := range targets {
+		p := data.probability[pair.ProbabilityIndex]
+		j := data.jumpseller[pair.ChannelIndex]
 
-		if !okProb || !okJS || j.ExternalID == "" || associated[key] {
-			uc.maybeProductProgress(ctx, businessID, uint(integIDUint), correlationID, "associate", i+1, total, 0, updated, fails.count())
-			continue
-		}
-
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), j.ExternalID); merr != nil {
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), jumpsellerRefs(j)); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al asociar producto con Jumpseller")
 			fails.add(p.SKU)
 		} else {
-			associated[key] = true
 			updated++
 		}
 		uc.maybeProductProgress(ctx, businessID, uint(integIDUint), correlationID, "associate", i+1, total, 0, updated, fails.count())

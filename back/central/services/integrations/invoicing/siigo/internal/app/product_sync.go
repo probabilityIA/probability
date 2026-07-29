@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -54,32 +55,67 @@ func (uc *invoicingUseCase) listAllSiigoProducts(ctx context.Context, credential
 	return all, nil
 }
 
-func (uc *invoicingUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) ([]dtos.ProductForSync, []dtos.ProductItem, error) {
+type reconcileContext struct {
+	probProducts  []dtos.ProductForSync
+	siigoProducts []dtos.ProductItem
+	rules         []productmatch.Rule
+	outcome       productmatch.Outcome
+}
+
+func probabilityItems(products []dtos.ProductForSync) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+func siigoItems(products []dtos.ProductItem) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = productmatch.Item{
+			SKU:        p.Code,
+			Barcode:    p.Barcode,
+			ExternalID: p.ID,
+			Name:       p.Name,
+		}
+	}
+	return items
+}
+
+func (uc *invoicingUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (*reconcileContext, error) {
 	integration, err := uc.integrationCore.GetIntegrationByID(ctx, integrationID)
 	if err != nil || integration == nil {
-		return nil, nil, fmt.Errorf("integracion no encontrada")
+		return nil, fmt.Errorf("integracion no encontrada")
 	}
 	if integration.BusinessID == nil || *integration.BusinessID != businessID {
-		return nil, nil, fmt.Errorf("la integracion no pertenece al negocio")
+		return nil, fmt.Errorf("la integracion no pertenece al negocio")
 	}
 
 	credentials, err := uc.resolveWebhookCredentials(ctx, integrationID)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	siigoProducts, err := uc.listAllSiigoProducts(ctx, credentials)
 	if err != nil {
-		return nil, nil, fmt.Errorf("listing siigo products: %w", err)
+		return nil, fmt.Errorf("listing siigo products: %w", err)
 	}
 	probProducts, err := uc.productRepo.ListProductsByBusiness(ctx, businessID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("listing probability products: %w", err)
+		return nil, fmt.Errorf("listing probability products: %w", err)
 	}
-	return probProducts, siigoProducts, nil
+
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
+	return &reconcileContext{
+		probProducts:  probProducts,
+		siigoProducts: siigoProducts,
+		rules:         rules,
+		outcome:       productmatch.Reconcile(rules, probabilityItems(probProducts), siigoItems(siigoProducts)),
+	}, nil
 }
 
 func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error) {
-	probProducts, siigoProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,41 +130,33 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 		MatchedNotAssociated: []dtos.ProductBrief{},
 		OnlyInProbability:    []dtos.ProductBrief{},
 		OnlyInSiigo:          []dtos.ProductBrief{},
+		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
+		SiigoNoSKU:           rc.outcome.ChannelUnmatchable,
+		MatchRules:           rc.rules,
 	}
 
-	probBySKU := make(map[string]dtos.ProductForSync)
-	for _, p := range probProducts {
-		key := normalizeSKU(p.SKU)
-		if key == "" {
-			result.ProbabilityNoSKU++
+	for _, pair := range rc.outcome.Pairs {
+		prob := rc.probProducts[pair.ProbabilityIndex]
+		channel := rc.siigoProducts[pair.ChannelIndex]
+		if associated[normalizeSKU(prob.SKU)] {
+			result.Matched++
 			continue
 		}
-		probBySKU[key] = p
+		result.MatchedNotAssociated = append(result.MatchedNotAssociated, dtos.ProductBrief{
+			SKU:          channel.Code,
+			Name:         channel.Name,
+			MatchedBy:    pair.Rule.Key(),
+			MatchedValue: siigoItems([]dtos.ProductItem{channel})[0].Values()[pair.Rule.Channel],
+		})
 	}
 
-	siigoSKUs := make(map[string]bool)
-	for _, s := range siigoProducts {
-		key := normalizeSKU(s.Code)
-		if key == "" {
-			result.SiigoNoSKU++
-			continue
-		}
-		siigoSKUs[key] = true
-		if _, ok := probBySKU[key]; ok {
-			if associated[key] {
-				result.Matched++
-			} else {
-				result.MatchedNotAssociated = append(result.MatchedNotAssociated, dtos.ProductBrief{SKU: s.Code, Name: s.Name})
-			}
-		} else {
-			result.OnlyInSiigo = append(result.OnlyInSiigo, dtos.ProductBrief{SKU: s.Code, Name: s.Name})
-		}
+	for _, idx := range rc.outcome.OnlyInChannel {
+		s := rc.siigoProducts[idx]
+		result.OnlyInSiigo = append(result.OnlyInSiigo, dtos.ProductBrief{SKU: s.Code, Name: s.Name})
 	}
-
-	for key, p := range probBySKU {
-		if !siigoSKUs[key] {
-			result.OnlyInProbability = append(result.OnlyInProbability, dtos.ProductBrief{SKU: p.SKU, Name: p.Name})
-		}
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		result.OnlyInProbability = append(result.OnlyInProbability, dtos.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
 	return result, nil
@@ -136,7 +164,7 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 
 func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	probProducts, siigoProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "siigo.product.sync.completed", map[string]interface{}{
 			"correlation_id": correlationID,
@@ -158,21 +186,15 @@ func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, inte
 				want[key] = true
 			}
 		}
-		for _, s := range siigoProducts {
+		for _, s := range rc.siigoProducts {
 			if key := normalizeSKU(s.Code); key != "" && want[key] {
 				missing = append(missing, s)
 			}
 		}
 	} else {
-		probSKUs := make(map[string]bool)
-		for _, p := range probProducts {
-			if key := normalizeSKU(p.SKU); key != "" {
-				probSKUs[key] = true
-			}
-		}
-		for _, s := range siigoProducts {
-			key := normalizeSKU(s.Code)
-			if key == "" || probSKUs[key] {
+		for _, idx := range rc.outcome.OnlyInChannel {
+			s := rc.siigoProducts[idx]
+			if normalizeSKU(s.Code) == "" {
 				continue
 			}
 			missing = append(missing, s)

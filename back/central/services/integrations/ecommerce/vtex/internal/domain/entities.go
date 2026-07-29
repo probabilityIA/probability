@@ -1,16 +1,21 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 type Integration struct {
-	ID              uint
-	BusinessID      *uint
-	Name            string
-	StoreID         string
-	IntegrationType int
-	Config          map[string]interface{}
-	IsTesting       bool
-	BaseURLTest     string
+	ID                uint
+	BusinessID        *uint
+	Name              string
+	StoreID           string
+	IntegrationType   int
+	Config            map[string]interface{}
+	IsTesting         bool
+	BaseURLTest       string
+	ProductMatchRules []productmatch.Rule
 }
 
 type VTEXOrder struct {

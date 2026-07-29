@@ -50,7 +50,12 @@ func (h *jumpsellerHandler) resolveBusinessID(c *gin.Context, bodyBusinessID *ui
 func briefsToResponse(items []domain.ProductBrief) []gin.H {
 	out := make([]gin.H, 0, len(items))
 	for _, item := range items {
-		out = append(out, gin.H{"sku": item.SKU, "name": item.Name})
+		out = append(out, gin.H{
+			"sku":           item.SKU,
+			"name":          item.Name,
+			"matched_by":    item.MatchedBy,
+			"matched_value": item.MatchedValue,
+		})
 	}
 	return out
 }

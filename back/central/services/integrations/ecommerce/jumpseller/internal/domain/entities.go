@@ -1,17 +1,22 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 type Integration struct {
-	ID              uint
-	BusinessID      *uint
-	Name            string
-	StoreID         string
-	IntegrationType int
-	Config          map[string]interface{}
-	IsTesting       bool
-	BaseURL         string
-	BaseURLTest     string
+	ID                uint
+	BusinessID        *uint
+	Name              string
+	StoreID           string
+	IntegrationType   int
+	Config            map[string]interface{}
+	IsTesting         bool
+	BaseURL           string
+	BaseURLTest       string
+	ProductMatchRules []productmatch.Rule
 }
 
 type TokenResponse struct {
@@ -161,6 +166,7 @@ type JumpsellerProduct struct {
 type ProductVariant struct {
 	ID             int64
 	SKU            string
+	Barcode        string
 	Price          float64
 	Stock          int
 	StockUnlimited bool

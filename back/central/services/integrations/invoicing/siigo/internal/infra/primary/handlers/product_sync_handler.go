@@ -58,7 +58,12 @@ type productReconcileRequest struct {
 func productBriefsToResponse(items []dtos.ProductBrief) []gin.H {
 	out := make([]gin.H, 0, len(items))
 	for _, b := range items {
-		out = append(out, gin.H{"sku": b.SKU, "name": b.Name})
+		out = append(out, gin.H{
+			"sku":           b.SKU,
+			"name":          b.Name,
+			"matched_by":    b.MatchedBy,
+			"matched_value": b.MatchedValue,
+		})
 	}
 	return out
 }
@@ -85,6 +90,7 @@ func (h *ProductHandler) ReconcileProducts(c *gin.Context) {
 		"success":                true,
 		"matched":                result.Matched,
 		"matched_not_associated": productBriefsToResponse(result.MatchedNotAssociated),
+		"match_rules":            result.MatchRules,
 		"only_in_probability":    productBriefsToResponse(result.OnlyInProbability),
 		"only_in_siigo":          productBriefsToResponse(result.OnlyInSiigo),
 		"probability_no_sku":     result.ProbabilityNoSKU,
