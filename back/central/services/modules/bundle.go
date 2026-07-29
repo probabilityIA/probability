@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	integrationsCore "github.com/secamc93/probability/back/central/services/integrations/core"
 	factusinv "github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
+	whatsapp "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp"
 	"github.com/secamc93/probability/back/central/services/modules/accounting"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
@@ -17,6 +18,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/geozones"
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
+	"github.com/secamc93/probability/back/central/services/modules/marketingleads"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
 	"github.com/secamc93/probability/back/central/services/modules/notification_backfill"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
@@ -97,6 +99,15 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment)
 	publicsite.New(router, database, logger, environment, payBundle)
+
+	var waSender marketingleads.IWhatsAppSender
+	if integ, ok := integrationCore.GetRegisteredIntegration(integrationsCore.IntegrationTypeWhatsApp); ok {
+		if wa, ok := integ.(whatsapp.IWhatsAppBundle); ok {
+			waSender = wa
+		}
+	}
+	marketingleads.New(router, database, logger, waSender)
+
 	websiteconfig.New(router, database, logger)
 	tickets.New(router, database, logger, s3)
 	accounting.New(router, database, logger, environment, integrationCore, dianEmitter)

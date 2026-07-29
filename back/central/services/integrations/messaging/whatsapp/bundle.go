@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasemessaging"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerai"
@@ -28,8 +29,34 @@ import (
 
 type IWhatsAppBundle interface {
 	SendMessage(ctx context.Context, orderNumber, phoneNumber string) (string, error)
+	SendDiagnosticResultTemplate(ctx context.Context, phone, name, surveyTitle, level string) (string, error)
 	RegisterRoutes(router *gin.RouterGroup)
 	SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter)
+}
+
+const diagnosticResultTemplateName = "resultado_diagnostico"
+
+func buildDiagnosticoResultTemplateMessage(phoneNumber, name, surveyTitle, level string) entities.TemplateMessage {
+	return entities.TemplateMessage{
+		MessagingProduct: "whatsapp",
+		RecipientType:    "individual",
+		To:               phoneNumber,
+		Type:             "template",
+		Template: entities.TemplateData{
+			Name:     diagnosticResultTemplateName,
+			Language: entities.TemplateLanguage{Code: "es"},
+			Components: []entities.TemplateComponent{
+				{
+					Type: "body",
+					Parameters: []entities.TemplateParameter{
+						{Type: "text", Text: name},
+						{Type: "text", Text: surveyTitle},
+						{Type: "text", Text: level},
+					},
+				},
+			},
+		},
+	}
 }
 
 type bundle struct {
@@ -159,6 +186,16 @@ func (b *bundle) SendMessage(ctx context.Context, orderNumber, phoneNumber strin
 		PhoneNumber: phoneNumber,
 	}
 	return b.useCase.SendMessage(ctx, req)
+}
+
+func (b *bundle) SendDiagnosticResultTemplate(ctx context.Context, phone, name, surveyTitle, level string) (string, error) {
+	config, err := b.credsCache.GetWhatsAppDefaultConfig(ctx)
+	if err != nil {
+		return "", fmt.Errorf("credenciales de plataforma WhatsApp no disponibles: %w", err)
+	}
+
+	msg := buildDiagnosticoResultTemplateMessage(phone, name, surveyTitle, level)
+	return b.wa.SendMessage(ctx, config.PhoneNumberID, msg, config.AccessToken)
 }
 
 func (b *bundle) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {

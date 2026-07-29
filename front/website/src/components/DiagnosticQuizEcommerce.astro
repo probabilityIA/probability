@@ -4,13 +4,19 @@ import '../styles/quiz-shared.css';
 
 <div id="diagnostic-quiz"></div>
 
-<script is:inline>
+<script>
+  import { API_BASE_URL } from '../config/api';
+
+  const SURVEY_SLUG = 'escanea-tu-logistica';
+
   class DiagnosticQuizEcommerce {
     constructor() {
       this.state = {
         screen: 'intro',
         currentQ: 0,
         answers: [null, null, null, null, null, null],
+        lead: { name: '', email: '', phone: '' },
+        result: null,
       };
 
       this.questions = [
@@ -87,6 +93,7 @@ import '../styles/quiz-shared.css';
     getHTML() {
       if (this.state.screen === 'intro') return this.renderIntro();
       if (this.state.screen === 'quiz') return this.renderQuiz();
+      if (this.state.screen === 'leadform') return this.renderLeadForm();
       if (this.state.screen === 'results') return this.renderResults();
     }
 
@@ -167,6 +174,88 @@ import '../styles/quiz-shared.css';
       `;
     }
 
+    renderLeadForm() {
+      const { name, email, phone } = this.state.lead;
+      const canSubmit = name.trim() && email.trim() && phone.trim();
+
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-quiz">
+              <div class="dq-card">
+                <div class="dq-question-header">
+                  <h2 class="dq-question-text">Ya casi. ¿A dónde te enviamos tu resultado?</h2>
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">Nombre completo</label>
+                  <input class="dq-input" type="text" data-lead-field="name" value="${name}" placeholder="Tu nombre" />
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">Correo</label>
+                  <input class="dq-input" type="email" data-lead-field="email" value="${email}" placeholder="tucorreo@empresa.com" />
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">WhatsApp</label>
+                  <input class="dq-input" type="tel" data-lead-field="phone" value="${phone}" placeholder="+57 300 000 0000" />
+                </div>
+              </div>
+
+              <div class="dq-buttons">
+                <button class="dq-btn-back">← Atrás</button>
+                <button class="dq-btn-next" ${!canSubmit ? 'disabled' : ''}>Ver mi resultado →</button>
+              </div>
+              <p class="dq-field-note">Te enviamos tu resultado por WhatsApp y correo. Nuestro equipo puede ayudarte a mejorarlo.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    submitLead() {
+      const { name, email, phone } = this.state.lead;
+      fetch(`${API_BASE_URL}/public/marketing-leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          survey_slug: SURVEY_SLUG,
+          score_total: this.state.result.total,
+          score_max: this.state.result.max,
+          level: this.state.result.level,
+        }),
+      }).catch(() => {
+        // silencioso: no bloqueamos el resultado si falla el envio del lead
+      });
+    }
+
+    computeResult() {
+      const scores = this.state.answers.map(a => a ?? 0);
+      const total = scores.reduce((a, b) => a + b, 0);
+      const max = this.maxScore;
+
+      let level, heroClass, desc, emoji;
+      if (total <= max * 0.35) {
+        level = 'Básica';
+        emoji = '🔴';
+        heroClass = 'basic';
+        desc = 'Tu operación depende de procesos manuales y de un modelo de pago de alta fricción. Hay una oportunidad grande de recuperar tiempo y margen.';
+      } else if (total <= max * 0.7) {
+        level = 'Intermedia';
+        emoji = '🟡';
+        heroClass = 'intermediate';
+        desc = 'Tienes una base funcional, pero algunos procesos te están costando tiempo y dinero. Optimizarlos te permitirá escalar sin fricciones.';
+      } else {
+        level = 'Avanzada';
+        emoji = '🟢';
+        heroClass = 'advanced';
+        desc = 'Tu operación está bien optimizada en volumen, canales y trazabilidad. Ahora el foco es afinar detalles y escalar apoyándote en datos.';
+      }
+
+      return { scores, total, max, level, heroClass, desc, emoji };
+    }
+
     buildRecs(a) {
       const recDefs = [
         { title: 'Prepárate para escalar sin caos', desc: 'A partir de 200+ órdenes al mes, los procesos manuales empiezan a colapsar. Centraliza tus pedidos en una sola plataforma antes de que el volumen te desborde.', tags: ['Volumen', 'Escalabilidad'] },
@@ -205,27 +294,7 @@ import '../styles/quiz-shared.css';
     }
 
     renderResults() {
-      const scores = this.state.answers.map(a => a ?? 0);
-      const total = scores.reduce((a, b) => a + b, 0);
-      const max = this.maxScore;
-
-      let level, heroClass, desc, emoji;
-      if (total <= max * 0.35) {
-        level = 'Básica';
-        emoji = '🔴';
-        heroClass = 'basic';
-        desc = 'Tu operación depende de procesos manuales y de un modelo de pago de alta fricción. Hay una oportunidad grande de recuperar tiempo y margen.';
-      } else if (total <= max * 0.7) {
-        level = 'Intermedia';
-        emoji = '🟡';
-        heroClass = 'intermediate';
-        desc = 'Tienes una base funcional, pero algunos procesos te están costando tiempo y dinero. Optimizarlos te permitirá escalar sin fricciones.';
-      } else {
-        level = 'Avanzada';
-        emoji = '🟢';
-        heroClass = 'advanced';
-        desc = 'Tu operación está bien optimizada en volumen, canales y trazabilidad. Ahora el foco es afinar detalles y escalar apoyándote en datos.';
-      }
+      const { total, max, level, heroClass, desc, emoji } = this.state.result;
 
       const remaining = max - total;
       const hoursPerMonth = Math.round(remaining * 6);
@@ -248,7 +317,7 @@ import '../styles/quiz-shared.css';
         </div>
       `;
 
-      const recs = this.buildRecs(scores);
+      const recs = this.buildRecs(this.state.result.scores);
       const recsHTML = recs
         .map((r) => {
           let tagsHtml = r.tags
@@ -318,19 +387,40 @@ import '../styles/quiz-shared.css';
       const nextBtn = document.querySelector('.dq-btn-next');
       if (nextBtn) {
         nextBtn.addEventListener('click', () => {
+          if (this.state.screen === 'leadform') {
+            this.submitLead();
+            this.state.screen = 'results';
+            this.renderAll();
+            return;
+          }
           if (this.state.currentQ < this.questions.length - 1) {
             this.state.currentQ++;
           } else {
-            this.state.screen = 'results';
+            this.state.result = this.computeResult();
+            this.state.screen = 'leadform';
           }
           this.renderAll();
         });
       }
 
+      const leadFields = document.querySelectorAll('[data-lead-field]');
+      leadFields.forEach(field => {
+        field.addEventListener('input', () => {
+          this.state.lead[field.getAttribute('data-lead-field')] = field.value;
+          const submitBtn = document.querySelector('.dq-btn-next');
+          if (submitBtn) {
+            const { name, email, phone } = this.state.lead;
+            submitBtn.disabled = !(name.trim() && email.trim() && phone.trim());
+          }
+        });
+      });
+
       const backBtn = document.querySelector('.dq-btn-back');
       if (backBtn) {
         backBtn.addEventListener('click', () => {
-          if (this.state.currentQ === 0) {
+          if (this.state.screen === 'leadform') {
+            this.state.screen = 'quiz';
+          } else if (this.state.currentQ === 0) {
             this.state.screen = 'intro';
           } else {
             this.state.currentQ--;
@@ -345,6 +435,8 @@ import '../styles/quiz-shared.css';
           this.state.screen = 'intro';
           this.state.currentQ = 0;
           this.state.answers = [null, null, null, null, null, null];
+          this.state.lead = { name: '', email: '', phone: '' };
+          this.state.result = null;
           this.renderAll();
         });
       }

@@ -167,5 +167,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateProductMatchRules(ctx); err != nil {
 		return err
 	}
-	return r.migratePublicCheckout(ctx)
+	if err := r.migratePublicCheckout(ctx); err != nil {
+		return err
+	}
+	return r.migrateMarketingLeads(ctx)
 }
