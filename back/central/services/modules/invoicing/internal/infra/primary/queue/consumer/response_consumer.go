@@ -16,7 +16,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// compareItemDetail ítem de documento del proveedor (local, sin compartir)
 type compareItemDetail struct {
 	ItemCode string `json:"item_code"`
 	ItemName string `json:"item_name"`
@@ -25,7 +24,6 @@ type compareItemDetail struct {
 	IVA      string `json:"iva"`
 }
 
-// ResponseConsumer consume responses de proveedores de facturación
 type ResponseConsumer struct {
 	queue        rabbitmq.IQueue
 	repo         ports.IRepository
@@ -35,7 +33,6 @@ type ResponseConsumer struct {
 	log          log.ILogger
 }
 
-// NewResponseConsumer crea un nuevo consumer de responses
 func NewResponseConsumer(
 	queue rabbitmq.IQueue,
 	repo ports.IRepository,
@@ -58,8 +55,6 @@ const (
 	QueueInvoiceResponses = rabbitmq.QueueInvoicingResponses
 )
 
-
-// compareProviderDocument documento retornado por el proveedor en comparación
 type compareProviderDocument struct {
 	DocumentNumber     string              `json:"document_number"`
 	DocumentDate       string              `json:"document_date"`
@@ -74,7 +69,6 @@ type compareProviderDocument struct {
 	Details            []compareItemDetail `json:"details,omitempty"`
 }
 
-// compareResponseMessage mensaje de respuesta de comparación del proveedor
 type compareResponseMessage struct {
 	Operation         string                    `json:"operation"`
 	Mode              string                    `json:"mode,omitempty"`
@@ -87,15 +81,13 @@ type compareResponseMessage struct {
 	Timestamp         time.Time                 `json:"timestamp"`
 }
 
-// responseDiscriminator se usa para identificar el tipo de mensaje antes de rutear
 type responseDiscriminator struct {
 	Operation string `json:"operation,omitempty"`
 	InvoiceID uint   `json:"invoice_id"`
 }
 
-// Start inicia el consumo de responses de proveedores
 func (c *ResponseConsumer) Start(ctx context.Context) error {
-	// Declarar la cola si no existe
+
 	if err := c.queue.DeclareQueue(QueueInvoiceResponses, true); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al declarar cola de responses")
 		return fmt.Errorf("failed to declare queue: %w", err)
@@ -103,9 +95,8 @@ func (c *ResponseConsumer) Start(ctx context.Context) error {
 
 	c.log.Info(ctx).
 		Str("queue", QueueInvoiceResponses).
-		Msg("📥 Starting invoice response consumer")
+		Msg("Starting invoice response consumer")
 
-	// Iniciar consumo
 	if err := c.queue.Consume(ctx, QueueInvoiceResponses, c.handleResponse); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al iniciar consumer de responses")
 		return fmt.Errorf("failed to start consuming: %w", err)
@@ -114,38 +105,31 @@ func (c *ResponseConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleResponse procesa una respuesta del proveedor
 func (c *ResponseConsumer) handleResponse(message []byte) error {
 	ctx := context.Background()
 
-	// Peek at the operation field to route to the correct handler
 	var disc responseDiscriminator
 	if err := json.Unmarshal(message, &disc); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al deserializar discriminator")
 		return fmt.Errorf("failed to unmarshal discriminator: %w", err)
 	}
 
-	// Route compare responses to dedicated handler
 	if disc.Operation == dtos.OperationCompare {
 		return c.handleCompareResponse(ctx, message)
 	}
 
-	// Route list_items responses to dedicated handler
 	if disc.Operation == dtos.OperationListItems {
 		return c.handleListItemsResponse(ctx, message)
 	}
 
-	// Route list_bank_accounts responses to dedicated handler
 	if disc.Operation == dtos.OperationListBankAccounts {
 		return c.handleListBankAccountsResponse(ctx, message)
 	}
 
-	// Route list_siigo_warehouses responses to dedicated handler
 	if disc.Operation == dtos.OperationListSiigoWarehouses {
 		return c.handleListSiigoWarehousesResponse(ctx, message)
 	}
 
-	// Deserializar response normal de factura
 	var response dtos.InvoiceResponseMessage
 	if err := json.Unmarshal(message, &response); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al deserializar response")
@@ -157,34 +141,31 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		Str("provider", response.Provider).
 		Str("status", response.Status).
 		Str("correlation_id", response.CorrelationID).
-		Msg("📨 Processing invoice response")
+		Msg("Processing invoice response")
 
-	// Obtener factura
 	invoice, err := c.repo.GetInvoiceByID(ctx, response.InvoiceID)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).
 			Uint("invoice_id", response.InvoiceID).
 			Msg("Failed to get invoice")
-		return nil // No requeue - invoice no existe
+		return nil
 	}
 
-	// Obtener sync log actual (el más reciente en processing)
 	syncLogs, err := c.repo.GetSyncLogsByInvoiceID(ctx, response.InvoiceID)
 	if err != nil || len(syncLogs) == 0 {
 		c.log.Warn(ctx).
 			Uint("invoice_id", response.InvoiceID).
 			Msg("No sync logs found")
-		// Continuar sin sync log (no es crítico)
+
 	}
 
 	var syncLog *entities.InvoiceSyncLog
 	if len(syncLogs) > 0 {
-		// Usar el sync log más reciente directamente
+
 		syncLog = syncLogs[0]
 	}
 
-	// Procesar según operación y status
 	if response.Operation == dtos.OperationCancel {
 		if response.Status == dtos.ResponseStatusSuccess {
 			c.handleCancelSuccess(ctx, invoice, syncLog, &response)
@@ -211,7 +192,6 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 	return nil
 }
 
-// handleSuccess procesa una respuesta exitosa
 func (c *ResponseConsumer) handleSuccess(
 	ctx context.Context,
 	invoice *entities.Invoice,
@@ -221,9 +201,8 @@ func (c *ResponseConsumer) handleSuccess(
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
 		Str("invoice_number", response.InvoiceNumber).
-		Msg("✅ Invoice created successfully by provider")
+		Msg("Invoice created successfully by provider")
 
-	// Actualizar invoice con datos del proveedor
 	invoice.InvoiceNumber = response.InvoiceNumber
 	if response.ExternalID != "" {
 		invoice.ExternalID = &response.ExternalID
@@ -246,18 +225,15 @@ func (c *ResponseConsumer) handleSuccess(
 
 	invoice.Status = constants.InvoiceStatusIssued
 
-	// Guardar documento completo si existe
 	if response.DocumentJSON != nil {
 		invoice.ProviderResponse = response.DocumentJSON
 	}
 
-	// Actualizar en BD
 	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to update invoice")
 		return
 	}
 
-	// Actualizar sync log como success
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -265,10 +241,8 @@ func (c *ResponseConsumer) handleSuccess(
 		syncLog.CompletedAt = &completedAt
 		syncLog.Duration = &duration
 
-		// Guardar response completa
 		syncLog.ResponseBody = response.DocumentJSON
 
-		// Poblar audit data del request/response HTTP al proveedor
 		c.populateSyncLogAudit(syncLog, response)
 
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
@@ -276,7 +250,6 @@ func (c *ResponseConsumer) handleSuccess(
 		}
 	}
 
-	// Actualizar información de factura en la orden (skip para journals)
 	if response.Operation != dtos.OperationCreateJournal {
 		invoiceURL := ""
 		if invoice.InvoiceURL != nil {
@@ -287,28 +260,23 @@ func (c *ResponseConsumer) handleSuccess(
 		}
 	}
 
-	// Publicar evento de factura creada (RabbitMQ)
 	if err := c.eventPub.PublishInvoiceCreated(ctx, invoice); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event")
 	}
 
-	// Publicar evento SSE
 	if err := c.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to publish SSE event")
 	}
 
-	// Actualizar contadores de bulk job si la factura pertenece a uno
 	c.updateBulkJobOnResult(ctx, invoice.ID, true)
 
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
 		Str("invoice_number", invoice.InvoiceNumber).
 		Int64("processing_time_ms", response.ProcessingTime).
-		Msg("✅ Invoice response processed successfully")
+		Msg("Invoice response processed successfully")
 }
 
-// handlePendingValidation procesa una respuesta donde Softpymes aceptó el documento
-// pero la DIAN aún lo está validando. La factura se mantiene en "pending" (no "failed").
 func (c *ResponseConsumer) handlePendingValidation(
 	ctx context.Context,
 	invoice *entities.Invoice,
@@ -318,17 +286,14 @@ func (c *ResponseConsumer) handlePendingValidation(
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
 		Str("provider_message", response.Error).
-		Msg("⏳ Invoice accepted by provider, pending DIAN validation")
+		Msg("Invoice accepted by provider, pending DIAN validation")
 
-	// Mantener invoice en estado pending (NO marcar como failed)
 	invoice.Status = constants.InvoiceStatusPending
 	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to update invoice status to pending")
 		return
 	}
 
-	// Actualizar sync log como pending (validación DIAN en curso)
-	// Programar check_status automático: solo busca el documento, nunca re-envía POST.
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -340,8 +305,6 @@ func (c *ResponseConsumer) handlePendingValidation(
 
 		c.populateSyncLogAudit(syncLog, response)
 
-		// Siempre programar próxima consulta — buscar es inofensivo.
-		// Backoff progresivo: 15min, 30min, 1h, 2h, 4h (DIAN puede tardar horas)
 		nextCheck := c.calculateCheckBackoff(syncLog.RetryCount)
 		syncLog.NextRetryAt = &nextCheck
 		c.log.Info(ctx).
@@ -355,7 +318,6 @@ func (c *ResponseConsumer) handlePendingValidation(
 		}
 	}
 
-	// Publicar SSE para que el frontend sepa que está en validación DIAN
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "invoice.pending_validation",
 		Category:   "invoice",
@@ -367,16 +329,13 @@ func (c *ResponseConsumer) handlePendingValidation(
 		},
 	})
 
-	// Para bulk jobs: contar como exitosa (el proveedor aceptó el documento).
-	// La factura queda en "pending" y el check_status automático la actualizará cuando DIAN responda.
 	c.updateBulkJobOnResult(ctx, invoice.ID, true)
 
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
-		Msg("⏳ Invoice kept as pending - awaiting DIAN validation")
+		Msg("Invoice kept as pending - awaiting DIAN validation")
 }
 
-// handleError procesa una respuesta de error
 func (c *ResponseConsumer) handleError(
 	ctx context.Context,
 	invoice *entities.Invoice,
@@ -387,9 +346,8 @@ func (c *ResponseConsumer) handleError(
 		Uint("invoice_id", invoice.ID).
 		Str("error", response.Error).
 		Str("error_code", response.ErrorCode).
-		Msg("❌ Provider returned error")
+		Msg("Provider returned error")
 
-	// Marcar invoice como failed
 	invoice.Status = constants.InvoiceStatusFailed
 
 	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
@@ -397,7 +355,6 @@ func (c *ResponseConsumer) handleError(
 		return
 	}
 
-	// Actualizar sync log como failed
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -417,13 +374,25 @@ func (c *ResponseConsumer) handleError(
 			if syncLog.RetryCount > 0 {
 				syncLog.RetryCount--
 			}
-			nextRetry := time.Now().Add(providerUnavailableRetryDelay)
-			syncLog.NextRetryAt = &nextRetry
-			c.log.Warn(ctx).
-				Uint("invoice_id", invoice.ID).
-				Time("next_retry_at", nextRetry).
-				Int("retry_count", syncLog.RetryCount).
-				Msg("Provider unavailable - retry rescheduled without consuming retry budget")
+			elapsed := time.Since(invoice.CreatedAt)
+			if elapsed >= providerUnavailableMaxWindow {
+				syncLog.Status = constants.SyncStatusCancelled
+				syncLog.NextRetryAt = nil
+				c.log.Warn(ctx).
+					Uint("invoice_id", invoice.ID).
+					Dur("elapsed", elapsed).
+					Dur("max_window", providerUnavailableMaxWindow).
+					Msg("Provider unavailable window exhausted - automatic retries stopped, invoice needs manual review")
+			} else {
+				nextRetry := time.Now().Add(providerUnavailableRetryDelay(elapsed))
+				syncLog.NextRetryAt = &nextRetry
+				c.log.Warn(ctx).
+					Uint("invoice_id", invoice.ID).
+					Time("next_retry_at", nextRetry).
+					Dur("elapsed", elapsed).
+					Int("retry_count", syncLog.RetryCount).
+					Msg("Provider unavailable - retry rescheduled without consuming retry budget")
+			}
 		} else if syncLog.RetryCount < syncLog.MaxRetries {
 			nextRetry := c.calculateNextRetry(syncLog.RetryCount)
 			syncLog.NextRetryAt = &nextRetry
@@ -434,17 +403,14 @@ func (c *ResponseConsumer) handleError(
 		}
 	}
 
-	// Publicar evento de factura fallida
 	if err := c.eventPub.PublishInvoiceFailed(ctx, invoice, response.Error); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to publish invoice failed event")
 	}
 
-	// Publicar evento SSE
 	if err := c.ssePublisher.PublishInvoiceFailed(ctx, invoice, response.Error); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to publish SSE failed event")
 	}
 
-	// Actualizar contadores de bulk job si la factura pertenece a uno
 	c.updateBulkJobOnResult(ctx, invoice.ID, false)
 }
 
@@ -489,14 +455,13 @@ func (c *ResponseConsumer) handleRetryRequeued(
 		Msg("Invoice requeued for creation retry after reconcile")
 }
 
-// handleCancelSuccess procesa una respuesta exitosa de cancelación
 func (c *ResponseConsumer) handleCancelSuccess(
 	ctx context.Context,
 	invoice *entities.Invoice,
 	syncLog *entities.InvoiceSyncLog,
 	response *dtos.InvoiceResponseMessage,
 ) {
-	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("✅ Invoice cancelled successfully by provider")
+	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("Invoice cancelled successfully by provider")
 
 	now := time.Now()
 	invoice.Status = constants.InvoiceStatusCancelled
@@ -518,7 +483,6 @@ func (c *ResponseConsumer) handleCancelSuccess(
 		}
 	}
 
-	// Publicar evento SSE via RabbitMQ -> events module -> frontend
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "invoice.cancelled",
 		Category:   "invoice",
@@ -529,10 +493,9 @@ func (c *ResponseConsumer) handleCancelSuccess(
 		},
 	})
 
-	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("✅ Invoice cancellation processed successfully")
+	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("Invoice cancellation processed successfully")
 }
 
-// handleCancelError procesa un error de cancelación
 func (c *ResponseConsumer) handleCancelError(
 	ctx context.Context,
 	invoice *entities.Invoice,
@@ -542,7 +505,7 @@ func (c *ResponseConsumer) handleCancelError(
 	c.log.Error(ctx).
 		Uint("invoice_id", invoice.ID).
 		Str("error", response.Error).
-		Msg("❌ Provider returned error on cancellation")
+		Msg("Provider returned error on cancellation")
 
 	if syncLog != nil {
 		completedAt := time.Now()
@@ -557,7 +520,6 @@ func (c *ResponseConsumer) handleCancelError(
 		}
 	}
 
-	// Publicar evento SSE de error via RabbitMQ
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "invoice.cancel_failed",
 		Category:   "invoice",
@@ -570,8 +532,6 @@ func (c *ResponseConsumer) handleCancelError(
 	})
 }
 
-// handleCashReceiptResponse procesa la respuesta de una operación de recibo de caja.
-// No cambia el estado de la factura (ya está issued), solo actualiza el sync log y el document_json.
 func (c *ResponseConsumer) handleCashReceiptResponse(
 	ctx context.Context,
 	invoice *entities.Invoice,
@@ -585,7 +545,6 @@ func (c *ResponseConsumer) handleCashReceiptResponse(
 			Uint("invoice_id", invoice.ID).
 			Msg("Cash receipt generated successfully")
 
-		// Actualizar document_json de la factura con el nuevo cash_receipt
 		if response.DocumentJSON != nil {
 			invoice.ProviderResponse = response.DocumentJSON
 			if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
@@ -599,7 +558,6 @@ func (c *ResponseConsumer) handleCashReceiptResponse(
 			Msg("Cash receipt generation failed")
 	}
 
-	// Actualizar sync log
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -615,7 +573,6 @@ func (c *ResponseConsumer) handleCashReceiptResponse(
 			syncLog.ErrorCode = &response.ErrorCode
 		}
 
-		// Poblar audit data del recibo de caja
 		c.populateSyncLogAudit(syncLog, response)
 
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
@@ -623,7 +580,6 @@ func (c *ResponseConsumer) handleCashReceiptResponse(
 		}
 	}
 
-	// Publicar SSE para que el frontend se actualice
 	if isSuccess {
 		_ = c.ssePublisher.PublishInvoiceCreated(ctx, invoice)
 	} else {
@@ -631,19 +587,17 @@ func (c *ResponseConsumer) handleCashReceiptResponse(
 	}
 }
 
-// updateBulkJobOnResult actualiza los contadores del bulk job cuando se recibe el resultado del proveedor
 func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID uint, success bool) {
-	// Buscar si esta factura pertenece a un bulk job
+
 	jobItem, err := c.repo.GetJobItemByInvoiceID(ctx, invoiceID)
 	if err != nil {
 		c.log.Warn(ctx).Err(err).Uint("invoice_id", invoiceID).Msg("Error checking bulk job item")
 		return
 	}
 	if jobItem == nil {
-		return // No pertenece a un bulk job
+		return
 	}
 
-	// Actualizar estado del item
 	if success {
 		jobItem.Status = "success"
 	} else {
@@ -653,7 +607,6 @@ func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID 
 		c.log.Error(ctx).Err(updateErr).Msg("Failed to update bulk job item status")
 	}
 
-	// Incrementar contadores del job
 	successful, failed := 0, 0
 	if success {
 		successful = 1
@@ -665,7 +618,6 @@ func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID 
 		return
 	}
 
-	// Publicar progreso del job via RabbitMQ -> events module -> frontend SSE
 	job, err := c.repo.GetJobByID(ctx, jobItem.JobID)
 	if err != nil || job == nil {
 		return
@@ -686,13 +638,11 @@ func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID 
 		},
 	})
 
-	// Verificar si el job completó (successful + failed = total)
 	if job.Successful+job.Failed >= job.TotalOrders {
 		c.completeBulkJob(ctx, job)
 	}
 }
 
-// completeBulkJob marca un bulk job como completado
 func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.BulkInvoiceJob) {
 	now := time.Now()
 	job.Status = "completed"
@@ -703,7 +653,6 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		return
 	}
 
-	// Publicar job completado via RabbitMQ -> events module -> frontend SSE
 	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
 		Type:       "bulk_job.completed",
 		Category:   "invoice",
@@ -727,10 +676,8 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		Msg("Bulk invoice job completed (from response consumer)")
 }
 
-// populateSyncLogAudit extrae audit data del response message y la almacena en el sync log.
-// Incluye tanto los datos de la factura como los del recibo de caja (si aplica).
 func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, response *dtos.InvoiceResponseMessage) {
-	// Audit data de la factura
+
 	if response.AuditRequestURL != "" {
 		syncLog.RequestURL = response.AuditRequestURL
 	}
@@ -747,7 +694,6 @@ func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog
 		}
 	}
 
-	// Audit data del recibo de caja (separado de la factura)
 	if response.CashReceiptRequestURL != "" {
 		syncLog.CashReceiptRequestURL = response.CashReceiptRequestURL
 	}
@@ -762,14 +708,12 @@ func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog
 		if json.Unmarshal([]byte(response.CashReceiptResponseBody), &bodyMap) == nil {
 			syncLog.CashReceiptResponseBody = bodyMap
 		} else {
-			// Si no es JSON válido, guardarlo como objeto con el string raw
+
 			syncLog.CashReceiptResponseBody = map[string]interface{}{"raw": response.CashReceiptResponseBody}
 		}
 	}
 }
 
-// handleCompareResponse procesa la respuesta de comparación del proveedor.
-// Cruza las facturas del proveedor contra las del sistema en memoria y publica SSE.
 func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []byte) error {
 	var msg compareResponseMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
@@ -783,9 +727,8 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		Str("date_from", msg.DateFrom).
 		Str("date_to", msg.DateTo).
 		Int("provider_docs", len(msg.ProviderDocuments)).
-		Msg("📊 Processing compare response")
+		Msg("Processing compare response")
 
-	// Si el proveedor reportó error, publicar SSE con resultado vacío + error en comment
 	if msg.Error != "" {
 		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in compare response")
 		data := &dtos.CompareResponseData{
@@ -798,7 +741,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 			},
 			Summary: dtos.CompareSummary{},
 		}
-		// Store in Redis before publishing SSE (belt + suspenders)
+
 		if err := c.compareCache.StoreCompareResult(ctx, msg.CorrelationID, data); err != nil {
 			c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store compare error result in Redis (non-fatal)")
 		}
@@ -806,14 +749,12 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		return c.ssePublisher.PublishCompareReady(ctx, data)
 	}
 
-	// Obtener facturas del sistema en el rango de fechas (en memoria)
 	systemInvoices, err := c.repo.GetIssuedInvoicesByDateRange(ctx, msg.BusinessID, msg.DateFrom, msg.DateTo)
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to get system invoices for comparison")
 		return fmt.Errorf("failed to get system invoices: %w", err)
 	}
 
-	// Construir mapa del sistema: invoiceNumber -> invoice
 	systemMap := make(map[string]*entities.Invoice, len(systemInvoices))
 	for _, inv := range systemInvoices {
 		if inv.InvoiceNumber != "" {
@@ -821,7 +762,6 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		}
 	}
 
-	// Recolectar orderIDs para batch lookup de fechas de creación
 	orderIDs := make([]string, 0, len(systemInvoices))
 	for _, inv := range systemInvoices {
 		if inv.OrderID != "" {
@@ -830,7 +770,6 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	}
 	orderDates, _ := c.repo.GetOrderCreatedAtsByIDs(ctx, orderIDs)
 
-	// Construir mapa del proveedor: documentNumber -> document
 	providerMap := make(map[string]compareProviderDocument, len(msg.ProviderDocuments))
 	for _, doc := range msg.ProviderDocuments {
 		if doc.DocumentNumber != "" {
@@ -838,16 +777,14 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		}
 	}
 
-	// Cruzar resultados
 	isSync := msg.Mode == "sync"
 	results := make([]dtos.CompareResult, 0)
 	matched, systemOnly, providerOnly, annulledInProvider, released := 0, 0, 0, 0, 0
 
 	c.log.Info(ctx).
 		Int("total_provider_docs", len(providerMap)).
-		Msg("📋 Starting comparison of provider documents")
+		Msg("Starting comparison of provider documents")
 
-	// 1. Recorrer documentos del proveedor
 	for docNum, doc := range providerMap {
 		c.log.Debug(ctx).
 			Str("doc_number", docNum).
@@ -896,7 +833,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 				SystemItems:     mapInvoiceItemsToCompareDetails(sysInv.Items),
 			})
 		} else {
-			// provider_only: está en proveedor pero no en sistema
+
 			results = append(results, dtos.CompareResult{
 				Status:          dtos.CompareStatusProviderOnly,
 				InvoiceNumber:   docNum,
@@ -912,12 +849,11 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		}
 	}
 
-	// 2. Recorrer facturas del sistema que no están en el proveedor
 	for invNum, sysInv := range systemMap {
 		if _, found := providerMap[invNum]; !found {
 			total := sysInv.TotalAmount
 			orderID := sysInv.OrderID
-			// Extraer customerNit del DNI del cliente
+
 			customerNit := sysInv.CustomerDNI
 			orderCreatedAt := formatOrderDate(orderDates, sysInv.OrderID)
 			results = append(results, dtos.CompareResult{
@@ -934,7 +870,6 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		}
 	}
 
-	// Ordenar resultados: por fecha descendente, luego por número de factura descendente
 	sort.Slice(results, func(i, j int) bool {
 		if results[i].DocumentDate != results[j].DocumentDate {
 			return results[i].DocumentDate > results[j].DocumentDate
@@ -974,9 +909,8 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		Int("matched", matched).
 		Int("system_only", systemOnly).
 		Int("provider_only", providerOnly).
-		Msg("📊 Comparison complete, storing in Redis + publishing SSE")
+		Msg("Comparison complete, storing in Redis + publishing SSE")
 
-	// Store in Redis before publishing SSE (belt + suspenders)
 	if err := c.compareCache.StoreCompareResult(ctx, msg.CorrelationID, responseData); err != nil {
 		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store compare result in Redis (non-fatal)")
 	}
@@ -985,21 +919,18 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 	return c.ssePublisher.PublishCompareReady(ctx, responseData)
 }
 
-// publishCompareEvent publica el evento invoice.compare_ready al exchange de eventos (RabbitMQ)
-// para que llegue al frontend vía SSE. Es necesario porque ssePublisher solo usa Redis Pub/Sub
-// y nadie suscribe a ese canal — el módulo de eventos solo consume de RabbitMQ.
 func (c *ResponseConsumer) publishCompareEvent(ctx context.Context, data *dtos.CompareResponseData) {
 	results := make([]map[string]interface{}, 0, len(data.Results))
 	for _, r := range data.Results {
 		row := map[string]interface{}{
-			"status":          r.Status,
-			"invoice_number":  r.InvoiceNumber,
-			"prefix":          r.Prefix,
-			"document_date":   r.DocumentDate,
-			"provider_total":  r.ProviderTotal,
-			"customer_nit":    r.CustomerNit,
-			"customer_name":   r.CustomerName,
-			"comment":         r.Comment,
+			"status":           r.Status,
+			"invoice_number":   r.InvoiceNumber,
+			"prefix":           r.Prefix,
+			"document_date":    r.DocumentDate,
+			"provider_total":   r.ProviderTotal,
+			"customer_nit":     r.CustomerNit,
+			"customer_name":    r.CustomerName,
+			"comment":          r.Comment,
 			"order_created_at": r.OrderCreatedAt,
 		}
 		if r.SystemInvoiceID != nil {
@@ -1058,7 +989,6 @@ func (c *ResponseConsumer) publishCompareEvent(ctx context.Context, data *dtos.C
 	})
 }
 
-// mapInvoiceItemsToCompareDetails convierte items de factura del sistema a CompareItemDetail
 func mapInvoiceItemsToCompareDetails(items []entities.InvoiceItem) []dtos.CompareItemDetail {
 	result := make([]dtos.CompareItemDetail, 0, len(items))
 	for _, it := range items {
@@ -1077,7 +1007,6 @@ func mapInvoiceItemsToCompareDetails(items []entities.InvoiceItem) []dtos.Compar
 	return result
 }
 
-// mapProviderDetailsToCompareDetails convierte items del proveedor a CompareItemDetail
 func mapProviderDetailsToCompareDetails(details []compareItemDetail) []dtos.CompareItemDetail {
 	result := make([]dtos.CompareItemDetail, 0, len(details))
 	for _, d := range details {
@@ -1092,7 +1021,6 @@ func mapProviderDetailsToCompareDetails(details []compareItemDetail) []dtos.Comp
 	return result
 }
 
-// formatOrderDate retorna la fecha de creación de una orden formateada como YYYY-MM-DD, o nil
 func formatOrderDate(orderDates map[string]*time.Time, orderID string) *string {
 	if t, ok := orderDates[orderID]; ok && t != nil {
 		s := t.Format("2006-01-02")
@@ -1101,7 +1029,20 @@ func formatOrderDate(orderDates map[string]*time.Time, orderID string) *string {
 	return nil
 }
 
-const providerUnavailableRetryDelay = 15 * time.Minute
+const providerUnavailableMaxWindow = 6 * time.Hour
+
+func providerUnavailableRetryDelay(elapsed time.Duration) time.Duration {
+	switch {
+	case elapsed < time.Hour:
+		return 15 * time.Minute
+	case elapsed < 2*time.Hour:
+		return 30 * time.Minute
+	case elapsed < 4*time.Hour:
+		return time.Hour
+	default:
+		return 2 * time.Hour
+	}
+}
 
 var providerUnavailableErrorMarkers = []string{
 	"context deadline exceeded",
@@ -1133,7 +1074,7 @@ func isProviderUnavailableError(errMsg string) bool {
 }
 
 func (c *ResponseConsumer) calculateNextRetry(retryCount int) time.Time {
-	// Backoff exponencial: 5min, 15min, 30min
+
 	delays := []time.Duration{
 		5 * time.Minute,
 		15 * time.Minute,
@@ -1148,8 +1089,6 @@ func (c *ResponseConsumer) calculateNextRetry(retryCount int) time.Time {
 	return time.Now().Add(delays[delayIndex])
 }
 
-// calculateCheckBackoff calcula cuándo hacer el próximo check_status para pending DIAN.
-// Backoff más largo que retries: DIAN puede tardar horas en validar.
 func (c *ResponseConsumer) calculateCheckBackoff(checkCount int) time.Time {
 	delays := []time.Duration{
 		15 * time.Minute,
@@ -1167,8 +1106,6 @@ func (c *ResponseConsumer) calculateCheckBackoff(checkCount int) time.Time {
 	return time.Now().Add(delays[delayIndex])
 }
 
-
-// listItemsProviderItem ítem del catálogo del proveedor
 type listItemsProviderItem struct {
 	ItemCode      string  `json:"item_code"`
 	ItemName      string  `json:"item_name"`
@@ -1179,18 +1116,15 @@ type listItemsProviderItem struct {
 	OrderQuantity string  `json:"order_quantity"`
 }
 
-// listItemsResponseMessage mensaje de respuesta de list_items del proveedor
 type listItemsResponseMessage struct {
-	Operation     string                   `json:"operation"`
-	CorrelationID string                   `json:"correlation_id"`
-	BusinessID    uint                     `json:"business_id"`
-	Items         []listItemsProviderItem  `json:"items"`
-	Error         string                   `json:"error,omitempty"`
-	Timestamp     time.Time                `json:"timestamp"`
+	Operation     string                  `json:"operation"`
+	CorrelationID string                  `json:"correlation_id"`
+	BusinessID    uint                    `json:"business_id"`
+	Items         []listItemsProviderItem `json:"items"`
+	Error         string                  `json:"error,omitempty"`
+	Timestamp     time.Time               `json:"timestamp"`
 }
 
-// handleListItemsResponse procesa la respuesta de list_items del proveedor,
-// consulta los productos del sistema y realiza la reconciliación en memoria.
 func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message []byte) error {
 	var msg listItemsResponseMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
@@ -1202,9 +1136,8 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		Str("correlation_id", msg.CorrelationID).
 		Uint("business_id", msg.BusinessID).
 		Int("provider_items", len(msg.Items)).
-		Msg("📦 Processing list_items response")
+		Msg("Processing list_items response")
 
-	// Si el proveedor reportó error, publicar SSE con resultado vacío
 	if msg.Error != "" {
 		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in list_items response")
 		data := &dtos.ItemCompareResponseData{
@@ -1213,7 +1146,7 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 			Results:       []dtos.ItemCompareResult{},
 			Summary:       dtos.ItemCompareSummary{},
 		}
-		// Store in Redis before publishing SSE (belt + suspenders)
+
 		if err := c.compareCache.StoreItemCompareResult(ctx, msg.CorrelationID, data); err != nil {
 			c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store item compare error result in Redis (non-fatal)")
 		}
@@ -1221,14 +1154,12 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		return c.ssePublisher.PublishListItemsReady(ctx, data)
 	}
 
-	// Obtener productos del sistema
 	systemProducts, err := c.repo.ListProductsByBusinessID(ctx, msg.BusinessID)
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to get system products for items comparison")
 		return fmt.Errorf("failed to get system products: %w", err)
 	}
 
-	// Construir mapa del proveedor: itemCode -> providerItem
 	providerMap := make(map[string]listItemsProviderItem, len(msg.Items))
 	for _, item := range msg.Items {
 		if item.ItemCode != "" {
@@ -1236,7 +1167,6 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		}
 	}
 
-	// Construir mapa del sistema: sku -> systemProduct
 	systemMap := make(map[string]dtos.SystemProduct, len(systemProducts))
 	for _, prod := range systemProducts {
 		if prod.SKU != "" {
@@ -1244,14 +1174,12 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		}
 	}
 
-	// Cruzar resultados
 	results := make([]dtos.ItemCompareResult, 0)
 	matched, providerOnly, systemOnly := 0, 0, 0
 
-	// 1. Recorrer ítems del proveedor
 	for code, pItem := range providerMap {
 		if sProd, found := systemMap[code]; found {
-			// Matched: existe en ambos
+
 			results = append(results, dtos.ItemCompareResult{
 				Status:        dtos.CompareStatusMatched,
 				ItemCode:      code,
@@ -1265,7 +1193,7 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 			})
 			matched++
 		} else {
-			// provider_only: está en proveedor pero no en sistema
+
 			results = append(results, dtos.ItemCompareResult{
 				Status:        dtos.CompareStatusProviderOnly,
 				ItemCode:      code,
@@ -1278,7 +1206,6 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		}
 	}
 
-	// 2. Recorrer productos del sistema que no están en el proveedor
 	for sku, sProd := range systemMap {
 		if _, found := providerMap[sku]; !found {
 			results = append(results, dtos.ItemCompareResult{
@@ -1291,7 +1218,6 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		}
 	}
 
-	// Ordenar resultados: matched primero, luego provider_only, luego system_only
 	sort.Slice(results, func(i, j int) bool {
 		statusOrder := map[string]int{
 			dtos.CompareStatusMatched:      0,
@@ -1324,9 +1250,8 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		Int("matched", matched).
 		Int("provider_only", providerOnly).
 		Int("system_only", systemOnly).
-		Msg("📦 Items comparison complete, storing in Redis + publishing SSE")
+		Msg("Items comparison complete, storing in Redis + publishing SSE")
 
-	// Store in Redis before publishing SSE (belt + suspenders)
 	if err := c.compareCache.StoreItemCompareResult(ctx, msg.CorrelationID, responseData); err != nil {
 		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store item compare result in Redis (non-fatal)")
 	}
@@ -1335,8 +1260,6 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 	return c.ssePublisher.PublishListItemsReady(ctx, responseData)
 }
 
-
-// listBankAccountsResponseMessage mensaje de respuesta de list_bank_accounts del proveedor
 type listBankAccountsResponseMessage struct {
 	Operation     string `json:"operation"`
 	CorrelationID string `json:"correlation_id"`
@@ -1350,7 +1273,6 @@ type listBankAccountsResponseMessage struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-// handleListBankAccountsResponse procesa la respuesta de list_bank_accounts del proveedor.
 func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, message []byte) error {
 	var msg listBankAccountsResponseMessage
 	if err := json.Unmarshal(message, &msg); err != nil {
@@ -1362,9 +1284,8 @@ func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, m
 		Str("correlation_id", msg.CorrelationID).
 		Uint("business_id", msg.BusinessID).
 		Int("accounts", len(msg.Items)).
-		Msg("🏦 Processing list_bank_accounts response")
+		Msg("Processing list_bank_accounts response")
 
-	// Si el proveedor reportó error, publicar SSE con resultado vacío
 	if msg.Error != "" {
 		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in list_bank_accounts response")
 		data := &dtos.BankAccountsResponseData{
@@ -1403,12 +1324,10 @@ func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, m
 		Results:       results,
 	}
 
-	// Store in Redis
 	if err := c.compareCache.StoreBankAccountsResult(ctx, msg.CorrelationID, responseData); err != nil {
 		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store bank accounts result in Redis (non-fatal)")
 	}
 
-	// Publish SSE via RabbitMQ
 	resultsData := make([]map[string]interface{}, 0, len(results))
 	for _, r := range results {
 		resultsData = append(resultsData, map[string]interface{}{
@@ -1431,7 +1350,7 @@ func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, m
 	c.log.Info(ctx).
 		Str("correlation_id", msg.CorrelationID).
 		Int("accounts", len(results)).
-		Msg("🏦 Bank accounts response processed successfully")
+		Msg("Bank accounts response processed successfully")
 
 	return nil
 }
@@ -1486,7 +1405,6 @@ func (c *ResponseConsumer) handleListSiigoWarehousesResponse(ctx context.Context
 	return nil
 }
 
-// publishListItemsEvent publica el evento invoice.list_items_ready al exchange de eventos (RabbitMQ)
 func (c *ResponseConsumer) publishListItemsEvent(ctx context.Context, data *dtos.ItemCompareResponseData) {
 	results := make([]map[string]interface{}, 0, len(data.Results))
 	for _, r := range data.Results {
