@@ -7,6 +7,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 // GetPublicIntegrationByID obtiene una integración por su ID en formato público
@@ -209,10 +210,16 @@ func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integra
 		IsTesting:       integration.IsTesting,
 	}
 
+	var typeDefaultRules, typeOptions []byte
 	if integration.IntegrationType != nil {
 		pub.BaseURL = integration.IntegrationType.BaseURL
 		pub.BaseURLTest = integration.IntegrationType.BaseURLTest
+		typeDefaultRules = integration.IntegrationType.DefaultProductMatchRules
+		typeOptions = integration.IntegrationType.ProductMatchOptions
 	}
+
+	rules := productmatch.Resolve(integration.ProductMatchRules, typeDefaultRules)
+	pub.ProductMatchRules = productmatch.AllowedByOptions(rules, productmatch.ParseOptions(typeOptions))
 
 	return pub
 }

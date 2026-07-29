@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -1235,4 +1236,20 @@ func TestSetAsDefaultHandler_ErrorDeUseCase(t *testing.T) {
 
 	// Assert
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func (m *mockIntegrationUseCase) GetProductMatchConfig(ctx context.Context, id, businessID uint) (*domain.ProductMatchConfig, error) {
+	args := m.Called(ctx, id, businessID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.ProductMatchConfig), args.Error(1)
+}
+
+func (m *mockIntegrationUseCase) UpdateProductMatchConfig(ctx context.Context, id, businessID uint, rules []productmatch.Rule) (*domain.ProductMatchConfig, error) {
+	args := m.Called(ctx, id, businessID, rules)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.ProductMatchConfig), args.Error(1)
 }

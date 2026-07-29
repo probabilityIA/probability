@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"gorm.io/datatypes"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 type CredentialRevealAudit struct {
@@ -48,6 +50,8 @@ type IntegrationType struct {
 	BaseURLTest       string
 	// Credenciales de plataforma encriptadas — opacas al dominio, procesadas por el use case
 	PlatformCredentialsEncrypted []byte
+	ProductMatchOptions          datatypes.JSON
+	DefaultProductMatchRules     datatypes.JSON
 	CreatedAt                    time.Time
 	UpdatedAt                    time.Time
 }
@@ -67,6 +71,7 @@ type Integration struct {
 	IsTesting         bool // Si está en modo de pruebas (usa base_url_test)
 	Config            datatypes.JSON
 	Credentials       datatypes.JSON
+	ProductMatchRules datatypes.JSON
 	Description       string
 	CreatedByID       uint
 	UpdatedByID       *uint
@@ -91,4 +96,7 @@ type PublicIntegration struct {
 	IsTesting   bool   // Si la integración está en modo pruebas
 	BaseURL     string // URL de producción (integration_types.base_url)
 	BaseURLTest string // URL de pruebas (integration_types.base_url_test)
+	// Reglas de match de producto ya resueltas (integracion > tipo > default global),
+	// en orden de prioridad. Nunca vacio.
+	ProductMatchRules []productmatch.Rule
 }

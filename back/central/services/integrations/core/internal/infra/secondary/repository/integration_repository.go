@@ -502,6 +502,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		IsTesting:         model.IsTesting,
 		Config:            model.Config,
 		Credentials:       model.Credentials, // Mantener encriptado
+		ProductMatchRules: model.ProductMatchRules,
 		Description:       model.Description,
 		CreatedByID:       model.CreatedByID,
 		UpdatedByID:       updatedByID,
@@ -565,6 +566,9 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			BaseURLTest:       model.IntegrationType.BaseURLTest,
 			CreatedAt:         model.IntegrationType.CreatedAt,
 			UpdatedAt:         model.IntegrationType.UpdatedAt,
+
+			ProductMatchOptions:      model.IntegrationType.ProductMatchOptions,
+			DefaultProductMatchRules: model.IntegrationType.DefaultProductMatchRules,
 		}
 		integration.IntegrationType = &integrationType
 	}

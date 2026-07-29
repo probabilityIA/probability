@@ -157,6 +157,8 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 		BaseURL:                      d.BaseURL,
 		BaseURLTest:                  d.BaseURLTest,
 		PlatformCredentialsEncrypted: d.PlatformCredentialsEncrypted,
+		ProductMatchOptions:          d.ProductMatchOptions,
+		DefaultProductMatchRules:     d.DefaultProductMatchRules,
 	}
 }
 
@@ -202,6 +204,8 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		BaseURL:                      m.BaseURL,
 		BaseURLTest:                  m.BaseURLTest,
 		PlatformCredentialsEncrypted: m.PlatformCredentialsEncrypted,
+		ProductMatchOptions:          m.ProductMatchOptions,
+		DefaultProductMatchRules:     m.DefaultProductMatchRules,
 		CreatedAt:                    m.CreatedAt,
 		UpdatedAt:                    m.UpdatedAt,
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"gorm.io/datatypes"
 )
 
@@ -47,6 +48,17 @@ func (uc *IntegrationUseCase) GetIntegrationByExternalID(ctx context.Context, ex
 	return uc.mapToPublicIntegration(integrations[0]), nil
 }
 
+func cachedMatchRules(cached *domain.CachedIntegration) datatypes.JSON {
+	if len(cached.ProductMatchRules) == 0 {
+		return nil
+	}
+	raw, err := json.Marshal(cached.ProductMatchRules)
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(raw)
+}
+
 func cachedToIntegration(cached *domain.CachedIntegration) *domain.Integration {
 	configJSON, _ := json.Marshal(cached.Config)
 	return &domain.Integration{
@@ -70,6 +82,7 @@ func cachedToIntegration(cached *domain.CachedIntegration) *domain.Integration {
 			BaseURL:     cached.BaseURL,
 			BaseURLTest: cached.BaseURLTest,
 		},
+		ProductMatchRules: cachedMatchRules(cached),
 	}
 }
 
@@ -94,11 +107,18 @@ func (uc *IntegrationUseCase) cacheIntegrationMeta(ctx context.Context, integrat
 	integrationTypeCode := ""
 	baseURL := ""
 	baseURLTest := ""
+	var typeDefaultRules, typeOptions []byte
 	if integrationType != nil {
 		integrationTypeCode = integrationType.Code
 		baseURL = integrationType.BaseURL
 		baseURLTest = integrationType.BaseURLTest
+		typeDefaultRules = integrationType.DefaultProductMatchRules
+		typeOptions = integrationType.ProductMatchOptions
 	}
+	matchRules := productmatch.AllowedByOptions(
+		productmatch.Resolve(integration.ProductMatchRules, typeDefaultRules),
+		productmatch.ParseOptions(typeOptions),
+	)
 
 	cachedMeta := &domain.CachedIntegration{
 		ID:                  integration.ID,
@@ -118,6 +138,7 @@ func (uc *IntegrationUseCase) cacheIntegrationMeta(ctx context.Context, integrat
 		UpdatedAt:           integration.UpdatedAt,
 		BaseURL:             baseURL,
 		BaseURLTest:         baseURLTest,
+		ProductMatchRules:   matchRules,
 	}
 
 	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {

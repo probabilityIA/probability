@@ -305,6 +305,14 @@ type IntegrationType struct {
 	// Almacena credenciales globales del proveedor para integraciones con use_platform_token=true
 	PlatformCredentialsEncrypted []byte `gorm:"column:platform_credentials_encrypted;type:bytea"`
 
+	// Campos de match de producto que este tipo de integracion soporta (catalogo para la UI)
+	// Ejemplo: {"probability": ["sku","barcode"], "channel": ["sku","external_id","variant_id"]}
+	ProductMatchOptions datatypes.JSON `gorm:"column:product_match_options;type:jsonb"`
+
+	// Reglas de match por defecto del tipo, en orden de prioridad (cascada)
+	// Ejemplo: [{"probability":"sku","channel":"sku"}]
+	DefaultProductMatchRules datatypes.JSON `gorm:"column:default_product_match_rules;type:jsonb"`
+
 	// Relaciones
 	Integrations []Integration `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
@@ -348,6 +356,11 @@ type Integration struct {
 	// Contiene tokens, API keys, secrets encriptados
 	// Ejemplo: {"access_token": "encrypted_value", "api_key": "encrypted_value"}
 	Credentials datatypes.JSON `gorm:"type:jsonb"`
+
+	// Reglas de match de producto de esta integracion, en orden de prioridad (cascada).
+	// NULL = hereda integration_types.default_product_match_rules
+	// Ejemplo: [{"probability":"sku","channel":"sku"},{"probability":"barcode","channel":"barcode"}]
+	ProductMatchRules datatypes.JSON `gorm:"column:product_match_rules;type:jsonb"`
 
 	// Metadata
 	Description string `gorm:"size:500"`

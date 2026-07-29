@@ -34,6 +34,7 @@ func (c *shopifyClient) ListProducts(ctx context.Context, storeName, accessToken
 				Variants []struct {
 					ID      int64  `json:"id"`
 					SKU     string `json:"sku"`
+					Barcode string `json:"barcode"`
 					ImageID *int64 `json:"image_id"`
 				} `json:"variants"`
 				Image *struct {
@@ -70,7 +71,9 @@ func (c *shopifyClient) ListProducts(ctx context.Context, storeName, accessToken
 				}
 				products = append(products, domain.ShopifyProductForSync{
 					ProductID: productID,
+					VariantID: strconv.FormatInt(v.ID, 10),
 					SKU:       v.SKU,
+					Barcode:   v.Barcode,
 					Name:      p.Title,
 					ImageURL:  image,
 				})

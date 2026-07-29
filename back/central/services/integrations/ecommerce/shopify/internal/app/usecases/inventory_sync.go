@@ -8,6 +8,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 const inventoryProgressBatch = 10
@@ -99,15 +100,16 @@ func resolveWarehouseIDs(cfg domain.InventoryConfig) []uint {
 	return cfg.WarehouseIDs
 }
 
-func resolveInventoryItemID(product *domain.ShopifyProduct, sku string) int64 {
+func resolveInventoryItemID(product *domain.ShopifyProduct, m domain.MappedItem, rules []productmatch.Rule) int64 {
 	if product == nil {
 		return 0
 	}
-	if len(product.Variants) > 1 && sku != "" {
-		for _, v := range product.Variants {
-			if v.SKU == sku && v.InventoryItemID != 0 {
-				return v.InventoryItemID
-			}
+	if len(product.Variants) > 1 {
+		if id := matchVariantByExternalID(product, m.ExternalVariantID); id != 0 {
+			return id
+		}
+		if id := matchVariantByRules(product, m, rules); id != 0 {
+			return id
 		}
 	}
 	for _, v := range product.Variants {
@@ -116,6 +118,60 @@ func resolveInventoryItemID(product *domain.ShopifyProduct, sku string) int64 {
 		}
 	}
 	return 0
+}
+
+func matchVariantByExternalID(product *domain.ShopifyProduct, externalVariantID string) int64 {
+	key := productmatch.Normalize(externalVariantID)
+	if key == "" {
+		return 0
+	}
+	for _, v := range product.Variants {
+		if productmatch.Normalize(strconv.FormatInt(v.ID, 10)) == key && v.InventoryItemID != 0 {
+			return v.InventoryItemID
+		}
+	}
+	return 0
+}
+
+func matchVariantByRules(product *domain.ShopifyProduct, m domain.MappedItem, rules []productmatch.Rule) int64 {
+	probe := productmatch.Item{
+		SKU:        firstNonEmpty(m.ExternalSKU, m.SKU),
+		Barcode:    firstNonEmpty(m.ExternalBarcode, m.Barcode),
+		ExternalID: m.ExternalItemID,
+		VariantID:  m.ExternalVariantID,
+	}
+	variants := make([]productmatch.Item, 0, len(product.Variants))
+	for _, v := range product.Variants {
+		variants = append(variants, productmatch.Item{
+			SKU:        v.SKU,
+			Barcode:    v.Barcode,
+			ExternalID: strconv.FormatInt(product.ID, 10),
+			VariantID:  strconv.FormatInt(v.ID, 10),
+		})
+	}
+	index := productmatch.IndexChannel(rules, itemValues(variants))
+	pos, _, ok := index.Find(probe.Values())
+	if !ok || product.Variants[pos].InventoryItemID == 0 {
+		return 0
+	}
+	return product.Variants[pos].InventoryItemID
+}
+
+func itemValues(items []productmatch.Item) []productmatch.Values {
+	out := make([]productmatch.Values, len(items))
+	for i, it := range items {
+		out[i] = it.Values()
+	}
+	return out
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func (uc *SyncOrdersUseCase) resolveStoreAndToken(ctx context.Context, integration *domain.Integration, integrationID string) (string, string, error) {
@@ -173,6 +229,7 @@ func (uc *SyncOrdersUseCase) SyncInventory(ctx context.Context, integrationID st
 	}
 
 	cfg := parseInventoryConfig(integration.Config)
+	matchRules := productmatch.Sanitize(integration.ProductMatchRules)
 	mapped, err := uc.inventoryRepo.ListMappedItems(ctx, uint(integIDUint))
 	if err != nil {
 		return fmt.Errorf("listing mapped items: %w", err)
@@ -201,7 +258,7 @@ func (uc *SyncOrdersUseCase) SyncInventory(ctx context.Context, integrationID st
 			return berr
 		}
 		for i, m := range mapped {
-			invItemID, ok := uc.resolveItem(ctx, storeDomain, accessToken, m)
+			invItemID, ok := uc.resolveItem(ctx, storeDomain, accessToken, m, matchRules)
 			if !ok {
 				skipped++
 				uc.progress(ctx, uint(integIDUint), integration.BusinessID, correlationID, i+1, total, updated, unchanged, skipped, failed)
@@ -234,7 +291,7 @@ func (uc *SyncOrdersUseCase) SyncInventory(ctx context.Context, integrationID st
 			return lerr
 		}
 		for i, m := range mapped {
-			invItemID, ok := uc.resolveItem(ctx, storeDomain, accessToken, m)
+			invItemID, ok := uc.resolveItem(ctx, storeDomain, accessToken, m, matchRules)
 			if !ok {
 				skipped++
 				uc.progress(ctx, uint(integIDUint), integration.BusinessID, correlationID, i+1, total, updated, unchanged, skipped, failed)
@@ -275,13 +332,13 @@ func (uc *SyncOrdersUseCase) SyncInventory(ctx context.Context, integrationID st
 	return nil
 }
 
-func (uc *SyncOrdersUseCase) resolveItem(ctx context.Context, storeDomain, accessToken string, m domain.MappedItem) (int64, bool) {
+func (uc *SyncOrdersUseCase) resolveItem(ctx context.Context, storeDomain, accessToken string, m domain.MappedItem, rules []productmatch.Rule) (int64, bool) {
 	product, err := uc.shopifyClient.GetProduct(ctx, storeDomain, accessToken, m.ExternalItemID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Str("external_product_id", m.ExternalItemID).Msg("Error al obtener producto de Shopify")
 		return 0, false
 	}
-	invItemID := resolveInventoryItemID(product, m.SKU)
+	invItemID := resolveInventoryItemID(product, m, rules)
 	if invItemID == 0 {
 		uc.log.Info(ctx).Str("sku", m.SKU).Msg("No inventory_item_id para el producto de Shopify")
 		return 0, false
@@ -335,7 +392,11 @@ func (uc *SyncOrdersUseCase) UpdateInventory(ctx context.Context, integrationID 
 	if err != nil {
 		return err
 	}
-	invItemID := resolveInventoryItemID(product, variantSKU)
+	invItemID := resolveInventoryItemID(product, domain.MappedItem{
+		SKU:            variantSKU,
+		ExternalItemID: productID,
+		ExternalSKU:    variantSKU,
+	}, productmatch.Sanitize(integration.ProductMatchRules))
 	if invItemID == 0 {
 		return fmt.Errorf("no inventory_item_id for product %s", productExternalID)
 	}
