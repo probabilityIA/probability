@@ -101,7 +101,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
         ? integration.product_match_rules
         : liveMatchRules;
     const matchRulesLabel = activeMatchRules?.length
-        ? activeMatchRules.map(rule => matchRuleLabel(`${rule.probability}->${rule.channel}`)).join(' > ')
+        ? activeMatchRules.map(rule => matchRuleLabel(`${rule.probability}->${rule.channel}`)).join('  |  ')
         : null;
 
     const lastRun = envView === 'inventory' || envView === 'products'
@@ -315,7 +315,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         </span>
                         {matchRulesLabel && (
                             <span
-                                title={`Se comparo cruzando: ${matchRulesLabel}${integration.product_match_is_default ? ' (configuracion predeterminada del canal)' : ''}`}
+                                title={`Se comparo cruzando campo de Probability contra campo del canal, en orden de prioridad: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
                                 className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                             >
                                 match: {matchRulesLabel}
@@ -375,7 +375,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         )}
                         {matchRulesLabel && (
                             <span
-                                title={`El comparativo se hace cruzando: ${matchRulesLabel}${integration.product_match_is_default ? ' (configuracion predeterminada del canal)' : ''}`}
+                                title={`El comparativo cruza campo de Probability contra campo del canal, en orden de prioridad: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
                                 className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
                             >
                                 match: {matchRulesLabel}

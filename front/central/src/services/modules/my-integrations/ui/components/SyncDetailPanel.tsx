@@ -109,7 +109,7 @@ export const matchRuleLabel = (rule: string) => {
     const [probability, channel] = rule.split('->');
     const left = MATCH_FIELD_LABELS[probability] || probability;
     const right = MATCH_FIELD_LABELS[channel] || channel;
-    return left === right ? left : `${left} → ${right}`;
+    return `${left} → ${right}`;
 };
 
 const groupLabel = (group: DetailGroup, providerLabel: string) =>
