@@ -16,17 +16,17 @@ type productMatchTypeDefaults struct {
 var productMatchDefaultsByType = []productMatchTypeDefaults{
 	{
 		TypeCode: "shopify",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","external_id","variant_id"]}`,
+		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
 		Rules:    defaultProductMatchRulesJSON,
 	},
 	{
 		TypeCode: "mercado_libre",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","external_id","variant_id"]}`,
+		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id"]}`,
 		Rules:    defaultProductMatchRulesJSON,
 	},
 	{
 		TypeCode: "woocommerce",
-		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","external_id","variant_id"]}`,
+		Options:  `{"probability":["sku","barcode","external_id"],"channel":["sku","barcode","external_id","variant_id"]}`,
 		Rules:    defaultProductMatchRulesJSON,
 	},
 	{

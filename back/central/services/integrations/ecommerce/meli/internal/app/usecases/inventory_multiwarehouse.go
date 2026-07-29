@@ -2,11 +2,14 @@ package usecases
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
-func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, cli domain.IMeliClient, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string) error {
+func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, cli domain.IMeliClient, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, rules []productmatch.Rule, correlationID string) error {
 	warehouseIDs := make([]uint, 0, len(cfg.WarehouseMappings))
 	for _, wm := range cfg.WarehouseMappings {
 		warehouseIDs = append(warehouseIDs, wm.InternalWarehouseID)
@@ -32,11 +35,11 @@ func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, cli doma
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
 		stockByWh := byWarehouse[m.ProductID]
-		skip, perr := uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh)
+		skip, perr := uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh, rules)
 		if perr == domain.ErrTokenExpired {
 			if newToken, rerr := uc.EnsureValidToken(ctx, integrationIDStr); rerr == nil {
 				accessToken = newToken
-				skip, perr = uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh)
+				skip, perr = uc.pushItemMultiWarehouse(ctx, cli, accessToken, m, cfg.WarehouseMappings, stockByWh, rules)
 			}
 		}
 		switch {
@@ -62,13 +65,13 @@ func (uc *meliUseCase) syncInventoryMultiWarehouse(ctx context.Context, cli doma
 	return nil
 }
 
-func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, cli domain.IMeliClient, accessToken string, m domain.MappedItem, mappings []domain.WarehouseMapping, stockByWh map[uint]int) (bool, error) {
+func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, cli domain.IMeliClient, accessToken string, m domain.MappedItem, mappings []domain.WarehouseMapping, stockByWh map[uint]int, rules []productmatch.Rule) (bool, error) {
 	item, err := cli.GetItem(ctx, accessToken, m.ExternalItemID)
 	if err != nil {
 		return false, err
 	}
 
-	userProductID := resolveUserProductID(item, m.SKU)
+	userProductID := resolveUserProductID(item, m, rules)
 	if userProductID == "" {
 		total := 0
 		for _, wm := range mappings {
@@ -95,12 +98,13 @@ func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, cli domain.IM
 	return false, cli.UpdateUserProductStock(ctx, accessToken, userProductID, current.Version, locations)
 }
 
-func resolveUserProductID(item *domain.MeliItemDetail, sku string) string {
+func resolveUserProductID(item *domain.MeliItemDetail, m domain.MappedItem, rules []productmatch.Rule) string {
 	if len(item.Variations) > 0 {
-		for _, v := range item.Variations {
-			if v.SellerSKU == sku && v.UserProductID != "" {
-				return v.UserProductID
-			}
+		if id := matchVariationByExternalID(item, m.ExternalVariantID); id != "" {
+			return id
+		}
+		if id := matchVariationByRules(item, m, rules); id != "" {
+			return id
 		}
 		for _, v := range item.Variations {
 			if v.UserProductID != "" {
@@ -109,4 +113,49 @@ func resolveUserProductID(item *domain.MeliItemDetail, sku string) string {
 		}
 	}
 	return item.UserProductID
+}
+
+func matchVariationByExternalID(item *domain.MeliItemDetail, externalVariantID string) string {
+	key := productmatch.Normalize(externalVariantID)
+	if key == "" {
+		return ""
+	}
+	for _, v := range item.Variations {
+		if productmatch.Normalize(strconv.FormatInt(v.ID, 10)) == key && v.UserProductID != "" {
+			return v.UserProductID
+		}
+	}
+	return ""
+}
+
+func matchVariationByRules(item *domain.MeliItemDetail, m domain.MappedItem, rules []productmatch.Rule) string {
+	probe := productmatch.Item{
+		SKU:        firstNonEmpty(m.ExternalSKU, m.SKU),
+		Barcode:    firstNonEmpty(m.ExternalBarcode, m.Barcode),
+		ExternalID: m.ExternalItemID,
+		VariantID:  m.ExternalVariantID,
+	}
+	values := make([]productmatch.Values, 0, len(item.Variations))
+	for _, v := range item.Variations {
+		values = append(values, productmatch.Item{
+			SKU:        v.SellerSKU,
+			ExternalID: item.ID,
+			VariantID:  strconv.FormatInt(v.ID, 10),
+		}.Values())
+	}
+	index := productmatch.IndexChannel(rules, values)
+	pos, _, ok := index.Find(probe.Values())
+	if !ok || item.Variations[pos].UserProductID == "" {
+		return ""
+	}
+	return item.Variations[pos].UserProductID
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }

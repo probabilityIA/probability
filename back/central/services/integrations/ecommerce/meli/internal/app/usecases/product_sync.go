@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -27,6 +28,41 @@ type providerUpsertMsg struct {
 	Price          float64 `json:"price"`
 	ExternalID     string  `json:"external_id"`
 	ImageURL       string  `json:"image_url,omitempty"`
+}
+
+func meliRefs(m domain.MeliProduct) productmatch.ExternalRefs {
+	return productmatch.ExternalRefs{
+		ProductID: m.ID,
+		VariantID: m.VariationID,
+		SKU:       m.SKU,
+		Barcode:   m.Barcode,
+	}
+}
+
+func probabilityItems(products []domain.ProductForSync) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+func meliItems(products []domain.MeliProduct) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+type reconcileContext struct {
+	accessToken  string
+	sellerID     int64
+	integration  *domain.Integration
+	probProducts []domain.ProductForSync
+	meliProducts []domain.MeliProduct
+	rules        []productmatch.Rule
+	outcome      productmatch.Outcome
 }
 
 func resolveSellerID(integration *domain.Integration) (int64, error) {
@@ -52,40 +88,49 @@ func resolveSellerID(integration *domain.Integration) (int64, error) {
 	return 0, domain.ErrSellerIDNotFound
 }
 
-func (uc *meliUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (accessToken string, sellerID int64, probProducts []domain.ProductForSync, meliProducts []domain.MeliProduct, err error) {
+func (uc *meliUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (*reconcileContext, error) {
 	integration, ierr := uc.service.GetIntegrationByID(ctx, integrationID)
 	if ierr != nil {
-		return "", 0, nil, nil, fmt.Errorf("getting integration: %w", ierr)
+		return nil, fmt.Errorf("getting integration: %w", ierr)
 	}
 	if integration == nil {
-		return "", 0, nil, nil, domain.ErrIntegrationNotFound
+		return nil, domain.ErrIntegrationNotFound
 	}
 
-	sellerID, err = resolveSellerID(integration)
+	sellerID, err := resolveSellerID(integration)
 	if err != nil {
-		return "", 0, nil, nil, err
+		return nil, err
 	}
 
-	accessToken, err = uc.EnsureValidToken(ctx, integrationID)
+	accessToken, err := uc.EnsureValidToken(ctx, integrationID)
 	if err != nil {
-		return "", 0, nil, nil, err
+		return nil, err
 	}
 
-	probProducts, err = uc.productRepo.ListProductsByBusiness(ctx, businessID)
+	probProducts, err := uc.productRepo.ListProductsByBusiness(ctx, businessID)
 	if err != nil {
-		return "", 0, nil, nil, fmt.Errorf("listing probability products: %w", err)
+		return nil, fmt.Errorf("listing probability products: %w", err)
 	}
 
-	meliProducts, err = uc.clientFor(ctx, integration).GetProducts(ctx, accessToken, sellerID)
+	meliProducts, err := uc.clientFor(ctx, integration).GetProducts(ctx, accessToken, sellerID)
 	if err != nil {
-		return "", 0, nil, nil, fmt.Errorf("listing meli products: %w", err)
+		return nil, fmt.Errorf("listing meli products: %w", err)
 	}
 
-	return accessToken, sellerID, probProducts, meliProducts, nil
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
+	return &reconcileContext{
+		accessToken:  accessToken,
+		sellerID:     sellerID,
+		integration:  integration,
+		probProducts: probProducts,
+		meliProducts: meliProducts,
+		rules:        rules,
+		outcome:      productmatch.Reconcile(rules, probabilityItems(probProducts), meliItems(meliProducts)),
+	}, nil
 }
 
 func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error) {
-	_, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,46 +147,40 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		}
 	}
 
-	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
 		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInMeli:           []domain.ProductBrief{},
-	}
-	for _, p := range probProducts {
-		key := normalizeSKU(p.SKU)
-		if key == "" {
-			result.ProbabilityNoSKU++
-			continue
-		}
-		probBySKU[key] = p
+		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
+		MeliNoSKU:            rc.outcome.ChannelUnmatchable,
+		MatchRules:           rc.rules,
 	}
 
-	meliSKUs := make(map[string]bool)
-	for _, m := range meliProducts {
-		key := normalizeSKU(m.SKU)
-		if key == "" {
-			result.MeliNoSKU++
-			continue
+	for _, pair := range rc.outcome.Pairs {
+		prob := rc.probProducts[pair.ProbabilityIndex]
+		channel := rc.meliProducts[pair.ChannelIndex]
+		brief := domain.ProductBrief{
+			SKU:          prob.SKU,
+			Name:         channel.Name,
+			MatchedBy:    pair.Rule.Key(),
+			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
 		}
-		meliSKUs[key] = true
-		if _, ok := probBySKU[key]; ok {
-			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
-			if associatedSKUs[key] {
-				result.Matched++
-			} else {
-				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
-			}
+		result.MatchedItems = append(result.MatchedItems, brief)
+		if associatedSKUs[normalizeSKU(prob.SKU)] {
+			result.Matched++
 		} else {
-			result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
+			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 		}
 	}
 
-	for key, p := range probBySKU {
-		if !meliSKUs[key] {
-			result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
-		}
+	for _, idx := range rc.outcome.OnlyInChannel {
+		m := rc.meliProducts[idx]
+		result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
+	}
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
 	return result, nil
@@ -200,23 +239,17 @@ func appendFailure(items []failedItem, sku string, err error) []failedItem {
 
 func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	accessToken, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
 	}
 
-	meliSKUs := make(map[string]bool)
-	for _, m := range meliProducts {
-		if key := normalizeSKU(m.SKU); key != "" {
-			meliSKUs[key] = true
-		}
-	}
-
 	only := selectedSKUs(skus)
 	missing := make([]domain.ProductForSync, 0)
-	for _, p := range probProducts {
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
 		key := normalizeSKU(p.SKU)
-		if key == "" || meliSKUs[key] || (only != nil && !only[key]) {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, p)
@@ -230,12 +263,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 	})
 
 	siteID, currencyID, listingTypeID := uc.resolveProductPublishConfig(ctx, integrationID)
-
-	integration, ierr := uc.service.GetIntegrationByID(ctx, integrationID)
-	if ierr != nil {
-		return ierr
-	}
-	cli := uc.clientFor(ctx, integration)
+	cli := uc.clientFor(ctx, rc.integration)
 
 	created, failed := 0, 0
 	failures := make([]failedItem, 0)
@@ -248,7 +276,7 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 			continue
 		}
 
-		newID, cerr := cli.CreateProduct(ctx, accessToken, domain.CreateProductInput{
+		newID, cerr := cli.CreateProduct(ctx, rc.accessToken, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
 			Price:         p.Price,
@@ -267,7 +295,8 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 			failures = appendFailure(failures, p.SKU, cerr)
 			failed++
 		} else {
-			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
+			refs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
+			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en MeLi pero fallo el mapeo")
 			}
 			created++
@@ -289,23 +318,17 @@ func (uc *meliUseCase) ApplyProductsToMeli(ctx context.Context, integrationID st
 
 func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	_, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
 	}
 
-	probSKUs := make(map[string]bool)
-	for _, p := range probProducts {
-		if key := normalizeSKU(p.SKU); key != "" {
-			probSKUs[key] = true
-		}
-	}
-
 	only := selectedSKUs(skus)
 	missing := make([]domain.MeliProduct, 0)
-	for _, m := range meliProducts {
+	for _, idx := range rc.outcome.OnlyInChannel {
+		m := rc.meliProducts[idx]
 		key := normalizeSKU(m.SKU)
-		if key == "" || probSKUs[key] || (only != nil && !only[key]) {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, m)
@@ -363,22 +386,9 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 
 func (uc *meliUseCase) AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	_, _, probProducts, meliProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
-	}
-
-	meliBySKU := make(map[string]string)
-	for _, m := range meliProducts {
-		if k := normalizeSKU(m.SKU); k != "" && m.ID != "" {
-			meliBySKU[k] = m.ID
-		}
-	}
-	probBySKU := make(map[string]domain.ProductForSync)
-	for _, p := range probProducts {
-		if k := normalizeSKU(p.SKU); k != "" {
-			probBySKU[k] = p
-		}
 	}
 
 	mapped, err := uc.inventoryRepo.ListMappedItems(ctx, uint(integIDUint))
@@ -392,19 +402,18 @@ func (uc *meliUseCase) AssociateProducts(ctx context.Context, integrationID stri
 		}
 	}
 
-	targets := make([]string, 0)
-	if len(skus) > 0 {
-		for _, s := range skus {
-			if k := normalizeSKU(s); k != "" {
-				targets = append(targets, k)
+	only := selectedSKUs(skus)
+	targets := make([]productmatch.Pair, 0, len(rc.outcome.Pairs))
+	for _, pair := range rc.outcome.Pairs {
+		key := normalizeSKU(rc.probProducts[pair.ProbabilityIndex].SKU)
+		if only != nil {
+			if key == "" || !only[key] {
+				continue
 			}
+		} else if associated[key] {
+			continue
 		}
-	} else {
-		for k := range probBySKU {
-			if meliBySKU[k] != "" && !associated[k] {
-				targets = append(targets, k)
-			}
-		}
+		targets = append(targets, pair)
 	}
 
 	total := len(targets)
@@ -415,18 +424,17 @@ func (uc *meliUseCase) AssociateProducts(ctx context.Context, integrationID stri
 	})
 
 	created, failed := 0, 0
-	for i, k := range targets {
-		p, okP := probBySKU[k]
-		ref, okM := meliBySKU[k]
-		if !okP || !okM || ref == "" || associated[k] {
+	for i, pair := range targets {
+		p := rc.probProducts[pair.ProbabilityIndex]
+		refs := meliRefs(rc.meliProducts[pair.ChannelIndex])
+		if refs.ProductID == "" {
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, failed)
 			continue
 		}
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), ref); merr != nil {
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al asociar producto a MercadoLibre")
 			failed++
 		} else {
-			associated[k] = true
 			created++
 		}
 		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, failed)

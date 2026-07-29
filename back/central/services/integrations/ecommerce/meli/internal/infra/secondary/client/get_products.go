@@ -66,6 +66,18 @@ func extractSKU(item meliItemDetail) string {
 	return ""
 }
 
+func extractBarcode(item meliItemDetail) string {
+	for _, attr := range item.Attributes {
+		switch attr.ID {
+		case "GTIN", "EAN", "UPC":
+			if strings.TrimSpace(attr.ValueName) != "" {
+				return attr.ValueName
+			}
+		}
+	}
+	return ""
+}
+
 func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, sellerID int64) ([]domain.MeliProduct, error) {
 	itemIDs := make([]string, 0)
 	offset := 0
@@ -118,6 +130,7 @@ func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, seller
 			products = append(products, domain.MeliProduct{
 				ID:            d.ID,
 				SKU:           extractSKU(d),
+				Barcode:       extractBarcode(d),
 				Name:          d.Title,
 				Price:         d.Price,
 				StockQuantity: d.AvailableQuantity,
