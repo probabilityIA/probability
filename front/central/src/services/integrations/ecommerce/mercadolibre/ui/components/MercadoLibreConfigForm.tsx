@@ -20,6 +20,7 @@ import { MercadoLibreProductSyncModal } from './MercadoLibreProductSyncModal';
 import { MercadoLibreInventorySection, MeliInventoryConfig } from './MercadoLibreInventorySection';
 import { MercadoLibreWarehouseMappingSection, MeliWarehouseMapping } from './MercadoLibreWarehouseMappingSection';
 import { MercadoLibreInventorySyncModal } from './MercadoLibreInventorySyncModal';
+import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
 
 interface MercadoLibreConfigFormProps {
     onSuccess?: () => void;
@@ -609,6 +610,14 @@ export function MercadoLibreConfigForm({ onSuccess, onCancel, isEdit, integratio
                         </button>
                     </div>
                 </div>
+            )}
+
+            {isEdit && integrationId && (
+                <ProductMatchRulesCard
+                    integrationId={Number(integrationId)}
+                    businessId={selectedBusinessId ?? undefined}
+                    channelName="Mercado Libre"
+                />
             )}
 
             <MercadoLibreInventorySection

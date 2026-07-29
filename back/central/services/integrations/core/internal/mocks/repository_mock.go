@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/datatypes"
+
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
 
 // RepositoryMock es un mock de domain.IRepository usando testify/mock
@@ -189,5 +191,10 @@ func (m *RepositoryMock) ListIntegrationCategories(ctx context.Context) ([]*doma
 
 func (m *RepositoryMock) RecordCredentialReveal(ctx context.Context, audit *domain.CredentialRevealAudit) error {
 	args := m.Called(ctx, audit)
+	return args.Error(0)
+}
+
+func (m *RepositoryMock) UpdateProductMatchRules(ctx context.Context, id uint, rules datatypes.JSON) error {
+	args := m.Called(ctx, id, rules)
 	return args.Error(0)
 }

@@ -9,6 +9,7 @@ import { getShipmentsAction, trackShipmentAction, cancelShipmentAction, cancelBa
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { useShipmentSSE } from '../hooks/useShipmentSSE';
 import { ProbabilityGuideButton } from './ProbabilityGuideButton';
+import { guideHref } from '../utils/guide-link';
 import {
     Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
     AlertTriangle, Plus, ChevronLeft, ChevronRight, FileText,
@@ -367,7 +368,7 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                     <div className="flex gap-1.5 pt-1">
                         {shipment.guide_url && (
                             <a
-                                href={shipment.guide_url}
+                                href={guideHref(shipment.id, shipment.guide_url, businessId)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-colors"

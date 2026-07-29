@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -80,13 +81,15 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		return fmt.Errorf("listing products: %w", err)
 	}
 
-	wooBySKU := make(map[string]string)
+	matchRules := productmatch.Sanitize(integration.ProductMatchRules)
+	wooRefsByProduct := make(map[int]productmatch.ExternalRefs)
 	if wooProducts, werr := uc.client.GetProducts(ctx, storeURL, consumerKey, consumerSecret); werr != nil {
-		uc.logger.Warn(ctx).Err(werr).Msg("No se pudo listar productos de WooCommerce para conciliar por SKU")
+		uc.logger.Warn(ctx).Err(werr).Msg("No se pudo listar productos de WooCommerce para conciliar el catalogo")
 	} else {
-		for _, w := range wooProducts {
-			if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
-				wooBySKU[key] = wooExternalRef(w)
+		outcome := productmatch.Reconcile(matchRules, probabilityItems(products), wooItems(wooProducts))
+		for _, pair := range outcome.Pairs {
+			if refs := wooRefs(wooProducts[pair.ChannelIndex]); refs.ProductID != "" {
+				wooRefsByProduct[pair.ProbabilityIndex] = refs
 			}
 		}
 	}
@@ -118,15 +121,15 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 		}
 
 		if !mapped || externalID == "" {
-			if wooID, ok := wooBySKU[normalizeSKU(p.SKU)]; ok && wooID != "" {
-				if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), wooID); merr != nil {
+			if refs, ok := wooRefsByProduct[i]; ok {
+				if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 					uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
 					failed++
 					uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")
 					uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
 					continue
 				}
-				externalID = wooID
+				externalID = refs.ProductID
 				mapped = true
 			}
 		}
@@ -160,7 +163,8 @@ func (uc *wooCommerceUseCase) SyncProducts(ctx context.Context, integrationID st
 			continue
 		}
 
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
+		newRefs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newRefs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
 			failed++
 			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, p.StockQuantity, "failed")

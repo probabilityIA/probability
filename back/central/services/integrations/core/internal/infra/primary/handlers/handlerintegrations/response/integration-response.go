@@ -1,6 +1,10 @@
 package response
 
-import "time"
+import (
+	"time"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 // IntegrationTypeInfo representa información básica del tipo de integración
 type IntegrationTypeInfo struct {
@@ -43,6 +47,10 @@ type IntegrationResponse struct {
 	UpdatedByID       *uint                  `json:"updated_by_id"`
 	CreatedAt         time.Time              `json:"created_at" example:"2024-01-15T10:30:00Z"`
 	UpdatedAt         time.Time              `json:"updated_at" example:"2024-01-15T10:30:00Z"`
+
+	// Reglas de match de producto ya resueltas (propias o heredadas del tipo), en orden de prioridad
+	ProductMatchRules   []productmatch.Rule `json:"product_match_rules,omitempty"`
+	ProductMatchDefault bool                `json:"product_match_is_default"`
 }
 
 // IntegrationListResponse representa la respuesta de lista de integraciones

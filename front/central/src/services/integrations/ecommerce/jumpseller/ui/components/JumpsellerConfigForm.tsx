@@ -39,6 +39,7 @@ import {
     ToggleRow,
     Spinner,
 } from '@/services/integrations/invoicing/siigo/ui/components/SiigoFormKit';
+import { ProductMatchRulesCard } from '@/services/integrations/core/ui/components/ProductMatchRulesCard';
 
 const JUMPSELLER_TYPE_ID = 33;
 
@@ -509,6 +510,14 @@ export function JumpsellerConfigForm({ onSuccess, onCancel, integrationTypeBaseU
                     </div>
                 </div>
             </SectionCard>
+
+            {isEdit && integrationId && (
+                <ProductMatchRulesCard
+                    integrationId={integrationId}
+                    businessId={selectedBusinessId ?? undefined}
+                    channelName="Jumpseller"
+                />
+            )}
 
             <SectionCard icon={<ArrowsRightLeftIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Sincronizacion">
                 <div className="rounded-lg bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700" style={{ border: `1px solid ${INPUT_BORDER}` }}>

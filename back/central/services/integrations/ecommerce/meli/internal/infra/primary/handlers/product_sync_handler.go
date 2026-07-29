@@ -36,7 +36,12 @@ type reconcileRequest struct {
 func briefsToResponse(items []domain.ProductBrief) []gin.H {
 	out := make([]gin.H, 0, len(items))
 	for _, b := range items {
-		out = append(out, gin.H{"sku": b.SKU, "name": b.Name})
+		out = append(out, gin.H{
+			"sku":           b.SKU,
+			"name":          b.Name,
+			"matched_by":    b.MatchedBy,
+			"matched_value": b.MatchedValue,
+		})
 	}
 	return out
 }

@@ -5,6 +5,10 @@ import (
 	"io"
 	"mime/multipart"
 	"time"
+
+	"gorm.io/datatypes"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 type IRepository interface {
@@ -37,6 +41,8 @@ type IRepository interface {
 	ListIntegrationCategories(ctx context.Context) ([]*IntegrationCategory, error)
 
 	RecordCredentialReveal(ctx context.Context, audit *CredentialRevealAudit) error
+
+	UpdateProductMatchRules(ctx context.Context, id uint, rules datatypes.JSON) error
 }
 
 type IEncryptionService interface {
@@ -117,6 +123,17 @@ type IIntegrationUseCase interface {
 	OnIntegrationCreated(integrationType int, observer func(context.Context, *PublicIntegration))
 
 	GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error)
+
+	GetProductMatchConfig(ctx context.Context, id uint, businessID uint) (*ProductMatchConfig, error)
+	UpdateProductMatchConfig(ctx context.Context, id uint, businessID uint, rules []productmatch.Rule) (*ProductMatchConfig, error)
+}
+
+type ProductMatchConfig struct {
+	IntegrationID uint
+	Rules         []productmatch.Rule
+	DefaultRules  []productmatch.Rule
+	Options       productmatch.Options
+	IsOverride    bool
 }
 
 type CachedIntegration struct {
@@ -137,6 +154,7 @@ type CachedIntegration struct {
 	UpdatedAt           time.Time              `json:"updated_at"`
 	BaseURL             string                 `json:"base_url"`
 	BaseURLTest         string                 `json:"base_url_test"`
+	ProductMatchRules   []productmatch.Rule    `json:"product_match_rules"`
 }
 
 type CachedCredentials struct {

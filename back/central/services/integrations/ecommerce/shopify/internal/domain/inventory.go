@@ -3,9 +3,13 @@ package domain
 import "context"
 
 type MappedItem struct {
-	ProductID      string
-	SKU            string
-	ExternalItemID string
+	ProductID         string
+	SKU               string
+	Barcode           string
+	ExternalItemID    string
+	ExternalVariantID string
+	ExternalSKU       string
+	ExternalBarcode   string
 }
 
 type WarehouseMapping struct {
@@ -30,6 +34,7 @@ type ShopifyLocation struct {
 type ShopifyVariant struct {
 	ID              int64
 	SKU             string
+	Barcode         string
 	InventoryItemID int64
 }
 

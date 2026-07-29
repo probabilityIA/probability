@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -48,4 +49,50 @@ func (r *OrderLookupRepo) GetMeliShipmentByOrderID(ctx context.Context, orderID 
 		IntegrationID: row.IntegrationID,
 		ShipmentID:    shipmentID,
 	}, nil
+}
+
+func (r *OrderLookupRepo) GetMeliLabelRefByShipmentID(ctx context.Context, shipmentID uint) (*domain.MeliLabelRef, error) {
+	var row struct {
+		BusinessID     uint
+		IntegrationID  uint
+		GuideID        string
+		TrackingNumber string
+	}
+	err := r.db.Conn(ctx).
+		Table("shipments AS s").
+		Select("o.business_id, o.integration_id, COALESCE(s.guide_id,'') AS guide_id, COALESCE(s.tracking_number,'') AS tracking_number").
+		Joins("JOIN orders o ON o.id = s.order_id AND o.deleted_at IS NULL").
+		Where("s.id = ? AND s.deleted_at IS NULL", shipmentID).
+		Where("(o.integration_type = ? OR o.platform = ?)", "mercado_libre", "mercadolibre").
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if row.BusinessID == 0 {
+		return nil, nil
+	}
+
+	meliShipmentID := parseMeliShipmentID(row.GuideID)
+	if meliShipmentID == 0 {
+		meliShipmentID = parseMeliShipmentID(row.TrackingNumber)
+	}
+
+	return &domain.MeliLabelRef{
+		BusinessID:     row.BusinessID,
+		IntegrationID:  row.IntegrationID,
+		MeliShipmentID: meliShipmentID,
+	}, nil
+}
+
+func parseMeliShipmentID(raw string) int64 {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return 0
+	}
+	id, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || id <= 0 {
+		return 0
+	}
+	return id
 }

@@ -15,10 +15,12 @@ const (
 )
 
 type reconcileDetailItem struct {
-	SKU   string `json:"sku"`
-	Label string `json:"label"`
-	Tone  string `json:"tone"`
-	Group string `json:"group"`
+	SKU          string `json:"sku"`
+	Label        string `json:"label"`
+	Tone         string `json:"tone"`
+	Group        string `json:"group"`
+	MatchedBy    string `json:"matched_by,omitempty"`
+	MatchedValue string `json:"matched_value,omitempty"`
 }
 
 type syncRunEnvelope struct {
@@ -50,6 +52,7 @@ func (uc *SyncOrdersUseCase) ReconcileProductsAsync(ctx context.Context, integra
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
 		"only_in_channel":     len(result.OnlyInShopify),
+		"match_rules":         result.MatchRules,
 	}
 
 	uc.emitProductEvent(ctx, integIDUint, businessID, reconcileEventType, counts)
@@ -71,7 +74,14 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 			if item.Name != "" {
 				text = label + " · " + item.Name
 			}
-			detail = append(detail, reconcileDetailItem{SKU: item.SKU, Label: text, Tone: tone, Group: group})
+			detail = append(detail, reconcileDetailItem{
+				SKU:          item.SKU,
+				Label:        text,
+				Tone:         tone,
+				Group:        group,
+				MatchedBy:    item.MatchedBy,
+				MatchedValue: item.MatchedValue,
+			})
 		}
 	}
 

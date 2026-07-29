@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -21,6 +22,45 @@ func wooExternalRef(w domain.WooProduct) string {
 		return w.ParentID + ":" + w.ID
 	}
 	return w.ID
+}
+
+func wooRefs(w domain.WooProduct) productmatch.ExternalRefs {
+	variantID := ""
+	if w.ParentID != "" {
+		variantID = w.ID
+	}
+	return productmatch.ExternalRefs{
+		ProductID: wooExternalRef(w),
+		VariantID: variantID,
+		SKU:       w.SKU,
+		Barcode:   w.Barcode,
+	}
+}
+
+func probabilityItems(products []domain.ProductForSync) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+func wooItems(products []domain.WooProduct) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+type reconcileContext struct {
+	storeURL     string
+	ck           string
+	cs           string
+	probProducts []domain.ProductForSync
+	wooProducts  []domain.WooProduct
+	rules        []productmatch.Rule
+	outcome      productmatch.Outcome
 }
 
 func fullImageURL(imageURL string) string {
@@ -46,24 +86,37 @@ type providerUpsertMsg struct {
 	ImageURL       string  `json:"image_url,omitempty"`
 }
 
-func (uc *wooCommerceUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (storeURL, ck, cs string, probProducts []domain.ProductForSync, wooProducts []domain.WooProduct, err error) {
-	storeURL, ck, cs, err = uc.resolveStoreCreds(ctx, integrationID)
+func (uc *wooCommerceUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (*reconcileContext, error) {
+	storeURL, ck, cs, err := uc.resolveStoreCreds(ctx, integrationID)
 	if err != nil {
-		return "", "", "", nil, nil, err
+		return nil, err
 	}
-	probProducts, err = uc.productRepo.ListProductsByBusiness(ctx, businessID)
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
-		return "", "", "", nil, nil, fmt.Errorf("listing probability products: %w", err)
+		return nil, fmt.Errorf("getting integration: %w", err)
 	}
-	wooProducts, err = uc.client.GetProducts(ctx, storeURL, ck, cs)
+	probProducts, err := uc.productRepo.ListProductsByBusiness(ctx, businessID)
 	if err != nil {
-		return "", "", "", nil, nil, fmt.Errorf("listing woocommerce products: %w", err)
+		return nil, fmt.Errorf("listing probability products: %w", err)
 	}
-	return storeURL, ck, cs, probProducts, wooProducts, nil
+	wooProducts, err := uc.client.GetProducts(ctx, storeURL, ck, cs)
+	if err != nil {
+		return nil, fmt.Errorf("listing woocommerce products: %w", err)
+	}
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
+	return &reconcileContext{
+		storeURL:     storeURL,
+		ck:           ck,
+		cs:           cs,
+		probProducts: probProducts,
+		wooProducts:  wooProducts,
+		rules:        rules,
+		outcome:      productmatch.Reconcile(rules, probabilityItems(probProducts), wooItems(wooProducts)),
+	}, nil
 }
 
 func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*domain.ReconcileResult, error) {
-	_, _, _, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,46 +133,40 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		}
 	}
 
-	probBySKU := make(map[string]domain.ProductForSync)
 	result := &domain.ReconcileResult{
 		MatchedItems:         []domain.ProductBrief{},
 		MatchedNotAssociated: []domain.ProductBrief{},
 		OnlyInProbability:    []domain.ProductBrief{},
 		OnlyInWoo:            []domain.ProductBrief{},
-	}
-	for _, p := range probProducts {
-		key := normalizeSKU(p.SKU)
-		if key == "" {
-			result.ProbabilityNoSKU++
-			continue
-		}
-		probBySKU[key] = p
+		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
+		WooNoSKU:             rc.outcome.ChannelUnmatchable,
+		MatchRules:           rc.rules,
 	}
 
-	wooSKUs := make(map[string]bool)
-	for _, w := range wooProducts {
-		key := normalizeSKU(w.SKU)
-		if key == "" {
-			result.WooNoSKU++
-			continue
+	for _, pair := range rc.outcome.Pairs {
+		prob := rc.probProducts[pair.ProbabilityIndex]
+		channel := rc.wooProducts[pair.ChannelIndex]
+		brief := domain.ProductBrief{
+			SKU:          prob.SKU,
+			Name:         channel.Name,
+			MatchedBy:    pair.Rule.Key(),
+			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
 		}
-		wooSKUs[key] = true
-		if _, ok := probBySKU[key]; ok {
-			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
-			if associatedSKUs[key] {
-				result.Matched++
-			} else {
-				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
-			}
+		result.MatchedItems = append(result.MatchedItems, brief)
+		if associatedSKUs[normalizeSKU(prob.SKU)] {
+			result.Matched++
 		} else {
-			result.OnlyInWoo = append(result.OnlyInWoo, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
+			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 		}
 	}
 
-	for key, p := range probBySKU {
-		if !wooSKUs[key] {
-			result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
-		}
+	for _, idx := range rc.outcome.OnlyInChannel {
+		w := rc.wooProducts[idx]
+		result.OnlyInWoo = append(result.OnlyInWoo, domain.ProductBrief{SKU: w.SKU, Name: w.Name})
+	}
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
 	return result, nil
@@ -140,26 +187,24 @@ func selectedSKUs(skus []string) map[string]bool {
 
 func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	storeURL, ck, cs, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
 	}
 
-	wooBySKU := make(map[string]string)
-	for _, w := range wooProducts {
-		if key := normalizeSKU(w.SKU); key != "" && w.ID != "" {
-			wooBySKU[key] = wooExternalRef(w)
-		}
+	matchedRefs := make(map[int]productmatch.ExternalRefs, len(rc.outcome.Pairs))
+	for _, pair := range rc.outcome.Pairs {
+		matchedRefs[pair.ProbabilityIndex] = wooRefs(rc.wooProducts[pair.ChannelIndex])
 	}
 
 	only := selectedSKUs(skus)
-	targets := make([]domain.ProductForSync, 0)
-	for _, p := range probProducts {
+	targets := make([]int, 0, len(rc.probProducts))
+	for i, p := range rc.probProducts {
 		key := normalizeSKU(p.SKU)
 		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
-		targets = append(targets, p)
+		targets = append(targets, i)
 	}
 
 	total := len(targets)
@@ -170,19 +215,20 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 	})
 
 	created, updated, failed := 0, 0, 0
-	for i, p := range targets {
-		if wooID, ok := wooBySKU[normalizeSKU(p.SKU)]; ok && wooID != "" {
-			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), wooID); merr != nil {
+	for n, idx := range targets {
+		p := rc.probProducts[idx]
+		if refs, ok := matchedRefs[idx]; ok && refs.ProductID != "" {
+			if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 				uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al mapear producto existente de WooCommerce")
 				failed++
 			} else {
 				updated++
 			}
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
 			continue
 		}
 
-		newID, cerr := uc.client.CreateProduct(ctx, storeURL, ck, cs, domain.CreateProductInput{
+		newID, cerr := uc.client.CreateProduct(ctx, rc.storeURL, rc.ck, rc.cs, domain.CreateProductInput{
 			Name:          p.Name,
 			SKU:           p.SKU,
 			Price:         p.Price,
@@ -194,17 +240,18 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 		if cerr != nil {
 			uc.logger.Error(ctx).Err(cerr).Str("sku", p.SKU).Msg("Error al crear producto en WooCommerce")
 			failed++
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
 			continue
 		}
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), newID); merr != nil {
+		refs := productmatch.ExternalRefs{ProductID: newID, SKU: p.SKU, Barcode: p.Barcode}
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Producto creado en Woo pero fallo el mapeo")
 			failed++
-			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
 			continue
 		}
 		created++
-		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, created, updated, failed)
+		uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, n+1, total, created, updated, failed)
 	}
 
 	uc.emitSyncEvent(ctx, businessID, uint(integIDUint), "woocommerce.product.sync.completed", map[string]interface{}{
@@ -220,23 +267,17 @@ func (uc *wooCommerceUseCase) ApplyProductsToWoo(ctx context.Context, integratio
 
 func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	_, _, _, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
 	}
 
-	probSKUs := make(map[string]bool)
-	for _, p := range probProducts {
-		if key := normalizeSKU(p.SKU); key != "" {
-			probSKUs[key] = true
-		}
-	}
-
 	only := selectedSKUs(skus)
 	missing := make([]domain.WooProduct, 0)
-	for _, w := range wooProducts {
+	for _, idx := range rc.outcome.OnlyInChannel {
+		w := rc.wooProducts[idx]
 		key := normalizeSKU(w.SKU)
-		if key == "" || probSKUs[key] || (only != nil && !only[key]) {
+		if key == "" || (only != nil && !only[key]) {
 			continue
 		}
 		missing = append(missing, w)
@@ -290,22 +331,9 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 
 func (uc *wooCommerceUseCase) AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
-	_, _, _, probProducts, wooProducts, err := uc.loadReconcileData(ctx, integrationID, businessID)
+	rc, err := uc.loadReconcileData(ctx, integrationID, businessID)
 	if err != nil {
 		return err
-	}
-
-	wooBySKU := make(map[string]string)
-	for _, w := range wooProducts {
-		if k := normalizeSKU(w.SKU); k != "" && w.ID != "" {
-			wooBySKU[k] = wooExternalRef(w)
-		}
-	}
-	probBySKU := make(map[string]domain.ProductForSync)
-	for _, p := range probProducts {
-		if k := normalizeSKU(p.SKU); k != "" {
-			probBySKU[k] = p
-		}
 	}
 
 	mappedItems, err := uc.productRepo.ListMappedItems(ctx, uint(integIDUint))
@@ -319,19 +347,18 @@ func (uc *wooCommerceUseCase) AssociateProducts(ctx context.Context, integration
 		}
 	}
 
-	targets := make([]string, 0)
-	if len(skus) > 0 {
-		for _, s := range skus {
-			if k := normalizeSKU(s); k != "" {
-				targets = append(targets, k)
+	only := selectedSKUs(skus)
+	targets := make([]productmatch.Pair, 0, len(rc.outcome.Pairs))
+	for _, pair := range rc.outcome.Pairs {
+		key := normalizeSKU(rc.probProducts[pair.ProbabilityIndex].SKU)
+		if only != nil {
+			if key == "" || !only[key] {
+				continue
 			}
+		} else if associated[key] {
+			continue
 		}
-	} else {
-		for k := range probBySKU {
-			if wooBySKU[k] != "" && !associated[k] {
-				targets = append(targets, k)
-			}
-		}
+		targets = append(targets, pair)
 	}
 
 	total := len(targets)
@@ -342,19 +369,18 @@ func (uc *wooCommerceUseCase) AssociateProducts(ctx context.Context, integration
 	})
 
 	updated, failed := 0, 0
-	for i, k := range targets {
-		p, okP := probBySKU[k]
-		ref, okW := wooBySKU[k]
-		if !okP || !okW || ref == "" || associated[k] {
+	for i, pair := range targets {
+		p := rc.probProducts[pair.ProbabilityIndex]
+		refs := wooRefs(rc.wooProducts[pair.ChannelIndex])
+		if refs.ProductID == "" {
 			uc.maybeProgress(ctx, businessID, uint(integIDUint), correlationID, i+1, total, 0, updated, failed)
 			continue
 		}
-		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), ref); merr != nil {
+		if merr := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, uint(integIDUint), refs); merr != nil {
 			uc.logger.Error(ctx).Err(merr).Str("sku", p.SKU).Msg("Error al asociar producto a WooCommerce")
 			failed++
 			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, 0, "failed")
 		} else {
-			associated[k] = true
 			updated++
 			uc.emitProductItem(ctx, businessID, uint(integIDUint), correlationID, p.SKU, p.Name, 0, "updated")
 		}

@@ -33,6 +33,7 @@ func (c *shopifyClient) GetProduct(ctx context.Context, storeName, accessToken, 
 			Variants []struct {
 				ID              int64  `json:"id"`
 				SKU             string `json:"sku"`
+				Barcode         string `json:"barcode"`
 				InventoryItemID int64  `json:"inventory_item_id"`
 			} `json:"variants"`
 		} `json:"product"`
@@ -46,6 +47,7 @@ func (c *shopifyClient) GetProduct(ctx context.Context, storeName, accessToken, 
 		product.Variants = append(product.Variants, domain.ShopifyVariant{
 			ID:              v.ID,
 			SKU:             v.SKU,
+			Barcode:         v.Barcode,
 			InventoryItemID: v.InventoryItemID,
 		})
 	}

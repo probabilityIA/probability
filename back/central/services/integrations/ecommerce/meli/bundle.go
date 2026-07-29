@@ -42,7 +42,7 @@ func New(
 			Msg("RabbitMQ not available, MercadoLibre orders will not be published to queue")
 	}
 
-	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, inventoryRepo, rabbitMQ, logger)
+	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, inventoryRepo, orderLookupRepo, rabbitMQ, logger)
 
 	handler := handlers.New(uc, logger, config, coreIntegration)
 	handler.RegisterRoutes(router, logger)

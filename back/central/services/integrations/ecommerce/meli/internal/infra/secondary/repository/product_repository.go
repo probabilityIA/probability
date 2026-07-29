@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
@@ -37,11 +38,18 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 	var rows []struct {
 		ProductID         string
 		SKU               string
+		Barcode           string
 		ExternalProductID string
+		ExternalVariantID string
+		ExternalSKU       string
+		ExternalBarcode   string
 	}
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations AS pbi").
-		Select("pbi.product_id, p.sku, pbi.external_product_id").
+		Select(`pbi.product_id, p.sku, COALESCE(p.barcode, '') AS barcode, pbi.external_product_id,
+			COALESCE(pbi.external_variant_id, '') AS external_variant_id,
+			COALESCE(pbi.external_sku, '') AS external_sku,
+			COALESCE(pbi.external_barcode, '') AS external_barcode`).
 		Joins("JOIN products p ON p.id = pbi.product_id").
 		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND pbi.external_product_id <> '' AND p.deleted_at IS NULL", integrationID).
 		Scan(&rows).Error
@@ -51,9 +59,13 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 	items := make([]domain.MappedItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, domain.MappedItem{
-			ProductID:      row.ProductID,
-			SKU:            row.SKU,
-			ExternalItemID: row.ExternalProductID,
+			ProductID:         row.ProductID,
+			SKU:               row.SKU,
+			Barcode:           row.Barcode,
+			ExternalItemID:    row.ExternalProductID,
+			ExternalVariantID: row.ExternalVariantID,
+			ExternalSKU:       row.ExternalSKU,
+			ExternalBarcode:   row.ExternalBarcode,
 		})
 	}
 	return items, nil
@@ -119,6 +131,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 	var rows []struct {
 		ID                string
 		SKU               string
+		Barcode           string
+		ExternalID        string
 		Name              string
 		Description       string
 		Price             float64
@@ -133,7 +147,7 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 
 	err := r.db.Conn(ctx).
 		Table("products AS p").
-		Select(`p.id, p.sku, p.name, p.description, p.price, p.stock_quantity, p.track_inventory, p.image_url,
+		Select(`p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.external_id, p.name, p.description, p.price, p.stock_quantity, p.track_inventory, p.image_url,
 			COALESCE(NULLIF(p.brand, ''), NULLIF(f.brand, ''), '') AS brand,
 			COALESCE(NULLIF(p.category, ''), NULLIF(f.category, ''), '') AS category,
 			COALESCE(p.channel_categories->>'meli', '') AS meli_category_id,
@@ -151,6 +165,8 @@ func (r *ProductRepository) ListProductsByBusiness(ctx context.Context, business
 		products = append(products, domain.ProductForSync{
 			ID:             row.ID,
 			SKU:            row.SKU,
+			Barcode:        row.Barcode,
+			ExternalID:     row.ExternalID,
 			Name:           row.Name,
 			Description:    row.Description,
 			Price:          row.Price,
@@ -185,7 +201,14 @@ func (r *ProductRepository) GetExternalProductID(ctx context.Context, productID 
 	return result.ExternalProductID, true, nil
 }
 
-func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, externalProductID string) error {
+func optionalRef(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error {
 	var existing models.ProductBusinessIntegration
 	err := r.db.Conn(ctx).
 		Where("product_id = ? AND integration_id = ?", productID, integrationID).
@@ -196,7 +219,10 @@ func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context,
 			ProductID:         productID,
 			BusinessID:        businessID,
 			IntegrationID:     integrationID,
-			ExternalProductID: externalProductID,
+			ExternalProductID: refs.ProductID,
+			ExternalVariantID: optionalRef(refs.VariantID),
+			ExternalSKU:       optionalRef(refs.SKU),
+			ExternalBarcode:   optionalRef(refs.Barcode),
 		}
 		return r.db.Conn(ctx).Create(&record).Error
 	}
@@ -204,7 +230,16 @@ func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context,
 		return err
 	}
 
-	existing.ExternalProductID = externalProductID
+	existing.ExternalProductID = refs.ProductID
+	if v := optionalRef(refs.VariantID); v != nil {
+		existing.ExternalVariantID = v
+	}
+	if v := optionalRef(refs.SKU); v != nil {
+		existing.ExternalSKU = v
+	}
+	if v := optionalRef(refs.Barcode); v != nil {
+		existing.ExternalBarcode = v
+	}
 	return r.db.Conn(ctx).Save(&existing).Error
 }
 

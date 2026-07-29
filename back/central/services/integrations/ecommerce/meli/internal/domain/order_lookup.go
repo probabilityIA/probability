@@ -9,4 +9,5 @@ type MeliOrderRef struct {
 
 type IOrderLookupRepository interface {
 	GetMeliShipmentByOrderID(ctx context.Context, orderID string) (*MeliOrderRef, error)
+	GetMeliLabelRefByShipmentID(ctx context.Context, shipmentID uint) (*MeliLabelRef, error)
 }

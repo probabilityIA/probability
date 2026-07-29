@@ -29,12 +29,16 @@ shipment_id de MELI `47626453039`, tracking `MEL47626453039FMDOF01`.
 
 ### IMPORTANTE
 
-1. Exponer un endpoint en el backend que descargue la etiqueta de MELI usando las
-   credenciales de la integracion y la devuelva como PDF (proxy autenticado).
-   Debe resolver el business/integracion desde el shipment, no desde el request,
-   y validar pertenencia al negocio (ver `.claude/rules/multi-tenant-security.md`).
-2. Que el front use ese endpoint para las guias de canal en vez del `guide_url`
-   crudo. Hoy el boton "Ver Guia" abre la URL tal cual.
+1. [RESUELTO 2026-07-28] Endpoint proxy autenticado
+   `GET /api/v1/integrations/meli/shipments/:shipment_id/label` en el modulo meli.
+   Resuelve business/integracion desde el shipment (nunca del request), exige que
+   el envio sea de MercadoLibre, valida pertenencia al negocio y pide
+   `business_id` por query a super admin. Refresca el token con `EnsureValidToken`
+   y devuelve el PDF.
+2. [RESUELTO 2026-07-28] El front pasa por `/internal/meli-label/[id]`
+   (`ui/utils/guide-link.ts` detecta las URLs de `api.mercadolibre.com` y
+   reescribe el href). Aplicado en `ShipmentList` y `CODShipmentList`.
+   `TrackingPanel.tsx` quedo sin tocar: hoy no lo usa ningun componente.
 3. Considerar guardar el PDF en S3 la primera vez (como se hace con las guias
    propias) para no depender del token ni de la disponibilidad de la API de MELI
    cada vez que alguien quiere imprimir.
@@ -55,3 +59,11 @@ shipment_id de MELI `47626453039`, tracking `MEL47626453039FMDOF01`.
 Se cierra cuando desde el modulo de Envios se pueda abrir e imprimir la guia de
 una orden de MercadoLibre sin errores de autenticacion, verificado con una orden
 viva del canal.
+
+Estado 2026-07-28: falta esa verificacion. Hoy NO existe ningun shipment de
+MercadoLibre en la base (la unica orden del canal con guia esta cancelada y por
+eso no se materializa), asi que el camino contra la API real de MELI todavia no
+se ha ejercido. Lo verificado es el contorno: ruta, JWT, regla de super admin,
+guarda de canal (un envio que no sea de MELI responde 404) y el proxy del front.
+Al llegar la proxima orden viva de MercadoLibre, abrir su guia y cerrar la alerta
+si el PDF sale bien.

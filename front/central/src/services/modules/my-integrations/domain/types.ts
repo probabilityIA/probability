@@ -19,6 +19,8 @@ export interface SyncRunDetail {
     label: string;
     tone: 'ok' | 'warn' | 'error';
     group?: string;
+    matched_by?: string;
+    matched_value?: string;
 }
 
 export interface SyncRunDetailQuery {

@@ -1,6 +1,10 @@
 package domain
 
-import "context"
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 type CreateProductInput struct {
 	Name          string
@@ -29,6 +33,8 @@ type UpdateProductInput struct {
 type ProductForSync struct {
 	ID             string
 	SKU            string
+	Barcode        string
+	ExternalID     string
 	Name           string
 	Description    string
 	Price          float64
@@ -44,8 +50,19 @@ type ProductForSync struct {
 }
 
 type ProductBrief struct {
-	SKU  string
-	Name string
+	SKU          string
+	Name         string
+	MatchedBy    string
+	MatchedValue string
+}
+
+func (p ProductForSync) MatchItem() productmatch.Item {
+	return productmatch.Item{
+		SKU:        p.SKU,
+		Barcode:    p.Barcode,
+		ExternalID: p.ExternalID,
+		Name:       p.Name,
+	}
 }
 
 type ReconcileResult struct {
@@ -56,12 +73,17 @@ type ReconcileResult struct {
 	OnlyInJumpseller     []ProductBrief
 	ProbabilityNoSKU     int
 	JumpsellerNoSKU      int
+	MatchRules           []productmatch.Rule
 }
 
 type MappedItem struct {
-	ProductID      string
-	SKU            string
-	ExternalItemID string
+	ProductID         string
+	SKU               string
+	Barcode           string
+	ExternalItemID    string
+	ExternalVariantID string
+	ExternalSKU       string
+	ExternalBarcode   string
 }
 
 const (
@@ -93,7 +115,7 @@ type LocationMapping struct {
 type IProductRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]ProductForSync, error)
 	GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error)
-	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, externalProductID string) error
+	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
 	ListMappedItems(ctx context.Context, integrationID uint) ([]MappedItem, error)
 	GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error)
 }

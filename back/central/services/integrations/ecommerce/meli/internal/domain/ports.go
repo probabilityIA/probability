@@ -19,6 +19,8 @@ type IMeliClient interface {
 
 	GetShipmentOrderIDs(ctx context.Context, accessToken string, shipmentID int64) ([]int64, error)
 
+	GetShipmentLabel(ctx context.Context, accessToken string, shipmentID int64, responseType string) (*ShipmentLabel, error)
+
 	GetBillingInfo(ctx context.Context, accessToken string, orderID int64) (*MeliBillingInfo, error)
 
 	GetPack(ctx context.Context, accessToken string, packID int64) (*MeliPack, error)

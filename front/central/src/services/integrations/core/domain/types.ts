@@ -34,6 +34,8 @@ export interface Integration {
     created_by_id: number;
     updated_by_id: number | null;
     created_at: string;
+    product_match_rules?: ProductMatchRule[];
+    product_match_is_default?: boolean;
     updated_at: string;
     integration_type?: IntegrationTypeInfo; // Información del tipo de integración si está cargado
 }
@@ -284,4 +286,24 @@ export interface IntegrationCategoriesResponse {
     success: boolean;
     message: string;
     data: IntegrationCategory[];
+}
+
+export type ProductMatchField = 'sku' | 'barcode' | 'external_id' | 'variant_id' | 'name';
+
+export interface ProductMatchRule {
+    probability: ProductMatchField;
+    channel: ProductMatchField;
+}
+
+export interface ProductMatchOptions {
+    probability: ProductMatchField[];
+    channel: ProductMatchField[];
+}
+
+export interface ProductMatchConfig {
+    integration_id: number;
+    rules: ProductMatchRule[];
+    default_rules: ProductMatchRule[];
+    options: ProductMatchOptions;
+    is_override: boolean;
 }

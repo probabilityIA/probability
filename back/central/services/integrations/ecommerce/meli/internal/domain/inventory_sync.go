@@ -3,9 +3,13 @@ package domain
 import "context"
 
 type MappedItem struct {
-	ProductID      string
-	SKU            string
-	ExternalItemID string
+	ProductID         string
+	SKU               string
+	Barcode           string
+	ExternalItemID    string
+	ExternalVariantID string
+	ExternalSKU       string
+	ExternalBarcode   string
 }
 
 type WarehouseMapping struct {

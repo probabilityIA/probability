@@ -7,7 +7,7 @@ import { Clock, SlidersHorizontal, ChevronDown, RefreshCw } from 'lucide-react';
 import { useSyncActivity, type DetailGroup, type SyncDetailItem, type SyncEnvironment, type SyncResult } from '../sync-activity-context';
 import type { SyncRunRecord } from '../../domain/types';
 import { getSyncProvider } from '../providers';
-import { SyncDetailPanel } from './SyncDetailPanel';
+import { SyncDetailPanel, matchRuleLabel } from './SyncDetailPanel';
 
 interface CyberChannelCardProps {
     integration: Integration;
@@ -96,6 +96,14 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
     const syncable = provider !== null;
     const envView = syncable ? environment : null;
     const syncBusy = syncState !== 'idle' || syncResult !== undefined || envView !== null;
+    const liveMatchRules = syncResult?.kind === 'products' ? syncResult.matchRules : undefined;
+    const activeMatchRules = integration.product_match_rules?.length
+        ? integration.product_match_rules
+        : liveMatchRules;
+    const matchRulesLabel = activeMatchRules?.length
+        ? activeMatchRules.map(rule => matchRuleLabel(`${rule.probability}->${rule.channel}`)).join('  |  ')
+        : null;
+
     const lastRun = envView === 'inventory' || envView === 'products'
         ? lastRuns[integration.id]?.[envView]
         : undefined;
@@ -305,6 +313,14 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                         <span className="rounded-full bg-fuchsia-50 px-2 py-0.5 text-[10.5px] font-bold text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300">
                             {syncResult.onlyInChannel} solo {channelLabel}
                         </span>
+                        {matchRulesLabel && (
+                            <span
+                                title={`Se comparo cruzando campo de Probability contra campo del canal, en orden de prioridad: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
+                                className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                            >
+                                match: {matchRulesLabel}
+                            </span>
+                        )}
                     </div>
                 ) : syncResult?.kind === 'error' ? (
                     <span className="text-right text-[11px] font-semibold text-red-500">{syncResult.message}</span>
@@ -356,6 +372,15 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                             </div>
                         ) : (
                             <span className="text-[11px] italic text-gray-300 dark:text-gray-600">Sin comparaciones registradas</span>
+                        )}
+                        {matchRulesLabel && (
+                            <span
+                                title={`El comparativo cruza campo de Probability contra campo del canal, en orden de prioridad: ${matchRulesLabel}${integration.product_match_is_default ? '. Configuracion predeterminada del canal.' : ''}`}
+                                className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-bold text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                            >
+                                match: {matchRulesLabel}
+                                {integration.product_match_is_default ? ' (predeterminado)' : ''}
+                            </span>
                         )}
                         {lastRunTime && (
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. comparacion {lastRunTime}</span>

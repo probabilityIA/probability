@@ -30,17 +30,20 @@ type IMeliUseCase interface {
 
 	PushOrderStatus(ctx context.Context, integrationID string, shipmentID int64, status string) error
 
+	GetShipmentLabel(ctx context.Context, shipmentID uint, businessID uint, responseType string) (*domain.ShipmentLabel, error)
+
 	RetryBilling(ctx context.Context, integrationID string, orderID int64) (bool, error)
 }
 
 type meliUseCase struct {
-	client        domain.IMeliClient
-	service       domain.IIntegrationService
-	publisher     domain.OrderPublisher
-	productRepo   domain.IProductRepository
-	inventoryRepo domain.IInventoryRepository
-	rabbit        rabbitmq.IQueue
-	logger        log.ILogger
+	client          domain.IMeliClient
+	service         domain.IIntegrationService
+	publisher       domain.OrderPublisher
+	productRepo     domain.IProductRepository
+	inventoryRepo   domain.IInventoryRepository
+	orderLookupRepo domain.IOrderLookupRepository
+	rabbit          rabbitmq.IQueue
+	logger          log.ILogger
 }
 
 func New(
@@ -49,16 +52,18 @@ func New(
 	publisher domain.OrderPublisher,
 	productRepo domain.IProductRepository,
 	inventoryRepo domain.IInventoryRepository,
+	orderLookupRepo domain.IOrderLookupRepository,
 	rabbit rabbitmq.IQueue,
 	logger log.ILogger,
 ) IMeliUseCase {
 	return &meliUseCase{
-		client:        client,
-		service:       service,
-		publisher:     publisher,
-		productRepo:   productRepo,
-		inventoryRepo: inventoryRepo,
-		rabbit:        rabbit,
-		logger:        logger.WithModule("meli"),
+		client:          client,
+		service:         service,
+		publisher:       publisher,
+		productRepo:     productRepo,
+		inventoryRepo:   inventoryRepo,
+		orderLookupRepo: orderLookupRepo,
+		rabbit:          rabbit,
+		logger:          logger.WithModule("meli"),
 	}
 }

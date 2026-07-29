@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -37,6 +38,33 @@ type reconcileData struct {
 	integration *domain.Integration
 	probability []domain.ProductForSync
 	vtex        []domain.VTEXSKU
+	rules       []productmatch.Rule
+	outcome     productmatch.Outcome
+}
+
+func vtexRefs(s domain.VTEXSKU) productmatch.ExternalRefs {
+	return productmatch.ExternalRefs{
+		ProductID: s.ID,
+		VariantID: s.ID,
+		SKU:       s.RefID,
+		Barcode:   s.EAN,
+	}
+}
+
+func probabilityItems(products []domain.ProductForSync) []productmatch.Item {
+	items := make([]productmatch.Item, len(products))
+	for i, p := range products {
+		items[i] = p.MatchItem()
+	}
+	return items
+}
+
+func vtexItems(skus []domain.VTEXSKU) []productmatch.Item {
+	items := make([]productmatch.Item, len(skus))
+	for i, s := range skus {
+		items[i] = s.MatchItem()
+	}
+	return items
 }
 
 func normalizeSKU(sku string) string {
@@ -64,11 +92,14 @@ func (uc *vtexUseCase) loadReconcileData(ctx context.Context, integrationID stri
 		return nil, fmt.Errorf("listing vtex skus: %w", err)
 	}
 
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
 	return &reconcileData{
 		cred:        cred,
 		integration: integration,
 		probability: probabilityProducts,
 		vtex:        vtexSKUs,
+		rules:       rules,
+		outcome:     productmatch.Reconcile(rules, probabilityItems(probabilityProducts), vtexItems(vtexSKUs)),
 	}, nil
 }
 
@@ -87,41 +118,34 @@ func (uc *vtexUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		associated[normalizeSKU(m.SKU)] = true
 	}
 
-	vtexBySKU := make(map[string]domain.VTEXSKU, len(data.vtex))
-	result := &domain.ReconcileResult{}
-	for _, sku := range data.vtex {
-		key := normalizeSKU(sku.RefID)
-		if key == "" {
-			result.VTEXNoSKU++
-			continue
-		}
-		vtexBySKU[key] = sku
+	result := &domain.ReconcileResult{
+		ProbabilityNoSKU: data.outcome.ProbabilityUnmatchable,
+		VTEXNoSKU:        data.outcome.ChannelUnmatchable,
+		MatchRules:       data.rules,
 	}
 
-	probabilityBySKU := make(map[string]bool, len(data.probability))
-	for _, p := range data.probability {
-		key := normalizeSKU(p.SKU)
-		if key == "" {
-			result.ProbabilityNoSKU++
-			continue
+	for _, pair := range data.outcome.Pairs {
+		prob := data.probability[pair.ProbabilityIndex]
+		channel := data.vtex[pair.ChannelIndex]
+		brief := domain.ProductBrief{
+			SKU:          prob.SKU,
+			Name:         channel.Name,
+			MatchedBy:    pair.Rule.Key(),
+			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
 		}
-		probabilityBySKU[key] = true
+		result.Matched++
+		result.MatchedItems = append(result.MatchedItems, brief)
+		if !associated[normalizeSKU(prob.SKU)] {
+			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
+		}
+	}
 
-		if _, ok := vtexBySKU[key]; ok {
-			result.Matched++
-			result.MatchedItems = append(result.MatchedItems, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
-			if !associated[key] {
-				result.MatchedNotAssociated = append(result.MatchedNotAssociated, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
-			}
-			continue
-		}
+	for _, idx := range data.outcome.OnlyInProbability {
+		p := data.probability[idx]
 		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
-
-	for key, sku := range vtexBySKU {
-		if probabilityBySKU[key] {
-			continue
-		}
+	for _, idx := range data.outcome.OnlyInChannel {
+		sku := data.vtex[idx]
 		result.OnlyInVTEX = append(result.OnlyInVTEX, domain.ProductBrief{SKU: sku.RefID, Name: sku.Name})
 	}
 
@@ -293,34 +317,20 @@ func (uc *vtexUseCase) AssociateProducts(ctx context.Context, integrationID stri
 		filter[normalizeSKU(s)] = true
 	}
 
-	vtexBySKU := make(map[string]domain.VTEXSKU, len(data.vtex))
-	for _, sku := range data.vtex {
-		key := normalizeSKU(sku.RefID)
-		if key == "" {
-			continue
-		}
-		vtexBySKU[key] = sku
-	}
-
 	total := 0
 	associated := 0
 	fails := &failedSKUs{}
 
-	for _, p := range data.probability {
+	for _, pair := range data.outcome.Pairs {
+		p := data.probability[pair.ProbabilityIndex]
 		key := normalizeSKU(p.SKU)
-		if key == "" {
-			continue
-		}
-		if len(filter) > 0 && !filter[key] {
-			continue
-		}
-		match, ok := vtexBySKU[key]
-		if !ok {
+		if len(filter) > 0 && (key == "" || !filter[key]) {
 			continue
 		}
 
 		total++
-		if err := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, data.integration.ID, match.ID); err != nil {
+		refs := vtexRefs(data.vtex[pair.ChannelIndex])
+		if err := uc.productRepo.UpsertProductIntegrationMapping(ctx, p.ID, businessID, data.integration.ID, refs); err != nil {
 			uc.logger.Error(ctx).Err(err).Str("sku", p.SKU).Msg("Error al asociar producto con VTEX")
 			fails.add(p.SKU)
 			continue

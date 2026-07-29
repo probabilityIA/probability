@@ -9,7 +9,8 @@ import {
     UpdateIntegrationDTO,
     CreateIntegrationTypeDTO,
     UpdateIntegrationTypeDTO,
-    SyncOrdersParams
+    SyncOrdersParams,
+    ProductMatchRule
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
@@ -247,3 +248,25 @@ export const getIntegrationsSimpleAction = async (businessId?: number): Promise<
 export const getIntegrationCategoriesAction = async (token?: string | null) => {
     return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationCategories()));
 };
+
+export const getProductMatchConfigAction = async (integrationId: number, businessId?: number) =>
+    safeAction(async () => {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || null;
+        if (!token) throw new Error('No se encontró sesión activa (Token ausente)');
+        const repository = new IntegrationApiRepository(token);
+        return repository.getProductMatchConfig(integrationId, businessId);
+    });
+
+export const updateProductMatchConfigAction = async (
+    integrationId: number,
+    rules: ProductMatchRule[],
+    businessId?: number,
+) =>
+    safeAction(async () => {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || null;
+        if (!token) throw new Error('No se encontró sesión activa (Token ausente)');
+        const repository = new IntegrationApiRepository(token);
+        return repository.updateProductMatchConfig(integrationId, rules, businessId);
+    });

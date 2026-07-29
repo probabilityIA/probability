@@ -29,6 +29,8 @@ type IIntegrationHandler interface {
 	CreateWebhookHandler(c *gin.Context)
 	CheckIntegrationExistsHandler(c *gin.Context)
 	GetIntegrationStatsHandler(c *gin.Context)
+	GetProductMatchConfigHandler(c *gin.Context)
+	UpdateProductMatchConfigHandler(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 type IntegrationHandler struct {

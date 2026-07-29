@@ -17,21 +17,23 @@ type wooImageResponse struct {
 }
 
 type wooProductResponse struct {
-	ID            int64              `json:"id"`
-	Name          string             `json:"name"`
-	SKU           string             `json:"sku"`
-	Type          string             `json:"type"`
-	Price         string             `json:"price"`
-	StockQuantity *int               `json:"stock_quantity"`
-	Images        []wooImageResponse `json:"images"`
+	ID             int64              `json:"id"`
+	Name           string             `json:"name"`
+	SKU            string             `json:"sku"`
+	GlobalUniqueID string             `json:"global_unique_id"`
+	Type           string             `json:"type"`
+	Price          string             `json:"price"`
+	StockQuantity  *int               `json:"stock_quantity"`
+	Images         []wooImageResponse `json:"images"`
 }
 
 type wooVariationResponse struct {
-	ID            int64             `json:"id"`
-	SKU           string            `json:"sku"`
-	Price         string            `json:"price"`
-	StockQuantity *int              `json:"stock_quantity"`
-	Image         *wooImageResponse `json:"image"`
+	ID             int64             `json:"id"`
+	SKU            string            `json:"sku"`
+	GlobalUniqueID string            `json:"global_unique_id"`
+	Price          string            `json:"price"`
+	StockQuantity  *int              `json:"stock_quantity"`
+	Image          *wooImageResponse `json:"image"`
 }
 
 func firstImage(images []wooImageResponse) string {
@@ -105,6 +107,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 						ID:            strconv.FormatInt(v.ID, 10),
 						ParentID:      parentID,
 						SKU:           v.SKU,
+						Barcode:       v.GlobalUniqueID,
 						Name:          p.Name,
 						Price:         vprice,
 						StockQuantity: vstock,
@@ -125,6 +128,7 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 			products = append(products, domain.WooProduct{
 				ID:            strconv.FormatInt(p.ID, 10),
 				SKU:           p.SKU,
+				Barcode:       p.GlobalUniqueID,
 				Name:          p.Name,
 				Price:         price,
 				StockQuantity: stock,

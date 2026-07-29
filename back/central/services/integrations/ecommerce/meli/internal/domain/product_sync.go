@@ -1,6 +1,10 @@
 package domain
 
-import "context"
+import (
+	"context"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 type CreateProductInput struct {
 	Name          string
@@ -20,6 +24,8 @@ type CreateProductInput struct {
 type ProductForSync struct {
 	ID             string
 	SKU            string
+	Barcode        string
+	ExternalID     string
 	Name           string
 	Description    string
 	Price          float64
@@ -34,16 +40,39 @@ type ProductForSync struct {
 
 type MeliProduct struct {
 	ID            string
+	VariationID   string
 	SKU           string
+	Barcode       string
 	Name          string
 	Price         float64
 	StockQuantity int
 	ImageURL      string
 }
 
+func (p ProductForSync) MatchItem() productmatch.Item {
+	return productmatch.Item{
+		SKU:        p.SKU,
+		Barcode:    p.Barcode,
+		ExternalID: p.ExternalID,
+		Name:       p.Name,
+	}
+}
+
+func (m MeliProduct) MatchItem() productmatch.Item {
+	return productmatch.Item{
+		SKU:        m.SKU,
+		Barcode:    m.Barcode,
+		ExternalID: m.ID,
+		VariantID:  m.VariationID,
+		Name:       m.Name,
+	}
+}
+
 type ProductBrief struct {
-	SKU  string
-	Name string
+	SKU          string
+	Name         string
+	MatchedBy    string
+	MatchedValue string
 }
 
 type ReconcileResult struct {
@@ -54,10 +83,11 @@ type ReconcileResult struct {
 	OnlyInMeli           []ProductBrief
 	ProbabilityNoSKU     int
 	MeliNoSKU            int
+	MatchRules           []productmatch.Rule
 }
 
 type IProductRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]ProductForSync, error)
 	GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error)
-	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, externalProductID string) error
+	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
 }

@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/secamc93/probability/back/central/shared/productmatch"
+)
 
 // WebhookItem representa un webhook registrado en WooCommerce.
 // Sin tags JSON: el core lo serializa en PascalCase para el mapper generico.
@@ -15,14 +19,15 @@ type WebhookItem struct {
 // Integration representa los datos de una integración de WooCommerce
 // tal como se obtienen del core de integraciones.
 type Integration struct {
-	ID              uint
-	BusinessID      *uint
-	Name            string
-	StoreID         string
-	IntegrationType int
-	Config          map[string]interface{}
-	IsTesting       bool
-	BaseURLTest     string
+	ID                uint
+	BusinessID        *uint
+	Name              string
+	StoreID           string
+	IntegrationType   int
+	Config            map[string]interface{}
+	IsTesting         bool
+	BaseURLTest       string
+	ProductMatchRules []productmatch.Rule
 }
 
 // WooCommerceOrder representa una orden de WooCommerce (API v3).

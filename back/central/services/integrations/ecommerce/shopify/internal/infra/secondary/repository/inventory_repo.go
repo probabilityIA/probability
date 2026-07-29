@@ -24,11 +24,18 @@ func (r *InventoryRepository) ListMappedItems(ctx context.Context, integrationID
 	var rows []struct {
 		ProductID         string
 		SKU               string
+		Barcode           string
 		ExternalProductID string
+		ExternalVariantID string
+		ExternalSKU       string
+		ExternalBarcode   string
 	}
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations AS pbi").
-		Select("pbi.product_id, p.sku, pbi.external_product_id").
+		Select(`pbi.product_id, p.sku, COALESCE(p.barcode, '') AS barcode, pbi.external_product_id,
+			COALESCE(pbi.external_variant_id, '') AS external_variant_id,
+			COALESCE(pbi.external_sku, '') AS external_sku,
+			COALESCE(pbi.external_barcode, '') AS external_barcode`).
 		Joins("JOIN products p ON p.id = pbi.product_id").
 		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND pbi.external_product_id <> '' AND p.deleted_at IS NULL", integrationID).
 		Scan(&rows).Error
@@ -38,9 +45,13 @@ func (r *InventoryRepository) ListMappedItems(ctx context.Context, integrationID
 	items := make([]domain.MappedItem, 0, len(rows))
 	for _, row := range rows {
 		items = append(items, domain.MappedItem{
-			ProductID:      row.ProductID,
-			SKU:            row.SKU,
-			ExternalItemID: row.ExternalProductID,
+			ProductID:         row.ProductID,
+			SKU:               row.SKU,
+			Barcode:           row.Barcode,
+			ExternalItemID:    row.ExternalProductID,
+			ExternalVariantID: row.ExternalVariantID,
+			ExternalSKU:       row.ExternalSKU,
+			ExternalBarcode:   row.ExternalBarcode,
 		})
 	}
 	return items, nil

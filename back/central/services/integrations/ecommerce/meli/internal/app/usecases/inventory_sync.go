@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 func toUint(v interface{}) uint {
@@ -117,9 +118,10 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 	}
 
 	cli := uc.clientFor(ctx, integration)
+	rules := productmatch.Sanitize(integration.ProductMatchRules)
 
 	if len(cfg.WarehouseMappings) > 0 {
-		return uc.syncInventoryMultiWarehouse(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID)
+		return uc.syncInventoryMultiWarehouse(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, rules, correlationID)
 	}
 
 	return uc.syncInventorySingle(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID)
