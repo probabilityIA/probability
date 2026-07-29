@@ -24,12 +24,15 @@ import { MercadoLibreTypeCredentialsForm } from '@/services/integrations/ecommer
 import type { MercadoLibrePlatformCredentials } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { JumpsellerTypeCredentialsForm } from '@/services/integrations/ecommerce/jumpseller/ui';
 import type { JumpsellerPlatformCredentials } from '@/services/integrations/ecommerce/jumpseller/ui';
+import { ShipitTypeCredentialsForm } from '@/services/integrations/transport/shipit/ui';
+import type { ShipitPlatformCredentials } from '@/services/integrations/transport/shipit/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 const WHATSAPP_TYPE_ID = 2;
 const BOLD_TYPE_ID = 23;
 const MERCADO_LIBRE_TYPE_ID = 3;
 const JUMPSELLER_TYPE_ID = 33;
+const SHIPIT_TYPE_ID = 34;
 
 const EMPTY_MELI_CREDENTIALS: MercadoLibrePlatformCredentials = {
     client_id: '',
@@ -48,6 +51,11 @@ const EMPTY_JUMPSELLER_CREDENTIALS: JumpsellerPlatformCredentials = {
     test_client_id: '',
     test_client_secret: '',
     test_redirect_uri: '',
+};
+
+const EMPTY_SHIPIT_CREDENTIALS: ShipitPlatformCredentials = {
+    email: '',
+    access_token: '',
 };
 
 const ACCENT = 'var(--color-primary)';
@@ -144,6 +152,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [boldWebhookUrls, setBoldWebhookUrls] = useState<{ production?: string; sandbox?: string }>({});
     const [meliCredentials, setMeliCredentials] = useState<MercadoLibrePlatformCredentials>(EMPTY_MELI_CREDENTIALS);
     const [jumpsellerCredentials, setJumpsellerCredentials] = useState<JumpsellerPlatformCredentials>(EMPTY_JUMPSELLER_CREDENTIALS);
+    const [shipitCredentials, setShipitCredentials] = useState<ShipitPlatformCredentials>(EMPTY_SHIPIT_CREDENTIALS);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -235,6 +244,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     test_client_secret: String(d.test_client_secret || ''),
                                     test_redirect_uri: String(d.test_redirect_uri || ''),
                                 });
+                            } else if (integrationType.id === SHIPIT_TYPE_ID) {
+                                const d = res.data as Record<string, unknown>;
+                                setShipitCredentials({
+                                    email: String(d.email || ''),
+                                    access_token: String(d.access_token || ''),
+                                });
                             } else {
                                 setFormData((prev) => ({
                                     ...prev,
@@ -315,6 +330,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (jumpsellerCredentials.test_client_secret.trim()) js.test_client_secret = jumpsellerCredentials.test_client_secret.trim();
                 if (jumpsellerCredentials.test_redirect_uri.trim()) js.test_redirect_uri = jumpsellerCredentials.test_redirect_uri.trim();
                 if (Object.keys(js).length > 0) platformCredentials = js;
+            } else if (integrationType?.id === SHIPIT_TYPE_ID) {
+                const sh: Record<string, unknown> = {};
+                if (shipitCredentials.email.trim()) sh.email = shipitCredentials.email.trim();
+                if (shipitCredentials.access_token.trim()) sh.access_token = shipitCredentials.access_token.trim();
+                if (Object.keys(sh).length > 0) platformCredentials = sh;
             } else {
                 try {
                     const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
@@ -592,6 +612,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     <JumpsellerTypeCredentialsForm
                         credentials={jumpsellerCredentials}
                         onChange={setJumpsellerCredentials}
+                        isEditing={!!integrationType}
+                    />
+                </SectionCard>
+            ) : integrationType?.id === SHIPIT_TYPE_ID ? (
+                <SectionCard icon={KeyIcon} title="Credenciales de Plataforma">
+                    <ShipitTypeCredentialsForm
+                        credentials={shipitCredentials}
+                        onChange={setShipitCredentials}
                         isEditing={!!integrationType}
                     />
                 </SectionCard>

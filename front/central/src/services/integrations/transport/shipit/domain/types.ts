@@ -1,4 +1,5 @@
 export interface ShipitConfig {
+    use_platform_token?: boolean;
     base_url?: string;
     base_url_test?: string;
 }

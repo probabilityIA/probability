@@ -130,7 +130,7 @@ func (r *Repository) migrateShipitIntegrationType(ctx context.Context) error {
 		Icon:              shipitIcon,
 		ImageURL:          shipitImageURL,
 		IsActive:          true,
-		InDevelopment:     true,
+		InDevelopment:     false,
 		CategoryID:        &categoryID,
 		ConfigSchema:      datatypes.JSON(shipitConfigSchema),
 		CredentialsSchema: datatypes.JSON(shipitCredsSchema),

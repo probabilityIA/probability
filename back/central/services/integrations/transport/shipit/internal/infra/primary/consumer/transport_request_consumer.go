@@ -17,6 +17,7 @@ import (
 type ICredentialResolver interface {
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
+	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 type TransportRequestMessage struct {
@@ -115,7 +116,7 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		}
 	}
 
-	creds, err := c.resolveCredentials(ctx, &request)
+	creds, err := c.resolveCredentials(ctx, &request, integrationConfig)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).
@@ -161,20 +162,40 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 	return nil
 }
 
-func (c *TransportRequestConsumer) resolveCredentials(ctx context.Context, request *TransportRequestMessage) (domain.Credentials, error) {
+func (c *TransportRequestConsumer) resolveCredentials(ctx context.Context, request *TransportRequestMessage, config map[string]interface{}) (domain.Credentials, error) {
+	usePlatform := false
+	if config != nil {
+		if v, ok := config["use_platform_token"].(bool); ok {
+			usePlatform = v
+		}
+	}
+
 	if request.IntegrationID != 0 {
 		integrationIDStr := fmt.Sprintf("%d", request.IntegrationID)
 
+		if usePlatform {
+			creds, err := c.platformCredentials(ctx, integrationIDStr)
+			if err != nil {
+				return domain.Credentials{}, fmt.Errorf("use_platform_token esta activo pero no hay credenciales de plataforma Shipit configuradas: %w", err)
+			}
+			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform Shipit credentials")
+			return creds, nil
+		}
+
 		email, emailErr := c.credentialResolver.DecryptCredential(ctx, integrationIDStr, "email")
 		token, tokenErr := c.credentialResolver.DecryptCredential(ctx, integrationIDStr, "access_token")
-
 		if emailErr == nil && tokenErr == nil && email != "" && token != "" {
 			return domain.Credentials{Email: email, AccessToken: token}, nil
 		}
 
+		if creds, err := c.platformCredentials(ctx, integrationIDStr); err == nil {
+			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform Shipit credentials (fallback)")
+			return creds, nil
+		}
+
 		c.log.Warn(ctx).
 			Uint("integration_id", request.IntegrationID).
-			Msg("Could not decrypt Shipit credentials, trying env fallback")
+			Msg("Could not resolve Shipit credentials from integration or platform, trying env fallback")
 	}
 
 	email := os.Getenv("SHIPIT_EMAIL")
@@ -184,6 +205,18 @@ func (c *TransportRequestConsumer) resolveCredentials(ctx context.Context, reque
 	}
 
 	return domain.Credentials{}, fmt.Errorf("no hay credenciales de Shipit para la integracion %d", request.IntegrationID)
+}
+
+func (c *TransportRequestConsumer) platformCredentials(ctx context.Context, integrationID string) (domain.Credentials, error) {
+	email, err := c.credentialResolver.GetPlatformCredential(ctx, integrationID, "email")
+	if err != nil || email == "" {
+		return domain.Credentials{}, fmt.Errorf("email de plataforma no disponible: %w", err)
+	}
+	token, err := c.credentialResolver.GetPlatformCredential(ctx, integrationID, "access_token")
+	if err != nil || token == "" {
+		return domain.Credentials{}, fmt.Errorf("access_token de plataforma no disponible: %w", err)
+	}
+	return domain.Credentials{Email: email, AccessToken: token}, nil
 }
 
 func (c *TransportRequestConsumer) resolveBaseURL(request *TransportRequestMessage, config map[string]interface{}) string {

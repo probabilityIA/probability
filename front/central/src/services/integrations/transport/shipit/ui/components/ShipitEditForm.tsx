@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, SecretInput } from '@/shared/ui';
+import { useState, FormEvent } from 'react';
+import { Button, Input, Alert } from '@/shared/ui';
 import { ShipitConfig, ShipitCredentials } from '../../domain/types';
-import { updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
+import { updateIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
-import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
-import { TokenStorage } from '@/shared/utils/token-storage';
 import { getActionError } from '@/shared/utils/action-result';
 import {
-    KeyIcon,
     Cog6ToothIcon,
     TruckIcon,
-    CheckBadgeIcon,
     InformationCircleIcon,
     ArrowLeftIcon,
+    CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
 
 interface ShipitEditFormProps {
@@ -32,78 +29,11 @@ interface ShipitEditFormProps {
 export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel }: ShipitEditFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [testingConnection, setTestingConnection] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-    const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(initialData.business_id || null);
-    const [loadingBusinesses, setLoadingBusinesses] = useState(false);
 
     const [formData, setFormData] = useState({
         name: initialData.name,
-        email: initialData.credentials?.email || '',
-        access_token: initialData.credentials?.access_token || '',
-        base_url: initialData.config?.base_url || '',
     });
-
-    useEffect(() => {
-        const checkUserAndLoadBusinesses = async () => {
-            const permissions = TokenStorage.getPermissions();
-            const isSuperUser = permissions?.is_super || false;
-            setIsSuperAdmin(isSuperUser);
-
-            if (isSuperUser) {
-                setLoadingBusinesses(true);
-                try {
-                    const response = await getBusinessesSimpleAction();
-                    if (response.success && response.data) {
-                        setBusinesses(response.data);
-                    }
-                } catch (err) {
-                    console.error('Error loading businesses:', err);
-                    showToast('Error al cargar la lista de negocios', 'error');
-                } finally {
-                    setLoadingBusinesses(false);
-                }
-            }
-        };
-
-        checkUserAndLoadBusinesses();
-    }, []);
-
-    const handleTestConnection = async () => {
-        if (!formData.email || !formData.access_token) {
-            showToast('Debes ingresar el email y el access token para probar la conexion', 'warning');
-            return;
-        }
-
-        setTestingConnection(true);
-        setError(null);
-
-        try {
-            const config: ShipitConfig = {
-                base_url: formData.base_url || undefined,
-            };
-
-            const credentials: ShipitCredentials = {
-                email: formData.email,
-                access_token: formData.access_token,
-            };
-
-            const result = await testConnectionRawAction('shipit', config, credentials);
-
-            if (result.success) {
-                showToast('Conexion exitosa con Shipit', 'success');
-            } else {
-                throw new Error(result.message || 'Error al probar conexion');
-            }
-        } catch (err: any) {
-            setError(getActionError(err, 'Error al probar conexion'));
-            showToast('Error al conectar con Shipit: ' + err.message, 'error');
-        } finally {
-            setTestingConnection(false);
-        }
-    };
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -112,23 +42,14 @@ export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel
 
         try {
             const config: ShipitConfig = {
-                base_url: formData.base_url || undefined,
+                ...initialData.config,
+                use_platform_token: true,
             };
 
-            const updateData: any = {
+            const response = await updateIntegrationAction(integrationId, {
                 name: formData.name,
                 config: config,
-            };
-
-            if (formData.email && formData.access_token) {
-                const credentials: ShipitCredentials = {
-                    email: formData.email,
-                    access_token: formData.access_token,
-                };
-                updateData.credentials = credentials;
-            }
-
-            const response = await updateIntegrationAction(integrationId, updateData);
+            } as any);
 
             if (response.success) {
                 showToast('Integracion Shipit actualizada exitosamente', 'success');
@@ -156,7 +77,7 @@ export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel
                     </h2>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
-                    Actualiza la configuracion de tu integracion con Shipit.
+                    Actualiza la configuracion de tu transportadora Shipit.
                 </p>
             </div>
 
@@ -165,6 +86,21 @@ export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel
                     {error}
                 </Alert>
             )}
+
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 border border-teal-100">
+                <div className="flex items-start gap-3">
+                    <CheckBadgeIcon className="w-6 h-6 text-teal-700 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                            Conexion gestionada por la plataforma
+                        </h3>
+                        <p className="text-sm text-teal-900">
+                            Los envios se generan con la cuenta Shipit de Probability, no necesitas credenciales propias.
+                            Puedes activar o desactivar la transportadora desde el listado de integraciones.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -182,143 +118,13 @@ export function ShipitEditForm({ integrationId, initialData, onSuccess, onCancel
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Shipit Principal"
+                        placeholder="Ej: Shipit"
                         required
                         className="bg-white dark:bg-gray-800"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
-                    </p>
-                </div>
-
-                {isSuperAdmin && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                            Negocio <span className="text-red-500">*</span>
-                        </label>
-                        {loadingBusinesses ? (
-                            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <svg className="animate-spin h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
-                            </div>
-                        ) : (
-                            <Select
-                                value={selectedBusinessId?.toString() || ''}
-                                onChange={(e) => setSelectedBusinessId(Number(e.target.value))}
-                                options={[
-                                    { value: '', label: '-- Selecciona un negocio --' },
-                                    ...businesses.map((business) => ({
-                                        value: business.id.toString(),
-                                        label: business.name,
-                                    })),
-                                ]}
-                                required
-                                className="bg-white dark:bg-gray-800"
-                                disabled={true}
-                            />
-                        )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 space-y-4 border border-teal-100">
-                <div className="flex items-center gap-2 mb-4">
-                    <KeyIcon className="w-5 h-5 text-teal-700" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Credenciales de API
-                    </h3>
-                </div>
-                <p className="text-sm text-teal-900 -mt-2 mb-4 flex items-start gap-2">
-                    <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>
-                        Aqui se muestran las credenciales actuales. Puedes modificarlas si necesitas actualizarlas.
-                    </span>
-                </p>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                            Email de la cuenta <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            placeholder="cuenta@dominio.cl"
-                            required
-                            className="bg-white dark:bg-gray-800 font-mono text-sm"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                            Access Token <span className="text-red-500">*</span>
-                        </label>
-                        <SecretInput
-                            value={formData.access_token}
-                            onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
-                            placeholder="Ingresa tu Access Token de Shipit"
-                            required
-                            className="bg-white dark:bg-gray-800 font-mono text-sm"
-                        />
-                    </div>
-
-                    <div className="pt-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full bg-white dark:bg-gray-800 hover:bg-teal-50 border-teal-200 text-teal-700 font-semibold"
-                            onClick={handleTestConnection}
-                            disabled={testingConnection || loading || !formData.email || !formData.access_token}
-                        >
-                            {testingConnection ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-teal-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Probando...
-                                </>
-                            ) : (
-                                <>
-                                    <CheckBadgeIcon className="w-4 h-4 mr-2" />
-                                    Probar Conexion
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Configuracion Avanzada
-                    </h3>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        URL Base de la API
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.base_url}
-                        onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
-                        placeholder="https://api.shipit.cl"
-                        className="bg-white dark:bg-gray-800 font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
-                        URL base del servicio de Shipit (no modificar salvo pruebas con el simulador)
+                        <span>Nombre descriptivo para identificar esta transportadora en el sistema</span>
                     </p>
                 </div>
             </div>
