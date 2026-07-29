@@ -224,6 +224,8 @@ import '../styles/quiz-shared.css';
           score_total: this.state.result.total,
           score_max: this.state.result.max,
           level: this.state.result.level,
+          answers: this.state.result.answersDetail,
+          recommendations: this.state.result.recommendations,
         }),
       }).catch(() => {
         // silencioso: no bloqueamos el resultado si falla el envio del lead
@@ -253,7 +255,14 @@ import '../styles/quiz-shared.css';
         desc = 'Tu operación está bien optimizada en volumen, canales y trazabilidad. Ahora el foco es afinar detalles y escalar apoyándote en datos.';
       }
 
-      return { scores, total, max, level, heroClass, desc, emoji };
+      const answersDetail = this.questions.map((q, i) => ({
+        question: q.text,
+        answer: q.options[this.state.answers[i] ?? 0],
+      }));
+
+      const recommendations = this.buildRecs(scores).map(r => ({ title: r.title, desc: r.desc, type: r.type }));
+
+      return { scores, total, max, level, heroClass, desc, emoji, answersDetail, recommendations };
     }
 
     buildRecs(a) {

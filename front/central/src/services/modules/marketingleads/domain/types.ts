@@ -1,3 +1,14 @@
+export interface LeadAnswer {
+    question: string;
+    answer: string;
+}
+
+export interface LeadRecommendation {
+    title: string;
+    desc: string;
+    type?: string;
+}
+
 export interface MarketingLead {
     id: number;
     name: string;
@@ -8,6 +19,8 @@ export interface MarketingLead {
     score_max: number;
     level: string;
     whats_app_message_id?: string;
+    answers?: LeadAnswer[];
+    recommendations?: LeadRecommendation[];
     created_at: string;
 }
 

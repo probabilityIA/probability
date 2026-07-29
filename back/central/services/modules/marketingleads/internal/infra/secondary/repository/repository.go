@@ -2,20 +2,32 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/modules/marketingleads/internal/domain/entities"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 )
 
 func leadToModel(l *entities.MarketingLead) *models.MarketingLead {
+	var answersJSON, recsJSON []byte
+	if len(l.Answers) > 0 {
+		answersJSON, _ = json.Marshal(l.Answers)
+	}
+	if len(l.Recommendations) > 0 {
+		recsJSON, _ = json.Marshal(l.Recommendations)
+	}
+
 	return &models.MarketingLead{
-		Name:       l.Name,
-		Email:      l.Email,
-		Phone:      l.Phone,
-		SurveySlug: l.SurveySlug,
-		ScoreTotal: l.ScoreTotal,
-		ScoreMax:   l.ScoreMax,
-		Level:      l.Level,
+		Name:            l.Name,
+		Email:           l.Email,
+		Phone:           l.Phone,
+		SurveySlug:      l.SurveySlug,
+		ScoreTotal:      l.ScoreTotal,
+		ScoreMax:        l.ScoreMax,
+		Level:           l.Level,
+		Answers:         datatypes.JSON(answersJSON),
+		Recommendations: datatypes.JSON(recsJSON),
 	}
 }
 
@@ -37,6 +49,15 @@ func (r *Repository) SetWhatsAppMessageID(ctx context.Context, leadID uint, mess
 }
 
 func modelToLead(m *models.MarketingLead) entities.MarketingLead {
+	var answers []entities.LeadAnswer
+	if len(m.Answers) > 0 {
+		_ = json.Unmarshal(m.Answers, &answers)
+	}
+	var recs []entities.LeadRecommendation
+	if len(m.Recommendations) > 0 {
+		_ = json.Unmarshal(m.Recommendations, &recs)
+	}
+
 	return entities.MarketingLead{
 		ID:                m.ID,
 		Name:              m.Name,
@@ -47,6 +68,8 @@ func modelToLead(m *models.MarketingLead) entities.MarketingLead {
 		ScoreMax:          m.ScoreMax,
 		Level:             m.Level,
 		WhatsAppMessageID: m.WhatsAppMessageID,
+		Answers:           answers,
+		Recommendations:   recs,
 		CreatedAt:         m.CreatedAt,
 	}
 }

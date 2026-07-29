@@ -30,13 +30,15 @@ func (uc *UseCase) CreateLead(ctx context.Context, dto dtos.CreateLeadDTO) error
 	}
 
 	lead := &entities.MarketingLead{
-		Name:       name,
-		Email:      email,
-		Phone:      phone,
-		SurveySlug: dto.SurveySlug,
-		ScoreTotal: dto.ScoreTotal,
-		ScoreMax:   dto.ScoreMax,
-		Level:      dto.Level,
+		Name:            name,
+		Email:           email,
+		Phone:           phone,
+		SurveySlug:      dto.SurveySlug,
+		ScoreTotal:      dto.ScoreTotal,
+		ScoreMax:        dto.ScoreMax,
+		Level:           dto.Level,
+		Answers:         dto.Answers,
+		Recommendations: dto.Recommendations,
 	}
 
 	if err := uc.repo.CreateLead(ctx, lead); err != nil {

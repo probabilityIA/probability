@@ -1,6 +1,9 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+)
 
 // MarketingLead stores leads captured from the public diagnostic quizzes
 // on the marketing site (front/website), before showing them their result.
@@ -13,7 +16,9 @@ type MarketingLead struct {
 	ScoreTotal        int
 	ScoreMax          int
 	Level             string `gorm:"size:50"`
-	WhatsAppMessageID string `gorm:"size:100"`
+	WhatsAppMessageID string         `gorm:"size:100"`
+	Answers           datatypes.JSON `gorm:"type:jsonb"`
+	Recommendations   datatypes.JSON `gorm:"type:jsonb"`
 }
 
 func (MarketingLead) TableName() string {

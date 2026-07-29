@@ -1,13 +1,72 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert } from '@/shared/ui/alert';
 import { useMarketingLeads } from '../hooks/useMarketingLeads';
+import { MarketingLead } from '../../domain/types';
 
 const SURVEY_LABELS: Record<string, string> = {
     'diagnostico-logistico': 'Diagnóstico Logístico',
     'escanea-tu-logistica': 'Diagnóstico de Operación E-commerce',
 };
+
+const LEVEL_STYLES: Record<string, string> = {
+    'Básica': 'bg-red-100 text-red-800 border border-red-200',
+    'Intermedia': 'bg-amber-100 text-amber-800 border border-amber-200',
+    'Avanzada': 'bg-green-100 text-green-800 border border-green-200',
+};
+
+const LevelBadge: React.FC<{ level: string }> = ({ level }) => (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${LEVEL_STYLES[level] || 'bg-gray-100 text-gray-700 border border-gray-200'}`}>
+        {level || 'Sin nivel'}
+    </span>
+);
+
+const REC_TYPE_STYLES: Record<string, string> = {
+    risk: 'bg-red-50 border-red-200 text-red-700',
+    warning: 'bg-amber-50 border-amber-200 text-amber-700',
+    success: 'bg-green-50 border-green-200 text-green-700',
+    info: 'bg-purple-50 border-purple-200 text-purple-700',
+};
+
+const LeadDetailRow: React.FC<{ lead: MarketingLead }> = ({ lead }) => (
+    <tr className="bg-gray-50 dark:bg-gray-900/40">
+        <td colSpan={8} className="px-6 py-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Respuestas de la encuesta</h4>
+                    {lead.answers && lead.answers.length > 0 ? (
+                        <ul className="space-y-2">
+                            {lead.answers.map((a, i) => (
+                                <li key={i} className="text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-2">
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs">{a.question}</p>
+                                    <p className="text-gray-900 dark:text-white font-medium">{a.answer}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-gray-400">Sin respuestas registradas</p>
+                    )}
+                </div>
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Cosas por mejorar</h4>
+                    {lead.recommendations && lead.recommendations.length > 0 ? (
+                        <ul className="space-y-2">
+                            {lead.recommendations.map((r, i) => (
+                                <li key={i} className={`text-sm rounded-md p-2 border ${REC_TYPE_STYLES[r.type || ''] || 'bg-white border-gray-200 text-gray-700'}`}>
+                                    <p className="font-semibold">{r.title}</p>
+                                    <p className="opacity-90">{r.desc}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-sm text-gray-400">Sin recomendaciones registradas</p>
+                    )}
+                </div>
+            </div>
+        </td>
+    </tr>
+);
 
 export const MarketingLeadsList: React.FC = () => {
     const {
@@ -23,6 +82,9 @@ export const MarketingLeadsList: React.FC = () => {
         setError,
     } = useMarketingLeads();
 
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const toggleExpand = (id: number) => setExpandedId((prev) => (prev === id ? null : id));
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center mb-6">
@@ -36,6 +98,7 @@ export const MarketingLeadsList: React.FC = () => {
                     <table className="table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
                             <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"></th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nombre</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Correo</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Teléfono</th>
@@ -43,7 +106,6 @@ export const MarketingLeadsList: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Puntaje</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Nivel</th>
                                 <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">WhatsApp</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Fecha</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -60,38 +122,58 @@ export const MarketingLeadsList: React.FC = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                leads.map((lead) => (
-                                    <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                            {lead.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {lead.email}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {lead.phone}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {SURVEY_LABELS[lead.survey_slug] || lead.survey_slug}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {lead.score_total} / {lead.score_max}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {lead.level}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
-                                            {lead.whats_app_message_id ? (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enviado</span>
-                                            ) : (
-                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Pendiente</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {new Date(lead.created_at).toLocaleString('es-CO')}
-                                        </td>
-                                    </tr>
-                                ))
+                                leads.map((lead) => {
+                                    const isExpanded = expandedId === lead.id;
+                                    const hasDetail = (lead.answers && lead.answers.length > 0) || (lead.recommendations && lead.recommendations.length > 0);
+                                    return (
+                                        <React.Fragment key={lead.id}>
+                                            <tr
+                                                className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${hasDetail ? 'cursor-pointer' : ''}`}
+                                                onClick={() => hasDetail && toggleExpand(lead.id)}
+                                            >
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    {hasDetail && (
+                                                        <svg
+                                                            className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                        >
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                    {lead.name}
+                                                    <div className="text-xs font-normal text-gray-400">
+                                                        {new Date(lead.created_at).toLocaleString('es-CO')}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {lead.email}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {lead.phone}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {SURVEY_LABELS[lead.survey_slug] || lead.survey_slug}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                    {lead.score_total} / {lead.score_max}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <LevelBadge level={lead.level} />
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
+                                                    {lead.whats_app_message_id ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enviado</span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Pendiente</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            {isExpanded && <LeadDetailRow lead={lead} />}
+                                        </React.Fragment>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

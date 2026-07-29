@@ -221,6 +221,8 @@ import '../styles/quiz-shared.css';
           score_total: this.state.result.total,
           score_max: this.state.result.scoreMax,
           level: this.state.result.level,
+          answers: this.state.result.answersDetail,
+          recommendations: this.state.result.recommendations,
         }),
       }).catch(() => {
         // silencioso: no bloqueamos el resultado si falla el envio del lead
@@ -246,7 +248,14 @@ import '../styles/quiz-shared.css';
         desc = 'Tu logística está muy optimizada. El foco ahora es afinar los últimos detalles y escalar apoyándote en los datos.';
       }
 
-      return { scores, total, scoreMax: SURVEY_SCORE_MAX, level, heroClass, desc };
+      const answersDetail = this.questions.map((q, i) => ({
+        question: q.text,
+        answer: q.options[this.state.answers[i] ?? 0],
+      }));
+
+      const recommendations = this.buildRecs(scores).map(r => ({ title: r.title, desc: r.desc, type: r.type }));
+
+      return { scores, total, scoreMax: SURVEY_SCORE_MAX, level, heroClass, desc, answersDetail, recommendations };
     }
 
     buildRecs(a) {
