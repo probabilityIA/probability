@@ -14,6 +14,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/envioclick"
 	"github.com/secamc93/probability/back/testing/integrations/jumpseller"
 	"github.com/secamc93/probability/back/testing/integrations/mercadolibre"
+	"github.com/secamc93/probability/back/testing/integrations/shipit"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
@@ -32,11 +33,9 @@ func main() {
 	logger := log.New()
 	config := env.New()
 
-	// 1. Connect to DB (read-only)
 	database := db.New(logger, config)
 	defer database.Close()
 
-	// 2. Start Softpymes HTTP mock (background)
 	softpymesPort := getEnv("SOFTPYMES_MOCK_PORT", "9090")
 	softpymesServer := softpymes.New(logger, softpymesPort)
 
@@ -47,7 +46,6 @@ func main() {
 		}
 	}()
 
-	// 3. Start EnvioClick HTTP mock (background)
 	envioclickPort := getEnv("ENVIOCLICK_MOCK_PORT", "9091")
 	var s3Service storage.IS3Service
 	urlBase := config.Get("URL_BASE_DOMAIN_S3")
@@ -65,7 +63,6 @@ func main() {
 		}
 	}()
 
-	// 3b. Start Bold HTTP mock (background)
 	boldPort := getEnv("BOLD_MOCK_PORT", "9094")
 	boldWebhookTarget := getEnv("BOLD_MOCK_WEBHOOK_TARGET", "http://localhost:3050/api/v1/webhooks/bold")
 	boldServer := bold.New(logger, boldPort, boldWebhookTarget)
@@ -119,6 +116,17 @@ func main() {
 		}
 	}()
 
+	shipitPort := getEnv("SHIPIT_MOCK_PORT", "9100")
+	shipitWebhookTarget := getEnv("SHIPIT_MOCK_WEBHOOK_TARGET", "http://localhost:3050/api/v1/webhooks/shipit")
+	shipitServer := shipit.New(logger, shipitPort, shipitWebhookTarget)
+
+	go func() {
+		if err := shipitServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting Shipit mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	jumpsellerPort := getEnv("JUMPSELLER_MOCK_PORT", "9097")
 	jumpsellerServer := jumpseller.New(logger, jumpsellerPort)
 
@@ -129,20 +137,17 @@ func main() {
 		}
 	}()
 
-	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
 
-	// 4b. Start Shopify Mock API (simula GET /admin/api/2024-10/orders.json)
 	go func() {
-		initialOrders := 500 // Pre-generar 500 ordenes distribuidas en 6 meses
+		initialOrders := 500
 		if err := shopifyIntegration.Start(initialOrders); err != nil {
 			logger.Error().Msgf("Error starting Shopify Mock API: %s", err.Error())
 			os.Exit(1)
 		}
 	}()
 
-	// 5. Start Testing Platform API (background)
 	apiPort := config.GetWithDefault("TESTING_API_PORT", "9092")
 	jwtSecret := config.Get("JWT_SECRET")
 	if jwtSecret == "" {
@@ -166,17 +171,16 @@ func main() {
 	fmt.Printf("Jumpseller HTTP:   http://localhost:%s\n", jumpsellerPort)
 	fmt.Printf("MercadoLibre HTTP: http://localhost:%s\n", meliPort)
 	fmt.Printf("VTEX HTTP:         http://localhost:%s\n", vtexPort)
+	fmt.Printf("Shipit HTTP:       http://localhost:%s\n", shipitPort)
 	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
 	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")
 
-	// 6. In server mode (Docker), block forever without interactive CLI
 	if os.Getenv("RUN_MODE") == "server" {
 		logger.Info().Msg("Running in server mode (no CLI)")
 		select {}
 	}
 
-	// 7. Start interactive CLI (local development only)
 	runCLIMode(logger, config, shopifyIntegration, softpymesServer, envioclickServer)
 }
 
@@ -186,7 +190,6 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORS())
 
-	// Health check (no auth)
 	router.GET("/api/v1/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
@@ -194,7 +197,6 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 		})
 	})
 
-	// Auth proxy - forward login to central backend (no auth required)
 	centralAPIURL := config.GetWithDefault("CENTRAL_API_URL", "http://localhost:3050")
 	router.POST("/api/v1/auth/login", func(c *gin.Context) {
 		body, err := io.ReadAll(c.Request.Body)
@@ -212,7 +214,6 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 
 		respBody, _ := io.ReadAll(resp.Body)
 
-		// Forward Set-Cookie headers
 		for _, cookie := range resp.Cookies() {
 			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
 		}
@@ -220,12 +221,10 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 		c.Data(resp.StatusCode, "application/json", respBody)
 	})
 
-	// Protected routes
 	api := router.Group("/api/v1")
 	api.Use(middleware.JWTAuth(jwtSecret))
 	api.Use(middleware.SuperAdminGuard())
 
-	// Businesses endpoint (for business selector dropdown)
 	api.GET("/businesses", func(c *gin.Context) {
 		var businesses []models.Business
 		allowedIDs := middleware.GetAllowedBusinessIDs()
@@ -245,11 +244,9 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 		c.JSON(200, gin.H{"data": result})
 	})
 
-	// Orders routes (require business whitelist)
 	ordersGroup := api.Group("/orders")
 	ordersGroup.Use(middleware.BusinessWhitelist())
 
-	// Register webhook simulators by integration type code
 	webhookSimulators := map[string]orders.IWebhookSimulator{
 		"Shopify": shopifyIntegration,
 	}
@@ -260,7 +257,6 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 	return router.Run(":" + port)
 }
 
-// runCLIMode starts the interactive CLI for webhook simulation
 func runCLIMode(logger log.ILogger, config env.IConfig, shopifyIntegration *shopify.ShopifyIntegration, softpymesIntegration *softpymes.SoftPymesIntegration, envioclickIntegration *envioclick.EnvioClickIntegration) {
 	whatsappIntegration := whatsapp.New(config, logger)
 
@@ -296,7 +292,6 @@ func runCLIMode(logger log.ILogger, config env.IConfig, shopifyIntegration *shop
 	}
 }
 
-// showShopifyMenu shows the Shopify menu
 func showShopifyMenu(reader *bufio.Reader, integration *shopify.ShopifyIntegration, logger log.ILogger) {
 	for {
 		fmt.Println("\n=== Shopify - Simulador de Webhooks ===")
@@ -326,7 +321,6 @@ func showShopifyMenu(reader *bufio.Reader, integration *shopify.ShopifyIntegrati
 	}
 }
 
-// showWhatsAppMenu shows the WhatsApp menu
 func showWhatsAppMenu(reader *bufio.Reader, integration *whatsapp.WhatsAppIntegration, logger log.ILogger) {
 	for {
 		fmt.Println("\n=== WhatsApp - Simulador ===")
@@ -354,7 +348,6 @@ func showWhatsAppMenu(reader *bufio.Reader, integration *whatsapp.WhatsAppIntegr
 	}
 }
 
-// showSoftpymesMenu shows the Softpymes menu
 func showSoftpymesMenu(reader *bufio.Reader, integration *softpymes.SoftPymesIntegration, logger log.ILogger) {
 	for {
 		fmt.Println("\n=== Softpymes - Facturacion ===")
@@ -385,7 +378,6 @@ func showSoftpymesMenu(reader *bufio.Reader, integration *softpymes.SoftPymesInt
 	}
 }
 
-// handleShopifyOrder handles Shopify order simulation
 func handleShopifyOrder(input string, integration *shopify.ShopifyIntegration, logger log.ILogger) {
 	var topic string
 	switch input {
@@ -414,7 +406,6 @@ func handleShopifyOrder(input string, integration *shopify.ShopifyIntegration, l
 	}
 }
 
-// listShopifyOrders lists all Shopify orders
 func listShopifyOrders(integration *shopify.ShopifyIntegration) {
 	orders := integration.GetAllOrders()
 	if len(orders) == 0 {
@@ -432,7 +423,6 @@ func listShopifyOrders(integration *shopify.ShopifyIntegration) {
 	}
 }
 
-// handleWhatsAppUserResponse handles manual WhatsApp response
 func handleWhatsAppUserResponse(reader *bufio.Reader, integration *whatsapp.WhatsAppIntegration, logger log.ILogger) {
 	fmt.Print("Phone number (eg: +573001234567): ")
 	phoneInput, _ := reader.ReadString('\n')
@@ -456,7 +446,6 @@ func handleWhatsAppUserResponse(reader *bufio.Reader, integration *whatsapp.What
 	}
 }
 
-// handleWhatsAppAutoResponse handles automatic WhatsApp response
 func handleWhatsAppAutoResponse(reader *bufio.Reader, integration *whatsapp.WhatsAppIntegration, logger log.ILogger) {
 	fmt.Print("Phone number (eg: +573001234567): ")
 	phoneInput, _ := reader.ReadString('\n')
@@ -480,7 +469,6 @@ func handleWhatsAppAutoResponse(reader *bufio.Reader, integration *whatsapp.What
 	}
 }
 
-// listWhatsAppConversations lists all WhatsApp conversations
 func listWhatsAppConversations(integration *whatsapp.WhatsAppIntegration) {
 	conversations := integration.GetAllConversations()
 	if len(conversations) == 0 {
@@ -495,7 +483,6 @@ func listWhatsAppConversations(integration *whatsapp.WhatsAppIntegration) {
 	}
 }
 
-// handleSoftpymesAuth handles Softpymes authentication
 func handleSoftpymesAuth(reader *bufio.Reader, integration *softpymes.SoftPymesIntegration, logger log.ILogger) {
 	fmt.Print("API Key: ")
 	apiKeyInput, _ := reader.ReadString('\n')
@@ -522,7 +509,6 @@ func handleSoftpymesAuth(reader *bufio.Reader, integration *softpymes.SoftPymesI
 	}
 }
 
-// handleSoftpymesInvoice handles Softpymes invoice creation
 func handleSoftpymesInvoice(reader *bufio.Reader, integration *softpymes.SoftPymesIntegration, logger log.ILogger) {
 	fmt.Print("Token: ")
 	tokenInput, _ := reader.ReadString('\n')
@@ -588,7 +574,6 @@ func handleSoftpymesInvoice(reader *bufio.Reader, integration *softpymes.SoftPym
 	}
 }
 
-// handleSoftpymesCreditNote handles Softpymes credit note creation
 func handleSoftpymesCreditNote(reader *bufio.Reader, integration *softpymes.SoftPymesIntegration, logger log.ILogger) {
 	fmt.Print("Token: ")
 	tokenInput, _ := reader.ReadString('\n')
@@ -639,7 +624,6 @@ func handleSoftpymesCreditNote(reader *bufio.Reader, integration *softpymes.Soft
 	}
 }
 
-// listSoftpymesDocuments lists all Softpymes documents
 func listSoftpymesDocuments(integration *softpymes.SoftPymesIntegration) {
 	repo := integration.GetRepository()
 	invoices := repo.GetAllInvoices()
@@ -665,7 +649,6 @@ func listSoftpymesDocuments(integration *softpymes.SoftPymesIntegration) {
 	}
 }
 
-// showEnvioClickMenu shows the EnvioClick menu
 func showEnvioClickMenu(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
 	for {
 		fmt.Println("\n=== EnvioClick - Envios ===")
@@ -699,7 +682,6 @@ func showEnvioClickMenu(reader *bufio.Reader, integration *envioclick.EnvioClick
 	}
 }
 
-// readEnvioClickRequest reads common shipment data from user
 func readEnvioClickRequest(reader *bufio.Reader) envioclick.QuoteRequest {
 	fmt.Print("DANE code origin (eg: 11001 for Bogota): ")
 	originInput, _ := reader.ReadString('\n')
@@ -757,7 +739,6 @@ func readEnvioClickRequest(reader *bufio.Reader) envioclick.QuoteRequest {
 	}
 }
 
-// handleEnvioClickQuote handles shipment quotation
 func handleEnvioClickQuote(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
 	req := readEnvioClickRequest(reader)
 	logger.Info().Msg("Simulating shipment quotation")
@@ -776,7 +757,6 @@ func handleEnvioClickQuote(reader *bufio.Reader, integration *envioclick.EnvioCl
 	}
 }
 
-// handleEnvioClickGenerate handles shipment label generation
 func handleEnvioClickGenerate(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
 	req := readEnvioClickRequest(reader)
 
@@ -805,7 +785,6 @@ func handleEnvioClickGenerate(reader *bufio.Reader, integration *envioclick.Envi
 	fmt.Printf("  Reference: %s\n", resp.Data.MyGuideReference)
 }
 
-// handleEnvioClickTrack handles shipment tracking
 func handleEnvioClickTrack(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
 	fmt.Print("Tracking number: ")
 	trackInput, _ := reader.ReadString('\n')
@@ -830,7 +809,6 @@ func handleEnvioClickTrack(reader *bufio.Reader, integration *envioclick.EnvioCl
 	}
 }
 
-// handleEnvioClickCancel handles shipment cancellation
 func handleEnvioClickCancel(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
 	fmt.Print("Shipment ID (eg: EC-005001): ")
 	idInput, _ := reader.ReadString('\n')
@@ -848,7 +826,6 @@ func handleEnvioClickCancel(reader *bufio.Reader, integration *envioclick.EnvioC
 	fmt.Printf("%s: %s\n", resp.Status, resp.Message)
 }
 
-// listEnvioClickShipments lists all stored shipments
 func listEnvioClickShipments(integration *envioclick.EnvioClickIntegration) {
 	shipments := integration.GetAllShipments()
 	if len(shipments) == 0 {
@@ -865,7 +842,6 @@ func listEnvioClickShipments(integration *envioclick.EnvioClickIntegration) {
 	}
 }
 
-// getEnv gets environment variable or returns default value
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

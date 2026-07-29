@@ -59,6 +59,7 @@ const (
 	IntegrationTypeTienda       = domain.IntegrationTypeTienda
 	IntegrationTypeTiendaWeb    = domain.IntegrationTypeTiendaWeb
 	IntegrationTypeJumpseller   = domain.IntegrationTypeJumpseller
+	IntegrationTypeShipit       = domain.IntegrationTypeShipit
 )
 
 type IIntegrationService interface {

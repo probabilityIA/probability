@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/transport/envioclick"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/mipaquete"
 	"github.com/secamc93/probability/back/central/services/integrations/transport/router"
+	"github.com/secamc93/probability/back/central/services/integrations/transport/shipit"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -27,6 +28,9 @@ func New(
 
 	mipaquete.New(logger, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeMiPaquete, nil)
+
+	shipit.New(ginRouter, logger, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeShipit, nil)
 
 	router.New(logger, rabbitMQ)
 }

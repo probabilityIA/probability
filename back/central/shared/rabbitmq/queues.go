@@ -55,6 +55,8 @@ const (
 
 	QueueWebhooksEnvioclickReceived = "webhooks.envioclick.received"
 
+	QueueWebhooksShipitReceived = "webhooks.shipit.received"
+
 	QueueWebhooksWhatsappReceived = "webhooks.whatsapp.received"
 )
 
@@ -126,6 +128,8 @@ const (
 	QueueTransportTuRequests = "transport.tu.requests"
 
 	QueueTransportMiPaqueteRequests = "transport.mipaquete.requests"
+
+	QueueTransportShipitRequests = "transport.shipit.requests"
 )
 
 const (

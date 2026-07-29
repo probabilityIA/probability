@@ -18,6 +18,7 @@ import { EnvioClickConfigForm, EnvioClickEditForm } from '@/services/integration
 import { EnviameConfigForm, EnviameEditForm } from '@/services/integrations/transport/enviame/ui';
 import { TuConfigForm, TuEditForm } from '@/services/integrations/transport/tu/ui';
 import { MiPaqueteConfigForm, MiPaqueteEditForm } from '@/services/integrations/transport/mipaquete/ui';
+import { ShipitConfigForm, ShipitEditForm } from '@/services/integrations/transport/shipit/ui';
 import { VTEXConfigForm, VTEXEditForm } from '@/services/integrations/ecommerce/vtex/ui';
 import { TiendanubeConfigForm, TiendanubeEditForm } from '@/services/integrations/ecommerce/tiendanube/ui';
 import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecommerce/magento/ui';
@@ -44,6 +45,7 @@ const INTEGRATION_TYPE_IDS = {
     ENVIAME: 13,
     TU: 14,
     MIPAQUETE: 15,
+    SHIPIT: 34,
     VTEX: 16,
     TIENDANUBE: 17,
     MAGENTO: 18,
@@ -603,6 +605,22 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SHIPIT) {
+            return (
+                <ShipitEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
         // Show edit form for VTEX
         if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.VTEX) {
             return (
@@ -943,6 +961,13 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SHIPIT && (
+                        <ShipitConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
                     {selectedType.id === INTEGRATION_TYPE_IDS.VTEX && (
                         <VTEXConfigForm
                             onSuccess={onSuccess}
@@ -1005,6 +1030,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                      selectedType.id !== INTEGRATION_TYPE_IDS.ENVIAME &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.TU &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.MIPAQUETE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.SHIPIT &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.VTEX &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.TIENDANUBE &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.MAGENTO &&

@@ -95,6 +95,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateVtexIntegrationType(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateShipitIntegrationType(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateOrderGeoConfidence(ctx); err != nil {
 		return err
 	}
