@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import DiagnosticQuiz from '../components/DiagnosticQuiz.astro';
+
+const title = 'Diagnóstico Logístico Gratuito - Escanea tu Operación | ProbabilityIA';
+const description = 'Responde 6 preguntas y descubre el nivel de madurez de tu logística, cuánto tiempo puedes recuperar y dónde está tu mayor oportunidad de ahorro.';
+---
+
+<Layout title={title} description={description}>
+	<Header />
+	<main class="bg-white py-12 px-4 sm:px-6">
+		<DiagnosticQuiz />
+	</main>
+	<Footer />
+</Layout>

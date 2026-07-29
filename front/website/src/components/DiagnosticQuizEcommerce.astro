@@ -5,7 +5,7 @@ import '../styles/quiz-shared.css';
 <div id="diagnostic-quiz"></div>
 
 <script is:inline>
-  class DiagnosticQuiz {
+  class DiagnosticQuizEcommerce {
     constructor() {
       this.state = {
         screen: 'intro',
@@ -15,60 +15,64 @@ import '../styles/quiz-shared.css';
 
       this.questions = [
         {
-          text: '¿Cómo gestionas tu inventario actualmente?',
+          text: '¿Cuántas órdenes envías al mes?',
+          hint: 'Incluye todos tus canales de venta',
           options: [
-            'Hojas de cálculo o papel',
-            'Software básico con actualización manual',
-            'Sistema con stock en tiempo real',
-            'WMS integrado con sincronización automática multicanal',
+            'Menos de 50 órdenes',
+            'Entre 50 y 200 órdenes',
+            'Entre 200 y 500 órdenes',
+            'Más de 500 órdenes',
           ],
         },
         {
-          text: '¿Cómo preparas los pedidos (picking y packing)?',
+          text: '¿Cuál es tu modelo de pago principal?',
+          hint: 'El que representa más del 50% de tus ventas',
           options: [
-            'Manual, sin rutas ni orden definido',
-            'Listas impresas, un pedido cada vez',
-            'Picking por lotes o por zonas',
-            'Picking guiado con escáner y validación automática',
+            'Contra entrega',
+            'Mixto (anticipado y contra entrega)',
+            'Anticipado (pago online)',
           ],
         },
         {
-          text: '¿Cómo gestionas los envíos y el transportista?',
+          text: '¿En cuántos canales de venta estás activo?',
+          hint: 'Instagram, TikTok Shop, Mercado Libre, tienda propia, WhatsApp…',
           options: [
-            'Un único transportista, etiquetas manuales',
-            'Varios transportistas comparados a mano',
-            'Plataforma multi-carrier con tarifas',
-            'Asignación automática por reglas y coste óptimo',
+            '1 canal',
+            '2 a 3 canales',
+            '4 o más canales',
           ],
         },
         {
-          text: '¿Cómo gestionas las devoluciones?',
+          text: '¿Cuál es tu ticket promedio por pedido?',
+          hint: 'Valor del pedido antes de sumar el flete',
           options: [
-            'Sin un proceso definido',
-            'Por email o manual, caso por caso',
-            'Portal de devoluciones básico',
-            'Portal automatizado con reembolso y reposición de stock',
+            'Menos de $50.000 COP',
+            '$50.000 – $150.000 COP',
+            '$150.000 – $400.000 COP',
+            'Más de $400.000 COP',
           ],
         },
         {
-          text: '¿Qué visibilidad tienes del estado de los pedidos?',
+          text: '¿Tus clientes reciben actualizaciones automáticas del estado de su pedido?',
+          hint: 'Sin que tú lo hagas manualmente — WhatsApp, email o SMS',
           options: [
-            'Ninguna hasta que se entrega',
-            'Consulta manual en las webs de los transportistas',
-            'Tracking centralizado interno',
-            'Tracking en tiempo real con alertas proactivas al cliente',
+            'No, no tengo notificaciones activas',
+            'A veces, de forma manual o parcial',
+            'Sí, de forma automática',
           ],
         },
         {
-          text: '¿Qué nivel de integración tienen tus sistemas (tienda, ERP, WMS)?',
+          text: '¿Cómo registras y haces seguimiento a tus pedidos?',
+          hint: 'Desde que el cliente compra hasta que se entrega',
           options: [
-            'Sistemas aislados, trasvase manual de datos',
-            'Algunas exportaciones e importaciones manuales',
-            'Integraciones parciales entre sistemas',
-            'Ecosistema totalmente integrado y automatizado',
+            'Papel, WhatsApp o de memoria',
+            'Hojas de cálculo (Excel / Sheets)',
+            'Plataforma o sistema (OMS / ERP)',
           ],
         },
       ];
+
+      this.maxScore = this.questions.reduce((sum, q) => sum + (q.options.length - 1), 0);
 
       this.renderAll();
     }
@@ -93,13 +97,13 @@ import '../styles/quiz-shared.css';
             <div class="dq-intro">
               <div class="dq-badge">
                 <span class="dq-badge-dot"></span>
-                Diagnóstico logístico
+                Diagnóstico de operación e-commerce
               </div>
               <h1 class="dq-title">
-                Escanea tu <span class="dq-title-gradient">Logística</span>
+                Escanea tu <span class="dq-title-gradient">Operación</span>
               </h1>
               <p class="dq-subtitle">
-                Responde 6 preguntas y descubre el nivel de madurez de tu operación, cuánto tiempo puedes recuperar y dónde está tu mayor oportunidad de ahorro.
+                Responde 6 preguntas y descubre qué tan eficiente es tu operación. Identifica cuellos de botella, tiempo perdido y dinero que puedes recuperar.
               </p>
               <button class="dq-btn-start">Empezar diagnóstico →</button>
               <div class="dq-time">6 preguntas · menos de 2 minutos</div>
@@ -164,25 +168,21 @@ import '../styles/quiz-shared.css';
     }
 
     buildRecs(a) {
-      const palette = {
-        info: { type: 'info' },
-        warning: { type: 'warning' },
-        success: { type: 'success' },
-        risk: { type: 'risk' },
-      };
-
       const recDefs = [
-        { title: 'Centraliza tu inventario', desc: 'Implementa control de stock en tiempo real para evitar roturas y sobrestock. Es la base sobre la que se apoya toda la operación.', tags: ['Inventario', 'Stock'] },
-        { title: 'Optimiza el picking', desc: 'Introduce picking por zonas o guiado por escáner para reducir errores y el tiempo de preparación de cada pedido.', tags: ['Picking', 'Almacén'] },
-        { title: 'Compara transportistas', desc: 'Usa una plataforma multi-carrier que asigne automáticamente el envío más barato y rápido para cada destino.', tags: ['Envíos', 'Costes'] },
-        { title: 'Automatiza las devoluciones', desc: 'Ofrece un portal self-service que gestione reembolsos y reponga stock sin intervención manual.', tags: ['Devoluciones', 'Experiencia'] },
-        { title: 'Da visibilidad al cliente', desc: 'Activa tracking en tiempo real con alertas proactivas para reducir incidencias y consultas de soporte.', tags: ['Tracking', 'Experiencia'] },
-        { title: 'Integra tus sistemas', desc: 'Conecta tienda, ERP y WMS para eliminar el trasvase manual de datos y los errores de sincronización.', tags: ['Integración', 'Automatización'] },
+        { title: 'Prepárate para escalar sin caos', desc: 'A partir de 200+ órdenes al mes, los procesos manuales empiezan a colapsar. Centraliza tus pedidos en una sola plataforma antes de que el volumen te desborde.', tags: ['Volumen', 'Escalabilidad'] },
+        { title: 'Concilia tus pagos contra entrega sin dolores de cabeza', desc: 'El contra entrega es el modelo con más fricción operativa: recaudo, cartera y conciliación manual. Automatiza el cruce entre lo cobrado por la transportadora y lo que realmente te pagan.', tags: ['Contra entrega', 'Conciliación'] },
+        { title: 'Centraliza tus pedidos de todos los canales', desc: 'Vender en varias plataformas sin un solo lugar donde ver todas tus órdenes genera errores y sobreventas. Unifica tu tienda, marketplaces y WhatsApp en un solo tablero.', tags: ['Multicanal', 'Órdenes'] },
+        { title: 'Optimiza el flete frente a tu ticket promedio', desc: 'Si el costo de envío se come una parte grande de tu ticket promedio, cada guía generada sin comparar tarifas es margen perdido. Cotiza automáticamente entre transportadoras antes de generar la guía.', tags: ['Flete', 'Margen'] },
+        { title: 'Activa notificaciones automáticas de pedido', desc: 'Sin actualizaciones automáticas, tu equipo pierde horas respondiendo "¿dónde está mi pedido?". Notifica a tus clientes por WhatsApp o email en cada cambio de estado, sin que nadie tenga que hacerlo a mano.', tags: ['Notificaciones', 'Experiencia'] },
+        { title: 'Excel tiene un techo — ya lo estás alcanzando', desc: 'Por encima de 200 órdenes al mes, las hojas de cálculo generan errores, duplicados y demoras. Migrar a una plataforma de pedidos te da trazabilidad en tiempo real sin esfuerzo extra.', tags: ['Sistema', 'Trazabilidad'] },
       ];
+
+      const maxPerQuestion = this.questions.map(q => q.options.length - 1);
 
       let recs = [];
       a.forEach((v, i) => {
-        if (v <= 1) {
+        const max = maxPerQuestion[i];
+        if (v <= Math.floor(max / 2)) {
           recs.push({
             ...recDefs[i],
             type: v === 0 ? 'risk' : 'warning',
@@ -194,8 +194,8 @@ import '../styles/quiz-shared.css';
 
       if (recs.length === 0) {
         recs.push({
-          title: 'Mantén tu ventaja',
-          desc: 'Tu operación ya es madura. Revisa tus KPIs cada mes y automatiza los últimos procesos manuales para escalar sin fricción.',
+          title: 'Tu operación ya está optimizada',
+          desc: 'Tienes una base sólida en volumen, canales, pagos y trazabilidad. El siguiente paso es automatizar lo que aún haces a mano para escalar sin aumentar el equipo.',
           tags: ['Optimización', 'Escalabilidad'],
           type: 'success',
         });
@@ -207,34 +207,44 @@ import '../styles/quiz-shared.css';
     renderResults() {
       const scores = this.state.answers.map(a => a ?? 0);
       const total = scores.reduce((a, b) => a + b, 0);
+      const max = this.maxScore;
 
-      let level, heroClass, desc;
-      if (total <= 6) {
+      let level, heroClass, desc, emoji;
+      if (total <= max * 0.35) {
         level = 'Básica';
+        emoji = '🔴';
         heroClass = 'basic';
-        desc = 'Tu operación depende en gran parte de procesos manuales. Hay un margen amplio de mejora y de ahorro por delante.';
-      } else if (total <= 12) {
+        desc = 'Tu operación depende de procesos manuales y de un modelo de pago de alta fricción. Hay una oportunidad grande de recuperar tiempo y margen.';
+      } else if (total <= max * 0.7) {
         level = 'Intermedia';
+        emoji = '🟡';
         heroClass = 'intermediate';
-        desc = 'Tienes bases sólidas, pero varios procesos clave todavía son manuales o están sin conectar entre sí.';
+        desc = 'Tienes una base funcional, pero algunos procesos te están costando tiempo y dinero. Optimizarlos te permitirá escalar sin fricciones.';
       } else {
         level = 'Avanzada';
+        emoji = '🟢';
         heroClass = 'advanced';
-        desc = 'Tu logística está muy optimizada. El foco ahora es afinar los últimos detalles y escalar apoyándote en los datos.';
+        desc = 'Tu operación está bien optimizada en volumen, canales y trazabilidad. Ahora el foco es afinar detalles y escalar apoyándote en datos.';
       }
+
+      const remaining = max - total;
+      const hoursPerMonth = Math.round(remaining * 6);
+      const returnRateLow = Math.round(4 + remaining * 0.6);
+      const returnRateHigh = returnRateLow + 7;
+      const monthlySavings = Math.round((remaining * 70000) / 1000) * 1000;
 
       const metricsHTML = `
         <div class="dq-metric">
-          <div class="dq-metric-value">${Math.round((18 - total) * 1.3 + 2)}h</div>
-          <div class="dq-metric-label">Horas/semana recuperables</div>
+          <div class="dq-metric-value">${hoursPerMonth}h</div>
+          <div class="dq-metric-label">Horas al mes en gestión manual estimadas</div>
         </div>
         <div class="dq-metric">
-          <div class="dq-metric-value">${(4 + (18 - total) * 0.6).toFixed(1)}%</div>
-          <div class="dq-metric-label">Tasa de devolución estimada</div>
+          <div class="dq-metric-value">${returnRateLow} – ${returnRateHigh}%</div>
+          <div class="dq-metric-label">Tasa de devolución estimada según tu modelo de pago</div>
         </div>
         <div class="dq-metric">
-          <div class="dq-metric-value dq-metric-price"><span class="dq-peso-sign">$</span>${((18 - total) * 3500000).toLocaleString('es-CO')}</div>
-          <div class="dq-metric-label">Ahorro anual potencial</div>
+          <div class="dq-metric-value dq-metric-price"><span class="dq-peso-sign">$</span>${monthlySavings.toLocaleString('es-CO')}</div>
+          <div class="dq-metric-label">Ahorro mensual potencial optimizando tu operación</div>
         </div>
       `;
 
@@ -242,7 +252,7 @@ import '../styles/quiz-shared.css';
       const recsHTML = recs
         .map((r) => {
           let tagsHtml = r.tags
-            .map((tag) => `<span class="tag ${r.type}">${tag}</span>`)
+            .map((tag) => `<span class="dq-tag ${r.type}">${tag}</span>`)
             .join('');
           return `
             <div class="dq-rec">
@@ -261,9 +271,9 @@ import '../styles/quiz-shared.css';
           <div class="dq-container">
             <div class="dq-results">
               <div class="dq-hero ${heroClass}">
-                <div class="dq-hero-label">Nivel de madurez logística</div>
+                <div class="dq-hero-label">${emoji} Nivel de eficiencia operativa</div>
                 <div class="dq-hero-title">${level}</div>
-                <div class="dq-hero-score">${total} / 18 puntos</div>
+                <div class="dq-hero-score">${total} / ${max} puntos</div>
                 <p class="dq-hero-desc">${desc}</p>
               </div>
 
@@ -272,7 +282,7 @@ import '../styles/quiz-shared.css';
               </div>
               <div class="dq-metrics-note">Estimaciones orientativas calculadas a partir de tus respuestas.</div>
 
-              <h3 class="dq-recs-title">Recomendaciones para ti</h3>
+              <h3 class="dq-recs-title">Recomendaciones para tu operación</h3>
               <div class="dq-recs">
                 ${recsHTML}
               </div>
@@ -343,9 +353,9 @@ import '../styles/quiz-shared.css';
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      new DiagnosticQuiz();
+      new DiagnosticQuizEcommerce();
     });
   } else {
-    new DiagnosticQuiz();
+    new DiagnosticQuizEcommerce();
   }
 </script>

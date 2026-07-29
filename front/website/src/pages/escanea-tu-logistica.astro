@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import DiagnosticQuizEcommerce from '../components/DiagnosticQuizEcommerce.astro';
+
+const title = 'Escanea tu Logística - Diagnóstico de Operación E-commerce | ProbabilityIA';
+const description = 'Responde 6 preguntas y descubre qué tan eficiente es tu operación de e-commerce. Identifica cuellos de botella, tiempo perdido y dinero que puedes recuperar.';
+---
+
+<Layout title={title} description={description}>
+	<Header />
+	<main class="bg-white py-12 px-4 sm:px-6">
+		<DiagnosticQuizEcommerce />
+	</main>
+	<Footer />
+</Layout>
