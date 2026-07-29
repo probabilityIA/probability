@@ -678,85 +678,89 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 	return mappers.ToDomainProduct(&product), nil
 }
 
-// ResolveProductForOrderItem intenta resolver el producto usando referencias externas de variante antes que el SKU local.
+// ResolveProductForOrderItem resuelve el producto siguiendo las reglas de match
+// configuradas en la integracion, en orden de prioridad. Para cada regla intenta
+// primero la asociacion ya guardada y luego el campo directo del producto.
 func (r *Repository) ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
-	if integrationID > 0 && item.VariantID != nil && *item.VariantID != "" {
+	if integrationID > 0 {
+		product, err := r.resolveByStoredMapping(ctx, businessID, integrationID, item)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+	}
+
+	for _, rule := range r.GetProductMatchRules(ctx, integrationID) {
+		value := orderItemChannelValue(item, rule.Channel)
+		if value == "" {
+			continue
+		}
+
+		if integrationID > 0 {
+			if column, ok := mappingColumnByChannelField[rule.Channel]; ok {
+				product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, column, value)
+				if err != nil {
+					return nil, err
+				}
+				if product != nil {
+					return product, nil
+				}
+			}
+		}
+
+		column, ok := productColumnByProbabilityField[rule.Probability]
+		if !ok {
+			continue
+		}
+		product, err := r.findProductByColumn(ctx, businessID, column, value)
+		if err != nil {
+			return nil, err
+		}
+		if product != nil {
+			return product, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// resolveByStoredMapping usa las referencias externas ya asociadas al producto.
+// No depende de las reglas: si la asociacion existe, es la fuente mas confiable.
+func (r *Repository) resolveByStoredMapping(ctx context.Context, businessID, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
+	if item.VariantID != nil && *item.VariantID != "" {
 		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_variant_id", *item.VariantID)
-		if err != nil {
-			return nil, err
-		}
-		if product != nil {
-			return product, nil
+		if err != nil || product != nil {
+			return product, err
 		}
 	}
-
-	if integrationID > 0 && item.ProductSKU != "" {
-		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_sku", item.ProductSKU)
-		if err != nil {
-			return nil, err
-		}
-		if product != nil {
-			return product, nil
-		}
-	}
-
-	if integrationID > 0 && item.ExternalBarcode != nil && *item.ExternalBarcode != "" {
-		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_barcode", *item.ExternalBarcode)
-		if err != nil {
-			return nil, err
-		}
-		if product != nil {
-			return product, nil
-		}
-	}
-
-	if item.ProductSKU != "" {
-		product, err := r.GetProductBySKU(ctx, businessID, item.ProductSKU)
-		if err != nil {
-			return nil, err
-		}
-		if product != nil {
-			return product, nil
-		}
-
-		var barcodeProduct models.Product
-		err = r.db.Conn(ctx).
-			Where("business_id = ? AND barcode = ?", businessID, item.ProductSKU).
-			First(&barcodeProduct).Error
-		if err == nil {
-			return mappers.ToDomainProduct(&barcodeProduct), nil
-		}
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
-	}
-
-	if item.ExternalBarcode != nil && *item.ExternalBarcode != "" {
-		var barcodeProduct models.Product
-		err := r.db.Conn(ctx).
-			Where("business_id = ? AND barcode = ?", businessID, *item.ExternalBarcode).
-			First(&barcodeProduct).Error
-		if err == nil {
-			return mappers.ToDomainProduct(&barcodeProduct), nil
-		}
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
-		}
-	}
-
 	if item.ProductID != nil && *item.ProductID != "" {
-		var byExternalID models.Product
-		err := r.db.Conn(ctx).
-			Where("business_id = ? AND external_id = ?", businessID, *item.ProductID).
-			First(&byExternalID).Error
-		if err == nil {
-			return mappers.ToDomainProduct(&byExternalID), nil
-		}
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+		product, err := r.findProductByIntegrationField(ctx, businessID, integrationID, "external_product_id", *item.ProductID)
+		if err != nil || product != nil {
+			return product, err
 		}
 	}
+	return nil, nil
+}
 
+func (r *Repository) findProductByColumn(ctx context.Context, businessID uint, column, value string) (*entities.Product, error) {
+	if value == "" {
+		return nil, nil
+	}
+
+	var products []models.Product
+	err := r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Where("business_id = ? AND deleted_at IS NULL AND "+column+" = ?", businessID, value).
+		Limit(2).
+		Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(products) == 1 {
+		return mappers.ToDomainProduct(&products[0]), nil
+	}
 	return nil, nil
 }
 
