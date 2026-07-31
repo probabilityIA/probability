@@ -2,6 +2,8 @@ package models
 
 import "gorm.io/gorm"
 
+func (TikTokShopSnapshot) TableName() string { return "tiktok_shop_snapshots" }
+
 type TikTokShopSnapshot struct {
 	gorm.Model
 	BusinessID           uint   `gorm:"not null;index:idx_tiktok_snapshots_business_integration,priority:1"`
