@@ -104,6 +104,7 @@ func (r *Repository) migrateTiktokIntegrationType(ctx context.Context) error {
 			"config_schema":      datatypes.JSON(tiktokConfigSchema),
 			"credentials_schema": datatypes.JSON(tiktokCredsSchema),
 			"setup_instructions": tiktokSetupInstructions,
+			"in_development":     false,
 		}
 		if uerr := r.db.Conn(ctx).Model(&models.IntegrationType{}).
 			Where("id = ?", existing.ID).
@@ -124,7 +125,7 @@ func (r *Repository) migrateTiktokIntegrationType(ctx context.Context) error {
 		Description:       tiktokDescription,
 		ImageURL:          tiktokImageURL,
 		IsActive:          true,
-		InDevelopment:     true,
+		InDevelopment:     false,
 		CategoryID:        &categoryID,
 		ConfigSchema:      datatypes.JSON(tiktokConfigSchema),
 		CredentialsSchema: datatypes.JSON(tiktokCredsSchema),
