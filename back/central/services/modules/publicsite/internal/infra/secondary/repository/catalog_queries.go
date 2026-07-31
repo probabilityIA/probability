@@ -18,6 +18,10 @@ func (r *Repository) ListActiveProducts(ctx context.Context, businessID uint, fi
 	query := r.db.Conn(ctx).Model(&models.Product{}).
 		Where("business_id = ? AND is_active = true AND deleted_at IS NULL", businessID)
 
+	if hidden, herr := r.GetHiddenCategories(ctx, businessID); herr == nil && len(hidden) > 0 {
+		query = query.Where("category NOT IN (?)", hidden)
+	}
+
 	if filters.Search != "" {
 		like := "%" + filters.Search + "%"
 		query = query.Where("name ILIKE ? OR description ILIKE ?", like, like)
@@ -58,20 +62,23 @@ func (r *Repository) GetProductByID(ctx context.Context, businessID uint, produc
 
 func (r *Repository) GetFeaturedProducts(ctx context.Context, businessID uint, limit int) ([]entities.PublicProduct, error) {
 	var products []models.Product
-	err := r.db.Conn(ctx).
-		Where("business_id = ? AND is_active = true AND is_featured = true AND deleted_at IS NULL", businessID).
-		Order("name ASC").
-		Limit(limit).
-		Find(&products).Error
+	hidden, _ := r.GetHiddenCategories(ctx, businessID)
+	base := r.db.Conn(ctx).
+		Where("business_id = ? AND is_active = true AND is_featured = true AND deleted_at IS NULL", businessID)
+	if len(hidden) > 0 {
+		base = base.Where("category NOT IN (?)", hidden)
+	}
+	err := base.Order("name ASC").Limit(limit).Find(&products).Error
 	if err != nil {
 		return nil, err
 	}
 	if len(products) == 0 {
-		err = r.db.Conn(ctx).
-			Where("business_id = ? AND is_active = true AND deleted_at IS NULL", businessID).
-			Order("created_at DESC").
-			Limit(limit).
-			Find(&products).Error
+		fallback := r.db.Conn(ctx).
+			Where("business_id = ? AND is_active = true AND deleted_at IS NULL", businessID)
+		if len(hidden) > 0 {
+			fallback = fallback.Where("category NOT IN (?)", hidden)
+		}
+		err = fallback.Order("created_at DESC").Limit(limit).Find(&products).Error
 		if err != nil {
 			return nil, err
 		}

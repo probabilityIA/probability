@@ -11,6 +11,33 @@ import (
 	"gorm.io/gorm"
 )
 
+func (r *Repository) GetUserAuthByEmail(ctx context.Context, email string) (uint, string, error) {
+	var user models.User
+	err := r.db.Conn(ctx).
+		Select("id, password").
+		Where("email = ? AND deleted_at IS NULL", email).
+		First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return 0, "", nil
+	}
+	if err != nil {
+		return 0, "", err
+	}
+	return user.ID, user.Password, nil
+}
+
+func (r *Repository) VerifyPassword(hash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+}
+
+func (r *Repository) StaffExists(ctx context.Context, userID, businessID uint) (bool, error) {
+	var count int64
+	err := r.db.Conn(ctx).Model(&models.BusinessStaff{}).
+		Where("user_id = ? AND business_id = ? AND deleted_at IS NULL", userID, businessID).
+		Count(&count).Error
+	return count > 0, err
+}
+
 func (r *Repository) UserExistsByEmail(ctx context.Context, email string) (bool, error) {
 	var count int64
 	err := r.db.Conn(ctx).Model(&models.User{}).

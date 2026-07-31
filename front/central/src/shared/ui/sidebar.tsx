@@ -613,7 +613,7 @@ export function Sidebar({ user }: SidebarProps) {
               {(canViewStorefront || canViewWebsiteConfig) && (
                 <li>
                   <Link
-                    href="/storefront/catalogo"
+                    href="/website-config"
                     className={`
                       flex ${primaryExpanded ? 'items-center' : 'justify-center items-center'} gap-1 px-3 py-1.5 rounded-lg transition-colors duration-300 w-full
                       ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')

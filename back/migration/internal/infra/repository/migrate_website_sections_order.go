@@ -22,5 +22,12 @@ ALTER TABLE business_website_config
 		return fmt.Errorf("add theme_content to business_website_config: %w", err)
 	}
 
+	if err := db.Exec(`
+ALTER TABLE business_website_config
+    ADD COLUMN IF NOT EXISTS hidden_categories JSONB
+`).Error; err != nil {
+		return fmt.Errorf("add hidden_categories to business_website_config: %w", err)
+	}
+
 	return nil
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { PublicProduct } from '../../domain/types';
 import { useCart } from '../cart/cart-context';
+import { useCustomerPrice } from '../session/prices-context';
 
 interface PublicProductCardProps {
     product: PublicProduct;
@@ -11,6 +12,7 @@ interface PublicProductCardProps {
 
 export function PublicProductCard({ product, slug }: PublicProductCardProps) {
     const { addItem } = useCart();
+    const { price, isCustom } = useCustomerPrice(product.id, product.price);
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -19,7 +21,7 @@ export function PublicProductCard({ product, slug }: PublicProductCardProps) {
             product_id: product.id,
             name: product.name,
             sku: product.sku,
-            price: product.price,
+            price,
             image_url: product.image_url,
         });
     };
@@ -51,14 +53,22 @@ export function PublicProductCard({ product, slug }: PublicProductCardProps) {
                 <h3 className="font-medium text-gray-900 dark:text-white text-sm mb-2 line-clamp-2">{product.name}</h3>
                 <div className="flex items-baseline gap-2">
                     <span className="font-bold text-lg" style={{ color: 'var(--brand-secondary)' }}>
-                        ${product.price.toLocaleString('es-CO')}
+                        ${price.toLocaleString('es-CO')}
                     </span>
-                    {product.compare_at_price && product.compare_at_price > product.price && (
+                    {isCustom && (
+                        <span className="text-sm text-gray-400 line-through">
+                            ${product.price.toLocaleString('es-CO')}
+                        </span>
+                    )}
+                    {!isCustom && product.compare_at_price && product.compare_at_price > product.price && (
                         <span className="text-sm text-gray-400 line-through">
                             ${product.compare_at_price.toLocaleString('es-CO')}
                         </span>
                     )}
                 </div>
+                {isCustom && (
+                    <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--brand-tertiary)' }}>Tu precio</p>
+                )}
                 {product.category && (
                     <p className="text-xs text-gray-400 mt-2">{product.category}</p>
                 )}

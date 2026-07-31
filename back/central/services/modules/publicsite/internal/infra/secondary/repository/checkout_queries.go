@@ -11,17 +11,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetPlatformIntegrationID resuelve el integration_id "platform" interno del negocio.
-// Replicado localmente (solo lectura) siguiendo la regla de aislamiento de modulos —
-// storefront tiene el mismo metodo para su propio flujo de ordenes.
-func (r *Repository) GetPlatformIntegrationID(ctx context.Context, businessID uint) (uint, error) {
+func (r *Repository) GetTiendaIntegrationID(ctx context.Context, businessID uint) (uint, error) {
 	var result struct {
 		ID uint
 	}
 	err := r.db.Conn(ctx).
 		Table("integrations").
 		Select("id").
-		Where("business_id = ? AND integration_type_id = ? AND is_active = true AND deleted_at IS NULL", businessID, 6).
+		Where("business_id = ? AND integration_type_id = ? AND is_active = true AND deleted_at IS NULL", businessID, 31).
 		Limit(1).
 		Scan(&result).Error
 	if err != nil {

@@ -22,6 +22,7 @@ type CreateCheckoutRequest struct {
 	CustomerEmail string                  `json:"customer_email"`
 	CustomerPhone string                  `json:"customer_phone"`
 	CustomerDni   string                  `json:"customer_dni"`
+	PaymentMethod string                  `json:"payment_method"`
 	Address       *CheckoutAddressRequest `json:"address"`
 }
 
@@ -47,6 +48,7 @@ func (r *CreateCheckoutRequest) ToDTO() *dtos.CreateCheckoutDTO {
 		CustomerEmail: r.CustomerEmail,
 		CustomerPhone: r.CustomerPhone,
 		CustomerDni:   r.CustomerDni,
+		PaymentMethod: r.PaymentMethod,
 		Address:       address,
 	}
 }

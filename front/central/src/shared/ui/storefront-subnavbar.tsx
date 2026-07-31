@@ -31,12 +31,9 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
 
     const canViewWebsiteConfig = isSuperAdmin || permissions?.role_name === 'Administrador';
 
-    const menuItems = [
-        { href: '/storefront/catalogo', label: 'Catalogo', icon: '🛍️' },
-        { href: '/storefront/nuevo-pedido', label: 'Nuevo Pedido', icon: '➕' },
-        { href: '/storefront/pedidos', label: 'Pedidos', icon: '📋' },
-        ...(canViewWebsiteConfig ? [{ href: '/website-config', label: 'Mi Sitio Web', icon: '🌐' }] : []),
-    ];
+    const menuItems = canViewWebsiteConfig
+        ? [{ href: '/website-config', label: 'Mi Sitio Web', icon: '🌐' }]
+        : [];
 
     return (
         <div className="subnav-surface border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-40">

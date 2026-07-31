@@ -9,11 +9,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, payBundle *pay.Bundle) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, payBundle *pay.Bundle, s3 storage.IS3Service) {
 	repo := repository.New(database)
 	uc := app.New(repo, payBundle, logger)
-	h := handlers.New(uc, logger, environment)
+	h := handlers.New(uc, logger, environment, s3)
 	h.RegisterRoutes(router)
 }

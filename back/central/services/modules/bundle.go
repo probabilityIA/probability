@@ -98,7 +98,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	routes.New(router, database)
 	geozones.New(router, database, logger, redisClient, rabbitMQ)
 	storefront.New(router, database, logger, rabbitMQ, environment)
-	publicsite.New(router, database, logger, environment, payBundle)
+	publicsite.New(router, database, logger, environment, payBundle, s3)
 
 	var waSender marketingleads.IWhatsAppSender
 	if integ, ok := integrationCore.GetRegisteredIntegration(integrationsCore.IntegrationTypeWhatsApp); ok {

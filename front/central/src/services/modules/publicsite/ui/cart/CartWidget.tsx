@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from './cart-context';
-import { createCheckoutSessionAction, getCheckoutStatusAction } from '../../infra/actions';
+import { createCheckoutSessionAction, getCheckoutStatusAction, getTiendaSessionAction } from '../../infra/actions';
 
 const formatCOP = (n: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
@@ -16,13 +16,40 @@ export function CartWidget({ slug }: { slug: string }) {
     const [customerName, setCustomerName] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
+    const [customerDni, setCustomerDni] = useState('');
     const [street, setStreet] = useState('');
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
+    const [fromAccount, setFromAccount] = useState(false);
 
     const [payState, setPayState] = useState<PayState>('idle');
     const [error, setError] = useState<string | null>(null);
     const [reference, setReference] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        const load = () => {
+            getTiendaSessionAction(slug).then(session => {
+                if (cancelled || !session) return;
+                setFromAccount(true);
+                setCustomerName(prev => prev || session.name);
+                setCustomerEmail(prev => prev || session.email);
+                setCustomerPhone(prev => prev || session.phone);
+                setCustomerDni(prev => prev || session.dni);
+                if (session.address) {
+                    setStreet(prev => prev || session.address!.street);
+                    setCity(prev => prev || session.address!.city);
+                    setState(prev => prev || session.address!.state);
+                }
+            });
+        };
+        load();
+        window.addEventListener('tienda-session-changed', load);
+        return () => {
+            cancelled = true;
+            window.removeEventListener('tienda-session-changed', load);
+        };
+    }, [slug]);
 
     if (count === 0 && !isOpen) {
         return (
@@ -46,14 +73,22 @@ export function CartWidget({ slug }: { slug: string }) {
                 customer_name: customerName,
                 customer_email: customerEmail || undefined,
                 customer_phone: customerPhone || undefined,
+                customer_dni: customerDni || undefined,
+                payment_method: 'agree',
                 address: street ? { street, city, state, country: 'Colombia' } : undefined,
             });
             if (!res.success || !res.data) {
-                throw new Error(res.error || 'No se pudo iniciar el pago');
+                throw new Error(res.error || 'No se pudo enviar el pedido');
             }
 
             const session = res.data;
             setReference(session.reference);
+
+            if (session.payment_method === 'agree') {
+                setPayState('success');
+                clear();
+                return;
+            }
 
             if (!(window as any).BoldCheckout) {
                 await new Promise<void>((resolve, reject) => {
@@ -184,6 +219,11 @@ export function CartWidget({ slug }: { slug: string }) {
 
                             {payState === 'idle' && step === 'form' && (
                                 <div className="space-y-3">
+                                    {fromAccount && (
+                                        <p className="text-xs rounded-lg bg-green-50 text-green-700 px-3 py-2">
+                                            Usando los datos de tu cuenta. Puedes ajustarlos para este pedido.
+                                        </p>
+                                    )}
                                     <Field label="Nombre completo *" value={customerName} onChange={setCustomerName} />
                                     <Field label="Correo" value={customerEmail} onChange={setCustomerEmail} type="email" />
                                     <Field label="Telefono" value={customerPhone} onChange={setCustomerPhone} />
@@ -195,6 +235,10 @@ export function CartWidget({ slug }: { slug: string }) {
 
                                     {error && <p className="text-xs text-red-500">{error}</p>}
 
+                                    <p className="text-xs rounded-lg bg-blue-50 text-blue-700 px-3 py-2">
+                                        El pago se coordina directamente con el vendedor: te contactara para acordar el metodo de pago y la entrega.
+                                    </p>
+
                                     <div className="flex items-center justify-between pt-1">
                                         <span className="font-semibold text-gray-900 dark:text-white">Total a pagar</span>
                                         <span className="font-bold text-lg" style={{ color: 'var(--brand-secondary)' }}>{formatCOP(total)}</span>
@@ -205,18 +249,18 @@ export function CartWidget({ slug }: { slug: string }) {
                                         className="w-full py-3 rounded-lg text-white font-semibold disabled:opacity-50"
                                         style={{ backgroundColor: 'var(--brand-secondary)' }}
                                     >
-                                        Pagar con Bold
+                                        Enviar pedido
                                     </button>
                                     <button onClick={() => setStep('cart')} className="w-full py-2 text-sm text-gray-500">Volver al carrito</button>
                                 </div>
                             )}
 
-                            {payState === 'starting' && <StatusBlock text="Preparando el pago..." spinner />}
+                            {payState === 'starting' && <StatusBlock text="Enviando tu pedido..." spinner />}
                             {payState === 'waiting' && (
                                 <StatusBlock text="Esperando confirmacion del pago. No cierres esta ventana." spinner reference={reference} />
                             )}
                             {payState === 'success' && (
-                                <StatusBlock text="Pago confirmado. Tu pedido ya fue enviado a la tienda." success reference={reference} />
+                                <StatusBlock text="Pedido enviado. El vendedor se pondra en contacto contigo para coordinar el pago y la entrega." success reference={reference} />
                             )}
                             {payState === 'failed' && (
                                 <StatusBlock text={error || 'El pago no se pudo confirmar.'} failed reference={reference} />

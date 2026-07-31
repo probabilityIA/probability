@@ -42,6 +42,7 @@ type PublicCheckout struct {
 
 const (
 	CheckoutStatusPending = "pending"
+	CheckoutStatusAgreed  = "agreed"
 	CheckoutStatusPaid    = "paid"
 	CheckoutStatusFailed  = "failed"
 	CheckoutStatusExpired = "expired"

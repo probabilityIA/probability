@@ -38,6 +38,7 @@ type CustomerAddress struct {
 	Latitude   *float64 `gorm:"type:decimal(10,8)"`
 	Longitude  *float64 `gorm:"type:decimal(11,8)"`
 	TimesUsed  int      `gorm:"not null;default:1"`
+	IsPrimary  bool     `gorm:"not null;default:false"`
 	LastUsedAt time.Time
 
 	Client Client `gorm:"foreignKey:CustomerID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

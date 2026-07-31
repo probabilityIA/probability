@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getPublicBusinessAction } from '@/services/modules/publicsite/infra/actions';
 import { getTemplate } from '@/services/modules/publicsite/ui/templates/registry';
 import { CartProvider } from '@/services/modules/publicsite/ui/cart/cart-context';
+import { TiendaPricesProvider } from '@/services/modules/publicsite/ui/session/prices-context';
 import { CartWidget } from '@/services/modules/publicsite/ui/cart/CartWidget';
 import { buildThemeStyle } from '@/services/modules/publicsite/ui/theme';
 
@@ -39,6 +40,7 @@ export default async function TiendaLayout({ children, params }: LayoutProps) {
     return (
         <div style={themeStyle}>
             <CartProvider slug={slug}>
+                <TiendaPricesProvider slug={slug}>
                 <Nav business={business} />
                 <main className="min-h-screen">
                     {children}
@@ -48,6 +50,7 @@ export default async function TiendaLayout({ children, params }: LayoutProps) {
                     <WhatsApp content={config.whatsapp_content} />
                 )}
                 <CartWidget slug={slug} />
+                </TiendaPricesProvider>
             </CartProvider>
         </div>
     );

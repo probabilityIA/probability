@@ -19,4 +19,8 @@ export class WebsiteConfigUseCases {
     async deleteImage(imageUrl: string, businessId?: number) {
         return this.repository.deleteImage(imageUrl, businessId);
     }
+
+    async getCategories(businessId?: number) {
+        return this.repository.getCategories(businessId);
+    }
 }

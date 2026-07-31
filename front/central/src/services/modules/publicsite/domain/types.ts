@@ -144,6 +144,65 @@ export interface PaginatedResponse<T> {
     total_pages: number;
 }
 
+export interface TiendaSession {
+    name: string;
+    avatar_url?: string;
+    email: string;
+    phone: string;
+    dni: string;
+    customer_id: number;
+    address: {
+        street: string;
+        city: string;
+        state: string;
+        country: string;
+        postal_code: string;
+    } | null;
+}
+
+export interface TiendaOrderSummary {
+    id: string;
+    order_number: string;
+    total: number;
+    currency: string;
+    status: string;
+    created_at: string;
+    items_count: number;
+}
+
+export interface TiendaAddress {
+    id: number;
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    postal_code: string;
+    is_primary: boolean;
+}
+
+export interface TiendaAddressInput {
+    street: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    postal_code?: string;
+    is_primary?: boolean;
+}
+
+export interface TiendaProfileUpdate {
+    name?: string;
+    phone?: string;
+    dni?: string;
+}
+
+export interface TiendaRegisterDTO {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    dni?: string;
+}
+
 export interface ContactFormDTO {
     name: string;
     email?: string;
@@ -175,10 +234,12 @@ export interface CreateCheckoutInput {
     customer_email?: string;
     customer_phone?: string;
     customer_dni?: string;
+    payment_method?: string;
     address?: CheckoutAddressInput;
 }
 
 export interface CheckoutSession {
+    payment_method?: string;
     reference: string;
     amount: number;
     currency: string;

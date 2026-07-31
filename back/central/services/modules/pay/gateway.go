@@ -56,3 +56,7 @@ func (b *Bundle) BoldGenerateSignatureForReference(ctx context.Context, business
 		PollingEnabled: resp.PollingEnabled,
 	}, nil
 }
+
+func (b *Bundle) PublishAgreedStorefrontOrder(ctx context.Context, reference string) error {
+	return b.orderUC.PublishAgreedStorefrontOrder(ctx, reference)
+}

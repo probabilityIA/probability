@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { PublicProduct } from '../../domain/types';
 import { useCart } from '../cart/cart-context';
+import { useCustomerPrice } from '../session/prices-context';
 
 export function ProductAddToCart({ product }: { product: PublicProduct }) {
     const { addItem, open } = useCart();
+    const { price } = useCustomerPrice(product.id, product.price);
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
 
@@ -15,7 +17,7 @@ export function ProductAddToCart({ product }: { product: PublicProduct }) {
                 product_id: product.id,
                 name: product.name,
                 sku: product.sku,
-                price: product.price,
+                price,
                 image_url: product.image_url,
             },
             quantity

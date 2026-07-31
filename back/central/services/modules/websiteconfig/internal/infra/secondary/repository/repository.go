@@ -31,6 +31,7 @@ func (r *Repository) GetConfig(ctx context.Context, businessID uint) (*entities.
 		Template:             template,
 		SectionsOrder:        config.SectionsOrder,
 		ThemeContent:         config.ThemeContent,
+		HiddenCategories:     config.HiddenCategories,
 		ShowHero:             config.ShowHero,
 		ShowAbout:            config.ShowAbout,
 		ShowFeaturedProducts: config.ShowFeaturedProducts,
@@ -70,6 +71,9 @@ func (r *Repository) UpsertConfig(ctx context.Context, businessID uint, dto *dto
 	}
 	if dto.ThemeContent != nil {
 		config.ThemeContent = datatypes.JSON(dto.ThemeContent)
+	}
+	if dto.HiddenCategories != nil {
+		config.HiddenCategories = datatypes.JSON(dto.HiddenCategories)
 	}
 	if dto.ShowHero != nil {
 		config.ShowHero = *dto.ShowHero
@@ -142,6 +146,7 @@ func (r *Repository) UpsertConfig(ctx context.Context, businessID uint, dto *dto
 		Template:             upsertTemplate,
 		SectionsOrder:        config.SectionsOrder,
 		ThemeContent:         config.ThemeContent,
+		HiddenCategories:     config.HiddenCategories,
 		ShowHero:             config.ShowHero,
 		ShowAbout:            config.ShowAbout,
 		ShowFeaturedProducts: config.ShowFeaturedProducts,

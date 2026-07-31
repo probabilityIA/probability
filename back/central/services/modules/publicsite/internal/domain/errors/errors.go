@@ -10,4 +10,5 @@ var (
 	ErrEmptyCart           = errors.New("el carrito esta vacio")
 	ErrInvalidCartItem     = errors.New("cantidad invalida en un item del carrito")
 	ErrCheckoutNotFound    = errors.New("checkout no encontrado")
+	ErrOnlinePayNotReady   = errors.New("el pago en linea no esta disponible para esta tienda")
 )

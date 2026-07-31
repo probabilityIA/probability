@@ -10,6 +10,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		wc.GET("", h.GetConfig)
 		wc.PUT("", h.UpdateConfig)
+		wc.GET("/categories", h.GetCategories)
 		wc.POST("/image", h.UploadImage)
 		wc.DELETE("/image", h.DeleteImage)
 	}

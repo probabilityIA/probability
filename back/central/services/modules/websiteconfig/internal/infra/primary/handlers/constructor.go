@@ -13,6 +13,7 @@ import (
 type IHandlers interface {
 	GetConfig(c *gin.Context)
 	UpdateConfig(c *gin.Context)
+	GetCategories(c *gin.Context)
 	UploadImage(c *gin.Context)
 	DeleteImage(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)

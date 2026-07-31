@@ -29,6 +29,10 @@ func (h *Handlers) Register(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
+		if errors.Is(err, domainerrors.ErrPasswordMismatch) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, domainerrors.ErrRoleNotFound) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "configuracion del sistema incompleta"})
 			return

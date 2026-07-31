@@ -1,12 +1,10 @@
 package dtos
 
-// CheckoutItemInput is a cart line item as sent by the client (price is never trusted).
 type CheckoutItemInput struct {
 	ProductID string
 	Quantity  int
 }
 
-// CheckoutAddressInput is the shipping address as sent by the client.
 type CheckoutAddressInput struct {
 	Street       string
 	City         string
@@ -16,18 +14,18 @@ type CheckoutAddressInput struct {
 	Instructions string
 }
 
-// CreateCheckoutDTO is the input to start a checkout session (before payment).
 type CreateCheckoutDTO struct {
 	Items         []CheckoutItemInput
 	CustomerName  string
 	CustomerEmail string
 	CustomerPhone string
 	CustomerDni   string
+	PaymentMethod string
 	Address       *CheckoutAddressInput
 }
 
-// CheckoutSessionDTO is what the client needs to open the Bold checkout widget.
 type CheckoutSessionDTO struct {
+	PaymentMethod  string  `json:"payment_method"`
 	Reference      string  `json:"reference"`
 	Amount         float64 `json:"amount"`
 	Currency       string  `json:"currency"`

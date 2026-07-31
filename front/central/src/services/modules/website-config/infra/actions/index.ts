@@ -32,6 +32,15 @@ export const updateWebsiteConfigAction = async (data: UpdateWebsiteConfigDTO, bu
     }
 };
 
+export const getWebsiteCategoriesAction = async (businessId?: number) => {
+    try {
+        return await (await getUseCases()).getCategories(businessId);
+    } catch (error: any) {
+        console.error('Get Website Categories Action Error:', error.message);
+        return [];
+    }
+};
+
 export const deleteWebsiteImageAction = async (imageUrl: string, businessId?: number) => {
     try {
         return await (await getUseCases()).deleteImage(imageUrl, businessId);

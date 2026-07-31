@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { PublicBusiness } from '../../domain/types';
+import { TiendaAccountButton } from '../session/TiendaAccountButton';
 
 interface PublicNavProps {
     business: PublicBusiness;
@@ -36,13 +37,7 @@ export function PublicNav({ business }: PublicNavProps) {
                         <Link href={`/tienda/${slug}/contacto`} className="text-sm font-medium opacity-90 hover:opacity-100" style={{ color: 'var(--brand-nav-text, #4b5563)' }}>
                             Contacto
                         </Link>
-                        <Link
-                            href={`/login?redirect=/storefront/catalogo&business_code=${slug}`}
-                            className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
-                            style={{ backgroundColor: 'var(--brand-secondary)' }}
-                        >
-                            Hacer Pedido
-                        </Link>
+                        <TiendaAccountButton slug={slug} />
                     </div>
 
                     <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2" style={{ color: 'var(--brand-nav-text, #4b5563)' }}>
@@ -67,14 +62,9 @@ export function PublicNav({ business }: PublicNavProps) {
                         <Link href={`/tienda/${slug}/contacto`} className="block px-4 py-2 rounded-lg opacity-90 hover:opacity-100" style={{ color: 'var(--brand-nav-text, #4b5563)' }} onClick={() => setMobileOpen(false)}>
                             Contacto
                         </Link>
-                        <Link
-                            href={`/login?redirect=/storefront/catalogo&business_code=${slug}`}
-                            className="block px-4 py-2 rounded-lg text-white text-center font-medium"
-                            style={{ backgroundColor: 'var(--brand-secondary)' }}
-                            onClick={() => setMobileOpen(false)}
-                        >
-                            Hacer Pedido
-                        </Link>
+                        <div className="px-4 py-2">
+                            <TiendaAccountButton slug={slug} />
+                        </div>
                     </div>
                 )}
             </div>

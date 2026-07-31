@@ -215,6 +215,17 @@ func (uc *useCase) processStorefrontCheckoutWebhook(ctx context.Context, msg *dt
 	return nil
 }
 
+func (uc *useCase) PublishAgreedStorefrontOrder(ctx context.Context, reference string) error {
+	checkout, err := uc.repo.GetStorefrontCheckoutByReference(ctx, reference)
+	if err != nil {
+		return fmt.Errorf("lookup storefront checkout: %w", err)
+	}
+	if checkout == nil {
+		return fmt.Errorf("checkout no encontrado: %s", reference)
+	}
+	return uc.publishStorefrontOrder(ctx, checkout, nil)
+}
+
 func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entities.StorefrontCheckoutSnapshot, msg *dtos.BoldWebhookMessage) error {
 	if uc.queue == nil {
 		return fmt.Errorf("cola rabbitmq no disponible")
@@ -256,9 +267,12 @@ func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entitie
 	}
 
 	now := time.Now()
-	paidAt := now.Format(time.RFC3339)
-	payments := []map[string]interface{}{
-		{
+	payments := []map[string]interface{}{}
+	status := "pending"
+	originalStatus := "agreed"
+	if msg != nil {
+		paidAt := now.Format(time.RFC3339)
+		payments = append(payments, map[string]interface{}{
 			"payment_method_id": 1,
 			"amount":            checkout.Amount,
 			"currency":          checkout.Currency,
@@ -267,14 +281,16 @@ func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entitie
 			"transaction_id":    msg.PaymentID,
 			"payment_reference": checkout.Reference,
 			"gateway":           boldGatewayCode,
-		},
+		})
+		status = "processing"
+		originalStatus = "paid"
 	}
 
 	canonicalOrder := map[string]interface{}{
 		"business_id":      checkout.BusinessID,
 		"integration_id":   checkout.IntegrationID,
 		"integration_type": "platform",
-		"platform":         "storefront",
+		"platform":         "tienda_web",
 		"external_id":      "sfo-" + checkout.Reference,
 		"order_number":     checkout.Reference,
 		"subtotal":         checkout.Amount,
@@ -288,8 +304,8 @@ func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entitie
 		"customer_email":   checkout.CustomerEmail,
 		"customer_phone":   checkout.CustomerPhone,
 		"customer_dni":     checkout.CustomerDni,
-		"status":           "processing",
-		"original_status":  "paid",
+		"status":           status,
+		"original_status":  originalStatus,
 		"invoiceable":      false,
 		"occurred_at":      now.Format(time.RFC3339),
 		"imported_at":      now.Format(time.RFC3339),

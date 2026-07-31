@@ -1,6 +1,6 @@
 import { env } from '@/shared/config/env';
 import { IWebsiteConfigRepository } from '../../domain/ports';
-import { WebsiteConfigData, UpdateWebsiteConfigDTO } from '../../domain/types';
+import { WebsiteConfigData, UpdateWebsiteConfigDTO, WebsiteCategory } from '../../domain/types';
 
 export class WebsiteConfigApiRepository implements IWebsiteConfigRepository {
     private baseUrl: string;
@@ -63,6 +63,11 @@ export class WebsiteConfigApiRepository implements IWebsiteConfigRepository {
             throw new Error(data.message || data.error || 'Error al subir imagen');
         }
         return data;
+    }
+
+    async getCategories(businessId?: number): Promise<WebsiteCategory[]> {
+        const res = await this.fetch<{ data: WebsiteCategory[] }>(this.withBusinessId('/website-config/categories', businessId));
+        return res.data || [];
     }
 
     async deleteImage(imageUrl: string, businessId?: number): Promise<{ success: boolean }> {

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getWebsiteConfigAction, updateWebsiteConfigAction, deleteWebsiteImageAction } from '../../infra/actions';
+import { getWebsiteConfigAction, updateWebsiteConfigAction, deleteWebsiteImageAction, getWebsiteCategoriesAction } from '../../infra/actions';
 import { getProductsAction } from '@/services/modules/products/infra/actions';
-import { WebsiteConfigData, UpdateWebsiteConfigDTO } from '../../domain/types';
+import { WebsiteConfigData, UpdateWebsiteConfigDTO, WebsiteCategory } from '../../domain/types';
 import { PublicBusiness, PublicProduct, WebsiteConfig, SectionKey } from '@/services/modules/publicsite/domain/types';
 import { getTemplate, getAvailableTemplates } from '@/services/modules/publicsite/ui/templates/registry';
 import { SectionRenderer } from '@/services/modules/publicsite/ui/components/SectionRenderer';
@@ -53,6 +53,7 @@ export function WebsiteBuilder() {
     const [config, setConfig] = useState<WebsiteConfigData | null>(null);
     const [order, setOrder] = useState<SectionKey[]>(normalizeOrder(null));
     const [products, setProducts] = useState<PublicProduct[]>([]);
+    const [categories, setCategories] = useState<WebsiteCategory[]>([]);
     const [selectedSection, setSelectedSection] = useState<SectionKey | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -79,10 +80,12 @@ export function WebsiteBuilder() {
 
     const loadAll = useCallback(async () => {
         setLoading(true);
-        const [cfg, prods] = await Promise.all([
+        const [cfg, prods, cats] = await Promise.all([
             getWebsiteConfigAction(effectiveBusinessId),
             getProductsAction({ page: 1, page_size: 8, business_id: effectiveBusinessId }),
+            getWebsiteCategoriesAction(effectiveBusinessId),
         ]);
+        setCategories(cats || []);
         if (cfg) {
             setConfig(cfg);
             setOrder(normalizeOrder(cfg.sections_order));
@@ -141,6 +144,7 @@ export function WebsiteBuilder() {
             template: config.template,
             sections_order: order,
             theme_content: config.theme_content || undefined,
+            hidden_categories: config.hidden_categories || [],
             show_hero: config.show_hero,
             show_about: config.show_about,
             show_featured_products: config.show_featured_products,
@@ -393,6 +397,38 @@ export function WebsiteBuilder() {
                                     />
                                 )}
                             </div>
+
+                            {categories.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Categorias en la tienda</h3>
+                                    <p className="text-xs text-gray-400 mb-2">Desactiva las categorias que no quieres mostrar; sus productos se ocultan del catalogo.</p>
+                                    <div className="space-y-1.5">
+                                        {categories.map(cat => {
+                                            const hidden = (config.hidden_categories || []).includes(cat.name);
+                                            return (
+                                                <label key={cat.name} className="flex items-center justify-between gap-2 text-sm text-gray-700 dark:text-gray-200">
+                                                    <span className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!hidden}
+                                                            onChange={(e) => {
+                                                                const current = config.hidden_categories || [];
+                                                                const next = e.target.checked
+                                                                    ? current.filter(c => c !== cat.name)
+                                                                    : [...current, cat.name];
+                                                                patchConfig({ hidden_categories: next });
+                                                            }}
+                                                            className="rounded border-gray-300"
+                                                        />
+                                                        {cat.name}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">{cat.product_count}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4 space-y-2">
                                 <p>Haz clic en una seccion del lienzo para editar su contenido.</p>

@@ -17,16 +17,30 @@ type IRepository interface {
 
 	IsIntegrationActive(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error)
 
-	GetPlatformIntegrationID(ctx context.Context, businessID uint) (uint, error)
+	GetTiendaIntegrationID(ctx context.Context, businessID uint) (uint, error)
 
 	CreateCheckout(ctx context.Context, checkout *entities.PublicCheckout) error
 	GetCheckoutByReference(ctx context.Context, reference string) (*entities.PublicCheckout, error)
+
+	GetClientSession(ctx context.Context, businessID uint, userID uint) (*entities.TiendaSession, error)
+	GetUserBasic(ctx context.Context, userID uint) (*entities.TiendaSession, error)
+	UserBelongsToBusiness(ctx context.Context, businessID uint, userID uint) (bool, error)
+	GetCustomerPrices(ctx context.Context, businessID uint, clientID uint) (map[string]float64, error)
+	ListCustomerOrders(ctx context.Context, businessID, userID, customerID uint, page, pageSize int) ([]entities.TiendaOrder, int64, error)
+
+	UpdateClientProfile(ctx context.Context, businessID, userID uint, name, phone, dni string) error
+	UpdateUserAvatar(ctx context.Context, userID uint, avatarURL string) error
+	GetUserAvatar(ctx context.Context, userID uint) (string, error)
+	ListCustomerAddresses(ctx context.Context, businessID, customerID uint) ([]entities.CustomerAddress, error)
+	CreateCustomerAddress(ctx context.Context, businessID, customerID uint, addr *entities.CustomerAddress) error
+	SetPrimaryAddress(ctx context.Context, businessID, customerID, addressID uint) error
+	DeleteCustomerAddress(ctx context.Context, businessID, customerID, addressID uint) error
+
+	GetHiddenCategories(ctx context.Context, businessID uint) ([]string, error)
+	ListPublicCategories(ctx context.Context, businessID uint, hidden []string) ([]string, error)
 }
 
-// IBoldGateway es el contrato minimo que el modulo pay expone para generar una firma
-// de Bold para un pago que no es recarga de billetera (checkout de tienda publica).
-// *pay.Bundle satisface esta interfaz directamente (mismo patron que IWalletDebiter
-// en el modulo subscriptions, que recibe payBundle como su propia interfaz local).
 type IBoldGateway interface {
 	BoldGenerateSignatureForReference(ctx context.Context, businessID uint, amount float64, currency, referencePrefix string) (*pay.BoldSignature, error)
+	PublishAgreedStorefrontOrder(ctx context.Context, reference string) error
 }

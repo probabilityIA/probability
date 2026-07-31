@@ -22,7 +22,7 @@ func (h *Handlers) CreateCheckoutSession(c *gin.Context) {
 		return
 	}
 
-	session, err := h.uc.CreateCheckoutSession(c.Request.Context(), slug, req.ToDTO())
+	session, err := h.uc.CreateCheckoutSession(c.Request.Context(), slug, req.ToDTO(), h.optionalUserID(c))
 	if err != nil {
 		switch {
 		case errors.Is(err, domainerrors.ErrBusinessNotFound):
@@ -31,6 +31,8 @@ func (h *Handlers) CreateCheckoutSession(c *gin.Context) {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		case errors.Is(err, domainerrors.ErrEmptyCart), errors.Is(err, domainerrors.ErrInvalidCartItem):
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case errors.Is(err, domainerrors.ErrOnlinePayNotReady):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}

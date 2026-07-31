@@ -85,6 +85,7 @@ type IUseCase interface {
 	ListPayments(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.PaymentTransaction, int64, error)
 	ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.BoldWebhookMessage) error
 	ApplyWalletRechargeStatus(ctx context.Context, in *dtos.WalletRechargeStatusInput) error
+	PublishAgreedStorefrontOrder(ctx context.Context, reference string) error
 }
 
 // IWalletUseCase define los casos de uso de la billetera

@@ -10,4 +10,5 @@ import (
 type IRepository interface {
 	GetConfig(ctx context.Context, businessID uint) (*entities.WebsiteConfig, error)
 	UpsertConfig(ctx context.Context, businessID uint, dto *dtos.UpdateConfigDTO) (*entities.WebsiteConfig, error)
+	ListProductCategories(ctx context.Context, businessID uint) ([]entities.ProductCategory, error)
 }

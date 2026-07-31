@@ -2,15 +2,18 @@ package app
 
 import (
 	"context"
+	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/secamc93/probability/back/central/services/modules/publicsite/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/publicsite/internal/domain/entities"
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/publicsite/internal/domain/errors"
 )
 
-const checkoutReferencePrefix = "SFO"
+const agreedReferencePrefix = "SFA"
 
-func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *dtos.CreateCheckoutDTO) (*dtos.CheckoutSessionDTO, error) {
+func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *dtos.CreateCheckoutDTO, userID uint) (*dtos.CheckoutSessionDTO, error) {
 	if len(dto.Items) == 0 {
 		return nil, domainerrors.ErrEmptyCart
 	}
@@ -36,9 +39,19 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 		return nil, domainerrors.ErrPublicSiteNotActive
 	}
 
-	integrationID, err := uc.repo.GetPlatformIntegrationID(ctx, business.ID)
+	integrationID, err := uc.repo.GetTiendaIntegrationID(ctx, business.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	customPrices := map[string]float64{}
+	if userID > 0 {
+		session, serr := uc.repo.GetClientSession(ctx, business.ID, userID)
+		if serr == nil && session != nil && session.CustomerID > 0 {
+			if prices, perr := uc.repo.GetCustomerPrices(ctx, business.ID, session.CustomerID); perr == nil {
+				customPrices = prices
+			}
+		}
 	}
 
 	items := make([]entities.CheckoutItem, 0, len(dto.Items))
@@ -48,14 +61,18 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 		if perr != nil {
 			return nil, perr
 		}
-		lineTotal := product.Price * float64(it.Quantity)
+		unitPrice := product.Price
+		if custom, ok := customPrices[product.ID]; ok {
+			unitPrice = custom
+		}
+		lineTotal := unitPrice * float64(it.Quantity)
 		total += lineTotal
 		items = append(items, entities.CheckoutItem{
 			ProductID: product.ID,
 			SKU:       product.SKU,
 			Name:      product.Name,
 			Quantity:  it.Quantity,
-			UnitPrice: product.Price,
+			UnitPrice: unitPrice,
 			ImageURL:  product.ImageURL,
 		})
 	}
@@ -72,17 +89,18 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 		}
 	}
 
-	signature, err := uc.bold.BoldGenerateSignatureForReference(ctx, business.ID, total, "COP", checkoutReferencePrefix)
-	if err != nil {
-		return nil, err
+	if dto.PaymentMethod == "online" {
+		return nil, domainerrors.ErrOnlinePayNotReady
 	}
+
+	reference := agreedReferencePrefix + strings.ReplaceAll(uuid.New().String(), "-", "")[:20]
 
 	checkout := &entities.PublicCheckout{
 		BusinessID:      business.ID,
 		IntegrationID:   integrationID,
 		Slug:            slug,
-		Reference:       signature.OrderID,
-		Status:          entities.CheckoutStatusPending,
+		Reference:       reference,
+		Status:          entities.CheckoutStatusAgreed,
 		Amount:          total,
 		Currency:        "COP",
 		Items:           items,
@@ -91,21 +109,22 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 		CustomerPhone:   dto.CustomerPhone,
 		CustomerDni:     dto.CustomerDni,
 		ShippingAddress: address,
-		BoldOrderID:     signature.OrderID,
+		BoldOrderID:     reference,
 	}
 	if err := uc.repo.CreateCheckout(ctx, checkout); err != nil {
 		return nil, err
 	}
 
+	if err := uc.orders.PublishAgreedStorefrontOrder(ctx, reference); err != nil {
+		uc.logger.Error(ctx).Err(err).Str("reference", reference).Msg("error publicando orden acordada")
+		return nil, err
+	}
+
 	return &dtos.CheckoutSessionDTO{
-		Reference:      signature.OrderID,
-		Amount:         signature.Amount,
-		Currency:       signature.Currency,
-		Hash:           signature.Hash,
-		PublicKey:      signature.PublicKey,
-		RedirectionURL: signature.RedirectionURL,
-		IsSandbox:      signature.IsSandbox,
-		PollingEnabled: signature.PollingEnabled,
+		PaymentMethod: "agree",
+		Reference:     reference,
+		Amount:        total,
+		Currency:      "COP",
 	}, nil
 }
 

@@ -5,8 +5,9 @@ type WebsiteConfig struct {
 	BusinessID uint
 	Template   string
 
-	SectionsOrder []byte
-	ThemeContent  []byte
+	SectionsOrder    []byte
+	ThemeContent     []byte
+	HiddenCategories []byte
 
 	ShowHero             bool
 	ShowAbout            bool
@@ -25,4 +26,9 @@ type WebsiteConfig struct {
 	ContactContent      []byte
 	SocialMediaContent  []byte
 	WhatsAppContent     []byte
+}
+
+type ProductCategory struct {
+	Name         string
+	ProductCount int64
 }

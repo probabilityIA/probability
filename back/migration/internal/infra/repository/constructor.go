@@ -176,5 +176,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateWebsiteSectionsOrder(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateClientMultiBusiness(ctx); err != nil {
+		return err
+	}
 	return r.migrateMarketingLeads(ctx)
 }

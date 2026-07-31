@@ -27,6 +27,11 @@ type IRepository interface {
 	CreateClient(ctx context.Context, client *entities.StorefrontClient) error
 	GetClienteFinalRoleID(ctx context.Context) (uint, error)
 	UserExistsByEmail(ctx context.Context, email string) (bool, error)
+	GetUserAuthByEmail(ctx context.Context, email string) (uint, string, error)
+	VerifyPassword(hash, password string) bool
+	StaffExists(ctx context.Context, userID, businessID uint) (bool, error)
+	GetClientByBusinessAndEmail(ctx context.Context, businessID uint, email string) (*entities.StorefrontClient, error)
+	LinkClientUser(ctx context.Context, clientID, userID uint) error
 
 	// Validation
 	GetRoleLevelByUserAndBusiness(ctx context.Context, userID, businessID uint) (int, error)

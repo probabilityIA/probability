@@ -8,6 +8,7 @@ var (
 	ErrClientNotFound       = errors.New("cliente no encontrado")
 	ErrBusinessNotFound     = errors.New("negocio no encontrado")
 	ErrEmailAlreadyExists   = errors.New("ya existe un usuario con este email")
+	ErrPasswordMismatch     = errors.New("este email ya tiene una cuenta; usa tu contrasena actual para vincularla a esta tienda")
 	ErrRoleNotFound         = errors.New("rol cliente_final no encontrado")
 	ErrForbidden            = errors.New("acceso denegado: rol invalido")
 	ErrNoItems              = errors.New("la orden debe tener al menos un item")

@@ -12,8 +12,9 @@ type BusinessWebsiteConfig struct {
 
 	Template string `gorm:"type:varchar(50);default:'default'"`
 
-	SectionsOrder datatypes.JSON `gorm:"type:jsonb"`
-	ThemeContent  datatypes.JSON `gorm:"type:jsonb"`
+	SectionsOrder    datatypes.JSON `gorm:"type:jsonb"`
+	ThemeContent     datatypes.JSON `gorm:"type:jsonb"`
+	HiddenCategories datatypes.JSON `gorm:"type:jsonb"`
 
 	ShowHero             bool `gorm:"default:true"`
 	ShowAbout            bool `gorm:"default:false"`

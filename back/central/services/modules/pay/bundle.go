@@ -21,6 +21,7 @@ import (
 
 type Bundle struct {
 	WalletUseCase ports.IWalletUseCase
+	orderUC       ports.IUseCase
 }
 
 func New(
@@ -77,5 +78,5 @@ func New(
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de pagos deshabilitados")
 	}
 
-	return &Bundle{WalletUseCase: walletUC}
+	return &Bundle{WalletUseCase: walletUC, orderUC: useCase}
 }

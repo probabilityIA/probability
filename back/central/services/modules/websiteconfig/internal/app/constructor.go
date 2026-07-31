@@ -12,6 +12,7 @@ import (
 type IUseCase interface {
 	GetConfig(ctx context.Context, businessID uint) (*entities.WebsiteConfig, error)
 	UpdateConfig(ctx context.Context, businessID uint, dto *dtos.UpdateConfigDTO) (*entities.WebsiteConfig, error)
+	GetProductCategories(ctx context.Context, businessID uint) ([]entities.ProductCategory, error)
 }
 
 type UseCase struct {
