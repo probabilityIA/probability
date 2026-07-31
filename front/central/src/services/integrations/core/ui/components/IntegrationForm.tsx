@@ -25,6 +25,7 @@ import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecom
 import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
+import { TikTokConfigForm, TikTokEditForm } from '@/services/integrations/ecommerce/tiktok/ui';
 import { JumpsellerConfigForm } from '@/services/integrations/ecommerce/jumpseller/ui';
 import { BoldConfigForm, BoldEditForm } from '@/services/integrations/pay/bold/ui/components';
 import { getActionError } from '@/shared/utils/action-result';
@@ -54,6 +55,7 @@ const INTEGRATION_TYPE_IDS = {
     EXITO: 21,
     BOLD: 23,
     JUMPSELLER: 33,
+    TIKTOK: 35,
 } as const;
 
 interface IntegrationFormProps {
@@ -710,6 +712,22 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.EXITO) {
             return (
                 <ExitoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.TIKTOK) {
+            return (
+                <TikTokEditForm
                     integrationId={integration.id}
                     initialData={{
                         name: integration.name,

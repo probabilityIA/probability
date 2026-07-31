@@ -60,6 +60,7 @@ const (
 	IntegrationTypeTiendaWeb    = domain.IntegrationTypeTiendaWeb
 	IntegrationTypeJumpseller   = domain.IntegrationTypeJumpseller
 	IntegrationTypeShipit       = domain.IntegrationTypeShipit
+	IntegrationTypeTikTok       = domain.IntegrationTypeTikTok
 )
 
 type IIntegrationService interface {

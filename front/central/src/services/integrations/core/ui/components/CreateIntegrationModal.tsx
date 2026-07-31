@@ -30,6 +30,7 @@ import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
 import { JumpsellerConnectTabs } from '@/services/integrations/ecommerce/jumpseller/ui';
+import { TikTokConfigForm } from '@/services/integrations/ecommerce/tiktok/ui';
 import { MercadoLibreOAuthForm } from '@/services/integrations/ecommerce/mercadolibre/ui';
 import { BoldConfigForm } from '@/services/integrations/pay/bold/ui/components';
 import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
@@ -63,6 +64,7 @@ const INTEGRATION_TYPE_IDS = {
     TIENDA: 30,
     TIENDA_WEB: 31,
     JUMPSELLER: 33,
+    TIKTOK: 35,
 } as const;
 
 interface CreateIntegrationModalProps {
@@ -391,6 +393,14 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                         onSuccess={onSuccess}
                         onCancel={onBack}
                         integrationTypeBaseURLTest={integrationType.base_url_test}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.TIKTOK:
+                return (
+                    <TikTokConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
                     />
                 );
 
