@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  cacheMaxMemorySize: 0,
+
   images: {
     remotePatterns: [
       {
@@ -16,7 +18,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Proxy para desarrollo local - evita problemas de CORS
   async rewrites() {
     return [
       {
@@ -26,7 +27,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Headers para CORS y Shopify iframes
   async headers() {
     return [
       {
@@ -49,7 +49,6 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Configuración experimental para mejorar el manejo de cookies
   experimental: {
     serverActions: {
       bodySizeLimit: '12mb',

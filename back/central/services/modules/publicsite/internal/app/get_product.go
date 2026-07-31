@@ -16,7 +16,7 @@ func (uc *UseCase) GetProduct(ctx context.Context, slug string, productID string
 		return nil, domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (uc *UseCase) GetFeaturedProducts(ctx context.Context, slug string, limit i
 		return nil, domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return nil, err
 	}

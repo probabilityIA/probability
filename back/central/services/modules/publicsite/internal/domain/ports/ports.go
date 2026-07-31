@@ -15,11 +15,8 @@ type IRepository interface {
 	GetFeaturedProducts(ctx context.Context, businessID uint, limit int) ([]entities.PublicProduct, error)
 	SaveContactSubmission(ctx context.Context, businessID uint, dto *dtos.ContactFormDTO) error
 
-	// Integration gate — checks if an integration is active (or missing = backward compat)
-	IsIntegrationActiveOrMissing(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error)
+	IsIntegrationActive(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error)
 
-	// GetPlatformIntegrationID resuelve el integration_id "platform" interno del negocio,
-	// usado para atribuir las ordenes creadas desde el checkout de la tienda publica.
 	GetPlatformIntegrationID(ctx context.Context, businessID uint) (uint, error)
 
 	CreateCheckout(ctx context.Context, checkout *entities.PublicCheckout) error

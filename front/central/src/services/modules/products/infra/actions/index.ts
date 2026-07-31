@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { updateTag } from 'next/cache';
 import { ProductApiRepository } from '../repository/api-repository';
 import { ProductUseCases } from '../../app/use-cases';
 import {
@@ -47,7 +48,9 @@ export const getProductByIdAction = async (id: string, businessId?: number) => {
 
 export const createProductAction = async (data: CreateProductDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).createProduct(data, businessId);
+        const result = await (await getUseCases()).createProduct(data, businessId);
+        updateTag('public-tienda');
+        return result;
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al crear producto', data: null };
     }
@@ -55,7 +58,9 @@ export const createProductAction = async (data: CreateProductDTO, businessId?: n
 
 export const updateProductAction = async (id: string, data: UpdateProductDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).updateProduct(id, data, businessId);
+        const result = await (await getUseCases()).updateProduct(id, data, businessId);
+        updateTag('public-tienda');
+        return result;
     } catch (error: any) {
         throw new Error(error.message);
     }
@@ -63,7 +68,9 @@ export const updateProductAction = async (id: string, data: UpdateProductDTO, bu
 
 export const deleteProductAction = async (id: string, businessId?: number) => {
     try {
-        return await (await getUseCases()).deleteProduct(id, businessId);
+        const result = await (await getUseCases()).deleteProduct(id, businessId);
+        updateTag('public-tienda');
+        return result;
     } catch (error: any) {
         throw new Error(error.message);
     }
@@ -71,7 +78,9 @@ export const deleteProductAction = async (id: string, businessId?: number) => {
 
 export const uploadProductImageAction = async (productId: string, formData: FormData, businessId?: number) => {
     try {
-        return await (await getUseCases()).uploadProductImage(productId, formData, businessId);
+        const result = await (await getUseCases()).uploadProductImage(productId, formData, businessId);
+        updateTag('public-tienda');
+        return result;
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al subir imagen', image_url: '' };
     }

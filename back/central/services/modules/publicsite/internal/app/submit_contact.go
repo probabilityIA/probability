@@ -20,7 +20,7 @@ func (uc *UseCase) SubmitContact(ctx context.Context, slug string, dto *dtos.Con
 		return domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return err
 	}

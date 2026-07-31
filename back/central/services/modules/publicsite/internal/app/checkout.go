@@ -10,9 +10,6 @@ import (
 
 const checkoutReferencePrefix = "SFO"
 
-// CreateCheckoutSession reprecia el carrito contra el catalogo real (nunca confia en el
-// precio que manda el cliente), crea un PublicCheckout en estado pending, y genera la
-// firma de Bold para que el frontend abra el widget de pago.
 func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *dtos.CreateCheckoutDTO) (*dtos.CheckoutSessionDTO, error) {
 	if len(dto.Items) == 0 {
 		return nil, domainerrors.ErrEmptyCart
@@ -31,7 +28,7 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 		return nil, domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +109,6 @@ func (uc *UseCase) CreateCheckoutSession(ctx context.Context, slug string, dto *
 	}, nil
 }
 
-// GetCheckoutStatus permite al frontend consultar (via polling) si el checkout ya fue
-// confirmado por el webhook de Bold.
 func (uc *UseCase) GetCheckoutStatus(ctx context.Context, reference string) (string, error) {
 	checkout, err := uc.repo.GetCheckoutByReference(ctx, reference)
 	if err != nil {

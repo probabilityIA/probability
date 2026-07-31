@@ -6,12 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// IsIntegrationActiveOrMissing checks if an integration of the given type is active for the business.
-// If no integration exists, returns true for backward compatibility (rollout suave).
-//
-// Table consulted: integrations (managed by integrations/core module)
-// Replicated locally to avoid sharing repositories between modules.
-func (r *Repository) IsIntegrationActiveOrMissing(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error) {
+func (r *Repository) IsIntegrationActive(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error) {
 	var result struct {
 		IsActive bool
 	}
@@ -24,7 +19,7 @@ func (r *Repository) IsIntegrationActiveOrMissing(ctx context.Context, businessI
 		First(&result).Error
 
 	if err == gorm.ErrRecordNotFound {
-		return true, nil // No integration = allowed (backward compat)
+		return false, nil
 	}
 	if err != nil {
 		return false, err

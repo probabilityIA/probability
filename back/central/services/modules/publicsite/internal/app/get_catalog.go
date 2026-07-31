@@ -17,7 +17,7 @@ func (uc *UseCase) ListCatalog(ctx context.Context, slug string, filters dtos.Ca
 		return nil, 0, domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return nil, 0, err
 	}

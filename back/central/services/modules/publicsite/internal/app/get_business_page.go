@@ -16,7 +16,7 @@ func (uc *UseCase) GetBusinessPage(ctx context.Context, slug string) (*entities.
 		return nil, domainerrors.ErrBusinessNotFound
 	}
 
-	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, business.ID, tiendaWebIntegrationTypeID)
+	active, err := uc.repo.IsIntegrationActive(ctx, business.ID, tiendaWebIntegrationTypeID)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { updateTag } from 'next/cache';
 import { IntegrationApiRepository } from '../repository/api-repository';
 import { IntegrationUseCases } from '../../app/use-cases';
 import {
@@ -25,11 +26,6 @@ async function getUseCases(tokenOverride?: string | null) {
     return new IntegrationUseCases(repository);
 }
 
-/**
- * Helper: ejecuta una acción y retorna { success, message, data } sin lanzar throw.
- * Next.js producción enmascara errores de Server Actions con un mensaje genérico,
- * así que retornamos el error como dato para que el cliente vea el mensaje real.
- */
 async function safeAction<T>(fn: () => Promise<T>): Promise<T | { success: false; message: string }> {
     try {
         return await fn();
@@ -67,7 +63,9 @@ export const getIntegrationByTypeAction = async (type: string, businessId?: numb
 
 export const createIntegrationAction = async (data: CreateIntegrationDTO, token?: string | null) => {
     try {
-        return await (await getUseCases(token)).createIntegration(data);
+        const result = await (await getUseCases(token)).createIntegration(data);
+        updateTag('public-tienda');
+        return result;
     } catch (error: any) {
         console.error('Create Integration Action Error:', error.message);
         return {
@@ -79,11 +77,15 @@ export const createIntegrationAction = async (data: CreateIntegrationDTO, token?
 };
 
 export const updateIntegrationAction = async (id: number, data: UpdateIntegrationDTO, token?: string | null) => {
-    return safeAction(() => getUseCases(token).then(uc => uc.updateIntegration(id, data)));
+    const result = await safeAction(() => getUseCases(token).then(uc => uc.updateIntegration(id, data)));
+    updateTag('public-tienda');
+    return result;
 };
 
 export const deleteIntegrationAction = async (id: number, token?: string | null) => {
-    return safeAction(() => getUseCases(token).then(uc => uc.deleteIntegration(id)));
+    const result = await safeAction(() => getUseCases(token).then(uc => uc.deleteIntegration(id)));
+    updateTag('public-tienda');
+    return result;
 };
 
 export const testConnectionAction = async (id: number, token?: string | null) => {
@@ -91,11 +93,15 @@ export const testConnectionAction = async (id: number, token?: string | null) =>
 };
 
 export const activateIntegrationAction = async (id: number, token?: string | null) => {
-    return safeAction(() => getUseCases(token).then(uc => uc.activateIntegration(id)));
+    const result = await safeAction(() => getUseCases(token).then(uc => uc.activateIntegration(id)));
+    updateTag('public-tienda');
+    return result;
 };
 
 export const deactivateIntegrationAction = async (id: number, token?: string | null) => {
-    return safeAction(() => getUseCases(token).then(uc => uc.deactivateIntegration(id)));
+    const result = await safeAction(() => getUseCases(token).then(uc => uc.deactivateIntegration(id)));
+    updateTag('public-tienda');
+    return result;
 };
 
 export const setAsDefaultAction = async (id: number, token?: string | null) => {

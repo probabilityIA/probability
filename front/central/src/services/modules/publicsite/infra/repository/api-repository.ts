@@ -9,7 +9,7 @@ export class PublicSiteApiRepository implements IPublicSiteRepository {
         this.baseUrl = env.API_BASE_URL;
     }
 
-    private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+    private async fetch<T>(path: string, options: RequestInit = {}, cacheable = false): Promise<T> {
         const url = `${this.baseUrl}${path}`;
 
         const headers: Record<string, string> = {
@@ -18,7 +18,11 @@ export class PublicSiteApiRepository implements IPublicSiteRepository {
             ...(options.headers as Record<string, string> || {}),
         };
 
-        const res = await fetch(url, { ...options, headers, cache: 'no-store' });
+        const cachePolicy: RequestInit = cacheable
+            ? { next: { revalidate: 60, tags: ['public-tienda'] } }
+            : { cache: 'no-store' };
+
+        const res = await fetch(url, { ...options, ...cachePolicy, headers });
         const data = await res.json();
 
         if (!res.ok) {
@@ -29,7 +33,7 @@ export class PublicSiteApiRepository implements IPublicSiteRepository {
     }
 
     async getBusinessPage(slug: string): Promise<PublicBusiness> {
-        return this.fetch<PublicBusiness>(`/public/tienda/${slug}`);
+        return this.fetch<PublicBusiness>(`/public/tienda/${slug}`, {}, true);
     }
 
     async getCatalog(slug: string, params?: { page?: number; page_size?: number; search?: string; category?: string }): Promise<PaginatedResponse<PublicProduct>> {
@@ -39,11 +43,11 @@ export class PublicSiteApiRepository implements IPublicSiteRepository {
                 if (value !== undefined && value !== null) searchParams.append(key, String(value));
             });
         }
-        return this.fetch<PaginatedResponse<PublicProduct>>(`/public/tienda/${slug}/catalog?${searchParams.toString()}`);
+        return this.fetch<PaginatedResponse<PublicProduct>>(`/public/tienda/${slug}/catalog?${searchParams.toString()}`, {}, true);
     }
 
     async getProduct(slug: string, productId: string): Promise<PublicProduct> {
-        return this.fetch<PublicProduct>(`/public/tienda/${slug}/product/${productId}`);
+        return this.fetch<PublicProduct>(`/public/tienda/${slug}/product/${productId}`, {}, true);
     }
 
     async submitContact(slug: string, data: ContactFormDTO): Promise<{ message: string }> {
