@@ -39,7 +39,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
     };
 
     return (
-        <section className="py-16 px-4 bg-gray-50">
+        <section className="py-16 px-4 bg-black/5">
             <div className="max-w-3xl mx-auto">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Contacto</h2>
 

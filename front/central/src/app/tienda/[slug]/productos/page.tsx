@@ -4,6 +4,8 @@ import { getTemplate } from '@/services/modules/publicsite/ui/templates/registry
 import { CatalogSearch } from '@/services/modules/publicsite/ui/components/CatalogSearch';
 import { CatalogPagination } from '@/services/modules/publicsite/ui/components/CatalogPagination';
 
+export const revalidate = 60;
+
 interface PageProps {
     params: Promise<{ slug: string }>;
     searchParams: Promise<{ page?: string; search?: string; category?: string }>;

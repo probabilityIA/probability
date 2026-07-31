@@ -1,6 +1,5 @@
 package entities
 
-// BusinessPage represents a business's public page info
 type BusinessPage struct {
 	ID              uint
 	Name            string
@@ -15,9 +14,10 @@ type BusinessPage struct {
 	WebsiteConfig   *WebsiteConfig
 }
 
-// WebsiteConfig holds section toggles and content
 type WebsiteConfig struct {
 	Template             string
+	SectionsOrder        []byte
+	ThemeContent         []byte
 	ShowHero             bool
 	ShowAbout            bool
 	ShowFeaturedProducts bool

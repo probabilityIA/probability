@@ -33,7 +33,6 @@ func (r *Repository) GetBusinessBySlug(ctx context.Context, slug string) (*entit
 		NavbarImageURL:  business.NavbarImageURL,
 	}
 
-	// Load website config if exists
 	var config models.BusinessWebsiteConfig
 	err = r.db.Conn(ctx).Where("business_id = ?", business.ID).First(&config).Error
 	if err == nil {
@@ -43,6 +42,8 @@ func (r *Repository) GetBusinessBySlug(ctx context.Context, slug string) (*entit
 		}
 		page.WebsiteConfig = &entities.WebsiteConfig{
 			Template:             template,
+			SectionsOrder:        config.SectionsOrder,
+			ThemeContent:         config.ThemeContent,
 			ShowHero:             config.ShowHero,
 			ShowAbout:            config.ShowAbout,
 			ShowFeaturedProducts: config.ShowFeaturedProducts,
@@ -61,7 +62,6 @@ func (r *Repository) GetBusinessBySlug(ctx context.Context, slug string) (*entit
 			WhatsAppContent:      config.WhatsAppContent,
 		}
 	}
-	// If no config exists, WebsiteConfig remains nil (defaults apply on frontend)
 
 	return page, nil
 }

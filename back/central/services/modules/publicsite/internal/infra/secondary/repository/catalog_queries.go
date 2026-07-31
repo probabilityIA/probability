@@ -66,5 +66,15 @@ func (r *Repository) GetFeaturedProducts(ctx context.Context, businessID uint, l
 	if err != nil {
 		return nil, err
 	}
+	if len(products) == 0 {
+		err = r.db.Conn(ctx).
+			Where("business_id = ? AND is_active = true AND deleted_at IS NULL", businessID).
+			Order("created_at DESC").
+			Limit(limit).
+			Find(&products).Error
+		if err != nil {
+			return nil, err
+		}
+	}
 	return mappers.ProductsToEntities(products), nil
 }

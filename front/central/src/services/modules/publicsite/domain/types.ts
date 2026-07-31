@@ -13,8 +13,43 @@ export interface PublicBusiness {
     featured_products: PublicProduct[];
 }
 
+export type SectionKey =
+    | 'hero'
+    | 'about'
+    | 'featured_products'
+    | 'testimonials'
+    | 'location'
+    | 'social_media'
+    | 'contact'
+    | 'full_catalog';
+
+export const DEFAULT_SECTIONS_ORDER: SectionKey[] = [
+    'hero',
+    'about',
+    'featured_products',
+    'testimonials',
+    'location',
+    'social_media',
+    'contact',
+    'full_catalog',
+];
+
+export interface ThemeContent {
+    primary?: string;
+    secondary?: string;
+    tertiary?: string;
+    quaternary?: string;
+    background?: string;
+    apply_background?: boolean;
+    apply_navbar?: boolean;
+    background_image?: string;
+    background_overlay?: number;
+}
+
 export interface WebsiteConfig {
     template: string;
+    sections_order?: SectionKey[] | null;
+    theme_content?: ThemeContent | null;
     show_hero: boolean;
     show_about: boolean;
     show_featured_products: boolean;
@@ -59,6 +94,8 @@ export interface LocationContent {
     lng?: number;
     address?: string;
     hours?: string;
+    show_map?: boolean;
+    show_directions?: boolean;
 }
 
 export interface ContactContent {

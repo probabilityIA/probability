@@ -29,6 +29,8 @@ func (r *Repository) GetConfig(ctx context.Context, businessID uint) (*entities.
 		ID:                   config.ID,
 		BusinessID:           config.BusinessID,
 		Template:             template,
+		SectionsOrder:        config.SectionsOrder,
+		ThemeContent:         config.ThemeContent,
 		ShowHero:             config.ShowHero,
 		ShowAbout:            config.ShowAbout,
 		ShowFeaturedProducts: config.ShowFeaturedProducts,
@@ -53,7 +55,6 @@ func (r *Repository) UpsertConfig(ctx context.Context, businessID uint, dto *dto
 	err := r.db.Conn(ctx).Where("business_id = ?", businessID).First(&config).Error
 
 	if err == gorm.ErrRecordNotFound {
-		// Create new config
 		config = models.BusinessWebsiteConfig{
 			BusinessID: businessID,
 		}
@@ -61,9 +62,14 @@ func (r *Repository) UpsertConfig(ctx context.Context, businessID uint, dto *dto
 		return nil, err
 	}
 
-	// Apply updates (only non-nil fields)
 	if dto.Template != nil {
 		config.Template = *dto.Template
+	}
+	if dto.SectionsOrder != nil {
+		config.SectionsOrder = datatypes.JSON(dto.SectionsOrder)
+	}
+	if dto.ThemeContent != nil {
+		config.ThemeContent = datatypes.JSON(dto.ThemeContent)
 	}
 	if dto.ShowHero != nil {
 		config.ShowHero = *dto.ShowHero
@@ -134,6 +140,8 @@ func (r *Repository) UpsertConfig(ctx context.Context, businessID uint, dto *dto
 		ID:                   config.ID,
 		BusinessID:           config.BusinessID,
 		Template:             upsertTemplate,
+		SectionsOrder:        config.SectionsOrder,
+		ThemeContent:         config.ThemeContent,
 		ShowHero:             config.ShowHero,
 		ShowAbout:            config.ShowAbout,
 		ShowFeaturedProducts: config.ShowFeaturedProducts,

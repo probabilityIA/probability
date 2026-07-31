@@ -2,6 +2,8 @@ export interface WebsiteConfigData {
     id: number;
     business_id: number;
     template: string;
+    sections_order?: string[] | null;
+    theme_content?: Record<string, any> | null;
     show_hero: boolean;
     show_about: boolean;
     show_featured_products: boolean;
@@ -22,6 +24,8 @@ export interface WebsiteConfigData {
 
 export interface UpdateWebsiteConfigDTO {
     template?: string;
+    sections_order?: string[];
+    theme_content?: Record<string, any>;
     show_hero?: boolean;
     show_about?: boolean;
     show_featured_products?: boolean;

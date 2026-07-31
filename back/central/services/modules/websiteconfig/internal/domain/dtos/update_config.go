@@ -2,9 +2,10 @@ package dtos
 
 import "encoding/json"
 
-// UpdateConfigDTO for updating website configuration
 type UpdateConfigDTO struct {
 	Template             *string         `json:"template"`
+	SectionsOrder        json.RawMessage `json:"sections_order"`
+	ThemeContent         json.RawMessage `json:"theme_content"`
 	ShowHero             *bool           `json:"show_hero"`
 	ShowAbout            *bool           `json:"show_about"`
 	ShowFeaturedProducts *bool           `json:"show_featured_products"`

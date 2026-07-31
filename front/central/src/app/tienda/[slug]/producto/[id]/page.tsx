@@ -3,6 +3,12 @@ import { getPublicBusinessAction, getPublicProductAction } from '@/services/modu
 import Link from 'next/link';
 import { ProductAddToCart } from '@/services/modules/publicsite/ui/components/ProductAddToCart';
 
+export const revalidate = 60;
+
+export function generateStaticParams(): Array<{ id: string }> {
+    return [];
+}
+
 interface PageProps {
     params: Promise<{ slug: string; id: string }>;
 }

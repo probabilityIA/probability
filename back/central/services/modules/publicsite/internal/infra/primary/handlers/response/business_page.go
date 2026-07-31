@@ -9,6 +9,8 @@ import (
 
 type WebsiteConfigResponse struct {
 	Template             string          `json:"template"`
+	SectionsOrder        json.RawMessage `json:"sections_order"`
+	ThemeContent         json.RawMessage `json:"theme_content"`
 	ShowHero             bool            `json:"show_hero"`
 	ShowAbout            bool            `json:"show_about"`
 	ShowFeaturedProducts bool            `json:"show_featured_products"`
@@ -69,6 +71,8 @@ func BusinessPageFromEntity(b *entities.BusinessPage, featured []entities.Public
 	if b.WebsiteConfig != nil {
 		wc := &WebsiteConfigResponse{
 			Template:             b.WebsiteConfig.Template,
+			SectionsOrder:        b.WebsiteConfig.SectionsOrder,
+			ThemeContent:         b.WebsiteConfig.ThemeContent,
 			ShowHero:             b.WebsiteConfig.ShowHero,
 			ShowAbout:            b.WebsiteConfig.ShowAbout,
 			ShowFeaturedProducts: b.WebsiteConfig.ShowFeaturedProducts,

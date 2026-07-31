@@ -8,6 +8,8 @@ import (
 
 type UpdateConfigRequest struct {
 	Template             *string         `json:"template"`
+	SectionsOrder        json.RawMessage `json:"sections_order"`
+	ThemeContent         json.RawMessage `json:"theme_content"`
 	ShowHero             *bool           `json:"show_hero"`
 	ShowAbout            *bool           `json:"show_about"`
 	ShowFeaturedProducts *bool           `json:"show_featured_products"`
@@ -29,6 +31,8 @@ type UpdateConfigRequest struct {
 func (r *UpdateConfigRequest) ToDTO() *dtos.UpdateConfigDTO {
 	return &dtos.UpdateConfigDTO{
 		Template:             r.Template,
+		SectionsOrder:        r.SectionsOrder,
+		ThemeContent:         r.ThemeContent,
 		ShowHero:             r.ShowHero,
 		ShowAbout:            r.ShowAbout,
 		ShowFeaturedProducts: r.ShowFeaturedProducts,

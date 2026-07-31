@@ -50,4 +50,23 @@ export class WebsiteConfigApiRepository implements IWebsiteConfigRepository {
             body: JSON.stringify(data),
         });
     }
+
+    async uploadImage(formData: FormData, businessId?: number): Promise<{ success: boolean; image_url: string }> {
+        const url = `${this.baseUrl}${this.withBusinessId('/website-config/image', businessId)}`;
+        const headers: Record<string, string> = {};
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(url, { method: 'POST', body: formData, headers });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || data.error || 'Error al subir imagen');
+        }
+        return data;
+    }
+
+    async deleteImage(imageUrl: string, businessId?: number): Promise<{ success: boolean }> {
+        const path = this.withBusinessId(`/website-config/image?image_url=${encodeURIComponent(imageUrl)}`, businessId);
+        return this.fetch<{ success: boolean }>(path, { method: 'DELETE' });
+    }
 }

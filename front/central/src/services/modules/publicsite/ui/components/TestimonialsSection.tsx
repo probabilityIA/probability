@@ -8,7 +8,7 @@ export function TestimonialsSection({ content }: TestimonialsSectionProps) {
     if (!content || content.length === 0) return null;
 
     return (
-        <section className="py-16 px-4 bg-gray-50">
+        <section className="py-16 px-4 bg-black/5">
             <div className="max-w-7xl mx-auto">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Lo que dicen nuestros clientes</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

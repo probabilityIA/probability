@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { getPublicBusinessAction } from '@/services/modules/publicsite/infra/actions';
 import { getTemplate } from '@/services/modules/publicsite/ui/templates/registry';
 
+export const revalidate = 60;
+
 interface PageProps {
     params: Promise<{ slug: string }>;
 }

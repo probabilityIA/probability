@@ -11,4 +11,12 @@ export class WebsiteConfigUseCases {
     async updateConfig(data: UpdateWebsiteConfigDTO, businessId?: number) {
         return this.repository.updateConfig(data, businessId);
     }
+
+    async uploadImage(formData: FormData, businessId?: number) {
+        return this.repository.uploadImage(formData, businessId);
+    }
+
+    async deleteImage(imageUrl: string, businessId?: number) {
+        return this.repository.deleteImage(imageUrl, businessId);
+    }
 }

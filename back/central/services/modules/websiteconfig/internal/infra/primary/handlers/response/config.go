@@ -10,6 +10,8 @@ type ConfigResponse struct {
 	ID                   uint            `json:"id"`
 	BusinessID           uint            `json:"business_id"`
 	Template             string          `json:"template"`
+	SectionsOrder        json.RawMessage `json:"sections_order"`
+	ThemeContent         json.RawMessage `json:"theme_content"`
 	ShowHero             bool            `json:"show_hero"`
 	ShowAbout            bool            `json:"show_about"`
 	ShowFeaturedProducts bool            `json:"show_featured_products"`
@@ -33,6 +35,8 @@ func ConfigFromEntity(e *entities.WebsiteConfig) ConfigResponse {
 		ID:                   e.ID,
 		BusinessID:           e.BusinessID,
 		Template:             e.Template,
+		SectionsOrder:        e.SectionsOrder,
+		ThemeContent:         e.ThemeContent,
 		ShowHero:             e.ShowHero,
 		ShowAbout:            e.ShowAbout,
 		ShowFeaturedProducts: e.ShowFeaturedProducts,

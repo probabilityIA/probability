@@ -108,7 +108,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 	marketingleads.New(router, database, logger, waSender)
 
-	websiteconfig.New(router, database, logger)
+	websiteconfig.New(router, database, logger, s3, environment)
 	tickets.New(router, database, logger, s3)
 	accounting.New(router, database, logger, environment, integrationCore, dianEmitter)
 

@@ -1,10 +1,12 @@
 package entities
 
-// WebsiteConfig represents the website configuration for a business
 type WebsiteConfig struct {
 	ID         uint
 	BusinessID uint
 	Template   string
+
+	SectionsOrder []byte
+	ThemeContent  []byte
 
 	ShowHero             bool
 	ShowAbout            bool
