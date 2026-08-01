@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiktok"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -55,4 +56,7 @@ func New(
 
 	jumpsellerProvider := jumpseller.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeJumpseller, jumpsellerProvider)
+
+	tiktokProvider := tiktok.New(router, logger, config, rabbitMQ, database, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeTikTok, tiktokProvider)
 }

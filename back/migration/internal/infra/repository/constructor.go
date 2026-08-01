@@ -179,6 +179,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateClientMultiBusiness(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateTiktokIntegrationType(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateMarketingLeads(ctx); err != nil {
 		return err
 	}

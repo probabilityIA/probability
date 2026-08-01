@@ -177,6 +177,8 @@ const (
 
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
 
+	QueueTiktokShopSnapshots = "integrations.tiktok.shop_snapshots"
+
 	QueueIntegrationSyncRuns = "integrations.sync_runs"
 
 	QueueWooProductSyncRequests = "woocommerce.products.sync.requests"

@@ -29,6 +29,7 @@ const (
 	IntegrationTypeTiendaWeb    = 31
 	IntegrationTypeJumpseller   = 33
 	IntegrationTypeShipit       = 34
+	IntegrationTypeTikTok       = 35
 )
 
 const (
@@ -85,6 +86,8 @@ func IntegrationTypeCodeAsInt(code string) int {
 		return IntegrationTypeJumpseller
 	case "shipit":
 		return IntegrationTypeShipit
+	case "tiktok", "tiktok_shop":
+		return IntegrationTypeTikTok
 	case "email":
 		return IntegrationTypeEmail
 	case "tienda":

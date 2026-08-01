@@ -18,6 +18,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
+	"github.com/secamc93/probability/back/testing/integrations/tiktok"
 	"github.com/secamc93/probability/back/testing/integrations/vtex"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
 	"github.com/secamc93/probability/back/testing/integrations/woocommerce"
@@ -137,6 +138,16 @@ func main() {
 		}
 	}()
 
+	tiktokPort := getEnv("TIKTOK_MOCK_PORT", "9101")
+	tiktokServer := tiktok.New(logger, tiktokPort)
+
+	go func() {
+		if err := tiktokServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting TikTok mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
 
@@ -169,6 +180,7 @@ func main() {
 	fmt.Printf("Siigo HTTP:        http://localhost:%s\n", siigoPort)
 	fmt.Printf("WooCommerce HTTP:  http://localhost:%s\n", woocommercePort)
 	fmt.Printf("Jumpseller HTTP:   http://localhost:%s\n", jumpsellerPort)
+	fmt.Printf("TikTok HTTP:       http://localhost:%s\n", tiktokPort)
 	fmt.Printf("MercadoLibre HTTP: http://localhost:%s\n", meliPort)
 	fmt.Printf("VTEX HTTP:         http://localhost:%s\n", vtexPort)
 	fmt.Printf("Shipit HTTP:       http://localhost:%s\n", shipitPort)
