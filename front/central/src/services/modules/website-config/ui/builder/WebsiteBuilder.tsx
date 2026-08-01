@@ -7,6 +7,7 @@ import { WebsiteConfigData, UpdateWebsiteConfigDTO, WebsiteCategory } from '../.
 import { PublicBusiness, PublicProduct, WebsiteConfig, SectionKey } from '@/services/modules/publicsite/domain/types';
 import { getTemplate, getAvailableTemplates } from '@/services/modules/publicsite/ui/templates/registry';
 import { SectionRenderer } from '@/services/modules/publicsite/ui/components/SectionRenderer';
+import { AnnouncementBar } from '@/services/modules/publicsite/ui/components/PublicNav';
 import { CartProvider } from '@/services/modules/publicsite/ui/cart/cart-context';
 import { buildThemeStyle } from '@/services/modules/publicsite/ui/theme';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -16,7 +17,7 @@ import { TokenStorage } from '@/shared/utils/token-storage';
 import { SECTION_META, normalizeOrder } from './section-meta';
 import { SectionOverlay } from './SectionOverlay';
 import { ThemeEditor } from './ThemeEditor';
-import { HeroEditor, AboutEditor, TestimonialsEditor, LocationEditor, ContactEditor, SocialMediaEditor, WhatsAppEditor } from './editors';
+import { HeroEditor, AboutEditor, TestimonialsEditor, LocationEditor, ContactEditor, SocialMediaEditor, WhatsAppEditor, NavbarEditor } from './editors';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
 function collectWebsiteImages(c: WebsiteConfigData | null): string[] {
@@ -55,6 +56,7 @@ export function WebsiteBuilder() {
     const [products, setProducts] = useState<PublicProduct[]>([]);
     const [categories, setCategories] = useState<WebsiteCategory[]>([]);
     const [selectedSection, setSelectedSection] = useState<SectionKey | null>(null);
+    const [navbarEditing, setNavbarEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [dirty, setDirty] = useState(false);
@@ -225,6 +227,7 @@ export function WebsiteBuilder() {
         template: config.template,
         sections_order: order,
         theme_content: theme,
+        navbar_content: config.navbar_content as any,
         show_hero: config.show_hero,
         show_about: config.show_about,
         show_featured_products: config.show_featured_products,
@@ -259,6 +262,66 @@ export function WebsiteBuilder() {
     };
 
     const meta = selectedSection ? SECTION_META[selectedSection] : null;
+    const navbarContentPreview = (config.navbar_content as Record<string, any>) || null;
+    const isSidebarPreview = navbarContentPreview?.position === 'left' || navbarContentPreview?.position === 'right';
+
+    const renderSection = (key: SectionKey, index: number) => {
+        const m = SECTION_META[key];
+        const visible = (config as unknown as Record<string, boolean>)[m.toggleField];
+        const rendered = (
+            <SectionRenderer
+                sectionKey={key}
+                business={canvasBusiness}
+                slug={businessInfo.code}
+                config={canvasConfig}
+                template={template}
+                heroEditable={key === 'hero' && selectedSection === 'hero'}
+                onHeroContentPositionChange={(position) => {
+                    const hero = (config.hero_content as Record<string, any>) || {};
+                    patchConfig({ hero_content: { ...hero, position } } as Partial<WebsiteConfigData>);
+                }}
+                onHeroBlockPositionChange={(idx, position) => {
+                    const hero = (config.hero_content as Record<string, any>) || {};
+                    const blocks = [...(hero.blocks || [])];
+                    blocks[idx] = { ...blocks[idx], position };
+                    patchConfig({ hero_content: { ...hero, blocks } } as Partial<WebsiteConfigData>);
+                }}
+            />
+        );
+        const isEmpty = m.contentField && !(config as unknown as Record<string, unknown>)[m.contentField]
+            && key !== 'hero' && key !== 'contact';
+        return (
+            <SectionOverlay
+                key={key}
+                label={m.label}
+                visible={visible}
+                selected={selectedSection === key}
+                isFirst={index === 0}
+                isLast={index === order.length - 1}
+                hasEditor={!!m.contentField}
+                onSelect={() => { setSelectedSection(key); setNavbarEditing(false); }}
+                onToggleVisible={() => patchConfig({ [m.toggleField]: !visible } as Partial<WebsiteConfigData>)}
+                onMoveUp={() => moveSection(index, index - 1)}
+                onMoveDown={() => moveSection(index, index + 1)}
+                onDragStart={() => { dragIndex.current = index; }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragIndex.current !== null && dragIndex.current !== index) {
+                        moveSection(dragIndex.current, index);
+                    }
+                    dragIndex.current = null;
+                }}
+            >
+                {isEmpty ? (
+                    <div className="py-16 text-center text-gray-400 border-y border-dashed border-gray-300 dark:border-gray-700">
+                        <p className="font-medium">{m.label}</p>
+                        <p className="text-sm">Sin contenido: haz clic para editar esta seccion</p>
+                    </div>
+                ) : rendered}
+            </SectionOverlay>
+        );
+    };
 
     return (
         <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
@@ -275,54 +338,27 @@ export function WebsiteBuilder() {
                     style={buildThemeStyle(theme, fallbackColors)}
                 >
                     <CartProvider slug={businessInfo.code}>
-                        <template.Nav business={canvasBusiness} />
-                        {order.map((key, index) => {
-                            const m = SECTION_META[key];
-                            const visible = (config as unknown as Record<string, boolean>)[m.toggleField];
-                            const rendered = (
-                                <SectionRenderer
-                                    sectionKey={key}
-                                    business={canvasBusiness}
-                                    slug={businessInfo.code}
-                                    config={canvasConfig}
-                                    template={template}
-                                />
-                            );
-                            const isEmpty = m.contentField && !(config as unknown as Record<string, unknown>)[m.contentField]
-                                && key !== 'hero' && key !== 'contact';
-                            return (
-                                <SectionOverlay
-                                    key={key}
-                                    label={m.label}
-                                    visible={visible}
-                                    selected={selectedSection === key}
-                                    isFirst={index === 0}
-                                    isLast={index === order.length - 1}
-                                    hasEditor={!!m.contentField}
-                                    onSelect={() => setSelectedSection(key)}
-                                    onToggleVisible={() => patchConfig({ [m.toggleField]: !visible } as Partial<WebsiteConfigData>)}
-                                    onMoveUp={() => moveSection(index, index - 1)}
-                                    onMoveDown={() => moveSection(index, index + 1)}
-                                    onDragStart={() => { dragIndex.current = index; }}
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) => {
-                                        e.preventDefault();
-                                        if (dragIndex.current !== null && dragIndex.current !== index) {
-                                            moveSection(dragIndex.current, index);
-                                        }
-                                        dragIndex.current = null;
-                                    }}
-                                >
-                                    {isEmpty ? (
-                                        <div className="py-16 text-center text-gray-400 border-y border-dashed border-gray-300 dark:border-gray-700">
-                                            <p className="font-medium">{m.label}</p>
-                                            <p className="text-sm">Sin contenido: haz clic para editar esta seccion</p>
-                                        </div>
-                                    ) : rendered}
-                                </SectionOverlay>
-                            );
-                        })}
-                        <template.Footer business={canvasBusiness} />
+                        <AnnouncementBar navbarContent={navbarContentPreview} />
+                        {isSidebarPreview ? (
+                            <div className="flex">
+                                {navbarContentPreview?.position === 'left' && (
+                                    <template.Nav business={canvasBusiness} navbarContent={navbarContentPreview} />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    {order.map((key, index) => renderSection(key, index))}
+                                    <template.Footer business={canvasBusiness} />
+                                </div>
+                                {navbarContentPreview?.position === 'right' && (
+                                    <template.Nav business={canvasBusiness} navbarContent={navbarContentPreview} />
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                <template.Nav business={canvasBusiness} navbarContent={navbarContentPreview} />
+                                {order.map((key, index) => renderSection(key, index))}
+                                <template.Footer business={canvasBusiness} />
+                            </>
+                        )}
                     </CartProvider>
                 </div>
             </div>
@@ -353,7 +389,7 @@ export function WebsiteBuilder() {
                 </div>
 
                 <div className="p-4 space-y-6">
-                    {!selectedSection && (
+                    {!selectedSection && !navbarEditing && (
                         <>
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Plantilla</h3>
@@ -367,6 +403,14 @@ export function WebsiteBuilder() {
                                     ))}
                                 </select>
                             </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setNavbarEditing(true)}
+                                className="w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                                Editar Navbar
+                            </button>
 
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Tema de colores</h3>
@@ -487,6 +531,26 @@ export function WebsiteBuilder() {
                                     Bloque de llamado a la accion que invita a explorar el catalogo completo.
                                 </p>
                             )}
+                        </div>
+                    )}
+
+                    {navbarEditing && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Navbar</h3>
+                                <button
+                                    onClick={() => setNavbarEditing(false)}
+                                    className="text-xs text-gray-400 hover:text-gray-600"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                            <NavbarEditor
+                                content={config.navbar_content || null}
+                                onChange={(c) => patchConfig({ navbar_content: c })}
+                                businessId={effectiveBusinessId}
+                                onImageDeleted={handleImageDeleted}
+                            />
                         </div>
                     )}
                 </div>

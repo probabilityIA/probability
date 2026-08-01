@@ -8,6 +8,7 @@ type WebsiteConfig struct {
 	SectionsOrder    []byte
 	ThemeContent     []byte
 	HiddenCategories []byte
+	NavbarContent    []byte
 
 	ShowHero             bool
 	ShowAbout            bool

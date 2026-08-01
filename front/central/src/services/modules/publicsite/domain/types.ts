@@ -46,10 +46,29 @@ export interface ThemeContent {
     background_overlay?: number;
 }
 
+export interface NavbarLink {
+    label: string;
+    href: string;
+    icon?: string;
+    icon_type?: 'symbol' | 'image';
+    icon_image?: string;
+}
+
+export interface NavbarContent {
+    position?: 'top' | 'left' | 'right';
+    alignment?: 'left' | 'center' | 'right';
+    collapsible?: boolean;
+    links?: NavbarLink[];
+    announcement_text?: string;
+    announcement_color?: string;
+    announcement_animation?: 'none' | 'fade' | 'slide' | 'marquee';
+}
+
 export interface WebsiteConfig {
     template: string;
     sections_order?: SectionKey[] | null;
     theme_content?: ThemeContent | null;
+    navbar_content?: NavbarContent | null;
     show_hero: boolean;
     show_about: boolean;
     show_featured_products: boolean;
@@ -68,11 +87,35 @@ export interface WebsiteConfig {
     whatsapp_content: WhatsAppContent | null;
 }
 
+export interface HeroPosition {
+    x: number;
+    y: number;
+}
+
+export interface HeroBlock {
+    type: 'text' | 'image' | 'button' | 'empty';
+    title?: string;
+    subtitle?: string;
+    title_size?: number;
+    subtitle_size?: number;
+    image?: string;
+    button_text?: string;
+    button_link?: string;
+    position?: HeroPosition;
+}
+
 export interface HeroContent {
     title?: string;
     subtitle?: string;
+    title_size?: number;
+    subtitle_size?: number;
     cta_text?: string;
     background_image?: string;
+    layout_rows?: number;
+    layout_columns?: number;
+    column_widths?: number[];
+    blocks?: HeroBlock[];
+    position?: HeroPosition;
 }
 
 export interface AboutContent {

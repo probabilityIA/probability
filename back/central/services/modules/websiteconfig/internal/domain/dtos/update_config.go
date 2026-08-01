@@ -7,6 +7,7 @@ type UpdateConfigDTO struct {
 	SectionsOrder        json.RawMessage `json:"sections_order"`
 	ThemeContent         json.RawMessage `json:"theme_content"`
 	HiddenCategories     json.RawMessage `json:"hidden_categories"`
+	NavbarContent        json.RawMessage `json:"navbar_content"`
 	ShowHero             *bool           `json:"show_hero"`
 	ShowAbout            *bool           `json:"show_about"`
 	ShowFeaturedProducts *bool           `json:"show_featured_products"`
