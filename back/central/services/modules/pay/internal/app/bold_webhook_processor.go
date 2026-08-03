@@ -389,13 +389,13 @@ func (uc *useCase) ApplyWalletRechargeStatus(ctx context.Context, in *dtos.Walle
 		return nil
 	}
 
-	if walletTx.Status != entities.WalletTxStatusPending {
+	if walletTx.Status == entities.WalletTxStatusCompleted {
 		uc.log.Info(ctx).
 			Str("source", in.Source).
 			Str("wallet_tx_id", walletTx.ID.String()).
 			Str("current_status", walletTx.Status).
 			Str("target_status", newStatus).
-			Msg("wallet recharge: transaction not pending, skipping")
+			Msg("wallet recharge: already completed, skipping")
 		return nil
 	}
 
