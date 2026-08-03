@@ -4,9 +4,9 @@ import "time"
 
 // WalletResponse respuesta HTTP de una billetera
 type WalletResponse struct {
-	ID         string  `json:"ID"`
-	BusinessID uint    `json:"BusinessID"`
-	Balance    float64 `json:"Balance"`
+	ID         string    `json:"ID"`
+	BusinessID uint      `json:"BusinessID"`
+	Balance    float64   `json:"Balance"`
 	CreatedAt  time.Time `json:"CreatedAt"`
 	UpdatedAt  time.Time `json:"UpdatedAt"`
 }

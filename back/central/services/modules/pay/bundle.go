@@ -73,7 +73,13 @@ func New(
 			}
 		}()
 
-		moduleLogger.Info(ctx).Msg("Consumers de pagos iniciados: responses, retry, bold_webhook")
+		go func() {
+			if err := consumers.BancolombiaWebhook.Start(ctx); err != nil {
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de bancolombia webhook events")
+			}
+		}()
+
+		moduleLogger.Info(ctx).Msg("Consumers de pagos iniciados: responses, retry, bold_webhook, bancolombia_webhook")
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de pagos deshabilitados")
 	}
