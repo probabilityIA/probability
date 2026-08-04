@@ -137,6 +137,10 @@ const (
 )
 
 const (
+	QueueWalletBalanceAlertRequested = "wallet.balance_alert.requested"
+)
+
+const (
 	QueueAuthPasswordResetOTP = "auth.password_reset.otp"
 )
 

@@ -262,15 +262,23 @@ func (u *usecases) getOrCreateConversation(
 			Msg("[WhatsApp UseCase] - conversación expirada, creando nueva")
 	}
 
+	conversationType := entities.ConversationTypeOrder
+	initialState := entities.StateAwaitingConfirmation
+	if orderNumber == "" {
+		conversationType = entities.ConversationTypeSystemAlert
+		initialState = entities.StateStart
+	}
+
 	newConversation := &entities.Conversation{
-		PhoneNumber:  phoneNumber,
-		OrderNumber:  orderNumber,
-		BusinessID:   businessID,
-		CurrentState: entities.StateAwaitingConfirmation,
-		Metadata:     make(map[string]interface{}),
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		ExpiresAt:    time.Now().Add(24 * time.Hour),
+		PhoneNumber:      phoneNumber,
+		OrderNumber:      orderNumber,
+		ConversationType: conversationType,
+		BusinessID:       businessID,
+		CurrentState:     initialState,
+		Metadata:         make(map[string]interface{}),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		ExpiresAt:        time.Now().Add(24 * time.Hour),
 	}
 
 	if err := u.conversationCache.Save(ctx, newConversation); err != nil {

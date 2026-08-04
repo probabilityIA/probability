@@ -62,6 +62,9 @@ type IRepository interface {
 
 	GetWalletKPISelection(ctx context.Context) (*entities.WalletKPISelection, error)
 	UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error
+
+	ListLowBalanceAlertCandidates(ctx context.Context, threshold float64) ([]entities.LowBalanceAlertCandidate, error)
+	HasRecentSystemAlert(ctx context.Context, phoneNumber string) (bool, error)
 }
 
 // IRequestPublisher publica solicitudes de pago a la cola pay.requests
@@ -112,4 +115,6 @@ type IWalletUseCase interface {
 
 	GetWalletKPISelection(ctx context.Context) (*dtos.WalletKPISelectionResponse, error)
 	UpdateWalletKPISelection(ctx context.Context, req *dtos.UpdateWalletKPISelectionRequest) (*dtos.WalletKPISelectionResponse, error)
+
+	CheckLowBalances(ctx context.Context) error
 }

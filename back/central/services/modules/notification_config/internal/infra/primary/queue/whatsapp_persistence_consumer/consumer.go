@@ -173,17 +173,18 @@ func (c *PersistenceConsumer) handleMessageLogStatusUpdated(ctx context.Context,
 
 func toConversationEntity(p *request.ConversationPayload) *entities.WhatsAppConversation {
 	return &entities.WhatsAppConversation{
-		ID:             p.ID,
-		PhoneNumber:    p.PhoneNumber,
-		OrderNumber:    p.OrderNumber,
-		BusinessID:     p.BusinessID,
-		CurrentState:   p.CurrentState,
-		LastMessageID:  p.LastMessageID,
-		LastTemplateID: p.LastTemplateID,
-		Metadata:       p.Metadata,
-		CreatedAt:      p.CreatedAt,
-		UpdatedAt:      p.UpdatedAt,
-		ExpiresAt:      p.ExpiresAt,
+		ID:               p.ID,
+		PhoneNumber:      p.PhoneNumber,
+		OrderNumber:      p.OrderNumber,
+		ConversationType: p.ConversationType,
+		BusinessID:       p.BusinessID,
+		CurrentState:     p.CurrentState,
+		LastMessageID:    p.LastMessageID,
+		LastTemplateID:   p.LastTemplateID,
+		Metadata:         p.Metadata,
+		CreatedAt:        p.CreatedAt,
+		UpdatedAt:        p.UpdatedAt,
+		ExpiresAt:        p.ExpiresAt,
 	}
 }
 

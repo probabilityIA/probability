@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/message_audit/response"
 )
 
-// DomainToListResponse convierte la respuesta paginada de dominio a response HTTP
 func DomainToListResponse(dto *dtos.PaginatedMessageAuditResponseDTO) response.PaginatedMessageAuditResponse {
 	logs := make([]response.MessageAuditLog, len(dto.Data))
 	for i, d := range dto.Data {
@@ -35,7 +34,6 @@ func DomainToListResponse(dto *dtos.PaginatedMessageAuditResponseDTO) response.P
 	}
 }
 
-// DomainToStatsResponse convierte estadísticas de dominio a response HTTP
 func DomainToStatsResponse(dto *dtos.MessageAuditStatsResponseDTO) response.MessageAuditStats {
 	return response.MessageAuditStats{
 		TotalSent:      dto.TotalSent,
@@ -46,7 +44,6 @@ func DomainToStatsResponse(dto *dtos.MessageAuditStatsResponseDTO) response.Mess
 	}
 }
 
-// DomainToConversationListResponse convierte lista de conversaciones de dominio a response HTTP
 func DomainToConversationListResponse(dto *dtos.PaginatedConversationListResponseDTO) response.PaginatedConversationListResponse {
 	conversations := make([]response.ConversationSummary, len(dto.Data))
 	for i, d := range dto.Data {
@@ -54,6 +51,7 @@ func DomainToConversationListResponse(dto *dtos.PaginatedConversationListRespons
 			ID:                   d.ID,
 			PhoneNumber:          d.PhoneNumber,
 			OrderNumber:          d.OrderNumber,
+			ConversationType:     d.ConversationType,
 			CurrentState:         d.CurrentState,
 			MessageCount:         d.MessageCount,
 			LastMessageContent:   d.LastMessageContent,
@@ -73,7 +71,6 @@ func DomainToConversationListResponse(dto *dtos.PaginatedConversationListRespons
 	}
 }
 
-// DomainToConversationDetailResponse convierte detalle de conversación de dominio a response HTTP
 func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO) response.ConversationDetailResponse {
 	messages := make([]response.ConversationMessage, len(dto.Messages))
 	for i, m := range dto.Messages {
@@ -91,11 +88,12 @@ func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO)
 	}
 
 	return response.ConversationDetailResponse{
-		ConversationID: dto.ConversationID,
-		PhoneNumber:    dto.PhoneNumber,
-		OrderNumber:    dto.OrderNumber,
-		CurrentState:   dto.CurrentState,
-		AiPaused:       dto.AiPaused,
-		Messages:       messages,
+		ConversationID:   dto.ConversationID,
+		PhoneNumber:      dto.PhoneNumber,
+		OrderNumber:      dto.OrderNumber,
+		ConversationType: dto.ConversationType,
+		CurrentState:     dto.CurrentState,
+		AiPaused:         dto.AiPaused,
+		Messages:         messages,
 	}
 }

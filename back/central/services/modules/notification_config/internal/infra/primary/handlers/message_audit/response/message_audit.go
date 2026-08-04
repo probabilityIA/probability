@@ -1,6 +1,5 @@
 package response
 
-// MessageAuditLog es el DTO de respuesta HTTP para un log de auditoría
 type MessageAuditLog struct {
 	ID             string  `json:"id"`
 	ConversationID string  `json:"conversation_id"`
@@ -17,7 +16,6 @@ type MessageAuditLog struct {
 	BusinessID     uint    `json:"business_id"`
 }
 
-// MessageAuditStats es el DTO de respuesta HTTP para estadísticas
 type MessageAuditStats struct {
 	TotalSent      int64   `json:"total_sent"`
 	TotalDelivered int64   `json:"total_delivered"`
@@ -26,7 +24,6 @@ type MessageAuditStats struct {
 	SuccessRate    float64 `json:"success_rate"`
 }
 
-// PaginatedMessageAuditResponse es la respuesta paginada de logs
 type PaginatedMessageAuditResponse struct {
 	Data       []MessageAuditLog `json:"data"`
 	Total      int64             `json:"total"`
@@ -35,13 +32,11 @@ type PaginatedMessageAuditResponse struct {
 	TotalPages int               `json:"total_pages"`
 }
 
-// --- Conversation View ---
-
-// ConversationSummary es el resumen de una conversación para la vista de lista
 type ConversationSummary struct {
 	ID                   string `json:"id"`
 	PhoneNumber          string `json:"phone_number"`
 	OrderNumber          string `json:"order_number"`
+	ConversationType     string `json:"conversation_type"`
 	CurrentState         string `json:"current_state"`
 	MessageCount         int    `json:"message_count"`
 	LastMessageContent   string `json:"last_message_content"`
@@ -51,7 +46,6 @@ type ConversationSummary struct {
 	CreatedAt            string `json:"created_at"`
 }
 
-// PaginatedConversationListResponse es la respuesta paginada de conversaciones
 type PaginatedConversationListResponse struct {
 	Data       []ConversationSummary `json:"data"`
 	Total      int64                 `json:"total"`
@@ -60,7 +54,6 @@ type PaginatedConversationListResponse struct {
 	TotalPages int                   `json:"total_pages"`
 }
 
-// ConversationMessage es un mensaje dentro de una conversación para la vista de chat
 type ConversationMessage struct {
 	ID           string  `json:"id"`
 	Direction    string  `json:"direction"`
@@ -73,12 +66,12 @@ type ConversationMessage struct {
 	CreatedAt    string  `json:"created_at"`
 }
 
-// ConversationDetailResponse es la respuesta con el detalle de una conversación
 type ConversationDetailResponse struct {
-	ConversationID string                `json:"conversation_id"`
-	PhoneNumber    string                `json:"phone_number"`
-	OrderNumber    string                `json:"order_number"`
-	CurrentState   string                `json:"current_state"`
-	AiPaused       bool                  `json:"ai_paused"`
-	Messages       []ConversationMessage `json:"messages"`
+	ConversationID   string                `json:"conversation_id"`
+	PhoneNumber      string                `json:"phone_number"`
+	OrderNumber      string                `json:"order_number"`
+	ConversationType string                `json:"conversation_type"`
+	CurrentState     string                `json:"current_state"`
+	AiPaused         bool                  `json:"ai_paused"`
+	Messages         []ConversationMessage `json:"messages"`
 }

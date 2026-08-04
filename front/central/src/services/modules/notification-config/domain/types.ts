@@ -208,6 +208,7 @@ export interface ConversationSummary {
     id: string;
     phone_number: string;
     order_number: string;
+    conversation_type: string;
     current_state: string;
     message_count: number;
     last_message_content: string;
@@ -251,6 +252,7 @@ export interface ConversationDetailResponse {
     conversation_id: string;
     phone_number: string;
     order_number: string;
+    conversation_type: string;
     current_state: string;
     messages: ConversationMessage[];
 }

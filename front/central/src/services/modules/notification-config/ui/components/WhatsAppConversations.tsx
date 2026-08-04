@@ -382,6 +382,7 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
             ) : (
               conversations.map((conv) => {
                 const isActive = selectedId === conv.id;
+                const isSystemAlert = conv.conversation_type === 'system_alert';
                 const state = stateLabel[conv.current_state] || { label: conv.current_state, color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' };
                 return (
                   <button
@@ -390,13 +391,11 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                     className={`w-full text-left p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors ${isActive ? 'bg-green-50 dark:bg-green-900/20 border-l-2 border-l-green-500' : ''}`}
                   >
                     <div className="flex gap-3">
-                      {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                        {conv.phone_number.slice(-2)}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${isSystemAlert ? 'bg-gradient-to-br from-purple-400 to-purple-600' : 'bg-gradient-to-br from-green-400 to-green-600'}`}>
+                        {isSystemAlert ? '🔔' : conv.phone_number.slice(-2)}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        {/* Row 1: phone + time */}
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
                             {conv.phone_number}
@@ -406,7 +405,6 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                           </span>
                         </div>
 
-                        {/* Row 2: last message preview */}
                         <div className="flex items-center gap-1 mt-0.5">
                           {conv.last_message_direction === 'outbound' && (
                             <span className={`text-[10px] shrink-0 ${conv.last_message_status === 'read' ? 'text-blue-500' : conv.last_message_status === 'failed' ? 'text-red-400' : 'text-gray-400'}`}>
@@ -418,16 +416,23 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                           </p>
                         </div>
 
-                        {/* Row 3: order + state badge + count */}
                         <div className="flex items-center gap-1.5 mt-1">
-                          {conv.order_number && (
-                            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
-                              #{conv.order_number}
+                          {isSystemAlert ? (
+                            <span className="inline-block px-1.5 py-0 rounded-full text-[9px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                              Aviso del sistema
                             </span>
+                          ) : (
+                            <>
+                              {conv.order_number && (
+                                <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">
+                                  #{conv.order_number}
+                                </span>
+                              )}
+                              <span className={`inline-block px-1.5 py-0 rounded-full text-[9px] font-medium ${state.color}`}>
+                                {state.label}
+                              </span>
+                            </>
                           )}
-                          <span className={`inline-block px-1.5 py-0 rounded-full text-[9px] font-medium ${state.color}`}>
-                            {state.label}
-                          </span>
                           <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto">
                             {conv.message_count} msg
                           </span>
@@ -484,52 +489,65 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
             </div>
           ) : detail ? (
             <>
-              {/* Chat header */}
-              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {detail.phone_number.slice(-2)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{detail.phone_number}</p>
-                  <div className="flex items-center gap-2">
-                    {detail.order_number && (
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">Orden #{detail.order_number}</span>
-                    )}
-                    {(() => {
-                      const s = stateLabel[detail.current_state] || { label: detail.current_state, color: 'bg-gray-100 text-gray-600' };
-                      return (
-                        <span className={`inline-block px-1.5 py-0 rounded-full text-[9px] font-medium ${s.color}`}>
-                          {s.label}
-                        </span>
-                      );
-                    })()}
+              {(() => {
+                const isSystemAlert = detail.conversation_type === 'system_alert';
+                return (
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750 flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${isSystemAlert ? 'bg-gradient-to-br from-purple-400 to-purple-600' : 'bg-gradient-to-br from-green-400 to-green-600'}`}>
+                      {isSystemAlert ? '🔔' : detail.phone_number.slice(-2)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{detail.phone_number}</p>
+                      <div className="flex items-center gap-2">
+                        {isSystemAlert ? (
+                          <span className="inline-block px-1.5 py-0 rounded-full text-[9px] font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                            Aviso del sistema
+                          </span>
+                        ) : (
+                          <>
+                            {detail.order_number && (
+                              <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono">Orden #{detail.order_number}</span>
+                            )}
+                            {(() => {
+                              const s = stateLabel[detail.current_state] || { label: detail.current_state, color: 'bg-gray-100 text-gray-600' };
+                              return (
+                                <span className={`inline-block px-1.5 py-0 rounded-full text-[9px] font-medium ${s.color}`}>
+                                  {s.label}
+                                </span>
+                              );
+                            })()}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">{detail.messages.length} msg</span>
+                      {!isSystemAlert && (
+                        <button
+                          onClick={handleToggleAI}
+                          disabled={aiToggling}
+                          title={aiPaused ? 'Reactivar IA' : 'Pausar IA y tomar control'}
+                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
+                            aiPaused
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300'
+                          }`}
+                        >
+                          {aiToggling ? (
+                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                          ) : (
+                            <span>{aiPaused ? '🔴' : '🟢'}</span>
+                          )}
+                          <span>IA {aiPaused ? 'Pausada' : 'Activa'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {/* AI toggle */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">{detail.messages.length} msg</span>
-                  <button
-                    onClick={handleToggleAI}
-                    disabled={aiToggling}
-                    title={aiPaused ? 'Reactivar IA' : 'Pausar IA y tomar control'}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
-                      aiPaused
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300'
-                    }`}
-                  >
-                    {aiToggling ? (
-                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                      </svg>
-                    ) : (
-                      <span>{aiPaused ? '🔴' : '🟢'}</span>
-                    )}
-                    <span>IA {aiPaused ? 'Pausada' : 'Activa'}</span>
-                  </button>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Messages area */}
               <div
@@ -591,9 +609,14 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Bottom bar */}
               <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">
-                {!aiPaused ? (
+                {detail.conversation_type === 'system_alert' ? (
+                  <div className="flex items-center justify-center py-2">
+                    <p className="text-[11px] text-purple-600 dark:text-purple-400">
+                      🔔 Este es un aviso automático del sistema, no admite respuesta.
+                    </p>
+                  </div>
+                ) : !aiPaused ? (
                   /* AI is active — show blocked state */
                   <div className="flex flex-col items-center justify-center py-2 gap-1">
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">

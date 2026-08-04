@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/queue/consumer"
+	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/primary/worker"
 	payqueue "github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/queue"
 	payredis "github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/repository"
@@ -48,7 +49,10 @@ func New(
 	}
 
 	useCase := app.New(repo, requestPublisher, ssePublisher, rabbitMQ, config, moduleLogger)
-	walletUC := app.NewWalletUseCase(repo, useCase, config, moduleLogger)
+	walletUC := app.NewWalletUseCase(repo, useCase, rabbitMQ, config, moduleLogger)
+
+	lowBalanceWorker := worker.NewLowBalanceWorker(walletUC, moduleLogger)
+	go lowBalanceWorker.Start(ctx)
 
 	handler := handlers.New(useCase, moduleLogger)
 	handler.RegisterRoutes(router)
