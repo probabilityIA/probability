@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateBulkInvoiceJob crea un nuevo job de facturación masiva en la base de datos
 func (r *Repository) CreateJob(ctx context.Context, job *entities.BulkInvoiceJob) error {
 	model := mappers.JobToModel(job)
 
@@ -19,7 +18,6 @@ func (r *Repository) CreateJob(ctx context.Context, job *entities.BulkInvoiceJob
 		return err
 	}
 
-	// Actualizar el ID generado
 	job.ID = model.ID.String()
 
 	r.log.Info(ctx).
@@ -30,7 +28,6 @@ func (r *Repository) CreateJob(ctx context.Context, job *entities.BulkInvoiceJob
 	return nil
 }
 
-// CreateBulkInvoiceJobItems crea múltiples items de job en la base de datos (batch insert)
 func (r *Repository) CreateJobItems(ctx context.Context, items []*entities.BulkInvoiceJobItem) error {
 	if len(items) == 0 {
 		return nil
@@ -51,7 +48,6 @@ func (r *Repository) CreateJobItems(ctx context.Context, items []*entities.BulkI
 	return nil
 }
 
-// GetBulkInvoiceJobByID busca un job de facturación masiva por su UUID en la base de datos
 func (r *Repository) GetJobByID(ctx context.Context, jobID string) (*entities.BulkInvoiceJob, error) {
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -70,7 +66,6 @@ func (r *Repository) GetJobByID(ctx context.Context, jobID string) (*entities.Bu
 	return mappers.JobToDomain(&jobModel), nil
 }
 
-// GetBulkInvoiceJobItemsByJobID busca todos los items de un job específico en la base de datos
 func (r *Repository) GetJobItems(ctx context.Context, jobID string) ([]*entities.BulkInvoiceJobItem, error) {
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
@@ -94,14 +89,33 @@ func (r *Repository) GetJobItems(ctx context.Context, jobID string) ([]*entities
 	return items, nil
 }
 
-// GetJobItemByInvoiceID busca un item de job por el ID de la factura asociada
+func (r *Repository) GetJobItemByJobAndOrder(ctx context.Context, jobID, orderID string) (*entities.BulkInvoiceJobItem, error) {
+	jobUUID, err := uuid.Parse(jobID)
+	if err != nil {
+		return nil, err
+	}
+
+	var itemModel models.BulkInvoiceJobItem
+	if err := r.db.Conn(ctx).
+		Where("job_id = ? AND order_id = ?", jobUUID, orderID).
+		First(&itemModel).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		r.log.Error(ctx).Err(err).Str("job_id", jobID).Str("order_id", orderID).Msg("Failed to get bulk job item")
+		return nil, err
+	}
+
+	return mappers.JobItemToDomain(&itemModel), nil
+}
+
 func (r *Repository) GetJobItemByInvoiceID(ctx context.Context, invoiceID uint) (*entities.BulkInvoiceJobItem, error) {
 	var itemModel models.BulkInvoiceJobItem
 	if err := r.db.Conn(ctx).
 		Where("invoice_id = ?", invoiceID).
 		First(&itemModel).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil // No pertenece a un bulk job
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -109,7 +123,6 @@ func (r *Repository) GetJobItemByInvoiceID(ctx context.Context, invoiceID uint) 
 	return mappers.JobItemToDomain(&itemModel), nil
 }
 
-// UpdateBulkInvoiceJob actualiza un job existente en la base de datos (todos los campos)
 func (r *Repository) UpdateJob(ctx context.Context, job *entities.BulkInvoiceJob) error {
 	jobUUID, err := uuid.Parse(job.ID)
 	if err != nil {
@@ -127,7 +140,6 @@ func (r *Repository) UpdateJob(ctx context.Context, job *entities.BulkInvoiceJob
 	return nil
 }
 
-// UpdateBulkInvoiceJobItem actualiza un item específico de un job en la base de datos
 func (r *Repository) UpdateJobItem(ctx context.Context, item *entities.BulkInvoiceJobItem) error {
 	itemModel := mappers.JobItemToModel(item)
 
@@ -139,20 +151,17 @@ func (r *Repository) UpdateJobItem(ctx context.Context, item *entities.BulkInvoi
 	return nil
 }
 
-// ListBulkInvoiceJobsByBusinessID obtiene jobs paginados de un negocio desde la base de datos
 func (r *Repository) ListJobs(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.BulkInvoiceJob, int64, error) {
 	var jobModels []models.BulkInvoiceJob
 	var total int64
 
 	query := r.db.Conn(ctx).Model(&models.BulkInvoiceJob{}).Where("business_id = ?", businessID)
 
-	// Contar total de registros
 	if err := query.Count(&total).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("Failed to count bulk jobs")
 		return nil, 0, err
 	}
 
-	// Obtener página específica
 	offset := (page - 1) * pageSize
 	if err := query.
 		Order("created_at DESC").
@@ -171,7 +180,6 @@ func (r *Repository) ListJobs(ctx context.Context, businessID uint, page, pageSi
 	return jobs, total, nil
 }
 
-// IncrementBulkInvoiceJobCounters actualiza contadores de un job de forma atómica en la BD (evita race conditions)
 func (r *Repository) IncrementJobCounters(ctx context.Context, jobID string, processed, successful, failed int) error {
 	jobUUID, err := uuid.Parse(jobID)
 	if err != nil {
