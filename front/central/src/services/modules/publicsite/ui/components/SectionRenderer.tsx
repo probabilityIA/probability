@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PublicBusiness, WebsiteConfig, SectionKey } from '../../domain/types';
+import { PublicBusiness, WebsiteConfig, SectionKey, HeroPosition } from '../../domain/types';
 import { TemplateComponents } from '../templates/types';
 
 interface SectionRendererProps {
@@ -8,6 +8,9 @@ interface SectionRendererProps {
     slug: string;
     config: WebsiteConfig | null;
     template: TemplateComponents;
+    heroEditable?: boolean;
+    onHeroContentPositionChange?: (position: HeroPosition) => void;
+    onHeroBlockPositionChange?: (index: number, position: HeroPosition) => void;
 }
 
 const DEFAULT_VISIBILITY: Record<string, boolean> = {
@@ -36,7 +39,7 @@ export function isSectionVisible(sectionKey: SectionKey, config: WebsiteConfig |
     }
 }
 
-export function SectionRenderer({ sectionKey, business, slug, config, template }: SectionRendererProps) {
+export function SectionRenderer({ sectionKey, business, slug, config, template, heroEditable, onHeroContentPositionChange, onHeroBlockPositionChange }: SectionRendererProps) {
     switch (sectionKey) {
         case 'hero':
             return (
@@ -44,6 +47,9 @@ export function SectionRenderer({ sectionKey, business, slug, config, template }
                     content={config?.hero_content || null}
                     business={business}
                     slug={slug}
+                    editable={heroEditable}
+                    onContentPositionChange={onHeroContentPositionChange}
+                    onBlockPositionChange={onHeroBlockPositionChange}
                 />
             );
         case 'about':

@@ -15,6 +15,7 @@ type BusinessWebsiteConfig struct {
 	SectionsOrder    datatypes.JSON `gorm:"type:jsonb"`
 	ThemeContent     datatypes.JSON `gorm:"type:jsonb"`
 	HiddenCategories datatypes.JSON `gorm:"type:jsonb"`
+	NavbarContent    datatypes.JSON `gorm:"type:jsonb"`
 
 	ShowHero             bool `gorm:"default:true"`
 	ShowAbout            bool `gorm:"default:false"`

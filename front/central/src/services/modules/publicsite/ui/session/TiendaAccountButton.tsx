@@ -8,9 +8,10 @@ import { TiendaSession } from '../../domain/types';
 
 interface TiendaAccountButtonProps {
     slug: string;
+    collapsible?: boolean;
 }
 
-export function TiendaAccountButton({ slug }: TiendaAccountButtonProps) {
+export function TiendaAccountButton({ slug, collapsible }: TiendaAccountButtonProps) {
     const router = useRouter();
     const pathname = usePathname();
     const [session, setSession] = useState<TiendaSession | null>(null);
@@ -48,13 +49,19 @@ export function TiendaAccountButton({ slug }: TiendaAccountButtonProps) {
         return (
             <Link
                 href={`/tienda/${slug}/cuenta`}
-                className="text-sm font-medium opacity-90 hover:opacity-100 flex items-center gap-1"
+                className={`text-sm font-medium opacity-90 hover:opacity-100 flex items-center gap-2 whitespace-nowrap ${collapsible ? 'justify-center' : ''}`}
                 style={{ color: 'var(--brand-nav-text, #4b5563)' }}
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                Iniciar sesion
+                {collapsible ? (
+                    <span className="text-lg shrink-0 grayscale">👤</span>
+                ) : (
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                )}
+                <span className={collapsible ? 'opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs overflow-hidden transition-all' : ''}>
+                    Iniciar sesion
+                </span>
             </Link>
         );
     }
@@ -64,20 +71,26 @@ export function TiendaAccountButton({ slug }: TiendaAccountButtonProps) {
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="text-sm font-medium opacity-90 hover:opacity-100 flex items-center gap-1"
+                className={`text-sm font-medium opacity-90 hover:opacity-100 flex items-center gap-2 whitespace-nowrap ${collapsible ? 'justify-center' : ''}`}
                 style={{ color: 'var(--brand-nav-text, #4b5563)' }}
             >
                 {session.avatar_url ? (
-                    <img src={session.avatar_url} alt={session.name} className="w-6 h-6 rounded-full object-cover" />
+                    <img src={session.avatar_url} alt={session.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+                ) : collapsible ? (
+                    <span className="text-lg shrink-0 grayscale">👤</span>
                 ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                 )}
-                {session.name.split(' ')[0]}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <span className={collapsible ? 'opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs overflow-hidden transition-all' : ''}>
+                    {session.name.split(' ')[0]}
+                </span>
+                {!collapsible && (
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                )}
             </button>
             {open && (
                 <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 py-1 z-50">

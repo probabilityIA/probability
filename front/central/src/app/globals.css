@@ -1523,3 +1523,36 @@ textarea:focus {
 .topbar-tinted.topbar-tinted .subnav-surface.subnav-surface :is([class^="bg-"], [class*=" bg-"], [style*="background"]) :is(a, span, p, label, small, h2, h3) {
   color: revert-layer;
 }
+
+@keyframes announcement-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes announcement-slide {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes announcement-marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+.announcement-fade {
+  animation: announcement-fade 0.6s ease-out;
+}
+
+.announcement-slide {
+  animation: announcement-slide 0.5s ease-out;
+}
+
+.announcement-marquee-track {
+  overflow: hidden;
+}
+
+.announcement-marquee-content {
+  display: inline-block;
+  white-space: nowrap;
+  animation: announcement-marquee 14s linear infinite;
+}

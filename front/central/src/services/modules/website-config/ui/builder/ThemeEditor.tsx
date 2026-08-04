@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { ImageField } from './editors';
+
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 type ThemeRecord = Record<string, any>;
 
@@ -49,6 +52,20 @@ export function ThemeEditor({ theme, fallback, onChange, businessId, onImageDele
 
     const patch = (p: ThemeRecord) => onChange({ ...(theme || {}), ...current, ...p });
 
+    const [hexDrafts, setHexDrafts] = useState<Record<string, string>>({});
+
+    const handleHexChange = (key: string, value: string) => {
+        setHexDrafts(prev => ({ ...prev, [key]: value }));
+        if (HEX_RE.test(value)) patch({ [key]: value });
+    };
+
+    const handleHexBlur = (key: string) => {
+        setHexDrafts(prev => {
+            const { [key]: _omit, ...rest } = prev;
+            return rest;
+        });
+    };
+
     const isActivePreset = (p: ThemePreset) =>
         p.primary === current.primary && p.secondary === current.secondary &&
         p.tertiary === current.tertiary && p.quaternary === current.quaternary &&
@@ -89,7 +106,15 @@ export function ThemeEditor({ theme, fallback, onChange, businessId, onImageDele
                                 onChange={(e) => patch({ [role.key]: e.target.value })}
                                 className="w-8 h-8 rounded cursor-pointer border border-gray-300 dark:border-gray-600 bg-transparent p-0"
                             />
-                            <code className="text-xs text-gray-400 w-16">{(current as ThemeRecord)[role.key]}</code>
+                            <input
+                                type="text"
+                                value={hexDrafts[role.key] ?? (current as ThemeRecord)[role.key]}
+                                onChange={(e) => handleHexChange(role.key, e.target.value)}
+                                onBlur={() => handleHexBlur(role.key)}
+                                placeholder="#000000"
+                                spellCheck={false}
+                                className="text-xs font-mono text-gray-600 dark:text-gray-300 w-20 rounded border border-gray-300 dark:border-gray-600 bg-transparent px-1.5 py-1"
+                            />
                         </span>
                     </label>
                 ))}
