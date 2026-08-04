@@ -30,15 +30,19 @@ recompilar (`scope`, `token_path`, `qr_generate_path`).
    `bancolombia_qr` y probar E2E: generar QR (cola `pay.requests` con
    `gateway_code=bancolombia`) y simular webhook a
    `/api/v1/webhooks/bancolombia/test`.
-4. Correr la migracion (crea `bancolombia_webhook_events` y el integration_type).
+4. Correr la migracion (crea `payment_webhook_events`, copia los eventos de
+   `bold_webhook_events` y crea el integration_type).
    Recordar: el deploy NO corre migraciones, hay que ejecutarla a mano contra RDS.
+   IMPORTANTE: la migracion debe correr ANTES de desplegar el backend nuevo, que
+   ya no sabe escribir en `bold_webhook_events`.
 
 ## Deseable
 
 - Icono `integration-types/bancolombia.png` en S3.
 - Endpoint de consulta de estado del QR (`qr_query_path` ya reservado en config).
-- Politica de retencion para `bancolombia_webhook_events` (hoy crece sin limite,
-  igual que `bold_webhook_events`).
+- Politica de retencion para `payment_webhook_events` (hoy crece sin limite).
+- Eliminar `bold_webhook_events` cuando el backend nuevo lleve dias estable en
+  produccion. La migracion la deja intacta a proposito, como respaldo.
 
 ## Criterio de cierre
 

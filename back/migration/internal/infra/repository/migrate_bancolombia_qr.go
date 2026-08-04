@@ -138,10 +138,6 @@ Notas:
 )
 
 func (r *Repository) migrateBancolombiaQR(ctx context.Context) error {
-	if err := r.db.Conn(ctx).AutoMigrate(&models.BancolombiaWebhookEvent{}); err != nil {
-		return fmt.Errorf("migrateBancolombiaQR: creando tabla de eventos webhook: %w", err)
-	}
-
 	if err := r.db.Conn(ctx).Exec(
 		`SELECT setval('integration_types_id_seq', GREATEST((SELECT COALESCE(MAX(id), 0) FROM integration_types), 1))`,
 	).Error; err != nil {

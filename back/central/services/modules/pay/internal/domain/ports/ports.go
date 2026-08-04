@@ -48,12 +48,9 @@ type IRepository interface {
 	GetBoldLinkCredentialsForBusiness(ctx context.Context, businessID uint) (*dtos.BoldCredentials, error)
 	GetBoldIntegrationForBusiness(ctx context.Context, businessID uint) (*dtos.BoldBusinessIntegration, error)
 
-	RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (created bool, err error)
-	MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error
-	LinkBoldWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error
-
-	RecordBancolombiaWebhookEvent(ctx context.Context, event *dtos.BancolombiaWebhookEvent) (created bool, err error)
-	MarkBancolombiaWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error
+	RecordPaymentWebhookEvent(ctx context.Context, event *dtos.PaymentWebhookEvent) (created bool, err error)
+	MarkPaymentWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error
+	LinkPaymentWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error
 
 	GetWalletKPISelection(ctx context.Context) (*entities.WalletKPISelection, error)
 	UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error

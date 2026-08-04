@@ -185,6 +185,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateMarketingLeads(ctx); err != nil {
 		return err
 	}
+	if err := r.migratePaymentWebhookEvents(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateBancolombiaQR(ctx); err != nil {
 		return err
 	}

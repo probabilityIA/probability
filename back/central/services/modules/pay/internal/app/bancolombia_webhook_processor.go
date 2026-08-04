@@ -22,17 +22,19 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 		rawPayload = buf
 	}
 
-	event := &dtos.BancolombiaWebhookEvent{
+	event := &dtos.PaymentWebhookEvent{
+		Gateway:        dtos.GatewayBancolombia,
 		EventID:        msg.EventID,
 		Type:           msg.Type,
-		TransferState:  msg.TransferState,
+		ExternalID:     msg.TransferCode,
+		ExternalState:  msg.TransferState,
 		Reference:      msg.Reference,
 		OccurredAt:     msg.OccurredAt,
 		Payload:        rawPayload,
 		SignatureValid: msg.SignatureValid,
 	}
 
-	created, err := uc.repo.RecordBancolombiaWebhookEvent(ctx, event)
+	created, err := uc.repo.RecordPaymentWebhookEvent(ctx, event)
 	if err != nil {
 		return fmt.Errorf("record bancolombia webhook event: %w", err)
 	}
@@ -49,7 +51,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 		uc.log.Warn(ctx).
 			Str("event_id", msg.EventID).
 			Msg("bancolombia webhook: missing reference, cannot match payment")
-		_ = uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, nil, lookupErr)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, lookupErr)
 		return nil
 	}
 
@@ -63,7 +65,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 			Str("event_id", msg.EventID).
 			Str("reference", msg.Reference).
 			Msg("bancolombia webhook: payment_transaction not found")
-		_ = uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, nil, lookupErr)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, lookupErr)
 		return nil
 	}
 
@@ -74,7 +76,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 			Str("type", msg.Type).
 			Str("state", msg.TransferState).
 			Msg("bancolombia webhook: unknown transfer state")
-		_ = uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, &tx.ID, fmt.Errorf("unknown transfer state %s type %s", msg.TransferState, msg.Type))
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, fmt.Errorf("unknown transfer state %s type %s", msg.TransferState, msg.Type))
 		return nil
 	}
 
@@ -83,7 +85,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 			Uint("transaction_id", tx.ID).
 			Str("status", newStatus).
 			Msg("bancolombia webhook: status unchanged, skipping update")
-		_ = uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, &tx.ID, nil)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, nil)
 		return nil
 	}
 
@@ -93,7 +95,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 		tx.ExternalID = &ext
 	}
 	if err := uc.repo.UpdatePaymentTransaction(ctx, tx); err != nil {
-		_ = uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, &tx.ID, err)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, err)
 		return fmt.Errorf("update payment_transaction: %w", err)
 	}
 
@@ -108,7 +110,7 @@ func (uc *useCase) ProcessBancolombiaWebhookMessage(ctx context.Context, msg *dt
 		}
 	}
 
-	if err := uc.repo.MarkBancolombiaWebhookProcessed(ctx, event.ID, &tx.ID, nil); err != nil {
+	if err := uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, nil); err != nil {
 		uc.log.Warn(ctx).Err(err).Msg("bancolombia webhook: mark processed failed")
 	}
 

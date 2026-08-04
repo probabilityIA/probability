@@ -2,23 +2,7 @@ package dtos
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
-
-type BancolombiaWebhookEvent struct {
-	ID                   uuid.UUID
-	EventID              string
-	Type                 string
-	TransferState        string
-	Reference            string
-	OccurredAt           *time.Time
-	Payload              []byte
-	SignatureValid       bool
-	ProcessedAt          *time.Time
-	ProcessedError       *string
-	PaymentTransactionID *uint
-}
 
 type BancolombiaWebhookMessage struct {
 	EventID        string     `json:"event_id"`

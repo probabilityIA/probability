@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,37 +11,47 @@ import (
 	"gorm.io/datatypes"
 )
 
-type bancolombiaWebhookEventRow struct {
+type paymentWebhookEventRow struct {
 	ID                   uuid.UUID
+	Gateway              string
 	EventID              string
 	Type                 string
-	TransferState        string
+	ExternalID           string
+	ExternalState        string
 	Reference            string
+	Source               string
 	OccurredAt           *time.Time
 	Payload              datatypes.JSON
 	SignatureValid       bool
 	ProcessedAt          *time.Time
 	ProcessedError       *string
 	PaymentTransactionID *uint
+	WalletTransactionID  *uuid.UUID
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }
 
-func (bancolombiaWebhookEventRow) TableName() string {
-	return "bancolombia_webhook_events"
+func (paymentWebhookEventRow) TableName() string {
+	return "payment_webhook_events"
 }
 
-func (r *Repository) RecordBancolombiaWebhookEvent(ctx context.Context, event *dtos.BancolombiaWebhookEvent) (bool, error) {
+func (r *Repository) RecordPaymentWebhookEvent(ctx context.Context, event *dtos.PaymentWebhookEvent) (bool, error) {
+	if event.Gateway == "" {
+		return false, fmt.Errorf("payment webhook gateway required")
+	}
 	if event.EventID == "" {
-		return false, fmt.Errorf("bancolombia event id required")
+		return false, fmt.Errorf("payment webhook event id required")
 	}
 
-	row := bancolombiaWebhookEventRow{
+	row := paymentWebhookEventRow{
 		ID:                   uuid.New(),
+		Gateway:              event.Gateway,
 		EventID:              event.EventID,
 		Type:                 event.Type,
-		TransferState:        event.TransferState,
+		ExternalID:           event.ExternalID,
+		ExternalState:        event.ExternalState,
 		Reference:            event.Reference,
+		Source:               event.Source,
 		OccurredAt:           event.OccurredAt,
 		Payload:              datatypes.JSON(event.Payload),
 		SignatureValid:       event.SignatureValid,
@@ -50,14 +61,14 @@ func (r *Repository) RecordBancolombiaWebhookEvent(ctx context.Context, event *d
 	}
 
 	res := r.db.Conn(ctx).
-		Where("event_id = ?", event.EventID).
+		Where("gateway = ? AND event_id = ?", event.Gateway, event.EventID).
 		Attrs(row).
 		FirstOrCreate(&row)
 	if res.Error != nil {
 		if isUniqueViolation(res.Error) {
 			return false, nil
 		}
-		return false, fmt.Errorf("upsert bancolombia webhook event: %w", res.Error)
+		return false, fmt.Errorf("upsert payment webhook event: %w", res.Error)
 	}
 
 	event.ID = row.ID
@@ -65,7 +76,7 @@ func (r *Repository) RecordBancolombiaWebhookEvent(ctx context.Context, event *d
 	return created, nil
 }
 
-func (r *Repository) MarkBancolombiaWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
+func (r *Repository) MarkPaymentWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
 	now := time.Now()
 	updates := map[string]any{
 		"processed_at":           &now,
@@ -78,7 +89,22 @@ func (r *Repository) MarkBancolombiaWebhookProcessed(ctx context.Context, id uui
 		updates["processed_error"] = nil
 	}
 	return r.db.Conn(ctx).
-		Table("bancolombia_webhook_events").
+		Table("payment_webhook_events").
 		Where("id = ?", id).
 		Updates(updates).Error
+}
+
+func (r *Repository) LinkPaymentWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error {
+	return r.db.Conn(ctx).
+		Table("payment_webhook_events").
+		Where("id = ?", eventID).
+		Update("wallet_transaction_id", walletTransactionID).Error
+}
+
+func isUniqueViolation(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "duplicate key") || strings.Contains(msg, "unique constraint")
 }

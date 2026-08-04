@@ -36,17 +36,19 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 		rawPayload = buf
 	}
 
-	event := &dtos.BoldWebhookEvent{
-		BoldEventID:    msg.BoldEventID,
+	event := &dtos.PaymentWebhookEvent{
+		Gateway:        dtos.GatewayBold,
+		EventID:        msg.BoldEventID,
 		Type:           msg.Type,
-		Subject:        msg.Subject,
+		ExternalID:     msg.Subject,
+		Reference:      msg.MerchantReference,
 		Source:         msg.Source,
 		OccurredAt:     msg.OccurredAt,
 		Payload:        rawPayload,
 		SignatureValid: true,
 	}
 
-	created, err := uc.repo.RecordBoldWebhookEvent(ctx, event)
+	created, err := uc.repo.RecordPaymentWebhookEvent(ctx, event)
 	if err != nil {
 		return fmt.Errorf("record bold webhook event: %w", err)
 	}
@@ -60,19 +62,19 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 
 	if isWalletRechargeReference(msg.MerchantReference) {
 		if procErr := uc.processWalletRechargeWebhook(ctx, event, msg, rawPayload); procErr != nil {
-			_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, procErr)
+			_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, procErr)
 			return procErr
 		}
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, nil)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, nil)
 		return nil
 	}
 
 	if isStorefrontCheckoutReference(msg.MerchantReference) {
 		if procErr := uc.processStorefrontCheckoutWebhook(ctx, msg); procErr != nil {
-			_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, procErr)
+			_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, procErr)
 			return procErr
 		}
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, nil)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, nil)
 		return nil
 	}
 
@@ -84,7 +86,7 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 			Str("merchant_reference", msg.MerchantReference).
 			Str("payment_id", msg.PaymentID).
 			Msg("bold webhook: payment_transaction not found")
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, nil, lookupErr)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, nil, lookupErr)
 		return nil
 	}
 
@@ -94,7 +96,7 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 			Str("bold_event_id", msg.BoldEventID).
 			Str("type", msg.Type).
 			Msg("bold webhook: unknown event type")
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, &tx.ID, fmt.Errorf("unknown event type %s", msg.Type))
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, fmt.Errorf("unknown event type %s", msg.Type))
 		return nil
 	}
 
@@ -103,7 +105,7 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 			Uint("transaction_id", tx.ID).
 			Str("status", newStatus).
 			Msg("bold webhook: status unchanged, skipping update")
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, &tx.ID, nil)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, nil)
 		return nil
 	}
 
@@ -113,7 +115,7 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 		tx.ExternalID = &ext
 	}
 	if err := uc.repo.UpdatePaymentTransaction(ctx, tx); err != nil {
-		_ = uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, &tx.ID, err)
+		_ = uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, err)
 		return fmt.Errorf("update payment_transaction: %w", err)
 	}
 
@@ -128,7 +130,7 @@ func (uc *useCase) ProcessBoldWebhookMessage(ctx context.Context, msg *dtos.Bold
 		}
 	}
 
-	if err := uc.repo.MarkBoldWebhookProcessed(ctx, event.ID, &tx.ID, nil); err != nil {
+	if err := uc.repo.MarkPaymentWebhookProcessed(ctx, event.ID, &tx.ID, nil); err != nil {
 		uc.log.Warn(ctx).Err(err).Msg("bold webhook: mark processed failed")
 	}
 
@@ -326,7 +328,7 @@ func (uc *useCase) publishStorefrontOrder(ctx context.Context, checkout *entitie
 	return nil
 }
 
-func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos.BoldWebhookEvent, msg *dtos.BoldWebhookMessage, rawPayload []byte) error {
+func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos.PaymentWebhookEvent, msg *dtos.BoldWebhookMessage, rawPayload []byte) error {
 	outcome := mapBoldEventToOutcome(msg.Type)
 	if outcome == "" {
 		uc.log.Warn(ctx).
@@ -350,7 +352,7 @@ func (uc *useCase) processWalletRechargeWebhook(ctx context.Context, event *dtos
 	if event != nil && event.ID != uuid.Nil {
 		walletTx, lookupErr := uc.repo.GetWalletTransactionByReference(ctx, msg.MerchantReference)
 		if lookupErr == nil && walletTx != nil {
-			if linkErr := uc.repo.LinkBoldWebhookToWalletTransaction(ctx, event.ID, walletTx.ID); linkErr != nil {
+			if linkErr := uc.repo.LinkPaymentWebhookToWalletTransaction(ctx, event.ID, walletTx.ID); linkErr != nil {
 				uc.log.Warn(ctx).Err(linkErr).Msg("bold webhook: failed to link webhook event to wallet tx")
 			}
 		}

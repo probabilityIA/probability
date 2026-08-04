@@ -18,7 +18,7 @@ Bancolombia POST /api/v1/webhooks/bancolombia (o /test)
   -> parse tolerante del payload
   -> pay.bancolombia.webhook.events
     -> modules/pay BancolombiaWebhookConsumer
-       -> idempotencia por event_id (tabla bancolombia_webhook_events)
+       -> idempotencia por (gateway, event_id) en payment_webhook_events
        -> match payment_transaction por reference
        -> APPROVED/SUCCESS -> completed | REJECTED/FAILED -> failed | CANCELLED/EXPIRED -> cancelled
        -> SSE payment completed/failed
