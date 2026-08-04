@@ -97,12 +97,19 @@ func Parse(raw []byte) []Rule {
 	return sanitized
 }
 
+func First(rules []Rule) []Rule {
+	if len(rules) == 0 {
+		return DefaultRules()
+	}
+	return rules[:1]
+}
+
 func Resolve(integrationRaw, typeDefaultRaw []byte) []Rule {
 	if rules := Parse(integrationRaw); rules != nil {
-		return rules
+		return First(rules)
 	}
 	if rules := Parse(typeDefaultRaw); rules != nil {
-		return rules
+		return First(rules)
 	}
 	return DefaultRules()
 }

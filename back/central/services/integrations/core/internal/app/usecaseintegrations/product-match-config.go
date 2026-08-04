@@ -43,8 +43,8 @@ func buildProductMatchConfig(integration *domain.Integration) *domain.ProductMat
 
 	return &domain.ProductMatchConfig{
 		IntegrationID: integration.ID,
-		Rules:         productmatch.AllowedByOptions(effective, options),
-		DefaultRules:  productmatch.AllowedByOptions(defaults, options),
+		Rules:         productmatch.First(productmatch.AllowedByOptions(effective, options)),
+		DefaultRules:  productmatch.First(productmatch.AllowedByOptions(defaults, options)),
 		Options:       options,
 		IsOverride:    own != nil,
 	}
@@ -74,13 +74,16 @@ func (uc *IntegrationUseCase) UpdateProductMatchConfig(ctx context.Context, id, 
 	}
 	options := productmatch.ParseOptions(typeOptionsRaw)
 
+	if len(rules) != 1 {
+		return nil, fmt.Errorf("debe seleccionar exactamente una regla de match")
+	}
 	for _, r := range rules {
 		if !r.Valid() {
 			return nil, fmt.Errorf("regla de match invalida: %s", r.Key())
 		}
 	}
 
-	sanitized := productmatch.Sanitize(rules)
+	sanitized := productmatch.First(productmatch.Sanitize(rules))
 	if len(productmatch.AllowedByOptions(sanitized, options)) != len(sanitized) {
 		return nil, fmt.Errorf("alguna regla usa campos no soportados por este tipo de integracion")
 	}
