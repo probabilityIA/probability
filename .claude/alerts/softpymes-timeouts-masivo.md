@@ -55,6 +55,39 @@ El job de 533 ordenes quedo con `failed=890` (contadores inflados por reintentos
   (agotaron max_retries contra un proveedor caido, antes del fix de presupuesto).
 - [DESEABLE] Arreglar contadores de `bulk_invoice_jobs` (failed > total_orders).
 
+## Incidente 2026-08-03: RDS OOM congelo 449 facturas en "pending"
+
+Bulk job `04aad4f7-d117-477e-a459-83587d8d1602` (business 34, 540 ordenes,
+lanzado 15:02 Bogota). A las 15:33-15:37 Bogota el RDS `database-1` se quedo
+sin memoria y se reinicio (evento AWS: "workload causing the system to run
+critically low on memory"; RDS bajo shared_buffers de 23081 a 11295). Durante
+la caida (~9.580 connection refused en 2 min) el consumer de SoftPymes drenó el
+backlog de la cola: cada create fallo en ~4ms (no podia leer la integracion de
+la DB) y la respuesta de error tampoco se pudo persistir.
+
+Resultado: 449 invoices en `pending` con sync log `create` en `processing`
+(response_status=0, sin body). NUNCA llegaron a SoftPymes: check_status barrio
+8 dias / 1.417 documentos y no existen -> reintentar creacion es seguro, sin
+riesgo de duplicados. El cron de reconciliacion solo hace check_status (query),
+nunca re-crea: estas facturas NO van a avanzar solas ("Document not found yet —
+DIAN still validating" en loop).
+
+- [EN CURSO 2026-08-03] Relanzamiento ejecutado con autorizacion del usuario:
+  449 invoices pasadas a status='failed', sus 449 sync logs create
+  processing->failed con next_retry_at=now, y 5 logs query pending->cancelled
+  (UPDATE directo en RDS, transaccional). El retry consumer las procesa en
+  lotes de 50 cada 5 min via RetryInvoice (idempotencia fail-closed contra
+  SoftPymes). Primer lote verificado OK en logs de prod (49/50 publicadas,
+  facturas emitiendose). Drenaje estimado ~3h. Verificar al final que
+  status='pending' o 'failed' quede en 0 para el burst 20:02:45-20:03:03 UTC.
+- [URGENTE] Cerrar el bulk job 04aad4f7 (quedo en `processing`, 539/540,
+  successful=100, failed=5, contadores nunca actualizados tras la caida).
+- [IMPORTANTE] El response_consumer pierde la respuesta si la DB esta caida al
+  procesarla (el mensaje se ACKea y el estado queda congelado). Falta nack/requeue
+  o retry con backoff cuando el fallo es de DB, igual que isProviderUnavailableError.
+- [IMPORTANTE] Capacity: el RDS hace OOM con jobs masivos grandes (ya bajo
+  shared_buffers solo). Evaluar subir instancia o limitar tamano de bulk.
+
 ## Criterio de cierre
 
 Retry no-idempotente eliminado + verificacion de duplicados hecha + throttle/backoff
