@@ -99,9 +99,9 @@ create en 'processing' para siempre (respuestas perdidas al matar el zombie).
 Zombie eliminado 2026-08-04 ~03:20 Bogota. Resultado del burst: 454/535
 emitidas, 81 pendientes de resolver.
 
-- [PENDIENTE - MANANA] Las 29 en status='failed': un click en "Reintentar
-  fallidas" (UI invoicing, business 34) las reconcilia y reintenta (o ya lo
-  hizo Claude via UI si el deploy nocturno lo permitio — verificar).
+- [RESUELTO 2026-08-04 03:06] Las 29 en status='failed': ejecutado "Reintentar
+  fallidas" via UI (reconcile-first). Resultado verificado: 0 failed, burst en
+  483 issued + 52 pending.
 - [PENDIENTE - MANANA] Las 52 en status='pending' (create log 'processing',
   sin query logs): NINGUN flujo automatico las va a tomar. Ejecutar en RDS:
 
