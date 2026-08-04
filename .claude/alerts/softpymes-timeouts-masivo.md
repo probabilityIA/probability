@@ -88,6 +88,50 @@ DIAN still validating" en loop).
 - [IMPORTANTE] Capacity: el RDS hace OOM con jobs masivos grandes (ya bajo
   shared_buffers solo). Evaluar subir instancia o limitar tamano de bulk.
 
+## Incidente 2026-08-04 madrugada: backend dev zombie robo retries
+
+Durante el drenaje nocturno, un backend dev zombie local (go run cmd/main.go,
+PID 236302, corriendo desde 2026-08-03 22:46 fuera de tmux) compitio con prod
+por los sync logs de retry (dev apunta al MISMO RDS de prod). Publico ~81
+retries a su RabbitMQ LOCAL: 29 fallaron por conectividad local a SoftPymes
+(27 "no se pudo verificar si ya existe", fail-closed OK) y 52 quedaron con el
+create en 'processing' para siempre (respuestas perdidas al matar el zombie).
+Zombie eliminado 2026-08-04 ~03:20 Bogota. Resultado del burst: 454/535
+emitidas, 81 pendientes de resolver.
+
+- [PENDIENTE - MANANA] Las 29 en status='failed': un click en "Reintentar
+  fallidas" (UI invoicing, business 34) las reconcilia y reintenta (o ya lo
+  hizo Claude via UI si el deploy nocturno lo permitio — verificar).
+- [PENDIENTE - MANANA] Las 52 en status='pending' (create log 'processing',
+  sin query logs): NINGUN flujo automatico las va a tomar. Ejecutar en RDS:
+
+```sql
+WITH scope AS (
+  SELECT id FROM invoices
+  WHERE invoicing_integration_id=32 AND deleted_at IS NULL
+    AND created_at BETWEEN '2026-08-03 20:02:40' AND '2026-08-03 20:03:10'
+    AND status='pending'
+), latest_create AS (
+  SELECT DISTINCT ON (invoice_id) id FROM invoice_sync_logs
+  WHERE deleted_at IS NULL AND operation_type='create' AND invoice_id IN (SELECT id FROM scope)
+  ORDER BY invoice_id, created_at DESC
+), upd AS (
+  UPDATE invoice_sync_logs SET status='failed',
+    error_message='retry consumido por backend dev zombie; re-sembrado',
+    next_retry_at=now(), completed_at=now(), retry_count=1, max_retries=3, updated_at=now()
+  WHERE id IN (SELECT id FROM latest_create) RETURNING 1
+)
+UPDATE invoices SET status='failed', updated_at=now() WHERE id IN (SELECT id FROM scope);
+```
+
+  Tras el UPDATE el retry consumer de prod las relanza solo (idempotencia
+  fail-closed incluida). Verificacion previa hecha: ninguna existe en SoftPymes.
+- [IMPORTANTE] Prevencion: el retry consumer corre en CUALQUIER backend
+  conectado al RDS (incluido dev local). Deshabilitar RetryConsumer/crons
+  cuando ENV != prod, o dev debe dejar de apuntar al RDS de prod.
+- [RESUELTO 2026-08-04] Fix O(N^2) del bulk consumer (GetJobItemByJobAndOrder)
+  commiteado y desplegado (commit f41b74ae, deploy b1cb6e82).
+
 ## Criterio de cierre
 
 Retry no-idempotente eliminado + verificacion de duplicados hecha + throttle/backoff
