@@ -84,8 +84,8 @@ func (h *IntegrationHandler) UpdateProductMatchConfigHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "rules es requerido"})
 		return
 	}
-	if len(req.Rules) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "debe seleccionar al menos una regla de match"})
+	if len(req.Rules) != 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "debe seleccionar exactamente una regla de match"})
 		return
 	}
 

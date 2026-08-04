@@ -25,6 +25,11 @@ func (h *IntegrationTypeHandler) buildWebhookURLs(code string) map[string]string
 			"production": base + "/api/v1/webhooks/bold",
 			"sandbox":    base + "/api/v1/webhooks/bold/test",
 		}
+	case "bancolombia_qr":
+		return map[string]string{
+			"production": base + "/api/v1/webhooks/bancolombia",
+			"sandbox":    base + "/api/v1/webhooks/bancolombia/test",
+		}
 	}
 	return nil
 }

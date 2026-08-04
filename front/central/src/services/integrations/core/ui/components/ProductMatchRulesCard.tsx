@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Check, GripVertical, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { ArrowRight, Check, Loader2, RotateCcw } from 'lucide-react';
 import { getProductMatchConfigAction, updateProductMatchConfigAction } from '../../infra/actions';
 import type { ProductMatchConfig, ProductMatchField, ProductMatchRule } from '../../domain/types';
 
@@ -23,18 +23,12 @@ function ruleKey(rule: ProductMatchRule) {
     return `${rule.probability}->${rule.channel}`;
 }
 
-function sameRules(a: ProductMatchRule[], b: ProductMatchRule[]) {
-    if (a.length !== b.length) return false;
-    return a.every((rule, index) => ruleKey(rule) === ruleKey(b[index]));
-}
-
 export function ProductMatchRulesCard({ integrationId, businessId, channelName }: ProductMatchRulesCardProps) {
     const [config, setConfig] = useState<ProductMatchConfig | null>(null);
-    const [rules, setRules] = useState<ProductMatchRule[]>([]);
+    const [rule, setRule] = useState<ProductMatchRule | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
-    const [dragIndex, setDragIndex] = useState<number | null>(null);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -45,7 +39,7 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
         };
         if (res?.success && res.data) {
             setConfig(res.data);
-            setRules(res.data.rules);
+            setRule(res.data.rules[0] ?? null);
         } else {
             setMessage({ tone: 'error', text: res?.message || 'No se pudo cargar la configuracion de match' });
         }
@@ -56,61 +50,53 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
         void load();
     }, [load]);
 
-    const dirty = useMemo(() => (config ? !sameRules(rules, config.rules) : false), [config, rules]);
+    const savedRule = config?.rules[0] ?? null;
 
-    const usedKeys = useMemo(() => new Set(rules.map(ruleKey)), [rules]);
+    const dirty = useMemo(() => {
+        if (!rule || !savedRule) return false;
+        return ruleKey(rule) !== ruleKey(savedRule);
+    }, [rule, savedRule]);
 
-    const availableToAdd = useMemo(() => {
+    const availableRules = useMemo(() => {
         if (!config) return [] as ProductMatchRule[];
         const candidates: ProductMatchRule[] = [];
         for (const probability of config.options.probability) {
             for (const channel of config.options.channel) {
-                const rule = { probability, channel };
-                if (!usedKeys.has(ruleKey(rule))) candidates.push(rule);
+                candidates.push({ probability, channel });
             }
         }
         return candidates;
-    }, [config, usedKeys]);
-
-    const move = (from: number, to: number) => {
-        if (to < 0 || to >= rules.length || from === to) return;
-        setRules(prev => {
-            const next = [...prev];
-            const [item] = next.splice(from, 1);
-            next.splice(to, 0, item);
-            return next;
-        });
-    };
+    }, [config]);
 
     const save = async () => {
-        if (!dirty || rules.length === 0) return;
+        if (!dirty || !rule) return;
         setSaving(true);
         setMessage(null);
-        const res = await updateProductMatchConfigAction(integrationId, rules, businessId) as {
+        const res = await updateProductMatchConfigAction(integrationId, [rule], businessId) as {
             success?: boolean;
             message?: string;
             data?: ProductMatchConfig;
         };
         if (res?.success && res.data) {
             setConfig(res.data);
-            setRules(res.data.rules);
-            setMessage({ tone: 'ok', text: 'Reglas de match guardadas' });
+            setRule(res.data.rules[0] ?? null);
+            setMessage({ tone: 'ok', text: 'Regla de match guardada' });
         } else {
-            setMessage({ tone: 'error', text: res?.message || 'No se pudieron guardar las reglas' });
+            setMessage({ tone: 'error', text: res?.message || 'No se pudo guardar la regla' });
         }
         setSaving(false);
     };
 
-    const restoreDefaults = () => {
+    const restoreDefault = () => {
         if (!config) return;
-        setRules(config.default_rules);
+        setRule(config.default_rules[0] ?? null);
     };
 
     if (loading) {
         return (
             <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
                 <Loader2 size={14} className="animate-spin" />
-                Cargando reglas de match de producto...
+                Cargando regla de match de producto...
             </div>
         );
     }
@@ -128,65 +114,49 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
             <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Match de productos</h4>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Define por que campos se reconoce que un producto de Probability y uno de
-                    {channelName ? ` ${channelName}` : ' este canal'} son el mismo. Se evaluan en orden: si la
-                    primera regla no encuentra coincidencia, se intenta la siguiente.
+                    Elige el unico campo con el que se reconoce que un producto de Probability y uno de
+                    {channelName ? ` ${channelName}` : ' este canal'} son el mismo. Solo se permite una regla: si no
+                    coincide por ese campo, el producto no se considera el mismo.
                 </p>
             </div>
 
-            <ul className="space-y-2">
-                {rules.map((rule, index) => (
-                    <li
-                        key={ruleKey(rule)}
-                        draggable={!saving}
-                        onDragStart={() => setDragIndex(index)}
-                        onDragOver={event => event.preventDefault()}
-                        onDrop={() => {
-                            if (dragIndex !== null) move(dragIndex, index);
-                            setDragIndex(null);
-                        }}
-                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-700/50"
-                    >
-                        <GripVertical size={14} className="cursor-grab text-gray-400" />
-                        <span className="w-5 text-xs font-semibold text-gray-400">{index + 1}</span>
-                        <span className="flex flex-1 items-center gap-2 text-sm text-gray-800 dark:text-gray-100">
-                            <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-                                {FIELD_LABELS[rule.probability]}
-                            </span>
-                            <ArrowRight size={12} className="text-gray-400" />
-                            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                                {FIELD_LABELS[rule.channel]}
-                            </span>
-                        </span>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+                {availableRules.map(option => {
+                    const selected = rule ? ruleKey(rule) === ruleKey(option) : false;
+                    return (
                         <button
+                            key={ruleKey(option)}
                             type="button"
-                            onClick={() => setRules(prev => prev.filter((_, i) => i !== index))}
-                            disabled={saving || rules.length === 1}
-                            title={rules.length === 1 ? 'Debe quedar al menos una regla' : 'Quitar regla'}
-                            className="text-gray-400 transition-colors hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </li>
-                ))}
-            </ul>
-
-            {availableToAdd.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                    {availableToAdd.map(rule => (
-                        <button
-                            key={ruleKey(rule)}
-                            type="button"
+                            role="radio"
+                            aria-checked={selected}
                             disabled={saving}
-                            onClick={() => setRules(prev => [...prev, rule])}
-                            className="flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2 py-1 text-[11px] text-gray-600 transition-colors hover:border-indigo-400 hover:text-indigo-700 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
+                            onClick={() => setRule(option)}
+                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-colors disabled:opacity-50 ${
+                                selected
+                                    ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-900/30'
+                                    : 'border-gray-200 bg-gray-50 hover:border-indigo-300 dark:border-gray-600 dark:bg-gray-700/50'
+                            }`}
                         >
-                            <Plus size={11} />
-                            {FIELD_LABELS[rule.probability]} → {FIELD_LABELS[rule.channel]}
+                            <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                                    selected ? 'border-indigo-600 bg-indigo-600' : 'border-gray-400 dark:border-gray-500'
+                                }`}
+                            >
+                                {selected && <Check size={10} className="text-white" />}
+                            </span>
+                            <span className="flex flex-1 items-center gap-2 text-sm text-gray-800 dark:text-gray-100">
+                                <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                                    {FIELD_LABELS[option.probability]}
+                                </span>
+                                <ArrowRight size={12} className="text-gray-400" />
+                                <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                    {FIELD_LABELS[option.channel]}
+                                </span>
+                            </span>
                         </button>
-                    ))}
-                </div>
-            )}
+                    );
+                })}
+            </div>
 
             {message && (
                 <p className={`text-xs ${message.tone === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -201,7 +171,7 @@ export function ProductMatchRulesCard({ integrationId, businessId, channelName }
                 <div className="flex gap-2">
                     <button
                         type="button"
-                        onClick={restoreDefaults}
+                        onClick={restoreDefault}
                         disabled={saving}
                         className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >

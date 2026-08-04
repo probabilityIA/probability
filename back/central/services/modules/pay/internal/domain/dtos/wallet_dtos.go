@@ -45,9 +45,9 @@ type BusinessFinancialStats struct {
 
 // FinancialStatsResponse respuesta de estadísticas financieras
 type FinancialStatsResponse struct {
-	Period      PeriodInfo                `json:"period"`
-	TotalIncome float64                   `json:"total_income"`
-	Businesses  []BusinessFinancialStats  `json:"businesses"`
+	Period      PeriodInfo               `json:"period"`
+	TotalIncome float64                  `json:"total_income"`
+	Businesses  []BusinessFinancialStats `json:"businesses"`
 }
 
 // PeriodInfo información del período de la consulta

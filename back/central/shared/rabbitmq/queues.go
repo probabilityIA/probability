@@ -114,6 +114,10 @@ const (
 	QueuePayMeliPagoRequests = "pay.melipago.requests"
 
 	QueuePayBoldWebhookEvents = "pay.bold.webhook.events"
+
+	QueuePayBancolombiaRequests = "pay.bancolombia.requests"
+
+	QueuePayBancolombiaWebhookEvents = "pay.bancolombia.webhook.events"
 )
 
 const (
