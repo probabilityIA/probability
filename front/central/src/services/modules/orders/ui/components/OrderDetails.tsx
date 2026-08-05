@@ -10,6 +10,7 @@ import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
+import { resolveCityState } from '@/shared/utils/dane-lookup';
 import dynamic from 'next/dynamic';
 const GeozoneMiniMap = dynamic(() => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap), { ssr: false });
 
@@ -746,7 +747,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             <div className="space-y-1">
                                                 <p className="text-xs font-semibold text-gray-900 dark:text-white">{order.shipping_street || '-'}</p>
                                                 <p className="text-xs text-gray-700 dark:text-gray-200">
-                                                    {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
+                                                    {(() => {
+                                                        const resolved = resolveCityState(order.shipping_city || '', order.shipping_state || '', order.destination_dane_code);
+                                                        const city = resolved?.ciudad || order.shipping_city || '';
+                                                        const state = resolved?.departamento || order.shipping_state || '';
+                                                        return `${city}${state ? ', ' + state : ''}${order.shipping_postal_code ? ' ' + order.shipping_postal_code : ''}`;
+                                                    })()}
                                                 </p>
                                                 {order.shipping_geo_confidence && (
                                                     <span

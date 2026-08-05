@@ -10,6 +10,7 @@ import ProductSelector from '../../../products/ui/components/ProductSelector';
 import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
+import { resolveCityState } from '@/shared/utils/dane-lookup';
 import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
@@ -408,10 +409,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     }, [isEdit, formData.business_id]);
 
     useEffect(() => {
-        if (order?.shipping_city && order?.shipping_state) {
-            setCitySearch(`${order.shipping_city} (${order.shipping_state})`);
-            setCitySelected(true);
-        }
+        if (!order?.shipping_city && !order?.shipping_state) return;
+
+        const resolved = resolveCityState(order.shipping_city || '', order.shipping_state || '', order.destination_dane_code);
+        setCitySearch(resolved
+            ? `${resolved.ciudad} (${resolved.departamento})`
+            : `${order.shipping_city} (${order.shipping_state})`);
+        setCitySelected(true);
     }, [order]);
 
     useEffect(() => {

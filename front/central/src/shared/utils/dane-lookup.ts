@@ -77,3 +77,20 @@ export const findDaneCode = (city: string, state: string) => {
 
     return null;
 };
+
+type DaneEntry = { ciudad: string; departamento: string };
+const daneMap = danes as Record<string, DaneEntry>;
+
+export const resolveCityState = (
+    city: string,
+    state: string,
+    verifiedDaneCode?: string | null
+): DaneEntry | null => {
+    const verifiedKey = verifiedDaneCode ? `${verifiedDaneCode}000` : null;
+    if (verifiedKey && daneMap[verifiedKey]) return daneMap[verifiedKey];
+
+    const mappedCode = findDaneCode(city, state);
+    if (mappedCode && daneMap[mappedCode]) return daneMap[mappedCode];
+
+    return null;
+};

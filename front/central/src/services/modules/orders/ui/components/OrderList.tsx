@@ -21,6 +21,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
 import RawOrderModal from './RawOrderModal';
+import { resolveCityState } from '@/shared/utils/dane-lookup';
 import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
 import { OrderStatusFlowModal } from './OrderStatusFlowModal';
 import { ChangeStatusModal } from './ChangeStatusModal';
@@ -1255,24 +1256,27 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 page++;
             }
 
-            const excelData = ordersToDownload.map((order: Order) => ({
-                'ID Orden': order.order_number || order.external_id || order.id,
-                'Cliente': order.customer_name || '',
-                'Email': order.customer_email || '',
-                'Teléfono': order.customer_phone || '',
-                'Plataforma': order.platform || '',
-                'Estado': order.status || '',
-                'Total': order.total_amount || 0,
-                'Moneda': order.currency || '',
-                'Pagado': order.is_paid ? 'Sí' : 'No',
-                'Contra Entrega COD': order.cod_total || 0,
-                'Dirección': order.shipping_street || '',
-                'Ciudad': order.shipping_city || '',
-                'Departamento': order.shipping_state || '',
-                'Valor Envío': order.shipment?.total_cost || order.quoted_shipping?.price || order.shipping_cost || 0,
-                'Guía': order.tracking_number || order.shipment?.tracking_number || '',
-                'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
-            }));
+            const excelData = ordersToDownload.map((order: Order) => {
+                const resolved = resolveCityState(order.shipping_city || '', order.shipping_state || '', order.destination_dane_code);
+                return {
+                    'ID Orden': order.order_number || order.external_id || order.id,
+                    'Cliente': order.customer_name || '',
+                    'Email': order.customer_email || '',
+                    'Teléfono': order.customer_phone || '',
+                    'Plataforma': order.platform || '',
+                    'Estado': order.status || '',
+                    'Total': order.total_amount || 0,
+                    'Moneda': order.currency || '',
+                    'Pagado': order.is_paid ? 'Sí' : 'No',
+                    'Contra Entrega COD': order.cod_total || 0,
+                    'Dirección': order.shipping_street || '',
+                    'Ciudad': resolved?.ciudad || order.shipping_city || '',
+                    'Departamento': resolved?.departamento || order.shipping_state || '',
+                    'Valor Envío': order.shipment?.total_cost || order.quoted_shipping?.price || order.shipping_cost || 0,
+                    'Guía': order.tracking_number || order.shipment?.tracking_number || '',
+                    'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(excelData);
             const wb = XLSX.utils.book_new();

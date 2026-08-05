@@ -265,6 +265,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         console.log('No selected rate or carrier:', selectedRate, carrierProbabilities);
     }
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+    const [generatedShipmentId, setGeneratedShipmentId] = useState<number | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
     const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
 
@@ -501,6 +502,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (data.correlation_id && data.correlation_id !== pendingGuideCorrelationId) return;
             setPendingGuideCorrelationId(null);
             if (data.label_url) setGeneratedPdfUrl(data.label_url);
+            if (data.shipment_id) setGeneratedShipmentId(data.shipment_id);
             if (data.tracking_number) {
                 setTrackingNumber(data.tracking_number);
                 if (data.carrier) setSelectedCarrier(data.carrier);
@@ -607,6 +609,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setSelectedRate(null);
             setStep3Data(null);
             setGeneratedPdfUrl(null);
+            setGeneratedShipmentId(null);
             setTrackingNumber(null);
             setSelectedCarrier(null);
             setOfficeCarrier(null);
@@ -896,7 +899,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (response.data?.data?.url) {
                 const tracker = response.data.data.tracker;
                 const carrier = (response.data?.data as any)?.carrier;
+                const shipmentIdFromResponse = (response.data?.data as any)?.shipment_id;
                 setGeneratedPdfUrl(response.data.data.url);
+                if (shipmentIdFromResponse) setGeneratedShipmentId(shipmentIdFromResponse);
                 setTrackingNumber(tracker);
                 if (carrier) setSelectedCarrier(carrier);
 
@@ -1811,12 +1816,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         {showGuideFormatDropdown && guideFormats.length > 0 && (
                                                             <div className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg overflow-hidden">
                                                                 {guideFormats.map((format) => (
-                                                                    <a
+                                                                    <button
                                                                         key={format.code}
-                                                                        href={`${generatedPdfUrl}?format=${format.code}`}
-                                                                        download
-                                                                        onClick={() => setShowGuideFormatDropdown(false)}
-                                                                        className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs border-b dark:border-gray-700 last:border-b-0 transition-colors"
+                                                                        type="button"
+                                                                        disabled={!generatedShipmentId}
+                                                                        onClick={() => {
+                                                                            if (!generatedShipmentId) return;
+                                                                            window.open(`/internal/shipment-guide/${generatedShipmentId}?format=${encodeURIComponent(format.code)}`, '_blank');
+                                                                            setSelectedGuideFormat(format.code);
+                                                                            setShowGuideFormatDropdown(false);
+                                                                        }}
+                                                                        className="w-full flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs border-b dark:border-gray-700 last:border-b-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                                     >
                                                                         <div>
                                                                             <div className="font-medium">{format.code.toUpperCase()}</div>
@@ -1831,7 +1841,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                             </svg>
                                                                         )}
-                                                                    </a>
+                                                                    </button>
                                                                 ))}
                                                             </div>
                                                         )}
