@@ -6,6 +6,7 @@ export interface ShippingMargin {
     margin_amount: number;
     insurance_margin: number;
     cod_margin_percent: number;
+    cod_margin_amount: number;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -17,6 +18,7 @@ export interface CreateShippingMarginDTO {
     margin_amount: number;
     insurance_margin: number;
     cod_margin_percent: number;
+    cod_margin_amount: number;
     is_active?: boolean;
 }
 
@@ -25,6 +27,7 @@ export interface UpdateShippingMarginDTO {
     margin_amount: number;
     insurance_margin: number;
     cod_margin_percent: number;
+    cod_margin_amount: number;
     is_active?: boolean;
 }
 

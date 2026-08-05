@@ -10,6 +10,7 @@ type ShippingMargin struct {
 	MarginAmount     float64
 	InsuranceMargin  float64
 	CODMarginPercent float64
+	CODMarginAmount  float64
 	IsActive         bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time

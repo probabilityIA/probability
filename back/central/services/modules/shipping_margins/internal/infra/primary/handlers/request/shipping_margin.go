@@ -6,6 +6,7 @@ type CreateShippingMarginRequest struct {
 	MarginAmount     float64 `json:"margin_amount" binding:"gte=0"`
 	InsuranceMargin  float64 `json:"insurance_margin" binding:"gte=0"`
 	CODMarginPercent float64 `json:"cod_margin_percent" binding:"gte=0,lte=100"`
+	CODMarginAmount  float64 `json:"cod_margin_amount" binding:"gte=0"`
 	IsActive         *bool   `json:"is_active"`
 }
 
@@ -14,5 +15,6 @@ type UpdateShippingMarginRequest struct {
 	MarginAmount     float64 `json:"margin_amount" binding:"gte=0"`
 	InsuranceMargin  float64 `json:"insurance_margin" binding:"gte=0"`
 	CODMarginPercent float64 `json:"cod_margin_percent" binding:"gte=0,lte=100"`
+	CODMarginAmount  float64 `json:"cod_margin_amount" binding:"gte=0"`
 	IsActive         *bool   `json:"is_active"`
 }

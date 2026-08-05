@@ -754,7 +754,7 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 
 		isCOD, _ := rate["cod"].(bool)
 		if isCOD {
-			c.applyCODFee(ctx, rate, carrierName, businessID, margin.CODMarginPercent)
+			c.applyCODFee(ctx, rate, carrierName, businessID, margin)
 		}
 		delete(rate, "codDetails")
 
@@ -867,10 +867,7 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 		codCarrierFee = *shipment.CodCarrierFee
 	}
 
-	codMargin := 0.0
-	if codCarrierFee > 0 && margin.CODMarginPercent > 0 {
-		codMargin = codCarrierFee * margin.CODMarginPercent / 100.0
-	}
+	codMargin := margin.CODMargin(codCarrierFee)
 
 	fleteMargin := margin.MarginAmount + margin.InsuranceMargin
 	totalMargin := fleteMargin + codMargin
@@ -881,13 +878,13 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 	}
 	shipment.CarrierCost = &carrierCost
 	shipment.AppliedMargin = &totalMargin
-	if codCarrierFee > 0 {
+	if codMargin > 0 {
 		applied := codMargin
 		shipment.CodProbabilityMargin = &applied
 	}
 }
 
-func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]interface{}, carrierName string, businessID uint, codMarginPercent float64) {
+func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]interface{}, carrierName string, businessID uint, margin domain.ShippingMargin) {
 	details, ok := rate["codDetails"].(map[string]interface{})
 	if !ok || details == nil {
 		return
@@ -896,7 +893,7 @@ func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]inte
 	codCarrierFee, _ := toFloat(details["codCost"])
 	codCarrierFeeInsured, _ := toFloat(details["codCostWithInsurance"])
 
-	codProbabilityMargin := codCarrierFee * codMarginPercent / 100.0
+	codProbabilityMargin := margin.CODMargin(codCarrierFee)
 
 	rate["codCarrierFee"] = codCarrierFee
 	rate["codProbabilityMargin"] = codProbabilityMargin
@@ -908,7 +905,8 @@ func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]inte
 		Str("carrier", carrierName).
 		Uint("business_id", businessID).
 		Float64("cod_carrier_fee", codCarrierFee).
-		Float64("cod_margin_percent", codMarginPercent).
+		Float64("cod_margin_percent", margin.CODMarginPercent).
+		Float64("cod_margin_amount", margin.CODMarginAmount).
 		Float64("cod_probability_margin", codProbabilityMargin).
 		Msg("COD fee applied to quote")
 }

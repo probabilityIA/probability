@@ -158,6 +158,10 @@ func (h *Handlers) overrideCodValue(c *gin.Context, raw map[string]interface{}, 
 	if amount > 0 {
 		raw["codValue"] = amount
 	}
+
+	if netTarget := basis.NetTarget(totalCost); netTarget > 0 {
+		raw["codNetTarget"] = netTarget
+	}
 }
 
 func shipmentHasActiveGuide(s *domain.Shipment) bool {

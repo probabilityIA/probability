@@ -21,6 +21,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
         margin_amount: margin?.margin_amount?.toString() || '0',
         insurance_margin: margin?.insurance_margin?.toString() || '0',
         cod_margin_percent: margin?.cod_margin_percent?.toString() || '0',
+        cod_margin_amount: margin?.cod_margin_amount?.toString() || '0',
         is_active: margin?.is_active ?? true,
     });
     const [loading, setLoading] = useState(false);
@@ -39,6 +40,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
             const margin_amount = parseFloat(formData.margin_amount) || 0;
             const insurance_margin = parseFloat(formData.insurance_margin) || 0;
             const cod_margin_percent = parseFloat(formData.cod_margin_percent) || 0;
+            const cod_margin_amount = parseFloat(formData.cod_margin_amount) || 0;
 
             if (isEdit && margin) {
                 const payload: UpdateShippingMarginDTO = {
@@ -46,6 +48,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     margin_amount,
                     insurance_margin,
                     cod_margin_percent,
+                    cod_margin_amount,
                     is_active: formData.is_active,
                 };
                 await updateShippingMarginAction(margin.id, payload, businessId);
@@ -56,6 +59,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     margin_amount,
                     insurance_margin,
                     cod_margin_percent,
+                    cod_margin_amount,
                     is_active: formData.is_active,
                 };
                 await createShippingMarginAction(payload, businessId);
@@ -147,7 +151,24 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     </p>
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Margen ganancia COD (monto fijo)
+                    </label>
+                    <Input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={formData.cod_margin_amount}
+                        onChange={(e) => setFormData((p) => ({ ...p, cod_margin_amount: e.target.value }))}
+                        placeholder="0"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Valor fijo que cobramos por cada envio contra entrega, sin importar el monto recaudado. Si es mayor a 0 tiene prioridad y el porcentaje se ignora.
+                    </p>
+                </div>
+
+                <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Margen ganancia COD (%)
                     </label>
@@ -158,10 +179,13 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                         step="0.01"
                         value={formData.cod_margin_percent}
                         onChange={(e) => setFormData((p) => ({ ...p, cod_margin_percent: e.target.value }))}
+                        disabled={(parseFloat(formData.cod_margin_amount) || 0) > 0}
                         placeholder="0"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Porcentaje extra que cobramos sobre el costo COD del carrier. Se suma al codCost y el cliente solo ve el total. Ej: 30 = +30% sobre lo que cobra el carrier por contra entrega.
+                        {(parseFloat(formData.cod_margin_amount) || 0) > 0
+                            ? 'Desactivado: se esta usando el monto fijo.'
+                            : 'Porcentaje sobre la comision COD del carrier. Ej: 15 = +15% sobre lo que cobra el carrier por contra entrega.'}
                     </p>
                 </div>
             </div>

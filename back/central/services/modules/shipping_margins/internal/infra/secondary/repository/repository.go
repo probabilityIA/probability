@@ -29,6 +29,7 @@ func (r *Repository) Create(ctx context.Context, m *entities.ShippingMargin) (*e
 		MarginAmount:     m.MarginAmount,
 		InsuranceMargin:  m.InsuranceMargin,
 		CODMarginPercent: m.CODMarginPercent,
+		CODMarginAmount:  m.CODMarginAmount,
 		IsActive:         m.IsActive,
 	}
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -102,6 +103,7 @@ func (r *Repository) Update(ctx context.Context, m *entities.ShippingMargin) (*e
 		"margin_amount":      m.MarginAmount,
 		"insurance_margin":   m.InsuranceMargin,
 		"cod_margin_percent": m.CODMarginPercent,
+		"cod_margin_amount":  m.CODMarginAmount,
 		"is_active":          m.IsActive,
 	}
 	res := r.db.Conn(ctx).Model(&models.ShippingMargin{}).
@@ -136,6 +138,7 @@ func modelToEntity(m *models.ShippingMargin) *entities.ShippingMargin {
 		MarginAmount:     m.MarginAmount,
 		InsuranceMargin:  m.InsuranceMargin,
 		CODMarginPercent: m.CODMarginPercent,
+		CODMarginAmount:  m.CODMarginAmount,
 		IsActive:         m.IsActive,
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,

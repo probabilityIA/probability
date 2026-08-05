@@ -14,6 +14,7 @@ type ShippingMarginResponse struct {
 	MarginAmount     float64   `json:"margin_amount"`
 	InsuranceMargin  float64   `json:"insurance_margin"`
 	CODMarginPercent float64   `json:"cod_margin_percent"`
+	CODMarginAmount  float64   `json:"cod_margin_amount"`
 	IsActive         bool      `json:"is_active"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
@@ -36,6 +37,7 @@ func FromEntity(m *entities.ShippingMargin) ShippingMarginResponse {
 		MarginAmount:     m.MarginAmount,
 		InsuranceMargin:  m.InsuranceMargin,
 		CODMarginPercent: m.CODMarginPercent,
+		CODMarginAmount:  m.CODMarginAmount,
 		IsActive:         m.IsActive,
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,

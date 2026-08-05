@@ -24,6 +24,7 @@ type cacheValue struct {
 	MarginAmount     float64 `json:"margin_amount"`
 	InsuranceMargin  float64 `json:"insurance_margin"`
 	CODMarginPercent float64 `json:"cod_margin_percent"`
+	CODMarginAmount  float64 `json:"cod_margin_amount"`
 }
 
 type ShippingMarginReader struct {
@@ -57,6 +58,7 @@ func (r *ShippingMarginReader) Get(ctx context.Context, businessID uint, carrier
 					MarginAmount:     v.MarginAmount,
 					InsuranceMargin:  v.InsuranceMargin,
 					CODMarginPercent: v.CODMarginPercent,
+					CODMarginAmount:  v.CODMarginAmount,
 				}, nil
 			}
 		}
@@ -81,6 +83,7 @@ func (r *ShippingMarginReader) Get(ctx context.Context, businessID uint, carrier
 		MarginAmount:     model.MarginAmount,
 		InsuranceMargin:  model.InsuranceMargin,
 		CODMarginPercent: model.CODMarginPercent,
+		CODMarginAmount:  model.CODMarginAmount,
 	}
 
 	if r.rdb != nil {
@@ -88,6 +91,7 @@ func (r *ShippingMarginReader) Get(ctx context.Context, businessID uint, carrier
 			MarginAmount:     margin.MarginAmount,
 			InsuranceMargin:  margin.InsuranceMargin,
 			CODMarginPercent: margin.CODMarginPercent,
+			CODMarginAmount:  margin.CODMarginAmount,
 		})
 		k := key(businessID)
 		_ = r.rdb.HSet(ctx, k, carrierCode, string(payload))

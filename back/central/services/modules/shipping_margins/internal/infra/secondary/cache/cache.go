@@ -21,6 +21,7 @@ type cacheValue struct {
 	MarginAmount     float64 `json:"margin_amount"`
 	InsuranceMargin  float64 `json:"insurance_margin"`
 	CODMarginPercent float64 `json:"cod_margin_percent"`
+	CODMarginAmount  float64 `json:"cod_margin_amount"`
 }
 
 type Writer struct {
@@ -47,6 +48,7 @@ func (w *Writer) Upsert(ctx context.Context, m *entities.ShippingMargin) error {
 		MarginAmount:     m.MarginAmount,
 		InsuranceMargin:  m.InsuranceMargin,
 		CODMarginPercent: m.CODMarginPercent,
+		CODMarginAmount:  m.CODMarginAmount,
 	})
 	if err != nil {
 		return err
