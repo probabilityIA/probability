@@ -7,24 +7,21 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IUseCase defines the operations available for the EnvioClick transport provider.
-// Callers MAY pass a non-nil *[]domain.SyncMeta to collect HTTP call metadata for persistence.
 type IUseCase interface {
 	Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.QuoteResponse, error)
 	Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, metas *[]domain.SyncMeta) (*domain.GenerateResponse, error)
+	ResolveCODValue(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, netTarget float64, metas *[]domain.SyncMeta) (float64, bool)
 	Track(ctx context.Context, baseURL, apiKey string, trackingNumber string, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error)
 	TrackByOrdersBatch(ctx context.Context, baseURL, apiKey string, orders []int64, metas *[]domain.SyncMeta) (*domain.TrackingResponse, error)
 	Cancel(ctx context.Context, baseURL, apiKey string, trackingNumber string, idOrder int64, metas *[]domain.SyncMeta) (*domain.CancelResponse, error)
 	CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest, metas *[]domain.SyncMeta) (*domain.CancelBatchResponse, error)
 }
 
-// useCase handles EnvioClick transport operations
 type useCase struct {
 	client domain.IEnvioClickClient
 	log    log.ILogger
 }
 
-// New creates a new EnvioClick use case
 func New(client domain.IEnvioClickClient, logger log.ILogger) IUseCase {
 	return &useCase{
 		client: client,

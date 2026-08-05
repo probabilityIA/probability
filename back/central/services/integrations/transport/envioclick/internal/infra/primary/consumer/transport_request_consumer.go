@@ -13,18 +13,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// ICredentialResolver resolves encrypted credentials and config for an integration.
-// Satisfied by core.IIntegrationService (replicated interface — module isolation).
 type ICredentialResolver interface {
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
-	// GetPlatformCredential decrypts a field from the integration type's platform credentials.
-	// Used when the integration has use_platform_token=true in its config.
 	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
-// TransportRequestMessage is the message received from the transport router
-// (replicated locally — module isolation rule)
 type TransportRequestMessage struct {
 	ShipmentID    *uint                  `json:"shipment_id,omitempty"`
 	Provider      string                 `json:"provider"`
@@ -42,7 +36,6 @@ const (
 	QueueEnvioclickRequests = rabbitmq.QueueTransportEnvioclickRequests
 )
 
-// TransportRequestConsumer consumes transport requests for EnvioClick
 type TransportRequestConsumer struct {
 	rabbit             rabbitmq.IQueue
 	useCase            app.IUseCase
@@ -53,7 +46,6 @@ type TransportRequestConsumer struct {
 	log                log.ILogger
 }
 
-// NewTransportRequestConsumer creates a new consumer
 func NewTransportRequestConsumer(
 	rabbit rabbitmq.IQueue,
 	useCase app.IUseCase,
@@ -74,8 +66,6 @@ func NewTransportRequestConsumer(
 	}
 }
 
-// persistSyncLogs persists each captured HTTP call meta as a shipment_sync_logs row.
-// Errors are logged but do not break the consumer flow (logging is best-effort).
 func (c *TransportRequestConsumer) persistSyncLogs(ctx context.Context, request *TransportRequestMessage, operation string, metas []domain.SyncMeta, opErr error) {
 	if c.syncLogRepo == nil || len(metas) == 0 {
 		return
@@ -129,7 +119,6 @@ func (c *TransportRequestConsumer) persistSyncLogs(ctx context.Context, request 
 	}
 }
 
-// Start starts consuming from the EnvioClick requests queue
 func (c *TransportRequestConsumer) Start(ctx context.Context) error {
 	if c.rabbit == nil {
 		c.log.Warn(ctx).Msg("RabbitMQ client is nil, consumer cannot start")
@@ -153,7 +142,6 @@ func (c *TransportRequestConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleRequest processes a transport request
 func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 	ctx := context.Background()
 
@@ -170,9 +158,8 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		Str("operation", request.Operation).
 		Str("correlation_id", request.CorrelationID).
 		Uint("integration_id", request.IntegrationID).
-		Msg("📨 Received transport request")
+		Msg("Received transport request")
 
-	// Resolve integration config (for use_platform_token and base_url_test)
 	var integrationConfig map[string]interface{}
 	if request.IntegrationID != 0 {
 		cfg, cfgErr := c.credentialResolver.GetIntegrationConfig(ctx, fmt.Sprintf("%d", request.IntegrationID))
@@ -183,7 +170,6 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		}
 	}
 
-	// Resolve API key from integration credentials (or platform token)
 	apiKey, err := c.resolveAPIKey(ctx, &request, integrationConfig)
 	if err != nil {
 		c.log.Error(ctx).
@@ -197,7 +183,6 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		return err
 	}
 
-	// Resolve effective base URL (base_url_test from config overrides msg.BaseURL)
 	baseURL := c.resolveBaseURL(&request, integrationConfig)
 
 	var response *queue.TransportResponseMessage
@@ -233,22 +218,17 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 	return nil
 }
 
-// resolveAPIKey resolves the API key for EnvioClick.
-// Priority:
-//  1. If config has use_platform_token=true -> reads ENVIOCLICK_API_KEY from integration_types.platform_credentials_encrypted
-//  2. Otherwise -> decrypts api_key from integration credentials (per-business)
 func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *TransportRequestMessage, config map[string]interface{}) (string, error) {
 	integrationIDStr := fmt.Sprintf("%d", request.IntegrationID)
 
-	// Check if the integration uses the platform shared token
 	if config != nil {
 		if usePlatform, ok := config["use_platform_token"].(bool); ok && usePlatform {
 			if request.IntegrationID == 0 {
-				return "", fmt.Errorf("use_platform_token está activo pero integration_id es 0")
+				return "", fmt.Errorf("use_platform_token esta activo pero integration_id es 0")
 			}
 			apiKey, err := c.credentialResolver.GetPlatformCredential(ctx, integrationIDStr, "ENVIOCLICK_API_KEY")
 			if err != nil {
-				return "", fmt.Errorf("use_platform_token está activo pero no hay credenciales de plataforma configuradas para la integración %d: %w", request.IntegrationID, err)
+				return "", fmt.Errorf("use_platform_token esta activo pero no hay credenciales de plataforma configuradas para la integracion %d: %w", request.IntegrationID, err)
 			}
 			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform transport token")
 			return apiKey, nil
@@ -267,8 +247,6 @@ func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *T
 	return apiKey, nil
 }
 
-// resolveBaseURL determines the effective base URL for EnvioClick.
-// Priority: config.base_url_test > msg.BaseURL > DefaultBaseURL
 func (c *TransportRequestConsumer) resolveBaseURL(request *TransportRequestMessage, config map[string]interface{}) string {
 	if config != nil {
 		if testURL, ok := config["base_url_test"].(string); ok && testURL != "" {
@@ -281,7 +259,6 @@ func (c *TransportRequestConsumer) resolveBaseURL(request *TransportRequestMessa
 	return "https://api.envioclickpro.com.co/api/v2"
 }
 
-// processQuote handles shipping rate quotes
 func (c *TransportRequestConsumer) processQuote(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
 	payloadBytes, err := json.Marshal(request.Payload)
 	if err != nil {
@@ -313,7 +290,6 @@ func (c *TransportRequestConsumer) processQuote(ctx context.Context, request *Tr
 	}
 }
 
-// processGenerate handles guide generation
 func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
 	payloadBytes, err := json.Marshal(request.Payload)
 	if err != nil {
@@ -326,6 +302,9 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 	}
 
 	var metas []domain.SyncMeta
+
+	c.applyCODCalibration(ctx, request, &req, baseURL, apiKey, &metas)
+
 	resp, err := c.useCase.Generate(ctx, baseURL, apiKey, req, &metas)
 	c.persistSyncLogs(ctx, request, "generate", metas, err)
 	if err != nil {
@@ -351,7 +330,40 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 	}
 }
 
-// processTrack handles shipment tracking
+func (c *TransportRequestConsumer) applyCODCalibration(ctx context.Context, request *TransportRequestMessage, req *domain.QuoteRequest, baseURL, apiKey string, metas *[]domain.SyncMeta) {
+	if req.CODValue <= 0 {
+		return
+	}
+
+	netTarget, _ := request.Payload["codNetTarget"].(float64)
+	if netTarget <= 0 {
+		return
+	}
+
+	carrier, _ := request.Payload["carrier"].(string)
+
+	declared, ok := c.useCase.ResolveCODValue(ctx, baseURL, apiKey, *req, carrier, netTarget, metas)
+	if !ok {
+		c.log.Warn(ctx).
+			Str("correlation_id", request.CorrelationID).
+			Float64("cod_value", req.CODValue).
+			Msg("No se pudo calibrar la comision COD, se declara el valor recibido")
+		return
+	}
+
+	if declared == req.CODValue {
+		return
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", request.CorrelationID).
+		Float64("cod_value_anterior", req.CODValue).
+		Float64("cod_value_declarado", declared).
+		Msg("Valor COD declarado ajustado para que el negocio reciba el neto esperado")
+
+	req.CODValue = declared
+}
+
 func (c *TransportRequestConsumer) processTrack(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
 	trackingNumber, _ := request.Payload["tracking_number"].(string)
 	if trackingNumber == "" {
@@ -378,9 +390,8 @@ func (c *TransportRequestConsumer) processTrack(ctx context.Context, request *Tr
 	}
 }
 
-// processCancel handles shipment cancellation
 func (c *TransportRequestConsumer) processCancel(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
-	idShipment, _ := request.Payload["id_shipment"].(string) // Original ID/Tracking from URL
+	idShipment, _ := request.Payload["id_shipment"].(string)
 	trackingNumber, _ := request.Payload["tracking_number"].(string)
 	if trackingNumber == "" {
 		trackingNumber = idShipment
@@ -421,7 +432,6 @@ func (c *TransportRequestConsumer) processCancel(ctx context.Context, request *T
 	}
 }
 
-// processCancelBatch handles multiple shipment cancellations
 func (c *TransportRequestConsumer) processCancelBatch(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
 	payloadBytes, err := json.Marshal(request.Payload)
 	if err != nil {
@@ -517,7 +527,6 @@ func (c *TransportRequestConsumer) processSyncBatch(ctx context.Context, request
 	}
 }
 
-// errorResponse creates an error response
 func (c *TransportRequestConsumer) errorResponse(request *TransportRequestMessage, errMsg string) *queue.TransportResponseMessage {
 	return &queue.TransportResponseMessage{
 		ShipmentID:    request.ShipmentID,
@@ -531,7 +540,6 @@ func (c *TransportRequestConsumer) errorResponse(request *TransportRequestMessag
 	}
 }
 
-// toMap converts a struct to map[string]interface{} via JSON
 func toMap(v interface{}) map[string]interface{} {
 	data, err := json.Marshal(v)
 	if err != nil {
