@@ -755,6 +755,18 @@ export function Sidebar({ user }: SidebarProps) {
             </ul>
           </nav>
 
+          {businessLogo && (
+            <a
+              href="https://www.probabilityia.com.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-1.5 py-2 opacity-50 hover:opacity-90 transition-opacity ${primaryExpanded ? '' : 'px-1'}`}
+              title="Probability"
+            >
+              <Image src="/logo.ico" alt="Probability" width={16} height={16} className="object-contain flex-shrink-0" />
+              {primaryExpanded && <span className="text-[10px] text-gray-500 dark:text-gray-400 whitespace-nowrap">Powered by Probability</span>}
+            </a>
+          )}
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-2" />
           <div className="p-4 pt-2">
             <button
