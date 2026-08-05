@@ -170,6 +170,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.seedVigaCodMarginAmount(ctx); err != nil {
 		return err
 	}
+	if err := r.fixVigaCodEnCurso(ctx); err != nil {
+		return err
+	}
+	if err := r.seedCodMarginAmount(ctx); err != nil {
+		return err
+	}
 	if err := r.pruneOrderErrors(ctx); err != nil {
 		return err
 	}

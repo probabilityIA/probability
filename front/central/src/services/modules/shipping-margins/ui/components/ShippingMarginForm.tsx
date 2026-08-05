@@ -20,7 +20,6 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
         carrier_name: margin?.carrier_name || CARRIER_OPTIONS[0].name,
         margin_amount: margin?.margin_amount?.toString() || '0',
         insurance_margin: margin?.insurance_margin?.toString() || '0',
-        cod_margin_percent: margin?.cod_margin_percent?.toString() || '0',
         cod_margin_amount: margin?.cod_margin_amount?.toString() || '0',
         is_active: margin?.is_active ?? true,
     });
@@ -39,7 +38,7 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
         try {
             const margin_amount = parseFloat(formData.margin_amount) || 0;
             const insurance_margin = parseFloat(formData.insurance_margin) || 0;
-            const cod_margin_percent = parseFloat(formData.cod_margin_percent) || 0;
+            const cod_margin_percent = 0;
             const cod_margin_amount = parseFloat(formData.cod_margin_amount) || 0;
 
             if (isEdit && margin) {
@@ -151,9 +150,9 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                     </p>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Margen ganancia COD (monto fijo)
+                        Margen ganancia COD
                     </label>
                     <Input
                         type="number"
@@ -164,30 +163,10 @@ export default function ShippingMarginForm({ margin, onSuccess, onCancel, busine
                         placeholder="0"
                     />
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Valor fijo que cobramos por cada envio contra entrega, sin importar el monto recaudado. Si es mayor a 0 tiene prioridad y el porcentaje se ignora.
+                        Valor fijo que cobramos por cada envio contra entrega, sin importar el monto recaudado.
                     </p>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                        Margen ganancia COD (%)
-                    </label>
-                    <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={formData.cod_margin_percent}
-                        onChange={(e) => setFormData((p) => ({ ...p, cod_margin_percent: e.target.value }))}
-                        disabled={(parseFloat(formData.cod_margin_amount) || 0) > 0}
-                        placeholder="0"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {(parseFloat(formData.cod_margin_amount) || 0) > 0
-                            ? 'Desactivado: se esta usando el monto fijo.'
-                            : 'Porcentaje sobre la comision COD del carrier. Ej: 15 = +15% sobre lo que cobra el carrier por contra entrega.'}
-                    </p>
-                </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
