@@ -92,7 +92,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
     const [totalPages, setTotalPages] = useState(1);
     const [savingId, setSavingId] = useState<number | null>(null);
 
-    const handleAdjust = async (m: ShippingMargin, field: 'margin_amount' | 'insurance_margin' | 'cod_margin_percent', delta: number) => {
+    const handleAdjust = async (m: ShippingMargin, field: 'margin_amount' | 'insurance_margin' | 'cod_margin_percent' | 'cod_margin_amount', delta: number) => {
         const current = m[field];
         const max = field === 'cod_margin_percent' ? COD_MAX : Number.POSITIVE_INFINITY;
         const next = Math.max(0, Math.min(max, current + delta));
@@ -108,6 +108,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
                     margin_amount: field === 'margin_amount' ? next : m.margin_amount,
                     insurance_margin: field === 'insurance_margin' ? next : m.insurance_margin,
                     cod_margin_percent: field === 'cod_margin_percent' ? next : m.cod_margin_percent,
+                    cod_margin_amount: field === 'cod_margin_amount' ? next : m.cod_margin_amount,
                     is_active: m.is_active,
                 },
                 selectedBusinessId,
@@ -154,6 +155,7 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
         { key: 'carrier', label: 'Transportadora' },
         { key: 'margin', label: 'Margen flete', align: 'center' as const },
         { key: 'insurance', label: 'Margen seguro', align: 'center' as const },
+        { key: 'cod_amount', label: 'Margen COD fijo', align: 'center' as const },
         { key: 'cod', label: '% Margen COD', align: 'center' as const },
         { key: 'status', label: 'Estado', align: 'center' as const },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
@@ -180,12 +182,26 @@ export default function ShippingMarginList({ onEdit, onRefreshRef, selectedBusin
                 onChange={(delta) => handleAdjust(m, 'insurance_margin', delta)}
             />
         ),
-        cod: (
-            <InlineCODEditor
-                value={m.cod_margin_percent}
+        cod_amount: (
+            <InlineMarginEditor
+                value={m.cod_margin_amount}
                 busy={savingId === m.id}
-                onChange={(delta) => handleAdjust(m, 'cod_margin_percent', delta)}
+                onChange={(delta) => handleAdjust(m, 'cod_margin_amount', delta)}
             />
+        ),
+        cod: (
+            <div className={m.cod_margin_amount > 0 ? 'opacity-40' : ''}>
+                <InlineCODEditor
+                    value={m.cod_margin_percent}
+                    busy={savingId === m.id || m.cod_margin_amount > 0}
+                    onChange={(delta) => handleAdjust(m, 'cod_margin_percent', delta)}
+                />
+                {m.cod_margin_amount > 0 && (
+                    <span className="block text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        usa monto fijo
+                    </span>
+                )}
+            </div>
         ),
         status: (
             <span
