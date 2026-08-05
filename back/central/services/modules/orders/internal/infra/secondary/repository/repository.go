@@ -105,7 +105,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 
 	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	result := mappers.ToDomainOrder(&order, r.imageURLBase)
-	result.DestinationDaneCode = r.getGeozoneCode(ctx, order.DestinationGeozoneID)
+	result.DestinationDaneCode = r.getGeozoneCode(ctx, order.GeozoneCityID)
 	return result, nil
 }
 
