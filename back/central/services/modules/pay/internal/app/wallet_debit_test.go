@@ -18,7 +18,7 @@ import (
 )
 
 func newWalletUseCaseForTest(repo ports.IRepository) ports.IWalletUseCase {
-	return NewWalletUseCase(repo, nil, nil, mocks.NewSilentLogger())
+	return NewWalletUseCase(repo, nil, nil, nil, mocks.NewSilentLogger())
 }
 
 func existingWallet(businessID uint, balance float64) *entities.Wallet {

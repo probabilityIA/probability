@@ -217,17 +217,30 @@ func (m *RepositoryMock) GetBoldIntegrationForBusiness(ctx context.Context, busi
 	return args.Get(0).(*dtos.BoldBusinessIntegration), args.Error(1)
 }
 
-func (m *RepositoryMock) RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (bool, error) {
+func (m *RepositoryMock) RecordPaymentWebhookEvent(ctx context.Context, event *dtos.PaymentWebhookEvent) (bool, error) {
 	args := m.Called(ctx, event)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *RepositoryMock) MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
+func (m *RepositoryMock) MarkPaymentWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
 	return m.Called(ctx, id, paymentTransactionID, processErr).Error(0)
 }
 
-func (m *RepositoryMock) LinkBoldWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error {
+func (m *RepositoryMock) LinkPaymentWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error {
 	return m.Called(ctx, eventID, walletTransactionID).Error(0)
+}
+
+func (m *RepositoryMock) ListLowBalanceAlertCandidates(ctx context.Context, threshold float64) ([]entities.LowBalanceAlertCandidate, error) {
+	args := m.Called(ctx, threshold)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.LowBalanceAlertCandidate), args.Error(1)
+}
+
+func (m *RepositoryMock) HasRecentSystemAlert(ctx context.Context, phoneNumber string) (bool, error) {
+	args := m.Called(ctx, phoneNumber)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *RepositoryMock) GetWalletKPISelection(ctx context.Context) (*entities.WalletKPISelection, error) {
