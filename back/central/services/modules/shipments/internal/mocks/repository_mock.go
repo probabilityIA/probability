@@ -19,6 +19,9 @@ type RepositoryMock struct {
 	GetActiveShippingCarrierFn        func(ctx context.Context, businessID uint) (*domain.CarrierInfo, error)
 	GetBusinessNameFn                 func(ctx context.Context, businessID uint) (string, error)
 	GetOrderBusinessIDFn              func(ctx context.Context, orderUUID string) (uint, error)
+	ResolveShipmentGeozoneFn          func(ctx context.Context, shipmentID uint, businessID uint) error
+	ListPendingForManifestFn          func(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, int64, error)
+	ListPendingCarriersFn             func(ctx context.Context, businessID uint, includeChildren bool) ([]domain.ManifestCarrierCount, error)
 	GetShipmentBusinessIDByTrackingFn func(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByIDFn       func(ctx context.Context, shipmentID uint) (uint, error)
 	UpdateOrderGuideLinkFn            func(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string, shippingCost float64) error
@@ -391,6 +394,9 @@ func (m *RepositoryMock) GetOrderPublicTrackingByNumber(ctx context.Context, ord
 }
 
 func (m *RepositoryMock) ResolveShipmentGeozone(ctx context.Context, shipmentID uint, businessID uint) error {
+	if m.ResolveShipmentGeozoneFn != nil {
+		return m.ResolveShipmentGeozoneFn(ctx, shipmentID, businessID)
+	}
 	return nil
 }
 
@@ -399,10 +405,16 @@ func (m *RepositoryMock) GetShipmentStatsByGeozone(ctx context.Context, filter d
 }
 
 func (m *RepositoryMock) ListPendingForManifest(ctx context.Context, filter domain.ManifestFilter) ([]domain.ManifestShipmentRow, int64, error) {
+	if m.ListPendingForManifestFn != nil {
+		return m.ListPendingForManifestFn(ctx, filter)
+	}
 	return nil, 0, nil
 }
 
 func (m *RepositoryMock) ListPendingCarriers(ctx context.Context, businessID uint, includeChildren bool) ([]domain.ManifestCarrierCount, error) {
+	if m.ListPendingCarriersFn != nil {
+		return m.ListPendingCarriersFn(ctx, businessID, includeChildren)
+	}
 	return nil, nil
 }
 

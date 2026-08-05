@@ -24,24 +24,54 @@ type mockRepo struct {
 	updateOrderItemsStatusFn    func(ctx context.Context, orderID string, status string) error
 	findClientByPhoneFn         func(ctx context.Context, businessID uint, phone string) (*entities.Client, error)
 	getByIDFn                   func(ctx context.Context, businessID, clientID uint) (*entities.Client, error)
+	createFn                    func(ctx context.Context, c *entities.Client) (*entities.Client, error)
+	listFn                      func(ctx context.Context, p dtos.ListClientsParams) ([]entities.Client, int64, error)
+	updateFn                    func(ctx context.Context, c *entities.Client) (*entities.Client, error)
+	deleteFn                    func(ctx context.Context, businessID, clientID uint) error
+	existsByEmailFn             func(ctx context.Context, businessID uint, email string, excludeID *uint) (bool, error)
+	existsByDniFn               func(ctx context.Context, businessID uint, dni string, excludeID *uint) (bool, error)
 }
 
-func (m *mockRepo) Create(_ context.Context, c *entities.Client) (*entities.Client, error)         { return c, nil }
+func (m *mockRepo) Create(ctx context.Context, c *entities.Client) (*entities.Client, error) {
+	if m.createFn != nil {
+		return m.createFn(ctx, c)
+	}
+	return c, nil
+}
 func (m *mockRepo) GetByID(ctx context.Context, bID, cID uint) (*entities.Client, error) {
 	if m.getByIDFn != nil {
 		return m.getByIDFn(ctx, bID, cID)
 	}
 	return &entities.Client{ID: cID, BusinessID: bID, Name: "Test"}, nil
 }
-func (m *mockRepo) List(_ context.Context, _ dtos.ListClientsParams) ([]entities.Client, int64, error) {
+func (m *mockRepo) List(ctx context.Context, p dtos.ListClientsParams) ([]entities.Client, int64, error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, p)
+	}
 	return nil, 0, nil
 }
-func (m *mockRepo) Update(_ context.Context, c *entities.Client) (*entities.Client, error) { return c, nil }
-func (m *mockRepo) Delete(_ context.Context, _, _ uint) error                              { return nil }
-func (m *mockRepo) ExistsByEmail(_ context.Context, _ uint, _ string, _ *uint) (bool, error) {
+func (m *mockRepo) Update(ctx context.Context, c *entities.Client) (*entities.Client, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, c)
+	}
+	return c, nil
+}
+func (m *mockRepo) Delete(ctx context.Context, businessID, clientID uint) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, businessID, clientID)
+	}
+	return nil
+}
+func (m *mockRepo) ExistsByEmail(ctx context.Context, businessID uint, email string, excludeID *uint) (bool, error) {
+	if m.existsByEmailFn != nil {
+		return m.existsByEmailFn(ctx, businessID, email, excludeID)
+	}
 	return false, nil
 }
-func (m *mockRepo) ExistsByDni(_ context.Context, _ uint, _ string, _ *uint) (bool, error) {
+func (m *mockRepo) ExistsByDni(ctx context.Context, businessID uint, dni string, excludeID *uint) (bool, error) {
+	if m.existsByDniFn != nil {
+		return m.existsByDniFn(ctx, businessID, dni, excludeID)
+	}
 	return false, nil
 }
 
