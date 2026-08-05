@@ -78,6 +78,7 @@ export interface Order {
     shipping_lat?: number;
     shipping_lng?: number;
     shipping_geo_confidence?: 'high' | 'medium' | 'low';
+    destination_dane_code?: string;
 
     payment_method_id: number;
     is_paid: boolean;

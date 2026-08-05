@@ -104,7 +104,22 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 	}
 
 	r.resolveOrderStatusByCodeSingle(ctx, &order)
-	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
+	result := mappers.ToDomainOrder(&order, r.imageURLBase)
+	result.DestinationDaneCode = r.getGeozoneCode(ctx, order.DestinationGeozoneID)
+	return result, nil
+}
+
+// getGeozoneCode obtiene el codigo DANE de una geozona (usado para prellenar destino de guias)
+func (r *Repository) getGeozoneCode(ctx context.Context, geozoneID *uint) string {
+	if geozoneID == nil {
+		return ""
+	}
+	var code string
+	err := r.db.Conn(ctx).Table("geozones").Select("code").Where("id = ?", *geozoneID).Limit(1).Scan(&code).Error
+	if err != nil {
+		return ""
+	}
+	return code
 }
 
 // GetOrderByInternalNumber obtiene una orden por su número interno

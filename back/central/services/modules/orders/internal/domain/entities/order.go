@@ -64,6 +64,7 @@ type ProbabilityOrder struct {
 	ShippingLat           *float64
 	ShippingLng           *float64
 	ShippingGeoConfidence string
+	DestinationDaneCode   string
 
 	PaymentMethodID   uint
 	PaymentMethodName string

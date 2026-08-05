@@ -13,6 +13,7 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { findDaneCode } from "@/shared/utils/dane-lookup";
 import { CarrierEffectivenessRates } from "@/services/modules/geozones/ui/components/CarrierEffectivenessRates";
 import { getProbabilityByCarrierAction } from "@/services/modules/geozones/infra/actions";
 import type { ProbabilityResult } from "@/services/modules/geozones/domain/types";
@@ -92,39 +93,6 @@ const getCarrierLogo = (carrierName: string): string => {
         return acc;
     }, {} as Record<string, string>);
     return normalizedLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
-};
-
-const findDaneCode = (city: string, state: string) => {
-    const targetCity = normalizeLocationName(city);
-    const targetState = normalizeLocationName(state);
-
-    if (!targetCity) return null;
-
-    const entries = Object.entries(danes);
-
-    // 1. Try exact match with city and state
-    const exactMatch = entries.find(([_, data]: [string, any]) => {
-        const dCity = normalizeLocationName(data.ciudad);
-        const dState = normalizeLocationName(data.departamento);
-        return dCity === targetCity && dState === targetState;
-    });
-    if (exactMatch) return exactMatch[0];
-
-    // 2. Try match with city only
-    const cityMatch = entries.find(([_, data]: [string, any]) => {
-        const dCity = normalizeLocationName(data.ciudad);
-        return dCity === targetCity;
-    });
-    if (cityMatch) return cityMatch[0];
-
-    // 3. Try partial match
-    const partialMatch = entries.find(([_, data]: [string, any]) => {
-        const dCity = normalizeLocationName(data.ciudad);
-        return dCity.includes(targetCity) || targetCity.includes(dCity);
-    });
-    if (partialMatch) return partialMatch[0];
-
-    return null;
 };
 
 interface ShipmentGuideModalProps {
@@ -454,7 +422,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 step1Form.setValue("length", order.length || 10, { shouldValidate: true });
             }
 
-            const mappedDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
+            const verifiedDaneKey = order.destination_dane_code ? `${order.destination_dane_code}000` : null;
+            const verifiedDane = verifiedDaneKey && danes[verifiedDaneKey as keyof typeof danes]
+                ? verifiedDaneKey
+                : null;
+            const mappedDane = verifiedDane || findDaneCode(order.shipping_city || "", order.shipping_state || "");
             if (mappedDane) {
                 step1Form.setValue("destDaneCode", mappedDane, { shouldValidate: true });
                 const cityData = danes[mappedDane as keyof typeof danes];

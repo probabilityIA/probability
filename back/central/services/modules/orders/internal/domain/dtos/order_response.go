@@ -66,6 +66,7 @@ type OrderResponse struct {
 	ShippingLat           *float64
 	ShippingLng           *float64
 	ShippingGeoConfidence string
+	DestinationDaneCode   string
 
 	// Información de pago
 	PaymentMethodID uint
