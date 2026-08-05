@@ -13,14 +13,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// messageAuditQuerier consulta whatsapp_message_logs y whatsapp_conversations
-// Replicado localmente para evitar compartir repositorios entre módulos
 type messageAuditQuerier struct {
 	db     db.IDatabase
 	logger log.ILogger
 }
 
-// NewMessageAuditQuerier crea una instancia del querier de auditoría de mensajes
 func NewMessageAuditQuerier(database db.IDatabase, logger log.ILogger) ports.IMessageAuditQuerier {
 	return &messageAuditQuerier{
 		db:     database,
@@ -28,7 +25,6 @@ func NewMessageAuditQuerier(database db.IDatabase, logger log.ILogger) ports.IMe
 	}
 }
 
-// messageLogRow representa una fila del resultado del JOIN
 type messageLogRow struct {
 	ID             uuid.UUID
 	ConversationID uuid.UUID
@@ -45,8 +41,6 @@ type messageLogRow struct {
 	BusinessID     uint
 }
 
-// ListMessageLogs obtiene logs de mensajes con filtros y paginación
-// Consulta: whatsapp_message_logs JOIN whatsapp_conversations
 func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error) {
 	baseQuery := q.db.Conn(ctx).
 		Table("whatsapp_message_logs ml").
@@ -69,7 +63,6 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 		baseQuery = baseQuery.Where("ml.created_at < ?::date + interval '1 day'", *filter.DateTo)
 	}
 
-	// Count total
 	var total int64
 	if err := baseQuery.Count(&total).Error; err != nil {
 		q.logger.Error().Err(err).Msg("Error counting message logs")
@@ -80,7 +73,6 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 		return []entities.MessageAuditLog{}, 0, nil
 	}
 
-	// Paginated query
 	offset := (filter.Page - 1) * filter.PageSize
 	var rows []messageLogRow
 
@@ -99,7 +91,6 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 		return nil, 0, err
 	}
 
-	// Map to domain entities
 	logs := make([]entities.MessageAuditLog, len(rows))
 	for i, row := range rows {
 		logs[i] = entities.MessageAuditLog{
@@ -122,8 +113,6 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 	return logs, total, nil
 }
 
-
-// emailLogRow representa una fila del resultado de la query de email_logs
 type emailLogRow struct {
 	BusinessID    uint
 	IntegrationID uint
@@ -136,8 +125,6 @@ type emailLogRow struct {
 	CreatedAt     time.Time
 }
 
-// ListEmailLogs obtiene logs de entregas de email con filtros y paginación
-// Consulta: email_logs (gestionada por notification_config)
 func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error) {
 	baseQuery := q.db.Conn(ctx).
 		Table("email_logs").
@@ -153,7 +140,6 @@ func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint
 		baseQuery = baseQuery.Where("created_at < ?::date + interval '1 day'", *dateTo)
 	}
 
-	// Count total
 	var total int64
 	if err := baseQuery.Count(&total).Error; err != nil {
 		q.logger.Error().Err(err).Msg("Error counting email logs")
@@ -164,7 +150,6 @@ func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint
 		return []entities.EmailDeliveryLog{}, 0, nil
 	}
 
-	// Paginated query
 	offset := (page - 1) * pageSize
 	var rows []emailLogRow
 
@@ -200,12 +185,11 @@ func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint
 	return logs, total, nil
 }
 
-
-// conversationSummaryRow representa una fila del resultado de ListConversations
 type conversationSummaryRow struct {
 	ID                   uuid.UUID
 	PhoneNumber          string
 	OrderNumber          string
+	ConversationType     string
 	BusinessID           uint
 	CurrentState         string
 	MessageCount         int
@@ -216,12 +200,10 @@ type conversationSummaryRow struct {
 	CreatedAt            time.Time
 }
 
-// ListConversations obtiene conversaciones con resumen para la vista de lista
 func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
-	// Base query: conversaciones con aggregates de mensajes
 	baseQuery := q.db.Conn(ctx).
 		Table("whatsapp_conversations c").
-		Select(`c.id, c.phone_number, c.order_number, c.business_id, c.current_state, c.created_at,
+		Select(`c.id, c.phone_number, c.order_number, c.conversation_type, c.business_id, c.current_state, c.created_at,
 			COALESCE(agg.message_count, 0) AS message_count,
 			COALESCE(agg.last_activity, c.updated_at) AS last_activity,
 			COALESCE(latest.content, '') AS last_message_content,
@@ -241,7 +223,6 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		) latest ON true`).
 		Where("c.business_id = ?", filter.BusinessID)
 
-	// Filtros opcionales
 	if filter.State != nil && *filter.State != "" {
 		baseQuery = baseQuery.Where("c.current_state = ?", *filter.State)
 	}
@@ -255,7 +236,6 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		baseQuery = baseQuery.Where("c.created_at < ?::date + interval '1 day'", *filter.DateTo)
 	}
 
-	// Count total (necesitamos contar sin el select complejo)
 	var total int64
 	countQuery := q.db.Conn(ctx).
 		Table("whatsapp_conversations c").
@@ -281,7 +261,6 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		return []entities.ConversationSummary{}, 0, nil
 	}
 
-	// Paginated query
 	offset := (filter.Page - 1) * filter.PageSize
 	var rows []conversationSummaryRow
 
@@ -296,13 +275,13 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 		return nil, 0, err
 	}
 
-	// Map to domain entities
 	conversations := make([]entities.ConversationSummary, len(rows))
 	for i, row := range rows {
 		conversations[i] = entities.ConversationSummary{
 			ID:                   row.ID.String(),
 			PhoneNumber:          row.PhoneNumber,
 			OrderNumber:          row.OrderNumber,
+			ConversationType:     row.ConversationType,
 			BusinessID:           row.BusinessID,
 			CurrentState:         row.CurrentState,
 			MessageCount:         row.MessageCount,
@@ -317,7 +296,6 @@ func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos
 	return conversations, total, nil
 }
 
-// conversationMessageRow representa una fila del resultado de GetConversationMessages
 type conversationMessageRow struct {
 	ID           uuid.UUID
 	Direction    string
@@ -330,33 +308,30 @@ type conversationMessageRow struct {
 	CreatedAt    time.Time
 }
 
-// conversationMetaRow representa los metadatos de la conversación
 type conversationMetaRow struct {
-	ID           uuid.UUID
-	PhoneNumber  string
-	OrderNumber  string
-	CurrentState string
+	ID               uuid.UUID
+	PhoneNumber      string
+	OrderNumber      string
+	ConversationType string
+	CurrentState     string
 }
 
-// GetConversationMessages obtiene los mensajes de una conversación para la vista de chat
 func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {
 	convID, err := uuid.Parse(conversationID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("conversation ID inválido: %s", conversationID)
 	}
 
-	// Obtener metadatos de la conversación (y validar que pertenece al business)
 	var meta conversationMetaRow
 	err = q.db.Conn(ctx).
 		Table("whatsapp_conversations").
-		Select("id, phone_number, order_number, current_state").
+		Select("id, phone_number, order_number, conversation_type, current_state").
 		Where("id = ? AND business_id = ?", convID, businessID).
 		First(&meta).Error
 	if err != nil {
 		return nil, nil, fmt.Errorf("conversation not found: %w", err)
 	}
 
-	// Obtener mensajes ordenados cronológicamente (ASC para chat view)
 	var rows []conversationMessageRow
 	err = q.db.Conn(ctx).
 		Table("whatsapp_message_logs").
@@ -368,13 +343,13 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 		return nil, nil, fmt.Errorf("error listing conversation messages: %w", err)
 	}
 
-	// Map conversación
 	conv := &entities.ConversationSummary{
-		ID:           meta.ID.String(),
-		PhoneNumber:  meta.PhoneNumber,
-		OrderNumber:  meta.OrderNumber,
-		CurrentState: meta.CurrentState,
-		BusinessID:   businessID,
+		ID:               meta.ID.String(),
+		PhoneNumber:      meta.PhoneNumber,
+		OrderNumber:      meta.OrderNumber,
+		ConversationType: meta.ConversationType,
+		CurrentState:     meta.CurrentState,
+		BusinessID:       businessID,
 	}
 
 	messages := make([]entities.ConversationMessage, len(rows))
@@ -395,8 +370,6 @@ func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conve
 	return conv, messages, nil
 }
 
-
-// statsResult representa el resultado de la query de estadísticas
 type statsResult struct {
 	TotalSent      int64
 	TotalDelivered int64
@@ -404,7 +377,6 @@ type statsResult struct {
 	TotalFailed    int64
 }
 
-// GetMessageStats obtiene estadísticas agregadas de mensajes outbound
 func (q *messageAuditQuerier) GetMessageStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error) {
 	baseQuery := q.db.Conn(ctx).
 		Table("whatsapp_message_logs ml").

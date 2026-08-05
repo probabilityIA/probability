@@ -12,13 +12,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// persistencePublisher publica eventos para persistencia asíncrona en DB
 type persistencePublisher struct {
 	rabbit rabbitmq.IQueue
 	log    log.ILogger
 }
 
-// NewPersistencePublisher crea un publisher que envía eventos de WhatsApp a notification_config para persistir
 func NewPersistencePublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.IPersistencePublisher {
 	return &persistencePublisher{
 		rabbit: rabbit,
@@ -26,11 +24,6 @@ func NewPersistencePublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.I
 	}
 }
 
-// ============================================
-// Conversation events
-// ============================================
-
-// conversationEvent es el payload para eventos de conversación
 type conversationEvent struct {
 	EventType    string              `json:"event_type"`
 	Conversation conversationPayload `json:"conversation"`
@@ -38,36 +31,41 @@ type conversationEvent struct {
 }
 
 type conversationPayload struct {
-	ID             string                 `json:"id"`
-	PhoneNumber    string                 `json:"phone_number"`
-	OrderNumber    string                 `json:"order_number"`
-	BusinessID     uint                   `json:"business_id"`
-	CurrentState   string                 `json:"current_state"`
-	LastMessageID  string                 `json:"last_message_id"`
-	LastTemplateID string                 `json:"last_template_id"`
-	Metadata       map[string]interface{} `json:"metadata"`
-	CreatedAt      time.Time              `json:"created_at"`
-	UpdatedAt      time.Time              `json:"updated_at"`
-	ExpiresAt      time.Time              `json:"expires_at"`
+	ID               string                 `json:"id"`
+	PhoneNumber      string                 `json:"phone_number"`
+	OrderNumber      string                 `json:"order_number"`
+	ConversationType string                 `json:"conversation_type"`
+	BusinessID       uint                   `json:"business_id"`
+	CurrentState     string                 `json:"current_state"`
+	LastMessageID    string                 `json:"last_message_id"`
+	LastTemplateID   string                 `json:"last_template_id"`
+	Metadata         map[string]interface{} `json:"metadata"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+	ExpiresAt        time.Time              `json:"expires_at"`
 }
 
 func toConversationPayload(c *entities.Conversation) conversationPayload {
+	convType := string(c.ConversationType)
+	if convType == "" {
+		convType = string(entities.ConversationTypeOrder)
+	}
 	return conversationPayload{
-		ID:             c.ID,
-		PhoneNumber:    c.PhoneNumber,
-		OrderNumber:    c.OrderNumber,
-		BusinessID:     c.BusinessID,
-		CurrentState:   string(c.CurrentState),
-		LastMessageID:  c.LastMessageID,
-		LastTemplateID: c.LastTemplateID,
-		Metadata:       c.Metadata,
-		CreatedAt:      c.CreatedAt,
-		UpdatedAt:      c.UpdatedAt,
-		ExpiresAt:      c.ExpiresAt,
+		ID:               c.ID,
+		PhoneNumber:      c.PhoneNumber,
+		OrderNumber:      c.OrderNumber,
+		ConversationType: convType,
+		BusinessID:       c.BusinessID,
+		CurrentState:     string(c.CurrentState),
+		LastMessageID:    c.LastMessageID,
+		LastTemplateID:   c.LastTemplateID,
+		Metadata:         c.Metadata,
+		CreatedAt:        c.CreatedAt,
+		UpdatedAt:        c.UpdatedAt,
+		ExpiresAt:        c.ExpiresAt,
 	}
 }
 
-// PublishConversationCreated publica evento de conversación creada
 func (p *persistencePublisher) PublishConversationCreated(ctx context.Context, conversation *entities.Conversation) error {
 	event := conversationEvent{
 		EventType:    "conversation.created",
@@ -77,7 +75,6 @@ func (p *persistencePublisher) PublishConversationCreated(ctx context.Context, c
 	return p.publishConversation(ctx, event)
 }
 
-// PublishConversationUpdated publica evento de conversación actualizada
 func (p *persistencePublisher) PublishConversationUpdated(ctx context.Context, conversation *entities.Conversation) error {
 	event := conversationEvent{
 		EventType:    "conversation.updated",
@@ -87,7 +84,6 @@ func (p *persistencePublisher) PublishConversationUpdated(ctx context.Context, c
 	return p.publishConversation(ctx, event)
 }
 
-// PublishConversationExpired publica evento de conversación expirada
 func (p *persistencePublisher) PublishConversationExpired(ctx context.Context, conversationID string) error {
 	event := conversationEvent{
 		EventType: "conversation.expired",
@@ -121,11 +117,6 @@ func (p *persistencePublisher) publishConversation(ctx context.Context, event co
 	return nil
 }
 
-// ============================================
-// MessageLog events
-// ============================================
-
-// messageLogEvent es el payload para eventos de message log
 type messageLogEvent struct {
 	EventType  string            `json:"event_type"`
 	MessageLog messageLogPayload `json:"message_log"`
@@ -160,7 +151,6 @@ func toMessageLogPayload(m *entities.MessageLog) messageLogPayload {
 	}
 }
 
-// PublishMessageLogCreated publica evento de message log creado
 func (p *persistencePublisher) PublishMessageLogCreated(ctx context.Context, messageLog *entities.MessageLog) error {
 	event := messageLogEvent{
 		EventType:  "messagelog.created",
@@ -170,16 +160,13 @@ func (p *persistencePublisher) PublishMessageLogCreated(ctx context.Context, mes
 	return p.publishMessageLog(ctx, event)
 }
 
-// messageStatusUpdatePayload es el payload para actualización de estado
 type messageStatusUpdatePayload struct {
 	MessageID  string            `json:"message_id"`
 	Status     string            `json:"status"`
 	Timestamps map[string]string `json:"timestamps"`
 }
 
-// PublishMessageStatusUpdated publica evento de actualización de estado de mensaje
 func (p *persistencePublisher) PublishMessageStatusUpdated(ctx context.Context, messageID string, status entities.MessageStatus, timestamps map[string]time.Time) error {
-	// Convertir timestamps a strings para serialización
 	tsStrings := make(map[string]string, len(timestamps))
 	for k, v := range timestamps {
 		tsStrings[k] = v.Format(time.RFC3339)

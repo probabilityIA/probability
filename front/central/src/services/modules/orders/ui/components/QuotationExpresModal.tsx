@@ -10,35 +10,10 @@ import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions"
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { findDaneCode } from "@/shared/utils/dane-lookup";
 import { getActionError } from '@/shared/utils/action-result';
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
-
-const normalizeLocationName = (str: string) => {
-    if (!str) return "";
-    let s = str.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim();
-    s = s.replace(/,\s*D\.C\./g, "").replace(/\sD\.C\./g, "").replace(/\sDC\b/g, "").trim();
-    return s;
-};
-
-const findDaneCode = (city: string, state: string) => {
-    const targetCity = normalizeLocationName(city);
-    const targetState = normalizeLocationName(state);
-    if (!targetCity) return null;
-    const entries = Object.entries(danes);
-    const exactMatch = entries.find(([_, data]: [string, any]) => {
-        const dCity = normalizeLocationName(data.ciudad);
-        const dState = normalizeLocationName(data.departamento);
-        return dCity === targetCity && dState === targetState;
-    });
-    if (exactMatch) return exactMatch[0];
-    const cityMatch = entries.find(([_, data]: [string, any]) => {
-        const dCity = normalizeLocationName(data.ciudad);
-        return dCity === targetCity;
-    });
-    if (cityMatch) return cityMatch[0];
-    return null;
-};
 
 const buildWarehouseAddress = (warehouse: Warehouse | null): string => {
     if (!warehouse) return "";

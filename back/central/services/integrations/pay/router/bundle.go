@@ -11,17 +11,17 @@ import (
 )
 
 const (
-	QueuePayRequests      = rabbitmq.QueuePayRequests
-	QueueNequiRequests    = rabbitmq.QueuePayNequiRequests
-	QueueBoldRequests     = rabbitmq.QueuePayBoldRequests
-	QueueWompiRequests    = rabbitmq.QueuePayWompiRequests
-	QueueStripeRequests   = rabbitmq.QueuePayStripeRequests
-	QueuePayURequests     = rabbitmq.QueuePayPayURequests
-	QueueEPaycoRequests   = rabbitmq.QueuePayEPaycoRequests
-	QueueMeliPagoRequests = rabbitmq.QueuePayMeliPagoRequests
+	QueuePayRequests         = rabbitmq.QueuePayRequests
+	QueueNequiRequests       = rabbitmq.QueuePayNequiRequests
+	QueueBoldRequests        = rabbitmq.QueuePayBoldRequests
+	QueueBancolombiaRequests = rabbitmq.QueuePayBancolombiaRequests
+	QueueWompiRequests       = rabbitmq.QueuePayWompiRequests
+	QueueStripeRequests      = rabbitmq.QueuePayStripeRequests
+	QueuePayURequests        = rabbitmq.QueuePayPayURequests
+	QueueEPaycoRequests      = rabbitmq.QueuePayEPaycoRequests
+	QueueMeliPagoRequests    = rabbitmq.QueuePayMeliPagoRequests
 )
 
-// payRequestHeader contiene solo los campos para enrutar
 type payRequestHeader struct {
 	PaymentTransactionID uint      `json:"payment_transaction_id"`
 	GatewayCode          string    `json:"gateway_code"`
@@ -31,13 +31,11 @@ type payRequestHeader struct {
 	Timestamp            time.Time `json:"timestamp"`
 }
 
-// Bundle es el router centralizado de pagos
 type Bundle struct {
 	rabbit rabbitmq.IQueue
 	log    log.ILogger
 }
 
-// New crea e inicia el router de pagos
 func New(
 	logger log.ILogger,
 	rabbit rabbitmq.IQueue,
@@ -76,10 +74,10 @@ func (b *Bundle) startRouter(ctx context.Context) error {
 		return err
 	}
 
-	// Declarar colas de gateways
 	for _, q := range []string{
 		QueueNequiRequests,
 		QueueBoldRequests,
+		QueueBancolombiaRequests,
 		QueueWompiRequests,
 		QueueStripeRequests,
 		QueuePayURequests,
@@ -112,7 +110,7 @@ func (b *Bundle) handlePaymentRequest(message []byte) error {
 	targetQueue := b.getGatewayQueue(header.GatewayCode)
 	if targetQueue == "" {
 		b.log.Error(ctx).Str("gateway", header.GatewayCode).Msg("Unknown payment gateway")
-		return nil // No re-encolar si el gateway es desconocido
+		return nil
 	}
 
 	if err := b.rabbit.Publish(ctx, targetQueue, message); err != nil {
@@ -135,6 +133,8 @@ func (b *Bundle) getGatewayQueue(gateway string) string {
 		return QueueNequiRequests
 	case "bold":
 		return QueueBoldRequests
+	case "bancolombia":
+		return QueueBancolombiaRequests
 	case "wompi":
 		return QueueWompiRequests
 	case "stripe":

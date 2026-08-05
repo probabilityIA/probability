@@ -3,6 +3,7 @@ package pay
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/bancolombia"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/bold"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/epayco"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/melipago"
@@ -27,6 +28,7 @@ func New(
 ) {
 	nequi.New(config, logger, database, rabbitMQ)
 	bold.New(apiRouter, coreSvc, logger, database, rabbitMQ)
+	bancolombia.New(apiRouter, coreSvc, logger, database, rabbitMQ)
 	wompi.New(config, logger, database, rabbitMQ)
 	stripe.New(config, logger, database, rabbitMQ)
 	payu.New(config, logger, database, rabbitMQ)

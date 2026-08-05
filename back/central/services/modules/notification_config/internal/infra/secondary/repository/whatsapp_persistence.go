@@ -35,18 +35,24 @@ func (r *whatsAppPersister) CreateConversation(ctx context.Context, conv *entiti
 
 	metadataJSON, _ := json.Marshal(conv.Metadata)
 
+	conversationType := conv.ConversationType
+	if conversationType == "" {
+		conversationType = "order"
+	}
+
 	model := &models.WhatsAppConversation{
-		ID:             convID,
-		PhoneNumber:    conv.PhoneNumber,
-		OrderNumber:    conv.OrderNumber,
-		BusinessID:     conv.BusinessID,
-		CurrentState:   conv.CurrentState,
-		LastMessageID:  conv.LastMessageID,
-		LastTemplateID: conv.LastTemplateID,
-		Metadata:       datatypes.JSON(metadataJSON),
-		CreatedAt:      conv.CreatedAt,
-		UpdatedAt:      conv.UpdatedAt,
-		ExpiresAt:      conv.ExpiresAt,
+		ID:               convID,
+		PhoneNumber:      conv.PhoneNumber,
+		OrderNumber:      conv.OrderNumber,
+		ConversationType: conversationType,
+		BusinessID:       conv.BusinessID,
+		CurrentState:     conv.CurrentState,
+		LastMessageID:    conv.LastMessageID,
+		LastTemplateID:   conv.LastTemplateID,
+		Metadata:         datatypes.JSON(metadataJSON),
+		CreatedAt:        conv.CreatedAt,
+		UpdatedAt:        conv.UpdatedAt,
+		ExpiresAt:        conv.ExpiresAt,
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {

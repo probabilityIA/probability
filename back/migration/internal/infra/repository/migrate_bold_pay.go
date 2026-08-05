@@ -87,7 +87,7 @@ const (
 )
 
 func (r *Repository) migrateBoldPay(ctx context.Context) error {
-	if err := r.db.Conn(ctx).AutoMigrate(&models.BoldWebhookEvent{}, &models.CredentialRevealAudit{}); err != nil {
+	if err := r.db.Conn(ctx).AutoMigrate(&models.CredentialRevealAudit{}); err != nil {
 		return fmt.Errorf("automigrate bold pay tables: %w", err)
 	}
 

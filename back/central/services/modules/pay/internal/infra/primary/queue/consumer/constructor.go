@@ -6,11 +6,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// Consumers agrupa todos los consumers del módulo de pagos
 type Consumers struct {
-	Response    *ResponseConsumer
-	Retry       *RetryConsumer
-	BoldWebhook *BoldWebhookConsumer
+	Response           *ResponseConsumer
+	Retry              *RetryConsumer
+	BoldWebhook        *BoldWebhookConsumer
+	BancolombiaWebhook *BancolombiaWebhookConsumer
 }
 
 func NewConsumers(
@@ -21,8 +21,9 @@ func NewConsumers(
 	logger log.ILogger,
 ) *Consumers {
 	return &Consumers{
-		Response:    NewResponseConsumer(queue, useCase, logger),
-		Retry:       NewRetryConsumer(repo, useCase, logger),
-		BoldWebhook: NewBoldWebhookConsumer(queue, useCase, logger),
+		Response:           NewResponseConsumer(queue, useCase, logger),
+		Retry:              NewRetryConsumer(repo, useCase, logger),
+		BoldWebhook:        NewBoldWebhookConsumer(queue, useCase, logger),
+		BancolombiaWebhook: NewBancolombiaWebhookConsumer(queue, useCase, logger),
 	}
 }

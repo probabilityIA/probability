@@ -7,7 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
 )
 
-// GetConversationMessages obtiene los mensajes de una conversación para la vista de chat
 func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*dtos.ConversationDetailResponseDTO, error) {
 	conv, messages, err := uc.messageAuditQuerier.GetConversationMessages(ctx, conversationID, businessID)
 	if err != nil {
@@ -15,7 +14,6 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 		return nil, err
 	}
 
-	// Map messages to response DTOs
 	msgDTOs := make([]dtos.ConversationMessageResponseDTO, len(messages))
 	for i, msg := range messages {
 		dto := dtos.ConversationMessageResponseDTO{
@@ -41,11 +39,12 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 	aiPaused := uc.aiPauseChecker.IsAIPaused(ctx, conv.PhoneNumber)
 
 	return &dtos.ConversationDetailResponseDTO{
-		ConversationID: conv.ID,
-		PhoneNumber:    conv.PhoneNumber,
-		OrderNumber:    conv.OrderNumber,
-		CurrentState:   conv.CurrentState,
-		AiPaused:       aiPaused,
-		Messages:       msgDTOs,
+		ConversationID:   conv.ID,
+		PhoneNumber:      conv.PhoneNumber,
+		OrderNumber:      conv.OrderNumber,
+		ConversationType: conv.ConversationType,
+		CurrentState:     conv.CurrentState,
+		AiPaused:         aiPaused,
+		Messages:         msgDTOs,
 	}, nil
 }

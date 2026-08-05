@@ -123,6 +123,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		ShippingLat:                 dto.ShippingLat,
 		ShippingLng:                 dto.ShippingLng,
 		ShippingGeoConfidence:       dto.ShippingGeoConfidence,
+		DestinationDaneCode:         dto.DestinationDaneCode,
 		PaymentMethodID:             dto.PaymentMethodID,
 		IsPaid:                      dto.IsPaid,
 		PaidAt:                      dto.PaidAt,

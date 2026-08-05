@@ -4,26 +4,28 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// walletUseCase implementa IWalletUseCase
 type walletUseCase struct {
 	repo           ports.IRepository
 	paymentUseCase ports.IUseCase
+	rabbit         rabbitmq.IQueue
 	config         env.IConfig
 	log            log.ILogger
 }
 
-// NewWalletUseCase crea una nueva instancia del use case de wallet
 func NewWalletUseCase(
 	repo ports.IRepository,
 	paymentUseCase ports.IUseCase,
+	rabbit rabbitmq.IQueue,
 	config env.IConfig,
 	logger log.ILogger,
 ) ports.IWalletUseCase {
 	return &walletUseCase{
 		repo:           repo,
 		paymentUseCase: paymentUseCase,
+		rabbit:         rabbit,
 		config:         config,
 		log:            logger.WithModule("pay.wallet.usecase"),
 	}

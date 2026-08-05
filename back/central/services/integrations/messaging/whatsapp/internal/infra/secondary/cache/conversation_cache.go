@@ -64,48 +64,59 @@ func isTerminalState(state entities.ConversationState) bool {
 
 // cachedConversation es la representación JSON de una conversación en Redis
 type cachedConversation struct {
-	ID             string                 `json:"id"`
-	PhoneNumber    string                 `json:"phone_number"`
-	OrderNumber    string                 `json:"order_number"`
-	BusinessID     uint                   `json:"business_id"`
-	CurrentState   string                 `json:"current_state"`
-	LastMessageID  string                 `json:"last_message_id"`
-	LastTemplateID string                 `json:"last_template_id"`
-	Metadata       map[string]interface{} `json:"metadata"`
-	CreatedAt      time.Time              `json:"created_at"`
-	UpdatedAt      time.Time              `json:"updated_at"`
-	ExpiresAt      time.Time              `json:"expires_at"`
+	ID               string                 `json:"id"`
+	PhoneNumber      string                 `json:"phone_number"`
+	OrderNumber      string                 `json:"order_number"`
+	ConversationType string                 `json:"conversation_type"`
+	BusinessID       uint                   `json:"business_id"`
+	CurrentState     string                 `json:"current_state"`
+	LastMessageID    string                 `json:"last_message_id"`
+	LastTemplateID   string                 `json:"last_template_id"`
+	Metadata         map[string]interface{} `json:"metadata"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
+	ExpiresAt        time.Time              `json:"expires_at"`
 }
 
 func toCached(c *entities.Conversation) *cachedConversation {
+	convType := string(c.ConversationType)
+	if convType == "" {
+		convType = string(entities.ConversationTypeOrder)
+	}
 	return &cachedConversation{
-		ID:             c.ID,
-		PhoneNumber:    c.PhoneNumber,
-		OrderNumber:    c.OrderNumber,
-		BusinessID:     c.BusinessID,
-		CurrentState:   string(c.CurrentState),
-		LastMessageID:  c.LastMessageID,
-		LastTemplateID: c.LastTemplateID,
-		Metadata:       c.Metadata,
-		CreatedAt:      c.CreatedAt,
-		UpdatedAt:      c.UpdatedAt,
-		ExpiresAt:      c.ExpiresAt,
+		ID:               c.ID,
+		PhoneNumber:      c.PhoneNumber,
+		OrderNumber:      c.OrderNumber,
+		ConversationType: convType,
+		BusinessID:       c.BusinessID,
+		CurrentState:     string(c.CurrentState),
+		LastMessageID:    c.LastMessageID,
+		LastTemplateID:   c.LastTemplateID,
+		Metadata:         c.Metadata,
+		CreatedAt:        c.CreatedAt,
+		UpdatedAt:        c.UpdatedAt,
+		ExpiresAt:        c.ExpiresAt,
 	}
 }
 
 func (cc *cachedConversation) toDomain() *entities.Conversation {
+	convType := cc.ConversationType
+	if convType == "" {
+		convType = string(entities.ConversationTypeOrder)
+	}
 	return &entities.Conversation{
-		ID:             cc.ID,
-		PhoneNumber:    cc.PhoneNumber,
-		OrderNumber:    cc.OrderNumber,
-		BusinessID:     cc.BusinessID,
-		CurrentState:   entities.ConversationState(cc.CurrentState),
-		LastMessageID:  cc.LastMessageID,
-		LastTemplateID: cc.LastTemplateID,
-		Metadata:       cc.Metadata,
-		CreatedAt:      cc.CreatedAt,
-		UpdatedAt:      cc.UpdatedAt,
-		ExpiresAt:      cc.ExpiresAt,
+		ID:               cc.ID,
+		PhoneNumber:      cc.PhoneNumber,
+		OrderNumber:      cc.OrderNumber,
+		ConversationType: entities.ConversationType(convType),
+		BusinessID:       cc.BusinessID,
+		CurrentState:     entities.ConversationState(cc.CurrentState),
+		LastMessageID:    cc.LastMessageID,
+		LastTemplateID:   cc.LastTemplateID,
+		Metadata:         cc.Metadata,
+		CreatedAt:        cc.CreatedAt,
+		UpdatedAt:        cc.UpdatedAt,
+		ExpiresAt:        cc.ExpiresAt,
 	}
 }
 

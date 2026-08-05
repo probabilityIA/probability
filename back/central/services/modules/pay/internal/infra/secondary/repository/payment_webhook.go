@@ -11,11 +11,14 @@ import (
 	"gorm.io/datatypes"
 )
 
-type boldWebhookEventRow struct {
+type paymentWebhookEventRow struct {
 	ID                   uuid.UUID
-	BoldEventID          string
+	Gateway              string
+	EventID              string
 	Type                 string
-	Subject              string
+	ExternalID           string
+	ExternalState        string
+	Reference            string
 	Source               string
 	OccurredAt           *time.Time
 	Payload              datatypes.JSON
@@ -28,21 +31,26 @@ type boldWebhookEventRow struct {
 	UpdatedAt            time.Time
 }
 
-func (boldWebhookEventRow) TableName() string {
-	return "bold_webhook_events"
+func (paymentWebhookEventRow) TableName() string {
+	return "payment_webhook_events"
 }
 
-func (r *Repository) RecordBoldWebhookEvent(ctx context.Context, event *dtos.BoldWebhookEvent) (bool, error) {
-	if event.BoldEventID == "" {
-		return false, fmt.Errorf("bold event id required")
+func (r *Repository) RecordPaymentWebhookEvent(ctx context.Context, event *dtos.PaymentWebhookEvent) (bool, error) {
+	if event.Gateway == "" {
+		return false, fmt.Errorf("payment webhook gateway required")
+	}
+	if event.EventID == "" {
+		return false, fmt.Errorf("payment webhook event id required")
 	}
 
-	newID := uuid.New()
-	row := boldWebhookEventRow{
-		ID:                   newID,
-		BoldEventID:          event.BoldEventID,
+	row := paymentWebhookEventRow{
+		ID:                   uuid.New(),
+		Gateway:              event.Gateway,
+		EventID:              event.EventID,
 		Type:                 event.Type,
-		Subject:              event.Subject,
+		ExternalID:           event.ExternalID,
+		ExternalState:        event.ExternalState,
+		Reference:            event.Reference,
 		Source:               event.Source,
 		OccurredAt:           event.OccurredAt,
 		Payload:              datatypes.JSON(event.Payload),
@@ -53,14 +61,14 @@ func (r *Repository) RecordBoldWebhookEvent(ctx context.Context, event *dtos.Bol
 	}
 
 	res := r.db.Conn(ctx).
-		Where("bold_event_id = ?", event.BoldEventID).
+		Where("gateway = ? AND event_id = ?", event.Gateway, event.EventID).
 		Attrs(row).
 		FirstOrCreate(&row)
 	if res.Error != nil {
 		if isUniqueViolation(res.Error) {
 			return false, nil
 		}
-		return false, fmt.Errorf("upsert bold webhook event: %w", res.Error)
+		return false, fmt.Errorf("upsert payment webhook event: %w", res.Error)
 	}
 
 	event.ID = row.ID
@@ -68,7 +76,7 @@ func (r *Repository) RecordBoldWebhookEvent(ctx context.Context, event *dtos.Bol
 	return created, nil
 }
 
-func (r *Repository) MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
+func (r *Repository) MarkPaymentWebhookProcessed(ctx context.Context, id uuid.UUID, paymentTransactionID *uint, processErr error) error {
 	now := time.Now()
 	updates := map[string]any{
 		"processed_at":           &now,
@@ -81,14 +89,14 @@ func (r *Repository) MarkBoldWebhookProcessed(ctx context.Context, id uuid.UUID,
 		updates["processed_error"] = nil
 	}
 	return r.db.Conn(ctx).
-		Table("bold_webhook_events").
+		Table("payment_webhook_events").
 		Where("id = ?", id).
 		Updates(updates).Error
 }
 
-func (r *Repository) LinkBoldWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error {
+func (r *Repository) LinkPaymentWebhookToWalletTransaction(ctx context.Context, eventID, walletTransactionID uuid.UUID) error {
 	return r.db.Conn(ctx).
-		Table("bold_webhook_events").
+		Table("payment_webhook_events").
 		Where("id = ?", eventID).
 		Update("wallet_transaction_id", walletTransactionID).Error
 }

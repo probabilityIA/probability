@@ -1,6 +1,5 @@
 package dtos
 
-// MessageAuditFilterDTO define los filtros para consultar logs de auditoría
 type MessageAuditFilterDTO struct {
 	BusinessID   uint
 	Status       *string
@@ -12,7 +11,6 @@ type MessageAuditFilterDTO struct {
 	PageSize     int
 }
 
-// MessageAuditLogResponseDTO es la respuesta de un registro de auditoría
 type MessageAuditLogResponseDTO struct {
 	ID             string  `json:"id"`
 	ConversationID string  `json:"conversation_id"`
@@ -29,7 +27,6 @@ type MessageAuditLogResponseDTO struct {
 	BusinessID     uint    `json:"business_id"`
 }
 
-// MessageAuditStatsResponseDTO contiene estadísticas de mensajes
 type MessageAuditStatsResponseDTO struct {
 	TotalSent      int64   `json:"total_sent"`
 	TotalDelivered int64   `json:"total_delivered"`
@@ -38,7 +35,6 @@ type MessageAuditStatsResponseDTO struct {
 	SuccessRate    float64 `json:"success_rate"`
 }
 
-// PaginatedMessageAuditResponseDTO es la respuesta paginada de logs de auditoría
 type PaginatedMessageAuditResponseDTO struct {
 	Data       []MessageAuditLogResponseDTO `json:"data"`
 	Total      int64                        `json:"total"`
@@ -47,9 +43,6 @@ type PaginatedMessageAuditResponseDTO struct {
 	TotalPages int                          `json:"total_pages"`
 }
 
-// --- Conversation List & Detail ---
-
-// ConversationListFilterDTO define los filtros para listar conversaciones
 type ConversationListFilterDTO struct {
 	BusinessID uint
 	DateFrom   *string
@@ -60,11 +53,11 @@ type ConversationListFilterDTO struct {
 	PageSize   int
 }
 
-// ConversationSummaryResponseDTO es la respuesta de un resumen de conversación
 type ConversationSummaryResponseDTO struct {
 	ID                   string `json:"id"`
 	PhoneNumber          string `json:"phone_number"`
 	OrderNumber          string `json:"order_number"`
+	ConversationType     string `json:"conversation_type"`
 	CurrentState         string `json:"current_state"`
 	MessageCount         int    `json:"message_count"`
 	LastMessageContent   string `json:"last_message_content"`
@@ -74,7 +67,6 @@ type ConversationSummaryResponseDTO struct {
 	CreatedAt            string `json:"created_at"`
 }
 
-// PaginatedConversationListResponseDTO es la respuesta paginada de conversaciones
 type PaginatedConversationListResponseDTO struct {
 	Data       []ConversationSummaryResponseDTO `json:"data"`
 	Total      int64                            `json:"total"`
@@ -83,7 +75,6 @@ type PaginatedConversationListResponseDTO struct {
 	TotalPages int                              `json:"total_pages"`
 }
 
-// ConversationMessageResponseDTO es la respuesta de un mensaje dentro de una conversación
 type ConversationMessageResponseDTO struct {
 	ID           string  `json:"id"`
 	Direction    string  `json:"direction"`
@@ -96,12 +87,12 @@ type ConversationMessageResponseDTO struct {
 	CreatedAt    string  `json:"created_at"`
 }
 
-// ConversationDetailResponseDTO es la respuesta con el detalle de una conversación y sus mensajes
 type ConversationDetailResponseDTO struct {
-	ConversationID string                           `json:"conversation_id"`
-	PhoneNumber    string                           `json:"phone_number"`
-	OrderNumber    string                           `json:"order_number"`
-	CurrentState   string                           `json:"current_state"`
-	AiPaused       bool                             `json:"ai_paused"`
-	Messages       []ConversationMessageResponseDTO `json:"messages"`
+	ConversationID   string                           `json:"conversation_id"`
+	PhoneNumber      string                           `json:"phone_number"`
+	OrderNumber      string                           `json:"order_number"`
+	ConversationType string                           `json:"conversation_type"`
+	CurrentState     string                           `json:"current_state"`
+	AiPaused         bool                             `json:"ai_paused"`
+	Messages         []ConversationMessageResponseDTO `json:"messages"`
 }
