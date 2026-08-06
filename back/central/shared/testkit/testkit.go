@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http/httptest"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,6 +23,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
 type SilentLogger struct{}
@@ -316,3 +319,92 @@ func CuerpoJSON(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 	}
 	return out
 }
+
+type RedisMock struct {
+	mu     sync.Mutex
+	Values map[string]string
+
+	GetFn func(ctx context.Context, key string) (string, error)
+	SetFn func(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+
+	Leidas   []string
+	Escritas []string
+}
+
+var _ redisclient.IRedis = (*RedisMock)(nil)
+
+func NewRedis(pares ...string) *RedisMock {
+	valores := map[string]string{}
+	for i := 0; i+1 < len(pares); i += 2 {
+		valores[pares[i]] = pares[i+1]
+	}
+	return &RedisMock{Values: valores}
+}
+
+func (m *RedisMock) Connect(ctx context.Context) error { return nil }
+
+func (m *RedisMock) Close() error { return nil }
+
+func (m *RedisMock) Client(ctx context.Context) *redis.Client { return nil }
+
+func (m *RedisMock) Ping(ctx context.Context) error { return nil }
+
+func (m *RedisMock) Get(ctx context.Context, key string) (string, error) {
+	m.mu.Lock()
+	m.Leidas = append(m.Leidas, key)
+	valor, ok := m.Values[key]
+	m.mu.Unlock()
+	if m.GetFn != nil {
+		return m.GetFn(ctx, key)
+	}
+	if !ok {
+		return "", errors.New("redis: nil")
+	}
+	return valor, nil
+}
+
+func (m *RedisMock) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	m.mu.Lock()
+	m.Escritas = append(m.Escritas, key)
+	if s, ok := value.(string); ok {
+		if m.Values == nil {
+			m.Values = map[string]string{}
+		}
+		m.Values[key] = s
+	}
+	m.mu.Unlock()
+	if m.SetFn != nil {
+		return m.SetFn(ctx, key, value, expiration)
+	}
+	return nil
+}
+
+func (m *RedisMock) Delete(ctx context.Context, keys ...string) error { return nil }
+
+func (m *RedisMock) Exists(ctx context.Context, keys ...string) (int64, error) { return 0, nil }
+
+func (m *RedisMock) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	return nil
+}
+
+func (m *RedisMock) TTL(ctx context.Context, key string) (time.Duration, error) { return 0, nil }
+
+func (m *RedisMock) Keys(ctx context.Context, pattern string) ([]string, error) { return nil, nil }
+
+func (m *RedisMock) Incr(ctx context.Context, key string) (int64, error) { return 0, nil }
+
+func (m *RedisMock) Decr(ctx context.Context, key string) (int64, error) { return 0, nil }
+
+func (m *RedisMock) HGet(ctx context.Context, key, field string) (string, error) { return "", nil }
+
+func (m *RedisMock) HSet(ctx context.Context, key string, values ...interface{}) error { return nil }
+
+func (m *RedisMock) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	return nil, nil
+}
+
+func (m *RedisMock) HDel(ctx context.Context, key string, fields ...string) error { return nil }
+
+func (m *RedisMock) RegisterCachePrefix(prefix string) {}
+
+func (m *RedisMock) RegisterChannel(channel string) {}
