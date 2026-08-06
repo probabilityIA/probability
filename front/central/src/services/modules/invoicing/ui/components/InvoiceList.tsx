@@ -1,7 +1,3 @@
-/**
- * Componente para listar facturas con paginación y detalle en modal
- */
-
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
@@ -80,7 +76,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     openBulkModal: () => setShowBulkModal(true),
   }));
 
-  // SSE: Escuchar eventos en tiempo real (inserción reactiva, sin recargar)
   useInvoiceSSE({
     businessId,
     onInvoiceCreated: async (data) => {
@@ -88,7 +83,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         `Factura ${data.invoice_number || ''} creada exitosamente para ${data.customer_name || 'orden'}`,
         'success'
       );
-      // Obtener factura completa y agregarla al inicio sin recargar
       if (data.invoice_id) {
         try {
           const invoice = await getInvoiceByIdAction(data.invoice_id);
@@ -97,7 +91,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
             return [invoice, ...prev];
           });
           setTotalCount(prev => prev + 1);
-          // Animación de resaltado
           setNewInvoiceIds(prev => new Set(prev).add(invoice.id));
           setTimeout(() => {
             setNewInvoiceIds(prev => {
@@ -107,7 +100,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
             });
           }, 2500);
         } catch {
-          // Fallback: recargar si falla el fetch individual
           loadInvoices(currentPage, pageSize);
         }
       }
@@ -117,7 +109,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         `Error al crear factura: ${data.error_message || 'Error desconocido'}`,
         'error'
       );
-      // Actualizar status in-place si la factura está en la lista
       if (data.invoice_id) {
         setInvoices(prev => prev.map(inv =>
           inv.id === data.invoice_id ? { ...inv, status: 'failed' as const, error_message: data.error_message } : inv
@@ -165,18 +156,12 @@ export const InvoiceList = forwardRef(function InvoiceList(
 
       const response = await getInvoicesAction(finalFilters);
 
-      // AGRUPAR: Mostrar solo UNA factura por orden
-      // Prioridad: 1) Facturas con status != failed, 2) La más reciente
       const grouped = (response.data || []).reduce((acc, invoice) => {
         const existing = acc.get(invoice.order_id);
 
         if (!existing) {
-          // Si no existe, agregar
           acc.set(invoice.order_id, invoice);
         } else {
-          // Si existe, reemplazar solo si:
-          // - La actual NO es failed y la existente SÍ es failed, O
-          // - Ambas son failed/non-failed y la actual es más reciente
           const currentIsFailed = invoice.status === 'failed';
           const existingIsFailed = existing.status === 'failed';
 
@@ -193,7 +178,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
       const uniqueInvoices = Array.from(grouped.values());
 
       setInvoices(uniqueInvoices);
-      setTotalCount(response.total); // Usar total del backend para paginación correcta
+      setTotalCount(response.total);
     } catch (error: any) {
       showToast('Error al cargar facturas: ' + error.message, 'error');
       setInvoices([]);
@@ -262,7 +247,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const compareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Helper to stop all compare timers (polling + timeout)
   const clearCompareTimers = useCallback(() => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
@@ -274,7 +258,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     }
   }, []);
 
-  // Sync cancellations timers
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -289,7 +272,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     }
   }, []);
 
-  // Items comparison timers
   const itemsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -320,7 +302,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
       const correlationId = result.correlation_id;
       setItemsCorrelationId(correlationId);
 
-      // Polling fallback every 3 seconds
       itemsPollingRef.current = setInterval(async () => {
         try {
           const data = await getListItemsResultAction(correlationId, effectiveBusinessId);
@@ -329,12 +310,9 @@ export const InvoiceList = forwardRef(function InvoiceList(
             setItemsLoading(false);
             clearItemsTimers();
           }
-        } catch {
-          // Polling errors are non-fatal
-        }
+        } catch {}
       }, 3000);
 
-      // Hard timeout after 60 seconds
       itemsTimeoutRef.current = setTimeout(() => {
         setItemsLoading(prev => {
           if (prev) {
@@ -372,7 +350,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
       const correlationId = result.correlation_id;
       setCompareCorrelationId(correlationId);
 
-      // Start polling every 3 seconds as fallback for SSE
       pollingRef.current = setInterval(async () => {
         try {
           const data = await getCompareResultAction(correlationId, effectiveBusinessId);
@@ -381,12 +358,9 @@ export const InvoiceList = forwardRef(function InvoiceList(
             setCompareLoading(false);
             clearCompareTimers();
           }
-        } catch {
-          // Polling errors are non-fatal; keep retrying until timeout
-        }
+        } catch {}
       }, 3000);
 
-      // Hard timeout: stop everything after 60 seconds
       compareTimeoutRef.current = setTimeout(() => {
         setCompareLoading(prev => {
           if (prev) {
@@ -428,9 +402,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
             setSyncLoading(false);
             clearSyncTimers();
           }
-        } catch {
-          // Polling errors are non-fatal; keep retrying until timeout
-        }
+        } catch {}
       }, 3000);
 
       syncTimeoutRef.current = setTimeout(() => {
@@ -461,7 +433,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     return <Badge type={config.type}>{config.label}</Badge>;
   };
 
-  // ===== DynamicFilters =====
   const availableFilters: FilterOption[] = useMemo(() => [
     {
       key: 'invoice_number',
@@ -696,7 +667,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
 
   return (
     <>
-      {/* Filtros + botón crear */}
       <div className="invoiceFilters flex items-center mb-4">
         <div className="flex-1 min-w-0">
           <DynamicFilters
@@ -788,7 +758,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
       </div>
 
-      {/* Tabla con paginación */}
       <div className="invoiceTable">
         <Table
           data={invoices}
@@ -811,7 +780,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         />
 
         <style jsx>{`
-          /* Botones morados en filtros */
           :global(.invoiceFilters) :global(button.btn-primary),
           :global(.invoiceFilters) :global(.btn-primary) {
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
@@ -821,7 +789,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
           :global(.invoiceFilters) :global(.btn-primary:hover) {
             filter: brightness(1.08);
           }
-          /* Chips morados */
           :global(.invoiceFilters) :global(.bg-blue-50) {
             background-color: rgba(124, 58, 237, 0.08) !important;
             color: #6d28d9 !important;
@@ -830,7 +797,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
             color: #6d28d9 !important;
           }
 
-          /* CTA morado (solo esta pantalla) */
           .invoiceHeader :global(.btn-primary) {
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
           }
@@ -838,14 +804,12 @@ export const InvoiceList = forwardRef(function InvoiceList(
             filter: brightness(1.05);
           }
 
-          /* Tabla más “card-like” fila por fila (solo Facturas Electrónicas) */
           .invoiceTable :global(.table) {
             border-collapse: separate;
-            border-spacing: 0 10px; /* separación entre filas */
+            border-spacing: 0 10px;
             background: transparent;
           }
 
-          /* Quitar el borde del contenedor global de Table SOLO aquí */
           .invoiceTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
             border: none !important;
             background: transparent !important;
@@ -859,11 +823,10 @@ export const InvoiceList = forwardRef(function InvoiceList(
             z-index: 1;
           }
 
-          /* Header más llamativo + bordes redondeados */
           .invoiceTable :global(.table thead th) {
             padding-top: 10px;
             padding-bottom: 10px;
-            font-size: 0.75rem; /* más pequeño */
+            font-size: 0.75rem;
             font-weight: 800;
             letter-spacing: 0.06em;
             text-transform: uppercase;
@@ -893,7 +856,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
             border-top: none;
           }
 
-          /* Redondeo de cada fila */
           .invoiceTable :global(.table tbody td:first-child) {
             border-top-left-radius: 12px;
             border-bottom-left-radius: 12px;
@@ -903,13 +865,11 @@ export const InvoiceList = forwardRef(function InvoiceList(
             border-bottom-right-radius: 12px;
           }
 
-          /* Acciones: focus consistente */
           .invoiceTable :global(a),
           .invoiceTable :global(button) {
             outline-color: rgba(124, 58, 237, 0.35);
           }
 
-          /* Animación para facturas recién creadas vía SSE */
           .invoiceTable :global(.invoice-new-row) {
             animation: invoiceSlideIn 0.5s ease-out;
             background: rgba(124, 58, 237, 0.10) !important;
@@ -929,7 +889,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         `}</style>
       </div>
 
-      {/* Modal de detalle de factura */}
       <InvoiceDetailModal
         invoice={selectedInvoice}
         isOpen={showDetailModal}
@@ -943,7 +902,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         businessId={businessId}
       />
 
-      {/* Modal de confirmación de cancelación */}
       <ConfirmModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
@@ -955,7 +913,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         type="danger"
       />
 
-      {/* Modal de confirmación de reintento masivo de fallidas */}
       <ConfirmModal
         isOpen={showRetryFailedModal}
         onClose={() => setShowRetryFailedModal(false)}
@@ -967,7 +924,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         type="warning"
       />
 
-      {/* Modal de creación masiva */}
       <BulkCreateInvoiceModal
         isOpen={showBulkModal}
         onClose={() => setShowBulkModal(false)}
@@ -975,7 +931,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         businessId={businessId}
       />
 
-      {/* Modal de auditoría comparativa */}
       <InvoiceComparisonModal
         isOpen={showCompareModal}
         onClose={() => {
@@ -987,7 +942,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         onRequestComparison={handleRequestComparison}
       />
 
-      {/* Modal de sincronización de anuladas */}
       <SyncCancellationsModal
         isOpen={showSyncModal}
         onClose={() => {
@@ -1002,7 +956,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         onRequestSync={handleSyncCancellations}
       />
 
-      {/* Modal de comparación de productos */}
       <ItemsComparisonModal
         isOpen={showItemsModal}
         onClose={() => {
@@ -1014,7 +967,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         onRequestComparison={handleRequestItemsComparison}
       />
 
-      {/* Modal de factura manual */}
       <ManualInvoiceModal
         isOpen={showManualModal}
         onClose={() => setShowManualModal(false)}
@@ -1022,7 +974,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
         businessId={businessId}
       />
 
-      {/* Modal de configuraciones de facturación */}
       <ConfigsModal
         isOpen={showConfigsModal}
         onClose={() => setShowConfigsModal(false)}
