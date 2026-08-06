@@ -10,8 +10,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
 )
 
-// AdminAdjustBalance ajusta el saldo de una billetera sin restricciones (admin)
-// Permite montos positivos (agregar) o negativos (restar) sin validación de mínimo
 func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.AdminAdjustBalanceDTO) error {
 	if dto.Amount == 0 {
 		return fmt.Errorf("amount cannot be zero")
@@ -22,12 +20,11 @@ func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.Admin
 		return fmt.Errorf("error getting wallet for business %d: %w", dto.BusinessID, err)
 	}
 
-	// Determinar tipo de transacción basado en signo del monto
 	txType := entities.WalletTxTypeRecharge
 	amount := dto.Amount
 	if amount < 0 {
 		txType = entities.WalletTxTypeUsage
-		amount = -amount // Convertir a positivo para la transacción
+		amount = -amount
 	}
 
 	concept := dto.Concept
@@ -35,7 +32,6 @@ func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.Admin
 		concept = entities.WalletTxConceptOther
 	}
 
-	// Crear transacción
 	tx := &entities.WalletTransaction{
 		ID:         uuid.New(),
 		WalletID:   wallet.ID,
@@ -52,7 +48,6 @@ func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.Admin
 		return fmt.Errorf("error creating transaction: %w", err)
 	}
 
-	// Ajustar saldo
 	wallet.Balance += dto.Amount
 	if err := uc.repo.UpdateWallet(ctx, wallet); err != nil {
 		return fmt.Errorf("error updating wallet balance: %w", err)

@@ -11,7 +11,6 @@ import (
 	payerrs "github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/errors"
 )
 
-// ManualDebit realiza un débito manual (admin)
 func (uc *walletUseCase) ManualDebit(ctx context.Context, dto *dtos.ManualDebitDTO) error {
 	if dto.Amount <= 0 {
 		return payerrs.ErrInvalidAmount
@@ -59,7 +58,6 @@ func (uc *walletUseCase) ManualDebit(ctx context.Context, dto *dtos.ManualDebitD
 	return nil
 }
 
-// DebitForGuide realiza un débito para generación de guía
 func (uc *walletUseCase) DebitForGuide(ctx context.Context, dto *dtos.DebitForGuideDTO) error {
 	if dto.Amount <= 0 {
 		return payerrs.ErrInvalidAmount
