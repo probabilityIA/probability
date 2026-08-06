@@ -237,35 +237,34 @@ export function Sidebar({ user }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           <div className="flex flex-col items-center py-4 gap-2">
-            {businessLogo ? (
+            <a
+              href="https://www.probabilityia.com.co/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
+            >
+              <Image
+                src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
+                alt="Probability Logo"
+                fill
+                className="object-contain"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </a>
+            {businessLogo && (
               <button
                 type="button"
                 onClick={() => setShowBusinessModal(true)}
                 title="Informacion del negocio"
-                className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
+                className={`transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}
               >
                 <img
                   src={businessLogo}
                   alt="Business Logo"
-                  className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-8 h-8 rounded'}`}
+                  className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-7 h-7 rounded'}`}
                 />
               </button>
-            ) : (
-              <a
-                href="https://www.probabilityia.com.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`relative transition-all duration-300 flex items-center justify-center cursor-pointer hover:opacity-80 ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}
-              >
-                <Image
-                  src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
-                  alt="Probability Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </a>
             )}
             {isSuperAdmin && superAdminBusinessLogo && (
               <button

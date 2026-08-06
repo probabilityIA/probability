@@ -80,24 +80,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
     openBulkModal: () => setShowBulkModal(true),
   }));
 
-  useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/4dbf3696-4a46-47a8-86ba-70e3d0546d6b', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: 'debug-session',
-        runId: 'invoice-table-ui-v1',
-        hypothesisId: 'H1',
-        location: 'InvoiceList.tsx:mount',
-        message: 'InvoiceList mounted',
-        data: { businessIdIsZero: businessId === 0 },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => { });
-    // #endregion
-  }, [businessId]);
-
   // SSE: Escuchar eventos en tiempo real (inserción reactiva, sin recargar)
   useInvoiceSSE({
     businessId,
@@ -615,7 +597,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
             {invoice.order_number || '—'}
           </div>
           <div className="text-xs text-gray-400 font-mono">
-            {invoice.order_id.substring(0, 8)}...
+            {invoice.order_id ? `${invoice.order_id.substring(0, 8)}...` : '—'}
           </div>
         </div>
       ),
