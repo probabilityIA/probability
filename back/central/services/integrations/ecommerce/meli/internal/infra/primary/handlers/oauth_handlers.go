@@ -350,6 +350,8 @@ func generatePKCE() (string, string, error) {
 	return verifier, challenge, nil
 }
 
+const integrationCodeMaxLen = 50
+
 func generateIntegrationCode(name string) string {
 	code := strings.ToLower(strings.TrimSpace(name))
 	code = strings.ReplaceAll(code, " ", "_")
@@ -359,5 +361,17 @@ func generateIntegrationCode(name string) string {
 		}
 		return -1
 	}, code)
-	return fmt.Sprintf("mercado_libre_%s_%d", code, time.Now().Unix())
+
+	suffix := fmt.Sprintf("_%d", time.Now().Unix())
+	prefix := "mercado_libre_"
+	maxSlugLen := integrationCodeMaxLen - len(prefix) - len(suffix)
+	if maxSlugLen < 0 {
+		maxSlugLen = 0
+	}
+	if len(code) > maxSlugLen {
+		code = code[:maxSlugLen]
+	}
+	code = strings.Trim(code, "_")
+
+	return prefix + code + suffix
 }
