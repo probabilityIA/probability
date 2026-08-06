@@ -7,7 +7,9 @@ import (
 	"io"
 	"net/http/httptest"
 	"regexp"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
@@ -87,6 +89,9 @@ func NewConfig(pares ...string) *ConfigMock {
 func (m *ConfigMock) Get(key string) string { return m.Values[key] }
 
 type QueueMock struct {
+	mu     sync.Mutex
+	espera chan struct{}
+
 	PublishFn           func(ctx context.Context, queueName string, message []byte) error
 	PublishToExchangeFn func(ctx context.Context, exchangeName, routingKey string, message []byte) error
 	DeclareQueueFn      func(queueName string, durable bool) error
@@ -126,8 +131,54 @@ type Binding struct {
 	RoutingKey string
 }
 
+func (m *QueueMock) registrar(p Publicacion) {
+	m.mu.Lock()
+	m.Publicados = append(m.Publicados, p)
+	if m.espera != nil {
+		select {
+		case m.espera <- struct{}{}:
+		default:
+		}
+	}
+	m.mu.Unlock()
+}
+
+func (m *QueueMock) Publicaciones() []Publicacion {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	copia := make([]Publicacion, len(m.Publicados))
+	copy(copia, m.Publicados)
+	return copia
+}
+
+func (m *QueueMock) EsperarPublicacion(t *testing.T) Publicacion {
+	t.Helper()
+	m.mu.Lock()
+	if m.espera == nil {
+		m.espera = make(chan struct{}, 64)
+	}
+	yaHay := len(m.Publicados)
+	espera := m.espera
+	m.mu.Unlock()
+
+	if yaHay > 0 {
+		return m.Publicaciones()[0]
+	}
+	select {
+	case <-espera:
+		pubs := m.Publicaciones()
+		if len(pubs) == 0 {
+			t.Fatal("se desperto la espera pero no hay publicaciones")
+		}
+		return pubs[0]
+	case <-time.After(3 * time.Second):
+		t.Fatal("no se publico nada en 3 segundos")
+		return Publicacion{}
+	}
+}
+
 func (m *QueueMock) Publish(ctx context.Context, queueName string, message []byte) error {
-	m.Publicados = append(m.Publicados, Publicacion{Queue: queueName, Body: message})
+	m.registrar(Publicacion{Queue: queueName, Body: message})
 	if m.PublishFn != nil {
 		return m.PublishFn(ctx, queueName, message)
 	}
@@ -135,7 +186,7 @@ func (m *QueueMock) Publish(ctx context.Context, queueName string, message []byt
 }
 
 func (m *QueueMock) PublishToExchange(ctx context.Context, exchangeName, routingKey string, message []byte) error {
-	m.Publicados = append(m.Publicados, Publicacion{Exchange: exchangeName, RoutingKey: routingKey, Body: message})
+	m.registrar(Publicacion{Exchange: exchangeName, RoutingKey: routingKey, Body: message})
 	if m.PublishToExchangeFn != nil {
 		return m.PublishToExchangeFn(ctx, exchangeName, routingKey, message)
 	}
