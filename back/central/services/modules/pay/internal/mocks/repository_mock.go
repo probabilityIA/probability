@@ -238,6 +238,14 @@ func (m *RepositoryMock) ListLowBalanceAlertCandidates(ctx context.Context, thre
 	return args.Get(0).([]entities.LowBalanceAlertCandidate), args.Error(1)
 }
 
+func (m *RepositoryMock) GetLowBalanceAlertCandidate(ctx context.Context, businessID uint, threshold float64) (*entities.LowBalanceAlertCandidate, error) {
+	args := m.Called(ctx, businessID, threshold)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.LowBalanceAlertCandidate), args.Error(1)
+}
+
 func (m *RepositoryMock) HasRecentSystemAlert(ctx context.Context, phoneNumber string) (bool, error) {
 	args := m.Called(ctx, phoneNumber)
 	return args.Bool(0), args.Error(1)

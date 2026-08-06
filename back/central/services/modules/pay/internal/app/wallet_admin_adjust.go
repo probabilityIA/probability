@@ -65,5 +65,9 @@ func (uc *walletUseCase) AdminAdjustBalance(ctx context.Context, dto *dtos.Admin
 		Str("reference", dto.Reference).
 		Msg("Admin adjusted wallet balance")
 
+	if dto.Amount < 0 {
+		uc.CheckLowBalanceForBusiness(ctx, dto.BusinessID)
+	}
+
 	return nil
 }

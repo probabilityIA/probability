@@ -8,7 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-const dailyRunHour = 10
+const dailyRunHour = 9
 
 type LowBalanceWorker struct {
 	uc  ports.IWalletUseCase

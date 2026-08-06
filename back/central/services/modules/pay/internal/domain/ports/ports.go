@@ -56,6 +56,7 @@ type IRepository interface {
 	UpdateWalletKPISelection(ctx context.Context, selection *entities.WalletKPISelection) error
 
 	ListLowBalanceAlertCandidates(ctx context.Context, threshold float64) ([]entities.LowBalanceAlertCandidate, error)
+	GetLowBalanceAlertCandidate(ctx context.Context, businessID uint, threshold float64) (*entities.LowBalanceAlertCandidate, error)
 	HasRecentSystemAlert(ctx context.Context, phoneNumber string) (bool, error)
 }
 
@@ -106,4 +107,5 @@ type IWalletUseCase interface {
 	UpdateWalletKPISelection(ctx context.Context, req *dtos.UpdateWalletKPISelectionRequest) (*dtos.WalletKPISelectionResponse, error)
 
 	CheckLowBalances(ctx context.Context) error
+	CheckLowBalanceForBusiness(ctx context.Context, businessID uint)
 }

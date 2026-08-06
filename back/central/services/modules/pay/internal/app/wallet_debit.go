@@ -54,6 +54,8 @@ func (uc *walletUseCase) ManualDebit(ctx context.Context, dto *dtos.ManualDebitD
 		Float64("new_balance", wallet.Balance).
 		Msg("Manual debit applied")
 
+	uc.CheckLowBalanceForBusiness(ctx, dto.BusinessID)
+
 	return nil
 }
 
