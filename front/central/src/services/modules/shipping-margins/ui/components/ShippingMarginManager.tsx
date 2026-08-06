@@ -56,7 +56,7 @@ export default function ShippingMarginManager({ selectedBusinessId = null }: Pro
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Margenes de envio</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         {tab === 'config'
-                            ? 'Configura los margenes (flete, seguro, % COD) por transportadora aplicados a cada guia'
+                            ? 'Configura los margenes (flete, seguro, COD) por transportadora aplicados a cada guia'
                             : 'Reporte de ganancias por guia (precio cobrado al cliente vs costo real del carrier)'}
                     </p>
                 </div>

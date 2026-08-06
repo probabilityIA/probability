@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	channelLabel        = "Shopify"
-	reconcileEventType  = "shopify.product.reconcile.completed"
+	channelLabel       = "Shopify"
+	reconcileEventType = "shopify.product.reconcile.completed"
 )
 
 type reconcileDetailItem struct {

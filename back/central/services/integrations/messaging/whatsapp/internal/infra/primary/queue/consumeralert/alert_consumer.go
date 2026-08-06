@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
+	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 const (
 	queueName    = rabbitmq.QueueMonitoringAlerts
-	adminPhone   = "573023406789"
 	templateName = "alerta_servidor"
 )
 
@@ -85,25 +85,46 @@ func (c *consumerAlert) handleMessage(body []byte) error {
 		"2": event.Summary,   // {{2}} descripción: "87.3% - supera umbral de 85%"
 	}
 
-	// Construir el mensaje de plantilla directamente (sin pasar por el use case que requiere DB)
-	msg := buildAlertTemplateMessage(adminPhone, variables)
+	enviados := 0
+	var falloTransitorio error
 
-	// Enviar mensaje de WhatsApp
-	messageID, err := c.wa.SendMessage(context.Background(), config.PhoneNumberID, msg, config.AccessToken)
-	if err != nil {
-		c.log.Error().
-			Err(err).
+	for _, phone := range c.phones {
+		msg := buildAlertTemplateMessage(phone, variables)
+
+		messageID, err := c.wa.SendMessage(context.Background(), config.PhoneNumberID, msg, config.AccessToken)
+		if err != nil {
+			if whaErrors.IsNonRetryable(err) {
+				c.log.Warn().
+					Err(err).
+					Str("alert_type", event.AlertType).
+					Str("phone", phone).
+					Msg("[AlertConsumer] Destinatario descartado - error no reintentable")
+				continue
+			}
+			falloTransitorio = err
+			c.log.Error().
+				Err(err).
+				Str("alert_type", event.AlertType).
+				Str("phone", phone).
+				Msg("[AlertConsumer] Error enviando alerta por WhatsApp")
+			continue
+		}
+
+		enviados++
+		c.log.Info().
+			Str("message_id", messageID).
 			Str("alert_type", event.AlertType).
-			Str("phone", adminPhone).
-			Msg("[AlertConsumer] Error enviando alerta por WhatsApp")
-		return err
+			Str("phone", phone).
+			Msg("[AlertConsumer] Alerta enviada por WhatsApp exitosamente")
 	}
 
-	c.log.Info().
-		Str("message_id", messageID).
-		Str("alert_type", event.AlertType).
-		Str("phone", adminPhone).
-		Msg("[AlertConsumer] Alerta enviada por WhatsApp exitosamente")
+	if falloTransitorio != nil {
+		c.log.Error().
+			Int("enviados", enviados).
+			Int("destinatarios", len(c.phones)).
+			Msg("[AlertConsumer] Reintentando alerta por fallo transitorio - los destinatarios ya enviados recibiran duplicado")
+		return falloTransitorio
+	}
 
 	return nil
 }

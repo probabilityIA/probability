@@ -50,6 +50,7 @@ type rabbitMQ struct {
 	mu        sync.RWMutex
 	consumers []consumerRegistration
 	done      chan struct{}
+	connEpoch uint64
 }
 
 func New(logger log.ILogger, config env.IConfig) (IQueue, error) {
@@ -115,7 +116,62 @@ func (r *rabbitMQ) connect() error {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
+	r.connEpoch++
+
 	return nil
+}
+
+type decisionRecuperacion string
+
+const (
+	recuperacionApagando          decisionRecuperacion = "shutdown"
+	recuperacionContextoCancelado decisionRecuperacion = "context_cancelled"
+	recuperacionConexionCaida     decisionRecuperacion = "connection_down"
+	recuperacionEpocaVieja        decisionRecuperacion = "stale_epoch"
+	recuperacionReiniciar         decisionRecuperacion = "restart"
+)
+
+func decidirRecuperacion(apagando, ctxCancelado, conexionViva bool, epocaActual, epocaAlStart uint64) decisionRecuperacion {
+	switch {
+	case apagando:
+		return recuperacionApagando
+	case ctxCancelado:
+		return recuperacionContextoCancelado
+	case !conexionViva:
+		return recuperacionConexionCaida
+	case epocaActual != epocaAlStart:
+		return recuperacionEpocaVieja
+	default:
+		return recuperacionReiniciar
+	}
+}
+
+func consumerPrefetch(workers int) int {
+	if workers < 1 {
+		return 1
+	}
+	return workers
+}
+
+func (r *rabbitMQ) epoch() uint64 {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.connEpoch
+}
+
+func (r *rabbitMQ) connectionAlive() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.conn != nil && !r.conn.IsClosed()
+}
+
+func (r *rabbitMQ) shuttingDown() bool {
+	select {
+	case <-r.done:
+		return true
+	default:
+		return false
+	}
 }
 
 func (r *rabbitMQ) watchConnection() {
@@ -228,8 +284,6 @@ func (r *rabbitMQ) reregisterConsumers() {
 	}
 }
 
-const consumerPrefetchCount = 50
-
 func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler func([]byte) error, workers int) error {
 	if workers < 1 {
 		workers = 1
@@ -244,7 +298,7 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 		return fmt.Errorf("failed to create consumer channel: %w", err)
 	}
 
-	if err := consumerChannel.Qos(consumerPrefetchCount, 0, false); err != nil {
+	if err := consumerChannel.Qos(consumerPrefetch(workers), 0, false); err != nil {
 		consumerChannel.Close()
 		r.logger.Error().
 			Err(err).
@@ -271,6 +325,8 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 		return fmt.Errorf("failed to register consumer: %w", err)
 	}
 
+	r.watchConsumerChannel(ctx, consumerChannel, queueName, handler, workers, r.connEpoch)
+
 	for i := 0; i < workers; i++ {
 		go func(workerID int) {
 			for {
@@ -286,7 +342,7 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 						r.logger.Warn().
 							Str("queue", queueName).
 							Int("worker", workerID).
-							Msg("Consumer channel closed - will be restored on reconnection")
+							Msg("Consumer delivery channel closed - worker stopping, channel watcher decides recovery")
 						return
 					}
 
@@ -318,6 +374,96 @@ func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler 
 	}
 
 	return nil
+}
+
+func (r *rabbitMQ) watchConsumerChannel(ctx context.Context, ch *amqp.Channel, queueName string, handler func([]byte) error, workers int, epochAlStart uint64) {
+	closeChan := ch.NotifyClose(make(chan *amqp.Error, 1))
+
+	go func() {
+		var amqpErr *amqp.Error
+		select {
+		case amqpErr = <-closeChan:
+		case <-r.done:
+			return
+		case <-ctx.Done():
+			return
+		}
+
+		ctxCancelado := false
+		select {
+		case <-ctx.Done():
+			ctxCancelado = true
+		default:
+		}
+
+		decision := decidirRecuperacion(r.shuttingDown(), ctxCancelado, r.connectionAlive(), r.epoch(), epochAlStart)
+
+		evento := r.logger.Error().Str("queue", queueName).Str("decision", string(decision))
+		if amqpErr != nil {
+			evento = evento.Int("code", amqpErr.Code).Str("reason", amqpErr.Reason)
+		}
+
+		switch decision {
+		case recuperacionApagando, recuperacionContextoCancelado:
+			return
+		case recuperacionConexionCaida:
+			evento.Msg("Consumer channel closed because the connection dropped - reconnection will restore it")
+			return
+		case recuperacionEpocaVieja:
+			evento.Msg("Consumer channel closed on a stale connection - already restored by reconnection")
+			return
+		}
+
+		evento.Msg("Consumer channel closed while the connection is alive - restarting this consumer")
+		r.restartConsumer(ctx, queueName, handler, workers, epochAlStart)
+	}()
+}
+
+func (r *rabbitMQ) restartConsumer(ctx context.Context, queueName string, handler func([]byte) error, workers int, epochAlStart uint64) {
+	backoff := time.Second
+	maxBackoff := 30 * time.Second
+
+	for attempt := 1; ; attempt++ {
+		if r.shuttingDown() {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(backoff):
+		}
+
+		if !r.connectionAlive() || r.epoch() != epochAlStart {
+			r.logger.Info().
+				Str("queue", queueName).
+				Msg("Connection was replaced while restarting consumer - reconnection takes over")
+			return
+		}
+
+		r.mu.RLock()
+		err := r.startConsumer(ctx, queueName, handler, workers)
+		r.mu.RUnlock()
+
+		if err == nil {
+			r.logger.Info().
+				Str("queue", queueName).
+				Int("attempt", attempt).
+				Msg("Consumer restarted successfully after channel failure")
+			return
+		}
+
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Int("attempt", attempt).
+			Dur("next_backoff", backoff*2).
+			Msg("Failed to restart consumer after channel failure - will retry")
+
+		backoff *= 2
+		if backoff > maxBackoff {
+			backoff = maxBackoff
+		}
+	}
 }
 
 func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte) error {

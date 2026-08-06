@@ -3,7 +3,6 @@ package consumershipment
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -113,7 +112,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	)
 
 	if err != nil {
-		if isNonRetryableError(err) {
+		if whaErrors.IsNonRetryable(err) {
 			c.log.Warn().
 				Err(err).
 				Str("tracking_number", event.TrackingNumber).
@@ -159,38 +158,4 @@ func formatTotalAmount(amount float64) string {
 		formatted += string(c)
 	}
 	return "$" + formatted
-}
-
-func isNonRetryableError(err error) bool {
-	var templateNotFound *whaErrors.ErrTemplateNotFound
-	if errors.As(err, &templateNotFound) {
-		return true
-	}
-	var missingVar *whaErrors.ErrMissingVariable
-	if errors.As(err, &missingVar) {
-		return true
-	}
-
-	errMsg := err.Error()
-	nonRetryablePhrases := []string{
-		"key not found",
-		"no se encontró integración",
-		"credenciales no encontradas",
-		"número de teléfono inválido",
-		"phone_number_id no encontrado",
-		"access_token no encontrado",
-		"Required parameter is missing",
-		"does not exist in",
-		"131008",
-		"132001",
-		"131009",
-		"132018",
-	}
-	for _, phrase := range nonRetryablePhrases {
-		if strings.Contains(errMsg, phrase) {
-			return true
-		}
-	}
-
-	return false
 }

@@ -26,6 +26,18 @@ recompilar (`scope`, `token_path`, `qr_generate_path`).
 2. Confirmar el formato de la notificacion webhook (campos y esquema de firma) y
    ajustar `parseWebhookPayload`/`verifySignature` en
    `pay/bancolombia/internal/app/webhook.go` si aplica.
+2b. **El webhook falla ABIERTO si no hay `webhook_secret` cargado.** Detectado
+   2026-08-05 al escribir los tests de `HandleIncomingWebhook`: cuando
+   `cfg.WebhookSecretKey()` devuelve `ok=false`, la validacion se salta entera y
+   el evento se publica con `signature_valid=false`. Cualquiera que conozca la
+   URL puede inyectar una transferencia aprobada por el monto que quiera.
+   Mientras `in_development=true` no hay exposicion real, pero antes de activar
+   la integracion hay que decidir una de dos:
+   - rechazar con 401 cuando no hay secreto configurado (falla cerrado), o
+   - garantizar que el consumidor de `payment_webhook_events` NUNCA marque un
+     pago como recibido con `signature_valid=false`.
+   El test que documenta esto es
+   `TestHandleIncomingWebhook_SinSecretoConfiguradoAceptaCualquierPayloadSinFirma`.
 3. Registrar las credenciales sandbox como platform credentials del tipo
    `bancolombia_qr` y probar E2E: generar QR (cola `pay.requests` con
    `gateway_code=bancolombia`) y simular webhook a

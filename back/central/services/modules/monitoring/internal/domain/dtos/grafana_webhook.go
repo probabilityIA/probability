@@ -4,8 +4,8 @@ import "time"
 
 // GrafanaWebhookDTO representa el payload del webhook de Grafana Cloud
 type GrafanaWebhookDTO struct {
-	Status string           `json:"status"`
-	Title  string           `json:"title"`
+	Status string            `json:"status"`
+	Title  string            `json:"title"`
 	Alerts []GrafanaAlertDTO `json:"alerts"`
 }
 

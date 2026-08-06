@@ -42,6 +42,7 @@ func (h *Handlers) Update(c *gin.Context) {
 		MarginAmount:     req.MarginAmount,
 		InsuranceMargin:  req.InsuranceMargin,
 		CODMarginPercent: req.CODMarginPercent,
+		CODMarginAmount:  req.CODMarginAmount,
 		IsActive:         isActive,
 	}
 	m, err := h.uc.Update(c.Request.Context(), dto)

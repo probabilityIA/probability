@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerwalletalert/request"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -56,6 +57,13 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 		event.BusinessID,
 	)
 	if err != nil {
+		if whaErrors.IsNonRetryable(err) {
+			c.log.Warn().Err(err).
+				Uint("business_id", event.BusinessID).
+				Str("phone_number", event.PhoneNumber).
+				Msg("Wallet balance alert skipped - non-retryable error (ACK)")
+			return nil
+		}
 		c.log.Error().Err(err).
 			Uint("business_id", event.BusinessID).
 			Str("phone_number", event.PhoneNumber).

@@ -36,6 +36,7 @@ func (h *Handlers) Create(c *gin.Context) {
 		MarginAmount:     req.MarginAmount,
 		InsuranceMargin:  req.InsuranceMargin,
 		CODMarginPercent: req.CODMarginPercent,
+		CODMarginAmount:  req.CODMarginAmount,
 		IsActive:         isActive,
 	}
 	m, err := h.uc.Create(c.Request.Context(), dto)

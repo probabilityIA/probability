@@ -22,14 +22,14 @@ func TestOrderCodBasisAmountToCollect(t *testing.T) {
 			basis:      OrderCodBasis{TotalAmount: 157500, CodTotal: 174918.40, CodIncludesShipping: false},
 			totalCost:  18993.40,
 			carrierFee: 6116,
-			want:       182609.40,
+			want:       182610,
 		},
 		{
 			name:       "total ya incluye flete: solo suma comision",
 			basis:      OrderCodBasis{TotalAmount: 157500, CodTotal: 176493.40, CodIncludesShipping: true},
 			totalCost:  18993.40,
 			carrierFee: 6116,
-			want:       182609.40,
+			want:       182610,
 		},
 		{
 			name:       "sin flete calculado conserva el cod_total",
@@ -39,11 +39,11 @@ func TestOrderCodBasisAmountToCollect(t *testing.T) {
 			want:       163616,
 		},
 		{
-			name:       "sin comision de recaudo",
+			name:       "sin comision de recaudo, redondea al peso",
 			basis:      OrderCodBasis{TotalAmount: 157500, CodTotal: 157500, CodIncludesShipping: false},
 			totalCost:  18993.40,
 			carrierFee: 0,
-			want:       176493.40,
+			want:       176494,
 		},
 	}
 

@@ -18,6 +18,7 @@ type CreateShippingMarginDTO struct {
 	MarginAmount     float64
 	InsuranceMargin  float64
 	CODMarginPercent float64
+	CODMarginAmount  float64
 	IsActive         bool
 }
 
@@ -28,5 +29,6 @@ type UpdateShippingMarginDTO struct {
 	MarginAmount     float64
 	InsuranceMargin  float64
 	CODMarginPercent float64
+	CODMarginAmount  float64
 	IsActive         bool
 }

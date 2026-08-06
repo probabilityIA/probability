@@ -10,6 +10,7 @@ type ShippingMargin struct {
 	MarginAmount     float64 `gorm:"type:decimal(15,2);not null;default:0"`
 	InsuranceMargin  float64 `gorm:"type:decimal(15,2);not null;default:0"`
 	CODMarginPercent float64 `gorm:"type:decimal(5,2);not null;default:0"`
+	CODMarginAmount  float64 `gorm:"type:decimal(15,2);not null;default:0"`
 	IsActive         bool    `gorm:"default:true;index"`
 
 	Business Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
