@@ -10,14 +10,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
 
-// RepositoryMock es un mock de domain.IRepository usando testify/mock
 type RepositoryMock struct {
 	mock.Mock
 }
-
-// ============================================
-// INTEGRATIONS
-// ============================================
 
 func (m *RepositoryMock) CreateIntegration(ctx context.Context, integration *domain.Integration) error {
 	args := m.Called(ctx, integration)
@@ -92,6 +87,14 @@ func (m *RepositoryMock) ExistsIntegrationByCode(ctx context.Context, code strin
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *RepositoryMock) FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*domain.StoreIDOwner, error) {
+	args := m.Called(ctx, storeID, integrationTypeID, excludeID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.StoreIDOwner), args.Error(1)
+}
+
 func (m *RepositoryMock) ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {
 	args := m.Called(ctx, integrationTypeID, businessID)
 	return args.Bool(0), args.Error(1)
@@ -101,10 +104,6 @@ func (m *RepositoryMock) UpdateLastSync(ctx context.Context, id uint, lastSync t
 	args := m.Called(ctx, id, lastSync)
 	return args.Error(0)
 }
-
-// ============================================
-// INTEGRATION TYPES
-// ============================================
 
 func (m *RepositoryMock) CreateIntegrationType(ctx context.Context, integrationType *domain.IntegrationType) error {
 	args := m.Called(ctx, integrationType)
@@ -168,10 +167,6 @@ func (m *RepositoryMock) ListActiveIntegrationTypes(ctx context.Context) ([]*dom
 	}
 	return args.Get(0).([]*domain.IntegrationType), args.Error(1)
 }
-
-// ============================================
-// INTEGRATION CATEGORIES
-// ============================================
 
 func (m *RepositoryMock) GetIntegrationCategoryByID(ctx context.Context, id uint) (*domain.IntegrationCategory, error) {
 	args := m.Called(ctx, id)

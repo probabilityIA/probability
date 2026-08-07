@@ -34,6 +34,11 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Code = *dto.Code
 	}
 	if dto.StoreID != nil {
+		if *dto.StoreID != oldStoreID {
+			if err := uc.ensureStoreIDNotInUse(ctx, *dto.StoreID, existing.IntegrationTypeID, existing.BusinessID, id); err != nil {
+				return nil, err
+			}
+		}
 		existing.StoreID = *dto.StoreID
 	}
 	if dto.IsActive != nil {
@@ -92,6 +97,10 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	}
 
 	if err := uc.repo.UpdateIntegration(ctx, id, existing); err != nil {
+		if isUniqueStoreIDViolation(err) {
+			uc.log.Warn(ctx).Uint("id", id).Msg("La base rechazo una cuenta de canal duplicada")
+			return nil, domain.ErrIntegrationStoreIDInUse
+		}
 		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar integración")
 		return nil, fmt.Errorf("error al actualizar integración: %w", err)
 	}

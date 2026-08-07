@@ -11,6 +11,7 @@ import {
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import type { InvoiceableOrder, InvoiceSSEEventData, InvoiceableOrdersFilters } from '../../domain/types';
 
 interface Props {
@@ -82,6 +83,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
   const [showBusinessAlert, setShowBusinessAlert] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const superAdminNeedsBusiness = isSuperAdmin && !selectedBusinessId;
   const currentBusinessId = propBusinessId ?? selectedBusinessId ?? 0;
@@ -242,13 +244,21 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     }
   };
 
-  const handleSubmit = async () => {
+  const confirmBusinessLabel = isSuperAdmin
+    ? (businesses.find(b => b.id === currentBusinessId)?.name || `Negocio #${currentBusinessId}`)
+    : 'tu negocio';
+
+  const requestSubmit = () => {
     if (superAdminNeedsBusiness) { setShowBusinessAlert(true); return; }
     if (selectedOrderIds.size === 0) return;
     if (selectedOrderIds.size > MAX_BULK_ORDERS) {
       alert(`Maximo ${MAX_BULK_ORDERS} ordenes por lote. Tienes ${selectedOrderIds.size} seleccionadas.`);
       return;
     }
+    setShowConfirm(true);
+  };
+
+  const handleSubmit = async () => {
     setSubmitting(true);
     setBulkProgress(null);
     setBulkCompleted(false);
@@ -329,7 +339,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   value={selectedBusinessId ?? ''}
                   onChange={(e) => {
                     const v = e.target.value;
-                    setShowBusinessAlert(false);
+                    setShowBusinessAlert(false); setShowConfirm(false);
                     setSelectedBusinessId(v === '' ? null : parseInt(v));
                     setSelectedOrderIds(new Set());
                     setPage(1);
@@ -578,7 +588,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
               <>
                 <button onClick={onClose} disabled={submitting} className="px-5 py-2 border border-gray-300 text-gray-700 dark:text-gray-200 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50">Cancelar</button>
                 <button
-                  onClick={handleSubmit}
+                  onClick={requestSubmit}
                   disabled={submitting || selectedOrderIds.size === 0 || loading || superAdminNeedsBusiness}
                   style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
                   className="px-5 py-2 text-white font-semibold rounded-full hover:shadow-lg disabled:opacity-50"
@@ -608,6 +618,27 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleSubmit}
+        type="warning"
+        title="Confirmar facturacion"
+        confirmText={`Facturar ${selectedOrderIds.size} orden${selectedOrderIds.size !== 1 ? 'es' : ''}`}
+        message={
+          <span className="block space-y-2">
+            <span className="block">
+              Se generaran <strong>{selectedOrderIds.size}</strong> factura{selectedOrderIds.size !== 1 ? 's' : ''} electronica{selectedOrderIds.size !== 1 ? 's' : ''} para el negocio{' '}
+              <strong>{confirmBusinessLabel}</strong>.
+            </span>
+            <span className="block text-sm text-gray-500 dark:text-gray-400">
+              Las facturas electronicas no se pueden deshacer: para revertirlas hay que emitir una nota credito.
+              Verifica que el negocio sea el correcto antes de continuar.
+            </span>
+          </span>
+        }
+      />
     </div>
   );
 }

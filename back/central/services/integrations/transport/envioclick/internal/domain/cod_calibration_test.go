@@ -103,12 +103,37 @@ func TestFindCODFeePrefiereElCarrierDelEnvio(t *testing.T) {
 		{Carrier: "INTERRAPIDISIMO", CODDetails: &CODDetails{CODCost: 11092}},
 	}
 
-	fee, ok := FindCODFee(rates, "interrapidisimo")
+	fee, ok := FindCODFee(rates, "interrapidisimo", 0)
 	if !ok || fee != 11092 {
 		t.Fatalf("FindCODFee() = %v, %v; se esperaba 11092, true", fee, ok)
 	}
 
-	if _, ok := FindCODFee([]Rate{{Carrier: "ENVIA"}}, "ENVIA"); ok {
+	if _, ok := FindCODFee([]Rate{{Carrier: "ENVIA"}}, "ENVIA", 0); ok {
 		t.Fatal("un rate sin codDetails no debe reportar comision")
+	}
+}
+
+func TestFindCODFeePrefiereElIDRateDeLaGuia(t *testing.T) {
+	rates := []Rate{
+		{IDRate: 24538193, Carrier: "COORDINADORA", CODDetails: &CODDetails{CODCost: 6116}},
+		{IDRate: 24538207, Carrier: "INTERRAPIDISIMO"},
+		{IDRate: 24538208, Carrier: "INTERRAPIDISIMO", CODDetails: &CODDetails{CODCost: 7513}},
+	}
+
+	fee, ok := FindCODFee(rates, "", 24538208)
+	if !ok || fee != 7513 {
+		t.Fatalf("FindCODFee() = %v, %v; se esperaba 7513, true", fee, ok)
+	}
+}
+
+func TestFindCODFeeNuncaUsaLaTarifaDeOtraTransportadora(t *testing.T) {
+	rates := []Rate{
+		{IDRate: 24538193, Carrier: "COORDINADORA", CODDetails: &CODDetails{CODCost: 6116}},
+		{IDRate: 24538202, Carrier: "Servientrega", CODDetails: &CODDetails{CODCost: 5512}},
+		{IDRate: 24538207, Carrier: "INTERRAPIDISIMO"},
+	}
+
+	if fee, ok := FindCODFee(rates, "INTERRAPIDISIMO", 24538208); ok {
+		t.Fatalf("sin la tarifa COD del carrier del envio debe fallar, devolvio %v", fee)
 	}
 }

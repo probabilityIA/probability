@@ -14,28 +14,14 @@ import (
 func (h *handler) ListInvoiceableOrders(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	businessIDValue, exists := c.Get("business_id")
-	if !exists {
-		c.JSON(401, gin.H{"error": "Business ID not found in context"})
-		return
-	}
-	businessID, ok := businessIDValue.(uint)
+	filterBusinessID, ok := h.resolveBusinessID(c)
 	if !ok {
-		c.JSON(500, gin.H{"error": "Invalid business ID"})
+		c.JSON(400, gin.H{"error": "business_id es requerido para super admin"})
 		return
 	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
-
-	filterBusinessID := businessID
-	if businessID == 0 {
-		if businessIDParam := c.Query("business_id"); businessIDParam != "" {
-			if paramID, err := strconv.ParseUint(businessIDParam, 10, 32); err == nil {
-				filterBusinessID = uint(paramID)
-			}
-		}
-	}
 
 	filter := dtos.InvoiceableOrdersFilter{
 		BusinessID:    filterBusinessID,

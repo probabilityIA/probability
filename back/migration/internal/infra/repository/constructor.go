@@ -20,6 +20,10 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
+	return nil
+}
+
+func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateWalletTxBusinessID(ctx); err != nil {
 		return err
 	}
@@ -134,6 +138,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateIntegrationStats(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateIntegrationsStoreIDUnique(ctx); err != nil {
+		return err
+	}
 	if err := r.migrateAccounting(ctx); err != nil {
 		return err
 	}
@@ -171,6 +178,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return err
 	}
 	if err := r.fixVigaCodEnCurso(ctx); err != nil {
+		return err
+	}
+	if err := r.fixVigaCodCalibracionFallida(ctx); err != nil {
 		return err
 	}
 	if err := r.seedCodMarginAmount(ctx); err != nil {

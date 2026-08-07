@@ -111,6 +111,12 @@ func (h *IntegrationHandler) UpdateIntegrationHandler(c *gin.Context) {
 		} else if errors.Is(err, domain.ErrIntegrationCodeExists) {
 			statusCode = http.StatusConflict
 			errorMsg = "Ya existe otra integración con el código proporcionado"
+		} else if errors.Is(err, domain.ErrIntegrationStoreIDInUse) {
+			statusCode = http.StatusConflict
+			errorMsg = "Esta cuenta ya esta conectada a otro negocio. Autoriza la cuenta correcta desde una ventana de incognito."
+		} else if errors.Is(err, domain.ErrIntegrationStoreIDSameBusiness) {
+			statusCode = http.StatusConflict
+			errorMsg = "Esta cuenta ya esta conectada en otra integracion de este negocio."
 		}
 
 		h.logger.Error().

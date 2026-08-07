@@ -234,12 +234,22 @@ func (h *meliHandler) OAuthCallbackHandler(c *gin.Context) {
 	rand.Read(exchangeTokenBytes)
 	exchangeToken := hex.EncodeToString(exchangeTokenBytes)
 
+	account := fetchMeliAccountInfo(tokenResp.AccessToken)
+	if account.Nickname == "" {
+		h.logger.Warn(c.Request.Context()).
+			Int64("seller_id", tokenResp.UserID).
+			Msg("No se pudo obtener el nickname de la cuenta de MercadoLibre")
+	}
+
 	storeExchangeToken(exchangeToken, TokenExchangeData{
 		AccessToken:  tokenResp.AccessToken,
 		RefreshToken: tokenResp.RefreshToken,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		SellerID:     tokenResp.UserID,
+		Nickname:     account.Nickname,
+		AccountName:  account.FullName,
+		AccountEmail: account.Email,
 		IsTesting:    testMode,
 		ExpiresAt:    time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
 		Expiry:       time.Now().Add(5 * time.Minute),
@@ -329,6 +339,60 @@ func exchangeCodeForToken(clientID, clientSecret, code, redirectURI, codeVerifie
 		return nil, fmt.Errorf("empty access_token in response")
 	}
 	return &result, nil
+}
+
+type meliAccountInfo struct {
+	Nickname string
+	FullName string
+	Email    string
+}
+
+func fetchMeliAccountInfo(accessToken string) meliAccountInfo {
+	req, err := http.NewRequest(http.MethodGet, "https://api.mercadolibre.com/users/me", nil)
+	if err != nil {
+		return meliAccountInfo{}
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return meliAccountInfo{}
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return meliAccountInfo{}
+	}
+
+	var result struct {
+		Nickname  string `json:"nickname"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		Email     string `json:"email"`
+		Company   struct {
+			CorporateName string `json:"corporate_name"`
+			BrandName     string `json:"brand_name"`
+		} `json:"company"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return meliAccountInfo{}
+	}
+
+	fullName := strings.TrimSpace(result.Company.CorporateName)
+	if fullName == "" {
+		fullName = strings.TrimSpace(result.Company.BrandName)
+	}
+	if fullName == "" {
+		fullName = strings.TrimSpace(result.FirstName + " " + result.LastName)
+	}
+
+	return meliAccountInfo{
+		Nickname: result.Nickname,
+		FullName: fullName,
+		Email:    result.Email,
+	}
 }
 
 func generateState() (string, error) {

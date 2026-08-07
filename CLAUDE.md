@@ -1,5 +1,14 @@
 # Probability
 
+## Documentacion
+
+- `.claude/alerts/` - pendientes urgentes. Revisar al iniciar sesion.
+- `.claude/bitacora/` - historico de soportes, incidentes y correcciones, un
+  archivo por caso. Buscar aca antes de investigar un problema parecido.
+  Reglas: `.claude/rules/bitacora.md`
+- `AGENTS.md` - punto de entrada para agentes de IA que no sean Claude Code.
+- `back/migration/MIGRACIONES.md` - flujo de migraciones e historico de corridas.
+
 ## Sin Comentarios
 
 NUNCA comentarios en Go/TypeScript. Al modificar un archivo, eliminar TODOS los comentarios existentes en el.

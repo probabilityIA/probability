@@ -37,25 +37,22 @@ func SolveCODDeclaredValue(p0, p1 CODQuotePoint, netTarget float64) (float64, bo
 	return math.Ceil(declared), true
 }
 
-func FindCODFee(rates []Rate, carrier string) (float64, bool) {
-	fallback := 0.0
-	hasFallback := false
-
-	for i := range rates {
-		if rates[i].CODDetails == nil {
-			continue
-		}
-		fee := rates[i].CODDetails.CODCost
-		if carrier != "" && equalCarrier(rates[i].Carrier, carrier) {
-			return fee, true
-		}
-		if !hasFallback {
-			fallback = fee
-			hasFallback = true
+func FindCODFee(rates []Rate, carrier string, rateID int64) (float64, bool) {
+	if rateID > 0 {
+		for i := range rates {
+			if rates[i].CODDetails != nil && rates[i].IDRate == rateID {
+				return rates[i].CODDetails.CODCost, true
+			}
 		}
 	}
 
-	return fallback, hasFallback
+	for i := range rates {
+		if rates[i].CODDetails != nil && carrier != "" && equalCarrier(rates[i].Carrier, carrier) {
+			return rates[i].CODDetails.CODCost, true
+		}
+	}
+
+	return 0, false
 }
 
 func equalCarrier(a, b string) bool {
