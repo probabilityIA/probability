@@ -2,7 +2,7 @@ package usecaseintegrations
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
@@ -12,7 +12,7 @@ func (uc *IntegrationUseCase) ensureStoreIDNotInUse(ctx context.Context, storeID
 		return nil
 	}
 
-	ownerBusinessID, err := uc.repo.FindStoreIDOwner(ctx, storeID, integrationTypeID, excludeID)
+	owner, err := uc.repo.FindStoreIDOwner(ctx, storeID, integrationTypeID, excludeID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).
 			Str("store_id", storeID).
@@ -21,19 +21,31 @@ func (uc *IntegrationUseCase) ensureStoreIDNotInUse(ctx context.Context, storeID
 		return err
 	}
 
-	if ownerBusinessID == nil {
+	if owner == nil {
 		return nil
 	}
 
-	if businessID != nil && *ownerBusinessID == *businessID {
-		return nil
-	}
+	sameBusiness := businessID != nil && owner.BusinessID != nil && *owner.BusinessID == *businessID
 
-	uc.log.Warn(ctx).
+	event := uc.log.Warn(ctx).
 		Str("store_id", storeID).
 		Uint("integration_type_id", integrationTypeID).
-		Uint("owner_business_id", *ownerBusinessID).
-		Msg("Intento de conectar una cuenta de canal que ya pertenece a otro negocio")
+		Uint("existing_integration_id", owner.IntegrationID).
+		Bool("same_business", sameBusiness)
+	if owner.BusinessID != nil {
+		event = event.Uint("owner_business_id", *owner.BusinessID)
+	}
+	event.Msg("Intento de conectar una cuenta de canal que ya esta en uso")
 
-	return fmt.Errorf("%w (store_id %s)", domain.ErrIntegrationStoreIDInUse, storeID)
+	if sameBusiness {
+		return domain.ErrIntegrationStoreIDSameBusiness
+	}
+	return domain.ErrIntegrationStoreIDInUse
+}
+
+func isUniqueStoreIDViolation(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "ux_integrations_store_type")
 }

@@ -105,6 +105,12 @@ func (h *IntegrationHandler) CreateIntegrationHandler(c *gin.Context) {
 		} else if errors.Is(err, domain.ErrEcommerceLimitReached) {
 			statusCode = http.StatusForbidden
 			errorMsg = err.Error()
+		} else if errors.Is(err, domain.ErrIntegrationStoreIDInUse) {
+			statusCode = http.StatusConflict
+			errorMsg = "Esta cuenta ya esta conectada a otro negocio. Autoriza la cuenta correcta desde una ventana de incognito."
+		} else if errors.Is(err, domain.ErrIntegrationStoreIDSameBusiness) {
+			statusCode = http.StatusConflict
+			errorMsg = "Esta cuenta ya esta conectada en este negocio. Usa la integracion existente o reconectala."
 		}
 
 		h.logger.Error().

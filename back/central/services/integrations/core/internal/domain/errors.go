@@ -20,6 +20,7 @@ var (
 	ErrIntegrationAccessTokenNotFound  = errors.New("access_token no encontrado o inválido en las credenciales")
 	ErrEcommerceLimitReached           = errors.New("se alcanzo el limite de canales de e-commerce del plan de suscripcion actual")
 	ErrIntegrationStoreIDInUse         = errors.New("esta cuenta del canal ya esta conectada a otro negocio")
+	ErrIntegrationStoreIDSameBusiness  = errors.New("esta cuenta del canal ya esta conectada en este negocio")
 
 	ErrIntegrationTypeNameRequired = errors.New("el nombre del tipo de integración es obligatorio")
 	ErrIntegrationTypeCodeRequired = errors.New("el código del tipo de integración es obligatorio")

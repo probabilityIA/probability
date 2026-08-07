@@ -97,6 +97,10 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	}
 
 	if err := uc.repo.UpdateIntegration(ctx, id, existing); err != nil {
+		if isUniqueStoreIDViolation(err) {
+			uc.log.Warn(ctx).Uint("id", id).Msg("La base rechazo una cuenta de canal duplicada")
+			return nil, domain.ErrIntegrationStoreIDInUse
+		}
 		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar integración")
 		return nil, fmt.Errorf("error al actualizar integración: %w", err)
 	}

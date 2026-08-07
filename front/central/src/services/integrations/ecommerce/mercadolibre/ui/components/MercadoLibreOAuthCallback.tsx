@@ -23,6 +23,14 @@ interface PendingConnection {
     reconnectId: number | null;
 }
 
+function friendlyError(raw: string): string {
+    const text = String(raw || '');
+    if (/SQLSTATE|duplicate key|violates unique constraint|ux_integrations_store_type/i.test(text)) {
+        return 'Esta cuenta de MercadoLibre ya esta conectada. Verifica que estas autorizando la cuenta correcta.';
+    }
+    return text || 'Error al completar la conexion con MercadoLibre';
+}
+
 export function MercadoLibreOAuthCallback() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -114,7 +122,7 @@ export function MercadoLibreOAuthCallback() {
                 setStatus('confirm');
             } catch (err: any) {
                 setStatus('error');
-                setMessage(err.message || 'Error al completar la conexion con MercadoLibre');
+                setMessage(friendlyError(err?.message));
             }
         };
 
@@ -181,7 +189,7 @@ export function MercadoLibreOAuthCallback() {
             setTimeout(() => router.push('/integrations'), 2000);
         } catch (err: any) {
             setStatus('error');
-            setMessage(err.message || 'Error al completar la conexion con MercadoLibre');
+            setMessage(friendlyError(err?.message));
         }
     }, [pending, router]);
 

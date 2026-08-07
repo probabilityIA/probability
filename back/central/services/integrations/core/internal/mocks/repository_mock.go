@@ -87,12 +87,12 @@ func (m *RepositoryMock) ExistsIntegrationByCode(ctx context.Context, code strin
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *RepositoryMock) FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*uint, error) {
+func (m *RepositoryMock) FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*domain.StoreIDOwner, error) {
 	args := m.Called(ctx, storeID, integrationTypeID, excludeID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*uint), args.Error(1)
+	return args.Get(0).(*domain.StoreIDOwner), args.Error(1)
 }
 
 func (m *RepositoryMock) ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {

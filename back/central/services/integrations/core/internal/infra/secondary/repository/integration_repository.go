@@ -382,17 +382,18 @@ func (r *Repository) SetIntegrationAsDefault(ctx context.Context, id uint) error
 	return nil
 }
 
-func (r *Repository) FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*uint, error) {
+func (r *Repository) FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*domain.StoreIDOwner, error) {
 	if storeID == "" || integrationTypeID == 0 {
 		return nil, nil
 	}
 
 	var result struct {
+		ID         uint
 		BusinessID *uint
 	}
 
 	query := r.db.Conn(ctx).Model(&models.Integration{}).
-		Select("business_id").
+		Select("id, business_id").
 		Where("store_id = ?", storeID).
 		Where("integration_type_id = ?", integrationTypeID).
 		Where("deleted_at IS NULL")
@@ -409,7 +410,7 @@ func (r *Repository) FindStoreIDOwner(ctx context.Context, storeID string, integ
 		return nil, fmt.Errorf("error al verificar store_id en uso: %w", err)
 	}
 
-	return result.BusinessID, nil
+	return &domain.StoreIDOwner{IntegrationID: result.ID, BusinessID: result.BusinessID}, nil
 }
 
 func (r *Repository) ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error) {

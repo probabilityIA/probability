@@ -180,6 +180,10 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	}
 
 	if err := uc.repo.CreateIntegration(ctx, integration); err != nil {
+		if isUniqueStoreIDViolation(err) {
+			uc.log.Warn(ctx).Str("store_id", dto.StoreID).Msg("La base rechazo una cuenta de canal duplicada")
+			return nil, domain.ErrIntegrationStoreIDInUse
+		}
 		uc.log.Error(ctx).Err(err).Msg("Error al crear integración")
 		return nil, fmt.Errorf("error al crear integración: %w", err)
 	}

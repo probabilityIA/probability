@@ -100,3 +100,8 @@ type PublicIntegration struct {
 	// en orden de prioridad. Nunca vacio.
 	ProductMatchRules []productmatch.Rule
 }
+
+type StoreIDOwner struct {
+	IntegrationID uint
+	BusinessID    *uint
+}
