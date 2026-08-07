@@ -12,14 +12,14 @@ const (
 	codProbeGap       = 10000.0
 )
 
-func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, netTarget float64, metas *[]domain.SyncMeta) (float64, bool) {
+func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, rateID int64, netTarget float64, metas *[]domain.SyncMeta) (float64, bool) {
 	if netTarget <= 0 {
 		return 0, false
 	}
 
 	target := math.Ceil(netTarget)
 
-	firstFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, target, metas)
+	firstFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, target, metas)
 	if !ok {
 		return 0, false
 	}
@@ -29,7 +29,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 		secondDeclared = target + codProbeGap
 	}
 
-	secondFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, secondDeclared, metas)
+	secondFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, secondDeclared, metas)
 	if !ok {
 		return 0, false
 	}
@@ -44,7 +44,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 	}
 
 	for i := 0; i < codMaxRefinements; i++ {
-		fee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, declared, metas)
+		fee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, declared, metas)
 		if !ok {
 			return 0, false
 		}
@@ -77,9 +77,10 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 	return 0, false
 }
 
-func (u *useCase) probeCODFee(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, declared float64, metas *[]domain.SyncMeta) (float64, bool) {
+func (u *useCase) probeCODFee(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, rateID int64, declared float64, metas *[]domain.SyncMeta) (float64, bool) {
 	probe := req
 	probe.CODValue = declared
+	probe.ContentValue = declared
 	probe.IDRate = 0
 	probe.RequestPickup = false
 
@@ -95,12 +96,13 @@ func (u *useCase) probeCODFee(ctx context.Context, baseURL, apiKey string, req d
 		return 0, false
 	}
 
-	fee, found := domain.FindCODFee(resp.Data.Rates, carrier)
+	fee, found := domain.FindCODFee(resp.Data.Rates, carrier, rateID)
 	if !found {
 		u.log.Warn(ctx).
 			Str("carrier", carrier).
+			Int64("id_rate", rateID).
 			Float64("declared", declared).
-			Msg("La cotizacion no devolvio codDetails, se conserva el valor original")
+			Msg("La cotizacion no devolvio la comision COD de esta transportadora, se conserva el valor original")
 		return 0, false
 	}
 

@@ -342,7 +342,7 @@ func (c *TransportRequestConsumer) applyCODCalibration(ctx context.Context, requ
 
 	carrier, _ := request.Payload["carrier"].(string)
 
-	declared, ok := c.useCase.ResolveCODValue(ctx, baseURL, apiKey, *req, carrier, netTarget, metas)
+	declared, ok := c.useCase.ResolveCODValue(ctx, baseURL, apiKey, *req, carrier, req.IDRate, netTarget, metas)
 	if !ok {
 		c.log.Warn(ctx).
 			Str("correlation_id", request.CorrelationID).
