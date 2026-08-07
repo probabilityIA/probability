@@ -23,6 +23,7 @@ type IRepository interface {
 	ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*Integration, error)
 	SetIntegrationAsDefault(ctx context.Context, id uint) error
 	ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error)
+	FindStoreIDOwner(ctx context.Context, storeID string, integrationTypeID uint, excludeID uint) (*uint, error)
 	ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error)
 	UpdateLastSync(ctx context.Context, id uint, lastSync time.Time) error
 	GetIntegrationStats(ctx context.Context, businessID uint) ([]IntegrationStats, error)

@@ -34,6 +34,11 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Code = *dto.Code
 	}
 	if dto.StoreID != nil {
+		if *dto.StoreID != oldStoreID {
+			if err := uc.ensureStoreIDNotInUse(ctx, *dto.StoreID, existing.IntegrationTypeID, existing.BusinessID, id); err != nil {
+				return nil, err
+			}
+		}
 		existing.StoreID = *dto.StoreID
 	}
 	if dto.IsActive != nil {
