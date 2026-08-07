@@ -49,6 +49,7 @@ type TokenExchangeData struct {
 	ClientID     string
 	ClientSecret string
 	SellerID     int64
+	Nickname     string
 	IsTesting    bool
 	ExpiresAt    time.Time
 	Expiry       time.Time

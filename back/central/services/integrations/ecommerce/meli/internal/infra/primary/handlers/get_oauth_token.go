@@ -14,6 +14,7 @@ type GetOAuthTokenResponse struct {
 	ClientID        string `json:"client_id,omitempty"`
 	ClientSecret    string `json:"client_secret,omitempty"`
 	SellerID        int64  `json:"seller_id,omitempty"`
+	Nickname        string `json:"nickname,omitempty"`
 	IsTesting       bool   `json:"is_testing"`
 	ExpiresAt       string `json:"expires_at,omitempty"`
 	IntegrationName string `json:"integration_name,omitempty"`
@@ -51,6 +52,7 @@ func (h *meliHandler) GetOAuthTokenHandler(c *gin.Context) {
 		ClientID:        data.ClientID,
 		ClientSecret:    data.ClientSecret,
 		SellerID:        data.SellerID,
+		Nickname:        data.Nickname,
 		IsTesting:       data.IsTesting,
 		ExpiresAt:       data.ExpiresAt.Format(time.RFC3339),
 		IntegrationName: integrationName,

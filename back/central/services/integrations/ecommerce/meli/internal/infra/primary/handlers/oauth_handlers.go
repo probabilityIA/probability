@@ -234,12 +234,20 @@ func (h *meliHandler) OAuthCallbackHandler(c *gin.Context) {
 	rand.Read(exchangeTokenBytes)
 	exchangeToken := hex.EncodeToString(exchangeTokenBytes)
 
+	nickname := fetchMeliNickname(tokenResp.AccessToken)
+	if nickname == "" {
+		h.logger.Warn(c.Request.Context()).
+			Int64("seller_id", tokenResp.UserID).
+			Msg("No se pudo obtener el nickname de la cuenta de MercadoLibre")
+	}
+
 	storeExchangeToken(exchangeToken, TokenExchangeData{
 		AccessToken:  tokenResp.AccessToken,
 		RefreshToken: tokenResp.RefreshToken,
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		SellerID:     tokenResp.UserID,
+		Nickname:     nickname,
 		IsTesting:    testMode,
 		ExpiresAt:    time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
 		Expiry:       time.Now().Add(5 * time.Minute),
@@ -329,6 +337,34 @@ func exchangeCodeForToken(clientID, clientSecret, code, redirectURI, codeVerifie
 		return nil, fmt.Errorf("empty access_token in response")
 	}
 	return &result, nil
+}
+
+func fetchMeliNickname(accessToken string) string {
+	req, err := http.NewRequest(http.MethodGet, "https://api.mercadolibre.com/users/me", nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	var result struct {
+		Nickname string `json:"nickname"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return ""
+	}
+	return result.Nickname
 }
 
 func generateState() (string, error) {

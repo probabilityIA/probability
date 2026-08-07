@@ -1,12 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createIntegrationAction, updateIntegrationAction } from '@/services/integrations/core/infra/actions';
+import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
-import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, ExclamationTriangleIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
 
-type Status = 'processing' | 'success' | 'error';
+type Status = 'processing' | 'confirm' | 'saving' | 'success' | 'error';
+
+interface PendingConnection {
+    tokenData: any;
+    sellerId: string;
+    nickname: string;
+    businessId: number | null;
+    businessName: string;
+    integrationName: string;
+    integrationCode: string;
+    isTesting: boolean;
+    reconnectId: number | null;
+}
 
 export function MercadoLibreOAuthCallback() {
     const router = useRouter();
@@ -14,6 +27,7 @@ export function MercadoLibreOAuthCallback() {
     const hasRun = useRef(false);
     const [status, setStatus] = useState<Status>('processing');
     const [message, setMessage] = useState('Conectando con MercadoLibre...');
+    const [pending, setPending] = useState<PendingConnection | null>(null);
 
     useEffect(() => {
         if (hasRun.current) return;
@@ -31,7 +45,7 @@ export function MercadoLibreOAuthCallback() {
             const integrationName = searchParams.get('integration_name') || 'MercadoLibre';
             const integrationCode = searchParams.get('integration_code') || `mercado_libre_${Date.now()}`;
             const state = searchParams.get('state');
-            const businessId = searchParams.get('business_id');
+            const businessIdParam = searchParams.get('business_id');
             const exchangeToken = searchParams.get('exchange_token');
             const isTesting = searchParams.get('is_testing') === 'true';
 
@@ -62,6 +76,7 @@ export function MercadoLibreOAuthCallback() {
                 }
 
                 const sellerId = tokenData.seller_id ? String(tokenData.seller_id) : '';
+                const businessId = businessIdParam && Number(businessIdParam) > 0 ? Number(businessIdParam) : null;
 
                 let reconnectId: number | null = null;
                 try {
@@ -72,63 +87,27 @@ export function MercadoLibreOAuthCallback() {
                     }
                 } catch { }
 
-                if (reconnectId) {
-                    localStorage.removeItem('meli_reconnect');
-                    const updateResponse: any = await updateIntegrationAction(reconnectId, {
-                        store_id: sellerId || undefined,
-                        config: {
-                            app_id: tokenData.client_id,
-                            seller_id: tokenData.seller_id,
-                            token_expires_at: tokenData.expires_at,
-                        } as any,
-                        credentials: {
-                            access_token: tokenData.access_token,
-                            refresh_token: tokenData.refresh_token,
-                            client_id: tokenData.client_id,
-                            client_secret: tokenData.client_secret,
-                        } as any,
-                    });
-
-                    if (!updateResponse || updateResponse.success === false) {
-                        throw new Error(updateResponse?.message || 'Error al reconectar la integracion');
-                    }
-
-                    setStatus('success');
-                    setMessage('MercadoLibre reconectado exitosamente. Redirigiendo...');
-                    setTimeout(() => router.push('/integrations'), 2000);
-                    return;
+                let businessName = '';
+                if (businessId) {
+                    try {
+                        const r: any = await getBusinessesSimpleAction();
+                        const match = (r?.data || []).find((b: any) => Number(b.id) === businessId);
+                        if (match?.name) businessName = String(match.name);
+                    } catch { }
                 }
 
-                const response = await createIntegrationAction({
-                    name: integrationName,
-                    code: integrationCode,
-                    integration_type_id: 3,
-                    category: 'ecommerce',
-                    store_id: sellerId,
-                    is_active: true,
-                    is_default: false,
-                    config: {
-                        app_id: tokenData.client_id,
-                        seller_id: tokenData.seller_id,
-                        token_expires_at: tokenData.expires_at,
-                    } as any,
-                    credentials: {
-                        access_token: tokenData.access_token,
-                        refresh_token: tokenData.refresh_token,
-                        client_id: tokenData.client_id,
-                        client_secret: tokenData.client_secret,
-                    } as any,
-                    business_id: businessId && Number(businessId) > 0 ? Number(businessId) : null,
-                    is_testing: isTesting || tokenData.is_testing || false,
-                }, sessionToken || undefined);
-
-                if (!response || response.success === false) {
-                    throw new Error(response?.message || 'Error al crear la integracion');
-                }
-
-                setStatus('success');
-                setMessage('MercadoLibre conectado exitosamente. Redirigiendo...');
-                setTimeout(() => router.push('/integrations'), 2000);
+                setPending({
+                    tokenData,
+                    sellerId,
+                    nickname: tokenData.nickname ? String(tokenData.nickname) : '',
+                    businessId,
+                    businessName,
+                    integrationName,
+                    integrationCode,
+                    isTesting: isTesting || tokenData.is_testing || false,
+                    reconnectId,
+                });
+                setStatus('confirm');
             } catch (err: any) {
                 setStatus('error');
                 setMessage(err.message || 'Error al completar la conexion con MercadoLibre');
@@ -136,12 +115,83 @@ export function MercadoLibreOAuthCallback() {
         };
 
         run();
-    }, [searchParams, router]);
+    }, [searchParams]);
+
+    const confirmConnection = useCallback(async () => {
+        if (!pending) return;
+        setStatus('saving');
+        setMessage('Guardando la conexion...');
+
+        const { tokenData, sellerId, businessId, integrationName, integrationCode, isTesting, reconnectId } = pending;
+        const sessionToken = TokenStorage.getSessionToken();
+
+        const config = {
+            app_id: tokenData.client_id,
+            seller_id: tokenData.seller_id,
+            token_expires_at: tokenData.expires_at,
+        } as any;
+        const credentials = {
+            access_token: tokenData.access_token,
+            refresh_token: tokenData.refresh_token,
+            client_id: tokenData.client_id,
+            client_secret: tokenData.client_secret,
+        } as any;
+
+        try {
+            if (reconnectId) {
+                localStorage.removeItem('meli_reconnect');
+                const updateResponse: any = await updateIntegrationAction(reconnectId, {
+                    store_id: sellerId || undefined,
+                    config,
+                    credentials,
+                });
+                if (!updateResponse || updateResponse.success === false) {
+                    throw new Error(updateResponse?.message || 'Error al reconectar la integracion');
+                }
+                setStatus('success');
+                setMessage('MercadoLibre reconectado exitosamente. Redirigiendo...');
+                setTimeout(() => router.push('/integrations'), 2000);
+                return;
+            }
+
+            const response = await createIntegrationAction({
+                name: integrationName,
+                code: integrationCode,
+                integration_type_id: 3,
+                category: 'ecommerce',
+                store_id: sellerId,
+                is_active: true,
+                is_default: false,
+                config,
+                credentials,
+                business_id: businessId,
+                is_testing: isTesting,
+            }, sessionToken || undefined);
+
+            if (!response || response.success === false) {
+                throw new Error(response?.message || 'Error al crear la integracion');
+            }
+
+            setStatus('success');
+            setMessage('MercadoLibre conectado exitosamente. Redirigiendo...');
+            setTimeout(() => router.push('/integrations'), 2000);
+        } catch (err: any) {
+            setStatus('error');
+            setMessage(err.message || 'Error al completar la conexion con MercadoLibre');
+        }
+    }, [pending, router]);
+
+    const cancelConnection = () => {
+        try {
+            localStorage.removeItem('meli_reconnect');
+        } catch { }
+        router.push('/integrations');
+    };
 
     return (
         <div className="flex min-h-[60vh] items-center justify-center p-6">
             <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center shadow-sm">
-                {status === 'processing' && (
+                {(status === 'processing' || status === 'saving') && (
                     <>
                         <svg className="mx-auto h-10 w-10 animate-spin text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -150,6 +200,55 @@ export function MercadoLibreOAuthCallback() {
                         <h2 className="mt-4 text-lg font-bold text-gray-900 dark:text-white">Conectando</h2>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
                     </>
+                )}
+                {status === 'confirm' && pending && (
+                    <div className="text-left">
+                        <ShieldExclamationIcon className="mx-auto h-12 w-12 text-amber-500" />
+                        <h2 className="mt-4 text-center text-lg font-bold text-gray-900 dark:text-white">
+                            {pending.reconnectId ? 'Confirma la reconexion' : 'Confirma la conexion'}
+                        </h2>
+                        <p className="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Revisa que la cuenta y el negocio sean los correctos antes de guardar.
+                        </p>
+
+                        <dl className="mt-5 space-y-3 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                            <div>
+                                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Cuenta de MercadoLibre</dt>
+                                <dd className="text-sm font-semibold text-gray-900 dark:text-white break-words">
+                                    {pending.nickname || 'Nombre no disponible'}
+                                </dd>
+                                <dd className="text-[11px] text-gray-400">Vendedor {pending.sellerId || 'sin id'}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-[11px] uppercase tracking-wide text-gray-400">Se conectara al negocio</dt>
+                                <dd className="text-sm font-semibold text-gray-900 dark:text-white break-words">
+                                    {pending.businessName || (pending.businessId ? `Negocio #${pending.businessId}` : 'Tu negocio')}
+                                </dd>
+                            </div>
+                        </dl>
+
+                        <p className="mt-4 text-[11px] text-gray-400">
+                            MercadoLibre autoriza la cuenta que este abierta en este navegador. Si el nombre de arriba no es
+                            el de este negocio, cancela y vuelve a intentar desde una ventana de incognito.
+                        </p>
+
+                        <div className="mt-5 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={cancelConnection}
+                                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmConnection}
+                                className="flex-1 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white"
+                            >
+                                Confirmar
+                            </button>
+                        </div>
+                    </div>
                 )}
                 {status === 'success' && (
                     <>
