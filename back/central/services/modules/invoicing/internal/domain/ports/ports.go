@@ -72,6 +72,7 @@ type IRepository interface {
 	IncrementJobCounters(ctx context.Context, jobID string, processed, successful, failed int) error
 
 	GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
+	CountOrdersOutsideBusiness(ctx context.Context, orderIDs []string, businessID uint) (int64, error)
 	UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
 	GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error)
 	CancelInvoiceAndReleaseOrder(ctx context.Context, invoiceID uint) (bool, string, error)

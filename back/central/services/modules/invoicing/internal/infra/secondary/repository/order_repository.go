@@ -42,15 +42,29 @@ func detectIsCOD(order *models.Order) bool {
 	return false
 }
 
-// GetByID obtiene una orden por su ID y la mapea a OrderData
+func (r *Repository) CountOrdersOutsideBusiness(ctx context.Context, orderIDs []string, businessID uint) (int64, error) {
+	if len(orderIDs) == 0 || businessID == 0 {
+		return 0, nil
+	}
+
+	var count int64
+	err := r.db.Conn(ctx).Model(&models.Order{}).
+		Where("id IN ?", orderIDs).
+		Where("business_id IS DISTINCT FROM ?", businessID).
+		Count(&count).Error
+	if err != nil {
+		r.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("Failed to validate order ownership")
+		return 0, fmt.Errorf("failed to validate order ownership: %w", err)
+	}
+
+	return count, nil
+}
+
 func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error) {
 	var order models.Order
 
-	// Consultar orden CON Preload de OrderItems para obtener los product_id correctos
-	// IMPORTANTE: OrderItems tiene los product_id de la tabla products (PRD_xxx)
-	// mientras que el JSONB Items tiene los IDs externos de las plataformas (Shopify, etc)
 	err := r.db.Conn(ctx).
-		Preload("OrderItems.Product"). // Preload items y productos
+		Preload("OrderItems.Product").
 		Where("id = ?", orderID).
 		First(&order).Error
 
@@ -59,12 +73,10 @@ func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.Or
 		return nil, fmt.Errorf("failed to get order: %w", err)
 	}
 
-	// Mapear a OrderData
 	orderData := r.mapToOrderData(&order)
 	return orderData, nil
 }
 
-// UpdateInvoiceInfo actualiza la información de factura en una orden
 func (r *Repository) UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error {
 	result := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("id = ?", orderID).
@@ -89,7 +101,6 @@ func (r *Repository) UpdateOrderInvoiceInfo(ctx context.Context, orderID string,
 	return nil
 }
 
-// mapToOrderData convierte un modelo GORM Order a OrderData del dominio
 func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	if order == nil {
 		return nil
@@ -121,18 +132,15 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		CreatedAt:        order.CreatedAt,
 	}
 
-	// BusinessID puede ser nil en el modelo, asignar valor
 	if order.BusinessID != nil {
 		orderData.BusinessID = *order.BusinessID
 	}
 
-	// CustomerID
 	if order.CustomerID != nil {
 		customerIDStr := fmt.Sprintf("%d", *order.CustomerID)
 		orderData.CustomerID = &customerIDStr
 	}
 
-	// Shipping address
 	if order.ShippingCity != "" {
 		orderData.ShippingCity = &order.ShippingCity
 	}
@@ -143,7 +151,6 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		orderData.ShippingCountry = &order.ShippingCountry
 	}
 
-	// Order Type - usar campos directos del modelo
 	if order.OrderTypeID != nil {
 		orderData.OrderTypeID = *order.OrderTypeID
 	}
@@ -151,15 +158,12 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		orderData.OrderTypeName = order.OrderTypeName
 	}
 
-	// Mapear items desde la tabla normalizada order_items (NO desde JSONB)
-	// IMPORTANTE: order_items contiene los product_id correctos de la tabla products
-	// mientras que el JSONB Items contiene IDs externos de las plataformas
 	items := make([]dtos.OrderItemData, 0, len(order.OrderItems))
 	for _, orderItem := range order.OrderItems {
 		item := dtos.OrderItemData{
-			ProductID:                orderItem.ProductID, // ✅ ID correcto de tabla products (PRD_xxx)
-			SKU:                      "",                  // Se obtendrá del Product si existe
-			Name:                     "",                  // Se obtendrá del Product si existe
+			ProductID:                orderItem.ProductID,
+			SKU:                      "",
+			Name:                     "",
 			Description:              nil,
 			Quantity:                 orderItem.Quantity,
 			UnitPrice:                orderItem.UnitPrice,
@@ -176,7 +180,6 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 			TaxPresentment:           orderItem.TaxPresentment,
 		}
 
-		// Obtener información del producto desde la relación (si existe y no está soft-deleted)
 		if orderItem.Product.ID != "" {
 			item.SKU = orderItem.Product.SKU
 			item.Name = orderItem.Product.Name
@@ -193,28 +196,22 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	return orderData
 }
 
-// GetInvoiceableOrders obtiene órdenes facturables paginadas
-// Filtra por:
-// - business_id (multi-tenant isolation)
-//   - Si businessID = 0 (super admin): retorna órdenes de TODOS los businesses
-//   - Si businessID != 0 (usuario normal): retorna solo órdenes de ese business
-//
-// - invoiceable = true
-// - invoice_id IS NULL (no facturadas previamente)
 func (r *Repository) GetInvoiceableOrders(ctx context.Context, filter dtos.InvoiceableOrdersFilter) ([]*dtos.OrderData, int64, error) {
 	filter.Sanitize()
 	var orders []models.Order
 	var total int64
 
+	if filter.BusinessID == 0 {
+		return nil, 0, fmt.Errorf("business_id es requerido para listar ordenes facturables")
+	}
+
 	noInvoiceSubquery := "NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = orders.id AND i.deleted_at IS NULL AND i.status <> 'cancelled')"
 	base := r.db.Conn(ctx).Model(&models.Order{}).
+		Where("business_id = ?", filter.BusinessID).
 		Where("invoiceable = ?", true).
 		Where("invoice_id IS NULL").
 		Where(noInvoiceSubquery)
 
-	if filter.BusinessID != 0 {
-		base = base.Where("business_id = ?", filter.BusinessID)
-	}
 	if filter.StartDate != nil {
 		base = base.Where("created_at >= ?", *filter.StartDate)
 	}

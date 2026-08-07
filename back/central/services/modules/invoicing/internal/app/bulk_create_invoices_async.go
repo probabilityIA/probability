@@ -31,6 +31,19 @@ func (uc *useCase) BulkCreateInvoicesAsync(ctx context.Context, dto *dtos.BulkCr
 		return "", fmt.Errorf("business_id is required: super admin must select a business")
 	}
 
+	foreign, err := uc.repo.CountOrdersOutsideBusiness(ctx, dto.OrderIDs, businessID)
+	if err != nil {
+		return "", err
+	}
+	if foreign > 0 {
+		uc.log.Warn(ctx).
+			Uint("business_id", businessID).
+			Int64("foreign_orders", foreign).
+			Int("total_orders", len(dto.OrderIDs)).
+			Msg("Intento de facturar ordenes que no pertenecen al negocio seleccionado")
+		return "", fmt.Errorf("%d de %d ordenes no pertenecen al negocio seleccionado", foreign, len(dto.OrderIDs))
+	}
+
 	jobID := uuid.New().String()
 
 	job := &entities.BulkInvoiceJob{
