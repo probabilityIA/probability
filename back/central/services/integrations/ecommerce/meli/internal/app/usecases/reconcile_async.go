@@ -52,6 +52,8 @@ func (uc *meliUseCase) ReconcileProductsAsync(ctx context.Context, integrationID
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
 		"only_in_channel":     len(result.OnlyInMeli),
+		"probability_no_sku":  result.ProbabilityNoSKU,
+		"channel_no_sku":      result.MeliNoSKU,
 		"match_rules":         result.MatchRules,
 	}
 

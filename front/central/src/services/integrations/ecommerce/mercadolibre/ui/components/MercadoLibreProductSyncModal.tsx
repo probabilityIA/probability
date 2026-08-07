@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, AlertCircle, RefreshCw, ArrowUpFromLine, ArrowDownToLine, ArrowRightLeft, Link2 } from 'lucide-react';
 import { useSSE } from '@/shared/hooks/use-sse';
-import { reconcileMeliProductsAction, applyMeliProductsAction, associateMeliProductsAction } from '../../infra/actions';
+import { reconcileMeliProductsAction, applyMeliProductsAction, associateMeliProductsAction, getSyncRunItemsAction } from '../../infra/actions';
 
 interface MercadoLibreProductSyncModalProps {
     isOpen: boolean;
@@ -23,6 +23,9 @@ interface Diff {
     matchedNotAssociated: Brief[];
     onlyInProbability: Brief[];
     onlyInMeli: Brief[];
+    notAssociatedCount: number;
+    onlyInProbabilityCount: number;
+    onlyInMeliCount: number;
     probabilityNoSku: number;
     meliNoSku: number;
 }
@@ -31,7 +34,22 @@ const PRODUCT_EVENT_TYPES = [
     'meli.product.sync.started',
     'meli.product.sync.progress',
     'meli.product.sync.completed',
+    'meli.product.reconcile.completed',
 ];
+
+const MAX_DETAIL_ITEMS = 200;
+const ANALYZE_TIMEOUT_MS = 120000;
+
+function briefsFromItems(items: any[]): Brief[] {
+    return items.map((item) => {
+        const label = String(item?.label || '');
+        const separator = label.indexOf(' · ');
+        return {
+            sku: String(item?.sku || ''),
+            name: separator >= 0 ? label.slice(separator + 3) : label,
+        };
+    });
+}
 
 type Phase = 'analyzing' | 'diff' | 'running' | 'done' | 'error';
 type Direction = 'to_meli' | 'to_probability';
@@ -53,19 +71,47 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
         setPhase('analyzing');
         setErrorMessage(null);
         setSelected(new Set());
+        setDiff(null);
+        correlationRef.current = null;
         const res: any = await reconcileMeliProductsAction(integrationId, businessId ?? undefined);
-        if (!res?.success) {
+        if (!res?.success || !res?.correlation_id) {
             setErrorMessage(res?.message || 'No se pudo analizar los productos');
             setPhase('error');
             return;
         }
+        correlationRef.current = res.correlation_id;
+    }, [integrationId, businessId]);
+
+    const loadReconcileResult = useCallback(async (counts: {
+        matched: number;
+        notAssociated: number;
+        onlyInProbability: number;
+        onlyInMeli: number;
+        probabilityNoSku: number;
+        meliNoSku: number;
+    }) => {
+        const [notAssociated, onlyProbability, onlyChannel] = await Promise.all([
+            counts.notAssociated > 0
+                ? getSyncRunItemsAction(integrationId, 'not_associated', businessId ?? undefined, MAX_DETAIL_ITEMS)
+                : Promise.resolve({ success: true, data: [] as any[] }),
+            counts.onlyInProbability > 0
+                ? getSyncRunItemsAction(integrationId, 'only_probability', businessId ?? undefined, MAX_DETAIL_ITEMS)
+                : Promise.resolve({ success: true, data: [] as any[] }),
+            counts.onlyInMeli > 0
+                ? getSyncRunItemsAction(integrationId, 'only_channel', businessId ?? undefined, MAX_DETAIL_ITEMS)
+                : Promise.resolve({ success: true, data: [] as any[] }),
+        ]);
+
         setDiff({
-            matched: Number(res.matched) || 0,
-            matchedNotAssociated: res.matched_not_associated || [],
-            onlyInProbability: res.only_in_probability || [],
-            onlyInMeli: res.only_in_meli || [],
-            probabilityNoSku: Number(res.probability_no_sku) || 0,
-            meliNoSku: Number(res.meli_no_sku) || 0,
+            matched: counts.matched,
+            matchedNotAssociated: briefsFromItems(notAssociated.data),
+            onlyInProbability: briefsFromItems(onlyProbability.data),
+            onlyInMeli: briefsFromItems(onlyChannel.data),
+            notAssociatedCount: counts.notAssociated,
+            onlyInProbabilityCount: counts.onlyInProbability,
+            onlyInMeliCount: counts.onlyInMeli,
+            probabilityNoSku: counts.probabilityNoSku,
+            meliNoSku: counts.meliNoSku,
         });
         setPhase('diff');
     }, [integrationId, businessId]);
@@ -87,10 +133,19 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
         analyze();
     }, [isOpen, analyze]);
 
+    useEffect(() => {
+        if (phase !== 'analyzing') return;
+        const timer = setTimeout(() => {
+            setErrorMessage('La comparacion esta tardando mas de lo esperado. Intenta de nuevo.');
+            setPhase('error');
+        }, ANALYZE_TIMEOUT_MS);
+        return () => clearTimeout(timer);
+    }, [phase]);
+
     const handleApply = async (dir: Direction) => {
         setDirection(dir);
         setPhase('running');
-        setTotal(dir === 'to_meli' ? (diff?.onlyInProbability.length || 0) : (diff?.onlyInMeli.length || 0));
+        setTotal(dir === 'to_meli' ? (diff?.onlyInProbabilityCount || 0) : (diff?.onlyInMeliCount || 0));
         setProcessed(0);
         setCreated(0);
         setFailed(0);
@@ -107,7 +162,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
     const handleAssociate = async (skus?: string[]) => {
         setDirection(null);
         setPhase('running');
-        setTotal(skus ? skus.length : (diff?.matchedNotAssociated.length || 0));
+        setTotal(skus ? skus.length : (diff?.notAssociatedCount || 0));
         setProcessed(0);
         setCreated(0);
         setFailed(0);
@@ -139,7 +194,21 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
             const corr = correlationRef.current;
             if (!corr || data.correlation_id !== corr) return;
 
-            if (eventType === 'meli.product.sync.started') {
+            if (eventType === 'meli.product.reconcile.completed') {
+                if (data.error) {
+                    setErrorMessage(String(data.error));
+                    setPhase('error');
+                    return;
+                }
+                void loadReconcileResult({
+                    matched: Number(data.matched) || 0,
+                    notAssociated: Number(data.not_associated) || 0,
+                    onlyInProbability: Number(data.only_in_probability) || 0,
+                    onlyInMeli: Number(data.only_in_channel) || 0,
+                    probabilityNoSku: Number(data.probability_no_sku) || 0,
+                    meliNoSku: Number(data.channel_no_sku) || 0,
+                });
+            } else if (eventType === 'meli.product.sync.started') {
                 setTotal(Number(data.total) || 0);
             } else if (eventType === 'meli.product.sync.progress') {
                 setProcessed(Number(data.processed) || 0);
@@ -156,19 +225,19 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
         } catch {
             return;
         }
-    }, [onCompleted]);
+    }, [onCompleted, loadReconcileResult]);
 
     useSSE({
         businessId: businessId ?? 0,
         eventTypes: PRODUCT_EVENT_TYPES,
         onMessage: handleMessage,
-        enabled: isOpen && (phase === 'running' || phase === 'done'),
+        enabled: isOpen && (phase === 'analyzing' || phase === 'running' || phase === 'done'),
     });
 
     if (!isOpen) return null;
 
     const progressPct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : phase === 'done' ? 100 : 0;
-    const inSync = diff && diff.onlyInProbability.length === 0 && diff.onlyInMeli.length === 0 && diff.matchedNotAssociated.length === 0;
+    const inSync = diff && diff.onlyInProbabilityCount === 0 && diff.onlyInMeliCount === 0 && diff.notAssociatedCount === 0;
 
     return (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -211,18 +280,19 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                 <span className="text-sm text-emerald-800 dark:text-emerald-300"><strong>{diff.matched}</strong> productos coinciden y ya estan asociados a este canal</span>
                             </div>
 
-                            {diff.matchedNotAssociated.length > 0 && (
+                            {diff.notAssociatedCount > 0 && (
                                 <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-900/10 p-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.matchedNotAssociated.length} producto{diff.matchedNotAssociated.length !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{diff.notAssociatedCount} producto{diff.notAssociatedCount !== 1 ? 's' : ''} coinciden por SKU pero no estan asociados a este canal</p>
                                             <p className="text-[11px] text-gray-400 mt-0.5">Crea la relacion (sin tocar stock) para que el canal los reconozca como propios.</p>
                                         </div>
-                                        <button onClick={() => handleAssociate(diff.matchedNotAssociated.map((p) => p.sku))} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                                        <button onClick={() => handleAssociate()} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-600 hover:bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
                                             <Link2 size={14} /> Asociar todos
                                         </button>
                                     </div>
                                     <SelectableProductList items={diff.matchedNotAssociated} selected={selected} onToggle={toggleSelected} />
+                                    <TruncatedNote shown={diff.matchedNotAssociated.length} total={diff.notAssociatedCount} />
                                     <div className="mt-2 flex items-center justify-between">
                                         <span className="text-[11px] text-gray-400">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
                                         <button onClick={() => handleAssociate(Array.from(selected))} disabled={selected.size === 0} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
@@ -240,11 +310,11 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                 </div>
                             ) : (
                                 <>
-                                    {diff.onlyInProbability.length > 0 && (
+                                    {diff.onlyInProbabilityCount > 0 && (
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbability.length} producto{diff.onlyInProbability.length !== 1 ? 's' : ''} que no estan en MercadoLibre</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En Probability hay {diff.onlyInProbabilityCount} producto{diff.onlyInProbabilityCount !== 1 ? 's' : ''} que no estan en MercadoLibre</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se publicaran en MercadoLibre (categoria estimada por titulo).</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_meli')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-violet-600 hover:bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -252,14 +322,15 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                                 </button>
                                             </div>
                                             <ProductList items={diff.onlyInProbability} />
+                                            <TruncatedNote shown={diff.onlyInProbability.length} total={diff.onlyInProbabilityCount} />
                                         </div>
                                     )}
 
-                                    {diff.onlyInMeli.length > 0 && (
+                                    {diff.onlyInMeliCount > 0 && (
                                         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En MercadoLibre hay {diff.onlyInMeli.length} producto{diff.onlyInMeli.length !== 1 ? 's' : ''} que no estan en Probability</p>
+                                                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">En MercadoLibre hay {diff.onlyInMeliCount} producto{diff.onlyInMeliCount !== 1 ? 's' : ''} que no estan en Probability</p>
                                                     <p className="text-[11px] text-gray-400 mt-0.5">Se crearan en Probability aplicando tu configuracion de bodegas.</p>
                                                 </div>
                                                 <button onClick={() => handleApply('to_probability')} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
@@ -267,6 +338,7 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                                                 </button>
                                             </div>
                                             <ProductList items={diff.onlyInMeli} />
+                                            <TruncatedNote shown={diff.onlyInMeli.length} total={diff.onlyInMeliCount} />
                                         </div>
                                     )}
                                 </>
@@ -318,6 +390,15 @@ export function MercadoLibreProductSyncModal({ isOpen, onClose, integrationId, b
                 </div>
             </div>
         </div>
+    );
+}
+
+function TruncatedNote({ shown, total }: { shown: number; total: number }) {
+    if (total <= shown) return null;
+    return (
+        <p className="mt-1 text-[11px] text-gray-400">
+            Mostrando {shown} de {total}. La accion se aplica sobre los {total}.
+        </p>
     );
 }
 
