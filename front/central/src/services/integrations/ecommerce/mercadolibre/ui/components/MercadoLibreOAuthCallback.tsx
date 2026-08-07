@@ -13,6 +13,8 @@ interface PendingConnection {
     tokenData: any;
     sellerId: string;
     nickname: string;
+    accountName: string;
+    accountEmail: string;
     businessId: number | null;
     businessName: string;
     integrationName: string;
@@ -100,6 +102,8 @@ export function MercadoLibreOAuthCallback() {
                     tokenData,
                     sellerId,
                     nickname: tokenData.nickname ? String(tokenData.nickname) : '',
+                    accountName: tokenData.account_name ? String(tokenData.account_name) : '',
+                    accountEmail: tokenData.account_email ? String(tokenData.account_email) : '',
                     businessId,
                     businessName,
                     integrationName,
@@ -215,8 +219,14 @@ export function MercadoLibreOAuthCallback() {
                             <div>
                                 <dt className="text-[11px] uppercase tracking-wide text-gray-400">Cuenta de MercadoLibre</dt>
                                 <dd className="text-sm font-semibold text-gray-900 dark:text-white break-words">
-                                    {pending.nickname || 'Nombre no disponible'}
+                                    {pending.accountName || pending.nickname || 'Nombre no disponible'}
                                 </dd>
+                                {pending.accountName && pending.nickname && (
+                                    <dd className="text-xs text-gray-500 dark:text-gray-400 break-words">Usuario {pending.nickname}</dd>
+                                )}
+                                {pending.accountEmail && (
+                                    <dd className="text-xs text-gray-500 dark:text-gray-400 break-words">{pending.accountEmail}</dd>
+                                )}
                                 <dd className="text-[11px] text-gray-400">Vendedor {pending.sellerId || 'sin id'}</dd>
                             </div>
                             <div>
