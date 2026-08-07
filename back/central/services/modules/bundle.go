@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
 	"github.com/secamc93/probability/back/central/services/modules/announcements"
 	"github.com/secamc93/probability/back/central/services/modules/codreport"
+	"github.com/secamc93/probability/back/central/services/modules/commercial"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/drivers"
@@ -92,6 +93,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	integrationCore.SetEcommerceLimitChecker(subscriptionsBundle.UseCase.EcommerceChannelLimit)
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "invoicing"))
 	warehouses.New(router, database)
+	commercial.New(router, database, logger)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient, subscriptions.RequireModuleAccess(subscriptionsBundle.UseCase, "inventory"))
 	drivers.New(router, database)
 	vehicles.New(router, database)

@@ -206,5 +206,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	if err := r.migrateNavbarContent(ctx); err != nil {
 		return err
 	}
-	return r.migrateWhatsappConversationType(ctx)
+	if err := r.migrateWhatsappConversationType(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateCommercialProspects(ctx); err != nil {
+		return err
+	}
+	return r.seedCommercialProspects(ctx)
 }
