@@ -292,15 +292,15 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{"Confirmar pedido", "No confirmar"},
 		Description:  "Confirmacion de pedido para pago online (sin metodo de pago ni valor a recaudar)",
 	},
-	"reporte_saldo_billetera": {
-		Name:     "reporte_saldo_billetera",
+	"reporte_saldo_billetera_v2": {
+		Name:     "reporte_saldo_billetera_v2",
 		Language: "es",
 		Variables: []string{
 			"nombre_negocio",
 			"saldo",
 		},
 		Description: "Aviso automatico de saldo bajo en la billetera del negocio",
-		Body:        "Hola {{1}}, este es tu reporte del día en Probability\n\nSaldo disponible en Billetera: {{2}}\n\nRecuerda recargar para que no te tome por sorpresa al momento de generar tus guías 💡\nFeliz día!!",
+		Body:        "Hola {{1}}, este es tu reporte del día en Probability 📊. Tu saldo disponible en Billetera es {{2}} pesos.",
 	},
 }
 
