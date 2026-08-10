@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const templateName = "reporte_saldo_billetera"
+const templateName = "reporte_saldo_billetera_v2"
 
 func (c *consumer) Start(ctx context.Context) error {
 	queueName := rabbitmq.QueueWalletBalanceAlertRequested
