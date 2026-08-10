@@ -266,9 +266,56 @@ whatsApp/
 
 ---
 
+## Dos formas de hablar con Meta: MCP DevTools vs Graph API
+
+Son complementarias y NO se solapan. El MCP opera sobre la **app** de Meta; la
+Graph API opera sobre el **WABA** (plantillas, mensajes, numeros).
+
+| Necesito | Herramienta |
+|----------|-------------|
+| Config de la app, dominios, secretos, restricciones | MCP `devtools_app` |
+| Rate limits de la app, volumen de llamadas | MCP `devtools_api_usage` (`rate_limits`, `call_volume`) |
+| Que se rompe cuando Meta suba de version | MCP `devtools_api_usage` (`deprecations`) + `devtools_api_changelog` |
+| Ver / cambiar / probar suscripciones de webhook | MCP `devtools_webhook_list`, `webhook_manage`, `webhook_test` |
+| Estado de App Review, permisos concedidos | MCP `devtools_app_review` |
+| Buscar documentacion oficial | MCP `devtools_discovery` |
+| **Plantillas** (listar, crear, editar, ver status) | Graph API |
+| **Enviar mensajes** | Graph API |
+| Phone numbers, calidad, messaging limit tier | Graph API |
+
+Puntos importantes:
+
+- El MCP **no tiene ningun tool de plantillas ni de envio**. Para eso siempre Graph API.
+- El MCP se autentica con el **usuario humano** (OAuth interactivo), no con el
+  system user `cam-adm`. Sirve para inspeccion; NO se usa en codigo ni en cron.
+- Los rate limits del MCP son los de la **app** (Graph API general). El limite de
+  mensajeria de WhatsApp (tier 1K/10K/100K y quality rating) es otro contador y
+  solo se ve por Graph API en el phone number. No confundirlos al diagnosticar.
+- La app figura en `dev_mode` / `is_live: false` y sin privacy policy ni data
+  deletion URL. Hoy no estorba porque WhatsApp opera con token de system user,
+  pero bloquea cualquier App Review o permiso nuevo.
+
+---
+
 ## API de Meta — Referencia Rápida
 
 Todas las llamadas usan `https://graph.facebook.com/v22.0/` con header `Authorization: Bearer {ACCESS_TOKEN}`.
+
+Credenciales listas para copiar en `back/central/.env`, bloque
+"Meta Graph API - uso administrativo": `META_APP_ID`, `META_WABA_PROD`,
+`META_WABA_TEST`, `META_PHONE_NUMBER_ID_PROD`, `META_ADMIN_TOKEN`.
+El backend NO lee esas variables (toma las suyas de BD + Redis); son para
+consultar a mano. Cargarlas asi:
+
+```bash
+set -a && source back/central/.env && set +a
+```
+
+Si `META_ADMIN_TOKEN` caduca, la fuente de verdad es Redis:
+
+```bash
+docker exec redis_local redis-cli GET "integration:platform_creds:2" | jq -r .access_token
+```
 
 ### Listar números de teléfono de un WABA
 
@@ -346,9 +393,22 @@ curl -s "https://graph.facebook.com/v22.0/debug_token?input_token={TOKEN}&access
 ### Listar templates
 
 ```bash
-curl -s "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates?fields=name,status,language,category&limit=50" \
-  -H "Authorization: Bearer {TOKEN}" | jq .
+curl -s "https://graph.facebook.com/v22.0/${META_WABA_PROD}/message_templates?fields=name,status,language,category&limit=200" \
+  -H "Authorization: Bearer ${META_ADMIN_TOKEN}" | jq -r '.data[] | "\(.status)\t\(.name)\t\(.language)\t\(.category)"'
 ```
+
+Conteo por estado:
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/${META_WABA_PROD}/message_templates?fields=status&limit=200" \
+  -H "Authorization: Bearer ${META_ADMIN_TOKEN}" | jq '[.data[].status] | group_by(.) | map({(.[0]): length}) | add'
+```
+
+Estado a 2026-08-10: **24 plantillas en prod, todas APPROVED** (23 `es` + `hello_world`
+en `en_US`; 22 UTILITY, `recuperacion_codigo` AUTHENTICATION, `reporte_saldo_billetera`
+MARKETING). En el WABA de test hay 16, casi todas categorizadas MARKETING aunque en
+prod las equivalentes son UTILITY: los costos medidos contra test NO son comparables
+con prod.
 
 ---
 

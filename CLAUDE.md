@@ -2,6 +2,9 @@
 
 ## Documentacion
 
+- `ROADMAP.md` - orden de prioridades (P0/P1/P2). Solo ordena, no duplica
+  contenido: el detalle vive en la alerta o documento que cada linea referencia.
+  Consultar antes de preguntar "que sigue".
 - `.claude/alerts/` - pendientes urgentes. Revisar al iniciar sesion.
 - `.claude/bitacora/` - historico de soportes, incidentes y correcciones, un
   archivo por caso. Buscar aca antes de investigar un problema parecido.
