@@ -62,9 +62,9 @@ func (uc *walletUseCase) publishLowBalanceAlert(ctx context.Context, c entities.
 		return
 	}
 
-	integrationID, err := uc.repo.GetWhatsAppIntegrationID(ctx, c.BusinessID)
+	integrationID, err := uc.repo.GetPlatformIntegrationID(ctx, c.BusinessID)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("business_id", c.BusinessID).Msg("Error resolviendo integracion de WhatsApp")
+		uc.log.Error(ctx).Err(err).Uint("business_id", c.BusinessID).Msg("Error resolviendo integracion de plataforma")
 		return
 	}
 	if integrationID == nil {

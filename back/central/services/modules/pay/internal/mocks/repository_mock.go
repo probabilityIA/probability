@@ -251,7 +251,7 @@ func (m *RepositoryMock) HasRecentSystemAlert(ctx context.Context, phoneNumber s
 	return args.Bool(0), args.Error(1)
 }
 
-func (m *RepositoryMock) GetWhatsAppIntegrationID(ctx context.Context, businessID uint) (*uint, error) {
+func (m *RepositoryMock) GetPlatformIntegrationID(ctx context.Context, businessID uint) (*uint, error) {
 	args := m.Called(ctx, businessID)
 	var id *uint
 	if v, ok := args.Get(0).(*uint); ok {
