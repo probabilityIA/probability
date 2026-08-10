@@ -91,6 +91,7 @@ const (
 	WalletRechargeProcessing = "wallet.recharge.processing"
 	WalletRechargeCompleted  = "wallet.recharge.completed"
 	WalletRechargeFailed     = "wallet.recharge.failed"
+	WalletLowBalance         = "wallet.low_balance"
 )
 
 // WHATSAPP EVENT TYPES

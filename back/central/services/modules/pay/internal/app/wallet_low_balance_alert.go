@@ -2,20 +2,13 @@ package app
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 const lowBalanceThreshold = 50000.0
-
-type walletBalanceAlertMessage struct {
-	BusinessID   uint    `json:"business_id"`
-	BusinessName string  `json:"business_name"`
-	PhoneNumber  string  `json:"phone_number"`
-	Balance      float64 `json:"balance"`
-}
+const eventTypeWalletLowBalance = "wallet.low_balance"
 
 func (uc *walletUseCase) CheckLowBalances(ctx context.Context) error {
 	if uc.rabbit == nil {
@@ -69,27 +62,33 @@ func (uc *walletUseCase) publishLowBalanceAlert(ctx context.Context, c entities.
 		return
 	}
 
-	msg := walletBalanceAlertMessage{
-		BusinessID:   c.BusinessID,
-		BusinessName: c.BusinessName,
-		PhoneNumber:  c.WarehousePhone,
-		Balance:      c.Balance,
-	}
-	data, err := json.Marshal(msg)
+	integrationID, err := uc.repo.GetWhatsAppIntegrationID(ctx, c.BusinessID)
 	if err != nil {
+		uc.log.Error(ctx).Err(err).Uint("business_id", c.BusinessID).Msg("Error resolviendo integracion de WhatsApp")
 		return
 	}
-	if err := uc.rabbit.DeclareQueue(rabbitmq.QueueWalletBalanceAlertRequested, true); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Error declarando cola de aviso de saldo bajo")
+	if integrationID == nil {
 		return
 	}
-	if err := uc.rabbit.Publish(ctx, rabbitmq.QueueWalletBalanceAlertRequested, data); err != nil {
-		uc.log.Error(ctx).Err(err).Uint("business_id", c.BusinessID).Msg("Error publicando aviso de saldo bajo")
+
+	envelope := rabbitmq.EventEnvelope{
+		Type:          eventTypeWalletLowBalance,
+		Category:      eventCategoryPay,
+		BusinessID:    c.BusinessID,
+		IntegrationID: *integrationID,
+		Data: map[string]interface{}{
+			"business_name": c.BusinessName,
+			"phone_number":  c.WarehousePhone,
+			"balance":       c.Balance,
+		},
+	}
+	if err := rabbitmq.PublishEvent(ctx, uc.rabbit, envelope); err != nil {
+		uc.log.Error(ctx).Err(err).Uint("business_id", c.BusinessID).Msg("Error publicando evento de saldo bajo")
 		return
 	}
 
 	uc.log.Info(ctx).
 		Uint("business_id", c.BusinessID).
 		Float64("balance", c.Balance).
-		Msg("Aviso de saldo bajo publicado")
+		Msg("Evento de saldo bajo publicado")
 }

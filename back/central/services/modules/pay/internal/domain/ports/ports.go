@@ -58,6 +58,7 @@ type IRepository interface {
 	ListLowBalanceAlertCandidates(ctx context.Context, threshold float64) ([]entities.LowBalanceAlertCandidate, error)
 	GetLowBalanceAlertCandidate(ctx context.Context, businessID uint, threshold float64) (*entities.LowBalanceAlertCandidate, error)
 	HasRecentSystemAlert(ctx context.Context, phoneNumber string) (bool, error)
+	GetWhatsAppIntegrationID(ctx context.Context, businessID uint) (*uint, error)
 }
 
 type IRequestPublisher interface {

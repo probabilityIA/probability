@@ -80,3 +80,22 @@ func (r *Repository) HasRecentSystemAlert(ctx context.Context, phoneNumber strin
 	}
 	return count > 0, nil
 }
+
+const whatsAppIntegrationTypeID = 2
+
+func (r *Repository) GetWhatsAppIntegrationID(ctx context.Context, businessID uint) (*uint, error) {
+	var result struct{ ID uint }
+	err := r.db.Conn(ctx).
+		Table("integrations").
+		Select("id").
+		Where("business_id = ? AND integration_type_id = ? AND is_active = true AND deleted_at IS NULL", businessID, whatsAppIntegrationTypeID).
+		Limit(1).
+		Scan(&result).Error
+	if err != nil {
+		return nil, err
+	}
+	if result.ID == 0 {
+		return nil, nil
+	}
+	return &result.ID, nil
+}

@@ -30,6 +30,8 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 	switch event.Category {
 	case "shipment":
 		return p.publishShipmentToWhatsApp(ctx, event, config)
+	case "pay":
+		return p.publishWalletToWhatsApp(ctx, event, config)
 	default:
 		return p.publishOrderToWhatsApp(ctx, event, config)
 	}
@@ -95,6 +97,30 @@ func (p *channelPublisher) publishOrderToWhatsApp(ctx context.Context, event ent
 	}
 
 	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("template_name", templateName).Str("queue", whatsAppConfirmationQueue).Msg("Evento encolado para WhatsApp")
+	return nil
+}
+
+func (p *channelPublisher) publishWalletToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
+	payload := map[string]any{
+		"business_id":   event.BusinessID,
+		"business_name": event.Data["business_name"],
+		"phone_number":  event.Data["phone_number"],
+		"balance":       event.Data["balance"],
+	}
+
+	jsonBytes, err := json.Marshal(payload)
+	if err != nil {
+		p.logger.Error(ctx).Err(err).Str("event_id", event.ID).Msg("Error serializando payload para WhatsApp wallet queue")
+		return fmt.Errorf("%w: WhatsApp wallet payload: %v", domainerrors.ErrSerializeFailed, err)
+	}
+
+	targetQueue := rabbitmq.QueueWalletBalanceAlertRequested
+	if err := p.rabbitMQ.Publish(ctx, targetQueue, jsonBytes); err != nil {
+		p.logger.Error(ctx).Err(err).Str("event_id", event.ID).Str("queue", targetQueue).Msg("Error publicando a WhatsApp wallet queue")
+		return fmt.Errorf("%w: WhatsApp wallet queue: %v", domainerrors.ErrPublishFailed, err)
+	}
+
+	p.logger.Info(ctx).Str("event_id", event.ID).Str("event_type", event.Type).Uint("config_id", config.ID).Str("queue", targetQueue).Msg("Evento de saldo bajo encolado para WhatsApp")
 	return nil
 }
 
