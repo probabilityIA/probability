@@ -256,7 +256,7 @@ export function ProspectsList({ stats, onSeenChange }: ProspectsListProps) {
         loading={loading}
         emptyMessage="No hay prospectos para mostrar"
         keyExtractor={(p: Prospect) => p.id}
-        rowClassName={(p: Prospect) => (seenOverrides[p.id] ?? p.seen) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}
+        rowClassName={(p: Prospect) => (seenOverrides[p.id] ?? p.seen) ? '!bg-emerald-50 dark:!bg-emerald-900/20' : ''}
         pagination={{
           currentPage,
           totalPages,
