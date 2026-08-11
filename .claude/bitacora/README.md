@@ -40,3 +40,4 @@ No hace falta entrada para un fix trivial o un cambio de UI.
 | Fecha | Tema | Estado |
 |-------|------|--------|
 | 2026-08-06 | [COD EnvioClick: valor a recaudar mal calibrado](2026-08-06-cod-envioclick-calibracion.md) | Corregido, pendiente deploy |
+| 2026-08-11 | [EnvioClick: cancelaciones con falso positivo](2026-08-11-envioclick-cancelacion-falso-positivo.md) | Fix desplegado, pendiente reclamo a EnvioClick |
