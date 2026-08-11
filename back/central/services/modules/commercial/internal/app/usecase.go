@@ -21,3 +21,7 @@ func (uc *UseCase) ListProspects(ctx context.Context, filters dtos.ListProspects
 func (uc *UseCase) GetStats(ctx context.Context) (*entities.ProspectStats, error) {
 	return uc.repo.GetStats(ctx)
 }
+
+func (uc *UseCase) UpdateSeen(ctx context.Context, id uint, seen bool) error {
+	return uc.repo.UpdateSeen(ctx, id, seen)
+}

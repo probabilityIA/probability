@@ -33,6 +33,7 @@ func modelToProspect(m *models.CommercialProspect) entities.Prospect {
 		Score:                  m.Score,
 		ScoreBreakdown:         breakdown,
 		Status:                 m.Status,
+		Seen:                   m.Seen,
 		SourceDiscoveredAt:     m.SourceDiscoveredAt,
 		SourceLastScannedAt:    m.SourceLastScannedAt,
 		CreatedAt:              m.CreatedAt,

@@ -27,6 +27,11 @@ func (h *Handlers) ListProspects(c *gin.Context) {
 			filters.MinScore = &minScore
 		}
 	}
+	if maxScoreStr := c.Query("max_score"); maxScoreStr != "" {
+		if maxScore, err := strconv.ParseFloat(maxScoreStr, 64); err == nil {
+			filters.MaxScore = &maxScore
+		}
+	}
 	if hasCODStr := c.Query("has_cod"); hasCODStr != "" {
 		hasCOD := hasCODStr == "true"
 		filters.HasCOD = &hasCOD

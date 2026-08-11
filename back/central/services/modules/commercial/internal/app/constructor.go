@@ -12,6 +12,7 @@ import (
 type IUseCase interface {
 	ListProspects(ctx context.Context, filters dtos.ListProspectsFilters) ([]entities.Prospect, dtos.ListResult, error)
 	GetStats(ctx context.Context) (*entities.ProspectStats, error)
+	UpdateSeen(ctx context.Context, id uint, seen bool) error
 }
 
 type UseCase struct {

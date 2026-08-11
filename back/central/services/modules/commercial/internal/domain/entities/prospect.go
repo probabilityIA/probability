@@ -22,6 +22,7 @@ type Prospect struct {
 	Score                  float64
 	ScoreBreakdown         map[string]interface{}
 	Status                 string
+	Seen                   bool
 	SourceDiscoveredAt     *time.Time
 	SourceLastScannedAt    *time.Time
 	CreatedAt              time.Time

@@ -12,6 +12,7 @@ type ListProspectsFilters struct {
 	City     string
 	Search   string
 	MinScore *float64
+	MaxScore *float64
 	HasCOD   *bool
 	Page     int
 	PageSize int

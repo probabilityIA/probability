@@ -20,6 +20,7 @@ export interface Prospect {
   score: number;
   score_breakdown?: Record<string, number>;
   status: string;
+  seen: boolean;
   source_discovered_at?: string;
   source_last_scanned_at?: string;
 }
@@ -32,7 +33,13 @@ export interface GetProspectsParams {
   city?: string;
   search?: string;
   min_score?: number;
+  max_score?: number;
   has_cod?: boolean;
+}
+
+export interface UpdateSeenResponse {
+  success: boolean;
+  error?: string;
 }
 
 export interface PaginatedProspectsResponse {

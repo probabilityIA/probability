@@ -28,6 +28,7 @@ type ProspectResponse struct {
 	Score                  float64                `json:"score"`
 	ScoreBreakdown         map[string]interface{} `json:"score_breakdown,omitempty"`
 	Status                 string                 `json:"status"`
+	Seen                   bool                   `json:"seen"`
 	SourceDiscoveredAt     *time.Time             `json:"source_discovered_at,omitempty"`
 	SourceLastScannedAt    *time.Time             `json:"source_last_scanned_at,omitempty"`
 }
@@ -83,6 +84,7 @@ func FromEntity(p *entities.Prospect) ProspectResponse {
 		Score:                  p.Score,
 		ScoreBreakdown:         p.ScoreBreakdown,
 		Status:                 p.Status,
+		Seen:                   p.Seen,
 		SourceDiscoveredAt:     p.SourceDiscoveredAt,
 		SourceLastScannedAt:    p.SourceLastScannedAt,
 	}

@@ -9,6 +9,7 @@ import (
 type IHandlers interface {
 	ListProspects(c *gin.Context)
 	GetStats(c *gin.Context)
+	UpdateSeen(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 

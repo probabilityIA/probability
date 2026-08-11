@@ -23,7 +23,7 @@ export function CommercialDashboard() {
       )}
       {!loading && stats && <ProspectsCharts stats={stats} />}
 
-      <ProspectsList />
+      <ProspectsList stats={stats} />
     </div>
   );
 }

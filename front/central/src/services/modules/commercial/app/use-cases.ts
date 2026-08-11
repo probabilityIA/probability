@@ -11,4 +11,8 @@ export class CommercialUseCases {
   async getProspectsStats() {
     return this.repository.getProspectsStats();
   }
+
+  async updateProspectSeen(id: number, seen: boolean) {
+    return this.repository.updateProspectSeen(id, seen);
+  }
 }

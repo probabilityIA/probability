@@ -18,13 +18,16 @@ func (r *Repository) ListProspects(ctx context.Context, filters dtos.ListProspec
 		base = base.Where("status = ?", filters.Status)
 	}
 	if filters.City != "" {
-		base = base.Where("city = ?", filters.City)
+		base = base.Where("initcap(unaccent(TRIM(city))) = ?", filters.City)
 	}
 	if filters.HasCOD != nil {
 		base = base.Where("has_cod = ?", *filters.HasCOD)
 	}
 	if filters.MinScore != nil {
 		base = base.Where("score >= ?", *filters.MinScore)
+	}
+	if filters.MaxScore != nil {
+		base = base.Where("score <= ?", *filters.MaxScore)
 	}
 	if filters.Search != "" {
 		like := "%" + filters.Search + "%"
@@ -53,6 +56,10 @@ func (r *Repository) ListProspects(ctx context.Context, filters dtos.ListProspec
 	}
 
 	return prospects, total, nil
+}
+
+func (r *Repository) UpdateSeen(ctx context.Context, id uint, seen bool) error {
+	return r.db.Conn(ctx).Model(&models.CommercialProspect{}).Where("id = ?", id).Update("seen", seen).Error
 }
 
 func (r *Repository) GetStats(ctx context.Context) (*entities.ProspectStats, error) {
@@ -98,9 +105,9 @@ func (r *Repository) GetStats(ctx context.Context) (*entities.ProspectStats, err
 		Count int64
 	}
 	if err := conn.Model(&models.CommercialProspect{}).
-		Select("city, COUNT(*) as count").
+		Select("initcap(unaccent(TRIM(city))) as city, COUNT(*) as count").
 		Where("city <> ''").
-		Group("city").
+		Group("initcap(unaccent(TRIM(city)))").
 		Order("count DESC").
 		Limit(10).
 		Scan(&cityRows).Error; err != nil {

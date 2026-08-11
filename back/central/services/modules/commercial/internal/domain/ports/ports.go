@@ -10,4 +10,5 @@ import (
 type IRepository interface {
 	ListProspects(ctx context.Context, filters dtos.ListProspectsFilters) ([]entities.Prospect, int64, error)
 	GetStats(ctx context.Context) (*entities.ProspectStats, error)
+	UpdateSeen(ctx context.Context, id uint, seen bool) error
 }

@@ -1,6 +1,6 @@
 import { env } from '@/shared/config/env';
 import { ICommercialRepository } from '../../domain/ports';
-import { GetProspectsParams, PaginatedProspectsResponse, ProspectStatsResponse } from '../../domain/types';
+import { GetProspectsParams, PaginatedProspectsResponse, ProspectStatsResponse, UpdateSeenResponse } from '../../domain/types';
 
 export class CommercialApiRepository implements ICommercialRepository {
   private baseUrl: string;
@@ -54,6 +54,21 @@ export class CommercialApiRepository implements ICommercialRepository {
 
     if (!res.ok) {
       throw new Error(data.error || data.message || 'Error al obtener estadisticas de prospectos');
+    }
+
+    return data;
+  }
+
+  async updateProspectSeen(id: number, seen: boolean): Promise<UpdateSeenResponse> {
+    const res = await fetch(`${this.baseUrl}/commercial/prospects/${id}/seen`, {
+      method: 'PATCH',
+      headers: this.headers(),
+      body: JSON.stringify({ seen }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || 'Error al actualizar visto');
     }
 
     return data;

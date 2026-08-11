@@ -27,6 +27,7 @@ type CommercialProspect struct {
 	Score                  float64        `gorm:"index"`
 	ScoreBreakdown         datatypes.JSON `gorm:"type:jsonb"`
 	Status                 string         `gorm:"size:30;index"`
+	Seen                   bool           `gorm:"index;default:false"`
 	SourceDiscoveredAt     *time.Time
 	SourceLastScannedAt    *time.Time
 }
