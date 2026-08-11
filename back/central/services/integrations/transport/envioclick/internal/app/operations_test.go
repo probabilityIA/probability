@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -16,17 +17,32 @@ const (
 	testTrackingNumber = "EC123456789CO"
 )
 
+func TestMain(m *testing.M) {
+	cancelVerifyDelay = 0
+	os.Exit(m.Run())
+}
+
+func trackSequence(statuses ...string) (func(string, string, string) (*domain.TrackingResponse, error), *int) {
+	calls := 0
+	fn := func(baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
+		idx := calls
+		calls++
+		if idx >= len(statuses) {
+			idx = len(statuses) - 1
+		}
+		return &domain.TrackingResponse{
+			Data: domain.TrackingData{Status: statuses[idx]},
+		}, nil
+	}
+	return fn, &calls
+}
+
 func TestCancel_Success_WithIdOrder(t *testing.T) {
 	ctx := context.Background()
 
+	trackFn, trackCalls := trackSequence("Pendiente de Recoleccion", "Cancelado")
 	client := &mocks.EnvioClickClientMock{
-		TrackFn: func(baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
-			return &domain.TrackingResponse{
-				Data: domain.TrackingData{
-					Status: "Pendiente de Recoleccion",
-				},
-			}, nil
-		},
+		TrackFn: trackFn,
 		CancelBatchFn: func(baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
 			return &domain.CancelBatchResponse{
 				Status: "success",
@@ -53,19 +69,17 @@ func TestCancel_Success_WithIdOrder(t *testing.T) {
 	if !strings.Contains(result.Message, "exitosamente") {
 		t.Errorf("se esperaba mensaje de exito, se obtuvo: %q", result.Message)
 	}
+	if *trackCalls < 2 {
+		t.Errorf("se esperaba un Track de verificacion despues de cancelar, hubo %d llamadas", *trackCalls)
+	}
 }
 
 func TestCancel_Success_CaseInsensitive(t *testing.T) {
 	ctx := context.Background()
 
+	trackFn, _ := trackSequence("pendiente de recoleccion", "CANCELADO")
 	client := &mocks.EnvioClickClientMock{
-		TrackFn: func(baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
-			return &domain.TrackingResponse{
-				Data: domain.TrackingData{
-					Status: "pendiente de recoleccion",
-				},
-			}, nil
-		},
+		TrackFn: trackFn,
 		CancelBatchFn: func(baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
 			return &domain.CancelBatchResponse{
 				Status: "success",
@@ -86,6 +100,38 @@ func TestCancel_Success_CaseInsensitive(t *testing.T) {
 	}
 	if result.Status != "success" {
 		t.Errorf("se esperaba status 'success', se obtuvo: %q", result.Status)
+	}
+}
+
+func TestCancel_Error_CarrierAcceptsButShipmentStaysActive(t *testing.T) {
+	ctx := context.Background()
+
+	trackFn, trackCalls := trackSequence("Pendiente de Recoleccion")
+	client := &mocks.EnvioClickClientMock{
+		TrackFn: trackFn,
+		CancelBatchFn: func(baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+			return &domain.CancelBatchResponse{
+				Status: "OK",
+				Data:   domain.CancelBatchData{},
+			}, nil
+		},
+	}
+
+	uc := New(client, &mocks.LoggerMock{})
+
+	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, 4613038, nil)
+
+	if err == nil {
+		t.Fatal("se esperaba error cuando la guia sigue activa tras aceptar la cancelacion, se obtuvo nil")
+	}
+	if result != nil {
+		t.Errorf("se esperaba resultado nil para no marcar el envio como cancelado, se obtuvo: %+v", result)
+	}
+	if !strings.Contains(err.Error(), "sigue activo") {
+		t.Errorf("el error deberia indicar que el envio sigue activo, se obtuvo: %q", err.Error())
+	}
+	if *trackCalls != 1+cancelVerifyAttempts {
+		t.Errorf("se esperaban %d Tracks (1 previo + %d de verificacion), hubo %d", 1+cancelVerifyAttempts, cancelVerifyAttempts, *trackCalls)
 	}
 }
 
@@ -208,17 +254,14 @@ func TestCancel_Error_BatchReturnsNotValid(t *testing.T) {
 
 	result, err := uc.Cancel(ctx, testBaseURL, testAPIKey, testTrackingNumber, orderID, nil)
 
-	if err != nil {
-		t.Fatalf("se esperaba nil error (la logica retorna CancelResponse con status error, no un error Go), se obtuvo: %v", err)
+	if err == nil {
+		t.Fatal("se esperaba error cuando la orden es not_valid, se obtuvo nil")
 	}
-	if result == nil {
-		t.Fatal("se esperaba resultado no nil")
+	if result != nil {
+		t.Errorf("se esperaba resultado nil para no marcar el envio como cancelado, se obtuvo: %+v", result)
 	}
-	if result.Status != "error" {
-		t.Errorf("se esperaba status 'error' cuando la orden es not_valid, se obtuvo: %q", result.Status)
-	}
-	if !strings.Contains(result.Message, "no valida") {
-		t.Errorf("se esperaba mensaje sobre orden no valida, se obtuvo: %q", result.Message)
+	if !strings.Contains(err.Error(), "no valido") {
+		t.Errorf("se esperaba mensaje sobre orden no valida, se obtuvo: %q", err.Error())
 	}
 }
 
