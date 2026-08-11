@@ -36,9 +36,10 @@ const SCORE_BUCKETS: Array<{ value: string; label: string; min: number; max: num
 
 interface ProspectsListProps {
   stats: ProspectStats | null;
+  onSeenChange?: () => void;
 }
 
-export function ProspectsList({ stats }: ProspectsListProps) {
+export function ProspectsList({ stats, onSeenChange }: ProspectsListProps) {
   const {
     prospects, loading, totalCount, currentPage, pageSize, totalPages,
     filters, updateFilters, handlePageChange, handlePageSizeChange,
@@ -87,6 +88,15 @@ export function ProspectsList({ stats }: ProspectsListProps) {
       label: 'Pago contraentrega',
       type: 'boolean',
     },
+    {
+      key: 'seen',
+      label: 'Revisado',
+      type: 'select',
+      options: [
+        { value: 'true', label: 'Revisados' },
+        { value: 'false', label: 'No revisados' },
+      ],
+    },
   ], [cityOptions]);
 
   const scoreBucketValue = useMemo(() => {
@@ -102,6 +112,7 @@ export function ProspectsList({ stats }: ProspectsListProps) {
     if (filters.city) active.push({ key: 'city', label: 'Ciudad', value: filters.city, type: 'select' });
     if (scoreBucketValue) active.push({ key: 'score_bucket', label: 'Score', value: scoreBucketValue, type: 'select' });
     if (filters.has_cod !== undefined) active.push({ key: 'has_cod', label: 'Pago contraentrega', value: filters.has_cod, type: 'boolean' });
+    if (filters.seen !== undefined) active.push({ key: 'seen', label: 'Revisado', value: filters.seen ? 'true' : 'false', type: 'select' });
     return active;
   }, [filters, scoreBucketValue]);
 
@@ -110,6 +121,10 @@ export function ProspectsList({ stats }: ProspectsListProps) {
       const bucket = SCORE_BUCKETS.find((b) => b.value === value);
       if (!bucket) return;
       updateFilters({ ...filters, min_score: bucket.min, max_score: bucket.max });
+      return;
+    }
+    if (key === 'seen') {
+      updateFilters({ ...filters, seen: value === 'true' });
       return;
     }
     updateFilters({ ...filters, [key]: value });
@@ -130,6 +145,7 @@ export function ProspectsList({ stats }: ProspectsListProps) {
     setSeenOverrides((prev) => ({ ...prev, [prospect.id]: nextSeen }));
     try {
       await updateProspectSeenAction(prospect.id, nextSeen);
+      onSeenChange?.();
     } catch (error) {
       console.error('Error al actualizar visto:', error);
       setSeenOverrides((prev) => ({ ...prev, [prospect.id]: prospect.seen }));
@@ -240,6 +256,7 @@ export function ProspectsList({ stats }: ProspectsListProps) {
         loading={loading}
         emptyMessage="No hay prospectos para mostrar"
         keyExtractor={(p: Prospect) => p.id}
+        rowClassName={(p: Prospect) => (seenOverrides[p.id] ?? p.seen) ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}
         pagination={{
           currentPage,
           totalPages,

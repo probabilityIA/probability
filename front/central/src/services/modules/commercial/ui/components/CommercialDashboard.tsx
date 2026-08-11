@@ -5,7 +5,7 @@ import { ProspectsCharts } from './ProspectsCharts';
 import { ProspectsList } from './ProspectsList';
 
 export function CommercialDashboard() {
-  const { stats, loading } = useProspectsStats();
+  const { stats, loading, refetch } = useProspectsStats();
 
   return (
     <div className="space-y-6">
@@ -23,7 +23,7 @@ export function CommercialDashboard() {
       )}
       {!loading && stats && <ProspectsCharts stats={stats} />}
 
-      <ProspectsList stats={stats} />
+      <ProspectsList stats={stats} onSeenChange={refetch} />
     </div>
   );
 }

@@ -36,6 +36,10 @@ func (h *Handlers) ListProspects(c *gin.Context) {
 		hasCOD := hasCODStr == "true"
 		filters.HasCOD = &hasCOD
 	}
+	if seenStr := c.Query("seen"); seenStr != "" {
+		seen := seenStr == "true"
+		filters.Seen = &seen
+	}
 
 	prospects, result, err := h.uc.ListProspects(c.Request.Context(), filters)
 	if err != nil {

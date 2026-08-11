@@ -48,6 +48,7 @@ type ProspectStats struct {
 	ByCity         []CountByKey
 	ScoreBuckets   []ScoreBucket
 	HasCODCount    int64
+	SeenCount      int64
 	MultiChannel   int64
 	AverageScore   float64
 	TopScoreDomain string

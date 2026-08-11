@@ -23,6 +23,9 @@ func (r *Repository) ListProspects(ctx context.Context, filters dtos.ListProspec
 	if filters.HasCOD != nil {
 		base = base.Where("has_cod = ?", *filters.HasCOD)
 	}
+	if filters.Seen != nil {
+		base = base.Where("seen = ?", *filters.Seen)
+	}
 	if filters.MinScore != nil {
 		base = base.Where("score >= ?", *filters.MinScore)
 	}
@@ -138,6 +141,9 @@ func (r *Repository) GetStats(ctx context.Context) (*entities.ProspectStats, err
 	stats.ScoreBuckets = buckets
 
 	if err := conn.Model(&models.CommercialProspect{}).Where("has_cod = ?", true).Count(&stats.HasCODCount).Error; err != nil {
+		return nil, err
+	}
+	if err := conn.Model(&models.CommercialProspect{}).Where("seen = ?", true).Count(&stats.SeenCount).Error; err != nil {
 		return nil, err
 	}
 	if err := conn.Model(&models.CommercialProspect{}).Where("uses_probability_channel = ?", true).Count(&stats.MultiChannel).Error; err != nil {

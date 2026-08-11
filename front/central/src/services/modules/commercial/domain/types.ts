@@ -35,6 +35,7 @@ export interface GetProspectsParams {
   min_score?: number;
   max_score?: number;
   has_cod?: boolean;
+  seen?: boolean;
 }
 
 export interface UpdateSeenResponse {
@@ -69,6 +70,7 @@ export interface ProspectStats {
   by_city: CountByKey[];
   score_buckets: ScoreBucket[];
   has_cod_count: number;
+  seen_count: number;
   multi_channel_count: number;
   average_score: number;
   top_score_domain: string;

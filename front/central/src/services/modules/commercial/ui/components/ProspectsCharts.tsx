@@ -59,8 +59,9 @@ export function ProspectsCharts({ stats }: { stats: ProspectStats }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <StatTile label="Total prospectos" value={stats.total.toLocaleString('es-CO')} />
+        <StatTile label="Revisados" value={`${stats.seen_count.toLocaleString('es-CO')} / ${stats.total.toLocaleString('es-CO')}`} />
         <StatTile label="Calificados" value={(stats.by_status.find(s => s.key === 'calificado')?.count ?? 0).toLocaleString('es-CO')} />
         <StatTile label="Con pago contraentrega" value={stats.has_cod_count.toLocaleString('es-CO')} />
         <StatTile label="Multi-canal" value={stats.multi_channel_count.toLocaleString('es-CO')} />
@@ -102,11 +103,11 @@ export function ProspectsCharts({ stats }: { stats: ProspectStats }) {
         </ChartCard>
 
         <ChartCard title="Top ciudades">
-          <ResponsiveContainer width="100%" height={260}>
+          <ResponsiveContainer width="100%" height={Math.max(260, cityData.length * 34)}>
             <BarChart data={cityData} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={90} />
+              <YAxis type="category" dataKey="name" interval={0} tick={{ fontSize: 11, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={90} />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(124,58,237,0.06)' }} />
               <Bar dataKey="count" fill={SEQUENTIAL} radius={[0, 4, 4, 0]} />
             </BarChart>

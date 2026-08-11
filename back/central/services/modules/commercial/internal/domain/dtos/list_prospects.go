@@ -14,6 +14,7 @@ type ListProspectsFilters struct {
 	MinScore *float64
 	MaxScore *float64
 	HasCOD   *bool
+	Seen     *bool
 	Page     int
 	PageSize int
 }

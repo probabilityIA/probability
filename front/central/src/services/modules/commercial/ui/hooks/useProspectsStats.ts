@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getProspectsStatsAction } from '../../infra/actions';
 import { ProspectStats } from '../../domain/types';
 
 export function useProspectsStats() {
   const [stats, setStats] = useState<ProspectStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(() => {
+    getProspectsStatsAction()
+      .then((res) => setStats(res.data))
+      .catch((error) => console.error('Error al cargar estadisticas de prospectos:', error));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,5 +29,5 @@ export function useProspectsStats() {
     return () => { cancelled = true; };
   }, []);
 
-  return { stats, loading };
+  return { stats, loading, refetch };
 }

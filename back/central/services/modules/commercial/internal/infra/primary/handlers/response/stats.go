@@ -19,6 +19,7 @@ type StatsResponse struct {
 	ByCity         []CountByKeyResponse  `json:"by_city"`
 	ScoreBuckets   []ScoreBucketResponse `json:"score_buckets"`
 	HasCODCount    int64                 `json:"has_cod_count"`
+	SeenCount      int64                 `json:"seen_count"`
 	MultiChannel   int64                 `json:"multi_channel_count"`
 	AverageScore   float64               `json:"average_score"`
 	TopScoreDomain string                `json:"top_score_domain"`
@@ -46,6 +47,7 @@ func FromStats(s *entities.ProspectStats) StatsResponse {
 		ByCity:         mapCounts(s.ByCity),
 		ScoreBuckets:   buckets,
 		HasCODCount:    s.HasCODCount,
+		SeenCount:      s.SeenCount,
 		MultiChannel:   s.MultiChannel,
 		AverageScore:   s.AverageScore,
 		TopScoreDomain: s.TopScoreDomain,
