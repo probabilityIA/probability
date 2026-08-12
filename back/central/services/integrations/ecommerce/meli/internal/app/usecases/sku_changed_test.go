@@ -73,3 +73,34 @@ func TestDetectSKUChangesNoConfundePublicacionesDistintas(t *testing.T) {
 		t.Fatalf("mismo variation_id en otra publicacion no es la misma variante, obtuve %d", len(out))
 	}
 }
+
+func TestDetectSKUChangesIgnoraElMapeoSinSKUGuardado(t *testing.T) {
+	mapped := []domain.MappedItem{
+		{SKU: "LD26-2XL", ExternalItemID: "MCO1", ExternalVariantID: "10", ExternalSKU: ""},
+	}
+	channel := []domain.MeliProduct{{ID: "MCO1", VariationID: "10", SKU: "LD26-3XL"}}
+
+	if out := detectSKUChanges(mapped, channel); len(out) != 0 {
+		t.Fatalf("sin copia guardada no hay contra que comparar, obtuve %d", len(out))
+	}
+}
+
+func TestDetectSKUChangesIgnoraLaVarianteQueQuedoSinSKUEnElCanal(t *testing.T) {
+	mapped := []domain.MappedItem{
+		{SKU: "LD26-2XL", ExternalItemID: "MCO1", ExternalVariantID: "10", ExternalSKU: "LD26-2XL"},
+	}
+	channel := []domain.MeliProduct{{ID: "MCO1", VariationID: "10", SKU: ""}}
+
+	if out := detectSKUChanges(mapped, channel); len(out) != 0 {
+		t.Fatalf("le quitaron el SKU: eso lo reporta el grupo sin-SKU, no este, obtuve %d", len(out))
+	}
+}
+
+func TestParentRefSoloAplicaAVariantes(t *testing.T) {
+	if got := parentRef(domain.MeliProduct{ID: "MCO1", VariationID: "10"}); got != "MCO1" {
+		t.Fatalf("una variante debe reportar su publicacion padre, obtuve %q", got)
+	}
+	if got := parentRef(domain.MeliProduct{ID: "MCO1"}); got != "" {
+		t.Fatalf("una publicacion simple no tiene padre, obtuve %q", got)
+	}
+}
