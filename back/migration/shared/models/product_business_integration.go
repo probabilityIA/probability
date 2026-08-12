@@ -29,6 +29,10 @@ type ProductBusinessIntegration struct {
 	// En fulfillment el stock lo administra el canal y no se puede empujar.
 	ExternalLogisticType *string `gorm:"size:32;index"`
 
+	// Ultima cantidad empujada al canal. Sirve para no repetir la llamada
+	// cuando el stock no cambio. Nil = nunca se empujo.
+	LastPushedQty *int `gorm:"column:last_pushed_qty"`
+
 	// Relaciones
 	Product     Product     `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Business    Business    `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

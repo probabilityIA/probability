@@ -44,6 +44,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 		ExternalSKU       string
 		ExternalBarcode   string
 		LogisticType      string
+		LastPushedQty     *int
 	}
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations AS pbi").
@@ -51,7 +52,8 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 			COALESCE(pbi.external_variant_id, '') AS external_variant_id,
 			COALESCE(pbi.external_sku, '') AS external_sku,
 			COALESCE(pbi.external_barcode, '') AS external_barcode,
-			COALESCE(pbi.external_logistic_type, '') AS logistic_type`).
+			COALESCE(pbi.external_logistic_type, '') AS logistic_type,
+			pbi.last_pushed_qty`).
 		Joins("JOIN products p ON p.id = pbi.product_id").
 		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND pbi.external_product_id <> '' AND p.deleted_at IS NULL", integrationID).
 		Scan(&rows).Error
@@ -69,6 +71,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 			ExternalSKU:       row.ExternalSKU,
 			ExternalBarcode:   row.ExternalBarcode,
 			LogisticType:      row.LogisticType,
+			LastPushedQty:     row.LastPushedQty,
 		})
 	}
 	return items, nil
@@ -281,4 +284,34 @@ func (r *ProductRepository) UpdateLogisticType(ctx context.Context, integrationI
 		Where("integration_id = ? AND external_product_id = ? AND deleted_at IS NULL", integrationID, externalItemID).
 		Where("external_logistic_type IS DISTINCT FROM ?", logisticType).
 		Update("external_logistic_type", logisticType).Error
+}
+
+func variantScope(q *gorm.DB, variantID string) *gorm.DB {
+	if variantID != "" {
+		return q.Where("external_variant_id = ?", variantID)
+	}
+	return q.Where("external_variant_id IS NULL OR external_variant_id = ''")
+}
+
+func (r *ProductRepository) MarkPushedQty(ctx context.Context, integrationID uint, productID, variantID string, quantity int) error {
+	q := r.db.Conn(ctx).
+		Table("product_business_integrations").
+		Where("integration_id = ? AND product_id = ? AND deleted_at IS NULL", integrationID, productID)
+	return variantScope(q, variantID).Update("last_pushed_qty", quantity).Error
+}
+
+func (r *ProductRepository) GetPushState(ctx context.Context, integrationID uint, productID, variantID string) (*domain.PushState, error) {
+	var row struct {
+		LogisticType  string
+		LastPushedQty *int
+	}
+	q := r.db.Conn(ctx).
+		Table("product_business_integrations").
+		Select("COALESCE(external_logistic_type, '') AS logistic_type, last_pushed_qty").
+		Where("integration_id = ? AND product_id = ? AND deleted_at IS NULL", integrationID, productID)
+	err := variantScope(q, variantID).Limit(1).Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	return &domain.PushState{LogisticType: row.LogisticType, LastPushedQty: row.LastPushedQty}, nil
 }

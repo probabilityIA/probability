@@ -82,10 +82,12 @@ func (uc *meliUseCase) reconcileItemStock(ctx context.Context, integration *doma
 				if uerr = cli.UpdateStock(ctx, accessToken, itemID, m.ExternalVariantID, qty); uerr != nil {
 					return uerr
 				}
+				uc.markPushed(ctx, integration.ID, m, qty)
 				continue
 			}
 			return uerr
 		}
+		uc.markPushed(ctx, integration.ID, m, qty)
 	}
 	return nil
 }
@@ -97,4 +99,10 @@ func findVariation(item *domain.MeliItemDetail, variantID string) *domain.MeliIt
 		}
 	}
 	return nil
+}
+
+func (uc *meliUseCase) markPushed(ctx context.Context, integrationID uint, m domain.MappedItem, qty int) {
+	if err := uc.inventoryRepo.MarkPushedQty(ctx, integrationID, m.ProductID, m.ExternalVariantID, qty); err != nil {
+		uc.logger.Warn(ctx).Err(err).Str("sku", m.SKU).Msg("No se pudo registrar la cantidad empujada")
+	}
 }

@@ -159,6 +159,11 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 			continue
 		}
 		qty, hasLevel := stock[m.ProductID]
+		if hasLevel && m.LastPushedQty != nil && *m.LastPushedQty == qty {
+			unchanged++
+			uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
+			continue
+		}
 		if !hasLevel {
 			skipped++
 			uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
@@ -177,6 +182,9 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 					accessToken = newToken
 					if retry := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, qty); retry == nil {
 						updated++
+						if merr := uc.inventoryRepo.MarkPushedQty(ctx, integrationID, m.ProductID, m.ExternalVariantID, qty); merr != nil {
+							uc.logger.Warn(ctx).Err(merr).Str("sku", m.SKU).Msg("No se pudo registrar la cantidad empujada")
+						}
 						uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
 						continue
 					}
@@ -193,6 +201,9 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 			})
 		} else {
 			updated++
+			if merr := uc.inventoryRepo.MarkPushedQty(ctx, integrationID, m.ProductID, m.ExternalVariantID, qty); merr != nil {
+				uc.logger.Warn(ctx).Err(merr).Str("sku", m.SKU).Msg("No se pudo registrar la cantidad empujada")
+			}
 			uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
 				"correlation_id": correlationID,
 				"sku":            m.SKU,
