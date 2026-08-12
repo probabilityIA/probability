@@ -3,7 +3,7 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { getProductsAction, deleteProductAction, updateProductAction } from '../../infra/actions';
 import { Product, GetProductsParams } from '../../domain/types';
-import { Button, Alert, Badge } from '@/shared/ui';
+import { Alert } from '@/shared/ui';
 import ProductIntegrationsModal from './ProductIntegrationsModal';
 import { getActionError } from '@/shared/utils/action-result';
 
@@ -13,11 +13,12 @@ interface ProductListProps {
     searchName?: string;
     searchSku?: string;
     searchIntegration?: string;
+    advancedFilters?: Record<string, string | boolean>;
     selectedBusinessId?: number;
 }
 
 const ProductList = forwardRef(function ProductList(
-    { onView, onEdit, searchName = '', searchSku = '', searchIntegration = '', selectedBusinessId }: ProductListProps,
+    { onView, onEdit, searchName = '', searchSku = '', searchIntegration = '', advancedFilters = {}, selectedBusinessId }: ProductListProps,
     ref: any
 ) {
     const [products, setProducts] = useState<Product[]>([]);
@@ -27,28 +28,46 @@ const ProductList = forwardRef(function ProductList(
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
 
-    // Modal de integraciones
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
 
-    // Filters
     const [filters, setFilters] = useState<GetProductsParams>({
         page: 1,
         page_size: 20,
     });
 
-    // Update filters when search params change
     useEffect(() => {
+        const numericFields = ['price_min', 'price_max', 'stock_min', 'stock_max', 'weight_min', 'weight_max'];
+        const advanced: Partial<GetProductsParams> = {};
+        for (const [key, value] of Object.entries(advancedFilters)) {
+            if (numericFields.includes(key)) {
+                const num = Number(value);
+                if (!isNaN(num)) (advanced as any)[key] = num;
+            } else {
+                (advanced as any)[key] = value;
+            }
+        }
+
         setFilters(prev => ({
             ...prev,
             name: searchName || undefined,
             sku: searchSku || undefined,
             integration_type: searchIntegration || undefined,
+            status: undefined,
+            category: undefined,
+            brand: undefined,
+            has_family: undefined,
+            price_min: undefined,
+            price_max: undefined,
+            stock_min: undefined,
+            stock_max: undefined,
+            weight_min: undefined,
+            weight_max: undefined,
+            ...advanced,
             page: 1,
         }));
-    }, [searchName, searchSku, searchIntegration]);
+    }, [searchName, searchSku, searchIntegration, advancedFilters]);
 
-    // Reset to page 1 when selected business changes
     useEffect(() => {
         setFilters(prev => ({ ...prev, page: 1 }));
     }, [selectedBusinessId]);
@@ -142,37 +161,36 @@ const ProductList = forwardRef(function ProductList(
 
     return (
         <div className="space-y-4">
-            {/* Table */}
-            <div className="productTable">
+            <div className="relative rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px', background: 'transparent' }}>
-                        <thead>
+                    <table className="min-w-full">
+                        <thead style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
                             <tr>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider rounded-l-lg">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest">
                                     Producto
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell">
                                     SKU
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest">
                                     Precio
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest">
                                     Stock
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell">
                                     Familia
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell">
                                     Inventario
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell">
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell">
                                     Fecha
                                 </th>
-                                <th className="px-3 sm:px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider rounded-r-lg">
+                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest">
                                     Acciones
                                 </th>
                             </tr>
@@ -186,7 +204,7 @@ const ProductList = forwardRef(function ProductList(
                                 </tr>
                             ) : (
                                 products.map((product) => (
-                                    <tr key={product.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                    <tr key={product.id} className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="px-3 sm:px-6 py-4">
                                             <div className="flex items-center">
                                                 {product.image_url || product.family?.image_url ? (
@@ -279,7 +297,7 @@ const ProductList = forwardRef(function ProductList(
                                                     <button
                                                         onClick={() => onEdit(product)}
                                                         title="Editar"
-                                                        className="p-1.5 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200"
+                                                        className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md transition-colors duration-200"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                     </button>
@@ -307,92 +325,23 @@ const ProductList = forwardRef(function ProductList(
                     </table>
                 </div>
 
-                {/* Pagination */}
                 {(totalPages > 1 || total > 0) && (
-                    <div className="bg-white dark:bg-gray-800 px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-700">
-                        {/* Mobile: Simple pagination */}
-                        <div className="flex-1 flex justify-between sm:hidden w-full">
-                            <Button
-                                variant="outline"
-                                onClick={() => setFilters({ ...filters, page: page - 1 })}
-                                disabled={page === 1}
-                                size="sm"
-                            >
-                                Anterior
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setFilters({ ...filters, page: page + 1 })}
-                                disabled={page === totalPages}
-                                size="sm"
-                            >
-                                Siguiente
-                            </Button>
-                        </div>
-
-                        {/* Desktop: Full pagination */}
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
-                            <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200">
-                                    Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
-                                    <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
-                                    <span className="font-medium">{total}</span> resultados
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                                        Mostrar:
-                                    </label>
-                                    <select
-                                        value={filters.page_size || 20}
-                                        onChange={(e) => {
-                                            const newPageSize = parseInt(e.target.value);
-                                            setFilters({ ...filters, page_size: newPageSize, page: 1 });
-                                        }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="20">20</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <button
-                                        onClick={() => setFilters({ ...filters, page: page - 1 })}
-                                        disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Anterior
-                                    </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
-                                        Página {page} de {totalPages}
-                                    </span>
-                                    <button
-                                        onClick={() => setFilters({ ...filters, page: page + 1 })}
-                                        disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Siguiente
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
-
-                        {/* Mobile: Page size selector */}
-                        <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
-                                    Mostrar:
-                                </label>
+                    <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
+                        <div className="flex items-center gap-3">
+                            <p className="text-[11px] text-white">
+                                Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
+                                <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
+                                <span className="font-medium">{total}</span> resultados
+                            </p>
+                            <div className="flex items-center gap-1">
+                                <label className="text-[11px] text-white whitespace-nowrap">Mostrar:</label>
                                 <select
                                     value={filters.page_size || 20}
                                     onChange={(e) => {
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                                    className="px-1.5 py-1 text-[11px] border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -400,15 +349,93 @@ const ProductList = forwardRef(function ProductList(
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Página {page} de {totalPages}
-                            </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <nav className="relative z-0 inline-flex items-center gap-1 flex-wrap justify-end">
+                                <button
+                                    onClick={() => setFilters({ ...filters, page: 1 })}
+                                    disabled={page === 1}
+                                    className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                    title="Primera pagina"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                                </button>
+
+                                <button
+                                    onClick={() => setFilters({ ...filters, page: page - 1 })}
+                                    disabled={page === 1}
+                                    className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                    title="Anterior"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+
+                                {(() => {
+                                    const pages: (number | string)[] = [];
+                                    const maxVisible = 8;
+
+                                    if (totalPages <= maxVisible) {
+                                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                                    } else {
+                                        const windowSize = maxVisible - 2;
+                                        let start = Math.max(2, page - Math.floor(windowSize / 2));
+                                        let end = start + windowSize - 1;
+                                        if (end >= totalPages) {
+                                            end = totalPages - 1;
+                                            start = Math.max(2, end - windowSize + 1);
+                                        }
+
+                                        pages.push(1);
+                                        if (start > 2) pages.push('...');
+                                        for (let i = start; i <= end; i++) pages.push(i);
+                                        if (end < totalPages - 1) pages.push('...');
+                                        pages.push(totalPages);
+                                    }
+
+                                    return pages.map((p, idx) =>
+                                        typeof p === 'string' ? (
+                                            <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-1 py-1 text-[11px] font-bold text-white/70">
+                                                ...
+                                            </span>
+                                        ) : (
+                                            <button
+                                                key={p}
+                                                onClick={() => setFilters({ ...filters, page: p })}
+                                                className={`relative inline-flex items-center justify-center min-w-7 px-2 py-1 rounded-md border text-[11px] font-semibold transition-all ${p === page ? 'page-btn-active z-10 shadow-md scale-105' : 'page-btn'
+                                                    }`}
+                                                style={p === page
+                                                    ? { backgroundColor: 'var(--color-secondary)', borderColor: 'var(--color-secondary)', color: 'white' }
+                                                    : undefined}
+                                            >
+                                                {p}
+                                            </button>
+                                        )
+                                    );
+                                })()}
+
+                                <button
+                                    onClick={() => setFilters({ ...filters, page: page + 1 })}
+                                    disabled={page === totalPages}
+                                    className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                    title="Siguiente"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                </button>
+
+                                <button
+                                    onClick={() => setFilters({ ...filters, page: totalPages })}
+                                    disabled={page === totalPages}
+                                    className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                    title="Ultima pagina"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                                </button>
+                            </nav>
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Modal de Integraciones */}
             {selectedProduct && (
                 <ProductIntegrationsModal
                     product={selectedProduct}
@@ -418,84 +445,11 @@ const ProductList = forwardRef(function ProductList(
                         setSelectedProduct(null);
                     }}
                     onSuccess={() => {
-                        // Recargar productos si es necesario
                         fetchProducts();
                     }}
                 />
             )}
 
-        <style jsx>{`
-          /* Tabla similar a Facturas */
-          .productTable :global(.table) {
-            border-collapse: separate;
-            border-spacing: 0 10px;
-            background: transparent;
-          }
-
-          .productTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
-            border: none !important;
-            background: transparent !important;
-          }
-
-          .productTable :global(.table th) {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-          }
-
-          /* Header llamativo */
-          .productTable table th {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
-            font-size: 0.75rem;
-            font-weight: 800;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
-          }
-
-          .productTable table thead th:first-child {
-            border-top-left-radius: 14px;
-            border-bottom-left-radius: 14px;
-          }
-
-          .productTable table thead th:last-child {
-            border-top-right-radius: 14px;
-            border-bottom-right-radius: 14px;
-          }
-
-          /* Filas con hover - Tailwind handles the colors */
-          .productTable table tbody tr {
-            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
-          }
-
-          /* Hover effect */
-          .productTable table tbody tr:hover {
-            box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
-            transform: translateY(-1px);
-          }
-
-          .productTable table td {
-            border-top: none;
-          }
-
-          /* Bordes redondeados en filas */
-          .productTable table tbody td:first-child {
-            border-top-left-radius: 12px;
-            border-bottom-left-radius: 12px;
-          }
-
-          .productTable table tbody td:last-child {
-            border-top-right-radius: 12px;
-            border-bottom-right-radius: 12px;
-          }
-
-          /* Focus */
-          .productTable :global(a),
-          .productTable :global(button) {
-            outline-color: rgba(124, 58, 237, 0.35);
-          }
-        `}</style>
         </div>
     );
 });
