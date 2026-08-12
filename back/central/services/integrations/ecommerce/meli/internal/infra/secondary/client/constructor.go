@@ -23,15 +23,32 @@ type MeliClient struct {
 	httpClient *http.Client
 	baseURL    string
 	limiter    *rateLimiter
+	limiters   *limiterRegistry
 }
 
 func New() domain.IMeliClient {
+	registry := newLimiterRegistry()
 	return &MeliClient{
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		baseURL: meliAPIBaseURL,
-		limiter: newRateLimiter(100),
+		baseURL:  meliAPIBaseURL,
+		limiter:  registry.forKey(""),
+		limiters: registry,
+	}
+}
+
+// ForAccount devuelve un cliente que consume la cuota de esa cuenta. El limite
+// de MercadoLibre es por vendedor, asi que cada integracion lleva la suya.
+func (c *MeliClient) ForAccount(key string) domain.IMeliClient {
+	if key == "" || c.limiters == nil {
+		return c
+	}
+	return &MeliClient{
+		httpClient: c.httpClient,
+		baseURL:    c.baseURL,
+		limiter:    c.limiters.forKey(key),
+		limiters:   c.limiters,
 	}
 }
 
@@ -43,6 +60,7 @@ func (c *MeliClient) WithBaseURL(baseURL string) domain.IMeliClient {
 		httpClient: c.httpClient,
 		baseURL:    baseURL,
 		limiter:    c.limiter,
+		limiters:   c.limiters,
 	}
 }
 

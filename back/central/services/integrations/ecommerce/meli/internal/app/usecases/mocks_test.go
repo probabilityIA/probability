@@ -40,6 +40,8 @@ type mockClient struct {
 
 func (m *mockClient) WithBaseURL(string) domain.IMeliClient { return m }
 
+func (m *mockClient) ForAccount(string) domain.IMeliClient { return m }
+
 func (m *mockClient) GetItem(context.Context, string, string) (*domain.MeliItemDetail, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
