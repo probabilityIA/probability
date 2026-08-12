@@ -58,7 +58,10 @@ func (h *handler) ListDetail(c *gin.Context) {
 
 	items := make([]detailResponse, 0, len(result.Items))
 	for _, item := range result.Items {
-		items = append(items, detailResponse{SKU: item.SKU, Label: item.Label, Tone: item.Tone, Group: item.Group})
+		items = append(items, detailResponse{
+			SKU: item.SKU, Label: item.Label, Tone: item.Tone, Group: item.Group,
+			ParentRef: item.ParentRef, ParentLabel: item.ParentLabel, VariantLabel: item.VariantLabel,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{

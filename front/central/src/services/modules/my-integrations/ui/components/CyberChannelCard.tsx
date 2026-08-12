@@ -42,6 +42,9 @@ function detailCountsOf(
                 not_associated: result.notAssociated,
                 only_probability: result.onlyInProbability,
                 only_channel: result.onlyInChannel,
+                channel_no_sku: result.channelNoSku,
+                sku_changed: result.skuChanged,
+                sku_typo: result.skuTypo,
             };
         }
         return {
@@ -49,6 +52,9 @@ function detailCountsOf(
             not_associated: lastRun?.not_associated ?? 0,
             only_probability: lastRun?.only_in_probability ?? 0,
             only_channel: lastRun?.only_in_channel ?? 0,
+            channel_no_sku: lastRun?.channel_no_sku ?? 0,
+            sku_changed: lastRun?.sku_changed ?? 0,
+            sku_typo: lastRun?.sku_typo ?? 0,
         };
     }
     if (result?.kind === 'inventory') {

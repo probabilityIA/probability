@@ -13,6 +13,10 @@ type IntegrationSyncRunItem struct {
 	Label string `gorm:"size:300"`
 	Tone  string `gorm:"size:16"`
 
+	ParentRef    string `gorm:"column:parent_ref;size:64;index"`
+	ParentLabel  string `gorm:"column:parent_label;size:300"`
+	VariantLabel string `gorm:"column:variant_label;size:200"`
+
 	CreatedAt time.Time
 }
 

@@ -30,12 +30,91 @@ type providerUpsertMsg struct {
 	ImageURL       string  `json:"image_url,omitempty"`
 }
 
+const noSKUPlaceholder = "(sin SKU)"
+
+// detectTypoSuspects cruza lo que quedo solo en cada lado buscando el mismo
+// producto escrito distinto. Los sin-SKU no participan: ahi no hay nada que
+// comparar y ya tienen su propio grupo.
+func detectTypoSuspects(rc *reconcileContext) []productmatch.TypoSuspect {
+	canal := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInChannel))
+	for _, idx := range rc.outcome.OnlyInChannel {
+		m := rc.meliProducts[idx]
+		canal = append(canal, productmatch.TypoCandidate{
+			SKU:      m.SKU,
+			Name:     m.Name,
+			Quantity: m.StockQuantity,
+			HasQty:   true,
+			Ref:      parentRef(m),
+			Label:    m.VariantLabel,
+		})
+	}
+
+	propios := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInProbability))
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		propios = append(propios, productmatch.TypoCandidate{
+			SKU:      p.SKU,
+			Name:     p.Name,
+			Quantity: p.StockQuantity,
+			HasQty:   true,
+		})
+	}
+
+	return productmatch.DetectTypos(canal, propios)
+}
+
+func channelKey(itemID, variantID string) string {
+	return itemID + "|" + variantID
+}
+
+// detectSKUChanges encuentra los mapeos cuyo SKU cambio en el canal. El id de la
+// variante nunca cambia, asi que el mapeo sigue "funcionando" y le empujariamos
+// el stock del producto viejo a una variante que ya es otra cosa.
+func detectSKUChanges(mapped []domain.MappedItem, channel []domain.MeliProduct) []domain.ProductBrief {
+	actual := make(map[string]domain.MeliProduct, len(channel))
+	for _, m := range channel {
+		actual[channelKey(m.ID, m.VariationID)] = m
+	}
+
+	changed := make([]domain.ProductBrief, 0)
+	for _, m := range mapped {
+		if m.ExternalSKU == "" {
+			continue
+		}
+		current, ok := actual[channelKey(m.ExternalItemID, m.ExternalVariantID)]
+		if !ok || current.SKU == "" {
+			continue
+		}
+		if normalizeSKU(current.SKU) == normalizeSKU(m.ExternalSKU) {
+			continue
+		}
+		changed = append(changed, domain.ProductBrief{
+			SKU:          m.SKU,
+			Name:         current.Name,
+			MatchedBy:    m.ExternalSKU,
+			MatchedValue: current.SKU,
+			ParentRef:    parentRef(current),
+			ParentLabel:  current.ParentName,
+			VariantLabel: current.VariantLabel,
+		})
+	}
+	return changed
+}
+
+func parentRef(m domain.MeliProduct) string {
+	if m.VariationID == "" {
+		return ""
+	}
+	return m.ID
+}
+
 func meliRefs(m domain.MeliProduct) productmatch.ExternalRefs {
 	return productmatch.ExternalRefs{
-		ProductID: m.ID,
-		VariantID: m.VariationID,
-		SKU:       m.SKU,
-		Barcode:   m.Barcode,
+		ProductID:    m.ID,
+		VariantID:    m.VariationID,
+		SKU:          m.SKU,
+		Barcode:      m.Barcode,
+		LogisticType: m.LogisticType,
 	}
 }
 
@@ -154,8 +233,13 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		OnlyInMeli:           []domain.ProductBrief{},
 		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
 		MeliNoSKU:            rc.outcome.ChannelUnmatchable,
+		MeliNoSKUItems:       []domain.ProductBrief{},
+		SKUChangedItems:      []domain.ProductBrief{},
 		MatchRules:           rc.rules,
 	}
+
+	result.SKUChangedItems = detectSKUChanges(mapped, rc.meliProducts)
+	result.TypoSuspects = detectTypoSuspects(rc)
 
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
@@ -165,6 +249,9 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 			Name:         channel.Name,
 			MatchedBy:    pair.Rule.Key(),
 			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
+			ParentRef:    parentRef(channel),
+			ParentLabel:  channel.ParentName,
+			VariantLabel: channel.VariantLabel,
 		}
 		result.MatchedItems = append(result.MatchedItems, brief)
 		if associatedSKUs[normalizeSKU(prob.SKU)] {
@@ -174,9 +261,26 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		}
 	}
 
+	for _, idx := range rc.outcome.ChannelNoKey {
+		m := rc.meliProducts[idx]
+		result.MeliNoSKUItems = append(result.MeliNoSKUItems, domain.ProductBrief{
+			SKU:          noSKUPlaceholder,
+			Name:         m.Name,
+			ParentRef:    parentRef(m),
+			ParentLabel:  m.ParentName,
+			VariantLabel: m.VariantLabel,
+		})
+	}
+
 	for _, idx := range rc.outcome.OnlyInChannel {
 		m := rc.meliProducts[idx]
-		result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
+		result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{
+			SKU:          m.SKU,
+			Name:         m.Name,
+			ParentRef:    parentRef(m),
+			ParentLabel:  m.ParentName,
+			VariantLabel: m.VariantLabel,
+		})
 	}
 	for _, idx := range rc.outcome.OnlyInProbability {
 		p := rc.probProducts[idx]

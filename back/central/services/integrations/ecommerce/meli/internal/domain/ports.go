@@ -9,6 +9,8 @@ import (
 type IMeliClient interface {
 	WithBaseURL(baseURL string) IMeliClient
 
+	ForAccount(key string) IMeliClient
+
 	TestConnection(ctx context.Context, accessToken string) error
 
 	GetOrder(ctx context.Context, accessToken string, orderID int64) (*MeliOrder, []byte, error)

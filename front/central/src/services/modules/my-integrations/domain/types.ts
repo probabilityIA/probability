@@ -21,6 +21,9 @@ export interface SyncRunDetail {
     group?: string;
     matched_by?: string;
     matched_value?: string;
+    parent_ref?: string;
+    parent_label?: string;
+    variant_label?: string;
 }
 
 export interface SyncRunDetailQuery {
@@ -56,6 +59,9 @@ export interface SyncRunRecord {
     not_associated: number;
     only_in_probability: number;
     only_in_channel: number;
+    channel_no_sku?: number;
+    sku_changed?: number;
+    sku_typo?: number;
     detail: SyncRunDetail[];
 }
 
@@ -74,6 +80,9 @@ export interface SyncRunPayload {
     not_associated?: number;
     only_in_probability?: number;
     only_in_channel?: number;
+    channel_no_sku?: number;
+    sku_changed?: number;
+    sku_typo?: number;
     detail?: SyncRunDetail[];
 }
 

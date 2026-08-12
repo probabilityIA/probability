@@ -14,9 +14,36 @@ type rateLimiter struct {
 	last       time.Time
 }
 
+// MercadoLibre permite 1.500 llamadas por minuto POR VENDEDOR. Se deja margen
+// para el resto del trafico de esa cuenta (ordenes, webhooks, envios).
+const defaultRequestsPerMinute = 1000
+
+// limiterRegistry entrega un limitador por vendedor. Uno global seria incorrecto:
+// el limite de MercadoLibre es por cuenta, asi que un negocio sincronizando no
+// debe frenar a los demas.
+type limiterRegistry struct {
+	mu       sync.Mutex
+	limiters map[string]*rateLimiter
+}
+
+func newLimiterRegistry() *limiterRegistry {
+	return &limiterRegistry{limiters: make(map[string]*rateLimiter)}
+}
+
+func (r *limiterRegistry) forKey(key string) *rateLimiter {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if l, ok := r.limiters[key]; ok {
+		return l
+	}
+	l := newRateLimiter(defaultRequestsPerMinute)
+	r.limiters[key] = l
+	return l
+}
+
 func newRateLimiter(requestsPerMinute float64) *rateLimiter {
 	if requestsPerMinute <= 0 {
-		requestsPerMinute = 100
+		requestsPerMinute = defaultRequestsPerMinute
 	}
 	return &rateLimiter{
 		tokens:     requestsPerMinute,

@@ -9,10 +9,13 @@ import (
 )
 
 type detailResponse struct {
-	SKU   string `json:"sku"`
-	Label string `json:"label"`
-	Tone  string `json:"tone"`
-	Group string `json:"group,omitempty"`
+	SKU          string `json:"sku"`
+	Label        string `json:"label"`
+	Tone         string `json:"tone"`
+	Group        string `json:"group,omitempty"`
+	ParentRef    string `json:"parent_ref,omitempty"`
+	ParentLabel  string `json:"parent_label,omitempty"`
+	VariantLabel string `json:"variant_label,omitempty"`
 }
 
 type runResponse struct {
@@ -32,6 +35,9 @@ type runResponse struct {
 	NotAssociated     int `json:"not_associated"`
 	OnlyInProbability int `json:"only_in_probability"`
 	OnlyInChannel     int `json:"only_in_channel"`
+	ChannelNoSKU      int `json:"channel_no_sku"`
+	SKUChanged        int `json:"sku_changed"`
+	SKUTypo           int `json:"sku_typo"`
 
 	Detail []detailResponse `json:"detail"`
 }
@@ -77,13 +83,19 @@ func toRunResponses(runs []domain.SyncRun) []runResponse {
 			NotAssociated:     run.NotAssociated,
 			OnlyInProbability: run.OnlyInProbability,
 			OnlyInChannel:     run.OnlyInChannel,
+			ChannelNoSKU:      run.ChannelNoSKU,
+			SKUChanged:        run.SKUChanged,
+			SKUTypo:           run.SKUTypo,
 			Detail:            make([]detailResponse, 0, len(run.Detail)),
 		}
 		if run.FinishedAt != nil {
 			item.FinishedAt = run.FinishedAt.Format("2006-01-02T15:04:05Z07:00")
 		}
 		for _, d := range run.Detail {
-			item.Detail = append(item.Detail, detailResponse{SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group})
+			item.Detail = append(item.Detail, detailResponse{
+				SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group,
+				ParentRef: d.ParentRef, ParentLabel: d.ParentLabel, VariantLabel: d.VariantLabel,
+			})
 		}
 		out = append(out, item)
 	}

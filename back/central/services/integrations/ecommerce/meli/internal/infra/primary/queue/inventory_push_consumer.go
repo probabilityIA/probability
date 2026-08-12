@@ -74,7 +74,7 @@ func (c *InventoryPushConsumer) handle(ctx context.Context, body []byte) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(msg.IntegrationID), 10)
-	if err := c.useCase.UpdateItemStock(ctx, integrationID, msg.ExternalProductID, msg.ExternalVariantID, msg.Quantity); err != nil {
+	if err := c.useCase.UpdateItemStock(ctx, integrationID, msg.ProductID, msg.ExternalProductID, msg.ExternalVariantID, msg.Quantity); err != nil {
 		c.logger.Error(ctx).
 			Err(err).
 			Str("integration_id", integrationID).

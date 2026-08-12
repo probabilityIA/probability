@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
@@ -26,13 +27,15 @@ func resolveEffectiveBaseURL(integration *domain.Integration) string {
 }
 
 func (uc *meliUseCase) clientFor(ctx context.Context, integration *domain.Integration) domain.IMeliClient {
+	cli := uc.client.ForAccount(strconv.FormatUint(uint64(integration.ID), 10))
+
 	baseURL := resolveEffectiveBaseURL(integration)
 	if baseURL == "" {
-		return uc.client
+		return cli
 	}
 	uc.logger.Info(ctx).
 		Uint("integration_id", integration.ID).
 		Str("base_url", baseURL).
 		Msg("Meli en modo pruebas: usando base_url_test")
-	return uc.client.WithBaseURL(baseURL)
+	return cli.WithBaseURL(baseURL)
 }

@@ -30,7 +30,7 @@ func (m *MeliCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, inte
 }
 
 func (m *MeliCore) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
-	return m.useCase.UpdateItemStock(ctx, integrationID, productExternalID, "", quantity)
+	return m.useCase.UpdateItemStock(ctx, integrationID, "", productExternalID, "", quantity)
 }
 
 func (m *MeliCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {

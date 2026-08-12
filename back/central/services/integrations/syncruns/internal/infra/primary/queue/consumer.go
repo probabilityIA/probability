@@ -135,6 +135,9 @@ func (c *Consumer) recordProducts(ctx context.Context, msg envelope, finished ti
 		NotAssociated:     intOf(msg.Data, "not_associated"),
 		OnlyInProbability: intOf(msg.Data, "only_in_probability"),
 		OnlyInChannel:     intOf(msg.Data, "only_in_channel"),
+		ChannelNoSKU:      intOf(msg.Data, "channel_no_sku"),
+		SKUChanged:        intOf(msg.Data, "sku_changed"),
+		SKUTypo:           intOf(msg.Data, "sku_typo"),
 		Status:            domain.StatusCompleted,
 		Message:           stringOf(msg.Data, "error"),
 		Detail:            reconcileDetail(msg.Data),
@@ -165,7 +168,13 @@ func reconcileDetail(data map[string]interface{}) []domain.DetailItem {
 		label, _ := obj["label"].(string)
 		tone, _ := obj["tone"].(string)
 		group, _ := obj["group"].(string)
-		detail = append(detail, domain.DetailItem{SKU: sku, Label: label, Tone: tone, Group: group})
+		parentRef, _ := obj["parent_ref"].(string)
+		parentLabel, _ := obj["parent_label"].(string)
+		variantLabel, _ := obj["variant_label"].(string)
+		detail = append(detail, domain.DetailItem{
+			SKU: sku, Label: label, Tone: tone, Group: group,
+			ParentRef: parentRef, ParentLabel: parentLabel, VariantLabel: variantLabel,
+		})
 	}
 	return detail
 }

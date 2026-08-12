@@ -10,10 +10,13 @@ import (
 )
 
 type detailRequest struct {
-	SKU   string `json:"sku"`
-	Label string `json:"label"`
-	Tone  string `json:"tone"`
-	Group string `json:"group"`
+	SKU          string `json:"sku"`
+	Label        string `json:"label"`
+	Tone         string `json:"tone"`
+	Group        string `json:"group"`
+	ParentRef    string `json:"parent_ref"`
+	ParentLabel  string `json:"parent_label"`
+	VariantLabel string `json:"variant_label"`
 }
 
 type recordRequest struct {
@@ -34,6 +37,9 @@ type recordRequest struct {
 	NotAssociated     int `json:"not_associated"`
 	OnlyInProbability int `json:"only_in_probability"`
 	OnlyInChannel     int `json:"only_in_channel"`
+	ChannelNoSKU      int `json:"channel_no_sku"`
+	SKUChanged        int `json:"sku_changed"`
+	SKUTypo           int `json:"sku_typo"`
 
 	Detail []detailRequest `json:"detail"`
 }
@@ -72,11 +78,17 @@ func (h *handler) Record(c *gin.Context) {
 		NotAssociated:     req.NotAssociated,
 		OnlyInProbability: req.OnlyInProbability,
 		OnlyInChannel:     req.OnlyInChannel,
+		ChannelNoSKU:      req.ChannelNoSKU,
+		SKUChanged:        req.SKUChanged,
+		SKUTypo:           req.SKUTypo,
 		Status:            req.Status,
 		Message:           req.Message,
 	}
 	for _, d := range req.Detail {
-		run.Detail = append(run.Detail, domain.DetailItem{SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group})
+		run.Detail = append(run.Detail, domain.DetailItem{
+			SKU: d.SKU, Label: d.Label, Tone: d.Tone, Group: d.Group,
+			ParentRef: d.ParentRef, ParentLabel: d.ParentLabel, VariantLabel: d.VariantLabel,
+		})
 	}
 
 	if err := h.useCase.Record(c.Request.Context(), &run); err != nil {
