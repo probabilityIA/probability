@@ -54,6 +54,12 @@ func (uc *meliUseCase) reconcileItemStock(ctx context.Context, integration *doma
 	cli := uc.clientFor(ctx, integration)
 	item, itemErr := cli.GetItem(ctx, accessToken, itemID)
 
+	if itemErr == nil && item.LogisticType != "" {
+		if uerr := uc.inventoryRepo.UpdateLogisticType(ctx, integration.ID, itemID, item.LogisticType); uerr != nil {
+			uc.logger.Warn(ctx).Err(uerr).Str("item_id", itemID).Msg("No se pudo refrescar el tipo logistico de la publicacion")
+		}
+	}
+
 	for _, m := range matches {
 		qty := stock[m.ProductID]
 

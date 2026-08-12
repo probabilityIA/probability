@@ -43,13 +43,15 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 		ExternalVariantID string
 		ExternalSKU       string
 		ExternalBarcode   string
+		LogisticType      string
 	}
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations AS pbi").
 		Select(`pbi.product_id, p.sku, COALESCE(p.barcode, '') AS barcode, pbi.external_product_id,
 			COALESCE(pbi.external_variant_id, '') AS external_variant_id,
 			COALESCE(pbi.external_sku, '') AS external_sku,
-			COALESCE(pbi.external_barcode, '') AS external_barcode`).
+			COALESCE(pbi.external_barcode, '') AS external_barcode,
+			COALESCE(pbi.external_logistic_type, '') AS logistic_type`).
 		Joins("JOIN products p ON p.id = pbi.product_id").
 		Where("pbi.integration_id = ? AND pbi.deleted_at IS NULL AND pbi.external_product_id <> '' AND p.deleted_at IS NULL", integrationID).
 		Scan(&rows).Error
@@ -66,6 +68,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 			ExternalVariantID: row.ExternalVariantID,
 			ExternalSKU:       row.ExternalSKU,
 			ExternalBarcode:   row.ExternalBarcode,
+			LogisticType:      row.LogisticType,
 		})
 	}
 	return items, nil
@@ -221,13 +224,14 @@ func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context,
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		record := models.ProductBusinessIntegration{
-			ProductID:         productID,
-			BusinessID:        businessID,
-			IntegrationID:     integrationID,
-			ExternalProductID: refs.ProductID,
-			ExternalVariantID: optionalRef(refs.VariantID),
-			ExternalSKU:       optionalRef(refs.SKU),
-			ExternalBarcode:   optionalRef(refs.Barcode),
+			ProductID:            productID,
+			BusinessID:           businessID,
+			IntegrationID:        integrationID,
+			ExternalProductID:    refs.ProductID,
+			ExternalVariantID:    optionalRef(refs.VariantID),
+			ExternalSKU:          optionalRef(refs.SKU),
+			ExternalBarcode:      optionalRef(refs.Barcode),
+			ExternalLogisticType: optionalRef(refs.LogisticType),
 		}
 		return r.db.Conn(ctx).Create(&record).Error
 	}
@@ -244,6 +248,9 @@ func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context,
 	}
 	if v := optionalRef(refs.Barcode); v != nil {
 		existing.ExternalBarcode = v
+	}
+	if v := optionalRef(refs.LogisticType); v != nil {
+		existing.ExternalLogisticType = v
 	}
 	return r.db.Conn(ctx).Save(&existing).Error
 }
@@ -263,4 +270,15 @@ func decodeVariantAttrs(raw []byte) map[string]string {
 		}
 	}
 	return attrs
+}
+
+func (r *ProductRepository) UpdateLogisticType(ctx context.Context, integrationID uint, externalItemID, logisticType string) error {
+	if externalItemID == "" || logisticType == "" {
+		return nil
+	}
+	return r.db.Conn(ctx).
+		Table("product_business_integrations").
+		Where("integration_id = ? AND external_product_id = ? AND deleted_at IS NULL", integrationID, externalItemID).
+		Where("external_logistic_type IS DISTINCT FROM ?", logisticType).
+		Update("external_logistic_type", logisticType).Error
 }

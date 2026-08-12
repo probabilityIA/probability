@@ -43,6 +43,7 @@ type MeliProduct struct {
 	VariationID   string
 	ParentName    string
 	VariantLabel  string
+	LogisticType  string
 	SKU           string
 	Barcode       string
 	Name          string

@@ -27,10 +27,11 @@ func toValues(items []Item) []Values {
 }
 
 type ExternalRefs struct {
-	ProductID string
-	VariantID string
-	SKU       string
-	Barcode   string
+	ProductID    string
+	VariantID    string
+	SKU          string
+	Barcode      string
+	LogisticType string
 }
 
 type Pair struct {

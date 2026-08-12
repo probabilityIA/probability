@@ -147,6 +147,17 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
+		if m.LogisticType == domain.LogisticFulfillment {
+			skipped++
+			uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
+				"correlation_id": correlationID,
+				"sku":            m.SKU,
+				"action":         "skipped",
+				"error":          "publicacion de fulfillment, el stock lo administra MercadoLibre",
+			})
+			uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
+			continue
+		}
 		qty, hasLevel := stock[m.ProductID]
 		if !hasLevel {
 			skipped++

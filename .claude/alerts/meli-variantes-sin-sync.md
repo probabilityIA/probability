@@ -60,6 +60,26 @@ Encima se corrigieron y agregaron:
    unicidad para los canales sin variantes. Se quitaron los tags `uniqueIndex`
    del modelo. `UpsertProductIntegrationMapping` tambien busca por variante.
 
+## Fulfillment
+
+Probado contra la cuenta real el 2026-08-12: el endpoint por variante funciona.
+`PUT /items/MCO1419041847/variations/180397877404 {"available_quantity":1}` ->
+200, cambio solo esa variante, las otras 7 intactas, ninguna borrada.
+Restaurado a su valor original, tambien 200.
+
+En publicaciones de fulfillment ML lo rechaza:
+
+    variations.available_quantity.not_modifiable
+    "Available quantity is not modifiable in fulfillment items"
+
+Es correcto: ahi el stock lo administra ML en su bodega. Por eso se guarda
+`external_logistic_type` en `product_business_integrations` al descubrir los
+productos, y el sync salta esas publicaciones sin gastar una llamada para
+fallar. El valor se refresca solo: `processItemNotification` (topics `items`,
+`items_prices`, `stock-locations`) ya hacia un `GetItem`, y ahora actualiza el
+tipo logistico ahi mismo. Si el vendedor saca una publicacion de fulfillment,
+el webhook lo trae y vuelve a entrar al sync sin intervencion.
+
 ## Pendiente
 
 ### IMPORTANTE
@@ -87,6 +107,26 @@ Encima se corrigieron y agregaron:
    venta; empujarle el stock crudo del SKU siempre va a estar mal (12 unidades
    de JH348-4XL son 4 packs, no 12). Mientras no exista el concepto, considerar
    dejar los packs fuera del sync.
+
+## Fulfillment
+
+Probado contra la cuenta real el 2026-08-12: el endpoint por variante funciona.
+`PUT /items/MCO1419041847/variations/180397877404 {"available_quantity":1}` ->
+200, cambio solo esa variante, las otras 7 intactas, ninguna borrada.
+Restaurado a su valor original, tambien 200.
+
+En publicaciones de fulfillment ML lo rechaza:
+
+    variations.available_quantity.not_modifiable
+    "Available quantity is not modifiable in fulfillment items"
+
+Es correcto: ahi el stock lo administra ML en su bodega. Por eso se guarda
+`external_logistic_type` en `product_business_integrations` al descubrir los
+productos, y el sync salta esas publicaciones sin gastar una llamada para
+fallar. El valor se refresca solo: `processItemNotification` (topics `items`,
+`items_prices`, `stock-locations`) ya hacia un `GetItem`, y ahora actualiza el
+tipo logistico ahi mismo. Si el vendedor saca una publicacion de fulfillment,
+el webhook lo trae y vuelve a entrar al sync sin intervencion.
 
 ## Pendientes de datos del negocio (no son de codigo)
 

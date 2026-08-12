@@ -41,10 +41,11 @@ func parentRef(m domain.MeliProduct) string {
 
 func meliRefs(m domain.MeliProduct) productmatch.ExternalRefs {
 	return productmatch.ExternalRefs{
-		ProductID: m.ID,
-		VariantID: m.VariationID,
-		SKU:       m.SKU,
-		Barcode:   m.Barcode,
+		ProductID:    m.ID,
+		VariantID:    m.VariationID,
+		SKU:          m.SKU,
+		Barcode:      m.Barcode,
+		LogisticType: m.LogisticType,
 	}
 }
 

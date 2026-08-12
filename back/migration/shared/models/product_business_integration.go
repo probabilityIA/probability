@@ -25,6 +25,10 @@ type ProductBusinessIntegration struct {
 	ExternalSKU       *string `gorm:"size:255;index"`
 	ExternalBarcode   *string `gorm:"size:255;index"`
 
+	// Tipo logistico del canal (MercadoLibre: fulfillment, xd_drop_off, etc).
+	// En fulfillment el stock lo administra el canal y no se puede empujar.
+	ExternalLogisticType *string `gorm:"size:32;index"`
+
 	// Relaciones
 	Product     Product     `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Business    Business    `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

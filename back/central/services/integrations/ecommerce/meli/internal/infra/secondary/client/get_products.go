@@ -62,8 +62,11 @@ type meliItemDetail struct {
 	SellerCustomField string              `json:"seller_custom_field"`
 	Attributes        []meliItemAttribute `json:"attributes"`
 	Variations        []meliItemVariation `json:"variations"`
-	Thumbnail         string              `json:"thumbnail"`
-	Pictures          []struct {
+	Shipping          struct {
+		LogisticType string `json:"logistic_type"`
+	} `json:"shipping"`
+	Thumbnail string `json:"thumbnail"`
+	Pictures  []struct {
 		SecureURL string `json:"secure_url"`
 		URL       string `json:"url"`
 	} `json:"pictures"`
@@ -174,6 +177,7 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 	if len(d.Variations) == 0 {
 		return []domain.MeliProduct{{
 			ID:            d.ID,
+			LogisticType:  d.Shipping.LogisticType,
 			SKU:           extractSKU(d),
 			Barcode:       extractBarcode(d),
 			Name:          d.Title,
@@ -191,6 +195,7 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 			VariationID:   fmt.Sprintf("%d", v.ID),
 			ParentName:    d.Title,
 			VariantLabel:  variationLabel(v),
+			LogisticType:  d.Shipping.LogisticType,
 			SKU:           extractSKUFrom(v.SellerCustomField, v.Attributes),
 			Barcode:       extractBarcode(d),
 			Name:          variationName(d.Title, v),
