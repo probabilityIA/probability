@@ -16,4 +16,5 @@ type IUseCase interface {
 	ListLast(ctx context.Context, businessID uint) ([]SyncRun, error)
 	ListDetail(ctx context.Context, query DetailQuery) (*DetailPage, error)
 	Findings(ctx context.Context, businessID uint) (*FindingsReport, error)
+	FindingItems(ctx context.Context, query FindingItemsQuery) (*FindingItemsPage, error)
 }
