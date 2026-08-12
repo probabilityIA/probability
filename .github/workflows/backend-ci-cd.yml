@@ -12,7 +12,10 @@ on:
 
 concurrency:
   group: backend-deploy
-  cancel-in-progress: true
+  # No cancelar: si se mata un build mientras sube capas a ECR, el siguiente
+  # arma un manifiesto que referencia capas a medio subir y el deploy falla con
+  # "content digest not found". Que el anterior termine y este espere su turno.
+  cancel-in-progress: false
 
 env:
   AWS_REGION: us-east-1
