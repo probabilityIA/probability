@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Modal } from '@/shared/ui';
+import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
 import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import ProductFamilyList, { ProductFamilyListHandle } from '@/services/modules/products/ui/components/ProductFamilyList';
@@ -35,6 +36,46 @@ export default function ProductsPage() {
         { value: 'woocommerce', label: 'WooCommerce' },
         { value: 'whatsapp', label: 'WhatsApp' },
     ];
+
+    const [productFilters, setProductFilters] = useState<Record<string, string | boolean>>({});
+
+    const productFilterOptions: FilterOption[] = [
+        {
+            key: 'status', label: 'Estado', type: 'select', options: [
+                { value: 'active', label: 'Activo' },
+                { value: 'draft', label: 'Borrador' },
+                { value: 'archived', label: 'Archivado' },
+            ]
+        },
+        { key: 'category', label: 'Categoria', type: 'text', placeholder: 'Ej: Calzado' },
+        { key: 'brand', label: 'Marca', type: 'text', placeholder: 'Ej: Nike' },
+        { key: 'has_family', label: 'Con familia de variantes', type: 'boolean' },
+        { key: 'price_min', label: 'Precio minimo', type: 'text', placeholder: 'Ej: 10000' },
+        { key: 'price_max', label: 'Precio maximo', type: 'text', placeholder: 'Ej: 200000' },
+        { key: 'stock_min', label: 'Stock minimo', type: 'text', placeholder: 'Ej: 1' },
+        { key: 'stock_max', label: 'Stock maximo', type: 'text', placeholder: 'Ej: 100' },
+        { key: 'weight_min', label: 'Peso minimo (kg)', type: 'text', placeholder: 'Ej: 0.5' },
+        { key: 'weight_max', label: 'Peso maximo (kg)', type: 'text', placeholder: 'Ej: 5' },
+    ];
+
+    const productActiveFilters: ActiveFilter[] = Object.entries(productFilters)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .map(([key, value]) => {
+            const def = productFilterOptions.find(f => f.key === key)!;
+            return { key, label: def.label, value: value as any, type: def.type };
+        });
+
+    const handleAddProductFilter = (key: string, value: any) => {
+        setProductFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleRemoveProductFilter = (key: string) => {
+        setProductFilters(prev => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+        });
+    };
 
     const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
     const [selectedFamily, setSelectedFamily] = useState<ProductFamily | undefined>(undefined);
@@ -114,7 +155,7 @@ export default function ProductsPage() {
     };
 
     const tabClass = (tab: Tab) =>
-        `px-5 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${activeTab === tab
+        `h-11 px-5 flex items-center text-sm font-bold rounded-lg transition-all duration-200 ${activeTab === tab
             ? 'btn-business-primary'
             : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`;
@@ -122,8 +163,8 @@ export default function ProductsPage() {
     return (
         <div className="space-y-6 p-8">
             {!requiresBusinessSelection && (
-                <div className="flex justify-between items-start gap-4">
-                            <div className="flex gap-2 w-fit flex-shrink-0">
+                <div className="flex justify-between items-end gap-4">
+                            <div className="flex gap-2 w-fit flex-shrink-0 self-end">
                                 <button onClick={() => setActiveTab('products')} className={tabClass('products')}>
                                     SKUs / Productos
                                 </button>
@@ -140,7 +181,7 @@ export default function ProductsPage() {
                                             placeholder="Ej: Camiseta..."
                                             value={searchName}
                                             onChange={e => setSearchName(e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
+                                            className="w-full h-11 px-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
                                         />
                                     </div>
                                     <div>
@@ -150,25 +191,37 @@ export default function ProductsPage() {
                                             placeholder="Ej: PROD-001..."
                                             value={searchSku}
                                             onChange={e => setSearchSku(e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
+                                            className="w-full h-11 px-4 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
                                         />
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex-1 flex items-center">
+                                <div className="flex-1 flex items-end pb-2.5">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
                                         Agrupa tus SKUs en familias para organizar variantes por color, talla u otro eje.
                                     </p>
                                 </div>
                             )}
-                            <div className="flex gap-3 flex-shrink-0">
-                                <div className="relative" ref={integrationMenuRef}>
+                            <div className="flex gap-3 flex-shrink-0 self-end">
+                                {activeTab === 'products' && (
+                                    <div className="h-11 flex items-center">
+                                        <DynamicFilters
+                                            variant="bar"
+                                            availableFilters={productFilterOptions}
+                                            activeFilters={productActiveFilters}
+                                            onAddFilter={handleAddProductFilter}
+                                            onRemoveFilter={handleRemoveProductFilter}
+                                            triggerClassName="!w-11 !h-11 !rounded-lg"
+                                        />
+                                    </div>
+                                )}
+                                <div className="relative flex items-center" ref={integrationMenuRef}>
                                     <button
                                         onClick={() => setShowIntegrationMenu(v => !v)}
                                         title="Filtrar por integracion"
-                                        className="w-14 h-14 flex items-center justify-center rounded-2xl bg-[#4fc3c9] hover:bg-[#3fb0b6] text-white shadow-sm transition-all duration-200"
+                                        className="btn-business-primary h-11 w-11 flex items-center justify-center rounded-lg text-white shadow-sm transition-all duration-200"
                                     >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                                         </svg>
                                     </button>
@@ -179,7 +232,7 @@ export default function ProductsPage() {
                                                     key={opt.value}
                                                     onClick={() => { setSearchIntegration(opt.value); setShowIntegrationMenu(false); }}
                                                     className={`w-full text-left px-4 py-2 text-sm transition-colors ${searchIntegration === opt.value
-                                                        ? 'bg-[#4fc3c9]/10 text-[#3fb0b6] font-semibold'
+                                                        ? 'btn-business-primary-soft font-semibold'
                                                         : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                                                         }`}
                                                 >
@@ -192,7 +245,7 @@ export default function ProductsPage() {
                                 <button
                                     onClick={() => setIsPricingModalOpen(true)}
                                     title="Grupos de clientes y precios por catalogo"
-                                    className="p-3 rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200"
+                                    className="h-11 w-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-3.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-3-3" />
@@ -201,7 +254,7 @@ export default function ProductsPage() {
                                 <button
                                     onClick={() => { setIsTourOpen(true); setPulseTour(false); }}
                                     title={pulseTour ? 'Nuevo! Tutorial guiado de productos' : 'Tutorial guiado'}
-                                    className={`p-3 rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200 ${pulseTour ? 'animate-pulse' : ''}`}
+                                    className={`h-11 w-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 text-business-primary bg-white dark:bg-gray-700 hover:border-business-primary shadow-sm transition-all duration-200 ${pulseTour ? 'animate-pulse' : ''}`}
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -210,7 +263,7 @@ export default function ProductsPage() {
                                 </button>
                                 <button
                                     onClick={handleCreate}
-                                    className="px-5 py-2.5 btn-business-primary text-white font-bold rounded-lg shadow-md transition-all duration-200 text-2xl"
+                                    className="h-11 w-11 flex items-center justify-center btn-business-primary text-white font-bold rounded-lg shadow-md transition-all duration-200 text-2xl leading-none"
                                 >
                                     +
                                 </button>
@@ -234,6 +287,7 @@ export default function ProductsPage() {
                             searchName={searchName}
                             searchSku={searchSku}
                             searchIntegration={searchIntegration}
+                            advancedFilters={productFilters}
                             selectedBusinessId={effectiveBusinessId}
                         />
                     ) : (
@@ -250,57 +304,68 @@ export default function ProductsPage() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 title={viewMode === 'create' ? 'Crear Producto' : viewMode === 'edit' ? 'Editar Producto' : 'Detalles del Producto'}
-                size="xl"
+                size="4xl"
             >
                 <div className="p-4">
                     {viewMode === 'view' && selectedProduct ? (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre</label>
-                                    <p className="text-gray-900 dark:text-white">{selectedProduct.name}</p>
+                        <div className="space-y-5">
+                            <div className="flex items-center gap-4 rounded-xl border border-gray-200 dark:border-gray-700 p-4" style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent)' }}>
+                                {selectedProduct.image_url ? (
+                                    <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-16 h-16 rounded-xl object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0" />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-xl bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                    </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white truncate">{selectedProduct.name}</h3>
+                                    <p className="text-sm font-mono text-gray-500 dark:text-gray-400">{selectedProduct.sku}</p>
                                 </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">SKU</label>
-                                    <p className="text-gray-900 dark:text-white">{selectedProduct.sku}</p>
-                                </div>
-                                {selectedProduct.barcode && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Barcode</label>
-                                        <p className="text-gray-900 dark:text-white font-mono">{selectedProduct.barcode}</p>
-                                    </div>
-                                )}
-                                {selectedProduct.family && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Familia</label>
-                                        <p className="text-gray-900 dark:text-white">{selectedProduct.family.name}</p>
-                                    </div>
-                                )}
-                                {selectedProduct.variant_label && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Variante</label>
-                                        <p className="text-gray-900 dark:text-white">{selectedProduct.variant_label}</p>
-                                    </div>
-                                )}
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Precio</label>
-                                    <p className="text-gray-900 dark:text-white">
+                                <span className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${selectedProduct.status === 'active'
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                                    : selectedProduct.status === 'archived'
+                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                    }`}>
+                                    {selectedProduct.status === 'active' ? 'Activo' : selectedProduct.status === 'archived' ? 'Archivado' : selectedProduct.status === 'draft' ? 'Borrador' : selectedProduct.status}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Precio</p>
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5">
                                         {new Intl.NumberFormat('es-CO', { style: 'currency', currency: selectedProduct.currency }).format(selectedProduct.price)}
                                     </p>
                                 </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Stock</label>
-                                    <p className="text-gray-900 dark:text-white">{selectedProduct.manage_stock ? selectedProduct.stock : '∞'}</p>
+                                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Stock</p>
+                                    <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5">{selectedProduct.manage_stock ? selectedProduct.stock : '∞'}</p>
                                 </div>
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado</label>
-                                    <p className="text-gray-900 dark:text-white">{selectedProduct.status}</p>
-                                </div>
+                                {selectedProduct.barcode && (
+                                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Barcode</p>
+                                        <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5 font-mono">{selectedProduct.barcode}</p>
+                                    </div>
+                                )}
+                                {selectedProduct.family && (
+                                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Familia</p>
+                                        <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5 truncate">{selectedProduct.family.name}</p>
+                                    </div>
+                                )}
+                                {selectedProduct.variant_label && (
+                                    <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Variante</p>
+                                        <p className="text-base font-semibold text-gray-900 dark:text-white mt-0.5">{selectedProduct.variant_label}</p>
+                                    </div>
+                                )}
                             </div>
+
                             {selectedProduct.description && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Descripcion</label>
-                                    <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{selectedProduct.description}</p>
+                                <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">Descripcion</p>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{selectedProduct.description}</p>
                                 </div>
                             )}
                         </div>
@@ -319,7 +384,7 @@ export default function ProductsPage() {
                 isOpen={isFamilyModalOpen}
                 onClose={handleCloseFamilyModal}
                 title={selectedFamily ? 'Editar Familia' : 'Nueva Familia de Variantes'}
-                size="lg"
+                size="4xl"
             >
                 <div className="p-4">
                     <ProductFamilyForm
