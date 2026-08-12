@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, Fragment } from 'react';
 import { ProductFamily, Product } from '../../domain/types';
 import { getProductFamiliesAction, deleteProductFamilyAction, getFamilyVariantsAction } from '../../infra/actions';
-import { ChevronRightIcon, XMarkIcon, PlusIcon, ScaleIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ChevronDownIcon, XMarkIcon, PlusIcon, ScaleIcon } from '@heroicons/react/24/outline';
 import AssociateProductModal from './AssociateProductModal';
 import FamilyDimensionsModal from './FamilyDimensionsModal';
 
@@ -35,6 +35,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
         const [modalPage, setModalPage] = useState(1);
         const [showAssociateModal, setShowAssociateModal] = useState(false);
         const [showDimensionsModal, setShowDimensionsModal] = useState(false);
+        const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
 
         useImperativeHandle(ref, () => ({ refresh: fetchFamilies }));
 
@@ -92,6 +93,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             setModalFamily(family);
             setModalPage(1);
             setModalVariants([]);
+            setExpandedVariantId(null);
             await fetchModalVariants(family.id);
         };
 
@@ -302,6 +304,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                             <table className="table w-full">
                                                 <thead>
                                                     <tr>
+                                                        <th className="!bg-gray-100 dark:!bg-gray-700 w-8"></th>
                                                         <th className="!bg-gray-100 dark:!bg-gray-700 !text-gray-600 dark:!text-gray-300 text-left">SKU</th>
                                                         <th className="!bg-gray-100 dark:!bg-gray-700 !text-gray-600 dark:!text-gray-300 text-left">Nombre</th>
                                                         <th className="!bg-gray-100 dark:!bg-gray-700 !text-gray-600 dark:!text-gray-300 text-left hidden sm:table-cell">Variante</th>
@@ -311,24 +314,97 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                                    {pagedVariants.map((variant) => (
-                                                        <tr key={variant.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                            <td className="font-mono text-xs text-gray-600 dark:text-gray-300">{variant.sku}</td>
-                                                            <td className="text-sm text-gray-900 dark:text-white">{variant.name}</td>
-                                                            <td className="hidden sm:table-cell">
-                                                                {variant.variant_label ? (
-                                                                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">{variant.variant_label}</span>
-                                                                ) : (
-                                                                    <span className="text-gray-400 text-xs">&mdash;</span>
+                                                    {pagedVariants.map((variant) => {
+                                                        const isExpanded = expandedVariantId === variant.id;
+                                                        return (
+                                                            <Fragment key={variant.id}>
+                                                                <tr
+                                                                    onClick={() => setExpandedVariantId(isExpanded ? null : variant.id)}
+                                                                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                                                                >
+                                                                    <td>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => { e.stopPropagation(); setExpandedVariantId(isExpanded ? null : variant.id); }}
+                                                                            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded transition-colors"
+                                                                            title={isExpanded ? 'Ocultar informacion' : 'Ver informacion'}
+                                                                        >
+                                                                            {isExpanded ? <ChevronDownIcon className="w-4 h-4" /> : <ChevronRightIcon className="w-4 h-4" />}
+                                                                        </button>
+                                                                    </td>
+                                                                    <td className="font-mono text-xs text-gray-600 dark:text-gray-300">{variant.sku}</td>
+                                                                    <td className="text-sm text-gray-900 dark:text-white">{variant.name}</td>
+                                                                    <td className="hidden sm:table-cell">
+                                                                        {variant.variant_label ? (
+                                                                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">{variant.variant_label}</span>
+                                                                        ) : (
+                                                                            <span className="text-gray-400 text-xs">&mdash;</span>
+                                                                        )}
+                                                                    </td>
+                                                                    <td className="hidden sm:table-cell font-mono text-xs text-gray-500 dark:text-gray-400">{variant.barcode || '-'}</td>
+                                                                    <td className="text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                                                        {new Intl.NumberFormat('es-CO', { style: 'currency', currency: variant.currency || 'COP', maximumFractionDigits: 0 }).format(variant.price)}
+                                                                    </td>
+                                                                    <td className="text-center">{stockBadge(variant.stock_quantity ?? variant.stock ?? 0)}</td>
+                                                                </tr>
+                                                                {isExpanded && (
+                                                                    <tr className="bg-gray-50 dark:bg-gray-900/30">
+                                                                        <td colSpan={7} className="px-5 py-4">
+                                                                            <div className="flex flex-col items-center gap-4">
+                                                                                {variant.image_url && (
+                                                                                    <img src={variant.image_url} alt={variant.name} className="w-20 h-20 rounded-lg object-cover flex-shrink-0 border border-gray-200 dark:border-gray-700" />
+                                                                                )}
+                                                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-10 gap-y-3 text-xs text-center justify-items-center max-w-3xl mx-auto">
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Categoria</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.category || '-'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Marca</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.brand || '-'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Estado</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.status || '-'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Gestiona inventario</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.manage_stock ? 'Si' : 'No'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Peso</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.weight != null ? `${variant.weight} kg` : '-'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Dimensiones (LxAxA)</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">
+                                                                                            {variant.length != null && variant.width != null && variant.height != null
+                                                                                                ? `${variant.length} x ${variant.width} x ${variant.height} cm`
+                                                                                                : '-'}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Integracion</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.integration_type || '-'}</p>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <p className="text-gray-400 uppercase tracking-wide">Creado</p>
+                                                                                        <p className="text-gray-800 dark:text-gray-200">{variant.created_at ? new Date(variant.created_at).toLocaleDateString('es-CO') : '-'}</p>
+                                                                                    </div>
+                                                                                    {variant.description && (
+                                                                                        <div className="col-span-2 sm:col-span-4">
+                                                                                            <p className="text-gray-400 uppercase tracking-wide">Descripcion</p>
+                                                                                            <p className="text-gray-800 dark:text-gray-200">{variant.description}</p>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
-                                                            </td>
-                                                            <td className="hidden sm:table-cell font-mono text-xs text-gray-500 dark:text-gray-400">{variant.barcode || '-'}</td>
-                                                            <td className="text-right text-sm font-semibold text-gray-900 dark:text-white">
-                                                                {new Intl.NumberFormat('es-CO', { style: 'currency', currency: variant.currency || 'COP', maximumFractionDigits: 0 }).format(variant.price)}
-                                                            </td>
-                                                            <td className="text-center">{stockBadge(variant.stock_quantity ?? variant.stock ?? 0)}</td>
-                                                        </tr>
-                                                    ))}
+                                                            </Fragment>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </table>
                                         </div>
