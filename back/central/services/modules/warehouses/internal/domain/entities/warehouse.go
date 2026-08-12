@@ -35,7 +35,22 @@ type Warehouse struct {
 	Street        string
 	Latitude      *float64
 	Longitude     *float64
-	Locations     []WarehouseLocation
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+
+	ShippingPackageStrategy string
+	StandardBoxes           []StandardBox
+
+	Locations []WarehouseLocation
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// StandardBox es un tamano de caja fijo que la bodega puede usar para cotizar
+// envios, con una capacidad maxima de unidades para elegir cual caja aplica.
+type StandardBox struct {
+	Name     string
+	Weight   *float64
+	Length   *float64
+	Width    *float64
+	Height   *float64
+	MaxItems int
 }

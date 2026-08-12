@@ -8,39 +8,53 @@ import (
 
 // WarehouseResponse respuesta básica de bodega (para listado)
 type WarehouseResponse struct {
-	ID            uint      `json:"id"`
-	BusinessID    uint      `json:"business_id"`
-	Name          string    `json:"name"`
-	Code          string    `json:"code"`
-	Address       string    `json:"address"`
-	City          string    `json:"city"`
-	State         string    `json:"state"`
-	Country       string    `json:"country"`
-	ZipCode       string    `json:"zip_code"`
-	Phone         string    `json:"phone"`
-	ContactName   string    `json:"contact_name"`
-	ContactEmail  string    `json:"contact_email"`
-	IsActive      bool      `json:"is_active"`
-	IsDefault     bool      `json:"is_default"`
-	IsFulfillment bool      `json:"is_fulfillment"`
-	StructureType string    `json:"structure_type"`
-	ZoneCount     int       `json:"zone_count"`
-	AisleCount    int       `json:"aisle_count"`
-	RackCount     int       `json:"rack_count"`
-	LevelCount    int       `json:"level_count"`
-	PositionCount int       `json:"position_count"`
-	Company       string    `json:"company"`
-	FirstName     string    `json:"first_name"`
-	LastName      string    `json:"last_name"`
-	Email         string    `json:"email"`
-	Suburb        string    `json:"suburb"`
-	CityDaneCode  string    `json:"city_dane_code"`
-	PostalCode    string    `json:"postal_code"`
-	Street        string    `json:"street"`
-	Latitude      *float64  `json:"latitude"`
-	Longitude     *float64  `json:"longitude"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID            uint     `json:"id"`
+	BusinessID    uint     `json:"business_id"`
+	Name          string   `json:"name"`
+	Code          string   `json:"code"`
+	Address       string   `json:"address"`
+	City          string   `json:"city"`
+	State         string   `json:"state"`
+	Country       string   `json:"country"`
+	ZipCode       string   `json:"zip_code"`
+	Phone         string   `json:"phone"`
+	ContactName   string   `json:"contact_name"`
+	ContactEmail  string   `json:"contact_email"`
+	IsActive      bool     `json:"is_active"`
+	IsDefault     bool     `json:"is_default"`
+	IsFulfillment bool     `json:"is_fulfillment"`
+	StructureType string   `json:"structure_type"`
+	ZoneCount     int      `json:"zone_count"`
+	AisleCount    int      `json:"aisle_count"`
+	RackCount     int      `json:"rack_count"`
+	LevelCount    int      `json:"level_count"`
+	PositionCount int      `json:"position_count"`
+	Company       string   `json:"company"`
+	FirstName     string   `json:"first_name"`
+	LastName      string   `json:"last_name"`
+	Email         string   `json:"email"`
+	Suburb        string   `json:"suburb"`
+	CityDaneCode  string   `json:"city_dane_code"`
+	PostalCode    string   `json:"postal_code"`
+	Street        string   `json:"street"`
+	Latitude      *float64 `json:"latitude"`
+	Longitude     *float64 `json:"longitude"`
+
+	ShippingPackageStrategy string                `json:"shipping_package_strategy"`
+	StandardBoxes           []StandardBoxResponse `json:"standard_boxes"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// StandardBoxResponse tamano de caja fija dentro de la estrategia de empaque
+type StandardBoxResponse struct {
+	Name     string   `json:"name"`
+	Weight   *float64 `json:"weight"`
+	Length   *float64 `json:"length"`
+	Width    *float64 `json:"width"`
+	Height   *float64 `json:"height"`
+	MaxItems int      `json:"max_items"`
 }
 
 // WarehouseDetailResponse respuesta con ubicaciones
@@ -107,9 +121,28 @@ func FromEntity(w *entities.Warehouse) WarehouseResponse {
 		Street:        w.Street,
 		Latitude:      w.Latitude,
 		Longitude:     w.Longitude,
-		CreatedAt:     w.CreatedAt,
-		UpdatedAt:     w.UpdatedAt,
+
+		ShippingPackageStrategy: w.ShippingPackageStrategy,
+		StandardBoxes:           toStandardBoxResponses(w.StandardBoxes),
+
+		CreatedAt: w.CreatedAt,
+		UpdatedAt: w.UpdatedAt,
 	}
+}
+
+func toStandardBoxResponses(boxes []entities.StandardBox) []StandardBoxResponse {
+	result := make([]StandardBoxResponse, len(boxes))
+	for i, b := range boxes {
+		result[i] = StandardBoxResponse{
+			Name:     b.Name,
+			Weight:   b.Weight,
+			Length:   b.Length,
+			Width:    b.Width,
+			Height:   b.Height,
+			MaxItems: b.MaxItems,
+		}
+	}
+	return result
 }
 
 // DetailFromEntity convierte una entidad con ubicaciones a WarehouseDetailResponse

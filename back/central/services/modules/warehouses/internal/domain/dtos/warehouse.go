@@ -1,5 +1,15 @@
 package dtos
 
+// StandardBoxDTO tamano de caja fija para la estrategia de empaque de la bodega
+type StandardBoxDTO struct {
+	Name     string
+	Weight   *float64
+	Length   *float64
+	Width    *float64
+	Height   *float64
+	MaxItems int
+}
+
 // ListWarehousesParams parámetros para listar bodegas
 type ListWarehousesParams struct {
 	BusinessID    uint
@@ -45,6 +55,9 @@ type CreateWarehouseDTO struct {
 	Street        string
 	Latitude      *float64
 	Longitude     *float64
+
+	ShippingPackageStrategy string
+	StandardBoxes           []StandardBoxDTO
 }
 
 // UpdateWarehouseDTO datos para actualizar una bodega
@@ -75,4 +88,7 @@ type UpdateWarehouseDTO struct {
 	Street        string
 	Latitude      *float64
 	Longitude     *float64
+
+	ShippingPackageStrategy string
+	StandardBoxes           []StandardBoxDTO
 }

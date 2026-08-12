@@ -2,13 +2,54 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/dtos"
-	domainerrors "github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/errors"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
+
+type shippingPackageMetadataBox struct {
+	Name     string   `json:"name,omitempty"`
+	Weight   *float64 `json:"weight,omitempty"`
+	Length   *float64 `json:"length,omitempty"`
+	Width    *float64 `json:"width,omitempty"`
+	Height   *float64 `json:"height,omitempty"`
+	MaxItems int      `json:"max_items,omitempty"`
+}
+
+type shippingPackageMetadata struct {
+	ShippingPackageStrategy string                       `json:"shipping_package_strategy,omitempty"`
+	StandardBoxes           []shippingPackageMetadataBox `json:"standard_boxes,omitempty"`
+}
+
+func warehouseShippingMetadataJSON(w *entities.Warehouse) datatypes.JSON {
+	if w.ShippingPackageStrategy == "" {
+		return nil
+	}
+	boxes := make([]shippingPackageMetadataBox, len(w.StandardBoxes))
+	for i, b := range w.StandardBoxes {
+		boxes[i] = shippingPackageMetadataBox{
+			Name:     b.Name,
+			Weight:   b.Weight,
+			Length:   b.Length,
+			Width:    b.Width,
+			Height:   b.Height,
+			MaxItems: b.MaxItems,
+		}
+	}
+	raw, err := json.Marshal(shippingPackageMetadata{
+		ShippingPackageStrategy: w.ShippingPackageStrategy,
+		StandardBoxes:           boxes,
+	})
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(raw)
+}
 
 func (r *Repository) Create(ctx context.Context, warehouse *entities.Warehouse) (*entities.Warehouse, error) {
 	model := &models.Warehouse{
@@ -37,6 +78,7 @@ func (r *Repository) Create(ctx context.Context, warehouse *entities.Warehouse) 
 		Street:        warehouse.Street,
 		Latitude:      warehouse.Latitude,
 		Longitude:     warehouse.Longitude,
+		Metadata:      warehouseShippingMetadataJSON(warehouse),
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -125,6 +167,7 @@ func (r *Repository) Update(ctx context.Context, warehouse *entities.Warehouse) 
 		Street:        warehouse.Street,
 		Latitude:      warehouse.Latitude,
 		Longitude:     warehouse.Longitude,
+		Metadata:      warehouseShippingMetadataJSON(warehouse),
 	}
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

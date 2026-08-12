@@ -12,7 +12,7 @@ import {
     Squares2X2Icon,
     SignalIcon,
 } from '@heroicons/react/24/outline';
-import { Alert, Spinner } from '@/shared/ui';
+import { Alert, Spinner, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { getWarehousesAction, deleteWarehouseAction } from '../../infra/actions';
 import { Warehouse } from '../../domain/types';
@@ -48,6 +48,8 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [searchInput, setSearchInput] = useState('');
+    const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
+    const [isFulfillmentFilter, setIsFulfillmentFilter] = useState<boolean | undefined>(undefined);
 
     const [expanded, setExpanded] = useState<Record<number, boolean>>({});
     const [trees, setTrees] = useState<Record<number, WarehouseTree>>({});
@@ -61,14 +63,44 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
         setLoading(true);
         setError(null);
         try {
-            const r = await getWarehousesAction({ page: 1, page_size: 100, business_id: businessId, search: search || undefined });
+            const r = await getWarehousesAction({
+                page: 1,
+                page_size: 100,
+                business_id: businessId,
+                search: search || undefined,
+                is_active: isActiveFilter,
+                is_fulfillment: isFulfillmentFilter,
+            });
             setWarehouses(r.data || []);
         } catch (e: any) {
             setError(e.message || 'Error al cargar bodegas');
         } finally {
             setLoading(false);
         }
-    }, [businessId, search]);
+    }, [businessId, search, isActiveFilter, isFulfillmentFilter]);
+
+    const availableFilters: FilterOption[] = [
+        { key: 'is_active', label: 'Estado', type: 'boolean' },
+        { key: 'is_fulfillment', label: 'Fulfillment', type: 'boolean' },
+    ];
+
+    const activeFilters: ActiveFilter[] = [];
+    if (isActiveFilter !== undefined) {
+        activeFilters.push({ key: 'is_active', label: 'Estado', value: isActiveFilter, type: 'boolean' });
+    }
+    if (isFulfillmentFilter !== undefined) {
+        activeFilters.push({ key: 'is_fulfillment', label: 'Fulfillment', value: isFulfillmentFilter, type: 'boolean' });
+    }
+
+    const handleAddFilter = (filterKey: string, value: any) => {
+        if (filterKey === 'is_active') setIsActiveFilter(value === true);
+        if (filterKey === 'is_fulfillment') setIsFulfillmentFilter(value === true);
+    };
+
+    const handleRemoveFilter = (filterKey: string) => {
+        if (filterKey === 'is_active') setIsActiveFilter(undefined);
+        if (filterKey === 'is_fulfillment') setIsFulfillmentFilter(undefined);
+    };
 
     useEffect(() => { fetchList(); }, [fetchList, refreshKey]);
 
@@ -136,7 +168,16 @@ export default function WarehouseTreeTable({ businessId, onEditWarehouse, onNewW
 
     return (
         <div className="space-y-4">
-            <form onSubmit={handleSearch} className="flex gap-2">
+            <form onSubmit={handleSearch} className="flex gap-2 items-center">
+                <div className="shrink-0 inline-block">
+                    <DynamicFilters
+                        variant="bar"
+                        availableFilters={availableFilters}
+                        activeFilters={activeFilters}
+                        onAddFilter={handleAddFilter}
+                        onRemoveFilter={handleRemoveFilter}
+                    />
+                </div>
                 <input
                     type="text"
                     value={searchInput}

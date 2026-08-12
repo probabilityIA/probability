@@ -55,6 +55,9 @@ func (h *Handlers) CreateWarehouse(c *gin.Context) {
 		Street:        req.Street,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
+
+		ShippingPackageStrategy: req.ShippingPackageStrategy,
+		StandardBoxes:           toStandardBoxDTOs(req.StandardBoxes),
 	}
 
 	warehouse, err := h.uc.CreateWarehouse(c.Request.Context(), dto)
@@ -68,4 +71,19 @@ func (h *Handlers) CreateWarehouse(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, response.FromEntity(warehouse))
+}
+
+func toStandardBoxDTOs(boxes []request.StandardBoxRequest) []dtos.StandardBoxDTO {
+	result := make([]dtos.StandardBoxDTO, len(boxes))
+	for i, b := range boxes {
+		result[i] = dtos.StandardBoxDTO{
+			Name:     b.Name,
+			Weight:   b.Weight,
+			Length:   b.Length,
+			Width:    b.Width,
+			Height:   b.Height,
+			MaxItems: b.MaxItems,
+		}
+	}
+	return result
 }

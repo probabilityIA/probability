@@ -1,59 +1,75 @@
 package request
 
+// StandardBoxRequest tamano de caja fija dentro de la estrategia de empaque
+type StandardBoxRequest struct {
+	Name     string   `json:"name" binding:"omitempty,max=100"`
+	Weight   *float64 `json:"weight" binding:"omitempty,min=0"`
+	Length   *float64 `json:"length" binding:"omitempty,min=0"`
+	Width    *float64 `json:"width" binding:"omitempty,min=0"`
+	Height   *float64 `json:"height" binding:"omitempty,min=0"`
+	MaxItems int      `json:"max_items" binding:"omitempty,min=1"`
+}
+
 // CreateWarehouseRequest payload de creación de bodega
 type CreateWarehouseRequest struct {
-	Name          string `json:"name" binding:"required,min=2,max=255"`
-	Code          string `json:"code" binding:"required,min=1,max=50"`
-	Address       string `json:"address" binding:"omitempty,max=500"`
-	City          string `json:"city" binding:"omitempty,max=100"`
-	State         string `json:"state" binding:"omitempty,max=100"`
-	Country       string `json:"country" binding:"omitempty,max=50"`
-	ZipCode       string `json:"zip_code" binding:"omitempty,max=20"`
-	Phone         string `json:"phone" binding:"omitempty,max=50"`
-	ContactName   string `json:"contact_name" binding:"omitempty,max=255"`
-	ContactEmail  string `json:"contact_email" binding:"omitempty,email,max=255"`
-	IsActive      *bool  `json:"is_active"`
-	IsDefault     bool   `json:"is_default"`
-	IsFulfillment bool   `json:"is_fulfillment"`
-	StructureType string `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
-	Company       string `json:"company" binding:"omitempty,max=100"`
-	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
-	LastName      string `json:"last_name" binding:"omitempty,max=100"`
-	Email         string `json:"email" binding:"omitempty,max=100"`
-	Suburb        string `json:"suburb" binding:"omitempty,max=100"`
-	CityDaneCode  string `json:"city_dane_code" binding:"omitempty,max=10"`
-	PostalCode    string `json:"postal_code" binding:"omitempty,max=20"`
+	Name          string   `json:"name" binding:"required,min=2,max=255"`
+	Code          string   `json:"code" binding:"required,min=1,max=50"`
+	Address       string   `json:"address" binding:"omitempty,max=500"`
+	City          string   `json:"city" binding:"omitempty,max=100"`
+	State         string   `json:"state" binding:"omitempty,max=100"`
+	Country       string   `json:"country" binding:"omitempty,max=50"`
+	ZipCode       string   `json:"zip_code" binding:"omitempty,max=20"`
+	Phone         string   `json:"phone" binding:"omitempty,max=50"`
+	ContactName   string   `json:"contact_name" binding:"omitempty,max=255"`
+	ContactEmail  string   `json:"contact_email" binding:"omitempty,email,max=255"`
+	IsActive      *bool    `json:"is_active"`
+	IsDefault     bool     `json:"is_default"`
+	IsFulfillment bool     `json:"is_fulfillment"`
+	StructureType string   `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
+	Company       string   `json:"company" binding:"omitempty,max=100"`
+	FirstName     string   `json:"first_name" binding:"omitempty,max=100"`
+	LastName      string   `json:"last_name" binding:"omitempty,max=100"`
+	Email         string   `json:"email" binding:"omitempty,max=100"`
+	Suburb        string   `json:"suburb" binding:"omitempty,max=100"`
+	CityDaneCode  string   `json:"city_dane_code" binding:"omitempty,max=10"`
+	PostalCode    string   `json:"postal_code" binding:"omitempty,max=20"`
 	Street        string   `json:"street" binding:"omitempty,max=255"`
 	Latitude      *float64 `json:"latitude"`
 	Longitude     *float64 `json:"longitude"`
+
+	ShippingPackageStrategy string               `json:"shipping_package_strategy" binding:"omitempty,oneof=product_dimensions standard_box"`
+	StandardBoxes           []StandardBoxRequest `json:"standard_boxes" binding:"omitempty,dive"`
 }
 
 // UpdateWarehouseRequest payload de actualización de bodega
 type UpdateWarehouseRequest struct {
-	Name          string `json:"name" binding:"required,min=2,max=255"`
-	Code          string `json:"code" binding:"required,min=1,max=50"`
-	Address       string `json:"address" binding:"omitempty,max=500"`
-	City          string `json:"city" binding:"omitempty,max=100"`
-	State         string `json:"state" binding:"omitempty,max=100"`
-	Country       string `json:"country" binding:"omitempty,max=50"`
-	ZipCode       string `json:"zip_code" binding:"omitempty,max=20"`
-	Phone         string `json:"phone" binding:"omitempty,max=50"`
-	ContactName   string `json:"contact_name" binding:"omitempty,max=255"`
-	ContactEmail  string `json:"contact_email" binding:"omitempty,email,max=255"`
-	IsActive      *bool  `json:"is_active"`
-	IsDefault     bool   `json:"is_default"`
-	IsFulfillment bool   `json:"is_fulfillment"`
-	StructureType string `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
-	Company       string `json:"company" binding:"omitempty,max=100"`
-	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
-	LastName      string `json:"last_name" binding:"omitempty,max=100"`
-	Email         string `json:"email" binding:"omitempty,max=100"`
-	Suburb        string `json:"suburb" binding:"omitempty,max=100"`
-	CityDaneCode  string `json:"city_dane_code" binding:"omitempty,max=10"`
-	PostalCode    string `json:"postal_code" binding:"omitempty,max=20"`
+	Name          string   `json:"name" binding:"required,min=2,max=255"`
+	Code          string   `json:"code" binding:"required,min=1,max=50"`
+	Address       string   `json:"address" binding:"omitempty,max=500"`
+	City          string   `json:"city" binding:"omitempty,max=100"`
+	State         string   `json:"state" binding:"omitempty,max=100"`
+	Country       string   `json:"country" binding:"omitempty,max=50"`
+	ZipCode       string   `json:"zip_code" binding:"omitempty,max=20"`
+	Phone         string   `json:"phone" binding:"omitempty,max=50"`
+	ContactName   string   `json:"contact_name" binding:"omitempty,max=255"`
+	ContactEmail  string   `json:"contact_email" binding:"omitempty,email,max=255"`
+	IsActive      *bool    `json:"is_active"`
+	IsDefault     bool     `json:"is_default"`
+	IsFulfillment bool     `json:"is_fulfillment"`
+	StructureType string   `json:"structure_type" binding:"omitempty,oneof=simple zones wms"`
+	Company       string   `json:"company" binding:"omitempty,max=100"`
+	FirstName     string   `json:"first_name" binding:"omitempty,max=100"`
+	LastName      string   `json:"last_name" binding:"omitempty,max=100"`
+	Email         string   `json:"email" binding:"omitempty,max=100"`
+	Suburb        string   `json:"suburb" binding:"omitempty,max=100"`
+	CityDaneCode  string   `json:"city_dane_code" binding:"omitempty,max=10"`
+	PostalCode    string   `json:"postal_code" binding:"omitempty,max=20"`
 	Street        string   `json:"street" binding:"omitempty,max=255"`
 	Latitude      *float64 `json:"latitude"`
 	Longitude     *float64 `json:"longitude"`
+
+	ShippingPackageStrategy string               `json:"shipping_package_strategy" binding:"omitempty,oneof=product_dimensions standard_box"`
+	StandardBoxes           []StandardBoxRequest `json:"standard_boxes" binding:"omitempty,dive"`
 }
 
 // CreateLocationRequest payload de creación de ubicación

@@ -63,6 +63,9 @@ func (h *Handlers) UpdateWarehouse(c *gin.Context) {
 		Street:        req.Street,
 		Latitude:      req.Latitude,
 		Longitude:     req.Longitude,
+
+		ShippingPackageStrategy: req.ShippingPackageStrategy,
+		StandardBoxes:           toStandardBoxDTOs(req.StandardBoxes),
 	}
 
 	warehouse, err := h.uc.UpdateWarehouse(c.Request.Context(), dto)

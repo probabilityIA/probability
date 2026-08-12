@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 
-	domainerrors "github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/warehouses/internal/domain/errors"
 )
 
 func (uc *UseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouseDTO) (*entities.Warehouse, error) {
@@ -53,6 +53,9 @@ func (uc *UseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouse
 		Street:        dto.Street,
 		Latitude:      dto.Latitude,
 		Longitude:     dto.Longitude,
+
+		ShippingPackageStrategy: dto.ShippingPackageStrategy,
+		StandardBoxes:           toEntityStandardBoxes(dto.StandardBoxes),
 	}
 
 	return uc.repo.Create(ctx, warehouse)

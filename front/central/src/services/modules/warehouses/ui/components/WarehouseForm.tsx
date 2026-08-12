@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO } from '../../domain/types';
+import { Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO, ShippingPackageStrategy, StandardBox } from '../../domain/types';
 import { createWarehouseAction, updateWarehouseAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
@@ -70,12 +70,51 @@ function generateCode(name: string): string {
     return slug || 'WH-' + Math.random().toString(36).slice(2, 6).toUpperCase();
 }
 
+interface StandardBoxFormRow {
+    name: string;
+    weight: string;
+    length: string;
+    width: string;
+    height: string;
+    max_items: string;
+}
+
+function emptyBoxRow(): StandardBoxFormRow {
+    return { name: '', weight: '', length: '', width: '', height: '', max_items: '' };
+}
+
+function boxToFormRow(box: StandardBox): StandardBoxFormRow {
+    return {
+        name: box.name || '',
+        weight: box.weight != null ? String(box.weight) : '',
+        length: box.length != null ? String(box.length) : '',
+        width: box.width != null ? String(box.width) : '',
+        height: box.height != null ? String(box.height) : '',
+        max_items: box.max_items != null ? String(box.max_items) : '',
+    };
+}
+
 
 export default function WarehouseForm({ warehouse, onSuccess, onCancel, businessId }: WarehouseFormProps) {
     const initialStructure: StructureMode = (warehouse?.structure_type === 'zones' || warehouse?.structure_type === 'wms')
         ? warehouse.structure_type
         : 'simple';
     const [structureMode, setStructureMode] = useState<StructureMode>(initialStructure);
+
+    const [packageStrategy, setPackageStrategy] = useState<ShippingPackageStrategy>(
+        warehouse?.shipping_package_strategy || 'product_dimensions'
+    );
+    const [standardBoxes, setStandardBoxes] = useState<StandardBoxFormRow[]>(
+        warehouse?.standard_boxes && warehouse.standard_boxes.length > 0
+            ? warehouse.standard_boxes.map(boxToFormRow)
+            : [emptyBoxRow()]
+    );
+
+    const addBoxRow = () => setStandardBoxes((rows) => [...rows, emptyBoxRow()]);
+    const removeBoxRow = (index: number) => setStandardBoxes((rows) => rows.filter((_, i) => i !== index));
+    const updateBoxRow = (index: number, field: keyof StandardBoxFormRow, value: string) => {
+        setStandardBoxes((rows) => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
+    };
 
     const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(() => {
         if (warehouse?.latitude != null && warehouse?.longitude != null) {
@@ -189,6 +228,22 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
         const resolvedCode = formData.code || generateCode(formData.name);
 
+        const packageFields = {
+            shipping_package_strategy: packageStrategy,
+            standard_boxes: packageStrategy === 'standard_box'
+                ? standardBoxes
+                    .filter((b) => b.weight || b.length || b.width || b.height)
+                    .map((b) => ({
+                        name: b.name,
+                        weight: b.weight ? parseFloat(b.weight) : null,
+                        length: b.length ? parseFloat(b.length) : null,
+                        width: b.width ? parseFloat(b.width) : null,
+                        height: b.height ? parseFloat(b.height) : null,
+                        max_items: b.max_items ? parseInt(b.max_items, 10) : 0,
+                    }))
+                : undefined,
+        };
+
         try {
             if (warehouse) {
                 const updateData: UpdateWarehouseDTO = {
@@ -209,6 +264,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     structure_type: structureMode,
                     latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                     longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+                    ...packageFields,
                 };
                 await updateWarehouseAction(warehouse.id, updateData, businessId);
             } else {
@@ -229,6 +285,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     structure_type: structureMode,
                     latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                     longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+                    ...packageFields,
                 };
                 await createWarehouseAction(createData, businessId);
             }
@@ -348,6 +405,124 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.is_active ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-600'}`}
                                 >
                                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="border-t dark:border-gray-700 pt-4">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Estrategia de empaque para cotización</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            Define cómo se calcula el peso/tamaño del paquete al cotizar envíos desde esta bodega.
+                        </p>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setPackageStrategy('product_dimensions')}
+                                className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'product_dimensions'
+                                    ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
+                                    }`}
+                            >
+                                <span className={`text-sm font-bold ${packageStrategy === 'product_dimensions' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    Dimensiones reales del producto
+                                </span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Suma el peso real de cada producto x cantidad; usa la dimensión más grande entre los items como tamaño de caja.
+                                </p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPackageStrategy('standard_box')}
+                                className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'standard_box'
+                                    ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
+                                    }`}
+                            >
+                                <span className={`text-sm font-bold ${packageStrategy === 'standard_box' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    Caja estándar
+                                </span>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Peso y tamaño fijos, sin importar qué producto ni cuántas unidades.
+                                </p>
+                            </button>
+                        </div>
+
+                        {packageStrategy === 'standard_box' && (
+                            <div className="mt-3 space-y-3">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Define una o varias cajas. "Máx. unidades" es cuántos items (sumando cantidades) caben en esa caja; al crear la orden se elige la caja más chica donde quepa todo.
+                                </p>
+                                {standardBoxes.map((box, index) => (
+                                    <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                type="text"
+                                                placeholder={`Caja ${index + 1} (ej: Chica)`}
+                                                value={box.name}
+                                                onChange={(e) => updateBoxRow(index, 'name', e.target.value)}
+                                                className="flex-1"
+                                            />
+                                            {standardBoxes.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeBoxRow(index)}
+                                                    className="text-red-500 hover:text-red-700 text-xs font-medium px-2"
+                                                >
+                                                    Quitar
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Peso (kg)</label>
+                                                <Input
+                                                    type="number" min="0" step="0.01"
+                                                    value={box.weight}
+                                                    onChange={(e) => updateBoxRow(index, 'weight', e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Largo (cm)</label>
+                                                <Input
+                                                    type="number" min="0" step="0.1"
+                                                    value={box.length}
+                                                    onChange={(e) => updateBoxRow(index, 'length', e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Ancho (cm)</label>
+                                                <Input
+                                                    type="number" min="0" step="0.1"
+                                                    value={box.width}
+                                                    onChange={(e) => updateBoxRow(index, 'width', e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Alto (cm)</label>
+                                                <Input
+                                                    type="number" min="0" step="0.1"
+                                                    value={box.height}
+                                                    onChange={(e) => updateBoxRow(index, 'height', e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Máx. unidades</label>
+                                                <Input
+                                                    type="number" min="1" step="1"
+                                                    value={box.max_items}
+                                                    onChange={(e) => updateBoxRow(index, 'max_items', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addBoxRow}
+                                    className="text-xs font-medium text-[#7c3aed] hover:text-[#6d28d9]"
+                                >
+                                    + Agregar otro tamaño de caja
                                 </button>
                             </div>
                         )}

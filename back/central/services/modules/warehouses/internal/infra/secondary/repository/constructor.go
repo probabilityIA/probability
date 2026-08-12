@@ -52,6 +52,24 @@ func warehouseModelToEntity(m *models.Warehouse) *entities.Warehouse {
 		UpdatedAt:     m.UpdatedAt,
 	}
 
+	if len(m.Metadata) > 0 {
+		var meta shippingPackageMetadata
+		if err := json.Unmarshal(m.Metadata, &meta); err == nil {
+			w.ShippingPackageStrategy = meta.ShippingPackageStrategy
+			w.StandardBoxes = make([]entities.StandardBox, len(meta.StandardBoxes))
+			for i, b := range meta.StandardBoxes {
+				w.StandardBoxes[i] = entities.StandardBox{
+					Name:     b.Name,
+					Weight:   b.Weight,
+					Length:   b.Length,
+					Width:    b.Width,
+					Height:   b.Height,
+					MaxItems: b.MaxItems,
+				}
+			}
+		}
+	}
+
 	if len(m.Locations) > 0 {
 		w.Locations = make([]entities.WarehouseLocation, len(m.Locations))
 		for i, loc := range m.Locations {

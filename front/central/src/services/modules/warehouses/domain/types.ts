@@ -1,4 +1,14 @@
 export type WarehouseStructureType = 'simple' | 'zones' | 'wms';
+export type ShippingPackageStrategy = 'product_dimensions' | 'standard_box';
+
+export interface StandardBox {
+    name: string;
+    weight: number | null;
+    length: number | null;
+    width: number | null;
+    height: number | null;
+    max_items: number;
+}
 
 // ============================================
 // ENTIDADES
@@ -36,6 +46,8 @@ export interface Warehouse {
     street: string;
     latitude: number | null;
     longitude: number | null;
+    shipping_package_strategy?: ShippingPackageStrategy;
+    standard_boxes?: StandardBox[];
     created_at: string;
     updated_at: string;
 }
@@ -86,6 +98,8 @@ export interface CreateWarehouseDTO {
     street?: string;
     latitude?: number | null;
     longitude?: number | null;
+    shipping_package_strategy?: ShippingPackageStrategy;
+    standard_boxes?: StandardBox[];
 }
 
 export interface UpdateWarehouseDTO {
@@ -113,6 +127,8 @@ export interface UpdateWarehouseDTO {
     street?: string;
     latitude?: number | null;
     longitude?: number | null;
+    shipping_package_strategy?: ShippingPackageStrategy;
+    standard_boxes?: StandardBox[];
 }
 
 export interface GetWarehousesParams {
