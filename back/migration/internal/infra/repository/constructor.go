@@ -222,5 +222,8 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateCommercialProspects(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateSiigoReferrals(ctx); err != nil {
+		return err
+	}
 	return r.seedCommercialProspects(ctx)
 }

@@ -43,6 +43,7 @@ entorno desde cero si algun dia hace falta.
 | 2026-08-12 | `migrateSyncRunSKUChanged` | Agrego `sku_changed` a `integration_sync_runs` para contar los mapeos cuyo SKU cambio en el canal | produccion |
 | 2026-08-12 | `migrateProductIntegrationLogisticType` | Agrego `external_logistic_type` a `product_business_integrations` para saber si la publicacion es de fulfillment (ML administra el stock y no se puede empujar). AutoMigrate arrastro tambien un DEFAULT '[]' en `subscription_types.features`, que ya coincidia con el modelo | produccion |
 | 2026-08-12 | `migrateProductIntegrationVariantUnique` | Reemplazo el unico `idx_product_integration` de `(product_id, integration_id)` por `(product_id, integration_id, COALESCE(external_variant_id, ''))`, para que un producto pueda mapearse a varias variantes del mismo canal. Se quitaron los tags `uniqueIndex` del modelo: ahora el indice lo maneja este SQL | produccion |
+| 2026-08-12 | `migrateSiigoReferrals` | Crea la tabla `siigo_referrals` (name, email, phone, order_range) para el nuevo modulo de referidos Siigo (formulario publico en front/website) | produccion |
 
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.

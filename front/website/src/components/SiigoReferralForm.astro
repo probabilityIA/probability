@@ -1,0 +1,171 @@
+---
+import '../styles/quiz-shared.css';
+---
+
+<div id="siigo-referral-form"></div>
+
+<script>
+  import { API_BASE_URL } from '../config/api';
+
+  const ORDER_RANGES = [
+    { value: '0-50', label: '0 a 50 órdenes/mes' },
+    { value: '51-200', label: '51 a 200 órdenes/mes' },
+    { value: '201-500', label: '201 a 500 órdenes/mes' },
+    { value: '501-1000', label: '501 a 1000 órdenes/mes' },
+    { value: '1000+', label: 'Más de 1000 órdenes/mes' },
+  ];
+
+  class SiigoReferralForm {
+    constructor() {
+      this.state = {
+        screen: 'form',
+        lead: { name: '', email: '', phone: '', order_range: '' },
+        submitting: false,
+        error: '',
+      };
+      this.renderAll();
+    }
+
+    renderAll() {
+      const root = document.getElementById('siigo-referral-form');
+      if (!root) return;
+      root.innerHTML = this.getHTML();
+      this.attachListeners();
+    }
+
+    getHTML() {
+      if (this.state.screen === 'thanks') return this.renderThanks();
+      return this.renderForm();
+    }
+
+    renderForm() {
+      const { name, email, phone, order_range } = this.state.lead;
+      const canSubmit = name.trim() && email.trim() && phone.trim() && order_range && !this.state.submitting;
+
+      const optionsHTML = ORDER_RANGES.map(
+        (r) => `<option value="${r.value}" ${order_range === r.value ? 'selected' : ''}>${r.label}</option>`
+      ).join('');
+
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-intro">
+              <div class="dq-badge">
+                <span class="dq-badge-dot"></span>
+                Programa de referidos
+              </div>
+              <h1 class="dq-title">
+                Refiere tu negocio a <span class="dq-title-gradient">Siigo</span>
+              </h1>
+              <p class="dq-subtitle">
+                Cuéntanos sobre tu operación y nuestro equipo te contactará para explorar cómo integrar Siigo con Probability.
+              </p>
+            </div>
+
+            <div class="dq-quiz">
+              <div class="dq-card">
+                <div class="dq-field">
+                  <label class="dq-field-label">Nombre completo</label>
+                  <input class="dq-input" type="text" data-lead-field="name" value="${name}" placeholder="Tu nombre" />
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">Correo</label>
+                  <input class="dq-input" type="email" data-lead-field="email" value="${email}" placeholder="tucorreo@empresa.com" />
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">WhatsApp</label>
+                  <input class="dq-input" type="tel" data-lead-field="phone" value="${phone}" placeholder="+57 300 000 0000" />
+                </div>
+                <div class="dq-field">
+                  <label class="dq-field-label">¿Cuántas órdenes o ventas haces al mes?</label>
+                  <select class="dq-input" data-lead-field="order_range">
+                    <option value="" ${order_range ? '' : 'selected'} disabled>Selecciona un rango</option>
+                    ${optionsHTML}
+                  </select>
+                </div>
+              </div>
+
+              ${this.state.error ? `<p class="dq-field-note" style="color:#dc2626;">${this.state.error}</p>` : ''}
+
+              <div class="dq-buttons">
+                <button class="dq-btn-next dq-btn-submit-referral" ${!canSubmit ? 'disabled' : ''}>
+                  ${this.state.submitting ? 'Enviando...' : 'Enviar →'}
+                </button>
+              </div>
+              <p class="dq-field-note">Tus datos solo se usan para contactarte sobre el programa de referidos Siigo.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    renderThanks() {
+      return `
+        <div class="dq-wrapper">
+          <div class="dq-container">
+            <div class="dq-intro">
+              <div class="dq-badge">
+                <span class="dq-badge-dot"></span>
+                ¡Listo!
+              </div>
+              <h1 class="dq-title">
+                Gracias por <span class="dq-title-gradient">referirte</span>
+              </h1>
+              <p class="dq-subtitle">
+                Recibimos tus datos. Nuestro equipo te contactará pronto por WhatsApp o correo.
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async submitLead() {
+      this.state.submitting = true;
+      this.state.error = '';
+      this.renderAll();
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/public/siigo-referrals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.state.lead),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'No se pudo enviar el formulario');
+        }
+        this.state.screen = 'thanks';
+      } catch (err) {
+        this.state.error = err instanceof Error ? err.message : 'No se pudo enviar el formulario';
+      } finally {
+        this.state.submitting = false;
+        this.renderAll();
+      }
+    }
+
+    attachListeners() {
+      const fields = document.querySelectorAll('[data-lead-field]');
+      fields.forEach((field) => {
+        const eventName = field.tagName === 'SELECT' ? 'change' : 'input';
+        field.addEventListener(eventName, () => {
+          this.state.lead[field.getAttribute('data-lead-field')] = field.value;
+          this.renderAll();
+        });
+      });
+
+      const submitBtn = document.querySelector('.dq-btn-submit-referral');
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => this.submitLead());
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      new SiigoReferralForm();
+    });
+  } else {
+    new SiigoReferralForm();
+  }
+</script>

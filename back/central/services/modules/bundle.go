@@ -33,6 +33,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
 	"github.com/secamc93/probability/back/central/services/modules/shipping_margins"
+	"github.com/secamc93/probability/back/central/services/modules/siigoreferrals"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
 	"github.com/secamc93/probability/back/central/services/modules/tickets"
@@ -102,6 +103,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	publicsite.New(router, database, logger, environment, payBundle, s3)
 
 	marketingleads.New(router, database, logger, nil)
+	siigoreferrals.New(router, database, logger)
 
 	websiteconfig.New(router, database, logger, s3, environment)
 	tickets.New(router, database, logger, s3)
