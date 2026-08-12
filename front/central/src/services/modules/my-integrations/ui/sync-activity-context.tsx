@@ -37,6 +37,7 @@ export interface ProductsResult {
     onlyInChannel: number;
     channelNoSku: number;
     skuChanged: number;
+    skuTypo: number;
     matchRules?: ProductMatchRuleSummary[];
 }
 
@@ -49,6 +50,7 @@ export type DetailGroup =
     | 'only_channel'
     | 'channel_no_sku'
     | 'sku_changed'
+    | 'sku_typo'
     | 'updated'
     | 'skipped'
     | 'failed';
@@ -272,6 +274,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                             onlyInChannel: Number(data.only_in_channel) || 0,
                             channelNoSku: Number(data.channel_no_sku) || 0,
                             skuChanged: Number(data.sku_changed) || 0,
+                            skuTypo: Number(data.sku_typo) || 0,
                             matchRules: Array.isArray(data.match_rules) ? (data.match_rules as ProductMatchRuleSummary[]) : undefined,
                         },
                     }));
@@ -368,6 +371,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                         onlyInChannel: row.only_in_channel || 0,
                         channelNoSku: row.channel_no_sku || 0,
                         skuChanged: row.sku_changed || 0,
+                        skuTypo: row.sku_typo || 0,
                     },
                 }));
             } else {

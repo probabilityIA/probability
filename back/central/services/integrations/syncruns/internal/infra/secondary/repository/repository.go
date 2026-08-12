@@ -43,6 +43,7 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 		OnlyInChannel:     run.OnlyInChannel,
 		ChannelNoSKU:      run.ChannelNoSKU,
 		SKUChanged:        run.SKUChanged,
+		SKUTypo:           run.SKUTypo,
 		Status:            run.Status,
 		Message:           run.Message,
 		Detail:            detail,
@@ -63,7 +64,7 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 			Where("id = ?", existing.ID).
 			Select("correlation_id", "started_at", "finished_at", "total", "updated", "unchanged",
 				"skipped", "failed", "matched", "not_associated", "only_in_probability",
-				"only_in_channel", "channel_no_sku", "sku_changed", "status", "message", "detail", "updated_at").
+				"only_in_channel", "channel_no_sku", "sku_changed", "sku_typo", "status", "message", "detail", "updated_at").
 			Updates(&row).Error; updateErr != nil {
 			return updateErr
 		}
@@ -193,6 +194,7 @@ func (r *repository) ListLastByBusiness(ctx context.Context, businessID uint) ([
 			OnlyInChannel:     row.OnlyInChannel,
 			ChannelNoSKU:      row.ChannelNoSKU,
 			SKUChanged:        row.SKUChanged,
+			SKUTypo:           row.SKUTypo,
 			Status:            row.Status,
 			Message:           row.Message,
 		}

@@ -38,6 +38,7 @@ entorno desde cero si algun dia hace falta.
 | 2026-08-06 | `fixVigaCodCalibracionFallida` | Ajusto `cod_total` y `cod_carrier_fee` de VIG-0071, VIG-0072 y VIG-0069 al valor que liquida EnvioClick (3 ordenes) | produccion |
 | 2026-08-12 | `migrateSyncRunItemParent` | Agrego `parent_ref`, `parent_label` y `variant_label` a `integration_sync_run_items` (+ indice en `parent_ref`) para agrupar variantes por publicacion en el comparativo | produccion |
 | 2026-08-12 | `migrateSyncRunChannelNoSKU` | Agrego `channel_no_sku` a `integration_sync_runs` para contar los items del canal que no tienen SKU y no se pueden emparejar | produccion |
+| 2026-08-12 | `migrateSyncRunSKUTypo` | Agrego `sku_typo` a `integration_sync_runs` para contar los posibles errores de digitacion detectados | produccion |
 | 2026-08-12 | `migrateProductIntegrationLastPushedQty` | Agrego `last_pushed_qty` a `product_business_integrations` para no repetir el push cuando el stock no cambio | produccion |
 | 2026-08-12 | `migrateSyncRunSKUChanged` | Agrego `sku_changed` a `integration_sync_runs` para contar los mapeos cuyo SKU cambio en el canal | produccion |
 | 2026-08-12 | `migrateProductIntegrationLogisticType` | Agrego `external_logistic_type` a `product_business_integrations` para saber si la publicacion es de fulfillment (ML administra el stock y no se puede empujar). AutoMigrate arrastro tambien un DEFAULT '[]' en `subscription_types.features`, que ya coincidia con el modelo | produccion |

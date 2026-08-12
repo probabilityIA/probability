@@ -85,6 +85,7 @@ type SyncRun struct {
 	OnlyInChannel     int
 	ChannelNoSKU      int
 	SKUChanged        int
+	SKUTypo           int
 
 	Status  string
 	Message string

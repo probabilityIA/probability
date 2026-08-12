@@ -91,6 +91,7 @@ type ReconcileResult struct {
 	MeliNoSKU            int
 	MeliNoSKUItems       []ProductBrief
 	SKUChangedItems      []ProductBrief
+	TypoSuspects         []productmatch.TypoSuspect
 	MatchRules           []productmatch.Rule
 }
 

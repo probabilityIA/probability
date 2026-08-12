@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -58,6 +59,7 @@ func (uc *meliUseCase) ReconcileProductsAsync(ctx context.Context, integrationID
 		"probability_no_sku":  result.ProbabilityNoSKU,
 		"channel_no_sku":      result.MeliNoSKU,
 		"sku_changed":         len(result.SKUChangedItems),
+		"sku_typo":            len(result.TypoSuspects),
 		"match_rules":         result.MatchRules,
 	}
 
@@ -108,12 +110,33 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 		}
 	}
 
+	addTypos := func(items []productmatch.TypoSuspect) {
+		for _, item := range items {
+			motivo := "letras trocadas"
+			if item.Reason == productmatch.ReasonOneCharAndQty {
+				motivo = "un caracter de diferencia y la misma cantidad"
+			}
+			detail = append(detail, reconcileDetailItem{
+				SKU:          item.ChannelSKU,
+				Label:        "posible error de digitacion: " + item.ChannelSKU + " -> " + item.ProbabilitySKU + " (" + motivo + ")",
+				Tone:         "warn",
+				Group:        "sku_typo",
+				MatchedBy:    item.ChannelSKU,
+				MatchedValue: item.ProbabilitySKU,
+				ParentRef:    item.ChannelRef,
+				ParentLabel:  item.ChannelName,
+				VariantLabel: item.ChannelLabel,
+			})
+		}
+	}
+
 	add(result.MatchedNotAssociated, "sin asociar", "warn", "not_associated")
 	add(result.MatchedItems, "en ambos", "ok", "both")
 	add(result.OnlyInProbability, "solo en Probability", "warn", "only_probability")
 	add(result.OnlyInMeli, "solo en "+channelLabel, "warn", "only_channel")
 	add(result.MeliNoSKUItems, "sin SKU en "+channelLabel, "error", "channel_no_sku")
 	addSKUChanged(result.SKUChangedItems)
+	addTypos(result.TypoSuspects)
 
 	return detail
 }

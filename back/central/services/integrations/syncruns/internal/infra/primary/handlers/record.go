@@ -39,6 +39,7 @@ type recordRequest struct {
 	OnlyInChannel     int `json:"only_in_channel"`
 	ChannelNoSKU      int `json:"channel_no_sku"`
 	SKUChanged        int `json:"sku_changed"`
+	SKUTypo           int `json:"sku_typo"`
 
 	Detail []detailRequest `json:"detail"`
 }
@@ -79,6 +80,7 @@ func (h *handler) Record(c *gin.Context) {
 		OnlyInChannel:     req.OnlyInChannel,
 		ChannelNoSKU:      req.ChannelNoSKU,
 		SKUChanged:        req.SKUChanged,
+		SKUTypo:           req.SKUTypo,
 		Status:            req.Status,
 		Message:           req.Message,
 	}

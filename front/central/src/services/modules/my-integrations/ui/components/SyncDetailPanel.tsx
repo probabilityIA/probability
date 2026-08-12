@@ -64,6 +64,12 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
         text: 'text-amber-700 dark:text-amber-300',
         chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-300',
     },
+    sku_typo: {
+        label: 'Posible error de digitacion',
+        dot: 'bg-amber-500',
+        text: 'text-amber-800 dark:text-amber-300',
+        chip: 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-500/50 dark:bg-amber-900/40 dark:text-amber-300',
+    },
     sku_changed: {
         label: 'SKU cambiado en el canal',
         dot: 'bg-red-600',
@@ -84,7 +90,7 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
     },
 };
 
-const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku', 'sku_changed'];
+const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku', 'sku_changed', 'sku_typo'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
 const PAGE_SIZE = 50;
@@ -128,6 +134,7 @@ const groupLabel = (group: DetailGroup, providerLabel: string) => {
     if (group === 'only_channel') return `Solo en ${providerLabel}`;
     if (group === 'channel_no_sku') return `Sin SKU en ${providerLabel}`;
     if (group === 'sku_changed') return `SKU cambiado en ${providerLabel}`;
+    if (group === 'sku_typo') return 'Posible error de digitacion';
     return GROUP_STYLES[group].label;
 };
 
@@ -307,6 +314,7 @@ export function SyncDetailPanel({
         });
     };
 
+    const typoCount = isLive ? (liveCounts.get('sku_typo') ?? 0) : (counts.sku_typo ?? 0);
     const skuChangedCount = isLive ? (liveCounts.get('sku_changed') ?? 0) : (counts.sku_changed ?? 0);
     const noSkuCount = isLive ? (liveCounts.get('channel_no_sku') ?? 0) : (counts.channel_no_sku ?? 0);
 
@@ -368,6 +376,16 @@ export function SyncDetailPanel({
                 )}
             </div>
 
+            {typoCount > 0 && (filter === 'all' || filter === 'sku_typo') && (
+                <div className="flex items-start gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-[10.5px] leading-snug text-amber-900 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-300">
+                    <AlertTriangle size={12} className="mt-px flex-shrink-0" />
+                    <span>
+                        <strong>{typoCount}</strong> {typoCount === 1 ? 'SKU se parece' : 'SKU se parecen'} mucho a un producto que quedo sin emparejar.
+                        Suele ser el mismo producto escrito distinto en cada sistema. Revisa y corrige el SKU en {providerLabel} o aca.
+                    </span>
+                </div>
+            )}
+
             {skuChangedCount > 0 && (filter === 'all' || filter === 'sku_changed') && (
                 <div className="flex items-start gap-1.5 rounded-lg border border-red-300 bg-red-100 px-2 py-1.5 text-[10.5px] leading-snug text-red-800 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-300">
                     <AlertTriangle size={12} className="mt-px flex-shrink-0" />
@@ -428,6 +446,8 @@ export function SyncDetailPanel({
                                 className={`w-28 flex-shrink-0 truncate ${
                                     item.group === 'channel_no_sku'
                                         ? 'italic font-semibold text-red-600 dark:text-red-400'
+                                        : item.group === 'sku_typo'
+                                            ? 'font-mono font-semibold text-amber-800 dark:text-amber-300'
                                         : item.group === 'sku_changed'
                                             ? 'font-mono font-semibold text-red-700 dark:text-red-400'
                                             : 'font-mono font-semibold text-gray-700 dark:text-gray-200'

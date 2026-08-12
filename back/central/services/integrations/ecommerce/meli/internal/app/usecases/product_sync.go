@@ -32,6 +32,37 @@ type providerUpsertMsg struct {
 
 const noSKUPlaceholder = "(sin SKU)"
 
+// detectTypoSuspects cruza lo que quedo solo en cada lado buscando el mismo
+// producto escrito distinto. Los sin-SKU no participan: ahi no hay nada que
+// comparar y ya tienen su propio grupo.
+func detectTypoSuspects(rc *reconcileContext) []productmatch.TypoSuspect {
+	canal := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInChannel))
+	for _, idx := range rc.outcome.OnlyInChannel {
+		m := rc.meliProducts[idx]
+		canal = append(canal, productmatch.TypoCandidate{
+			SKU:      m.SKU,
+			Name:     m.Name,
+			Quantity: m.StockQuantity,
+			HasQty:   true,
+			Ref:      parentRef(m),
+			Label:    m.VariantLabel,
+		})
+	}
+
+	propios := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInProbability))
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		propios = append(propios, productmatch.TypoCandidate{
+			SKU:      p.SKU,
+			Name:     p.Name,
+			Quantity: p.StockQuantity,
+			HasQty:   true,
+		})
+	}
+
+	return productmatch.DetectTypos(canal, propios)
+}
+
 func channelKey(itemID, variantID string) string {
 	return itemID + "|" + variantID
 }
@@ -208,6 +239,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 	}
 
 	result.SKUChangedItems = detectSKUChanges(mapped, rc.meliProducts)
+	result.TypoSuspects = detectTypoSuspects(rc)
 
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]

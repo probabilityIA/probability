@@ -44,6 +44,7 @@ function detailCountsOf(
                 only_channel: result.onlyInChannel,
                 channel_no_sku: result.channelNoSku,
                 sku_changed: result.skuChanged,
+                sku_typo: result.skuTypo,
             };
         }
         return {
@@ -53,6 +54,7 @@ function detailCountsOf(
             only_channel: lastRun?.only_in_channel ?? 0,
             channel_no_sku: lastRun?.channel_no_sku ?? 0,
             sku_changed: lastRun?.sku_changed ?? 0,
+            sku_typo: lastRun?.sku_typo ?? 0,
         };
     }
     if (result?.kind === 'inventory') {

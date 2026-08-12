@@ -37,6 +37,7 @@ type runResponse struct {
 	OnlyInChannel     int `json:"only_in_channel"`
 	ChannelNoSKU      int `json:"channel_no_sku"`
 	SKUChanged        int `json:"sku_changed"`
+	SKUTypo           int `json:"sku_typo"`
 
 	Detail []detailResponse `json:"detail"`
 }
@@ -84,6 +85,7 @@ func toRunResponses(runs []domain.SyncRun) []runResponse {
 			OnlyInChannel:     run.OnlyInChannel,
 			ChannelNoSKU:      run.ChannelNoSKU,
 			SKUChanged:        run.SKUChanged,
+			SKUTypo:           run.SKUTypo,
 			Detail:            make([]detailResponse, 0, len(run.Detail)),
 		}
 		if run.FinishedAt != nil {

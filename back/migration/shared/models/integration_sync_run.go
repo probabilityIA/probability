@@ -31,6 +31,7 @@ type IntegrationSyncRun struct {
 	OnlyInChannel     int `gorm:"default:0"`
 	ChannelNoSKU      int `gorm:"column:channel_no_sku;default:0"`
 	SKUChanged        int `gorm:"column:sku_changed;default:0"`
+	SKUTypo           int `gorm:"column:sku_typo;default:0"`
 
 	Status  string `gorm:"size:32;not null;default:'completed';index"`
 	Message string `gorm:"size:500"`
