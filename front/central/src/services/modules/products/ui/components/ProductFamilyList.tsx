@@ -3,7 +3,9 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { ProductFamily, Product } from '../../domain/types';
 import { getProductFamiliesAction, deleteProductFamilyAction, getFamilyVariantsAction } from '../../infra/actions';
-import { ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, XMarkIcon, PlusIcon, ScaleIcon } from '@heroicons/react/24/outline';
+import AssociateProductModal from './AssociateProductModal';
+import FamilyDimensionsModal from './FamilyDimensionsModal';
 
 interface ProductFamilyListProps {
     onEdit?: (family: ProductFamily) => void;
@@ -31,6 +33,8 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
         const [modalVariants, setModalVariants] = useState<Product[]>([]);
         const [modalLoading, setModalLoading] = useState(false);
         const [modalPage, setModalPage] = useState(1);
+        const [showAssociateModal, setShowAssociateModal] = useState(false);
+        const [showDimensionsModal, setShowDimensionsModal] = useState(false);
 
         useImperativeHandle(ref, () => ({ refresh: fetchFamilies }));
 
@@ -74,17 +78,21 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             }
         };
 
-        const handleOpenModal = async (family: ProductFamily) => {
-            setModalFamily(family);
-            setModalPage(1);
-            setModalVariants([]);
+        const fetchModalVariants = async (familyId: number) => {
             setModalLoading(true);
             try {
-                const res = await getFamilyVariantsAction(family.id, selectedBusinessId);
+                const res = await getFamilyVariantsAction(familyId, selectedBusinessId);
                 setModalVariants(res.data || []);
             } finally {
                 setModalLoading(false);
             }
+        };
+
+        const handleOpenModal = async (family: ProductFamily) => {
+            setModalFamily(family);
+            setModalPage(1);
+            setModalVariants([]);
+            await fetchModalVariants(family.id);
         };
 
         const stockBadge = (qty: number) => {
@@ -255,12 +263,30 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setModalFamily(null)}
-                                    className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    <XMarkIcon className="w-5 h-5" />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {modalVariants.length > 0 && (
+                                        <button
+                                            onClick={() => setShowDimensionsModal(true)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            <ScaleIcon className="w-4 h-4" />
+                                            Dimensiones
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setShowAssociateModal(true)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity"
+                                    >
+                                        <PlusIcon className="w-4 h-4" />
+                                        Asociar producto
+                                    </button>
+                                    <button
+                                        onClick={() => setModalFamily(null)}
+                                        className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <XMarkIcon className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="overflow-auto flex-1 p-5 flex flex-col gap-4">
@@ -334,6 +360,25 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                             </div>
                         </div>
                     </div>
+                )}
+
+                {modalFamily && showAssociateModal && (
+                    <AssociateProductModal
+                        businessId={selectedBusinessId}
+                        family={modalFamily}
+                        onClose={() => setShowAssociateModal(false)}
+                        onAssociated={() => fetchModalVariants(modalFamily.id)}
+                    />
+                )}
+
+                {modalFamily && showDimensionsModal && (
+                    <FamilyDimensionsModal
+                        businessId={selectedBusinessId}
+                        family={modalFamily}
+                        variants={modalVariants}
+                        onClose={() => setShowDimensionsModal(false)}
+                        onApplied={() => fetchModalVariants(modalFamily.id)}
+                    />
                 )}
             </>
         );
