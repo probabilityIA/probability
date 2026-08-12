@@ -150,7 +150,11 @@ import '../styles/quiz-shared.css';
         const eventName = field.tagName === 'SELECT' ? 'change' : 'input';
         field.addEventListener(eventName, () => {
           this.state.lead[field.getAttribute('data-lead-field')] = field.value;
-          this.renderAll();
+          const submitBtn = document.querySelector('.dq-btn-submit-referral');
+          if (submitBtn) {
+            const { name, email, phone, order_range } = this.state.lead;
+            submitBtn.disabled = !(name.trim() && email.trim() && phone.trim() && order_range);
+          }
         });
       });
 
