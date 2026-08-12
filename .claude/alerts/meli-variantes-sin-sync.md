@@ -93,6 +93,30 @@ mapear) contra el SKU que la variante tiene hoy. Sale como grupo propio
 desasocia ni se re-empareja solo: es una decision del cliente, no una que
 podamos adivinar.
 
+## Hallazgos de integraciones (modulo nuevo)
+
+`GET /api/v1/integrations/sync-runs/findings` agrega los hallazgos de TODOS los
+canales del negocio. Reusa lo que el comparativo ya persiste en
+`integration_sync_runs` y `integration_sync_run_items`, asi que no vuelve a
+consultar a los canales.
+
+Lo que sale de cada canal por separado: publicaciones sin SKU, SKU cambiado,
+posibles errores de digitacion, productos sin asociar.
+
+Lo que solo se ve cruzando todos (query en `repository/findings.go`):
+
+- **no publicado en ningun canal**: existe aqui y ningun canal de venta lo tiene
+- **se vende y no existe**: publicado en algun canal, sin producto en Probability
+- **desbalance**: en un canal si y en otro no (puede ser intencional, va como
+  informativo)
+
+Medido en Viga: 2.241 SKU analizados, 443 sin publicar en ningun canal, 59 que se
+venden sin existir aqui, 922 con desbalance.
+
+En el front es el `FindingsPanel`, que se abre desde el signo de admiracion sobre
+el nucleo. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
+volumen.
+
 ## Pendiente
 
 ### IMPORTANTE
@@ -153,6 +177,30 @@ mapear) contra el SKU que la variante tiene hoy. Sale como grupo propio
 `sku_changed`, con el SKU viejo y el nuevo, para que el negocio lo corrija. NO se
 desasocia ni se re-empareja solo: es una decision del cliente, no una que
 podamos adivinar.
+
+## Hallazgos de integraciones (modulo nuevo)
+
+`GET /api/v1/integrations/sync-runs/findings` agrega los hallazgos de TODOS los
+canales del negocio. Reusa lo que el comparativo ya persiste en
+`integration_sync_runs` y `integration_sync_run_items`, asi que no vuelve a
+consultar a los canales.
+
+Lo que sale de cada canal por separado: publicaciones sin SKU, SKU cambiado,
+posibles errores de digitacion, productos sin asociar.
+
+Lo que solo se ve cruzando todos (query en `repository/findings.go`):
+
+- **no publicado en ningun canal**: existe aqui y ningun canal de venta lo tiene
+- **se vende y no existe**: publicado en algun canal, sin producto en Probability
+- **desbalance**: en un canal si y en otro no (puede ser intencional, va como
+  informativo)
+
+Medido en Viga: 2.241 SKU analizados, 443 sin publicar en ningun canal, 59 que se
+venden sin existir aqui, 922 con desbalance.
+
+En el front es el `FindingsPanel`, que se abre desde el signo de admiracion sobre
+el nucleo. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
+volumen.
 
 ## Pendientes de datos del negocio (no son de codigo)
 

@@ -19,12 +19,14 @@ interface CyberHubProps {
     integrations: Integration[];
     resourceActive: Record<string, boolean>;
     onSyncClick?: () => void;
+    findingsCount?: number;
+    onFindingsClick?: () => void;
 }
 
 const ORBIT_RADIUS = 120;
 
 export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function CyberHub(
-    { integrations, resourceActive, onSyncClick },
+    { integrations, resourceActive, onSyncClick, findingsCount = 0, onFindingsClick },
     ref,
 ) {
     const { mode, nodes, running, environment, canRun, runCurrent } = useSyncActivity();
@@ -153,6 +155,17 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             ? ({ '--charge': chargeColor, animation: 'cyber-charge 1s ease-in-out infinite' } as CSSProperties)
                             : undefined}
                     >
+                        {findingsCount > 0 && onFindingsClick && (
+                            <button
+                                onClick={onFindingsClick}
+                                title={`${findingsCount} ${findingsCount === 1 ? 'hallazgo' : 'hallazgos'} en tus integraciones`}
+                                aria-label={`Ver ${findingsCount} hallazgos de tus integraciones`}
+                                className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 px-1 text-[11px] font-black text-white shadow-lg transition-transform hover:scale-110 dark:border-gray-900"
+                                style={{ animation: 'cyber-alert-pulse 2s ease-in-out infinite' }}
+                            >
+                                !
+                            </button>
+                        )}
                         <span className="text-[9px] uppercase tracking-[0.3em] text-gray-400">nucleo</span>
                         <span className="text-sm font-bold tracking-wide text-gray-800 dark:text-white">
                             Probability

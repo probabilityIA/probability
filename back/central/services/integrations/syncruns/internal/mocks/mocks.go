@@ -13,6 +13,8 @@ type RepositoryMock struct {
 	ListLastByBusinessFn           func(ctx context.Context, businessID uint) ([]domain.SyncRun, error)
 	ListDetailFn                   func(ctx context.Context, query domain.DetailQuery) (*domain.DetailPage, error)
 	IntegrationBelongsToBusinessFn func(ctx context.Context, integrationID, businessID uint) (bool, error)
+	ChannelSummariesFn             func(ctx context.Context, businessID uint) ([]domain.ChannelSummary, error)
+	CrossChannelFn                 func(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error)
 
 	Guardados       []domain.SyncRun
 	ConsultasDueno  []ConsultaDueno
@@ -114,4 +116,18 @@ func (l *SilentLogger) WithModule(module string) log.ILogger {
 
 func (l *SilentLogger) WithBusinessID(businessID uint) log.ILogger {
 	return l
+}
+
+func (m *RepositoryMock) ChannelSummaries(ctx context.Context, businessID uint) ([]domain.ChannelSummary, error) {
+	if m.ChannelSummariesFn != nil {
+		return m.ChannelSummariesFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) CrossChannel(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error) {
+	if m.CrossChannelFn != nil {
+		return m.CrossChannelFn(ctx, businessID)
+	}
+	return domain.CrossChannelCounts{}, nil
 }

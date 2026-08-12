@@ -22,6 +22,9 @@ import { CyberHub } from './CyberHub';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
 import { SyncActivityProvider } from '../sync-activity-context';
 import { SyncActions } from './SyncActions';
+import { FindingsPanel } from './FindingsPanel';
+import { fetchSyncFindings } from '../../infra/repository/sync-findings';
+import type { FindingsReport } from '../../domain/types';
 
 interface MyIntegrationsModalProps {
     isOpen: boolean;
@@ -42,6 +45,7 @@ const HUB_KEYFRAMES = `
 @keyframes cyber-spark { 0% { transform: scale(.4); opacity: 0; } 15% { opacity: 1; } 45% { transform: scale(1.15); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
 @keyframes cyber-core-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,.28), 0 18px 44px rgba(15,50,110,.16); } 50% { box-shadow: 0 0 0 16px rgba(37,99,235,0), 0 18px 44px rgba(15,50,110,.16); } }
 @keyframes cyber-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes cyber-alert-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.55); } 50% { box-shadow: 0 0 0 7px rgba(245,158,11,0); } }
 @keyframes cyber-sweep { from { background-position: 200% 0; } to { background-position: -100% 0; } }
 .orbit-ring:has(.orbit-chip:hover) { animation-play-state: paused !important; }
 .orbit-ring:has(.orbit-chip:hover) .orbit-chip { animation-play-state: paused !important; }
@@ -50,6 +54,20 @@ const HUB_KEYFRAMES = `
 export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrationsModalProps) {
     const { permissions, isSuperAdmin } = usePermissions();
     const effectiveBusinessId = businessId ?? (isSuperAdmin ? null : permissions?.business_id ?? null);
+    const [findings, setFindings] = useState<FindingsReport | null>(null);
+    const [showFindings, setShowFindings] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setShowFindings(false);
+            return;
+        }
+        const controller = new AbortController();
+        fetchSyncFindings(effectiveBusinessId ?? undefined, controller.signal)
+            .then(setFindings)
+            .catch(() => setFindings(null));
+        return () => controller.abort();
+    }, [isOpen, effectiveBusinessId]);
 
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
     const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -338,8 +356,16 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 ref={hubRef}
                                 integrations={internalIntegrations}
                                 resourceActive={resourceActive}
+                                findingsCount={findings?.findings.length ?? 0}
+                                onFindingsClick={() => setShowFindings(true)}
                             />
                             </div>
+                            {showFindings && (
+                                <FindingsPanel
+                                    businessId={effectiveBusinessId}
+                                    onClose={() => setShowFindings(false)}
+                                />
+                            )}
                             <div className="flex flex-wrap gap-8 lg:flex-nowrap">
                                 {services.map(renderCluster)}
                             </div>

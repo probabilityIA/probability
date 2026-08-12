@@ -94,3 +94,33 @@ export const INTERNAL_MODULE_RESOURCE_NAME: Record<string, string> = {
     storefront_module: 'Storefront',
     invoicing_module: 'Facturacion',
 };
+
+export type FindingSeverity = 'error' | 'warn' | 'info';
+
+export interface Finding {
+    code: string;
+    severity: FindingSeverity;
+    title: string;
+    detail: string;
+    count: number;
+    channels?: string[];
+}
+
+export interface FindingChannelSummary {
+    integration_id: number;
+    integration_name: string;
+    channel_code: string;
+    matched: number;
+    not_associated: number;
+    only_in_channel: number;
+    channel_no_sku: number;
+    sku_changed: number;
+    sku_typo: number;
+    compared_at?: string;
+}
+
+export interface FindingsReport {
+    total: number;
+    findings: Finding[];
+    channels: FindingChannelSummary[];
+}

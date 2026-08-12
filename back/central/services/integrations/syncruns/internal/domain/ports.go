@@ -3,6 +3,8 @@ package domain
 import "context"
 
 type IRepository interface {
+	IFindingsRepository
+
 	Save(ctx context.Context, run *SyncRun) error
 	ListLastByBusiness(ctx context.Context, businessID uint) ([]SyncRun, error)
 	ListDetail(ctx context.Context, query DetailQuery) (*DetailPage, error)
@@ -13,4 +15,5 @@ type IUseCase interface {
 	Record(ctx context.Context, run *SyncRun) error
 	ListLast(ctx context.Context, businessID uint) ([]SyncRun, error)
 	ListDetail(ctx context.Context, query DetailQuery) (*DetailPage, error)
+	Findings(ctx context.Context, businessID uint) (*FindingsReport, error)
 }
