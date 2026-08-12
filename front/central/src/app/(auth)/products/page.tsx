@@ -25,7 +25,16 @@ export default function ProductsPage() {
     const [searchName, setSearchName] = useState('');
     const [searchSku, setSearchSku] = useState('');
     const [searchIntegration, setSearchIntegration] = useState('');
+    const [showIntegrationMenu, setShowIntegrationMenu] = useState(false);
+    const integrationMenuRef = useRef<HTMLDivElement>(null);
     const productListRef = useRef<any>(null);
+
+    const integrationOptions = [
+        { value: '', label: 'Todas las integraciones' },
+        { value: 'shopify', label: 'Shopify' },
+        { value: 'woocommerce', label: 'WooCommerce' },
+        { value: 'whatsapp', label: 'WhatsApp' },
+    ];
 
     const [isFamilyModalOpen, setIsFamilyModalOpen] = useState(false);
     const [selectedFamily, setSelectedFamily] = useState<ProductFamily | undefined>(undefined);
@@ -41,6 +50,17 @@ export default function ProductsPage() {
             if (!seen) setPulseTour(true);
         } catch {}
     }, []);
+
+    useEffect(() => {
+        if (!showIntegrationMenu) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (integrationMenuRef.current && !integrationMenuRef.current.contains(e.target as Node)) {
+                setShowIntegrationMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showIntegrationMenu]);
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
@@ -101,19 +121,18 @@ export default function ProductsPage() {
 
     return (
         <div className="space-y-6 p-8">
-            <div className="flex items-start gap-6">
-                <div className="flex-shrink-0 min-w-fit">
-                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Productos</h1>
-                    <p className="text-gray-600 dark:text-gray-300 text-base">
-                        Gestiona el catalogo de productos de tu negocio
-                    </p>
-                </div>
-
-                {!requiresBusinessSelection && (
-                    <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300 flex-1">
-                        <div className="flex justify-between items-end gap-4">
+            {!requiresBusinessSelection && (
+                <div className="flex justify-between items-start gap-4">
+                            <div className="flex gap-2 w-fit flex-shrink-0">
+                                <button onClick={() => setActiveTab('products')} className={tabClass('products')}>
+                                    SKUs / Productos
+                                </button>
+                                <button onClick={() => setActiveTab('families')} className={tabClass('families')}>
+                                    Familias de variantes
+                                </button>
+                            </div>
                             {activeTab === 'products' ? (
-                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-2.5">Nombre</label>
                                         <input
@@ -134,19 +153,6 @@ export default function ProductsPage() {
                                             className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary focus:border-business-primary text-gray-900 dark:text-white placeholder:text-gray-400 bg-white dark:bg-gray-700 transition-all text-sm"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-200 mb-2.5">Integraciones</label>
-                                        <select
-                                            value={searchIntegration}
-                                            onChange={e => setSearchIntegration(e.target.value)}
-                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-business-primary text-gray-900 dark:text-white bg-white dark:bg-gray-700 transition-all text-sm"
-                                        >
-                                            <option value="">Todas las integraciones</option>
-                                            <option value="shopify">Shopify</option>
-                                            <option value="woocommerce">WooCommerce</option>
-                                            <option value="whatsapp">WhatsApp</option>
-                                        </select>
-                                    </div>
                                 </div>
                             ) : (
                                 <div className="flex-1 flex items-center">
@@ -156,6 +162,33 @@ export default function ProductsPage() {
                                 </div>
                             )}
                             <div className="flex gap-3 flex-shrink-0">
+                                <div className="relative" ref={integrationMenuRef}>
+                                    <button
+                                        onClick={() => setShowIntegrationMenu(v => !v)}
+                                        title="Filtrar por integracion"
+                                        className="w-14 h-14 flex items-center justify-center rounded-2xl bg-[#4fc3c9] hover:bg-[#3fb0b6] text-white shadow-sm transition-all duration-200"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                                        </svg>
+                                    </button>
+                                    {showIntegrationMenu && (
+                                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-20">
+                                            {integrationOptions.map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    onClick={() => { setSearchIntegration(opt.value); setShowIntegrationMenu(false); }}
+                                                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${searchIntegration === opt.value
+                                                        ? 'bg-[#4fc3c9]/10 text-[#3fb0b6] font-semibold'
+                                                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                        }`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => setIsPricingModalOpen(true)}
                                     title="Grupos de clientes y precios por catalogo"
@@ -183,10 +216,7 @@ export default function ProductsPage() {
                                 </button>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
-
+            )}
             {requiresBusinessSelection ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,15 +226,6 @@ export default function ProductsPage() {
                 </div>
             ) : (
                 <>
-                    <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl w-fit">
-                        <button onClick={() => setActiveTab('products')} className={tabClass('products')}>
-                            SKUs / Productos
-                        </button>
-                        <button onClick={() => setActiveTab('families')} className={tabClass('families')}>
-                            Familias de variantes
-                        </button>
-                    </div>
-
                     {activeTab === 'products' ? (
                         <ProductList
                             ref={productListRef}
