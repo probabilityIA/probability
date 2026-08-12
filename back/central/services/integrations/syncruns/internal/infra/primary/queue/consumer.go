@@ -136,6 +136,7 @@ func (c *Consumer) recordProducts(ctx context.Context, msg envelope, finished ti
 		OnlyInProbability: intOf(msg.Data, "only_in_probability"),
 		OnlyInChannel:     intOf(msg.Data, "only_in_channel"),
 		ChannelNoSKU:      intOf(msg.Data, "channel_no_sku"),
+		SKUChanged:        intOf(msg.Data, "sku_changed"),
 		Status:            domain.StatusCompleted,
 		Message:           stringOf(msg.Data, "error"),
 		Detail:            reconcileDetail(msg.Data),

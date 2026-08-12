@@ -64,6 +64,12 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
         text: 'text-amber-700 dark:text-amber-300',
         chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-300',
     },
+    sku_changed: {
+        label: 'SKU cambiado en el canal',
+        dot: 'bg-red-600',
+        text: 'text-red-700 dark:text-red-400',
+        chip: 'border-red-400 bg-red-100 text-red-800 dark:border-red-500/60 dark:bg-red-900/40 dark:text-red-300',
+    },
     channel_no_sku: {
         label: 'Sin SKU en el canal',
         dot: 'bg-red-500',
@@ -78,7 +84,7 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
     },
 };
 
-const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku'];
+const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku', 'sku_changed'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
 const PAGE_SIZE = 50;
@@ -121,6 +127,7 @@ export const matchRuleLabel = (rule: string) => {
 const groupLabel = (group: DetailGroup, providerLabel: string) => {
     if (group === 'only_channel') return `Solo en ${providerLabel}`;
     if (group === 'channel_no_sku') return `Sin SKU en ${providerLabel}`;
+    if (group === 'sku_changed') return `SKU cambiado en ${providerLabel}`;
     return GROUP_STYLES[group].label;
 };
 
@@ -300,6 +307,7 @@ export function SyncDetailPanel({
         });
     };
 
+    const skuChangedCount = isLive ? (liveCounts.get('sku_changed') ?? 0) : (counts.sku_changed ?? 0);
     const noSkuCount = isLive ? (liveCounts.get('channel_no_sku') ?? 0) : (counts.channel_no_sku ?? 0);
 
     const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
@@ -360,6 +368,17 @@ export function SyncDetailPanel({
                 )}
             </div>
 
+            {skuChangedCount > 0 && (filter === 'all' || filter === 'sku_changed') && (
+                <div className="flex items-start gap-1.5 rounded-lg border border-red-300 bg-red-100 px-2 py-1.5 text-[10.5px] leading-snug text-red-800 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-300">
+                    <AlertTriangle size={12} className="mt-px flex-shrink-0" />
+                    <span>
+                        A <strong>{skuChangedCount}</strong> {skuChangedCount === 1 ? 'variante le cambiaron' : 'variantes les cambiaron'} el SKU en {providerLabel}.
+                        La asociacion sigue apuntando ahi, asi que les estamos reportando el inventario del producto anterior.
+                        Hay que revisarlas y volver a asociarlas.
+                    </span>
+                </div>
+            )}
+
             {noSkuCount > 0 && (filter === 'all' || filter === 'channel_no_sku') && (
                 <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[10.5px] leading-snug text-red-700 dark:border-red-500/40 dark:bg-red-900/25 dark:text-red-300">
                     <AlertTriangle size={12} className="mt-px flex-shrink-0" />
@@ -409,7 +428,9 @@ export function SyncDetailPanel({
                                 className={`w-28 flex-shrink-0 truncate ${
                                     item.group === 'channel_no_sku'
                                         ? 'italic font-semibold text-red-600 dark:text-red-400'
-                                        : 'font-mono font-semibold text-gray-700 dark:text-gray-200'
+                                        : item.group === 'sku_changed'
+                                            ? 'font-mono font-semibold text-red-700 dark:text-red-400'
+                                            : 'font-mono font-semibold text-gray-700 dark:text-gray-200'
                                 }`}
                             >
                                 {item.sku}

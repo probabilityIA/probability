@@ -60,6 +60,7 @@ export interface SyncRunRecord {
     only_in_probability: number;
     only_in_channel: number;
     channel_no_sku?: number;
+    sku_changed?: number;
     detail: SyncRunDetail[];
 }
 
@@ -79,6 +80,7 @@ export interface SyncRunPayload {
     only_in_probability?: number;
     only_in_channel?: number;
     channel_no_sku?: number;
+    sku_changed?: number;
     detail?: SyncRunDetail[];
 }
 

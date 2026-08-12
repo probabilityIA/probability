@@ -80,6 +80,19 @@ fallar. El valor se refresca solo: `processItemNotification` (topics `items`,
 tipo logistico ahi mismo. Si el vendedor saca una publicacion de fulfillment,
 el webhook lo trae y vuelve a entrar al sync sin intervencion.
 
+## Deteccion de SKU cambiado
+
+El id de la variante nunca cambia, asi que si el vendedor le edita el SKU a una
+talla el mapeo sigue "funcionando": apunta a la misma variante, pero esa variante
+ya es otro producto. Le seguiriamos empujando el inventario del producto viejo,
+sin ningun error.
+
+Se detecta en el comparativo comparando `external_sku` (la copia al momento de
+mapear) contra el SKU que la variante tiene hoy. Sale como grupo propio
+`sku_changed`, con el SKU viejo y el nuevo, para que el negocio lo corrija. NO se
+desasocia ni se re-empareja solo: es una decision del cliente, no una que
+podamos adivinar.
+
 ## Pendiente
 
 ### IMPORTANTE
@@ -127,6 +140,19 @@ fallar. El valor se refresca solo: `processItemNotification` (topics `items`,
 `items_prices`, `stock-locations`) ya hacia un `GetItem`, y ahora actualiza el
 tipo logistico ahi mismo. Si el vendedor saca una publicacion de fulfillment,
 el webhook lo trae y vuelve a entrar al sync sin intervencion.
+
+## Deteccion de SKU cambiado
+
+El id de la variante nunca cambia, asi que si el vendedor le edita el SKU a una
+talla el mapeo sigue "funcionando": apunta a la misma variante, pero esa variante
+ya es otro producto. Le seguiriamos empujando el inventario del producto viejo,
+sin ningun error.
+
+Se detecta en el comparativo comparando `external_sku` (la copia al momento de
+mapear) contra el SKU que la variante tiene hoy. Sale como grupo propio
+`sku_changed`, con el SKU viejo y el nuevo, para que el negocio lo corrija. NO se
+desasocia ni se re-empareja solo: es una decision del cliente, no una que
+podamos adivinar.
 
 ## Pendientes de datos del negocio (no son de codigo)
 

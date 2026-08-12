@@ -90,6 +90,7 @@ type ReconcileResult struct {
 	ProbabilityNoSKU     int
 	MeliNoSKU            int
 	MeliNoSKUItems       []ProductBrief
+	SKUChangedItems      []ProductBrief
 	MatchRules           []productmatch.Rule
 }
 

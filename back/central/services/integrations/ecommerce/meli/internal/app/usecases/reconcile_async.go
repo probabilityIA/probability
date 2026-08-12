@@ -57,6 +57,7 @@ func (uc *meliUseCase) ReconcileProductsAsync(ctx context.Context, integrationID
 		"only_in_channel":     len(result.OnlyInMeli),
 		"probability_no_sku":  result.ProbabilityNoSKU,
 		"channel_no_sku":      result.MeliNoSKU,
+		"sku_changed":         len(result.SKUChangedItems),
 		"match_rules":         result.MatchRules,
 	}
 
@@ -93,11 +94,26 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 		}
 	}
 
+	addSKUChanged := func(items []domain.ProductBrief) {
+		for _, item := range items {
+			detail = append(detail, reconcileDetailItem{
+				SKU:          item.SKU,
+				Label:        "el SKU cambio en " + channelLabel + ": " + item.MatchedBy + " -> " + item.MatchedValue,
+				Tone:         "error",
+				Group:        "sku_changed",
+				ParentRef:    item.ParentRef,
+				ParentLabel:  item.ParentLabel,
+				VariantLabel: item.VariantLabel,
+			})
+		}
+	}
+
 	add(result.MatchedNotAssociated, "sin asociar", "warn", "not_associated")
 	add(result.MatchedItems, "en ambos", "ok", "both")
 	add(result.OnlyInProbability, "solo en Probability", "warn", "only_probability")
 	add(result.OnlyInMeli, "solo en "+channelLabel, "warn", "only_channel")
 	add(result.MeliNoSKUItems, "sin SKU en "+channelLabel, "error", "channel_no_sku")
+	addSKUChanged(result.SKUChangedItems)
 
 	return detail
 }

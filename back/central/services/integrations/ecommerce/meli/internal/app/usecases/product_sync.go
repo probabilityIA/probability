@@ -32,6 +32,44 @@ type providerUpsertMsg struct {
 
 const noSKUPlaceholder = "(sin SKU)"
 
+func channelKey(itemID, variantID string) string {
+	return itemID + "|" + variantID
+}
+
+// detectSKUChanges encuentra los mapeos cuyo SKU cambio en el canal. El id de la
+// variante nunca cambia, asi que el mapeo sigue "funcionando" y le empujariamos
+// el stock del producto viejo a una variante que ya es otra cosa.
+func detectSKUChanges(mapped []domain.MappedItem, channel []domain.MeliProduct) []domain.ProductBrief {
+	actual := make(map[string]domain.MeliProduct, len(channel))
+	for _, m := range channel {
+		actual[channelKey(m.ID, m.VariationID)] = m
+	}
+
+	changed := make([]domain.ProductBrief, 0)
+	for _, m := range mapped {
+		if m.ExternalSKU == "" {
+			continue
+		}
+		current, ok := actual[channelKey(m.ExternalItemID, m.ExternalVariantID)]
+		if !ok || current.SKU == "" {
+			continue
+		}
+		if normalizeSKU(current.SKU) == normalizeSKU(m.ExternalSKU) {
+			continue
+		}
+		changed = append(changed, domain.ProductBrief{
+			SKU:          m.SKU,
+			Name:         current.Name,
+			MatchedBy:    m.ExternalSKU,
+			MatchedValue: current.SKU,
+			ParentRef:    parentRef(current),
+			ParentLabel:  current.ParentName,
+			VariantLabel: current.VariantLabel,
+		})
+	}
+	return changed
+}
+
 func parentRef(m domain.MeliProduct) string {
 	if m.VariationID == "" {
 		return ""
@@ -165,8 +203,11 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
 		MeliNoSKU:            rc.outcome.ChannelUnmatchable,
 		MeliNoSKUItems:       []domain.ProductBrief{},
+		SKUChangedItems:      []domain.ProductBrief{},
 		MatchRules:           rc.rules,
 	}
+
+	result.SKUChangedItems = detectSKUChanges(mapped, rc.meliProducts)
 
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
