@@ -46,6 +46,9 @@ type Outcome struct {
 	OnlyInChannel          []int
 	ProbabilityUnmatchable int
 	ChannelUnmatchable     int
+
+	ProbabilityNoKey []int
+	ChannelNoKey     []int
 }
 
 func Reconcile(rules []Rule, probability, channel []Item) Outcome {
@@ -61,12 +64,15 @@ func Reconcile(rules []Rule, probability, channel []Item) Outcome {
 		Pairs:             []Pair{},
 		OnlyInProbability: []int{},
 		OnlyInChannel:     []int{},
+		ProbabilityNoKey:  []int{},
+		ChannelNoKey:      []int{},
 	}
 
 	matchedProb := make(map[int]bool, len(probability))
 	for ci, cv := range chanValues {
 		if !index.HasAnyKey(cv) {
 			out.ChannelUnmatchable++
+			out.ChannelNoKey = append(out.ChannelNoKey, ci)
 			continue
 		}
 		pi, rule, ok := index.Find(cv)
@@ -84,6 +90,7 @@ func Reconcile(rules []Rule, probability, channel []Item) Outcome {
 		}
 		if !channelProbe.HasAnyKey(pv) {
 			out.ProbabilityUnmatchable++
+			out.ProbabilityNoKey = append(out.ProbabilityNoKey, pi)
 			continue
 		}
 		out.OnlyInProbability = append(out.OnlyInProbability, pi)

@@ -41,6 +41,7 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 		NotAssociated:     run.NotAssociated,
 		OnlyInProbability: run.OnlyInProbability,
 		OnlyInChannel:     run.OnlyInChannel,
+		ChannelNoSKU:      run.ChannelNoSKU,
 		Status:            run.Status,
 		Message:           run.Message,
 		Detail:            detail,
@@ -61,7 +62,7 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 			Where("id = ?", existing.ID).
 			Select("correlation_id", "started_at", "finished_at", "total", "updated", "unchanged",
 				"skipped", "failed", "matched", "not_associated", "only_in_probability",
-				"only_in_channel", "status", "message", "detail", "updated_at").
+				"only_in_channel", "channel_no_sku", "status", "message", "detail", "updated_at").
 			Updates(&row).Error; updateErr != nil {
 			return updateErr
 		}
@@ -81,11 +82,14 @@ func replaceDetailItems(tx *gorm.DB, runID uint, detail []domain.DetailItem) err
 	rows := make([]models.IntegrationSyncRunItem, 0, len(detail))
 	for _, item := range detail {
 		rows = append(rows, models.IntegrationSyncRunItem{
-			RunID:     runID,
-			GroupCode: truncate(item.Group, 32),
-			SKU:       truncate(item.SKU, 120),
-			Label:     truncate(item.Label, 300),
-			Tone:      truncate(item.Tone, 16),
+			RunID:        runID,
+			GroupCode:    truncate(item.Group, 32),
+			SKU:          truncate(item.SKU, 120),
+			Label:        truncate(item.Label, 300),
+			Tone:         truncate(item.Tone, 16),
+			ParentRef:    truncate(item.ParentRef, 64),
+			ParentLabel:  truncate(item.ParentLabel, 300),
+			VariantLabel: truncate(item.VariantLabel, 200),
 		})
 	}
 	return tx.CreateInBatches(&rows, detailInsertBatch).Error
@@ -144,10 +148,13 @@ func (r *repository) ListDetail(ctx context.Context, query domain.DetailQuery) (
 
 	for _, row := range rows {
 		page.Items = append(page.Items, domain.DetailItem{
-			SKU:   row.SKU,
-			Label: row.Label,
-			Tone:  row.Tone,
-			Group: row.GroupCode,
+			SKU:          row.SKU,
+			Label:        row.Label,
+			Tone:         row.Tone,
+			Group:        row.GroupCode,
+			ParentRef:    row.ParentRef,
+			ParentLabel:  row.ParentLabel,
+			VariantLabel: row.VariantLabel,
 		})
 	}
 
@@ -183,6 +190,7 @@ func (r *repository) ListLastByBusiness(ctx context.Context, businessID uint) ([
 			NotAssociated:     row.NotAssociated,
 			OnlyInProbability: row.OnlyInProbability,
 			OnlyInChannel:     row.OnlyInChannel,
+			ChannelNoSKU:      row.ChannelNoSKU,
 			Status:            row.Status,
 			Message:           row.Message,
 		}

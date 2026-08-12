@@ -26,10 +26,32 @@ type meliItemAttribute struct {
 }
 
 type meliItemVariation struct {
-	ID                int64               `json:"id"`
-	AvailableQuantity int                 `json:"available_quantity"`
-	SellerCustomField string              `json:"seller_custom_field"`
-	Attributes        []meliItemAttribute `json:"attributes"`
+	ID                    int64               `json:"id"`
+	AvailableQuantity     int                 `json:"available_quantity"`
+	SellerCustomField     string              `json:"seller_custom_field"`
+	Attributes            []meliItemAttribute `json:"attributes"`
+	AttributeCombinations []struct {
+		Name      string `json:"name"`
+		ValueName string `json:"value_name"`
+	} `json:"attribute_combinations"`
+}
+
+func variationLabel(v meliItemVariation) string {
+	parts := make([]string, 0, len(v.AttributeCombinations))
+	for _, c := range v.AttributeCombinations {
+		if strings.TrimSpace(c.ValueName) != "" {
+			parts = append(parts, c.ValueName)
+		}
+	}
+	return strings.Join(parts, " / ")
+}
+
+func variationName(title string, v meliItemVariation) string {
+	label := variationLabel(v)
+	if label == "" {
+		return title
+	}
+	return title + " - " + label
 }
 
 type meliItemDetail struct {
@@ -164,16 +186,14 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 	image := itemImageURL(d)
 	products := make([]domain.MeliProduct, 0, len(d.Variations))
 	for _, v := range d.Variations {
-		sku := extractSKUFrom(v.SellerCustomField, v.Attributes)
-		if sku == "" {
-			continue
-		}
 		products = append(products, domain.MeliProduct{
 			ID:            d.ID,
 			VariationID:   fmt.Sprintf("%d", v.ID),
-			SKU:           sku,
+			ParentName:    d.Title,
+			VariantLabel:  variationLabel(v),
+			SKU:           extractSKUFrom(v.SellerCustomField, v.Attributes),
 			Barcode:       extractBarcode(d),
-			Name:          d.Title,
+			Name:          variationName(d.Title, v),
 			Price:         d.Price,
 			StockQuantity: v.AvailableQuantity,
 			ImageURL:      image,
@@ -183,8 +203,7 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 }
 
 func (c *MeliClient) multigetItems(ctx context.Context, accessToken string, ids []string) ([]meliItemDetail, error) {
-	attrs := "id,title,price,available_quantity,seller_custom_field,attributes,pictures,thumbnail,variations"
-	endpoint := fmt.Sprintf("%s/items?ids=%s&attributes=%s", c.baseURL, strings.Join(ids, ","), attrs)
+	endpoint := fmt.Sprintf("%s/items?ids=%s&include_attributes=all", c.baseURL, strings.Join(ids, ","))
 	req, err := c.newAuthorizedRequest(ctx, http.MethodGet, endpoint, accessToken)
 	if err != nil {
 		return nil, err

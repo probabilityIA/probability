@@ -35,6 +35,7 @@ export interface ProductsResult {
     notAssociated: number;
     onlyInProbability: number;
     onlyInChannel: number;
+    channelNoSku: number;
     matchRules?: ProductMatchRuleSummary[];
 }
 
@@ -45,6 +46,7 @@ export type DetailGroup =
     | 'not_associated'
     | 'only_probability'
     | 'only_channel'
+    | 'channel_no_sku'
     | 'updated'
     | 'skipped'
     | 'failed';
@@ -56,6 +58,9 @@ export interface SyncDetailItem {
     group: DetailGroup;
     matchedBy?: string;
     matchedValue?: string;
+    parentRef?: string;
+    parentLabel?: string;
+    variantLabel?: string;
 }
 
 export interface ProductMatchRuleSummary {
@@ -263,6 +268,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                             notAssociated: Number(data.not_associated) || 0,
                             onlyInProbability: Number(data.only_in_probability) || 0,
                             onlyInChannel: Number(data.only_in_channel) || 0,
+                            channelNoSku: Number(data.channel_no_sku) || 0,
                             matchRules: Array.isArray(data.match_rules) ? (data.match_rules as ProductMatchRuleSummary[]) : undefined,
                         },
                     }));
@@ -357,6 +363,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
                         notAssociated: row.not_associated || 0,
                         onlyInProbability: row.only_in_probability || 0,
                         onlyInChannel: row.only_in_channel || 0,
+                        channelNoSku: row.channel_no_sku || 0,
                     },
                 }));
             } else {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { AlertTriangle, Search, X } from 'lucide-react';
 import type { SyncRunKind } from '../../domain/types';
 import { fetchSyncRunItems } from '../../infra/repository/sync-run-items';
 import type { ProductApplyActions } from '../providers';
@@ -64,6 +64,12 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
         text: 'text-amber-700 dark:text-amber-300',
         chip: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-300',
     },
+    channel_no_sku: {
+        label: 'Sin SKU en el canal',
+        dot: 'bg-red-500',
+        text: 'text-red-600 dark:text-red-400',
+        chip: 'border-red-300 bg-red-50 text-red-700 dark:border-red-500/50 dark:bg-red-900/30 dark:text-red-300',
+    },
     failed: {
         label: 'Fallidos',
         dot: 'bg-red-500',
@@ -72,7 +78,7 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
     },
 };
 
-const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel'];
+const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
 const PAGE_SIZE = 50;
@@ -112,8 +118,28 @@ export const matchRuleLabel = (rule: string) => {
     return `${left} → ${right}`;
 };
 
-const groupLabel = (group: DetailGroup, providerLabel: string) =>
-    group === 'only_channel' ? `Solo en ${providerLabel}` : GROUP_STYLES[group].label;
+const groupLabel = (group: DetailGroup, providerLabel: string) => {
+    if (group === 'only_channel') return `Solo en ${providerLabel}`;
+    if (group === 'channel_no_sku') return `Sin SKU en ${providerLabel}`;
+    return GROUP_STYLES[group].label;
+};
+
+const PARENT_COLORS = [
+    { bar: 'bg-sky-400', chip: 'bg-sky-50 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' },
+    { bar: 'bg-violet-400', chip: 'bg-violet-50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
+    { bar: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+    { bar: 'bg-teal-400', chip: 'bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' },
+    { bar: 'bg-rose-400', chip: 'bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' },
+    { bar: 'bg-lime-400', chip: 'bg-lime-50 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300' },
+    { bar: 'bg-fuchsia-400', chip: 'bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-900/40 dark:text-fuchsia-300' },
+    { bar: 'bg-cyan-400', chip: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' },
+];
+
+const parentColor = (ref: string) => {
+    let hash = 0;
+    for (let i = 0; i < ref.length; i += 1) hash = (hash * 31 + ref.charCodeAt(i)) % 100000;
+    return PARENT_COLORS[hash % PARENT_COLORS.length];
+};
 
 export function SyncDetailPanel({
     integrationId,
@@ -179,6 +205,9 @@ export function SyncDetailPanel({
                 group: (item.group || 'both') as DetailGroup,
                 matchedBy: item.matched_by,
                 matchedValue: item.matched_value,
+                parentRef: item.parent_ref,
+                parentLabel: item.parent_label,
+                variantLabel: item.variant_label,
             }));
             setRemoteItems(prev => (replace ? incoming : [...prev, ...incoming]));
             setRemoteTotal(result.total);
@@ -271,6 +300,8 @@ export function SyncDetailPanel({
         });
     };
 
+    const noSkuCount = isLive ? (liveCounts.get('channel_no_sku') ?? 0) : (counts.channel_no_sku ?? 0);
+
     const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
 
     return (
@@ -329,6 +360,17 @@ export function SyncDetailPanel({
                 )}
             </div>
 
+            {noSkuCount > 0 && (filter === 'all' || filter === 'channel_no_sku') && (
+                <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[10.5px] leading-snug text-red-700 dark:border-red-500/40 dark:bg-red-900/25 dark:text-red-300">
+                    <AlertTriangle size={12} className="mt-px flex-shrink-0" />
+                    <span>
+                        <strong>{noSkuCount}</strong> {noSkuCount === 1 ? 'publicacion o variante' : 'publicaciones o variantes'} en {providerLabel} no {noSkuCount === 1 ? 'tiene' : 'tienen'} SKU.
+                        El emparejamiento se hace por SKU, asi que no hay forma de asociarlas ni de sincronizarles stock.
+                        Hay que asignarles el SKU en {providerLabel}.
+                    </span>
+                </div>
+            )}
+
             <div className="max-h-40 overflow-y-auto rounded-lg bg-gray-50 p-1.5 dark:bg-gray-900/40">
                 {visible.length === 0 && !loading && (
                     <p className="px-1 py-2 text-[11px] italic text-gray-400 dark:text-gray-500">
@@ -343,11 +385,17 @@ export function SyncDetailPanel({
                 )}
                 {!reloading && visible.map((item, index) => {
                     const style = GROUP_STYLES[item.group];
+                    const parent = item.parentRef ? parentColor(item.parentRef) : null;
+                    const firstOfParent =
+                        parent != null && (index === 0 || visible[index - 1]?.parentRef !== item.parentRef);
                     return (
                         <label
                             key={`${item.group}-${item.sku}-${index}`}
-                            className="flex cursor-pointer items-start gap-2 border-b border-gray-100 px-1 py-1 text-[11px] last:border-0 hover:bg-white dark:border-gray-700/60 dark:hover:bg-gray-800/60"
+                            className={`flex cursor-pointer items-start gap-2 border-b border-gray-100 py-1 text-[11px] last:border-0 hover:bg-white dark:border-gray-700/60 dark:hover:bg-gray-800/60 ${
+                                parent ? 'pl-0 pr-1' : 'px-1'
+                            }`}
                         >
+                            {parent && <span className={`-my-1 w-0.5 flex-shrink-0 self-stretch rounded-full ${parent.bar}`} />}
                             {selectable(item) && (
                                 <input
                                     type="checkbox"
@@ -357,8 +405,32 @@ export function SyncDetailPanel({
                                 />
                             )}
                             <span className={`mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
-                            <span className="w-28 flex-shrink-0 truncate font-mono font-semibold text-gray-700 dark:text-gray-200">{item.sku}</span>
-                            <span className={`min-w-0 flex-1 truncate ${style.text}`}>{item.label}</span>
+                            <span
+                                className={`w-28 flex-shrink-0 truncate ${
+                                    item.group === 'channel_no_sku'
+                                        ? 'italic font-semibold text-red-600 dark:text-red-400'
+                                        : 'font-mono font-semibold text-gray-700 dark:text-gray-200'
+                                }`}
+                            >
+                                {item.sku}
+                            </span>
+                            {parent ? (
+                                <span className="flex min-w-0 flex-1 items-center gap-1">
+                                    <span
+                                        title={`Variante de la publicacion ${item.parentLabel || item.parentRef} (${item.parentRef})`}
+                                        className={`flex-shrink-0 truncate rounded-full px-1.5 py-0.5 font-semibold ${parent.chip} ${
+                                            firstOfParent ? 'max-w-[9rem]' : 'max-w-[9rem] opacity-60'
+                                        }`}
+                                    >
+                                        {item.parentLabel || item.parentRef}
+                                    </span>
+                                    <span className={`min-w-0 flex-1 truncate ${style.text}`}>
+                                        {item.variantLabel || item.label}
+                                    </span>
+                                </span>
+                            ) : (
+                                <span className={`min-w-0 flex-1 truncate ${style.text}`}>{item.label}</span>
+                            )}
                             {item.matchedBy && (
                                 <span
                                     title={`Coincidencia por ${matchRuleLabel(item.matchedBy)}${item.matchedValue ? `: ${item.matchedValue}` : ''}`}

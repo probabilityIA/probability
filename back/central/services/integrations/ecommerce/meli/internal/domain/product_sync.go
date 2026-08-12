@@ -41,6 +41,8 @@ type ProductForSync struct {
 type MeliProduct struct {
 	ID            string
 	VariationID   string
+	ParentName    string
+	VariantLabel  string
 	SKU           string
 	Barcode       string
 	Name          string
@@ -73,6 +75,9 @@ type ProductBrief struct {
 	Name         string
 	MatchedBy    string
 	MatchedValue string
+	ParentRef    string
+	ParentLabel  string
+	VariantLabel string
 }
 
 type ReconcileResult struct {
@@ -83,6 +88,7 @@ type ReconcileResult struct {
 	OnlyInMeli           []ProductBrief
 	ProbabilityNoSKU     int
 	MeliNoSKU            int
+	MeliNoSKUItems       []ProductBrief
 	MatchRules           []productmatch.Rule
 }
 

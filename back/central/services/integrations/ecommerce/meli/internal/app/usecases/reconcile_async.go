@@ -21,6 +21,9 @@ type reconcileDetailItem struct {
 	Group        string `json:"group"`
 	MatchedBy    string `json:"matched_by,omitempty"`
 	MatchedValue string `json:"matched_value,omitempty"`
+	ParentRef    string `json:"parent_ref,omitempty"`
+	ParentLabel  string `json:"parent_label,omitempty"`
+	VariantLabel string `json:"variant_label,omitempty"`
 }
 
 type syncRunEnvelope struct {
@@ -83,6 +86,9 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 				Group:        group,
 				MatchedBy:    item.MatchedBy,
 				MatchedValue: item.MatchedValue,
+				ParentRef:    item.ParentRef,
+				ParentLabel:  item.ParentLabel,
+				VariantLabel: item.VariantLabel,
 			})
 		}
 	}
@@ -91,6 +97,7 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 	add(result.MatchedItems, "en ambos", "ok", "both")
 	add(result.OnlyInProbability, "solo en Probability", "warn", "only_probability")
 	add(result.OnlyInMeli, "solo en "+channelLabel, "warn", "only_channel")
+	add(result.MeliNoSKUItems, "sin SKU en "+channelLabel, "error", "channel_no_sku")
 
 	return detail
 }

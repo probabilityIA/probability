@@ -147,7 +147,18 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
-		qty := stock[m.ProductID]
+		qty, hasLevel := stock[m.ProductID]
+		if !hasLevel {
+			skipped++
+			uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
+				"correlation_id": correlationID,
+				"sku":            m.SKU,
+				"action":         "skipped",
+				"error":          "el producto no tiene registro de inventario, se conserva el stock actual en MercadoLibre",
+			})
+			uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
+			continue
+		}
 		if uerr := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, qty); uerr != nil {
 			if uerr == domain.ErrTokenExpired {
 				newToken, rerr := uc.EnsureValidToken(ctx, integrationIDStr)

@@ -36,6 +36,9 @@ entorno desde cero si algun dia hace falta.
 | Fecha | Migracion | Que hizo | Entorno |
 |-------|-----------|----------|---------|
 | 2026-08-06 | `fixVigaCodCalibracionFallida` | Ajusto `cod_total` y `cod_carrier_fee` de VIG-0071, VIG-0072 y VIG-0069 al valor que liquida EnvioClick (3 ordenes) | produccion |
+| 2026-08-12 | `migrateSyncRunItemParent` | Agrego `parent_ref`, `parent_label` y `variant_label` a `integration_sync_run_items` (+ indice en `parent_ref`) para agrupar variantes por publicacion en el comparativo | produccion |
+| 2026-08-12 | `migrateSyncRunChannelNoSKU` | Agrego `channel_no_sku` a `integration_sync_runs` para contar los items del canal que no tienen SKU y no se pueden emparejar | produccion |
+| 2026-08-12 | `migrateProductIntegrationVariantUnique` | Reemplazo el unico `idx_product_integration` de `(product_id, integration_id)` por `(product_id, integration_id, COALESCE(external_variant_id, ''))`, para que un producto pueda mapearse a varias variantes del mismo canal. Se quitaron los tags `uniqueIndex` del modelo: ahora el indice lo maneja este SQL | produccion |
 
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.

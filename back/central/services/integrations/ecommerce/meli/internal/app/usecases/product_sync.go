@@ -30,6 +30,15 @@ type providerUpsertMsg struct {
 	ImageURL       string  `json:"image_url,omitempty"`
 }
 
+const noSKUPlaceholder = "(sin SKU)"
+
+func parentRef(m domain.MeliProduct) string {
+	if m.VariationID == "" {
+		return ""
+	}
+	return m.ID
+}
+
 func meliRefs(m domain.MeliProduct) productmatch.ExternalRefs {
 	return productmatch.ExternalRefs{
 		ProductID: m.ID,
@@ -154,6 +163,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		OnlyInMeli:           []domain.ProductBrief{},
 		ProbabilityNoSKU:     rc.outcome.ProbabilityUnmatchable,
 		MeliNoSKU:            rc.outcome.ChannelUnmatchable,
+		MeliNoSKUItems:       []domain.ProductBrief{},
 		MatchRules:           rc.rules,
 	}
 
@@ -165,6 +175,9 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 			Name:         channel.Name,
 			MatchedBy:    pair.Rule.Key(),
 			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
+			ParentRef:    parentRef(channel),
+			ParentLabel:  channel.ParentName,
+			VariantLabel: channel.VariantLabel,
 		}
 		result.MatchedItems = append(result.MatchedItems, brief)
 		if associatedSKUs[normalizeSKU(prob.SKU)] {
@@ -174,9 +187,26 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 		}
 	}
 
+	for _, idx := range rc.outcome.ChannelNoKey {
+		m := rc.meliProducts[idx]
+		result.MeliNoSKUItems = append(result.MeliNoSKUItems, domain.ProductBrief{
+			SKU:          noSKUPlaceholder,
+			Name:         m.Name,
+			ParentRef:    parentRef(m),
+			ParentLabel:  m.ParentName,
+			VariantLabel: m.VariantLabel,
+		})
+	}
+
 	for _, idx := range rc.outcome.OnlyInChannel {
 		m := rc.meliProducts[idx]
-		result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{SKU: m.SKU, Name: m.Name})
+		result.OnlyInMeli = append(result.OnlyInMeli, domain.ProductBrief{
+			SKU:          m.SKU,
+			Name:         m.Name,
+			ParentRef:    parentRef(m),
+			ParentLabel:  m.ParentName,
+			VariantLabel: m.VariantLabel,
+		})
 	}
 	for _, idx := range rc.outcome.OnlyInProbability {
 		p := rc.probProducts[idx]

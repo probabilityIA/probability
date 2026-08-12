@@ -9,14 +9,14 @@ type ProductBusinessIntegration struct {
 	gorm.Model
 
 	// ID del producto (hash alfanumérico)
-	ProductID string `gorm:"type:varchar(64);not null;index;uniqueIndex:idx_product_integration,priority:1"`
+	ProductID string `gorm:"type:varchar(64);not null;index"`
 
 	// ID del negocio (desnormalizado para optimización de queries y validación)
 	// Este campo DEBE coincidir con el BusinessID del producto y de la integración
 	BusinessID uint `gorm:"not null;index"`
 
 	// ID de la integración asociada
-	IntegrationID uint `gorm:"not null;index;uniqueIndex:idx_product_integration,priority:2"`
+	IntegrationID uint `gorm:"not null;index"`
 
 	// ID del producto en el sistema externo de la integración
 	// Por ejemplo: el product_id de Shopify, el item_id de Mercado Libre, etc.

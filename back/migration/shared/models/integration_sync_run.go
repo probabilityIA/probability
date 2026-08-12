@@ -29,6 +29,7 @@ type IntegrationSyncRun struct {
 	NotAssociated     int `gorm:"default:0"`
 	OnlyInProbability int `gorm:"default:0"`
 	OnlyInChannel     int `gorm:"default:0"`
+	ChannelNoSKU      int `gorm:"column:channel_no_sku;default:0"`
 
 	Status  string `gorm:"size:32;not null;default:'completed';index"`
 	Message string `gorm:"size:500"`

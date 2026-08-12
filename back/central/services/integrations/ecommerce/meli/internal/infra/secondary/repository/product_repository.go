@@ -210,9 +210,14 @@ func optionalRef(value string) *string {
 
 func (r *ProductRepository) UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error {
 	var existing models.ProductBusinessIntegration
-	err := r.db.Conn(ctx).
-		Where("product_id = ? AND integration_id = ?", productID, integrationID).
-		First(&existing).Error
+	query := r.db.Conn(ctx).
+		Where("product_id = ? AND integration_id = ?", productID, integrationID)
+	if refs.VariantID != "" {
+		query = query.Where("external_variant_id = ?", refs.VariantID)
+	} else {
+		query = query.Where("external_variant_id IS NULL OR external_variant_id = ''")
+	}
+	err := query.First(&existing).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		record := models.ProductBusinessIntegration{

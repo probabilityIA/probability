@@ -18,10 +18,13 @@ const (
 )
 
 type DetailItem struct {
-	SKU   string `json:"sku"`
-	Label string `json:"label"`
-	Tone  string `json:"tone"`
-	Group string `json:"group,omitempty"`
+	SKU          string `json:"sku"`
+	Label        string `json:"label"`
+	Tone         string `json:"tone"`
+	Group        string `json:"group,omitempty"`
+	ParentRef    string `json:"parent_ref,omitempty"`
+	ParentLabel  string `json:"parent_label,omitempty"`
+	VariantLabel string `json:"variant_label,omitempty"`
 }
 
 type DetailQuery struct {
@@ -80,6 +83,7 @@ type SyncRun struct {
 	NotAssociated     int
 	OnlyInProbability int
 	OnlyInChannel     int
+	ChannelNoSKU      int
 
 	Status  string
 	Message string
