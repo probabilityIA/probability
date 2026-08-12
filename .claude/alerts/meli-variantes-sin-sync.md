@@ -113,8 +113,14 @@ Lo que solo se ve cruzando todos (query en `repository/findings.go`):
 Medido en Viga: 2.241 SKU analizados, 443 sin publicar en ningun canal, 59 que se
 venden sin existir aqui, 922 con desbalance.
 
+`GET /api/v1/integrations/sync-runs/findings/items?code=X` lista el detalle de
+cada hallazgo: SKU, producto, que le pasa y en que canales. Un mismo SKU con el
+problema en dos canales sale en UNA fila con los dos, no duplicado.
+Con `format=csv` baja la lista completa sin paginar.
+
 En el front es el `FindingsPanel`, que se abre desde el signo de admiracion sobre
-el nucleo. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
+el nucleo: una pestana por categoria y la tabla del detalle debajo, con busqueda
+y descarga. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
 volumen.
 
 ## Pendiente
@@ -198,8 +204,14 @@ Lo que solo se ve cruzando todos (query en `repository/findings.go`):
 Medido en Viga: 2.241 SKU analizados, 443 sin publicar en ningun canal, 59 que se
 venden sin existir aqui, 922 con desbalance.
 
+`GET /api/v1/integrations/sync-runs/findings/items?code=X` lista el detalle de
+cada hallazgo: SKU, producto, que le pasa y en que canales. Un mismo SKU con el
+problema en dos canales sale en UNA fila con los dos, no duplicado.
+Con `format=csv` baja la lista completa sin paginar.
+
 En el front es el `FindingsPanel`, que se abre desde el signo de admiracion sobre
-el nucleo. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
+el nucleo: una pestana por categoria y la tabla del detalle debajo, con busqueda
+y descarga. Los hallazgos se ordenan por gravedad y, a igual gravedad, por
 volumen.
 
 ## Pendientes de datos del negocio (no son de codigo)

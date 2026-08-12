@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Info, Loader2, ShieldAlert, X } from 'lucide-react';
 import { fetchSyncFindings } from '../../infra/repository/sync-findings';
+import { FindingItemsTable } from './FindingItemsTable';
 import type { Finding, FindingSeverity, FindingsReport } from '../../domain/types';
 
 interface FindingsPanelProps {
@@ -40,6 +41,25 @@ const SEVERITY = {
     badge: string;
 }>;
 
+function FindingTab({ finding, active, onClick }: { finding: Finding; active: boolean; onClick: () => void }) {
+    const style = SEVERITY[finding.severity] ?? SEVERITY.info;
+    const Icon = style.icon;
+    return (
+        <button
+            onClick={onClick}
+            className={`flex flex-shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-semibold transition-all ${
+                active
+                    ? `${style.card} ${style.text} ring-2 ring-current ring-offset-1 dark:ring-offset-gray-900`
+                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+        >
+            <Icon size={12} className="flex-shrink-0" />
+            <span className="max-w-[11rem] truncate">{finding.title}</span>
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-black ${style.badge}`}>{finding.count}</span>
+        </button>
+    );
+}
+
 function FindingCard({ finding }: { finding: Finding }) {
     const style = SEVERITY[finding.severity] ?? SEVERITY.info;
     const Icon = style.icon;
@@ -76,6 +96,7 @@ function FindingCard({ finding }: { finding: Finding }) {
 export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
     const [report, setReport] = useState<FindingsReport | null>(null);
     const [loading, setLoading] = useState(true);
+    const [active, setActive] = useState<string | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -89,6 +110,7 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
 
     const findings = report?.findings ?? [];
     const graves = findings.filter(f => f.severity === 'error').length;
+    const activo = findings.find(f => f.code === active) ?? findings[0] ?? null;
 
     return (
         <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-modal="true">
@@ -98,7 +120,7 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
                 className="absolute inset-0 cursor-default bg-gray-900/30 backdrop-blur-[2px]"
             />
 
-            <div className="relative flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+            <div className="relative flex max-h-full h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
                 <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
                     <div className="min-w-0">
                         <h2 className="text-sm font-bold text-gray-800 dark:text-white">Hallazgos de tus integraciones</h2>
@@ -118,48 +140,58 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
                     </button>
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
-                    {loading && (
-                        <div className="flex items-center justify-center gap-2 py-10 text-[12px] text-gray-500">
-                            <Loader2 size={14} className="animate-spin" />
-                            Cruzando la informacion de tus canales
+                {loading && (
+                    <div className="flex items-center justify-center gap-2 py-16 text-[12px] text-gray-500">
+                        <Loader2 size={14} className="animate-spin" />
+                        Cruzando la informacion de tus canales
+                    </div>
+                )}
+
+                {!loading && findings.length === 0 && (
+                    <div className="py-16 text-center text-[12px] text-gray-500 dark:text-gray-400">
+                        Todo en orden. Vuelve a comparar productos cuando cambies algo en tus canales.
+                    </div>
+                )}
+
+                {!loading && findings.length > 0 && (
+                    <>
+                        <div className="flex flex-wrap gap-1.5 border-b border-gray-100 px-4 py-2.5 dark:border-gray-700">
+                            {findings.map(finding => (
+                                <FindingTab
+                                    key={finding.code}
+                                    finding={finding}
+                                    active={activo?.code === finding.code}
+                                    onClick={() => setActive(finding.code)}
+                                />
+                            ))}
                         </div>
-                    )}
 
-                    {!loading && findings.length === 0 && (
-                        <div className="py-10 text-center text-[12px] text-gray-500 dark:text-gray-400">
-                            Todo en orden. Vuelve a comparar productos cuando cambies algo en tus canales.
-                        </div>
-                    )}
-
-                    {!loading && findings.map(finding => <FindingCard key={finding.code} finding={finding} />)}
-
-                    {!loading && (report?.channels?.length ?? 0) > 0 && (
-                        <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-gray-400">Por canal</p>
-                            <div className="space-y-1">
-                                {report?.channels.map(channel => {
-                                    const problemas = channel.channel_no_sku + channel.sku_changed + channel.sku_typo + channel.not_associated;
-                                    return (
-                                        <div key={channel.integration_id} className="flex items-center justify-between gap-2 text-[11.5px]">
-                                            <span className="truncate font-semibold text-gray-700 dark:text-gray-200">
-                                                {channel.integration_name}
-                                            </span>
-                                            <span className="flex-shrink-0 text-gray-500 dark:text-gray-400">
-                                                {channel.matched} asociados
-                                                {problemas > 0 && (
-                                                    <span className="ml-1.5 font-bold text-amber-600 dark:text-amber-400">
-                                                        {problemas} por revisar
-                                                    </span>
-                                                )}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
+                        {activo && (
+                            <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-4">
+                                <FindingCard finding={activo} />
+                                <FindingItemsTable code={activo.code} businessId={businessId} total={activo.count} />
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </>
+                )}
+
+                {!loading && (report?.channels?.length ?? 0) > 0 && (
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 bg-gray-50 px-4 py-2 dark:border-gray-700 dark:bg-gray-800/50">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Por canal</span>
+                        {report?.channels.map(channel => {
+                            const problemas = channel.channel_no_sku + channel.sku_changed + channel.sku_typo + channel.not_associated;
+                            return (
+                                <span key={channel.integration_id} className="text-[11px] text-gray-500 dark:text-gray-400">
+                                    <span className="font-semibold text-gray-700 dark:text-gray-200">{channel.integration_name}</span>
+                                    {' '}{channel.matched} asociados
+                                    {problemas > 0 && (
+                                        <span className="ml-1 font-bold text-amber-600 dark:text-amber-400">{problemas} por revisar</span>
+                                    )}
+                                </span>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {!loading && graves > 0 && (
                     <div className="border-t border-gray-100 bg-red-50 px-4 py-2 text-[11.5px] font-semibold text-red-700 dark:border-gray-700 dark:bg-red-900/20 dark:text-red-300">

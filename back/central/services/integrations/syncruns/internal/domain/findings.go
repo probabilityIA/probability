@@ -63,4 +63,47 @@ type FindingsReport struct {
 type IFindingsRepository interface {
 	ChannelSummaries(ctx context.Context, businessID uint) ([]ChannelSummary, error)
 	CrossChannel(ctx context.Context, businessID uint) (CrossChannelCounts, error)
+	FindingItems(ctx context.Context, query FindingItemsQuery) (*FindingItemsPage, error)
+}
+
+// FindingItem es una fila del detalle de un hallazgo. Channels lleva los canales
+// involucrados: un mismo SKU puede tener el problema en mas de uno.
+type FindingItem struct {
+	SKU      string
+	Name     string
+	Detail   string
+	Channels []string
+}
+
+type FindingItemsQuery struct {
+	BusinessID uint
+	Code       string
+	Search     string
+	Page       int
+	PageSize   int
+	All        bool
+}
+
+func (q FindingItemsQuery) Offset() int {
+	if q.Page < 1 {
+		return 0
+	}
+	return (q.Page - 1) * q.PageSize
+}
+
+func (q *FindingItemsQuery) Normalize() {
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if q.PageSize < 1 || q.PageSize > 200 {
+		q.PageSize = 50
+	}
+}
+
+type FindingItemsPage struct {
+	Items      []FindingItem
+	Total      int64
+	Page       int
+	PageSize   int
+	TotalPages int
 }

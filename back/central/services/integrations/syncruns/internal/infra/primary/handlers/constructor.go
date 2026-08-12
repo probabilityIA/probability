@@ -14,6 +14,7 @@ type IHandler interface {
 	ListDetail(c *gin.Context)
 	Record(c *gin.Context)
 	Findings(c *gin.Context)
+	FindingItems(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
@@ -36,6 +37,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("/items", h.ListDetail)
 		group.POST("", h.Record)
 		group.GET("/findings", h.Findings)
+		group.GET("/findings/items", h.FindingItems)
 	}
 }
 

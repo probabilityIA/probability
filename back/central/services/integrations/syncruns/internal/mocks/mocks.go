@@ -15,6 +15,7 @@ type RepositoryMock struct {
 	IntegrationBelongsToBusinessFn func(ctx context.Context, integrationID, businessID uint) (bool, error)
 	ChannelSummariesFn             func(ctx context.Context, businessID uint) ([]domain.ChannelSummary, error)
 	CrossChannelFn                 func(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error)
+	FindingItemsFn                 func(ctx context.Context, query domain.FindingItemsQuery) (*domain.FindingItemsPage, error)
 
 	Guardados       []domain.SyncRun
 	ConsultasDueno  []ConsultaDueno
@@ -130,4 +131,11 @@ func (m *RepositoryMock) CrossChannel(ctx context.Context, businessID uint) (dom
 		return m.CrossChannelFn(ctx, businessID)
 	}
 	return domain.CrossChannelCounts{}, nil
+}
+
+func (m *RepositoryMock) FindingItems(ctx context.Context, query domain.FindingItemsQuery) (*domain.FindingItemsPage, error) {
+	if m.FindingItemsFn != nil {
+		return m.FindingItemsFn(ctx, query)
+	}
+	return &domain.FindingItemsPage{Items: []domain.FindingItem{}}, nil
 }
