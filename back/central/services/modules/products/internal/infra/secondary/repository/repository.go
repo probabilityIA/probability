@@ -162,27 +162,27 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		}
 	}
 
-	if priceMin, ok := filters["price_min"].(float64); ok {
+	if priceMin, ok := filters["price_min"].(float64); ok && priceMin >= 0 {
 		query = query.Where("products.price >= ?", priceMin)
 	}
 
-	if priceMax, ok := filters["price_max"].(float64); ok {
+	if priceMax, ok := filters["price_max"].(float64); ok && priceMax >= 0 {
 		query = query.Where("products.price <= ?", priceMax)
 	}
 
-	if stockMin, ok := filters["stock_min"].(int); ok {
+	if stockMin, ok := filters["stock_min"].(int); ok && stockMin >= 0 {
 		query = query.Where("products.stock_quantity >= ?", stockMin)
 	}
 
-	if stockMax, ok := filters["stock_max"].(int); ok {
+	if stockMax, ok := filters["stock_max"].(int); ok && stockMax >= 0 {
 		query = query.Where("products.stock_quantity <= ?", stockMax)
 	}
 
-	if weightMin, ok := filters["weight_min"].(float64); ok {
+	if weightMin, ok := filters["weight_min"].(float64); ok && weightMin >= 0 {
 		query = query.Where("products.weight >= ?", weightMin)
 	}
 
-	if weightMax, ok := filters["weight_max"].(float64); ok {
+	if weightMax, ok := filters["weight_max"].(float64); ok && weightMax >= 0 {
 		query = query.Where("products.weight <= ?", weightMax)
 	}
 
