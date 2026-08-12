@@ -39,7 +39,7 @@ type IMeliClient interface {
 
 	GetItem(ctx context.Context, accessToken, itemID string) (*MeliItemDetail, error)
 
-	UpdateStock(ctx context.Context, accessToken, itemID string, quantity int) error
+	UpdateStock(ctx context.Context, accessToken, itemID, variantID string, quantity int) error
 
 	GetUserProductStock(ctx context.Context, accessToken, userProductID string) (*UserProductStock, error)
 

@@ -13,6 +13,7 @@ import (
 type ecommerceStockPushMessage struct {
 	ProductID           string `json:"product_id"`
 	ExternalProductID   string `json:"external_product_id"`
+	ExternalVariantID   string `json:"external_variant_id"`
 	IntegrationID       uint   `json:"integration_id"`
 	IntegrationTypeCode string `json:"integration_type_code"`
 	BusinessID          uint   `json:"business_id"`
@@ -73,7 +74,7 @@ func (c *InventoryPushConsumer) handle(ctx context.Context, body []byte) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(msg.IntegrationID), 10)
-	if err := c.useCase.UpdateItemStock(ctx, integrationID, msg.ExternalProductID, msg.Quantity); err != nil {
+	if err := c.useCase.UpdateItemStock(ctx, integrationID, msg.ExternalProductID, msg.ExternalVariantID, msg.Quantity); err != nil {
 		c.logger.Error(ctx).
 			Err(err).
 			Str("integration_id", integrationID).

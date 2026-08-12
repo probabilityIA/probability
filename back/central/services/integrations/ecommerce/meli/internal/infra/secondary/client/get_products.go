@@ -20,18 +20,28 @@ type meliItemsSearchResponse struct {
 	} `json:"paging"`
 }
 
+type meliItemAttribute struct {
+	ID        string `json:"id"`
+	ValueName string `json:"value_name"`
+}
+
+type meliItemVariation struct {
+	ID                int64               `json:"id"`
+	AvailableQuantity int                 `json:"available_quantity"`
+	SellerCustomField string              `json:"seller_custom_field"`
+	Attributes        []meliItemAttribute `json:"attributes"`
+}
+
 type meliItemDetail struct {
-	ID                string  `json:"id"`
-	Title             string  `json:"title"`
-	Price             float64 `json:"price"`
-	AvailableQuantity int     `json:"available_quantity"`
-	SellerCustomField string  `json:"seller_custom_field"`
-	Attributes        []struct {
-		ID        string `json:"id"`
-		ValueName string `json:"value_name"`
-	} `json:"attributes"`
-	Thumbnail string `json:"thumbnail"`
-	Pictures  []struct {
+	ID                string              `json:"id"`
+	Title             string              `json:"title"`
+	Price             float64             `json:"price"`
+	AvailableQuantity int                 `json:"available_quantity"`
+	SellerCustomField string              `json:"seller_custom_field"`
+	Attributes        []meliItemAttribute `json:"attributes"`
+	Variations        []meliItemVariation `json:"variations"`
+	Thumbnail         string              `json:"thumbnail"`
+	Pictures          []struct {
 		SecureURL string `json:"secure_url"`
 		URL       string `json:"url"`
 	} `json:"pictures"`
@@ -54,16 +64,20 @@ type meliMultigetItem struct {
 	Body meliItemDetail `json:"body"`
 }
 
-func extractSKU(item meliItemDetail) string {
-	if strings.TrimSpace(item.SellerCustomField) != "" {
-		return item.SellerCustomField
+func extractSKUFrom(sellerCustomField string, attrs []meliItemAttribute) string {
+	if strings.TrimSpace(sellerCustomField) != "" {
+		return sellerCustomField
 	}
-	for _, attr := range item.Attributes {
+	for _, attr := range attrs {
 		if attr.ID == "SELLER_SKU" {
 			return attr.ValueName
 		}
 	}
 	return ""
+}
+
+func extractSKU(item meliItemDetail) string {
+	return extractSKUFrom(item.SellerCustomField, item.Attributes)
 }
 
 func extractBarcode(item meliItemDetail) string {
@@ -127,23 +141,49 @@ func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, seller
 			return nil, err
 		}
 		for _, d := range details {
-			products = append(products, domain.MeliProduct{
-				ID:            d.ID,
-				SKU:           extractSKU(d),
-				Barcode:       extractBarcode(d),
-				Name:          d.Title,
-				Price:         d.Price,
-				StockQuantity: d.AvailableQuantity,
-				ImageURL:      itemImageURL(d),
-			})
+			products = append(products, itemToProducts(d)...)
 		}
 	}
 
 	return products, nil
 }
 
+func itemToProducts(d meliItemDetail) []domain.MeliProduct {
+	if len(d.Variations) == 0 {
+		return []domain.MeliProduct{{
+			ID:            d.ID,
+			SKU:           extractSKU(d),
+			Barcode:       extractBarcode(d),
+			Name:          d.Title,
+			Price:         d.Price,
+			StockQuantity: d.AvailableQuantity,
+			ImageURL:      itemImageURL(d),
+		}}
+	}
+
+	image := itemImageURL(d)
+	products := make([]domain.MeliProduct, 0, len(d.Variations))
+	for _, v := range d.Variations {
+		sku := extractSKUFrom(v.SellerCustomField, v.Attributes)
+		if sku == "" {
+			continue
+		}
+		products = append(products, domain.MeliProduct{
+			ID:            d.ID,
+			VariationID:   fmt.Sprintf("%d", v.ID),
+			SKU:           sku,
+			Barcode:       extractBarcode(d),
+			Name:          d.Title,
+			Price:         d.Price,
+			StockQuantity: v.AvailableQuantity,
+			ImageURL:      image,
+		})
+	}
+	return products
+}
+
 func (c *MeliClient) multigetItems(ctx context.Context, accessToken string, ids []string) ([]meliItemDetail, error) {
-	attrs := "id,title,price,available_quantity,seller_custom_field,attributes,pictures,thumbnail"
+	attrs := "id,title,price,available_quantity,seller_custom_field,attributes,pictures,thumbnail,variations"
 	endpoint := fmt.Sprintf("%s/items?ids=%s&attributes=%s", c.baseURL, strings.Join(ids, ","), attrs)
 	req, err := c.newAuthorizedRequest(ctx, http.MethodGet, endpoint, accessToken)
 	if err != nil {

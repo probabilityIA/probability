@@ -139,12 +139,13 @@ func (r *Repository) GetProductIntegrations(ctx context.Context, productID strin
 	var results []struct {
 		IntegrationID       uint
 		ExternalProductID   string
+		ExternalVariantID   string
 		IntegrationTypeCode string
 	}
 
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations pbi").
-		Select("pbi.integration_id, pbi.external_product_id, it.code AS integration_type_code").
+		Select("pbi.integration_id, pbi.external_product_id, COALESCE(pbi.external_variant_id, '') AS external_variant_id, it.code AS integration_type_code").
 		Joins("INNER JOIN integrations i ON i.id = pbi.integration_id AND i.deleted_at IS NULL AND i.is_active = true").
 		Joins("INNER JOIN integration_types it ON it.id = i.integration_type_id AND it.deleted_at IS NULL").
 		Where("pbi.product_id = ? AND pbi.business_id = ? AND pbi.deleted_at IS NULL", productID, businessID).
@@ -159,6 +160,7 @@ func (r *Repository) GetProductIntegrations(ctx context.Context, productID strin
 		infos[i] = ports.ProductIntegrationInfo{
 			IntegrationID:       r.IntegrationID,
 			ExternalProductID:   r.ExternalProductID,
+			ExternalVariantID:   r.ExternalVariantID,
 			IntegrationTypeCode: r.IntegrationTypeCode,
 		}
 	}

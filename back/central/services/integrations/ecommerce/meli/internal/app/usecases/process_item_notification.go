@@ -30,39 +30,65 @@ func (uc *meliUseCase) reconcileItemStock(ctx context.Context, integration *doma
 		return err
 	}
 
-	var productID string
+	matches := make([]domain.MappedItem, 0)
 	for _, m := range mapped {
 		if m.ExternalItemID == itemID {
-			productID = m.ProductID
-			break
+			matches = append(matches, m)
 		}
 	}
-	if productID == "" {
+	if len(matches) == 0 {
 		uc.logger.Info(ctx).Str("item_id", itemID).Msg("Item change ignored: no local product mapped")
 		return nil
 	}
 
 	warehouseIDs := resolveWarehouseIDs(cfg)
-	stock, err := uc.inventoryRepo.GetStockForProducts(ctx, []string{productID}, warehouseIDs)
+	productIDs := make([]string, len(matches))
+	for i, m := range matches {
+		productIDs[i] = m.ProductID
+	}
+	stock, err := uc.inventoryRepo.GetStockForProducts(ctx, productIDs, warehouseIDs)
 	if err != nil {
 		return err
 	}
-	qty := stock[productID]
 
 	cli := uc.clientFor(ctx, integration)
-	item, err := cli.GetItem(ctx, accessToken, itemID)
-	if err == nil && item.AvailableQuantity == qty && len(item.Variations) == 0 {
-		return nil
-	}
+	item, itemErr := cli.GetItem(ctx, accessToken, itemID)
 
-	if uerr := cli.UpdateStock(ctx, accessToken, itemID, qty); uerr != nil {
-		if uerr == domain.ErrTokenExpired {
-			newToken, rerr := uc.EnsureValidToken(ctx, strconv.FormatUint(uint64(integration.ID), 10))
-			if rerr == nil {
-				return cli.UpdateStock(ctx, newToken, itemID, qty)
+	for _, m := range matches {
+		qty := stock[m.ProductID]
+
+		if itemErr == nil && len(item.Variations) == 0 && item.AvailableQuantity == qty {
+			continue
+		}
+		if itemErr == nil && m.ExternalVariantID != "" {
+			if v := findVariation(item, m.ExternalVariantID); v != nil && v.AvailableQuantity == qty {
+				continue
 			}
 		}
-		return uerr
+
+		if uerr := cli.UpdateStock(ctx, accessToken, itemID, m.ExternalVariantID, qty); uerr != nil {
+			if uerr == domain.ErrTokenExpired {
+				newToken, rerr := uc.EnsureValidToken(ctx, strconv.FormatUint(uint64(integration.ID), 10))
+				if rerr != nil {
+					return rerr
+				}
+				accessToken = newToken
+				if uerr = cli.UpdateStock(ctx, accessToken, itemID, m.ExternalVariantID, qty); uerr != nil {
+					return uerr
+				}
+				continue
+			}
+			return uerr
+		}
+	}
+	return nil
+}
+
+func findVariation(item *domain.MeliItemDetail, variantID string) *domain.MeliItemVariation {
+	for i := range item.Variations {
+		if strconv.FormatInt(item.Variations[i].ID, 10) == variantID {
+			return &item.Variations[i]
+		}
 	}
 	return nil
 }

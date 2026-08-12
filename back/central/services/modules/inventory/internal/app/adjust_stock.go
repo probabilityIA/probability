@@ -117,6 +117,7 @@ func (uc *useCase) pushEcommerceStock(ctx context.Context, productID string, bus
 		_ = uc.publisher.PublishEcommerceStockPush(ctx, ports.EcommerceStockPushMessage{
 			ProductID:           productID,
 			ExternalProductID:   integ.ExternalProductID,
+			ExternalVariantID:   integ.ExternalVariantID,
 			IntegrationID:       integ.IntegrationID,
 			IntegrationTypeCode: integ.IntegrationTypeCode,
 			BusinessID:          businessID,

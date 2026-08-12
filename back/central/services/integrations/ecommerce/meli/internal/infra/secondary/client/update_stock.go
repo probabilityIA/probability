@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-func (c *MeliClient) UpdateStock(ctx context.Context, accessToken, itemID string, quantity int) error {
+func (c *MeliClient) UpdateStock(ctx context.Context, accessToken, itemID, variantID string, quantity int) error {
 	payload := map[string]interface{}{
 		"available_quantity": quantity,
 	}
@@ -19,6 +19,9 @@ func (c *MeliClient) UpdateStock(ctx context.Context, accessToken, itemID string
 	}
 
 	endpoint := fmt.Sprintf("%s/items/%s", c.baseURL, itemID)
+	if variantID != "" {
+		endpoint = fmt.Sprintf("%s/items/%s/variations/%s", c.baseURL, itemID, variantID)
+	}
 	resp, respBody, err := c.do(ctx, func() (*http.Request, error) {
 		return c.newAuthorizedRequestWithBody(ctx, http.MethodPut, endpoint, accessToken, bodyBytes)
 	})

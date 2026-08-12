@@ -178,6 +178,7 @@ type ProductDimensions struct {
 type ProductIntegrationInfo struct {
 	IntegrationID       uint
 	ExternalProductID   string
+	ExternalVariantID   string
 	IntegrationTypeCode string
 }
 
@@ -190,6 +191,7 @@ type ISyncPublisher interface {
 type EcommerceStockPushMessage struct {
 	ProductID           string `json:"product_id"`
 	ExternalProductID   string `json:"external_product_id"`
+	ExternalVariantID   string `json:"external_variant_id,omitempty"`
 	IntegrationID       uint   `json:"integration_id"`
 	IntegrationTypeCode string `json:"integration_type_code"`
 	BusinessID          uint   `json:"business_id"`

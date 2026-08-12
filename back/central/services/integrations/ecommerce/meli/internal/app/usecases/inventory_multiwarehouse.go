@@ -77,7 +77,7 @@ func (uc *meliUseCase) pushItemMultiWarehouse(ctx context.Context, cli domain.IM
 		for _, wm := range mappings {
 			total += stockByWh[wm.InternalWarehouseID]
 		}
-		return false, cli.UpdateStock(ctx, accessToken, m.ExternalItemID, total)
+		return false, cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, total)
 	}
 
 	locations := make([]domain.StockLocation, 0, len(mappings))

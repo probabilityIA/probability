@@ -148,12 +148,12 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 	updated, unchanged, skipped, failed := 0, 0, 0, 0
 	for i, m := range mapped {
 		qty := stock[m.ProductID]
-		if uerr := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, qty); uerr != nil {
+		if uerr := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, qty); uerr != nil {
 			if uerr == domain.ErrTokenExpired {
 				newToken, rerr := uc.EnsureValidToken(ctx, integrationIDStr)
 				if rerr == nil {
 					accessToken = newToken
-					if retry := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, qty); retry == nil {
+					if retry := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, qty); retry == nil {
 						updated++
 						uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
 						continue

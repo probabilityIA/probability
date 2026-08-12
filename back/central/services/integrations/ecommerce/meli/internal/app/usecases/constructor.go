@@ -26,7 +26,7 @@ type IMeliUseCase interface {
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
-	UpdateItemStock(ctx context.Context, integrationID, itemID string, quantity int) error
+	UpdateItemStock(ctx context.Context, integrationID, itemID, variantID string, quantity int) error
 
 	PushOrderStatus(ctx context.Context, integrationID string, shipmentID int64, status string) error
 
