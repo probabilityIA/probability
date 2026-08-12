@@ -40,6 +40,7 @@ interface DynamicFiltersProps {
     className?: string;
     variant?: 'card' | 'bar';
     extraActions?: ReactNode;
+    triggerClassName?: string;
 }
 
 export function DynamicFilters({
@@ -65,6 +66,7 @@ export function DynamicFilters({
     className = '',
     variant = 'card',
     extraActions,
+    triggerClassName = '',
 }: DynamicFiltersProps) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [selectedFilterKey, setSelectedFilterKey] = useState<string | null>(null);
@@ -229,6 +231,7 @@ export function DynamicFilters({
                                     variant="primary"
                                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                     icon={<FunnelIcon className="w-4 h-4" />}
+                                    className={triggerClassName}
                                 />
                             ) : (
                                 <button

@@ -335,28 +335,10 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
             )}
 
             {mode === 'single' && (
-                <form onSubmit={handleSingleSubmit} className={`${formData.image_url ? 'grid grid-cols-2 gap-6' : 'space-y-5'}`}>
-                    {formData.image_url && (
-                        <div className="flex flex-col gap-3">
-                            <div className="sticky top-0">
-                                <label className={lc}>URL de imagen</label>
-                                <input
-                                    type="text"
-                                    className={ic}
-                                    placeholder="https://..."
-                                    value={formData.image_url || ''}
-                                    onChange={e => setFormData(f => ({ ...f, image_url: e.target.value }))}
-                                />
-                                {formData.image_url && (
-                                    <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-4 mt-3" style={{ minHeight: 300 }}>
-                                        <img src={formData.image_url} alt="Preview" className="max-h-80 max-w-full object-contain" onError={() => {}} />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                <form onSubmit={handleSingleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-5">
 
-                    <div className={formData.image_url ? 'space-y-5' : ''}>
+                    {/* LEFT COLUMN — identificacion, precio, descripcion */}
+                    <div className="space-y-5">
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={lc}>SKU <span className="text-red-500">*</span></label>
@@ -410,6 +392,43 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                             </div>
                         </div>
 
+                        <div>
+                            <label className={lc}>Descripcion</label>
+                            <textarea rows={5} className={ic} placeholder="Descripcion del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
+                        </div>
+
+                        <details className="group">
+                            <summary className="text-xs font-semibold text-gray-500 dark:text-gray-400 cursor-pointer select-none flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
+                                <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+                                Peso y dimensiones
+                            </summary>
+                            <div className="mt-3 grid grid-cols-4 gap-3">
+                                <div><label className={lc}>Peso (kg)</label><input className={ic} type="number" min="0" step="0.01" value={formData.weight ?? ''} onChange={e => setFormData(f => ({ ...f, weight: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Largo (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.length ?? ''} onChange={e => setFormData(f => ({ ...f, length: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Ancho (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.width ?? ''} onChange={e => setFormData(f => ({ ...f, width: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                                <div><label className={lc}>Alto (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.height ?? ''} onChange={e => setFormData(f => ({ ...f, height: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
+                            </div>
+                        </details>
+                    </div>
+
+                    {/* RIGHT COLUMN — imagen, catalogo, familia */}
+                    <div className="space-y-5">
+                        <div>
+                            <label className={lc}>URL de imagen</label>
+                            <input
+                                type="text"
+                                className={ic}
+                                placeholder="https://..."
+                                value={formData.image_url || ''}
+                                onChange={e => setFormData(f => ({ ...f, image_url: e.target.value }))}
+                            />
+                            {formData.image_url && (
+                                <div className="rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-3 mt-2" style={{ minHeight: 140 }}>
+                                    <img src={formData.image_url} alt="Preview" className="max-h-32 max-w-full object-contain" onError={() => {}} />
+                                </div>
+                            )}
+                        </div>
+
                         <div style={{ borderColor: tertiaryColor + '40', backgroundColor: primaryColor + '08' }} className="rounded-xl border p-4">
                             <h4 style={{ color: primaryColor }} className="text-xs font-bold uppercase tracking-wider mb-3">Catalogo</h4>
                             <div className="grid grid-cols-2 gap-3">
@@ -440,7 +459,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                     )}
                                 </div>
                             </div>
-                            <div className="mt-3 grid grid-cols-3 gap-3">
+                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label className={lc}>Talla</label>
                                     <input
@@ -467,7 +486,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                         }))}
                                     />
                                 </div>
-                                <div>
+                                <div className="col-span-2 sm:col-span-1">
                                     <label className={lc}>Categoria en Mercado Libre</label>
                                     <input
                                         className={ic}
@@ -529,44 +548,11 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        <details className="group">
-                            <summary className="text-xs font-semibold text-gray-500 dark:text-gray-400 cursor-pointer select-none flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
-                                <svg className="w-3 h-3 transition-transform group-open:rotate-90" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
-                                Peso y dimensiones
-                            </summary>
-                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                <div><label className={lc}>Peso (kg)</label><input className={ic} type="number" min="0" step="0.01" value={formData.weight ?? ''} onChange={e => setFormData(f => ({ ...f, weight: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                                <div><label className={lc}>Largo (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.length ?? ''} onChange={e => setFormData(f => ({ ...f, length: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                                <div><label className={lc}>Ancho (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.width ?? ''} onChange={e => setFormData(f => ({ ...f, width: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                                <div><label className={lc}>Alto (cm)</label><input className={ic} type="number" min="0" step="0.1" value={formData.height ?? ''} onChange={e => setFormData(f => ({ ...f, height: e.target.value ? parseFloat(e.target.value) : undefined }))} /></div>
-                            </div>
-                        </details>
-
-                        <div>
-                            <label className={lc}>Descripcion</label>
-                            <textarea rows={3} className={ic} placeholder="Descripcion del producto..." value={formData.description || ''} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))} />
-                        </div>
-
-                        {!formData.image_url && (
-                            <div>
-                                <label className={lc}>URL de imagen</label>
-                                <div className="flex flex-col gap-2">
-                                    <input
-                                        type="text"
-                                        className={ic}
-                                        placeholder="https://..."
-                                        value={formData.image_url || ''}
-                                        onChange={e => setFormData(f => ({ ...f, image_url: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                            {cancelBtn}
-                            {submitBtn(isEdit ? 'Guardar cambios' : 'Crear producto')}
-                        </div>
+                    <div className="lg:col-span-2 flex justify-end gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                        {cancelBtn}
+                        {submitBtn(isEdit ? 'Guardar cambios' : 'Crear producto')}
                     </div>
                 </form>
             )}

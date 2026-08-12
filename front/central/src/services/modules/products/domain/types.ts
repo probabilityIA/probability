@@ -148,6 +148,16 @@ export interface GetProductsParams {
     updated_before?: string;
     sort_by?: 'id' | 'sku' | 'name' | 'created_at' | 'updated_at' | 'business_id';
     sort_order?: 'asc' | 'desc';
+    status?: string;
+    category?: string;
+    brand?: string;
+    has_family?: boolean;
+    price_min?: number;
+    price_max?: number;
+    stock_min?: number;
+    stock_max?: number;
+    weight_min?: number;
+    weight_max?: number;
 }
 
 export interface CreateProductDTO {

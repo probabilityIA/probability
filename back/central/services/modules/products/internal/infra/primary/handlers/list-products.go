@@ -8,37 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListProducts godoc
-// @Summary      Listar productos
-// @Description  Obtiene una lista paginada de productos con filtros opcionales y búsquedas optimizadas
-// @Tags         Products
-// @Accept       json
-// @Produce      json
-// @Param        business_id     query    int     false  "ID del negocio (requerido para super admin)"
-// @Param        page            query    int     false  "Número de página (default: 1, min: 1)"
-// @Param        page_size       query    int     false  "Tamaño de página (default: 10, min: 1, max: 100)"
-// @Param        integration_id  query    int     false  "Filtrar por ID de integración"
-// @Param        integration_type query    string  false  "Filtrar por tipo de integración (ej: shopify, whatsapp)"
-// @Param        sku             query    string  false  "Filtrar por SKU (búsqueda parcial, case-insensitive)"
-// @Param        skus            query    string  false  "Filtrar por múltiples SKUs separados por coma (búsqueda exacta)"
-// @Param        family_id       query    int     false  "Filtrar por ID de familia de producto"
-// @Param        barcode         query    string  false  "Filtrar por código de barras exacto"
-// @Param        name            query    string  false  "Filtrar por nombre (búsqueda parcial, case-insensitive)"
-// @Param        external_id     query    string  false  "Filtrar por ID externo (búsqueda exacta)"
-// @Param        external_ids    query    string  false  "Filtrar por múltiples IDs externos separados por coma"
-// @Param        start_date      query    string  false  "Fecha de inicio (YYYY-MM-DD o YYYY-MM-DD HH:MM:SS)"
-// @Param        end_date        query    string  false  "Fecha de fin (YYYY-MM-DD o YYYY-MM-DD HH:MM:SS)"
-// @Param        created_after   query    string  false  "Productos creados después de esta fecha (YYYY-MM-DD)"
-// @Param        created_before  query    string  false  "Productos creados antes de esta fecha (YYYY-MM-DD)"
-// @Param        updated_after   query    string  false  "Productos actualizados después de esta fecha (YYYY-MM-DD)"
-// @Param        updated_before  query    string  false  "Productos actualizados antes de esta fecha (YYYY-MM-DD)"
-// @Param        sort_by        query    string  false  "Campo para ordenar (id, sku, name, created_at, updated_at, business_id) (default: created_at)"
-// @Param        sort_order      query    string  false  "Orden (asc, desc) (default: desc)"
-// @Security     BearerAuth
-// @Success      200  {object}  domain.ProductsListResponse
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /products [get]
 func (h *Handlers) ListProducts(c *gin.Context) {
 	businessID, ok := h.resolveBusinessID(c)
 	if !ok {
@@ -46,7 +15,6 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		return
 	}
 
-	// Obtener y validar parámetros de paginación
 	pageStr := c.DefaultQuery("page", "1")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page < 1 {
@@ -69,32 +37,26 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		return
 	}
 
-	// Limitar el tamaño máximo de página
 	if pageSize > 100 {
 		pageSize = 100
 	}
 
-	// Construir filtros adicionales (business_id viene por separado como parámetro explícito)
 	filters := make(map[string]interface{})
 
-	// Filtro por integration_id (a través de JOIN con Business -> Integrations)
 	if integrationID := c.Query("integration_id"); integrationID != "" {
 		if id, err := strconv.ParseUint(integrationID, 10, 32); err == nil && id > 0 {
 			filters["integration_id"] = uint(id)
 		}
 	}
 
-	// Filtro por integration_type
 	if integrationType := c.Query("integration_type"); integrationType != "" {
 		filters["integration_type"] = strings.TrimSpace(integrationType)
 	}
 
-	// Filtro por SKU (búsqueda parcial)
 	if sku := c.Query("sku"); sku != "" {
 		filters["sku"] = strings.TrimSpace(sku)
 	}
 
-	// Filtro por múltiples SKUs (búsqueda exacta)
 	if skus := c.Query("skus"); skus != "" {
 		skuList := strings.Split(skus, ",")
 		trimmedSKUs := make([]string, 0, len(skuList))
@@ -119,17 +81,14 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		filters["barcode"] = strings.TrimSpace(barcode)
 	}
 
-	// Filtro por nombre (búsqueda parcial)
 	if name := c.Query("name"); name != "" {
 		filters["name"] = strings.TrimSpace(name)
 	}
 
-	// Filtro por external_id (búsqueda exacta)
 	if externalID := c.Query("external_id"); externalID != "" {
 		filters["external_id"] = strings.TrimSpace(externalID)
 	}
 
-	// Filtro por múltiples external_ids
 	if externalIDs := c.Query("external_ids"); externalIDs != "" {
 		idList := strings.Split(externalIDs, ",")
 		trimmedIDs := make([]string, 0, len(idList))
@@ -144,7 +103,6 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		}
 	}
 
-	// Filtros de fecha (compatibilidad con formato anterior)
 	if startDate := c.Query("start_date"); startDate != "" {
 		filters["start_date"] = strings.TrimSpace(startDate)
 	}
@@ -153,7 +111,6 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		filters["end_date"] = strings.TrimSpace(endDate)
 	}
 
-	// Filtros de fecha mejorados
 	if createdAfter := c.Query("created_after"); createdAfter != "" {
 		filters["created_after"] = strings.TrimSpace(createdAfter)
 	}
@@ -170,9 +127,63 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		filters["updated_before"] = strings.TrimSpace(updatedBefore)
 	}
 
-	// Ordenamiento
+	if status := c.Query("status"); status != "" {
+		filters["status"] = strings.TrimSpace(status)
+	}
+
+	if category := c.Query("category"); category != "" {
+		filters["category"] = strings.TrimSpace(category)
+	}
+
+	if brand := c.Query("brand"); brand != "" {
+		filters["brand"] = strings.TrimSpace(brand)
+	}
+
+	if hasFamily := c.Query("has_family"); hasFamily != "" {
+		if hasFamily == "true" {
+			filters["has_family"] = true
+		} else if hasFamily == "false" {
+			filters["has_family"] = false
+		}
+	}
+
+	if priceMin := c.Query("price_min"); priceMin != "" {
+		if v, err := strconv.ParseFloat(priceMin, 64); err == nil {
+			filters["price_min"] = v
+		}
+	}
+
+	if priceMax := c.Query("price_max"); priceMax != "" {
+		if v, err := strconv.ParseFloat(priceMax, 64); err == nil {
+			filters["price_max"] = v
+		}
+	}
+
+	if stockMin := c.Query("stock_min"); stockMin != "" {
+		if v, err := strconv.Atoi(stockMin); err == nil {
+			filters["stock_min"] = v
+		}
+	}
+
+	if stockMax := c.Query("stock_max"); stockMax != "" {
+		if v, err := strconv.Atoi(stockMax); err == nil {
+			filters["stock_max"] = v
+		}
+	}
+
+	if weightMin := c.Query("weight_min"); weightMin != "" {
+		if v, err := strconv.ParseFloat(weightMin, 64); err == nil {
+			filters["weight_min"] = v
+		}
+	}
+
+	if weightMax := c.Query("weight_max"); weightMax != "" {
+		if v, err := strconv.ParseFloat(weightMax, 64); err == nil {
+			filters["weight_max"] = v
+		}
+	}
+
 	if sortBy := c.Query("sort_by"); sortBy != "" {
-		// Validar campos permitidos para ordenar
 		allowedSortFields := map[string]bool{
 			"id":         true,
 			"sku":        true,
@@ -192,7 +203,6 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		}
 	}
 
-	// Llamar al caso de uso con el businessID del JWT
 	response, err := h.uc.ListProducts(c.Request.Context(), businessID, page, pageSize, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -203,7 +213,6 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		return
 	}
 
-	// Construir URLs completas de imagenes
 	for i := range response.Data {
 		response.Data[i].ImageURL = h.buildImageURL(response.Data[i].ImageURL)
 	}

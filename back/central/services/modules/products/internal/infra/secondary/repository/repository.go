@@ -12,30 +12,25 @@ import (
 	"gorm.io/gorm"
 )
 
-// Repository implementa el repositorio de productos
 type Repository struct {
 	db db.IDatabase
 }
 
-// New crea una nueva instancia del repositorio
 func New(database db.IDatabase) domain.IRepository {
 	return &Repository{
 		db: database,
 	}
 }
 
-// CreateProduct crea un nuevo producto en la base de datos
 func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product) error {
 	dbProduct := mappers.ToDBProduct(product)
 	if err := r.db.Conn(ctx).Create(dbProduct).Error; err != nil {
 		return err
 	}
-	// Actualizar el ID del modelo de dominio con el ID generado
 	product.ID = dbProduct.ID
 	return nil
 }
 
-// GetProductByID obtiene un producto por su ID, validando que pertenezca al negocio
 func (r *Repository) GetProductByID(ctx context.Context, businessID uint, id string) (*domain.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
@@ -54,7 +49,6 @@ func (r *Repository) GetProductByID(ctx context.Context, businessID uint, id str
 	return mappers.ToDomainProduct(&product), nil
 }
 
-// GetProductBySKU obtiene un producto por su SKU y BusinessID
 func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*domain.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
@@ -73,15 +67,12 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 	return mappers.ToDomainProduct(&product), nil
 }
 
-// ListProducts obtiene una lista paginada de productos filtrados por negocio
 func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.Product, int64, error) {
 	var products []models.Product
 	var total int64
 
-	// Construir query base - siempre filtra por businessID
 	query := r.db.Conn(ctx).Model(&models.Product{}).Where("products.business_id = ?", businessID)
 
-	// Filtro por integration_id (JOIN con Business -> Integrations)
 	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
 		query = query.
 			Joins("INNER JOIN business ON products.business_id = business.id").
@@ -90,7 +81,6 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 			Where("integrations.is_active = ?", true)
 	}
 
-	// Filtro por integration_type (JOIN con Business -> Integrations -> IntegrationType)
 	if integrationType, ok := filters["integration_type"].(string); ok && integrationType != "" {
 		query = query.
 			Joins("INNER JOIN business ON products.business_id = business.id").
@@ -100,12 +90,10 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 			Where("integrations.is_active = ?", true)
 	}
 
-	// Filtro por SKU (búsqueda parcial, case-insensitive)
 	if sku, ok := filters["sku"].(string); ok && sku != "" {
 		query = query.Where("products.sku ILIKE ?", "%"+sku+"%")
 	}
 
-	// Filtro por múltiples SKUs (búsqueda exacta con IN)
 	if skus, ok := filters["skus"].([]string); ok && len(skus) > 0 {
 		query = query.Where("products.sku IN ?", skus)
 	}
@@ -114,7 +102,6 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		query = query.Where("products.family_id = ?", familyID)
 	}
 
-	// Filtro por nombre (búsqueda parcial, case-insensitive)
 	if name, ok := filters["name"].(string); ok && name != "" {
 		query = query.Where("products.name ILIKE ?", "%"+name+"%")
 	}
@@ -123,17 +110,14 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		query = query.Where("products.barcode = ?", barcode)
 	}
 
-	// Filtro por external_id (búsqueda exacta)
 	if externalID, ok := filters["external_id"].(string); ok && externalID != "" {
 		query = query.Where("products.external_id = ?", externalID)
 	}
 
-	// Filtro por múltiples external_ids (búsqueda exacta con IN)
 	if externalIDs, ok := filters["external_ids"].([]string); ok && len(externalIDs) > 0 {
 		query = query.Where("products.external_id IN ?", externalIDs)
 	}
 
-	// Filtros de fecha (compatibilidad con formato anterior)
 	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
 		query = query.Where("products.created_at >= ?", startDate)
 	}
@@ -142,7 +126,6 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		query = query.Where("products.created_at <= ?", endDate)
 	}
 
-	// Filtros de fecha mejorados
 	if createdAfter, ok := filters["created_after"].(string); ok && createdAfter != "" {
 		query = query.Where("products.created_at >= ?", createdAfter)
 	}
@@ -159,21 +142,61 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 		query = query.Where("products.updated_at <= ?", updatedBefore)
 	}
 
-	// Usar DISTINCT si hay JOINs para evitar duplicados
+	if status, ok := filters["status"].(string); ok && status != "" {
+		query = query.Where("products.status = ?", status)
+	}
+
+	if category, ok := filters["category"].(string); ok && category != "" {
+		query = query.Where("products.category ILIKE ?", "%"+category+"%")
+	}
+
+	if brand, ok := filters["brand"].(string); ok && brand != "" {
+		query = query.Where("products.brand ILIKE ?", "%"+brand+"%")
+	}
+
+	if hasFamily, ok := filters["has_family"].(bool); ok {
+		if hasFamily {
+			query = query.Where("products.family_id IS NOT NULL")
+		} else {
+			query = query.Where("products.family_id IS NULL")
+		}
+	}
+
+	if priceMin, ok := filters["price_min"].(float64); ok {
+		query = query.Where("products.price >= ?", priceMin)
+	}
+
+	if priceMax, ok := filters["price_max"].(float64); ok {
+		query = query.Where("products.price <= ?", priceMax)
+	}
+
+	if stockMin, ok := filters["stock_min"].(int); ok {
+		query = query.Where("products.stock_quantity >= ?", stockMin)
+	}
+
+	if stockMax, ok := filters["stock_max"].(int); ok {
+		query = query.Where("products.stock_quantity <= ?", stockMax)
+	}
+
+	if weightMin, ok := filters["weight_min"].(float64); ok {
+		query = query.Where("products.weight >= ?", weightMin)
+	}
+
+	if weightMax, ok := filters["weight_max"].(float64); ok {
+		query = query.Where("products.weight <= ?", weightMax)
+	}
+
 	hasJoins := filters["integration_id"] != nil || filters["integration_type"] != nil
 	if hasJoins {
 		query = query.Distinct("products.id")
 	}
 
-	// Contar total (antes de aplicar paginación y ordenamiento)
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Aplicar ordenamiento
 	sortBy := "products.created_at"
 	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
-		// Mapear campos de ordenamiento
 		sortFieldMap := map[string]string{
 			"id":          "products.id",
 			"sku":         "products.sku",
@@ -194,19 +217,15 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Aplicar paginación
 	offset := (page - 1) * pageSize
 	query = query.Offset(offset).Limit(pageSize)
 
-	// Precargar relaciones
 	query = query.Preload("Business").Preload("Family")
 
-	// Ejecutar query
 	if err := query.Find(&products).Error; err != nil {
 		return nil, 0, err
 	}
 
-	// Convertir a dominio
 	domainProducts := make([]domain.Product, len(products))
 	for i, product := range products {
 		domainProducts[i] = *mappers.ToDomainProduct(&product)
@@ -215,18 +234,15 @@ func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pa
 	return domainProducts, total, nil
 }
 
-// UpdateProduct actualiza un producto existente
 func (r *Repository) UpdateProduct(ctx context.Context, product *domain.Product) error {
 	dbProduct := mappers.ToDBProduct(product)
 	return r.db.Conn(ctx).Save(dbProduct).Error
 }
 
-// DeleteProduct elimina (soft delete) un producto, validando que pertenezca al negocio
 func (r *Repository) DeleteProduct(ctx context.Context, businessID uint, id string) error {
 	return r.db.Conn(ctx).Where("id = ? AND business_id = ?", id, businessID).Delete(&models.Product{}).Error
 }
 
-// ListProductsByFamilyID obtiene todas las variantes pertenecientes a una familia.
 func (r *Repository) ListProductsByFamilyID(ctx context.Context, businessID uint, familyID uint) ([]domain.Product, error) {
 	var products []models.Product
 	err := r.db.Conn(ctx).
@@ -247,7 +263,6 @@ func (r *Repository) ListProductsByFamilyID(ctx context.Context, businessID uint
 	return domainProducts, nil
 }
 
-// ProductExists verifica si existe un producto con el SKU para un negocio
 func (r *Repository) ProductExists(ctx context.Context, businessID uint, sku string) (bool, error) {
 	var count int64
 	err := r.db.Conn(ctx).
@@ -262,7 +277,6 @@ func (r *Repository) ProductExists(ctx context.Context, businessID uint, sku str
 	return count > 0, nil
 }
 
-// VariantExistsInFamily verifica si ya existe una variante con la misma combinación dentro de una familia.
 func (r *Repository) VariantExistsInFamily(ctx context.Context, businessID uint, familyID uint, variantSignature string, excludeProductID *string) (bool, error) {
 	if variantSignature == "" {
 		return false, nil
@@ -284,7 +298,6 @@ func (r *Repository) VariantExistsInFamily(ctx context.Context, businessID uint,
 	return count > 0, nil
 }
 
-// CreateProductFamily crea una nueva familia de producto.
 func (r *Repository) CreateProductFamily(ctx context.Context, family *domain.ProductFamily) error {
 	dbFamily := mappers.ToDBProductFamily(family)
 	if err := r.db.Conn(ctx).Create(dbFamily).Error; err != nil {
@@ -297,7 +310,6 @@ func (r *Repository) CreateProductFamily(ctx context.Context, family *domain.Pro
 	return nil
 }
 
-// GetProductFamilyByID obtiene una familia validando que pertenezca al negocio.
 func (r *Repository) GetProductFamilyByID(ctx context.Context, businessID uint, familyID uint) (*domain.ProductFamily, error) {
 	var family models.ProductFamily
 	err := r.db.Conn(ctx).
@@ -318,7 +330,6 @@ func (r *Repository) GetProductFamilyByID(ctx context.Context, businessID uint, 
 	return mappers.ToDomainProductFamily(&family), nil
 }
 
-// ListProductFamilies obtiene una lista paginada de familias de producto por negocio.
 func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.ProductFamily, int64, error) {
 	var families []models.ProductFamily
 	var total int64
@@ -394,26 +405,18 @@ func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, p
 	return result, total, nil
 }
 
-// UpdateProductFamily actualiza una familia de producto.
 func (r *Repository) UpdateProductFamily(ctx context.Context, family *domain.ProductFamily) error {
 	dbFamily := mappers.ToDBProductFamily(family)
 	return r.db.Conn(ctx).Save(dbFamily).Error
 }
 
-// DeleteProductFamily elimina una familia de producto.
 func (r *Repository) DeleteProductFamily(ctx context.Context, businessID uint, familyID uint) error {
 	return r.db.Conn(ctx).
 		Where("id = ? AND business_id = ?", familyID, businessID).
 		Delete(&models.ProductFamily{}).Error
 }
 
-//
-//	PRODUCT-INTEGRATION MANAGEMENT
-//
-
-// AddProductIntegration asocia un producto con una integración
 func (r *Repository) AddProductIntegration(ctx context.Context, productID string, integrationID uint, externalProductID string, externalVariantID, externalSKU, externalBarcode *string) (*domain.ProductBusinessIntegration, error) {
-	// Verificar que el producto existe y obtener su BusinessID
 	var product models.Product
 	if err := r.db.Conn(ctx).Where("id = ?", productID).First(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -422,7 +425,6 @@ func (r *Repository) AddProductIntegration(ctx context.Context, productID string
 		return nil, err
 	}
 
-	// Verificar que la integración existe
 	var integration models.Integration
 	if err := r.db.Conn(ctx).Where("id = ?", integrationID).First(&integration).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -431,12 +433,10 @@ func (r *Repository) AddProductIntegration(ctx context.Context, productID string
 		return nil, err
 	}
 
-	// Validar que la integración pertenece al mismo negocio que el producto
 	if integration.BusinessID == nil || *integration.BusinessID != product.BusinessID {
 		return nil, fmt.Errorf("integration does not belong to the same business as the product")
 	}
 
-	// Verificar si ya existe la asociación
 	var existingCount int64
 	err := r.db.Conn(ctx).
 		Model(&models.ProductBusinessIntegration{}).
@@ -449,7 +449,6 @@ func (r *Repository) AddProductIntegration(ctx context.Context, productID string
 		return nil, fmt.Errorf("product is already associated with this integration")
 	}
 
-	// Crear la asociación
 	dbPI := &models.ProductBusinessIntegration{
 		ProductID:         productID,
 		BusinessID:        product.BusinessID,
@@ -467,7 +466,6 @@ func (r *Repository) AddProductIntegration(ctx context.Context, productID string
 	return mappers.ToDomainProductIntegration(dbPI), nil
 }
 
-// RemoveProductIntegration remueve la asociación entre un producto y una integración
 func (r *Repository) RemoveProductIntegration(ctx context.Context, productID string, integrationID uint) error {
 	result := r.db.Conn(ctx).
 		Where("product_id = ? AND integration_id = ?", productID, integrationID).
@@ -484,7 +482,6 @@ func (r *Repository) RemoveProductIntegration(ctx context.Context, productID str
 	return nil
 }
 
-// GetProductIntegrations obtiene todas las integraciones asociadas a un producto
 func (r *Repository) GetProductIntegrations(ctx context.Context, productID string) ([]domain.ProductBusinessIntegration, error) {
 	var integrations []models.ProductBusinessIntegration
 	err := r.db.Conn(ctx).
@@ -500,7 +497,6 @@ func (r *Repository) GetProductIntegrations(ctx context.Context, productID strin
 	return mappers.ToDomainProductIntegrations(integrations), nil
 }
 
-// GetProductsByIntegration obtiene todos los productos asociados a una integración
 func (r *Repository) GetProductsByIntegration(ctx context.Context, integrationID uint) ([]domain.Product, error) {
 	var products []models.Product
 	err := r.db.Conn(ctx).
@@ -513,7 +509,6 @@ func (r *Repository) GetProductsByIntegration(ctx context.Context, integrationID
 		return nil, err
 	}
 
-	// Convertir a dominio
 	domainProducts := make([]domain.Product, len(products))
 	for i, product := range products {
 		domainProducts[i] = *mappers.ToDomainProduct(&product)
