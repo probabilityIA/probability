@@ -42,7 +42,7 @@ const ProductList = forwardRef(function ProductList(
         for (const [key, value] of Object.entries(advancedFilters)) {
             if (numericFields.includes(key)) {
                 const num = Number(value);
-                if (!isNaN(num)) (advanced as any)[key] = num;
+                if (!isNaN(num) && num >= 0) (advanced as any)[key] = num;
             } else {
                 (advanced as any)[key] = value;
             }
