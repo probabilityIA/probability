@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -452,6 +453,22 @@ func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*entities.Prob
 func (r *Repository) UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	dbOrder := mappers.ToDBOrder(order)
 	return r.db.Conn(ctx).Save(dbOrder).Error
+}
+
+// UpdateOrderShippingDimensions actualiza solo peso/dimensiones de la orden,
+// sin tocar el resto de columnas (evita pisar campos que otros procesos
+// asincronos pudieron haber actualizado entre la creacion de la orden y esta
+// llamada, ej. internal_number).
+func (r *Repository) UpdateOrderShippingDimensions(ctx context.Context, orderID string, weight, height, width, length *float64) error {
+	return r.db.Conn(ctx).
+		Model(&models.Order{}).
+		Where("id = ?", orderID).
+		Updates(map[string]interface{}{
+			"weight": weight,
+			"height": height,
+			"width":  width,
+			"length": length,
+		}).Error
 }
 
 // DeleteOrder elimina (soft delete) una orden
@@ -970,6 +987,59 @@ func (r *Repository) BusinessHasWarehouse(ctx context.Context, businessID uint) 
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *Repository) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
+	var row struct {
+		Metadata datatypes.JSON
+	}
+	err := r.db.Conn(ctx).
+		Table("warehouses").
+		Select("metadata").
+		Where("id = ?", warehouseID).
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return nil, err
+	}
+	if len(row.Metadata) == 0 {
+		return nil, nil
+	}
+
+	var raw struct {
+		ShippingPackageStrategy string `json:"shipping_package_strategy"`
+		StandardBoxes           []struct {
+			Name     string   `json:"name"`
+			Weight   *float64 `json:"weight"`
+			Length   *float64 `json:"length"`
+			Width    *float64 `json:"width"`
+			Height   *float64 `json:"height"`
+			MaxItems int      `json:"max_items"`
+		} `json:"standard_boxes"`
+	}
+	if err := json.Unmarshal(row.Metadata, &raw); err != nil {
+		return nil, nil
+	}
+	if raw.ShippingPackageStrategy == "" {
+		return nil, nil
+	}
+
+	boxes := make([]entities.StandardBox, 0, len(raw.StandardBoxes))
+	for _, b := range raw.StandardBoxes {
+		boxes = append(boxes, entities.StandardBox{
+			Name:     b.Name,
+			Weight:   b.Weight,
+			Length:   b.Length,
+			Width:    b.Width,
+			Height:   b.Height,
+			MaxItems: b.MaxItems,
+		})
+	}
+
+	return &entities.ShippingPackageConfig{
+		Strategy:      raw.ShippingPackageStrategy,
+		StandardBoxes: boxes,
+	}, nil
 }
 
 func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {

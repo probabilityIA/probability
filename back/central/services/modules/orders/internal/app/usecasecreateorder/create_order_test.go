@@ -94,6 +94,10 @@ func (m *mockRepository) ListOrders(ctx context.Context, page, pageSize int, fil
 	}
 	return nil, 0, nil
 }
+func (m *mockRepository) UpdateOrderShippingDimensions(ctx context.Context, orderID string, weight, height, width, length *float64) error {
+	return nil
+}
+
 func (m *mockRepository) UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	if m.UpdateOrderFn != nil {
 		return m.UpdateOrderFn(ctx, order)
@@ -154,6 +158,9 @@ func (m *mockRepository) BusinessHasWarehouse(ctx context.Context, businessID ui
 		return m.BusinessHasWarehouseFn(ctx, businessID)
 	}
 	return true, nil
+}
+func (m *mockRepository) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
+	return nil, nil
 }
 func (m *mockRepository) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {
 	if m.OrderExistsFn != nil {

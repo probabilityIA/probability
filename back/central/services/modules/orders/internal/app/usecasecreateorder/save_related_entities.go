@@ -15,6 +15,12 @@ func (uc *UseCaseCreateOrder) saveRelatedEntities(ctx context.Context, order *en
 		return err
 	}
 
+	if order.Weight != nil {
+		if err := uc.repo.UpdateOrderShippingDimensions(ctx, order.ID, order.Weight, order.Height, order.Width, order.Length); err != nil {
+			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("failed to persist shipping package dimensions on order")
+		}
+	}
+
 	if err := uc.saveAddresses(ctx, order, dto); err != nil {
 		return err
 	}
@@ -40,6 +46,8 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 		return nil
 	}
 
+	var totalWeight, maxLength, maxWidth, maxHeight float64
+	var totalQuantity int
 	orderItems := make([]*entities.ProbabilityOrderItem, len(dto.OrderItems))
 	for i, itemDTO := range dto.OrderItems {
 		// Validar/Crear Producto
@@ -48,9 +56,23 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 			return fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
 		}
 
+		totalQuantity += itemDTO.Quantity
+
 		var productID *string
 		if product != nil {
 			productID = &product.ID
+			if product.Weight != nil {
+				totalWeight += *product.Weight * float64(itemDTO.Quantity)
+			}
+			if product.Length != nil && *product.Length > maxLength {
+				maxLength = *product.Length
+			}
+			if product.Width != nil && *product.Width > maxWidth {
+				maxWidth = *product.Width
+			}
+			if product.Height != nil && *product.Height > maxHeight {
+				maxHeight = *product.Height
+			}
 		}
 
 		orderItems[i] = &entities.ProbabilityOrderItem{
@@ -84,6 +106,8 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 		}
 	}
 
+	uc.applyShippingPackageDimensions(ctx, order, totalQuantity, totalWeight, maxLength, maxWidth, maxHeight)
+
 	if err := uc.repo.CreateOrderItems(ctx, orderItems); err != nil {
 		return err
 	}
@@ -93,6 +117,47 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 	}
 
 	return nil
+}
+
+// applyShippingPackageDimensions decide el peso/dimensiones de la orden segun la
+// estrategia de empaque configurada en la bodega: caja estandar fija, o la suma
+// del peso real de los productos con la dimension mas grande entre los items.
+func (uc *UseCaseCreateOrder) applyShippingPackageDimensions(ctx context.Context, order *entities.ProbabilityOrder, totalQuantity int, totalWeight, maxLength, maxWidth, maxHeight float64) {
+	var config *entities.ShippingPackageConfig
+	if order.WarehouseID != nil {
+		cfg, err := uc.repo.GetWarehouseShippingConfig(ctx, *order.WarehouseID)
+		if err != nil {
+			uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("failed to load warehouse shipping config")
+		} else {
+			config = cfg
+		}
+	}
+
+	if config != nil && config.Strategy == entities.ShippingPackageStrategyStandardBox {
+		box := config.SelectBox(totalQuantity, maxLength, maxWidth, maxHeight)
+		if box != nil {
+			if box.Weight != nil {
+				order.Weight = box.Weight
+			}
+			if box.Length != nil {
+				order.Length = box.Length
+			}
+			if box.Width != nil {
+				order.Width = box.Width
+			}
+			if box.Height != nil {
+				order.Height = box.Height
+			}
+			return
+		}
+	}
+
+	if totalWeight > 0 {
+		order.Weight = &totalWeight
+		order.Length = &maxLength
+		order.Width = &maxWidth
+		order.Height = &maxHeight
+	}
 }
 
 // saveAddresses guarda las direcciones de la orden

@@ -86,6 +86,11 @@ func (m *RepositoryMock) UpdateOrder(ctx context.Context, order *entities.Probab
 	return args.Error(0)
 }
 
+func (m *RepositoryMock) UpdateOrderShippingDimensions(ctx context.Context, orderID string, weight, height, width, length *float64) error {
+	args := m.Called(ctx, orderID, weight, height, width, length)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) DeleteOrder(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -153,6 +158,15 @@ func (m *RepositoryMock) GetIntegrationCodIncludesShipping(ctx context.Context, 
 func (m *RepositoryMock) BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error) {
 	args := m.Called(ctx, businessID)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *RepositoryMock) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error) {
+	args := m.Called(ctx, warehouseID)
+	var cfg *entities.ShippingPackageConfig
+	if v, ok := args.Get(0).(*entities.ShippingPackageConfig); ok {
+		cfg = v
+	}
+	return cfg, args.Error(1)
 }
 
 func (m *RepositoryMock) OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error) {

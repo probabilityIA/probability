@@ -18,6 +18,7 @@ type IRepository interface {
 	GetOrderNotificationMessages(ctx context.Context, businessID uint, orderNumber string) ([]entities.OrderNotificationMessage, error)
 	GetWhatsAppEventCodes(ctx context.Context, businessID, integrationID uint) ([]string, error)
 	UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error
+	UpdateOrderShippingDimensions(ctx context.Context, orderID string, weight, height, width, length *float64) error
 	DeleteOrder(ctx context.Context, id string) error
 	GetOrderRaw(ctx context.Context, id string) (*entities.ProbabilityOrderChannelMetadata, error)
 	CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error)
@@ -28,6 +29,7 @@ type IRepository interface {
 	GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error)
 	GetIntegrationCodIncludesShipping(ctx context.Context, integrationID uint) (bool, error)
 	BusinessHasWarehouse(ctx context.Context, businessID uint) (bool, error)
+	GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*entities.ShippingPackageConfig, error)
 
 	OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error)
 	GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error)
