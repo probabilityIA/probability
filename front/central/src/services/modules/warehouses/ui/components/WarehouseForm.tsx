@@ -409,124 +409,6 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                             </div>
                         )}
                     </div>
-
-                    <div className="border-t dark:border-gray-700 pt-4">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Estrategia de empaque para cotización</h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                            Define cómo se calcula el peso/tamaño del paquete al cotizar envíos desde esta bodega.
-                        </p>
-                        <div className="flex flex-col gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setPackageStrategy('product_dimensions')}
-                                className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'product_dimensions'
-                                    ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
-                                    }`}
-                            >
-                                <span className={`text-sm font-bold ${packageStrategy === 'product_dimensions' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    Dimensiones reales del producto
-                                </span>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Suma el peso real de cada producto x cantidad; usa la dimensión más grande entre los items como tamaño de caja.
-                                </p>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPackageStrategy('standard_box')}
-                                className={`text-left px-4 py-3 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'standard_box'
-                                    ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
-                                    }`}
-                            >
-                                <span className={`text-sm font-bold ${packageStrategy === 'standard_box' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
-                                    Caja estándar
-                                </span>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    Peso y tamaño fijos, sin importar qué producto ni cuántas unidades.
-                                </p>
-                            </button>
-                        </div>
-
-                        {packageStrategy === 'standard_box' && (
-                            <div className="mt-3 space-y-3">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Define una o varias cajas. "Máx. unidades" es cuántos items (sumando cantidades) caben en esa caja; al crear la orden se elige la caja más chica donde quepa todo.
-                                </p>
-                                {standardBoxes.map((box, index) => (
-                                    <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                type="text"
-                                                placeholder={`Caja ${index + 1} (ej: Chica)`}
-                                                value={box.name}
-                                                onChange={(e) => updateBoxRow(index, 'name', e.target.value)}
-                                                className="flex-1"
-                                            />
-                                            {standardBoxes.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeBoxRow(index)}
-                                                    className="text-red-500 hover:text-red-700 text-xs font-medium px-2"
-                                                >
-                                                    Quitar
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Peso (kg)</label>
-                                                <Input
-                                                    type="number" min="0" step="0.01"
-                                                    value={box.weight}
-                                                    onChange={(e) => updateBoxRow(index, 'weight', e.target.value)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Largo (cm)</label>
-                                                <Input
-                                                    type="number" min="0" step="0.1"
-                                                    value={box.length}
-                                                    onChange={(e) => updateBoxRow(index, 'length', e.target.value)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Ancho (cm)</label>
-                                                <Input
-                                                    type="number" min="0" step="0.1"
-                                                    value={box.width}
-                                                    onChange={(e) => updateBoxRow(index, 'width', e.target.value)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Alto (cm)</label>
-                                                <Input
-                                                    type="number" min="0" step="0.1"
-                                                    value={box.height}
-                                                    onChange={(e) => updateBoxRow(index, 'height', e.target.value)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1">Máx. unidades</label>
-                                                <Input
-                                                    type="number" min="1" step="1"
-                                                    value={box.max_items}
-                                                    onChange={(e) => updateBoxRow(index, 'max_items', e.target.value)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={addBoxRow}
-                                    className="text-xs font-medium text-[#7c3aed] hover:text-[#6d28d9]"
-                                >
-                                    + Agregar otro tamaño de caja
-                                </button>
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 {/* RIGHT COLUMN */}
@@ -667,6 +549,141 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                     </div>
 
                 </div>
+            </div>
+
+            <div className="border-t dark:border-gray-700 pt-5">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Estrategia de empaque para cotización</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    Define cómo se calcula el peso/tamaño del paquete al cotizar envíos desde esta bodega.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <button
+                        type="button"
+                        onClick={() => setPackageStrategy('product_dimensions')}
+                        className={`text-left px-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'product_dimensions'
+                            ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
+                            }`}
+                    >
+                        <span className={`text-sm font-bold ${packageStrategy === 'product_dimensions' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
+                            Dimensiones reales del producto
+                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Suma el peso real de cada producto x cantidad; usa la dimensión más grande entre los items como tamaño de caja.
+                        </p>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setPackageStrategy('standard_box')}
+                        className={`text-left px-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${packageStrategy === 'standard_box'
+                            ? 'border-[#7c3aed] bg-purple-50 dark:bg-purple-900/20 shadow-sm'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-white dark:bg-gray-800'
+                            }`}
+                    >
+                        <span className={`text-sm font-bold ${packageStrategy === 'standard_box' ? 'text-[#7c3aed]' : 'text-gray-800 dark:text-gray-200'}`}>
+                            Caja estándar
+                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Peso y tamaño fijos, sin importar qué producto ni cuántas unidades.
+                        </p>
+                    </button>
+                </div>
+
+                {packageStrategy === 'standard_box' && (
+                    <div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                            Define una o varias cajas. "Máx. unidades" es cuántos items (sumando cantidades) caben en esa caja; al crear la orden se elige la caja más chica donde quepa todo.
+                        </p>
+
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div className="hidden md:grid grid-cols-[1.6fr_0.9fr_0.9fr_0.9fr_0.9fr_1fr_auto] gap-3 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700">
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Nombre</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Peso (kg)</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Largo (cm)</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Ancho (cm)</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Alto (cm)</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Máx. unid.</span>
+                                <span className="w-14" />
+                            </div>
+
+                            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {standardBoxes.map((box, index) => (
+                                    <div key={index} className="grid grid-cols-2 md:grid-cols-[1.6fr_0.9fr_0.9fr_0.9fr_0.9fr_1fr_auto] gap-3 px-4 py-3 items-start md:items-center">
+                                        <div className="col-span-2 md:col-span-1">
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Nombre</label>
+                                            <Input
+                                                type="text"
+                                                placeholder={`Caja ${index + 1} (ej: Chica)`}
+                                                value={box.name}
+                                                onChange={(e) => updateBoxRow(index, 'name', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Peso (kg)</label>
+                                            <Input
+                                                type="number" min="0" step="0.01"
+                                                value={box.weight}
+                                                onChange={(e) => updateBoxRow(index, 'weight', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Largo (cm)</label>
+                                            <Input
+                                                type="number" min="0" step="0.1"
+                                                value={box.length}
+                                                onChange={(e) => updateBoxRow(index, 'length', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Ancho (cm)</label>
+                                            <Input
+                                                type="number" min="0" step="0.1"
+                                                value={box.width}
+                                                onChange={(e) => updateBoxRow(index, 'width', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Alto (cm)</label>
+                                            <Input
+                                                type="number" min="0" step="0.1"
+                                                value={box.height}
+                                                onChange={(e) => updateBoxRow(index, 'height', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-medium text-gray-500 dark:text-gray-400 mb-1 md:hidden">Máx. unidades</label>
+                                            <Input
+                                                type="number" min="1" step="1"
+                                                value={box.max_items}
+                                                onChange={(e) => updateBoxRow(index, 'max_items', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="col-span-2 md:col-span-1 flex md:justify-center md:items-center">
+                                            {standardBoxes.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeBoxRow(index)}
+                                                    className="text-red-500 hover:text-red-700 text-xs font-medium px-2 py-1"
+                                                >
+                                                    Quitar
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={addBoxRow}
+                                className="w-full text-left px-4 py-2.5 bg-gray-50 dark:bg-gray-800/40 hover:bg-purple-50 dark:hover:bg-purple-900/10 text-xs font-medium text-[#7c3aed] hover:text-[#6d28d9] transition-colors"
+                            >
+                                + Agregar otro tamaño de caja
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
