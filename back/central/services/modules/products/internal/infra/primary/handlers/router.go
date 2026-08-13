@@ -27,6 +27,9 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		products.POST("/channel-data/undo", middleware.JWT(), h.UndoChannelData)
 		products.GET("/channel-data/batches", middleware.JWT(), h.ListDataBatches)
 
+		products.GET("/dimensions/export", middleware.JWT(), h.ExportProductsDimensions)
+		products.POST("/dimensions/import", middleware.JWT(), h.ImportProductsDimensions)
+
 		products.GET("", middleware.JWT(), h.ListProducts)
 		products.GET("/:id", middleware.JWT(), h.GetProductByID)
 		products.GET("/:id/detail", middleware.JWT(), h.GetProductDetail)

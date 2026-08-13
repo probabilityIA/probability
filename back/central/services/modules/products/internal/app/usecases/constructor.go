@@ -124,3 +124,13 @@ func (uc *UseCases) GetNextSKU(ctx context.Context, businessID uint, prefix stri
 func (uc *UseCases) GetNextSKUBatch(ctx context.Context, businessID uint, prefix string, count int) ([]string, error) {
 	return uc.ProductCRUD.GetNextSKUBatch(ctx, businessID, prefix, count)
 }
+
+// ExportDimensions delega al caso de uso CRUD
+func (uc *UseCases) ExportDimensions(ctx context.Context, businessID uint) ([]domain.Product, error) {
+	return uc.ProductCRUD.ExportDimensions(ctx, businessID)
+}
+
+// BulkUpdateDimensions delega al caso de uso CRUD
+func (uc *UseCases) BulkUpdateDimensions(ctx context.Context, businessID uint, rows []domain.DimensionRow) (*domain.BulkDimensionsResult, error) {
+	return uc.ProductCRUD.BulkUpdateDimensions(ctx, businessID, rows)
+}
