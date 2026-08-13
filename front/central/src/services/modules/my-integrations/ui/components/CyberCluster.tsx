@@ -1,15 +1,21 @@
 'use client';
 
 import type { Integration, IntegrationCategory } from '@/services/integrations/core/domain/types';
+import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import { CyberIntegrationNode } from './CyberIntegrationNode';
+import { CyberChannelCard } from './CyberChannelCard';
+import { getSyncProvider } from '../providers';
 
 interface CyberClusterProps {
     category: IntegrationCategory;
     color: string;
     integrations: Integration[];
+    stats?: Record<number, IntegrationStatsItem>;
     onToggle: (integration: Integration) => void;
+    onToggleInventory?: (integration: Integration) => void;
     onEdit: (integration: Integration) => void;
     togglingId: number | null;
+    inventoryTogglingId?: number | null;
     editingId: number | null;
     anchorRef: (el: HTMLDivElement | null) => void;
 }
@@ -18,9 +24,12 @@ export function CyberCluster({
     category,
     color,
     integrations,
+    stats,
     onToggle,
+    onToggleInventory,
     onEdit,
     togglingId,
+    inventoryTogglingId,
     editingId,
     anchorRef,
 }: CyberClusterProps) {
@@ -34,15 +43,30 @@ export function CyberCluster({
                         </p>
                     ) : (
                         integrations.map(integration => (
-                            <CyberIntegrationNode
-                                key={integration.id}
-                                integration={integration}
-                                color={color}
-                                onToggle={onToggle}
-                                onEdit={onEdit}
-                                togglingId={togglingId}
-                                editingId={editingId}
-                            />
+                            getSyncProvider(integration.integration_type_id) && onToggleInventory ? (
+                                <CyberChannelCard
+                                    key={integration.id}
+                                    integration={integration}
+                                    color={color}
+                                    stats={stats?.[integration.id]}
+                                    onToggle={onToggle}
+                                    onToggleInventory={onToggleInventory}
+                                    onEdit={onEdit}
+                                    togglingId={togglingId}
+                                    inventoryTogglingId={inventoryTogglingId ?? null}
+                                    editingId={editingId}
+                                />
+                            ) : (
+                                <CyberIntegrationNode
+                                    key={integration.id}
+                                    integration={integration}
+                                    color={color}
+                                    onToggle={onToggle}
+                                    onEdit={onEdit}
+                                    togglingId={togglingId}
+                                    editingId={editingId}
+                                />
+                            )
                         ))
                     )}
                 </div>

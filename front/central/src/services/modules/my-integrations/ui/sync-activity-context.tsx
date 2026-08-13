@@ -51,6 +51,7 @@ export type DetailGroup =
     | 'channel_no_sku'
     | 'sku_changed'
     | 'sku_typo'
+    | 'sku_spacing'
     | 'updated'
     | 'skipped'
     | 'failed';
@@ -586,7 +587,9 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
 
         const runs = steps
             .map(step => (step === 'associate'
-                ? (id: number, bid?: number, only?: string[]) => provider.associateProducts(id, bid, only)
+                ? (provider.associateProducts
+                    ? (id: number, bid?: number, only?: string[]) => provider.associateProducts!(id, bid, only)
+                    : undefined)
                 : step === 'createBothSides'
                     ? undefined
                     : provider.apply[step]))

@@ -20,11 +20,22 @@ export async function fetchSyncFindings(businessId?: number, signal?: AbortSigna
     };
 }
 
+export type FixSide = 'channel' | 'probability';
+export type FindingPattern = 'spacing' | 'transposed' | 'one_char';
+
 export interface FindingItem {
     sku: string;
     name?: string;
     detail?: string;
     channels?: string[];
+    counterpart_sku?: string;
+    counterpart_name?: string;
+    channel_qty?: number;
+    own_qty?: number;
+    fix_side?: FixSide;
+    pattern?: FindingPattern;
+    present_in?: string[];
+    missing_in?: string[];
 }
 
 export interface FindingItemsPage {
@@ -64,4 +75,81 @@ export function findingItemsCsvUrl(code: string, businessId?: number, search = '
     if (businessId) params.set('business_id', String(businessId));
     if (search) params.set('q', search);
     return `/internal/sync-finding-items?${params.toString()}`;
+}
+
+export interface MatrixColumn {
+    integration_id: number;
+    name: string;
+    code: string;
+}
+
+export interface MatrixCell {
+    integration_id: number;
+    present: boolean;
+    sku?: string;
+    barcode?: string;
+    external_id?: string;
+    variant_id?: string;
+    sku_matches: boolean;
+    sku_known: boolean;
+}
+
+export interface MatrixRow {
+    product_id: string;
+    sku: string;
+    barcode?: string;
+    name?: string;
+    cells: MatrixCell[];
+}
+
+export interface MatrixFilters {
+    search?: string;
+    integrationIds?: number[];
+}
+
+export interface MatrixPage {
+    columns: MatrixColumn[];
+    rows: MatrixRow[];
+    total: number;
+    page: number;
+    total_pages: number;
+}
+
+const EMPTY_MATRIX: MatrixPage = { columns: [], rows: [], total: 0, page: 1, total_pages: 0 };
+
+function matrixParams(businessId?: number, filters: MatrixFilters = {}): URLSearchParams {
+    const params = new URLSearchParams();
+    if (businessId) params.set('business_id', String(businessId));
+    if (filters.search) params.set('q', filters.search);
+    if (filters.integrationIds?.length) params.set('integration_ids', filters.integrationIds.join(','));
+    return params;
+}
+
+export async function fetchMatchMatrix(
+    businessId?: number,
+    page = 1,
+    filters: MatrixFilters = {},
+    signal?: AbortSignal,
+): Promise<MatrixPage> {
+    const params = matrixParams(businessId, filters);
+    params.set('page', String(page));
+    params.set('page_size', '50');
+
+    const response = await fetch(`/internal/sync-matrix?${params.toString()}`, { signal, cache: 'no-store' });
+    if (!response.ok) return EMPTY_MATRIX;
+
+    const body = await response.json();
+    return {
+        columns: Array.isArray(body?.columns) ? body.columns : [],
+        rows: Array.isArray(body?.data) ? body.data : [],
+        total: Number(body?.total) || 0,
+        page: Number(body?.page) || 1,
+        total_pages: Number(body?.total_pages) || 0,
+    };
+}
+
+export function matchMatrixCsvUrl(businessId?: number, filters: MatrixFilters = {}): string {
+    const params = matrixParams(businessId, filters);
+    params.set('format', 'csv');
+    return `/internal/sync-matrix?${params.toString()}`;
 }

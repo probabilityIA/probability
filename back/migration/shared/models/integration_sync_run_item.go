@@ -17,6 +17,13 @@ type IntegrationSyncRunItem struct {
 	ParentLabel  string `gorm:"column:parent_label;size:300"`
 	VariantLabel string `gorm:"column:variant_label;size:200"`
 
+	CounterpartSKU  string `gorm:"column:counterpart_sku;size:120"`
+	CounterpartName string `gorm:"column:counterpart_name;size:300"`
+	ChannelQty      *int   `gorm:"column:channel_qty"`
+	OwnQty          *int   `gorm:"column:own_qty"`
+	FixSide         string `gorm:"column:fix_side;size:16"`
+	Pattern         string `gorm:"column:pattern;size:24"`
+
 	CreatedAt time.Time
 }
 

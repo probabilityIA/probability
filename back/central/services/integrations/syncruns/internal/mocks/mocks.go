@@ -16,6 +16,7 @@ type RepositoryMock struct {
 	ChannelSummariesFn             func(ctx context.Context, businessID uint) ([]domain.ChannelSummary, error)
 	CrossChannelFn                 func(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error)
 	FindingItemsFn                 func(ctx context.Context, query domain.FindingItemsQuery) (*domain.FindingItemsPage, error)
+	MatchMatrixFn                  func(ctx context.Context, query domain.MatrixQuery) (*domain.MatrixPage, error)
 
 	Guardados       []domain.SyncRun
 	ConsultasDueno  []ConsultaDueno
@@ -138,4 +139,11 @@ func (m *RepositoryMock) FindingItems(ctx context.Context, query domain.FindingI
 		return m.FindingItemsFn(ctx, query)
 	}
 	return &domain.FindingItemsPage{Items: []domain.FindingItem{}}, nil
+}
+
+func (m *RepositoryMock) MatchMatrix(ctx context.Context, query domain.MatrixQuery) (*domain.MatrixPage, error) {
+	if m.MatchMatrixFn != nil {
+		return m.MatchMatrixFn(ctx, query)
+	}
+	return &domain.MatrixPage{}, nil
 }

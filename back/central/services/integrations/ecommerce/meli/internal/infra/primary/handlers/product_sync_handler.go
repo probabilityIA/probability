@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -45,6 +46,8 @@ func briefsToResponse(items []domain.ProductBrief) []gin.H {
 	}
 	return out
 }
+
+const maxCreacionPorLote = 50
 
 func (h *meliHandler) ReconcileProducts(c *gin.Context) {
 	var req reconcileRequest
@@ -122,6 +125,22 @@ func (h *meliHandler) ApplyProducts(c *gin.Context) {
 	if req.Direction != "to_meli" && req.Direction != "to_probability" {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "direction debe ser to_meli o to_probability"})
 		return
+	}
+	if req.Direction == "to_meli" {
+		if len(req.SKUs) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   "para publicar en Mercado Libre hay que indicar los SKU, no se permite crear todo el catalogo de una vez",
+			})
+			return
+		}
+		if len(req.SKUs) > maxCreacionPorLote {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   fmt.Sprintf("maximo %d productos por lote al publicar en Mercado Libre, llegaron %d", maxCreacionPorLote, len(req.SKUs)),
+			})
+			return
+		}
 	}
 	businessID, ok := h.resolveBusinessID(c, req.BusinessID)
 	if !ok {

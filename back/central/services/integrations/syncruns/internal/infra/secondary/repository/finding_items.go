@@ -8,20 +8,26 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/syncruns/internal/domain"
 )
 
-// grupoDeHallazgo mapea los hallazgos que salen tal cual del detalle de cada
-// canal. Los demas se calculan cruzando canales y llevan su propia consulta.
 var grupoDeHallazgo = map[string]string{
 	domain.FindingChannelNoSKU:  "channel_no_sku",
 	domain.FindingSKUChanged:    "sku_changed",
 	domain.FindingSKUTypo:       "sku_typo",
+	domain.FindingSKUSpacing:    "sku_spacing",
 	domain.FindingNotAssociated: "not_associated",
 }
 
-// baseRuns limita a las corridas de comparacion del negocio, sobre canales activos.
 const baseRuns = `
     SELECT r.id, i.name AS channel
     FROM integration_sync_runs r
     JOIN integrations i ON i.id = r.integration_id AND i.deleted_at IS NULL AND i.is_active = true
+    WHERE r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL`
+
+const baseSalesRuns = `
+    SELECT r.id, i.name AS channel
+    FROM integration_sync_runs r
+    JOIN integrations i ON i.id = r.integration_id AND i.deleted_at IS NULL AND i.is_active = true
+    JOIN integration_types it2 ON it2.id = i.integration_type_id AND it2.deleted_at IS NULL
+    JOIN integration_categories ic ON ic.id = it2.category_id AND ic.code = 'ecommerce'
     WHERE r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL`
 
 func (r *repository) FindingItems(ctx context.Context, q domain.FindingItemsQuery) (*domain.FindingItemsPage, error) {
@@ -43,7 +49,7 @@ func (r *repository) FindingItems(ctx context.Context, q domain.FindingItemsQuer
 		return nil, err
 	}
 
-	listSQL := sel + " ORDER BY sku"
+	listSQL := sel + " ORDER BY sku, name"
 	listArgs := args
 	if !q.All {
 		listSQL += " LIMIT ? OFFSET ?"
@@ -51,19 +57,38 @@ func (r *repository) FindingItems(ctx context.Context, q domain.FindingItemsQuer
 	}
 
 	var rows []struct {
-		SKU      string
-		Name     string
-		Detail   string
-		Channels string
+		SKU             string
+		Name            string
+		Detail          string
+		Channels        string
+		CounterpartSKU  string
+		CounterpartName string
+		ChannelQty      *int
+		OwnQty          *int
+		FixSide         string
+		Pattern         string
+		PresentIn       string
+		MissingIn       string
 	}
 	if err := r.db.Conn(ctx).Raw(listSQL, listArgs...).Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 
 	for _, row := range rows {
-		item := domain.FindingItem{SKU: row.SKU, Name: row.Name, Detail: row.Detail}
+		item := domain.FindingItem{
+			SKU: row.SKU, Name: row.Name, Detail: row.Detail,
+			CounterpartSKU: row.CounterpartSKU, CounterpartName: row.CounterpartName,
+			ChannelQty: row.ChannelQty, OwnQty: row.OwnQty,
+			FixSide: row.FixSide, Pattern: row.Pattern,
+		}
 		if row.Channels != "" {
 			item.Channels = strings.Split(row.Channels, "|")
+		}
+		if row.PresentIn != "" {
+			item.PresentIn = strings.Split(row.PresentIn, "|")
+		}
+		if row.MissingIn != "" {
+			item.MissingIn = strings.Split(row.MissingIn, "|")
 		}
 		page.Items = append(page.Items, item)
 	}
@@ -86,14 +111,20 @@ func findingItemsQuery(q domain.FindingItemsQuery) (string, []interface{}, error
 	return "", nil, fmt.Errorf("hallazgo desconocido: %s", q.Code)
 }
 
-// porGrupo agrupa por SKU: el mismo problema puede estar en varios canales y se
-// muestra una sola fila con todos.
 func porGrupo(q domain.FindingItemsQuery, grupo string) (string, []interface{}, error) {
 	sel := `
 SELECT it.sku AS sku,
        COALESCE(MAX(NULLIF(it.parent_label, '')), '') AS name,
        COALESCE(MAX(it.label), '') AS detail,
-       string_agg(DISTINCT runs.channel, '|') AS channels
+       string_agg(DISTINCT runs.channel, '|') AS channels,
+       COALESCE(MAX(it.counterpart_sku), '')  AS counterpart_sku,
+       COALESCE(MAX(it.counterpart_name), '') AS counterpart_name,
+       MAX(it.channel_qty) AS channel_qty,
+       MAX(it.own_qty)     AS own_qty,
+       COALESCE(MAX(it.fix_side), '') AS fix_side,
+       COALESCE(MAX(it.pattern), '')  AS pattern,
+       '' AS present_in,
+       '' AS missing_in
 FROM integration_sync_run_items it
 JOIN (` + baseRuns + `) AS runs ON runs.id = it.run_id
 WHERE it.group_code = ?`
@@ -104,31 +135,47 @@ WHERE it.group_code = ?`
 		like := "%" + q.Search + "%"
 		args = append(args, like, like, like)
 	}
-	sel += " GROUP BY it.sku"
+	sel += " GROUP BY " + agrupacion(grupo)
 	return sel, args, nil
 }
 
-// cruzado resuelve los hallazgos que solo existen al mirar todos los canales a la
-// vez. Por cada SKU arma en que canales esta y en cuales falta.
+func agrupacion(grupo string) string {
+	if grupo == "channel_no_sku" {
+		return "it.sku, it.parent_ref, it.variant_label"
+	}
+	return "it.sku"
+}
+
 func cruzado(q domain.FindingItemsQuery) (string, []interface{}, error) {
-	var having, detail string
+	var having, detail, estaEn, faltaEn string
 	switch q.Code {
 	case domain.FindingNotPublished:
 		having = "presente = 0 AND solo_canal = 0 AND ausente > 0"
 		detail = "'no esta en ningun canal de venta'"
+		estaEn = "''"
+		faltaEn = "COALESCE(faltantes, '')"
 	case domain.FindingSoldNotOwned:
 		having = "solo_canal > 0 AND presente = 0"
-		detail = "'se vende en: ' || COALESCE(en_canal, 'ninguno')"
+		detail = "'se vende en el canal pero no existe en Probability'"
+		estaEn = "COALESCE(en_canal, '')"
+		faltaEn = "'Probability'"
 	case domain.FindingImbalance:
 		having = "presente > 0 AND ausente > 0"
-		detail = "'esta en: ' || COALESCE(presentes, '-') || '  ·  falta en: ' || COALESCE(faltantes, '-')"
+		detail = "''"
+		estaEn = "COALESCE(presentes, '')"
+		faltaEn = "COALESCE(faltantes, '')"
 	}
 
 	sel := `
 SELECT sku,
        COALESCE(nombre, '') AS name,
        ` + detail + ` AS detail,
-       COALESCE(todos, '') AS channels
+       COALESCE(todos, '') AS channels,
+       ` + estaEn + ` AS present_in,
+       ` + faltaEn + ` AS missing_in,
+       '' AS counterpart_sku, '' AS counterpart_name,
+       NULL::int AS channel_qty, NULL::int AS own_qty,
+       '' AS fix_side, '' AS pattern
 FROM (
     SELECT UPPER(TRIM(it.sku)) AS sku,
         MAX(NULLIF(it.parent_label, '')) AS nombre,
@@ -136,11 +183,11 @@ FROM (
         COUNT(*) FILTER (WHERE it.group_code = 'only_probability')          AS ausente,
         COUNT(*) FILTER (WHERE it.group_code = 'only_channel')              AS solo_canal,
         string_agg(DISTINCT runs.channel, '|') AS todos,
-        string_agg(DISTINCT runs.channel, ', ') FILTER (WHERE it.group_code IN ('both', 'not_associated')) AS presentes,
-        string_agg(DISTINCT runs.channel, ', ') FILTER (WHERE it.group_code = 'only_probability')          AS faltantes,
-        string_agg(DISTINCT runs.channel, ', ') FILTER (WHERE it.group_code = 'only_channel')              AS en_canal
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code IN ('both', 'not_associated')) AS presentes,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code = 'only_probability')          AS faltantes,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code = 'only_channel')              AS en_canal
     FROM integration_sync_run_items it
-    JOIN (` + baseRuns + `) AS runs ON runs.id = it.run_id
+    JOIN (` + baseSalesRuns + `) AS runs ON runs.id = it.run_id
     WHERE TRIM(it.sku) <> '' AND it.sku NOT LIKE '(%'
     GROUP BY UPPER(TRIM(it.sku))
 ) AS por_sku

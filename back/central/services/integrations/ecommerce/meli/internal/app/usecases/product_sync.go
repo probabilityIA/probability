@@ -32,10 +32,7 @@ type providerUpsertMsg struct {
 
 const noSKUPlaceholder = "(sin SKU)"
 
-// detectTypoSuspects cruza lo que quedo solo en cada lado buscando el mismo
-// producto escrito distinto. Los sin-SKU no participan: ahi no hay nada que
-// comparar y ya tienen su propio grupo.
-func detectTypoSuspects(rc *reconcileContext) []productmatch.TypoSuspect {
+func detectTypoSuspects(rc *reconcileContext, opts productmatch.TypoOptions) []productmatch.TypoSuspect {
 	canal := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInChannel))
 	for _, idx := range rc.outcome.OnlyInChannel {
 		m := rc.meliProducts[idx]
@@ -60,7 +57,23 @@ func detectTypoSuspects(rc *reconcileContext) []productmatch.TypoSuspect {
 		})
 	}
 
-	return productmatch.DetectTypos(canal, propios)
+	return productmatch.DetectTypos(canal, propios, opts)
+}
+
+func (uc *meliUseCase) inventoryAuthority(ctx context.Context, businessID uint) string {
+	if uc.productRepo == nil {
+		return productmatch.AuthorityUnknown
+	}
+	feeds, err := uc.productRepo.ERPFeedsInventory(ctx, businessID)
+	if err != nil {
+		uc.logger.Warn(ctx).Err(err).Uint("business_id", businessID).
+			Msg("No se pudo determinar si el ERP alimenta el inventario")
+		return productmatch.AuthorityUnknown
+	}
+	if feeds {
+		return productmatch.AuthorityProbability
+	}
+	return productmatch.AuthorityUnknown
 }
 
 func channelKey(itemID, variantID string) string {
@@ -239,7 +252,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 	}
 
 	result.SKUChangedItems = detectSKUChanges(mapped, rc.meliProducts)
-	result.TypoSuspects = detectTypoSuspects(rc)
+	result.TypoSuspects = detectTypoSuspects(rc, productmatch.TypoOptions{Authority: uc.inventoryAuthority(ctx, businessID)})
 
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]

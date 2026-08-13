@@ -138,6 +138,7 @@ func (c *Consumer) recordProducts(ctx context.Context, msg envelope, finished ti
 		ChannelNoSKU:      intOf(msg.Data, "channel_no_sku"),
 		SKUChanged:        intOf(msg.Data, "sku_changed"),
 		SKUTypo:           intOf(msg.Data, "sku_typo"),
+		SKUSpacing:        intOf(msg.Data, "sku_spacing"),
 		Status:            domain.StatusCompleted,
 		Message:           stringOf(msg.Data, "error"),
 		Detail:            reconcileDetail(msg.Data),
@@ -171,9 +172,16 @@ func reconcileDetail(data map[string]interface{}) []domain.DetailItem {
 		parentRef, _ := obj["parent_ref"].(string)
 		parentLabel, _ := obj["parent_label"].(string)
 		variantLabel, _ := obj["variant_label"].(string)
+		counterpartSKU, _ := obj["counterpart_sku"].(string)
+		counterpartName, _ := obj["counterpart_name"].(string)
+		fixSide, _ := obj["fix_side"].(string)
+		pattern, _ := obj["pattern"].(string)
 		detail = append(detail, domain.DetailItem{
 			SKU: sku, Label: label, Tone: tone, Group: group,
 			ParentRef: parentRef, ParentLabel: parentLabel, VariantLabel: variantLabel,
+			CounterpartSKU: counterpartSKU, CounterpartName: counterpartName,
+			ChannelQty: optionalInt(obj, "channel_qty"), OwnQty: optionalInt(obj, "own_qty"),
+			FixSide: fixSide, Pattern: pattern,
 		})
 	}
 	return detail
@@ -209,6 +217,18 @@ func intOf(data map[string]interface{}, key string) int {
 		return value
 	}
 	return 0
+}
+
+func optionalInt(data map[string]interface{}, key string) *int {
+	switch value := data[key].(type) {
+	case float64:
+		v := int(value)
+		return &v
+	case int:
+		v := value
+		return &v
+	}
+	return nil
 }
 
 func stringOf(data map[string]interface{}, key string) string {

@@ -24,17 +24,20 @@ func NewProductRepository(database db.IDatabase, logger log.ILogger) ports.IProd
 
 func (r *ProductReadRepository) ListProductsByBusiness(ctx context.Context, businessID uint) ([]dtos.ProductForSync, error) {
 	var rows []struct {
-		ID      string
-		SKU     string
-		Barcode string
-		Name    string
+		ID            string
+		SKU           string
+		Barcode       string
+		Name          string
+		StockQuantity int
 	}
 
 	err := r.db.Conn(ctx).
-		Table("products").
-		Select("id, sku, COALESCE(barcode, '') AS barcode, name").
-		Where("business_id = ? AND deleted_at IS NULL AND is_active = ?", businessID, true).
-		Order("created_at ASC").
+		Table("products p").
+		Select(`p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.name,
+			COALESCE((SELECT SUM(il.quantity) FROM inventory_levels il
+				WHERE il.product_id = p.id AND il.deleted_at IS NULL), 0) AS stock_quantity`).
+		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = ?", businessID, true).
+		Order("p.created_at ASC").
 		Scan(&rows).Error
 	if err != nil {
 		return nil, err
@@ -43,10 +46,11 @@ func (r *ProductReadRepository) ListProductsByBusiness(ctx context.Context, busi
 	products := make([]dtos.ProductForSync, 0, len(rows))
 	for _, row := range rows {
 		products = append(products, dtos.ProductForSync{
-			ID:      row.ID,
-			SKU:     row.SKU,
-			Barcode: row.Barcode,
-			Name:    row.Name,
+			ID:            row.ID,
+			SKU:           row.SKU,
+			Barcode:       row.Barcode,
+			Name:          row.Name,
+			StockQuantity: row.StockQuantity,
 		})
 	}
 	return products, nil

@@ -18,6 +18,11 @@ func nuevoCasoHallazgos(channels []domain.ChannelSummary, cross domain.CrossChan
 	return New(repo, log.New())
 }
 
+func nuevoCasoMatriz() (domain.IUseCase, *mocks.RepositoryMock) {
+	repo := &mocks.RepositoryMock{}
+	return New(repo, log.New()), repo
+}
+
 func buscar(report *domain.FindingsReport, code string) *domain.Finding {
 	for i := range report.Findings {
 		if report.Findings[i].Code == code {
@@ -167,4 +172,37 @@ func mustFindings(t *testing.T, uc domain.IUseCase) *domain.FindingsReport {
 		t.Fatalf("error inesperado: %v", err)
 	}
 	return r
+}
+
+func TestMatchMatrixExigeNegocio(t *testing.T) {
+	uc, _ := nuevoCasoMatriz()
+	if _, err := uc.MatchMatrix(context.Background(), domain.MatrixQuery{}); err == nil {
+		t.Fatal("sin business_id deberia fallar")
+	}
+}
+
+func TestMatchMatrixNormalizaPaginacion(t *testing.T) {
+	uc, repo := nuevoCasoMatriz()
+	var visto domain.MatrixQuery
+	repo.MatchMatrixFn = func(_ context.Context, q domain.MatrixQuery) (*domain.MatrixPage, error) {
+		visto = q
+		return &domain.MatrixPage{Page: q.Page, PageSize: q.PageSize}, nil
+	}
+
+	if _, err := uc.MatchMatrix(context.Background(), domain.MatrixQuery{BusinessID: 46, Page: 0, PageSize: 9999}); err != nil {
+		t.Fatalf("error inesperado: %v", err)
+	}
+	if visto.Page != 1 || visto.PageSize != 50 {
+		t.Fatalf("no normalizo la paginacion: %+v", visto)
+	}
+}
+
+func TestMatchMatrixPropagaError(t *testing.T) {
+	uc, repo := nuevoCasoMatriz()
+	repo.MatchMatrixFn = func(_ context.Context, _ domain.MatrixQuery) (*domain.MatrixPage, error) {
+		return nil, errors.New("boom")
+	}
+	if _, err := uc.MatchMatrix(context.Background(), domain.MatrixQuery{BusinessID: 46}); err == nil {
+		t.Fatal("deberia propagar el error del repositorio")
+	}
 }

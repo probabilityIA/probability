@@ -3,10 +3,11 @@ package dtos
 import "github.com/secamc93/probability/back/central/shared/productmatch"
 
 type ProductForSync struct {
-	ID      string
-	SKU     string
-	Barcode string
-	Name    string
+	ID            string
+	SKU           string
+	Barcode       string
+	Name          string
+	StockQuantity int
 }
 
 func (p ProductForSync) MatchItem() productmatch.Item {
@@ -26,10 +27,12 @@ type ProductBrief struct {
 
 type ReconcileResult struct {
 	Matched              int
+	MatchedItems         []ProductBrief
 	MatchedNotAssociated []ProductBrief
 	OnlyInProbability    []ProductBrief
 	OnlyInSiigo          []ProductBrief
 	ProbabilityNoSKU     int
 	SiigoNoSKU           int
+	TypoSuspects         []productmatch.TypoSuspect
 	MatchRules           []productmatch.Rule
 }

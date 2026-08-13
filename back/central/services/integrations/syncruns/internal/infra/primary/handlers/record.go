@@ -40,6 +40,7 @@ type recordRequest struct {
 	ChannelNoSKU      int `json:"channel_no_sku"`
 	SKUChanged        int `json:"sku_changed"`
 	SKUTypo           int `json:"sku_typo"`
+	SKUSpacing        int `json:"sku_spacing"`
 
 	Detail []detailRequest `json:"detail"`
 }
@@ -81,6 +82,7 @@ func (h *handler) Record(c *gin.Context) {
 		ChannelNoSKU:      req.ChannelNoSKU,
 		SKUChanged:        req.SKUChanged,
 		SKUTypo:           req.SKUTypo,
+		SKUSpacing:        req.SKUSpacing,
 		Status:            req.Status,
 		Message:           req.Message,
 	}

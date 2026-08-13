@@ -25,6 +25,13 @@ type DetailItem struct {
 	ParentRef    string `json:"parent_ref,omitempty"`
 	ParentLabel  string `json:"parent_label,omitempty"`
 	VariantLabel string `json:"variant_label,omitempty"`
+
+	CounterpartSKU  string `json:"counterpart_sku,omitempty"`
+	CounterpartName string `json:"counterpart_name,omitempty"`
+	ChannelQty      *int   `json:"channel_qty,omitempty"`
+	OwnQty          *int   `json:"own_qty,omitempty"`
+	FixSide         string `json:"fix_side,omitempty"`
+	Pattern         string `json:"pattern,omitempty"`
 }
 
 type DetailQuery struct {
@@ -86,6 +93,7 @@ type SyncRun struct {
 	ChannelNoSKU      int
 	SKUChanged        int
 	SKUTypo           int
+	SKUSpacing        int
 
 	Status  string
 	Message string

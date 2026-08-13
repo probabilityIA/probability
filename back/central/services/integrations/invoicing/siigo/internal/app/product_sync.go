@@ -127,6 +127,7 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 	}
 
 	result := &dtos.ReconcileResult{
+		MatchedItems:         []dtos.ProductBrief{},
 		MatchedNotAssociated: []dtos.ProductBrief{},
 		OnlyInProbability:    []dtos.ProductBrief{},
 		OnlyInSiigo:          []dtos.ProductBrief{},
@@ -138,16 +139,18 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
 		channel := rc.siigoProducts[pair.ChannelIndex]
-		if associated[normalizeSKU(prob.SKU)] {
-			result.Matched++
-			continue
-		}
-		result.MatchedNotAssociated = append(result.MatchedNotAssociated, dtos.ProductBrief{
+		brief := dtos.ProductBrief{
 			SKU:          channel.Code,
 			Name:         channel.Name,
 			MatchedBy:    pair.Rule.Key(),
 			MatchedValue: siigoItems([]dtos.ProductItem{channel})[0].Values()[pair.Rule.Channel],
-		})
+		}
+		result.MatchedItems = append(result.MatchedItems, brief)
+		if associated[normalizeSKU(prob.SKU)] {
+			result.Matched++
+			continue
+		}
+		result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 	}
 
 	for _, idx := range rc.outcome.OnlyInChannel {
@@ -159,7 +162,37 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 		result.OnlyInProbability = append(result.OnlyInProbability, dtos.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
+	result.TypoSuspects = detectTypoSuspects(rc)
+
 	return result, nil
+}
+
+func detectTypoSuspects(rc *reconcileContext) []productmatch.TypoSuspect {
+	canal := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInChannel))
+	for _, idx := range rc.outcome.OnlyInChannel {
+		s := rc.siigoProducts[idx]
+		canal = append(canal, productmatch.TypoCandidate{
+			SKU:      s.Code,
+			Name:     s.Name,
+			Quantity: int(s.AvailableQuantity),
+			HasQty:   s.StockControl,
+		})
+	}
+
+	propios := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInProbability))
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		propios = append(propios, productmatch.TypoCandidate{
+			SKU:      p.SKU,
+			Name:     p.Name,
+			Quantity: p.StockQuantity,
+			HasQty:   true,
+		})
+	}
+
+	return productmatch.DetectTypos(canal, propios, productmatch.TypoOptions{
+		Authority: productmatch.AuthorityChannel,
+	})
 }
 
 func (uc *invoicingUseCase) ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error {

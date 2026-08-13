@@ -43,6 +43,7 @@ entorno desde cero si algun dia hace falta.
 | 2026-08-12 | `migrateSyncRunSKUChanged` | Agrego `sku_changed` a `integration_sync_runs` para contar los mapeos cuyo SKU cambio en el canal | produccion |
 | 2026-08-12 | `migrateProductIntegrationLogisticType` | Agrego `external_logistic_type` a `product_business_integrations` para saber si la publicacion es de fulfillment (ML administra el stock y no se puede empujar). AutoMigrate arrastro tambien un DEFAULT '[]' en `subscription_types.features`, que ya coincidia con el modelo | produccion |
 | 2026-08-12 | `migrateProductIntegrationVariantUnique` | Reemplazo el unico `idx_product_integration` de `(product_id, integration_id)` por `(product_id, integration_id, COALESCE(external_variant_id, ''))`, para que un producto pueda mapearse a varias variantes del mismo canal. Se quitaron los tags `uniqueIndex` del modelo: ahora el indice lo maneja este SQL | produccion |
+| 2026-08-12 | `migrateSyncRunTypoEvidence` | Agrego `sku_spacing` a `integration_sync_runs` y a `integration_sync_run_items` las columnas `counterpart_sku`, `counterpart_name`, `channel_qty`, `own_qty`, `fix_side` y `pattern`: la evidencia que sostiene cada sugerencia de correccion de SKU (que dice cada sistema, cuanto stock tiene cada lado y de que lado conviene corregir) | produccion |
 
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.

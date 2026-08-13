@@ -38,6 +38,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.POST("", h.Record)
 		group.GET("/findings", h.Findings)
 		group.GET("/findings/items", h.FindingItems)
+		group.GET("/matrix", h.MatchMatrix)
 	}
 }
 

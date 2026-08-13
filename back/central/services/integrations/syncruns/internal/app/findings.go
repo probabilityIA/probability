@@ -31,6 +31,13 @@ var channelIssues = []channelIssue{
 		value:    func(s domain.ChannelSummary) int { return s.SKUChanged },
 	},
 	{
+		code:     domain.FindingSKUSpacing,
+		severity: domain.SeverityWarn,
+		title:    "SKU con espacios de sobra",
+		detail:   "Es el mismo SKU de los dos lados: solo sobra un espacio. Quitandolo el producto queda emparejado y vuelve a recibir stock.",
+		value:    func(s domain.ChannelSummary) int { return s.SKUSpacing },
+	},
+	{
 		code:     domain.FindingSKUTypo,
 		severity: domain.SeverityWarn,
 		title:    "Posibles errores de digitacion",

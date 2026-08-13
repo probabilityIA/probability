@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Search, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { AlertTriangle, Lock, LockOpen, Search, X } from 'lucide-react';
 import type { SyncRunKind } from '../../domain/types';
 import { fetchSyncRunItems } from '../../infra/repository/sync-run-items';
 import type { ProductApplyActions } from '../providers';
@@ -70,6 +71,12 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
         text: 'text-amber-800 dark:text-amber-300',
         chip: 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-500/50 dark:bg-amber-900/40 dark:text-amber-300',
     },
+    sku_spacing: {
+        label: 'SKU con espacios de sobra',
+        dot: 'bg-sky-500',
+        text: 'text-sky-700 dark:text-sky-300',
+        chip: 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/50 dark:bg-sky-900/30 dark:text-sky-300',
+    },
     sku_changed: {
         label: 'SKU cambiado en el canal',
         dot: 'bg-red-600',
@@ -90,11 +97,12 @@ const GROUP_STYLES: Record<DetailGroup, GroupStyle> = {
     },
 };
 
-const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku', 'sku_changed', 'sku_typo'];
+const PRODUCT_ORDER: DetailGroup[] = ['both', 'not_associated', 'only_probability', 'only_channel', 'channel_no_sku', 'sku_changed', 'sku_typo', 'sku_spacing'];
 const INVENTORY_ORDER: DetailGroup[] = ['updated', 'skipped', 'failed'];
 
 const PAGE_SIZE = 50;
 const SEARCH_DEBOUNCE_MS = 400;
+const MAX_CREACION_POR_LOTE = 50;
 
 interface PanelAction {
     key: ProductActionKey;
@@ -135,6 +143,7 @@ const groupLabel = (group: DetailGroup, providerLabel: string) => {
     if (group === 'channel_no_sku') return `Sin SKU en ${providerLabel}`;
     if (group === 'sku_changed') return `SKU cambiado en ${providerLabel}`;
     if (group === 'sku_typo') return 'Posible error de digitacion';
+    if (group === 'sku_spacing') return 'SKU con espacios de sobra';
     return GROUP_STYLES[group].label;
 };
 
@@ -169,6 +178,8 @@ export function SyncDetailPanel({
 }: SyncDetailPanelProps) {
     const [filter, setFilter] = useState<DetailGroup | 'all'>('all');
     const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [creacionDesbloqueada, setCreacionDesbloqueada] = useState(false);
+    const [pidiendoDesbloqueo, setPidiendoDesbloqueo] = useState(false);
     const [search, setSearch] = useState('');
     const [term, setTerm] = useState('');
     const [remoteItems, setRemoteItems] = useState<SyncDetailItem[]>([]);
@@ -303,6 +314,7 @@ export function SyncDetailPanel({
     const pick = (group: DetailGroup | 'all') => {
         setFilter(group);
         setSelected(new Set());
+        setCreacionDesbloqueada(false);
     };
 
     const toggle = (sku: string) => {
@@ -319,6 +331,13 @@ export function SyncDetailPanel({
     const noSkuCount = isLive ? (liveCounts.get('channel_no_sku') ?? 0) : (counts.channel_no_sku ?? 0);
 
     const allVisibleSelected = selectableItems.length > 0 && selectableItems.every(item => selected.has(item.sku));
+
+    const creaEnCanal = action?.key === 'createInChannel' || action?.key === 'createBothSides';
+    const bloqueado = creaEnCanal && !creacionDesbloqueada;
+    const excedeLote = creaEnCanal && selected.size > MAX_CREACION_POR_LOTE;
+    const puedeAplicar = selected.size > 0 && !bloqueado && !excedeLote;
+    const tope = creaEnCanal ? MAX_CREACION_POR_LOTE : selectableItems.length;
+    const aSeleccionar = selectableItems.slice(0, tope).map(item => item.sku);
 
     return (
         <div className="space-y-1.5">
@@ -497,26 +516,32 @@ export function SyncDetailPanel({
                 <div className="flex flex-wrap items-center gap-2">
                     {selectableItems.length > 0 && (
                     <button
-                        onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(selectableItems.map(item => item.sku)))}
+                        onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(aSeleccionar))}
                         className="rounded-lg border border-gray-200 px-2 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
-                        {allVisibleSelected ? 'Quitar seleccion' : `Seleccionar los ${selectableItems.length} cargados`}
+                        {allVisibleSelected
+                            ? 'Quitar seleccion'
+                            : creaEnCanal
+                                ? `Seleccionar ${Math.min(tope, selectableItems.length)}`
+                                : `Seleccionar los ${selectableItems.length} cargados`}
                     </button>
                     )}
                     {selected.size > 0 && (
                         <button
                             onClick={() => onApply(action.key, Array.from(selected))}
-                            disabled={busyAction !== null}
+                            disabled={busyAction !== null || !puedeAplicar}
+                            title={bloqueado ? 'Quita el seguro para poder crear en el canal' : undefined}
                             className="flex items-center gap-1.5 rounded-lg bg-[#0d5c80] px-3 py-1 text-[11px] font-bold text-white transition-colors hover:bg-[#0a4964] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             {busyAction === action.key && (
                                 <span className="h-3 w-3 animate-spin rounded-full border border-transparent border-t-current" />
                             )}
+                            {bloqueado && <Lock size={11} />}
                             {action.label(providerLabel)}
                             <span className="rounded-full bg-white/25 px-1.5 tabular-nums">{selected.size}</span>
                         </button>
                     )}
-                    {selected.size === 0 && term === '' && applyAllTotal > 0 && (
+                    {selected.size === 0 && !creaEnCanal && term === '' && applyAllTotal > 0 && (
                         <button
                             onClick={() => onApply(action.key, [])}
                             disabled={busyAction !== null}
@@ -528,14 +553,92 @@ export function SyncDetailPanel({
                             {action.label(providerLabel)} los {applyAllTotal}
                         </button>
                     )}
-                    {selected.size === 0 && (
-                        <span className="text-[11px] italic text-gray-400 dark:text-gray-500">
-                            {term === ''
-                                ? 'o marca productos para aplicar solo a esos'
-                                : 'marca los productos que quieras aplicar'}
+                    {excedeLote && (
+                        <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                            Maximo {MAX_CREACION_POR_LOTE} por lote, tienes {selected.size}
                         </span>
                     )}
+                    {selected.size === 0 && (
+                        <span className="text-[11px] italic text-gray-400 dark:text-gray-500">
+                            {creaEnCanal
+                                ? `marca los productos que quieras crear, maximo ${MAX_CREACION_POR_LOTE} por lote`
+                                : term === ''
+                                    ? 'o marca productos para aplicar solo a esos'
+                                    : 'marca los productos que quieras aplicar'}
+                        </span>
+                    )}
+
+                    {creaEnCanal && (
+                        <button
+                            onClick={() => (creacionDesbloqueada ? setCreacionDesbloqueada(false) : setPidiendoDesbloqueo(true))}
+                            aria-pressed={creacionDesbloqueada}
+                            className={`ml-auto flex items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                                creacionDesbloqueada
+                                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/50 dark:bg-amber-900/30 dark:text-amber-300'
+                                    : 'border-gray-200 bg-white text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
+                            }`}
+                        >
+                            {creacionDesbloqueada ? <LockOpen size={11} /> : <Lock size={11} />}
+                            <span
+                                className={`relative h-3.5 w-6 rounded-full transition-colors ${
+                                    creacionDesbloqueada ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+                                }`}
+                            >
+                                <span
+                                    className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white transition-all ${
+                                        creacionDesbloqueada ? 'left-3' : 'left-0.5'
+                                    }`}
+                                />
+                            </span>
+                            {creacionDesbloqueada ? 'Creacion habilitada' : 'Creacion bloqueada'}
+                        </button>
+                    )}
                 </div>
+            )}
+
+            {pidiendoDesbloqueo && createPortal(
+                <div className="fixed inset-0 z-[210] flex items-center justify-center p-4">
+                    <button
+                        aria-label="Cancelar"
+                        onClick={() => setPidiendoDesbloqueo(false)}
+                        className="absolute inset-0 cursor-default bg-gray-900/50"
+                    />
+                    <div className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl dark:bg-gray-900">
+                        <div className="flex items-start gap-3">
+                            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300">
+                                <AlertTriangle size={18} />
+                            </span>
+                            <div className="min-w-0">
+                                <h3 className="text-[14px] font-bold text-gray-900 dark:text-white">
+                                    Vas a habilitar la creacion en {providerLabel}
+                                </h3>
+                                <p className="mt-1.5 text-[12px] leading-relaxed text-gray-600 dark:text-gray-300">
+                                    Esto publica productos nuevos en {providerLabel}, no en Probability. Lo que se
+                                    cree queda visible para tus compradores y hay que borrarlo a mano desde el canal.
+                                </p>
+                                <p className="mt-2 text-[12px] leading-relaxed text-gray-600 dark:text-gray-300">
+                                    Se crean solo los productos que marques, maximo{' '}
+                                    <span className="font-bold">{MAX_CREACION_POR_LOTE} por lote</span>.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                onClick={() => setPidiendoDesbloqueo(false)}
+                                className="rounded-lg border border-gray-200 px-3 py-1.5 text-[12px] font-semibold text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => { setCreacionDesbloqueada(true); setPidiendoDesbloqueo(false); }}
+                                className="rounded-lg bg-amber-500 px-3 py-1.5 text-[12px] font-bold text-white transition-colors hover:bg-amber-600"
+                            >
+                                Entiendo, habilitar
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body,
             )}
         </div>
     );

@@ -14,6 +14,7 @@ const (
 	FindingChannelNoSKU  = "channel_no_sku"
 	FindingSKUChanged    = "sku_changed"
 	FindingSKUTypo       = "sku_typo"
+	FindingSKUSpacing    = "sku_spacing"
 	FindingNotAssociated = "not_associated"
 	FindingNotPublished  = "not_published"
 	FindingSoldNotOwned  = "sold_not_owned"
@@ -31,6 +32,7 @@ type ChannelSummary struct {
 	ChannelNoSKU    int
 	SKUChanged      int
 	SKUTypo         int
+	SKUSpacing      int
 	ComparedAt      string
 }
 
@@ -64,15 +66,24 @@ type IFindingsRepository interface {
 	ChannelSummaries(ctx context.Context, businessID uint) ([]ChannelSummary, error)
 	CrossChannel(ctx context.Context, businessID uint) (CrossChannelCounts, error)
 	FindingItems(ctx context.Context, query FindingItemsQuery) (*FindingItemsPage, error)
+	MatchMatrix(ctx context.Context, query MatrixQuery) (*MatrixPage, error)
 }
 
 // FindingItem es una fila del detalle de un hallazgo. Channels lleva los canales
 // involucrados: un mismo SKU puede tener el problema en mas de uno.
 type FindingItem struct {
-	SKU      string
-	Name     string
-	Detail   string
-	Channels []string
+	SKU             string
+	Name            string
+	Detail          string
+	Channels        []string
+	CounterpartSKU  string
+	CounterpartName string
+	ChannelQty      *int
+	OwnQty          *int
+	FixSide         string
+	Pattern         string
+	PresentIn       []string
+	MissingIn       []string
 }
 
 type FindingItemsQuery struct {

@@ -38,6 +38,7 @@ type runResponse struct {
 	ChannelNoSKU      int `json:"channel_no_sku"`
 	SKUChanged        int `json:"sku_changed"`
 	SKUTypo           int `json:"sku_typo"`
+	SKUSpacing        int `json:"sku_spacing"`
 
 	Detail []detailResponse `json:"detail"`
 }
@@ -86,6 +87,7 @@ func toRunResponses(runs []domain.SyncRun) []runResponse {
 			ChannelNoSKU:      run.ChannelNoSKU,
 			SKUChanged:        run.SKUChanged,
 			SKUTypo:           run.SKUTypo,
+			SKUSpacing:        run.SKUSpacing,
 			Detail:            make([]detailResponse, 0, len(run.Detail)),
 		}
 		if run.FinishedAt != nil {

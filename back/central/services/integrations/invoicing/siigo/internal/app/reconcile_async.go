@@ -1,18 +1,19 @@
-package usecases
+package app
 
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/shared/productmatch"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 const (
-	channelLabel       = "WooCommerce"
-	reconcileEventType = "woo.product.reconcile.completed"
+	channelLabel       = "Siigo"
+	reconcileEventType = "siigo.product.reconcile.completed"
 )
 
 type reconcileDetailItem struct {
@@ -39,14 +40,14 @@ type syncRunEnvelope struct {
 	Data          map[string]interface{} `json:"data"`
 }
 
-func (uc *wooCommerceUseCase) ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string) {
-	uc.emitSyncEvent(ctx, businessID, integIDUint, "woo.product.reconcile.started", map[string]interface{}{
+func (uc *invoicingUseCase) ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string) {
+	uc.emitSyncEvent(ctx, businessID, integIDUint, "siigo.product.reconcile.started", map[string]interface{}{
 		"correlation_id": correlationID,
 	})
 
 	result, err := uc.ReconcileProducts(ctx, integrationID, businessID)
 	if err != nil {
-		uc.logger.Error(ctx).Err(err).Str("integration_id", integrationID).Msg("Error al comparar el catalogo con WooCommerce")
+		uc.log.Error(ctx).Err(err).Str("integration_id", integrationID).Msg("Error al comparar el catalogo con Siigo")
 		payload := map[string]interface{}{
 			"correlation_id": correlationID,
 			"error":          err.Error(),
@@ -56,12 +57,28 @@ func (uc *wooCommerceUseCase) ReconcileProductsAsync(ctx context.Context, integr
 		return
 	}
 
+	uc.recordReconcileRun(ctx, businessID, integIDUint, correlationID, result)
+}
+
+func (uc *invoicingUseCase) ReconcileProductsAndRecord(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error) {
+	result, err := uc.ReconcileProducts(ctx, integrationID, businessID)
+	if err != nil {
+		return nil, err
+	}
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	uc.recordReconcileRun(ctx, businessID, uint(integIDUint), "", result)
+	return result, nil
+}
+
+func (uc *invoicingUseCase) recordReconcileRun(ctx context.Context, businessID, integIDUint uint, correlationID string, result *dtos.ReconcileResult) {
 	counts := map[string]interface{}{
 		"correlation_id":      correlationID,
 		"matched":             result.Matched,
 		"not_associated":      len(result.MatchedNotAssociated),
 		"only_in_probability": len(result.OnlyInProbability),
-		"only_in_channel":     len(result.OnlyInWoo),
+		"only_in_channel":     len(result.OnlyInSiigo),
+		"probability_no_sku":  result.ProbabilityNoSKU,
+		"channel_no_sku":      result.SiigoNoSKU,
 		"sku_typo":            len(result.TypoSuspects) - productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
 		"sku_spacing":         productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
 		"match_rules":         result.MatchRules,
@@ -77,10 +94,10 @@ func (uc *wooCommerceUseCase) ReconcileProductsAsync(ctx context.Context, integr
 	uc.publishReconcileRun(ctx, businessID, integIDUint, stored)
 }
 
-func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
+func reconcileDetail(result *dtos.ReconcileResult) []reconcileDetailItem {
 	detail := make([]reconcileDetailItem, 0)
 
-	add := func(items []domain.ProductBrief, label, tone, group string) {
+	add := func(items []dtos.ProductBrief, label, tone, group string) {
 		for _, item := range items {
 			text := label
 			if item.Name != "" {
@@ -100,7 +117,7 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 	add(result.MatchedNotAssociated, "sin asociar", "warn", "not_associated")
 	add(result.MatchedItems, "en ambos", "ok", "both")
 	add(result.OnlyInProbability, "solo en Probability", "warn", "only_probability")
-	add(result.OnlyInWoo, "solo en "+channelLabel, "warn", "only_channel")
+	add(result.OnlyInSiigo, "solo en "+channelLabel, "warn", "only_channel")
 
 	for _, d := range productmatch.TypoDetails(result.TypoSuspects, channelLabel) {
 		detail = append(detail, reconcileDetailItem{
@@ -122,12 +139,12 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 	return detail
 }
 
-func (uc *wooCommerceUseCase) publishReconcileRun(ctx context.Context, businessID, integrationID uint, data map[string]interface{}) {
+func (uc *invoicingUseCase) publishReconcileRun(ctx context.Context, businessID, integrationID uint, data map[string]interface{}) {
 	if uc.rabbit == nil {
 		return
 	}
 	if err := uc.rabbit.DeclareQueue(rabbitmq.QueueIntegrationSyncRuns, true); err != nil {
-		uc.logger.Error(ctx).Err(err).Msg("Error al declarar la cola de resultados de sincronizacion")
+		uc.log.Error(ctx).Err(err).Msg("Error al declarar la cola de resultados de sincronizacion")
 		return
 	}
 	payload, err := json.Marshal(syncRunEnvelope{
@@ -141,6 +158,6 @@ func (uc *wooCommerceUseCase) publishReconcileRun(ctx context.Context, businessI
 		return
 	}
 	if err := uc.rabbit.Publish(ctx, rabbitmq.QueueIntegrationSyncRuns, payload); err != nil {
-		uc.logger.Error(ctx).Err(err).Msg("Error al publicar el resultado de la comparacion de catalogo")
+		uc.log.Error(ctx).Err(err).Msg("Error al publicar el resultado de la comparacion de catalogo")
 	}
 }

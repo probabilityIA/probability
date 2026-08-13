@@ -26,6 +26,7 @@ type channelSummaryResponse struct {
 	ChannelNoSKU    int    `json:"channel_no_sku"`
 	SKUChanged      int    `json:"sku_changed"`
 	SKUTypo         int    `json:"sku_typo"`
+	SKUSpacing      int    `json:"sku_spacing"`
 	ComparedAt      string `json:"compared_at,omitempty"`
 }
 
@@ -74,7 +75,8 @@ func (h *handler) Findings(c *gin.Context) {
 			IntegrationID: ch.IntegrationID, IntegrationName: ch.IntegrationName,
 			ChannelCode: ch.ChannelCode, Matched: ch.Matched, NotAssociated: ch.NotAssociated,
 			OnlyInChannel: ch.OnlyInChannel, ChannelNoSKU: ch.ChannelNoSKU,
-			SKUChanged: ch.SKUChanged, SKUTypo: ch.SKUTypo, ComparedAt: ch.ComparedAt,
+			SKUChanged: ch.SKUChanged, SKUTypo: ch.SKUTypo, SKUSpacing: ch.SKUSpacing,
+			ComparedAt: ch.ComparedAt,
 		})
 	}
 

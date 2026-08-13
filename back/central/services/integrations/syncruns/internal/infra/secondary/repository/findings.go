@@ -18,6 +18,7 @@ func (r *repository) ChannelSummaries(ctx context.Context, businessID uint) ([]d
 		ChannelNoSKU    int
 		SKUChanged      int
 		SKUTypo         int
+		SKUSpacing      int
 		FinishedAt      *time.Time
 	}
 
@@ -25,7 +26,7 @@ func (r *repository) ChannelSummaries(ctx context.Context, businessID uint) ([]d
 		Table("integration_sync_runs AS r").
 		Select(`r.integration_id, i.name AS integration_name, it.code AS channel_code,
 			r.matched, r.not_associated, r.only_in_channel,
-			r.channel_no_sku, r.sku_changed, r.sku_typo, r.finished_at`).
+			r.channel_no_sku, r.sku_changed, r.sku_typo, r.sku_spacing, r.finished_at`).
 		Joins("JOIN integrations i ON i.id = r.integration_id AND i.deleted_at IS NULL AND i.is_active = true").
 		Joins("JOIN integration_types it ON it.id = i.integration_type_id AND it.deleted_at IS NULL").
 		Where("r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL", businessID, domain.KindProducts).
@@ -47,6 +48,7 @@ func (r *repository) ChannelSummaries(ctx context.Context, businessID uint) ([]d
 			ChannelNoSKU:    row.ChannelNoSKU,
 			SKUChanged:      row.SKUChanged,
 			SKUTypo:         row.SKUTypo,
+			SKUSpacing:      row.SKUSpacing,
 		}
 		if row.FinishedAt != nil {
 			s.ComparedAt = row.FinishedAt.Format(time.RFC3339)
@@ -56,9 +58,6 @@ func (r *repository) ChannelSummaries(ctx context.Context, businessID uint) ([]d
 	return out, nil
 }
 
-// CrossChannel cruza el detalle de todos los canales por SKU. Es lo unico que no
-// se puede saber mirando un canal solo: si un producto no se publica en NINGUNO,
-// si se vende algo que no tenemos, o si esta en unos canales y en otros no.
 func (r *repository) CrossChannel(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error) {
 	var out domain.CrossChannelCounts
 
@@ -67,6 +66,8 @@ WITH runs AS (
     SELECT r.id
     FROM integration_sync_runs r
     JOIN integrations i ON i.id = r.integration_id AND i.deleted_at IS NULL AND i.is_active = true
+    JOIN integration_types it ON it.id = i.integration_type_id AND it.deleted_at IS NULL
+    JOIN integration_categories ic ON ic.id = it.category_id AND ic.code = 'ecommerce'
     WHERE r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL
 ),
 items AS (

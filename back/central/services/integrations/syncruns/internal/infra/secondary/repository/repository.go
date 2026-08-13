@@ -44,6 +44,7 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 		ChannelNoSKU:      run.ChannelNoSKU,
 		SKUChanged:        run.SKUChanged,
 		SKUTypo:           run.SKUTypo,
+		SKUSpacing:        run.SKUSpacing,
 		Status:            run.Status,
 		Message:           run.Message,
 		Detail:            detail,
@@ -64,7 +65,8 @@ func (r *repository) Save(ctx context.Context, run *domain.SyncRun) error {
 			Where("id = ?", existing.ID).
 			Select("correlation_id", "started_at", "finished_at", "total", "updated", "unchanged",
 				"skipped", "failed", "matched", "not_associated", "only_in_probability",
-				"only_in_channel", "channel_no_sku", "sku_changed", "sku_typo", "status", "message", "detail", "updated_at").
+				"only_in_channel", "channel_no_sku", "sku_changed", "sku_typo", "sku_spacing",
+				"status", "message", "detail", "updated_at").
 			Updates(&row).Error; updateErr != nil {
 			return updateErr
 		}
@@ -92,6 +94,13 @@ func replaceDetailItems(tx *gorm.DB, runID uint, detail []domain.DetailItem) err
 			ParentRef:    truncate(item.ParentRef, 64),
 			ParentLabel:  truncate(item.ParentLabel, 300),
 			VariantLabel: truncate(item.VariantLabel, 200),
+
+			CounterpartSKU:  truncate(item.CounterpartSKU, 120),
+			CounterpartName: truncate(item.CounterpartName, 300),
+			ChannelQty:      item.ChannelQty,
+			OwnQty:          item.OwnQty,
+			FixSide:         truncate(item.FixSide, 16),
+			Pattern:         truncate(item.Pattern, 24),
 		})
 	}
 	return tx.CreateInBatches(&rows, detailInsertBatch).Error
@@ -195,6 +204,7 @@ func (r *repository) ListLastByBusiness(ctx context.Context, businessID uint) ([
 			ChannelNoSKU:      row.ChannelNoSKU,
 			SKUChanged:        row.SKUChanged,
 			SKUTypo:           row.SKUTypo,
+			SKUSpacing:        row.SKUSpacing,
 			Status:            row.Status,
 			Message:           row.Message,
 		}

@@ -51,6 +51,12 @@ export async function reconcileSiigoProductsAction(integrationId: number, busine
     return postWithAuth('/siigo/products/reconcile', body);
 }
 
+export async function startSiigoProductsReconcileAction(integrationId: number, businessId?: number) {
+    const body: Record<string, unknown> = { integration_id: integrationId };
+    if (businessId) body.business_id = businessId;
+    return postWithAuth('/siigo/products/reconcile/start', body);
+}
+
 export async function applySiigoProductsAction(integrationId: number, businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;

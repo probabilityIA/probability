@@ -25,6 +25,13 @@ type reconcileDetailItem struct {
 	ParentRef    string `json:"parent_ref,omitempty"`
 	ParentLabel  string `json:"parent_label,omitempty"`
 	VariantLabel string `json:"variant_label,omitempty"`
+
+	CounterpartSKU  string `json:"counterpart_sku,omitempty"`
+	CounterpartName string `json:"counterpart_name,omitempty"`
+	ChannelQty      *int   `json:"channel_qty,omitempty"`
+	OwnQty          *int   `json:"own_qty,omitempty"`
+	FixSide         string `json:"fix_side,omitempty"`
+	Pattern         string `json:"pattern,omitempty"`
 }
 
 type syncRunEnvelope struct {
@@ -59,7 +66,8 @@ func (uc *meliUseCase) ReconcileProductsAsync(ctx context.Context, integrationID
 		"probability_no_sku":  result.ProbabilityNoSKU,
 		"channel_no_sku":      result.MeliNoSKU,
 		"sku_changed":         len(result.SKUChangedItems),
-		"sku_typo":            len(result.TypoSuspects),
+		"sku_typo":            len(result.TypoSuspects) - productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
+		"sku_spacing":         productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
 		"match_rules":         result.MatchRules,
 	}
 
@@ -111,21 +119,23 @@ func reconcileDetail(result *domain.ReconcileResult) []reconcileDetailItem {
 	}
 
 	addTypos := func(items []productmatch.TypoSuspect) {
-		for _, item := range items {
-			motivo := "letras trocadas"
-			if item.Reason == productmatch.ReasonOneCharAndQty {
-				motivo = "un caracter de diferencia y la misma cantidad"
-			}
+		for _, d := range productmatch.TypoDetails(items, channelLabel) {
 			detail = append(detail, reconcileDetailItem{
-				SKU:          item.ChannelSKU,
-				Label:        "posible error de digitacion: " + item.ChannelSKU + " -> " + item.ProbabilitySKU + " (" + motivo + ")",
-				Tone:         "warn",
-				Group:        "sku_typo",
-				MatchedBy:    item.ChannelSKU,
-				MatchedValue: item.ProbabilitySKU,
-				ParentRef:    item.ChannelRef,
-				ParentLabel:  item.ChannelName,
-				VariantLabel: item.ChannelLabel,
+				SKU:             d.SKU,
+				Label:           d.Label,
+				Tone:            d.Tone,
+				Group:           d.Group,
+				MatchedBy:       d.SKU,
+				MatchedValue:    d.CounterpartSKU,
+				ParentRef:       d.ParentRef,
+				ParentLabel:     d.ParentLabel,
+				VariantLabel:    d.VariantLabel,
+				CounterpartSKU:  d.CounterpartSKU,
+				CounterpartName: d.CounterpartName,
+				ChannelQty:      d.ChannelQty,
+				OwnQty:          d.OwnQty,
+				FixSide:         d.FixSide,
+				Pattern:         d.Pattern,
 			})
 		}
 	}

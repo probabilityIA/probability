@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 type ProductHandler struct {
@@ -30,6 +31,7 @@ func (h *ProductHandler) RegisterRoutes(router *gin.RouterGroup) {
 	group := router.Group("/siigo")
 	{
 		group.POST("/products/reconcile", middleware.JWT(), h.ReconcileProducts)
+		group.POST("/products/reconcile/start", middleware.JWT(), h.StartReconcileProducts)
 		group.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
 	}
 }
@@ -80,7 +82,7 @@ func (h *ProductHandler) ReconcileProducts(c *gin.Context) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
-	result, err := h.useCase.ReconcileProducts(c.Request.Context(), integrationID, businessID)
+	result, err := h.useCase.ReconcileProductsAndRecord(c.Request.Context(), integrationID, businessID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return
@@ -95,6 +97,33 @@ func (h *ProductHandler) ReconcileProducts(c *gin.Context) {
 		"only_in_siigo":          productBriefsToResponse(result.OnlyInSiigo),
 		"probability_no_sku":     result.ProbabilityNoSKU,
 		"siigo_no_sku":           result.SiigoNoSKU,
+		"sku_typo":               len(result.TypoSuspects) - productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
+		"sku_spacing":            productmatch.CountPattern(result.TypoSuspects, productmatch.PatternSpacing),
+	})
+}
+
+func (h *ProductHandler) StartReconcileProducts(c *gin.Context) {
+	var req productReconcileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "integration_id es requerido"})
+		return
+	}
+	businessID, ok := h.resolveBusinessID(c, req.BusinessID)
+	if !ok {
+		return
+	}
+
+	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
+	correlationID := uuid.New().String()
+
+	go func() {
+		h.useCase.ReconcileProductsAsync(context.Background(), integrationID, businessID, req.IntegrationID, correlationID)
+	}()
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"success":        true,
+		"correlation_id": correlationID,
+		"message":        "Comparacion de catalogo iniciada",
 	})
 }
 

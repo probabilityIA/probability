@@ -52,6 +52,8 @@ type IInvoiceUseCase interface {
 	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]dtos.WebhookItem, error)
 
 	ReconcileProducts(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error)
+	ReconcileProductsAndRecord(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error)
+	ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string)
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 }
 

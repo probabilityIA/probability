@@ -3,6 +3,7 @@ import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateSh
 import { syncMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction, applyMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
 import { syncWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction, applyWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
 import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction, applyJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
+import { syncSiigoInventoryAction, startSiigoProductsReconcileAction, applySiigoProductsAction } from '@/services/integrations/invoicing/siigo/infra/actions';
 import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction, applyVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
 import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopify/ui/components/ShopifyProductSyncModal';
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
@@ -33,7 +34,7 @@ export interface SyncProvider {
     productEventPrefix?: string;
     syncInventory: (integrationId: number, businessId?: number) => Promise<unknown>;
     reconcileProducts: (integrationId: number, businessId?: number) => Promise<unknown>;
-    associateProducts: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
+    associateProducts?: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
     apply: ProductApplyActions;
     onlyInChannelField: string;
     channelNoSkuField: string;
@@ -105,6 +106,19 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         onlyInChannelField: 'only_in_vtex',
         channelNoSkuField: 'vtex_no_sku',
     },
+    8: {
+        typeId: 8,
+        key: 'siigo',
+        label: 'Siigo',
+        inventoryEventPrefix: 'siigo',
+        syncInventory: syncSiigoInventoryAction,
+        reconcileProducts: startSiigoProductsReconcileAction,
+        apply: {
+            createInProbability: (id, bid, skus) => applySiigoProductsAction(id, bid, skus),
+        },
+        onlyInChannelField: 'only_in_siigo',
+        channelNoSkuField: 'siigo_no_sku',
+    },
     33: {
         typeId: 33,
         key: 'jumpseller',
@@ -134,6 +148,8 @@ export const GLOBAL_INVENTORY_EVENT_TYPES = Object.values(SYNC_PROVIDERS).flatMa
     `${p.inventoryEventPrefix}.product.reconcile.completed`,
     ...PRODUCT_SYNC_SUFFIXES.map(s => `${p.productEventPrefix ?? p.inventoryEventPrefix}.product.sync.${s}`),
 ]);
+
+export const SIIGO_TYPE_ID = 8;
 
 export function getSyncProvider(integrationTypeId: number | string | undefined): SyncProvider | null {
     if (integrationTypeId === undefined || integrationTypeId === null) return null;

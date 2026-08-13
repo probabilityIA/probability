@@ -83,6 +83,7 @@ export function GlobalProductsMatrix({ channels, businessId, onAssociated }: Glo
             const provider = getSyncProvider(ch.integration.integration_type_id);
             if (!provider) continue;
             try {
+                if (!provider.associateProducts) continue;
                 const res = await provider.associateProducts(ch.integration.id, businessId ?? undefined, skus) as { success?: boolean };
                 if (res?.success === false) failCount += skus.length;
                 else okCount += skus.length;

@@ -80,6 +80,7 @@ type ReconcileResult struct {
 	OnlyInWoo            []ProductBrief
 	ProbabilityNoSKU     int
 	WooNoSKU             int
+	TypoSuspects         []productmatch.TypoSuspect
 	MatchRules           []productmatch.Rule
 }
 
@@ -106,4 +107,5 @@ type IProductRepository interface {
 	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
 	ListMappedItems(ctx context.Context, integrationID uint) ([]MappedItem, error)
 	GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error)
+	ERPFeedsInventory(ctx context.Context, businessID uint) (bool, error)
 }

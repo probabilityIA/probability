@@ -11,7 +11,6 @@ interface Totals {
     total: number;
     inProgress: number;
     delivered: number;
-    cancelled: number;
     returned: number;
 }
 
@@ -42,10 +41,9 @@ export function OrdersEffectivenessKpis({ businessId }: Props) {
                     total: acc.total + (item.orders_count || 0),
                     inProgress: acc.inProgress + (item.orders_in_progress || 0),
                     delivered: acc.delivered + (item.orders_delivered || 0),
-                    cancelled: acc.cancelled + (item.orders_cancelled || 0),
                     returned: acc.returned + (item.orders_returned || 0),
                 }),
-                { total: 0, inProgress: 0, delivered: 0, cancelled: 0, returned: 0 },
+                { total: 0, inProgress: 0, delivered: 0, returned: 0 },
             );
             setTotals(sum);
         };
@@ -58,7 +56,8 @@ export function OrdersEffectivenessKpis({ businessId }: Props) {
 
     if (!totals || totals.total === 0) return null;
 
-    const closed = totals.delivered + totals.cancelled + totals.returned;
+    const closed = totals.delivered + totals.returned;
+    if (closed === 0) return null;
 
     const cards = [
         {
@@ -67,7 +66,7 @@ export function OrdersEffectivenessKpis({ businessId }: Props) {
             detail: `${numberFormat.format(totals.delivered)} entregadas`,
             dot: '#22c55e',
             text: 'text-emerald-600 dark:text-emerald-400',
-            title: `${numberFormat.format(totals.delivered)} entregadas de ${numberFormat.format(closed)} ordenes finalizadas`,
+            title: `${numberFormat.format(totals.delivered)} entregadas de ${numberFormat.format(closed)} entre entregadas y devueltas`,
         },
         {
             label: 'Devoluciones',
@@ -75,15 +74,7 @@ export function OrdersEffectivenessKpis({ businessId }: Props) {
             detail: `${numberFormat.format(totals.returned)} devueltas`,
             dot: '#f59e0b',
             text: 'text-amber-600 dark:text-amber-400',
-            title: `${numberFormat.format(totals.returned)} devueltas de ${numberFormat.format(closed)} ordenes finalizadas`,
-        },
-        {
-            label: 'Fallidas',
-            value: percent(totals.cancelled, closed),
-            detail: `${numberFormat.format(totals.cancelled)} canceladas`,
-            dot: '#ef4444',
-            text: 'text-red-600 dark:text-red-400',
-            title: `${numberFormat.format(totals.cancelled)} canceladas de ${numberFormat.format(closed)} ordenes finalizadas`,
+            title: `${numberFormat.format(totals.returned)} devueltas de ${numberFormat.format(closed)} entre entregadas y devueltas`,
         },
     ];
 

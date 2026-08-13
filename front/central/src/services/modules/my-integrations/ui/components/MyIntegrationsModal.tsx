@@ -15,6 +15,7 @@ import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
 import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, CATEGORY_COLORS, CHANNELS_COLOR } from '../../domain/types';
+import { getSyncProvider } from '../providers';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
@@ -275,6 +276,8 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const createCategories = categories.filter(c => c.code === 'ecommerce' || c.code === 'invoicing');
 
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
+    const serviceIntegrations = services.flatMap(cat => integrationsByCategory[cat.code] || []);
+    const syncableIntegrations = [...channelIntegrations, ...serviceIntegrations.filter(i => getSyncProvider(i.integration_type_id))];
     const revision = loading ? 0 : categories.length * 1000 + integrations.length * 10 + channelIntegrations.length + 1;
 
     const editIsWide = editingIntegration
@@ -287,16 +290,19 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
             category={cat}
             color={CATEGORY_COLORS[cat.code] || '#6366f1'}
             integrations={integrationsByCategory[cat.code] || []}
+            stats={stats}
             onToggle={handleToggle}
+            onToggleInventory={handleToggleInventory}
             onEdit={handleEdit}
             togglingId={togglingId}
+            inventoryTogglingId={inventoryTogglingId}
             editingId={editLoadingId}
             anchorRef={setClusterRef(cat.code)}
         />
     );
 
     return (
-        <SyncActivityProvider integrations={channelIntegrations} businessId={effectiveBusinessId}>
+        <SyncActivityProvider integrations={syncableIntegrations} businessId={effectiveBusinessId}>
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}

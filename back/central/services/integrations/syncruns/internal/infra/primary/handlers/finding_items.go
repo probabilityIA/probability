@@ -13,10 +13,18 @@ import (
 )
 
 type findingItemResponse struct {
-	SKU      string   `json:"sku"`
-	Name     string   `json:"name,omitempty"`
-	Detail   string   `json:"detail,omitempty"`
-	Channels []string `json:"channels,omitempty"`
+	SKU             string   `json:"sku"`
+	Name            string   `json:"name,omitempty"`
+	Detail          string   `json:"detail,omitempty"`
+	Channels        []string `json:"channels,omitempty"`
+	CounterpartSKU  string   `json:"counterpart_sku,omitempty"`
+	CounterpartName string   `json:"counterpart_name,omitempty"`
+	ChannelQty      *int     `json:"channel_qty,omitempty"`
+	OwnQty          *int     `json:"own_qty,omitempty"`
+	FixSide         string   `json:"fix_side,omitempty"`
+	Pattern         string   `json:"pattern,omitempty"`
+	PresentIn       []string `json:"present_in,omitempty"`
+	MissingIn       []string `json:"missing_in,omitempty"`
 }
 
 func (h *handler) FindingItems(c *gin.Context) {
@@ -68,6 +76,10 @@ func (h *handler) FindingItems(c *gin.Context) {
 	for _, item := range page.Items {
 		items = append(items, findingItemResponse{
 			SKU: item.SKU, Name: item.Name, Detail: item.Detail, Channels: item.Channels,
+			CounterpartSKU: item.CounterpartSKU, CounterpartName: item.CounterpartName,
+			ChannelQty: item.ChannelQty, OwnQty: item.OwnQty,
+			FixSide: item.FixSide, Pattern: item.Pattern,
+			PresentIn: item.PresentIn, MissingIn: item.MissingIn,
 		})
 	}
 
@@ -94,8 +106,25 @@ func (h *handler) escribirCSV(c *gin.Context, code string, page *domain.FindingI
 	w := csv.NewWriter(c.Writer)
 	defer w.Flush()
 
-	_ = w.Write([]string{"SKU", "Producto", "Detalle", "Canales"})
+	_ = w.Write([]string{
+		"SKU en el canal", "SKU en Probability", "Producto",
+		"Stock en el canal", "Stock en Probability", "Que hacer",
+		"Esta en", "Falta en", "Canales",
+	})
 	for _, item := range page.Items {
-		_ = w.Write([]string{item.SKU, item.Name, item.Detail, strings.Join(item.Channels, ", ")})
+		_ = w.Write([]string{
+			item.SKU, item.CounterpartSKU, item.Name,
+			numero(item.ChannelQty), numero(item.OwnQty),
+			item.Detail,
+			strings.Join(item.PresentIn, ", "), strings.Join(item.MissingIn, ", "),
+			strings.Join(item.Channels, ", "),
+		})
 	}
+}
+
+func numero(value *int) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.Itoa(*value)
 }

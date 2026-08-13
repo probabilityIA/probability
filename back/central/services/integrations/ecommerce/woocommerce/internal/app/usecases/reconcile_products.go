@@ -169,7 +169,51 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		result.OnlyInProbability = append(result.OnlyInProbability, domain.ProductBrief{SKU: p.SKU, Name: p.Name})
 	}
 
+	result.TypoSuspects = detectTypoSuspects(rc, productmatch.TypoOptions{Authority: uc.inventoryAuthority(ctx, businessID)})
+
 	return result, nil
+}
+
+func detectTypoSuspects(rc *reconcileContext, opts productmatch.TypoOptions) []productmatch.TypoSuspect {
+	canal := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInChannel))
+	for _, idx := range rc.outcome.OnlyInChannel {
+		w := rc.wooProducts[idx]
+		canal = append(canal, productmatch.TypoCandidate{
+			SKU:      w.SKU,
+			Name:     w.Name,
+			Quantity: w.StockQuantity,
+			HasQty:   true,
+		})
+	}
+
+	propios := make([]productmatch.TypoCandidate, 0, len(rc.outcome.OnlyInProbability))
+	for _, idx := range rc.outcome.OnlyInProbability {
+		p := rc.probProducts[idx]
+		propios = append(propios, productmatch.TypoCandidate{
+			SKU:      p.SKU,
+			Name:     p.Name,
+			Quantity: p.StockQuantity,
+			HasQty:   true,
+		})
+	}
+
+	return productmatch.DetectTypos(canal, propios, opts)
+}
+
+func (uc *wooCommerceUseCase) inventoryAuthority(ctx context.Context, businessID uint) string {
+	if uc.productRepo == nil {
+		return productmatch.AuthorityUnknown
+	}
+	feeds, err := uc.productRepo.ERPFeedsInventory(ctx, businessID)
+	if err != nil {
+		uc.logger.Warn(ctx).Err(err).Uint("business_id", businessID).
+			Msg("No se pudo determinar si el ERP alimenta el inventario")
+		return productmatch.AuthorityUnknown
+	}
+	if feeds {
+		return productmatch.AuthorityProbability
+	}
+	return productmatch.AuthorityUnknown
 }
 
 func selectedSKUs(skus []string) map[string]bool {
