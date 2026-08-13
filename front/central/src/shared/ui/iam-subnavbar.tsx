@@ -12,7 +12,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const { isSuperAdmin, permissions } = usePermissions();
     const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
 
-    const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users') || pathname.startsWith('/marketing-leads');
+    const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users') || pathname.startsWith('/marketing-leads') || pathname.startsWith('/siigo-referrals');
 
     const businessIdForConfig = isSuperAdmin
         ? (selectedBusinessId || 0)
@@ -44,6 +44,7 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const menuItems = allMenuItems.filter(i => isResourceActive(i.resource));
     if (isSuperAdmin) {
         menuItems.push({ href: '/marketing-leads', label: 'Leads de encuestas', icon: '📊', resource: 'MarketingLeads' });
+        menuItems.push({ href: '/siigo-referrals', label: 'Referidos Siigo', icon: '🤝', resource: 'SiigoReferrals' });
     }
 
     return (

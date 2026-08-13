@@ -1,0 +1,17 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SiigoReferralForm from '../components/SiigoReferralForm.astro';
+
+const title = 'Referidos Siigo - ProbabilityIA';
+const description = 'Refiere tu negocio para integrar Siigo con Probability. Cuéntanos cuántas órdenes o ventas haces al mes y te contactamos.';
+---
+
+<Layout title={title} description={description}>
+	<Header />
+	<main class="bg-white py-12 px-4 sm:px-6">
+		<SiigoReferralForm />
+	</main>
+	<Footer />
+</Layout>
