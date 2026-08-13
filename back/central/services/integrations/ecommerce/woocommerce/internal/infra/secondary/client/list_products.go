@@ -16,24 +16,51 @@ type wooImageResponse struct {
 	Src string `json:"src"`
 }
 
+type wooTermResponse struct {
+	Name string `json:"name"`
+}
+
+type wooDimensionsResponse struct {
+	Length string `json:"length"`
+	Width  string `json:"width"`
+	Height string `json:"height"`
+}
+
 type wooProductResponse struct {
-	ID             int64              `json:"id"`
-	Name           string             `json:"name"`
-	SKU            string             `json:"sku"`
-	GlobalUniqueID string             `json:"global_unique_id"`
-	Type           string             `json:"type"`
-	Price          string             `json:"price"`
-	StockQuantity  *int               `json:"stock_quantity"`
-	Images         []wooImageResponse `json:"images"`
+	ID               int64                 `json:"id"`
+	Name             string                `json:"name"`
+	SKU              string                `json:"sku"`
+	GlobalUniqueID   string                `json:"global_unique_id"`
+	Type             string                `json:"type"`
+	Price            string                `json:"price"`
+	RegularPrice     string                `json:"regular_price"`
+	Description      string                `json:"description"`
+	ShortDescription string                `json:"short_description"`
+	Categories       []wooTermResponse     `json:"categories"`
+	Brands           []wooTermResponse     `json:"brands"`
+	Weight           string                `json:"weight"`
+	Dimensions       wooDimensionsResponse `json:"dimensions"`
+	StockQuantity    *int                  `json:"stock_quantity"`
+	Images           []wooImageResponse    `json:"images"`
+}
+
+type wooAttributeResponse struct {
+	Name   string `json:"name"`
+	Option string `json:"option"`
 }
 
 type wooVariationResponse struct {
-	ID             int64             `json:"id"`
-	SKU            string            `json:"sku"`
-	GlobalUniqueID string            `json:"global_unique_id"`
-	Price          string            `json:"price"`
-	StockQuantity  *int              `json:"stock_quantity"`
-	Image          *wooImageResponse `json:"image"`
+	ID             int64                  `json:"id"`
+	Attributes     []wooAttributeResponse `json:"attributes"`
+	SKU            string                 `json:"sku"`
+	GlobalUniqueID string                 `json:"global_unique_id"`
+	Price          string                 `json:"price"`
+	RegularPrice   string                 `json:"regular_price"`
+	Description    string                 `json:"description"`
+	Weight         string                 `json:"weight"`
+	Dimensions     wooDimensionsResponse  `json:"dimensions"`
+	StockQuantity  *int                   `json:"stock_quantity"`
+	Image          *wooImageResponse      `json:"image"`
 }
 
 func firstImage(images []wooImageResponse) string {
@@ -41,6 +68,60 @@ func firstImage(images []wooImageResponse) string {
 		return ""
 	}
 	return images[0].Src
+}
+
+func atributosDeVariacion(attrs []wooAttributeResponse) map[string]string {
+	out := make(map[string]string, len(attrs))
+	for _, attr := range attrs {
+		nombre := strings.ToLower(strings.TrimSpace(attr.Name))
+		valor := strings.TrimSpace(attr.Option)
+		if nombre == "" || valor == "" {
+			continue
+		}
+		out[nombre] = valor
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func etiquetaDeVariacion(attrs []wooAttributeResponse) string {
+	partes := make([]string, 0, len(attrs))
+	for _, attr := range attrs {
+		if valor := strings.TrimSpace(attr.Option); valor != "" {
+			partes = append(partes, valor)
+		}
+	}
+	return strings.Join(partes, " / ")
+}
+
+func firstTerm(terms []wooTermResponse) string {
+	if len(terms) == 0 {
+		return ""
+	}
+	return terms[0].Name
+}
+
+func numeroWoo(value string) *float64 {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	parsed, err := strconv.ParseFloat(trimmed, 64)
+	if err != nil || parsed <= 0 {
+		return nil
+	}
+	return &parsed
+}
+
+func firstText(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error) {
@@ -104,14 +185,24 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 						image = v.Image.Src
 					}
 					products = append(products, domain.WooProduct{
-						ID:            strconv.FormatInt(v.ID, 10),
-						ParentID:      parentID,
-						SKU:           v.SKU,
-						Barcode:       v.GlobalUniqueID,
-						Name:          p.Name,
-						Price:         vprice,
-						StockQuantity: vstock,
-						ImageURL:      image,
+						ID:                strconv.FormatInt(v.ID, 10),
+						ParentID:          parentID,
+						ParentName:        p.Name,
+						VariantLabel:      etiquetaDeVariacion(v.Attributes),
+						VariantAttributes: atributosDeVariacion(v.Attributes),
+						SKU:               v.SKU,
+						Barcode:           v.GlobalUniqueID,
+						Name:              p.Name,
+						Description:       firstText(v.Description, p.Description, p.ShortDescription),
+						Category:          firstTerm(p.Categories),
+						Brand:             firstTerm(p.Brands),
+						Weight:            numeroWoo(firstText(v.Weight, p.Weight)),
+						Length:            numeroWoo(firstText(v.Dimensions.Length, p.Dimensions.Length)),
+						Width:             numeroWoo(firstText(v.Dimensions.Width, p.Dimensions.Width)),
+						Height:            numeroWoo(firstText(v.Dimensions.Height, p.Dimensions.Height)),
+						Price:             vprice,
+						StockQuantity:     vstock,
+						ImageURL:          image,
 					})
 				}
 				continue
@@ -130,6 +221,13 @@ func (c *WooCommerceClient) GetProducts(ctx context.Context, storeURL, consumerK
 				SKU:           p.SKU,
 				Barcode:       p.GlobalUniqueID,
 				Name:          p.Name,
+				Description:   firstText(p.Description, p.ShortDescription),
+				Category:      firstTerm(p.Categories),
+				Brand:         firstTerm(p.Brands),
+				Weight:        numeroWoo(p.Weight),
+				Length:        numeroWoo(p.Dimensions.Length),
+				Width:         numeroWoo(p.Dimensions.Width),
+				Height:        numeroWoo(p.Dimensions.Height),
 				Price:         price,
 				StockQuantity: stock,
 				ImageURL:      firstImage(p.Images),

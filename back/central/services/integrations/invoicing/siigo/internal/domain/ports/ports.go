@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
+	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
 type ISiigoClient interface {
@@ -55,11 +57,13 @@ type IInvoiceUseCase interface {
 	ReconcileProductsAndRecord(ctx context.Context, integrationID string, businessID uint) (*dtos.ReconcileResult, error)
 	ReconcileProductsAsync(ctx context.Context, integrationID string, businessID, integIDUint uint, correlationID string)
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
+	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
 }
 
 type IProductReadRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]dtos.ProductForSync, error)
 	ListAssociatedSKUs(ctx context.Context, businessID, integrationID uint) (map[string]bool, error)
+	SaveChannelSnapshots(ctx context.Context, businessID, integrationID uint, entries []productmatch.SnapshotEntry) error
 }
 
 type WebhookCreateResult struct {

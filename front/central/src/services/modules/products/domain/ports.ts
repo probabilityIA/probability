@@ -1,5 +1,6 @@
 import {
     Product,
+    ProductDetail,
     ProductFamily,
     PaginatedResponse,
     GetProductsParams,
@@ -19,6 +20,7 @@ import {
 export interface IProductRepository {
     getProducts(params?: GetProductsParams): Promise<PaginatedResponse<Product>>;
     getProductById(id: string, businessId?: number): Promise<SingleResponse<Product>>;
+    getProductDetail(id: string, businessId?: number): Promise<SingleResponse<ProductDetail>>;
     createProduct(data: CreateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
     updateProduct(id: string, data: UpdateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
     deleteProduct(id: string, businessId?: number): Promise<ActionResponse>;

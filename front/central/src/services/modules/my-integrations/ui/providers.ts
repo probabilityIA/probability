@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
 import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateShopifyProductsAction, applyShopifyProductsAction } from '@/services/integrations/ecommerce/shopify/infra/actions';
-import { syncMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction, applyMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
-import { syncWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction, applyWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
+import { syncMeliInventoryAction, compareMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction, applyMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
+import { syncWooInventoryAction, compareWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction, applyWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
 import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction, applyJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
-import { syncSiigoInventoryAction, startSiigoProductsReconcileAction, applySiigoProductsAction } from '@/services/integrations/invoicing/siigo/infra/actions';
+import { syncSiigoInventoryAction, compareSiigoInventoryAction, startSiigoProductsReconcileAction, applySiigoProductsAction } from '@/services/integrations/invoicing/siigo/infra/actions';
 import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction, applyVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
 import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopify/ui/components/ShopifyProductSyncModal';
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
@@ -32,7 +32,8 @@ export interface SyncProvider {
     label: string;
     inventoryEventPrefix: string;
     productEventPrefix?: string;
-    syncInventory: (integrationId: number, businessId?: number) => Promise<unknown>;
+    syncInventory: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
+    compareInventory?: (integrationId: number, businessId?: number, page?: number, pageSize?: number, skus?: string[]) => Promise<unknown>;
     reconcileProducts: (integrationId: number, businessId?: number) => Promise<unknown>;
     associateProducts?: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
     apply: ProductApplyActions;
@@ -64,6 +65,7 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         label: 'Mercado Libre',
         inventoryEventPrefix: 'meli',
         syncInventory: syncMeliInventoryAction,
+        compareInventory: compareMeliInventoryAction,
         reconcileProducts: reconcileMeliProductsAction,
         associateProducts: associateMeliProductsAction,
         apply: {
@@ -81,6 +83,7 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         inventoryEventPrefix: 'woo',
         productEventPrefix: 'woocommerce',
         syncInventory: syncWooInventoryAction,
+        compareInventory: compareWooInventoryAction,
         reconcileProducts: reconcileWooProductsAction,
         associateProducts: associateWooProductsAction,
         apply: {
@@ -112,6 +115,7 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         label: 'Siigo',
         inventoryEventPrefix: 'siigo',
         syncInventory: syncSiigoInventoryAction,
+        compareInventory: compareSiigoInventoryAction,
         reconcileProducts: startSiigoProductsReconcileAction,
         apply: {
             createInProbability: (id, bid, skus) => applySiigoProductsAction(id, bid, skus),

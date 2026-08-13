@@ -19,6 +19,14 @@ type WooClientMock struct {
 	UpdateProductStockFn func(ctx context.Context, storeURL, consumerKey, consumerSecret, productExternalID string, quantity int) error
 	CreateProductFn      func(ctx context.Context, storeURL, consumerKey, consumerSecret string, input domain.CreateProductInput) (string, error)
 	GetProductsFn        func(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error)
+	GetProductsStockFn   func(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]domain.ChannelStock, error)
+}
+
+func (m *WooClientMock) GetProductsStock(ctx context.Context, storeURL, consumerKey, consumerSecret string, externalIDs []string) ([]domain.ChannelStock, error) {
+	if m.GetProductsStockFn != nil {
+		return m.GetProductsStockFn(ctx, storeURL, consumerKey, consumerSecret, externalIDs)
+	}
+	return nil, nil
 }
 
 func (m *WooClientMock) GetProducts(ctx context.Context, storeURL, consumerKey, consumerSecret string) ([]domain.WooProduct, error) {

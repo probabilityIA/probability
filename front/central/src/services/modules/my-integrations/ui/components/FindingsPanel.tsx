@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Loader2, X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { fetchSyncFindings } from '../../infra/repository/sync-findings';
 import { FindingItemsTable } from './FindingItemsTable';
 import { MatchMatrixTable } from './MatchMatrixTable';
+import { ChannelDataTable } from './ChannelDataTable';
+import { InventoryMatrixTable } from './InventoryMatrixTable';
 import { channelBrand } from '../../domain/types';
 import type { Finding, FindingSeverity, FindingsReport } from '../../domain/types';
+import type { Integration } from '@/services/integrations/core/domain/types';
 import { ACCENT, CARD_BORDER } from '../panel-theme';
 
 interface FindingsPanelProps {
     businessId: number | null;
+    integrations: Integration[];
+    initialTab?: string;
     onClose: () => void;
 }
 
@@ -22,13 +27,8 @@ const COUNT_TONE: Record<FindingSeverity, string> = {
 };
 
 const RESUMEN = 'resumen';
-
-const RESUMEN_NOTA = (
-    <>
-        Una fila por producto, una columna por canal.{' '}
-        <span className="font-semibold text-emerald-600 dark:text-emerald-400">Verde</span> = el SKU coincide.
-    </>
-);
+const DATOS = 'datos';
+const INVENTARIO = 'inventario';
 
 function Pildora({
     label,
@@ -103,10 +103,10 @@ function KpiCanal({
     );
 }
 
-export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
+export function FindingsPanel({ businessId, integrations, initialTab, onClose }: FindingsPanelProps) {
     const [report, setReport] = useState<FindingsReport | null>(null);
     const [loading, setLoading] = useState(true);
-    const [active, setActive] = useState<string>(RESUMEN);
+    const [active, setActive] = useState<string>(initialTab ?? RESUMEN);
     const [montado, setMontado] = useState(false);
 
     useEffect(() => setMontado(true), []);
@@ -125,8 +125,9 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
     const codeByChannel = Object.fromEntries(
         (report?.channels ?? []).map(c => [c.integration_name, c.channel_code]),
     );
-    const graves = findings.filter(f => f.severity === 'error').length;
     const enResumen = active === RESUMEN;
+    const enDatos = active === DATOS;
+    const enInventario = active === INVENTARIO;
     const activo = findings.find(f => f.code === active) ?? null;
 
     if (!montado) return null;
@@ -141,30 +142,24 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
 
             <div className="relative flex h-[90vh] w-full max-w-[96rem] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
                 <div className="flex items-start justify-between gap-4 px-6 pb-3 pt-5">
-                    <div className="min-w-0">
-                        <h2 className="text-[17px] font-bold text-gray-900 dark:text-white">
-                            Hallazgos de tus integraciones
-                        </h2>
-                        <p className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
-                            {loading
-                                ? 'Analizando todos los canales...'
-                                : findings.length === 0
-                                    ? 'No encontramos cruces ni conflictos entre tus canales.'
-                                    : (
-                                        <>
-                                            {findings.length} {findings.length === 1 ? 'hallazgo' : 'hallazgos'} sobre{' '}
-                                            {(report?.total ?? 0).toLocaleString('es-CO')} productos, cruzando todos tus canales.{' '}
-                                            {enResumen ? RESUMEN_NOTA : activo?.detail}
-                                        </>
-                                    )}
-                        </p>
-                        {!loading && graves > 0 && (
-                            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                                <AlertTriangle size={11} />
-                                {graves === 1 ? '1 hallazgo' : `${graves} hallazgos`} que puede estar costando ventas
-                            </span>
-                        )}
-                    </div>
+                    {!loading && (
+                        <div className="flex min-w-0 flex-1 flex-wrap gap-2">
+                            <Pildora label="Resumen general" active={enResumen} onClick={() => setActive(RESUMEN)} />
+                            <Pildora label="Actualizar productos en Probability" active={enDatos} onClick={() => setActive(DATOS)} />
+                            <Pildora label="Sincronizar inventario a los canales" active={enInventario} onClick={() => setActive(INVENTARIO)} />
+                            {findings.map(finding => (
+                                <Pildora
+                                    key={finding.code}
+                                    label={finding.title}
+                                    count={finding.count}
+                                    tone={COUNT_TONE[finding.severity] ?? COUNT_TONE.info}
+                                    active={activo?.code === finding.code}
+                                    onClick={() => setActive(finding.code)}
+                                />
+                            ))}
+                        </div>
+                    )}
+
                     {!loading && (report?.channels?.length ?? 0) > 0 && (
                         <div className="hidden flex-wrap justify-end gap-2 lg:flex">
                             {report?.channels.map(channel => (
@@ -199,30 +194,29 @@ export function FindingsPanel({ businessId, onClose }: FindingsPanelProps) {
 
                 {!loading && (
                     <>
-                        <div className="flex flex-wrap gap-2 px-6 pb-3">
-                            <Pildora label="Resumen general" active={enResumen} onClick={() => setActive(RESUMEN)} />
-                            {findings.map(finding => (
-                                <Pildora
-                                    key={finding.code}
-                                    label={finding.title}
-                                    count={finding.count}
-                                    tone={COUNT_TONE[finding.severity] ?? COUNT_TONE.info}
-                                    active={activo?.code === finding.code}
-                                    onClick={() => setActive(finding.code)}
-                                />
-                            ))}
-                        </div>
-
                         {enResumen && (
                             <div className="flex min-h-0 flex-1 flex-col px-6 pb-4">
                                 <MatchMatrixTable businessId={businessId} />
                             </div>
                         )}
 
-                        {!enResumen && activo && (
+                        {enDatos && (
+                            <div className="flex min-h-0 flex-1 flex-col px-6 pb-4">
+                                <ChannelDataTable businessId={businessId} />
+                            </div>
+                        )}
+
+                        {enInventario && (
+                            <div className="flex min-h-0 flex-1 flex-col px-6 pb-4">
+                                <InventoryMatrixTable businessId={businessId} integrations={integrations} />
+                            </div>
+                        )}
+
+                        {!enResumen && !enDatos && !enInventario && activo && (
                             <div className="flex min-h-0 flex-1 flex-col px-6 pb-4">
                                 <FindingItemsTable
                                     code={activo.code}
+                                    detail={activo.detail}
                                     businessId={businessId}
                                     total={activo.count}
                                     channels={activo.channels}

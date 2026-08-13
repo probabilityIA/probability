@@ -76,14 +76,18 @@ func fullImageURL(imageURL string) string {
 }
 
 type providerUpsertMsg struct {
-	BusinessID     uint    `json:"business_id"`
-	IntegrationID  uint    `json:"integration_id"`
-	SKU            string  `json:"sku"`
-	Name           string  `json:"name"`
-	TrackInventory bool    `json:"track_inventory"`
-	Price          float64 `json:"price"`
-	ExternalID     string  `json:"external_id"`
-	ImageURL       string  `json:"image_url,omitempty"`
+	BusinessID        uint              `json:"business_id"`
+	IntegrationID     uint              `json:"integration_id"`
+	SKU               string            `json:"sku"`
+	Name              string            `json:"name"`
+	TrackInventory    bool              `json:"track_inventory"`
+	Price             float64           `json:"price"`
+	ExternalID        string            `json:"external_id"`
+	ImageURL          string            `json:"image_url,omitempty"`
+	FamilyName        string            `json:"family_name,omitempty"`
+	FamilyRef         string            `json:"family_ref,omitempty"`
+	VariantLabel      string            `json:"variant_label,omitempty"`
+	VariantAttributes map[string]string `json:"variant_attributes,omitempty"`
 }
 
 func (uc *wooCommerceUseCase) loadReconcileData(ctx context.Context, integrationID string, businessID uint) (*reconcileContext, error) {
@@ -143,6 +147,7 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 		MatchRules:           rc.rules,
 	}
 
+	snapshots := make([]productmatch.SnapshotEntry, 0, len(rc.outcome.Pairs))
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
 		channel := rc.wooProducts[pair.ChannelIndex]
@@ -153,11 +158,20 @@ func (uc *wooCommerceUseCase) ReconcileProducts(ctx context.Context, integration
 			MatchedValue: channel.MatchItem().Values()[pair.Rule.Channel],
 		}
 		result.MatchedItems = append(result.MatchedItems, brief)
+		snapshots = append(snapshots, productmatch.SnapshotEntry{
+			ProbabilityID: prob.ID,
+			Snapshot:      wooSnapshot(channel),
+		})
 		if associatedSKUs[normalizeSKU(prob.SKU)] {
 			result.Matched++
 		} else {
 			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 		}
+	}
+
+	if serr := uc.productRepo.SaveChannelSnapshots(ctx, businessID, uint(integIDUint), snapshots); serr != nil {
+		uc.logger.Warn(ctx).Err(serr).Uint("business_id", businessID).
+			Msg("No se pudo guardar la foto del catalogo de WooCommerce")
 	}
 
 	for _, idx := range rc.outcome.OnlyInChannel {
@@ -349,6 +363,12 @@ func (uc *wooCommerceUseCase) ApplyProductsToProbability(ctx context.Context, in
 			Price:          w.Price,
 			ExternalID:     wooExternalRef(w),
 			ImageURL:       w.ImageURL,
+		}
+		if len(w.VariantAttributes) > 0 && w.ParentID != "" {
+			msg.FamilyName = nombreDeFamiliaWoo(w)
+			msg.FamilyRef = "woo:" + w.ParentID
+			msg.VariantLabel = w.VariantLabel
+			msg.VariantAttributes = w.VariantAttributes
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {

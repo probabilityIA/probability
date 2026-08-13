@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -25,7 +26,8 @@ type IWooCommerceUseCase interface {
 
 	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 
-	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
+	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
 
 	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error

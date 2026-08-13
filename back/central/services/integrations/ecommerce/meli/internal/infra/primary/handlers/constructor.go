@@ -17,6 +17,7 @@ type IHandler interface {
 	ReconcileProducts(c *gin.Context)
 	ApplyProducts(c *gin.Context)
 	SyncInventory(c *gin.Context)
+	CompareInventory(c *gin.Context)
 	GetShipmentLabel(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
@@ -52,6 +53,7 @@ func (h *meliHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger
 		oauthGroup.POST("/products/apply", middleware.JWT(), h.ApplyProducts)
 		oauthGroup.POST("/products/associate", middleware.JWT(), h.AssociateProducts)
 		oauthGroup.POST("/inventory/sync", middleware.JWT(), h.SyncInventory)
+		oauthGroup.POST("/inventory/compare", middleware.JWT(), h.CompareInventory)
 		oauthGroup.GET("/shipments/:shipment_id/label", middleware.JWT(), h.GetShipmentLabel)
 	}
 

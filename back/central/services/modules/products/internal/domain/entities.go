@@ -26,6 +26,11 @@ type ProductProviderUpsertDTO struct {
 	Height         *float64
 	DimensionUnit  string
 	ImageURL       string
+
+	FamilyName        string
+	FamilyRef         string
+	VariantLabel      string
+	VariantAttributes map[string]string
 }
 
 type CreateProductRequest struct {

@@ -10,7 +10,8 @@ import (
 
 // UseCases contiene todos los casos de uso del módulo products
 type UseCases struct {
-	repo domain.IRepository
+	repo    domain.IRepository
+	eventos *publicadorEventos
 
 	// Casos de uso modulares
 	ProductCRUD *usecaseproduct.UseCaseProduct

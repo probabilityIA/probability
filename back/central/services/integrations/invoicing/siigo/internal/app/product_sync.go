@@ -136,6 +136,7 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 		MatchRules:           rc.rules,
 	}
 
+	snapshots := make([]productmatch.SnapshotEntry, 0, len(rc.outcome.Pairs))
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
 		channel := rc.siigoProducts[pair.ChannelIndex]
@@ -146,11 +147,20 @@ func (uc *invoicingUseCase) ReconcileProducts(ctx context.Context, integrationID
 			MatchedValue: siigoItems([]dtos.ProductItem{channel})[0].Values()[pair.Rule.Channel],
 		}
 		result.MatchedItems = append(result.MatchedItems, brief)
+		snapshots = append(snapshots, productmatch.SnapshotEntry{
+			ProbabilityID: prob.ID,
+			Snapshot:      siigoSnapshot(channel),
+		})
 		if associated[normalizeSKU(prob.SKU)] {
 			result.Matched++
 			continue
 		}
 		result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
+	}
+
+	if serr := uc.productRepo.SaveChannelSnapshots(ctx, businessID, uint(integIDUint), snapshots); serr != nil {
+		uc.log.Warn(ctx).Err(serr).Uint("business_id", businessID).
+			Msg("No se pudo guardar la foto del catalogo de Siigo")
 	}
 
 	for _, idx := range rc.outcome.OnlyInChannel {

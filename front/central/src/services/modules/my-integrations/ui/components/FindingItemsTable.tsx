@@ -13,6 +13,7 @@ import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER, inputCls } from '../pa
 
 interface FindingItemsTableProps {
     code: string;
+    detail?: string;
     businessId: number | null;
     total: number;
     channels?: string[];
@@ -23,8 +24,13 @@ const SEARCH_DEBOUNCE_MS = 400;
 
 const COMPARATIVOS = new Set(['sku_spacing', 'sku_typo']);
 
-const CRUZADOS: Record<string, { esta: string; falta: string }> = {
-    not_published: { esta: 'Si esta publicado en', falta: 'Falta publicarlo en' },
+const CRUZADOS: Record<string, { esta: string; estaNota?: string; falta: string; faltaNota?: string }> = {
+    not_published: {
+        esta: 'Si esta en tu inventario',
+        estaNota: 'ERP, no es canal de venta',
+        falta: 'Falta publicarlo en',
+        faltaNota: 'canales de venta',
+    },
     sold_not_owned: { esta: 'Se vende en', falta: 'No existe en' },
     channel_imbalance: { esta: 'Si esta publicado en', falta: 'Falta publicarlo en' },
 };
@@ -157,7 +163,7 @@ function FilaSimple({ item, codeByChannel }: { item: FindingItem; codeByChannel?
     );
 }
 
-export function FindingItemsTable({ code, businessId, total, channels, codeByChannel }: FindingItemsTableProps) {
+export function FindingItemsTable({ code, detail, businessId, total, channels, codeByChannel }: FindingItemsTableProps) {
     const [items, setItems] = useState<FindingItem[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
@@ -199,6 +205,7 @@ export function FindingItemsTable({ code, businessId, total, channels, codeByCha
 
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
+            {detail && <p className="text-[12px] text-gray-500 dark:text-gray-400">{detail}</p>}
             <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
                     <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -220,6 +227,7 @@ export function FindingItemsTable({ code, businessId, total, channels, codeByCha
                 </div>
                 <a
                     href={findingItemsCsvUrl(code, businessId ?? undefined, term)}
+                    download={`${code}-${new Date().toISOString().slice(0, 10)}.csv`}
                     className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
                     style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
                 >
@@ -245,9 +253,15 @@ export function FindingItemsTable({ code, businessId, total, channels, codeByCha
                                     <th className="px-3 py-2 font-bold">Producto</th>
                                     <th className="px-3 py-2 font-bold text-emerald-600 dark:text-emerald-400">
                                         {cruzado.esta}
+                                        {cruzado.estaNota && (
+                                            <span className="ml-1 font-normal normal-case italic text-gray-400">({cruzado.estaNota})</span>
+                                        )}
                                     </th>
                                     <th className="px-3 py-2 font-bold text-red-500 dark:text-red-400">
                                         {cruzado.falta}
+                                        {cruzado.faltaNota && (
+                                            <span className="ml-1 font-normal normal-case italic text-gray-400">({cruzado.faltaNota})</span>
+                                        )}
                                     </th>
                                 </>
                             ) : (
@@ -294,6 +308,7 @@ export function FindingItemsTable({ code, businessId, total, channels, codeByCha
                 total={total}
                 shown={items.length}
                 noun="productos"
+                pageSize={50}
                 onPage={p => void load(p)}
             />
         </div>

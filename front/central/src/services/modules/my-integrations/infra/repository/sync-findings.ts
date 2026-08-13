@@ -81,6 +81,8 @@ export interface MatrixColumn {
     integration_id: number;
     name: string;
     code: string;
+    image_url?: string;
+    is_sales: boolean;
 }
 
 export interface MatrixCell {
@@ -99,12 +101,14 @@ export interface MatrixRow {
     sku: string;
     barcode?: string;
     name?: string;
+    image_url?: string;
     cells: MatrixCell[];
 }
 
 export interface MatrixFilters {
     search?: string;
-    integrationIds?: number[];
+    presentIn?: number[];
+    missingIn?: number[];
 }
 
 export interface MatrixPage {
@@ -121,7 +125,8 @@ function matrixParams(businessId?: number, filters: MatrixFilters = {}): URLSear
     const params = new URLSearchParams();
     if (businessId) params.set('business_id', String(businessId));
     if (filters.search) params.set('q', filters.search);
-    if (filters.integrationIds?.length) params.set('integration_ids', filters.integrationIds.join(','));
+    if (filters.presentIn?.length) params.set('present_in', filters.presentIn.join(','));
+    if (filters.missingIn?.length) params.set('missing_in', filters.missingIn.join(','));
     return params;
 }
 
@@ -130,10 +135,11 @@ export async function fetchMatchMatrix(
     page = 1,
     filters: MatrixFilters = {},
     signal?: AbortSignal,
+    pageSize = 10,
 ): Promise<MatrixPage> {
     const params = matrixParams(businessId, filters);
     params.set('page', String(page));
-    params.set('page_size', '50');
+    params.set('page_size', String(pageSize));
 
     const response = await fetch(`/internal/sync-matrix?${params.toString()}`, { signal, cache: 'no-store' });
     if (!response.ok) return EMPTY_MATRIX;

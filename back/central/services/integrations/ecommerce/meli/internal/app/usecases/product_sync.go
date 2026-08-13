@@ -20,14 +20,18 @@ func normalizeSKU(sku string) string {
 }
 
 type providerUpsertMsg struct {
-	BusinessID     uint    `json:"business_id"`
-	IntegrationID  uint    `json:"integration_id"`
-	SKU            string  `json:"sku"`
-	Name           string  `json:"name"`
-	TrackInventory bool    `json:"track_inventory"`
-	Price          float64 `json:"price"`
-	ExternalID     string  `json:"external_id"`
-	ImageURL       string  `json:"image_url,omitempty"`
+	BusinessID        uint              `json:"business_id"`
+	IntegrationID     uint              `json:"integration_id"`
+	SKU               string            `json:"sku"`
+	Name              string            `json:"name"`
+	TrackInventory    bool              `json:"track_inventory"`
+	Price             float64           `json:"price"`
+	ExternalID        string            `json:"external_id"`
+	ImageURL          string            `json:"image_url,omitempty"`
+	FamilyName        string            `json:"family_name,omitempty"`
+	FamilyRef         string            `json:"family_ref,omitempty"`
+	VariantLabel      string            `json:"variant_label,omitempty"`
+	VariantAttributes map[string]string `json:"variant_attributes,omitempty"`
 }
 
 const noSKUPlaceholder = "(sin SKU)"
@@ -254,6 +258,7 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 	result.SKUChangedItems = detectSKUChanges(mapped, rc.meliProducts)
 	result.TypoSuspects = detectTypoSuspects(rc, productmatch.TypoOptions{Authority: uc.inventoryAuthority(ctx, businessID)})
 
+	snapshots := make([]productmatch.SnapshotEntry, 0, len(rc.outcome.Pairs))
 	for _, pair := range rc.outcome.Pairs {
 		prob := rc.probProducts[pair.ProbabilityIndex]
 		channel := rc.meliProducts[pair.ChannelIndex]
@@ -267,11 +272,21 @@ func (uc *meliUseCase) ReconcileProducts(ctx context.Context, integrationID stri
 			VariantLabel: channel.VariantLabel,
 		}
 		result.MatchedItems = append(result.MatchedItems, brief)
+		snapshots = append(snapshots, productmatch.SnapshotEntry{
+			ProbabilityID:    prob.ID,
+			ChannelVariantID: channel.VariationID,
+			Snapshot:         meliSnapshot(channel),
+		})
 		if associatedSKUs[normalizeSKU(prob.SKU)] {
 			result.Matched++
 		} else {
 			result.MatchedNotAssociated = append(result.MatchedNotAssociated, brief)
 		}
+	}
+
+	if serr := uc.productRepo.SaveChannelSnapshots(ctx, businessID, uint(integIDUint), snapshots); serr != nil {
+		uc.logger.Warn(ctx).Err(serr).Uint("business_id", businessID).
+			Msg("No se pudo guardar la foto del catalogo de MercadoLibre")
 	}
 
 	for _, idx := range rc.outcome.ChannelNoKey {
@@ -474,6 +489,12 @@ func (uc *meliUseCase) ApplyProductsToProbability(ctx context.Context, integrati
 			Price:          m.Price,
 			ExternalID:     m.ID,
 			ImageURL:       m.ImageURL,
+		}
+		if atributos := atributosDeVariante(m); len(atributos) > 0 {
+			msg.FamilyName = nombreDeFamilia(m)
+			msg.FamilyRef = "meli:" + m.ID
+			msg.VariantLabel = m.VariantLabel
+			msg.VariantAttributes = atributos
 		}
 		data, merr := json.Marshal(msg)
 		if merr != nil || uc.rabbit == nil {

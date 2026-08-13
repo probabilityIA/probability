@@ -21,7 +21,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	repo := repository.New(database)
 
 	// 2. Init Use Cases
-	uc := usecases.New(repo)
+	uc := usecases.New(repo).WithEvents(rabbitMQ, logger)
 
 	// 3. Init Handlers
 	h := handlers.New(uc, logger, s3, environment)

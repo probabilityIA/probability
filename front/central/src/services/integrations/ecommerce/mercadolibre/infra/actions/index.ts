@@ -95,8 +95,16 @@ export async function applyMeliProductsAction(integrationId: number, direction: 
     return postWithAuth('/integrations/meli/products/apply', body);
 }
 
-export async function syncMeliInventoryAction(integrationId: number, businessId?: number) {
+export async function syncMeliInventoryAction(integrationId: number, businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
     return postWithAuth('/integrations/meli/inventory/sync', body);
+}
+
+export async function compareMeliInventoryAction(integrationId: number, businessId?: number, page = 1, pageSize = 100, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId, page, page_size: pageSize };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/integrations/meli/inventory/compare', body);
 }

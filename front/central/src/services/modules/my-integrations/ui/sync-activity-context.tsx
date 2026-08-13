@@ -96,7 +96,7 @@ interface SyncActivityValue {
     actionBusy: Record<number, ProductActionKey | null>;
     actionResult: Record<number, ProductActionResult | null>;
     runProductAction: (integrationId: number, action: ProductActionKey, skus?: string[]) => void;
-    runInventoryOne: (integrationId: number) => void;
+    runInventoryOne: (integrationId: number, skus?: string[]) => void;
     runCurrent: () => void;
     runInventory: () => void;
     runProducts: () => void;
@@ -415,7 +415,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setActionResult({});
     }, []);
 
-    const syncInventoryOne = useCallback(async (integration: Integration) => {
+    const syncInventoryOne = useCallback(async (integration: Integration, skus?: string[]) => {
         const provider = getSyncProvider(integration.integration_type_id);
         if (!provider) return;
 
@@ -423,7 +423,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         const launchedAt = Date.now();
         let result: SyncStartResult | null = null;
         try {
-            result = await provider.syncInventory(integration.id, businessId ?? undefined) as SyncStartResult;
+            result = await provider.syncInventory(integration.id, businessId ?? undefined, skus) as SyncStartResult;
         } catch {
             result = null;
         }
@@ -462,7 +462,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         });
     }, [businessId, patchNode, drainPending, hydrateFromLastRun]);
 
-    const runInventoryOne = useCallback(async (integrationId: number) => {
+    const runInventoryOne = useCallback(async (integrationId: number, skus?: string[]) => {
         const integration = eligible.find(i => i.id === integrationId);
         if (!integration || running) return;
         setRunning(true);
@@ -475,7 +475,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         setDetails(prev => ({ ...prev, [integrationId]: [] }));
         setProgress(prev => ({ ...prev, [integrationId]: { processed: 0, total: 0 } }));
 
-        await syncInventoryOne(integration);
+        await syncInventoryOne(integration, skus);
 
         setRunning(false);
         setMode('idle');

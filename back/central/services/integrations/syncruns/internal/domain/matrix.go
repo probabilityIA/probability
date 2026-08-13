@@ -6,6 +6,8 @@ type MatrixColumn struct {
 	IntegrationID uint
 	Name          string
 	Code          string
+	ImageURL      string
+	IsSales       bool
 }
 
 type MatrixCell struct {
@@ -24,16 +26,18 @@ type MatrixRow struct {
 	SKU       string
 	Barcode   string
 	Name      string
+	ImageURL  string
 	Cells     []MatrixCell
 }
 
 type MatrixQuery struct {
-	BusinessID     uint
-	Search         string
-	IntegrationIDs []uint
-	Page           int
-	PageSize       int
-	All            bool
+	BusinessID uint
+	Search     string
+	PresentIn  []uint
+	MissingIn  []uint
+	Page       int
+	PageSize   int
+	All        bool
 }
 
 func (q MatrixQuery) Offset() int {
@@ -47,8 +51,11 @@ func (q *MatrixQuery) Normalize() {
 	if q.Page < 1 {
 		q.Page = 1
 	}
-	if q.PageSize < 1 || q.PageSize > 200 {
-		q.PageSize = 50
+	if q.PageSize < 1 {
+		q.PageSize = 10
+	}
+	if q.PageSize > 100 {
+		q.PageSize = 100
 	}
 }
 

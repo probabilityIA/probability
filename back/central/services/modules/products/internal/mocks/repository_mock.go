@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 )
@@ -21,6 +22,7 @@ type RepositoryMock struct {
 	VariantExistsInFamilyFn       func(ctx context.Context, businessID uint, familyID uint, variantSignature string, excludeProductID *string) (bool, error)
 	CreateProductFamilyFn         func(ctx context.Context, family *domain.ProductFamily) error
 	GetProductFamilyByIDFn        func(ctx context.Context, businessID uint, familyID uint) (*domain.ProductFamily, error)
+	GetProductFamilyByNameFn      func(ctx context.Context, businessID uint, name string) (*domain.ProductFamily, error)
 	ListProductFamiliesFn         func(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.ProductFamily, int64, error)
 	UpdateProductFamilyFn         func(ctx context.Context, family *domain.ProductFamily) error
 	DeleteProductFamilyFn         func(ctx context.Context, businessID uint, familyID uint) error
@@ -32,6 +34,58 @@ type RepositoryMock struct {
 	GetProductsByIntegrationFn    func(ctx context.Context, integrationID uint) ([]domain.Product, error)
 	ProductIntegrationExistsFn    func(ctx context.Context, productID string, integrationID uint) (bool, error)
 	LookupProductByExternalRefFn  func(ctx context.Context, businessID uint, integrationID uint, externalVariantID, externalSKU, externalProductID, externalBarcode *string) (*domain.Product, error)
+	GetProductChannelsFn          func(ctx context.Context, businessID uint, productID string) ([]domain.ProductChannel, error)
+	GetProductStockFn             func(ctx context.Context, businessID uint, productID string) ([]domain.ProductStockLevel, error)
+	GetProductMovementsFn         func(ctx context.Context, businessID uint, productID string, limit int) ([]domain.ProductMovement, error)
+	CountFamilySiblingsFn         func(ctx context.Context, businessID uint, familyID uint, productID string) (int64, error)
+	RecordFieldChangesFn          func(ctx context.Context, changes []domain.FieldChange) error
+	GetProductFieldOriginsFn      func(ctx context.Context, businessID uint, productID string) ([]domain.FieldOriginView, error)
+	ApplyChannelFieldFn           func(ctx context.Context, req domain.DataApplyRequest, batchID string, at time.Time) (int, error)
+	ApplyChannelVariantFn         func(ctx context.Context, req domain.DataApplyRequest, batchID string, at time.Time, progress domain.ProgressFunc) (int, error)
+	UndoBatchFn                   func(ctx context.Context, businessID uint, batchID string, userID uint, at time.Time) (int, error)
+	ListDataBatchesFn             func(ctx context.Context, businessID uint, limit int) ([]domain.DataBatch, error)
+}
+
+func (m *RepositoryMock) ApplyChannelField(ctx context.Context, req domain.DataApplyRequest, batchID string, at time.Time) (int, error) {
+	if m.ApplyChannelFieldFn != nil {
+		return m.ApplyChannelFieldFn(ctx, req, batchID, at)
+	}
+	return 0, nil
+}
+
+func (m *RepositoryMock) ApplyChannelVariant(ctx context.Context, req domain.DataApplyRequest, batchID string, at time.Time, progress domain.ProgressFunc) (int, error) {
+	if m.ApplyChannelVariantFn != nil {
+		return m.ApplyChannelVariantFn(ctx, req, batchID, at, progress)
+	}
+	return 0, nil
+}
+
+func (m *RepositoryMock) UndoBatch(ctx context.Context, businessID uint, batchID string, userID uint, at time.Time) (int, error) {
+	if m.UndoBatchFn != nil {
+		return m.UndoBatchFn(ctx, businessID, batchID, userID, at)
+	}
+	return 0, nil
+}
+
+func (m *RepositoryMock) ListDataBatches(ctx context.Context, businessID uint, limit int) ([]domain.DataBatch, error) {
+	if m.ListDataBatchesFn != nil {
+		return m.ListDataBatchesFn(ctx, businessID, limit)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) RecordFieldChanges(ctx context.Context, changes []domain.FieldChange) error {
+	if m.RecordFieldChangesFn != nil {
+		return m.RecordFieldChangesFn(ctx, changes)
+	}
+	return nil
+}
+
+func (m *RepositoryMock) GetProductFieldOrigins(ctx context.Context, businessID uint, productID string) ([]domain.FieldOriginView, error) {
+	if m.GetProductFieldOriginsFn != nil {
+		return m.GetProductFieldOriginsFn(ctx, businessID, productID)
+	}
+	return nil, nil
 }
 
 var _ domain.IRepository = (*RepositoryMock)(nil)
@@ -209,4 +263,39 @@ func (m *RepositoryMock) LookupProductByExternalRef(ctx context.Context, busines
 		return m.LookupProductByExternalRefFn(ctx, businessID, integrationID, externalVariantID, externalSKU, externalProductID, externalBarcode)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) GetProductFamilyByName(ctx context.Context, businessID uint, name string) (*domain.ProductFamily, error) {
+	if m.GetProductFamilyByNameFn != nil {
+		return m.GetProductFamilyByNameFn(ctx, businessID, name)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetProductChannels(ctx context.Context, businessID uint, productID string) ([]domain.ProductChannel, error) {
+	if m.GetProductChannelsFn != nil {
+		return m.GetProductChannelsFn(ctx, businessID, productID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetProductStock(ctx context.Context, businessID uint, productID string) ([]domain.ProductStockLevel, error) {
+	if m.GetProductStockFn != nil {
+		return m.GetProductStockFn(ctx, businessID, productID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetProductMovements(ctx context.Context, businessID uint, productID string, limit int) ([]domain.ProductMovement, error) {
+	if m.GetProductMovementsFn != nil {
+		return m.GetProductMovementsFn(ctx, businessID, productID, limit)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) CountFamilySiblings(ctx context.Context, businessID uint, familyID uint, productID string) (int64, error) {
+	if m.CountFamilySiblingsFn != nil {
+		return m.CountFamilySiblingsFn(ctx, businessID, familyID, productID)
+	}
+	return 0, nil
 }

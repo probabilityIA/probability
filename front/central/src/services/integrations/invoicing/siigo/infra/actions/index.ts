@@ -39,6 +39,13 @@ export async function syncSiigoInventoryAction(integrationId: number, businessId
     return postWithAuth('/invoicing/inventory/sync', body);
 }
 
+export async function compareSiigoInventoryAction(integrationId: number, businessId?: number, page = 1, pageSize = 100, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId, page, page_size: pageSize };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/siigo/inventory/compare', body);
+}
+
 export async function listSiigoWarehousesAction(integrationId: number, businessId?: number) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;

@@ -56,6 +56,7 @@ func (h *Handlers) GetProductFamilyByID(c *gin.Context) {
 		return
 	}
 
+	family.ImageURL = h.buildImageURL(family.ImageURL)
 	for i := range family.Variants {
 		family.Variants[i].ImageURL = h.buildImageURL(family.Variants[i].ImageURL)
 	}
@@ -94,7 +95,7 @@ func (h *Handlers) ListProductFamilies(c *gin.Context) {
 	}
 
 	filters := make(map[string]interface{})
-	for _, field := range []string{"name", "category", "brand", "status", "sort_by", "sort_order"} {
+	for _, field := range []string{"name", "category", "brand", "status", "has_variants", "sort_by", "sort_order"} {
 		if value := strings.TrimSpace(c.Query(field)); value != "" {
 			filters[field] = strings.ToLower(value)
 			if field == "name" || field == "category" || field == "brand" {
@@ -107,6 +108,10 @@ func (h *Handlers) ListProductFamilies(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Error al listar familias", "error": err.Error()})
 		return
+	}
+
+	for i := range response.Data {
+		response.Data[i].ImageURL = h.buildImageURL(response.Data[i].ImageURL)
 	}
 
 	c.JSON(http.StatusOK, gin.H{

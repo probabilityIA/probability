@@ -18,7 +18,7 @@ func syncSetup(mapped []domain.MappedItem, stock map[string]int) (*mockClient, *
 func runSync(t *testing.T, uc *meliUseCase, mapped []domain.MappedItem, stock map[string]int) {
 	t.Helper()
 	cfg := domain.InventoryConfig{Mode: "single", SingleWarehouseID: 22, Enabled: true}
-	if err := uc.syncInventorySingle(context.Background(), uc.client, 46, 254, "254", "tok", cfg, mapped, "corr"); err != nil {
+	if err := uc.syncInventorySingle(context.Background(), uc.client, 46, 254, "254", "tok", cfg, mapped, "corr", false); err != nil {
 		t.Fatalf("error inesperado en el sync: %v", err)
 	}
 }
@@ -200,7 +200,7 @@ func TestSyncPropagaElErrorAlLeerElStock(t *testing.T) {
 
 	cfg := domain.InventoryConfig{Mode: "single", SingleWarehouseID: 22}
 	err := uc.syncInventorySingle(context.Background(), cli, 46, 254, "254", "tok", cfg,
-		[]domain.MappedItem{{ProductID: "P1"}}, "corr")
+		[]domain.MappedItem{{ProductID: "P1"}}, "corr", false)
 	if err == nil {
 		t.Fatal("si no se puede leer el stock hay que abortar, no empujar a ciegas")
 	}
@@ -286,5 +286,35 @@ func TestSyncSigueAunqueFalleElRegistroDeLaCantidad(t *testing.T) {
 
 	if len(cli.puts()) != 1 {
 		t.Fatal("el push debia hacerse igual")
+	}
+}
+
+func TestSeleccionManualCorrigeElCanalACeroCuandoNoHayRegistro(t *testing.T) {
+	mapped := []domain.MappedItem{
+		{ProductID: "P9", SKU: "SIN-STOCK", ExternalItemID: "MCO9", ExternalVariantID: "90"},
+	}
+	cli, _, uc := syncSetup(mapped, map[string]int{})
+
+	cfg := domain.InventoryConfig{Mode: "single", SingleWarehouseID: 22, Enabled: true}
+	if err := uc.syncInventorySingle(context.Background(), cli, 46, 254, "254", "tok", cfg, mapped, "corr", true); err != nil {
+		t.Fatalf("error inesperado: %v", err)
+	}
+
+	puts := cli.puts()
+	if len(puts) != 1 || puts[0].Quantity != 0 {
+		t.Fatalf("al elegirlo a mano se debe corregir el canal a 0, obtuve %+v", puts)
+	}
+}
+
+func TestElSyncAutomaticoNoTocaLoQueNoTieneRegistro(t *testing.T) {
+	mapped := []domain.MappedItem{
+		{ProductID: "P9", SKU: "SIN-STOCK", ExternalItemID: "MCO9", ExternalVariantID: "90"},
+	}
+	cli, _, uc := syncSetup(mapped, map[string]int{})
+
+	runSync(t, uc, mapped, map[string]int{})
+
+	if len(cli.puts()) != 0 {
+		t.Fatal("sin seleccion manual no se debe apagar el stock del canal")
 	}
 }

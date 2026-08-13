@@ -2,6 +2,7 @@ import { env } from '@/shared/config/env';
 import { IProductRepository } from '../../domain/ports';
 import {
     Product,
+    ProductDetail,
     ProductFamily,
     PaginatedResponse,
     GetProductsParams,
@@ -60,6 +61,10 @@ export class ProductApiRepository implements IProductRepository {
 
     async getProductById(id: string, businessId?: number): Promise<SingleResponse<Product>> {
         return this.fetch<SingleResponse<Product>>(this.withBusinessId(`/products/${id}`, businessId));
+    }
+
+    async getProductDetail(id: string, businessId?: number): Promise<SingleResponse<ProductDetail>> {
+        return this.fetch<SingleResponse<ProductDetail>>(this.withBusinessId(`/products/${id}/detail`, businessId));
     }
 
     async createProduct(data: CreateProductDTO, businessId?: number): Promise<SingleResponse<Product>> {

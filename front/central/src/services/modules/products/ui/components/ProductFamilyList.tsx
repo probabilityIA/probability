@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, forwardRef, useImperativeHandle, Fragment } from 'react';
-import { ProductFamily, Product } from '../../domain/types';
+import { ProductFamily, Product, GetFamiliesParams } from '../../domain/types';
 import { getProductFamiliesAction, deleteProductFamilyAction, getFamilyVariantsAction } from '../../infra/actions';
 import { ChevronRightIcon, ChevronDownIcon, XMarkIcon, PlusIcon, ScaleIcon } from '@heroicons/react/24/outline';
 import AssociateProductModal from './AssociateProductModal';
@@ -10,6 +10,8 @@ import FamilyDimensionsModal from './FamilyDimensionsModal';
 interface ProductFamilyListProps {
     onEdit?: (family: ProductFamily) => void;
     selectedBusinessId?: number;
+    searchName?: string;
+    advancedFilters?: Record<string, string | boolean>;
 }
 
 export interface ProductFamilyListHandle {
@@ -19,15 +21,14 @@ export interface ProductFamilyListHandle {
 const MODAL_PAGE_SIZE = 10;
 
 const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListProps>(
-    ({ onEdit, selectedBusinessId }, ref) => {
+    ({ onEdit, selectedBusinessId, searchName = '', advancedFilters = {} }, ref) => {
         const [families, setFamilies] = useState<ProductFamily[]>([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState<string | null>(null);
         const [page, setPage] = useState(1);
         const [totalPages, setTotalPages] = useState(1);
         const [total, setTotal] = useState(0);
-        const [pageSize, setPageSize] = useState(10);
-        const [searchName, setSearchName] = useState('');
+        const [filters, setFilters] = useState<GetFamiliesParams>({ page: 1, page_size: 10 });
 
         const [modalFamily, setModalFamily] = useState<ProductFamily | null>(null);
         const [modalVariants, setModalVariants] = useState<Product[]>([]);
@@ -43,9 +44,8 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             setLoading(true);
             setError(null);
             try {
-                const params: any = { page, page_size: pageSize };
+                const params: GetFamiliesParams = { ...filters };
                 if (selectedBusinessId) params.business_id = selectedBusinessId;
-                if (searchName) params.name = searchName;
                 const res = await getProductFamiliesAction(params);
                 if (res.success === false) {
                     setError(res.message || 'Error al cargar familias');
@@ -54,6 +54,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                     setFamilies(res.data || []);
                     setTotal(res.total || 0);
                     setTotalPages(res.total_pages || 1);
+                    setPage(res.page || 1);
                 }
             } catch (e: any) {
                 setError(e.message || 'Error inesperado');
@@ -62,7 +63,28 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
             }
         };
 
-        useEffect(() => { fetchFamilies(); }, [page, pageSize, selectedBusinessId, searchName]);
+        useEffect(() => {
+            const avanzados: Record<string, string> = {};
+            for (const [key, value] of Object.entries(advancedFilters)) {
+                avanzados[key] = String(value);
+            }
+            setFilters(prev => ({
+                ...prev,
+                name: searchName || undefined,
+                category: undefined,
+                brand: undefined,
+                status: undefined,
+                has_variants: undefined,
+                ...avanzados,
+                page: 1,
+            }));
+        }, [searchName, advancedFilters]);
+
+        useEffect(() => {
+            setFilters(prev => ({ ...prev, page: 1 }));
+        }, [selectedBusinessId]);
+
+        useEffect(() => { fetchFamilies(); }, [filters, selectedBusinessId]);
 
         const handleDelete = async (family: ProductFamily) => {
             if (!confirm(`Eliminar la familia "${family.name}"? Esta accion no se puede deshacer.`)) return;
@@ -108,134 +130,227 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
 
         return (
             <>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4 flex-wrap">
-                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            {total} {total === 1 ? 'familia' : 'familias'}
-                        </span>
-                        <div className="flex items-center gap-3">
-                            <input
-                                type="text"
-                                placeholder="Buscar familia..."
-                                value={searchName}
-                                onChange={(e) => { setSearchName(e.target.value); setPage(1); }}
-                                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
-                            />
-                            <select
-                                value={pageSize}
-                                onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-                                className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            >
-                                {[10, 20, 50].map((n) => <option key={n} value={n}>{n} por pagina</option>)}
-                            </select>
-                        </div>
-                    </div>
-
-                    {loading ? (
-                        <div className="flex justify-center items-center py-20">
-                            <div className="spinner" />
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-16 text-red-500 text-sm">{error}</div>
-                    ) : families.length === 0 ? (
-                        <div className="text-center py-16 text-gray-400 text-sm">No hay familias registradas</div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="table w-full">
-                                <thead>
+                <div className="relative rounded-xl overflow-hidden shadow-sm bg-white dark:bg-gray-800">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full">
+                            <thead style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
+                                <tr>
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest">
+                                        Familia
+                                    </th>
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell">
+                                        Categoria
+                                    </th>
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell">
+                                        Marca
+                                    </th>
+                                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest">
+                                        Variantes
+                                    </th>
+                                    <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest">
+                                        Estado
+                                    </th>
+                                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest">
+                                        Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
                                     <tr>
-                                        <th className="text-left">Familia</th>
-                                        <th className="text-left hidden md:table-cell">Categoria</th>
-                                        <th className="text-left hidden md:table-cell">Marca</th>
-                                        <th className="text-center">Variantes</th>
-                                        <th className="text-center">Estado</th>
-                                        <th className="text-right">Acciones</th>
+                                        <td colSpan={6} className="px-4 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                            Cargando familias...
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                    {families.map((family) => (
-                                        <tr key={family.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                            <td>
-                                                <div className="flex items-center gap-3">
+                                ) : error ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 sm:px-6 py-12 text-center text-red-500 text-sm">{error}</td>
+                                    </tr>
+                                ) : families.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                            No hay familias disponibles
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    families.map((family) => (
+                                        <tr key={family.id} className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-700 transition-colors">
+                                            <td className="px-3 sm:px-6 py-4">
+                                                <div className="flex items-center">
                                                     {family.image_url ? (
-                                                        <img src={family.image_url} alt={family.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                                        <img src={family.image_url} alt={family.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
                                                     ) : (
-                                                        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                                        <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                                                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                                             </svg>
                                                         </div>
                                                     )}
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{family.name}</p>
+                                                    <div className="min-w-0">
+                                                        <div className="text-sm font-medium text-gray-900 dark:text-white">{family.name}</div>
                                                         {family.title && family.title !== family.name && (
-                                                            <p className="text-xs text-gray-400 truncate max-w-[180px]">{family.title}</p>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[220px]">{family.title}</div>
                                                         )}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="hidden md:table-cell text-sm text-gray-600 dark:text-gray-300">{family.category || '-'}</td>
-                                            <td className="hidden md:table-cell text-sm text-gray-600 dark:text-gray-300">{family.brand || '-'}</td>
-                                            <td className="text-center">
+                                            <td className="px-3 sm:px-6 py-4 hidden md:table-cell text-sm text-gray-900 dark:text-white">{family.category || '-'}</td>
+                                            <td className="px-3 sm:px-6 py-4 hidden md:table-cell text-sm text-gray-900 dark:text-white">{family.brand || '-'}</td>
+                                            <td className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">
                                                 <button
                                                     onClick={() => handleOpenModal(family)}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+                                                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-900/70 transition-colors"
                                                     title="Ver variantes"
                                                 >
                                                     {family.variant_count}
                                                     <ChevronRightIcon className="w-3 h-3" />
                                                 </button>
                                             </td>
-                                            <td className="text-center">
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${family.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                            <td className="px-3 sm:px-6 py-4 text-center whitespace-nowrap">
+                                                <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${family.is_active
+                                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                                    : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200'
+                                                    }`}>
                                                     {family.is_active ? 'Activa' : 'Inactiva'}
                                                 </span>
                                             </td>
-                                            <td>
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex flex-row justify-end gap-1.5">
+                                                    <button
+                                                        onClick={() => handleOpenModal(family)}
+                                                        title="Ver variantes"
+                                                        className="p-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                                    </button>
                                                     {onEdit && (
                                                         <button
                                                             onClick={() => onEdit(family)}
-                                                            className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                             title="Editar"
+                                                            className="p-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-md transition-colors duration-200"
                                                         >
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                         </button>
                                                     )}
                                                     <button
                                                         onClick={() => handleDelete(family)}
-                                                        className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                         title="Eliminar"
+                                                        className="p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200"
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-                    {!loading && totalPages > 1 && (
-                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">Pagina {page} de {totalPages}</span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    Anterior
-                                </button>
-                                <button
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                                >
-                                    Siguiente
-                                </button>
+                    {!loading && !error && total > 0 && (
+                        <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
+                            <div className="flex items-center gap-3">
+                                <p className="text-[11px] text-white">
+                                    Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 10) + 1}</span> a{' '}
+                                    <span className="font-medium">{Math.min(page * (filters.page_size || 10), total)}</span> de{' '}
+                                    <span className="font-medium">{total}</span> familias
+                                </p>
+                                <div className="flex items-center gap-1">
+                                    <label className="text-[11px] text-white whitespace-nowrap">Mostrar:</label>
+                                    <select
+                                        value={filters.page_size || 10}
+                                        onChange={(e) => setFilters({ ...filters, page_size: parseInt(e.target.value), page: 1 })}
+                                        className="px-1.5 py-1 text-[11px] border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                                    >
+                                        <option value="10">10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <nav className="relative z-0 inline-flex items-center gap-1 flex-wrap justify-end">
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: 1 })}
+                                        disabled={page === 1}
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                        title="Primera pagina"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: page - 1 })}
+                                        disabled={page === 1}
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                        title="Anterior"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    </button>
+
+                                    {(() => {
+                                        const pages: (number | string)[] = [];
+                                        const maxVisible = 8;
+
+                                        if (totalPages <= maxVisible) {
+                                            for (let i = 1; i <= totalPages; i++) pages.push(i);
+                                        } else {
+                                            const windowSize = maxVisible - 2;
+                                            let start = Math.max(2, page - Math.floor(windowSize / 2));
+                                            let end = start + windowSize - 1;
+                                            if (end >= totalPages) {
+                                                end = totalPages - 1;
+                                                start = Math.max(2, end - windowSize + 1);
+                                            }
+
+                                            pages.push(1);
+                                            if (start > 2) pages.push('...');
+                                            for (let i = start; i <= end; i++) pages.push(i);
+                                            if (end < totalPages - 1) pages.push('...');
+                                            pages.push(totalPages);
+                                        }
+
+                                        return pages.map((p, idx) =>
+                                            typeof p === 'string' ? (
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-1 py-1 text-[11px] font-bold text-white/70">
+                                                    ...
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    key={p}
+                                                    onClick={() => setFilters({ ...filters, page: p })}
+                                                    className={`relative inline-flex items-center justify-center min-w-7 px-2 py-1 rounded-md border text-[11px] font-semibold transition-all ${p === page ? 'page-btn-active z-10 shadow-md scale-105' : 'page-btn'
+                                                        }`}
+                                                    style={p === page
+                                                        ? { backgroundColor: 'var(--color-secondary)', borderColor: 'var(--color-secondary)', color: 'white' }
+                                                        : undefined}
+                                                >
+                                                    {p}
+                                                </button>
+                                            )
+                                        );
+                                    })()}
+
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: page + 1 })}
+                                        disabled={page === totalPages}
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                        title="Siguiente"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: totalPages })}
+                                        disabled={page === totalPages}
+                                        className="page-btn relative inline-flex items-center px-1.5 py-1 rounded-md border text-[11px] font-medium disabled:opacity-40 transition-all"
+                                        title="Ultima pagina"
+                                    >
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                                    </button>
+                                </nav>
                             </div>
                         </div>
                     )}

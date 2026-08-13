@@ -1,6 +1,8 @@
 package app
 
 import (
+	"sync"
+
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -13,6 +15,7 @@ type invoicingUseCase struct {
 	rabbit          rabbitmq.IQueue
 	productRepo     ports.IProductReadRepository
 	log             log.ILogger
+	fotoStock       sync.Map
 }
 
 func New(

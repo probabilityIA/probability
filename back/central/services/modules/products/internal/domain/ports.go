@@ -16,11 +16,22 @@ type IRepository interface {
 	DeleteProduct(ctx context.Context, businessID uint, id string) error
 	ListProductsByFamilyID(ctx context.Context, businessID uint, familyID uint) ([]Product, error)
 
+	IDataApplyRepository
+
+	RecordFieldChanges(ctx context.Context, changes []FieldChange) error
+	GetProductFieldOrigins(ctx context.Context, businessID uint, productID string) ([]FieldOriginView, error)
+
+	GetProductChannels(ctx context.Context, businessID uint, productID string) ([]ProductChannel, error)
+	GetProductStock(ctx context.Context, businessID uint, productID string) ([]ProductStockLevel, error)
+	GetProductMovements(ctx context.Context, businessID uint, productID string, limit int) ([]ProductMovement, error)
+	CountFamilySiblings(ctx context.Context, businessID uint, familyID uint, productID string) (int64, error)
+
 	ProductExists(ctx context.Context, businessID uint, sku string) (bool, error)
 	VariantExistsInFamily(ctx context.Context, businessID uint, familyID uint, variantSignature string, excludeProductID *string) (bool, error)
 
 	CreateProductFamily(ctx context.Context, family *ProductFamily) error
 	GetProductFamilyByID(ctx context.Context, businessID uint, familyID uint) (*ProductFamily, error)
+	GetProductFamilyByName(ctx context.Context, businessID uint, name string) (*ProductFamily, error)
 	ListProductFamilies(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]ProductFamily, int64, error)
 	UpdateProductFamily(ctx context.Context, family *ProductFamily) error
 	DeleteProductFamily(ctx context.Context, businessID uint, familyID uint) error

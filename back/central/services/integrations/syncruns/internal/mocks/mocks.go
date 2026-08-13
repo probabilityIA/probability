@@ -17,6 +17,8 @@ type RepositoryMock struct {
 	CrossChannelFn                 func(ctx context.Context, businessID uint) (domain.CrossChannelCounts, error)
 	FindingItemsFn                 func(ctx context.Context, query domain.FindingItemsQuery) (*domain.FindingItemsPage, error)
 	MatchMatrixFn                  func(ctx context.Context, query domain.MatrixQuery) (*domain.MatrixPage, error)
+	DataSummaryFn                  func(ctx context.Context, businessID uint) (*domain.DataSummary, error)
+	DataPreviewFn                  func(ctx context.Context, query domain.DataPreviewQuery) (*domain.DataPreview, error)
 
 	Guardados       []domain.SyncRun
 	ConsultasDueno  []ConsultaDueno
@@ -139,6 +141,20 @@ func (m *RepositoryMock) FindingItems(ctx context.Context, query domain.FindingI
 		return m.FindingItemsFn(ctx, query)
 	}
 	return &domain.FindingItemsPage{Items: []domain.FindingItem{}}, nil
+}
+
+func (m *RepositoryMock) DataSummary(ctx context.Context, businessID uint) (*domain.DataSummary, error) {
+	if m.DataSummaryFn != nil {
+		return m.DataSummaryFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) DataPreview(ctx context.Context, query domain.DataPreviewQuery) (*domain.DataPreview, error) {
+	if m.DataPreviewFn != nil {
+		return m.DataPreviewFn(ctx, query)
+	}
+	return nil, nil
 }
 
 func (m *RepositoryMock) MatchMatrix(ctx context.Context, query domain.MatrixQuery) (*domain.MatrixPage, error) {

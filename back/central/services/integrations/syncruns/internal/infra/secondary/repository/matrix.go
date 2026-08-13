@@ -10,9 +10,13 @@ import (
 )
 
 const matrixColumnsQuery = `
-SELECT i.id AS integration_id, i.name, COALESCE(it.code, '') AS code
+SELECT i.id AS integration_id, i.name,
+       COALESCE(it.code, '')                      AS code,
+       COALESCE(it.image_url, '')                 AS image_url,
+       COALESCE(ic.code = 'ecommerce', false)     AS is_sales
 FROM integrations i
 JOIN integration_types it ON it.id = i.integration_type_id AND it.deleted_at IS NULL
+LEFT JOIN integration_categories ic ON ic.id = it.category_id
 WHERE i.business_id = ? AND i.deleted_at IS NULL AND i.is_active = true
   AND EXISTS (
       SELECT 1 FROM product_business_integrations pbi
@@ -44,6 +48,8 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 		IntegrationID uint
 		Name          string
 		Code          string
+		ImageURL      string
+		IsSales       bool
 	}
 	if err := r.db.Conn(ctx).Raw(matrixColumnsQuery, q.BusinessID).Scan(&columnas).Error; err != nil {
 		return nil, err
@@ -51,6 +57,7 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 	for _, c := range columnas {
 		page.Columns = append(page.Columns, domain.MatrixColumn{
 			IntegrationID: c.IntegrationID, Name: c.Name, Code: c.Code,
+			ImageURL: c.ImageURL, IsSales: c.IsSales,
 		})
 	}
 
@@ -61,9 +68,14 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 		like := "%" + q.Search + "%"
 		base = base.Where("p.sku ILIKE ? OR p.name ILIKE ? OR p.barcode ILIKE ?", like, like, like)
 	}
-	for _, id := range q.IntegrationIDs {
+	for _, id := range q.PresentIn {
 		if id > 0 {
-			base = base.Where("EXISTS ("+coincideEnCanal+")", id)
+			base = base.Where("EXISTS ("+estaEnIntegracion+")", id)
+		}
+	}
+	for _, id := range q.MissingIn {
+		if id > 0 {
+			base = base.Where("NOT EXISTS ("+estaEnIntegracion+")", id)
 		}
 	}
 
@@ -72,13 +84,14 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 	}
 
 	var filas []struct {
-		ID      string
-		SKU     string
-		Barcode string
-		Name    string
+		ID       string
+		SKU      string
+		Barcode  string
+		Name     string
+		ImageURL string
 	}
 	listado := base.Session(&gorm.Session{}).
-		Select("p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.name").
+		Select("p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.name, COALESCE(p.image_url, '') AS image_url").
 		Order("p.sku")
 	if !q.All {
 		listado = listado.Limit(q.PageSize).Offset(q.Offset())
@@ -123,7 +136,8 @@ func (r *repository) MatchMatrix(ctx context.Context, q domain.MatrixQuery) (*do
 	for _, f := range filas {
 		fila := domain.MatrixRow{
 			ProductID: f.ID, SKU: f.SKU, Barcode: f.Barcode, Name: f.Name,
-			Cells: make([]domain.MatrixCell, 0, len(page.Columns)),
+			ImageURL: f.ImageURL,
+			Cells:    make([]domain.MatrixCell, 0, len(page.Columns)),
 		}
 		for _, col := range page.Columns {
 			celda, ok := celdas[f.ID][col.IntegrationID]
@@ -154,8 +168,6 @@ func mismoSKU(a, b string) bool {
 	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
-const coincideEnCanal = `
+const estaEnIntegracion = `
     SELECT 1 FROM product_business_integrations m
-    WHERE m.product_id = p.id AND m.integration_id = ? AND m.deleted_at IS NULL
-      AND (COALESCE(m.external_sku, '') = ''
-           OR UPPER(TRIM(m.external_sku)) = UPPER(TRIM(p.sku)))`
+    WHERE m.product_id = p.id AND m.integration_id = ? AND m.deleted_at IS NULL`

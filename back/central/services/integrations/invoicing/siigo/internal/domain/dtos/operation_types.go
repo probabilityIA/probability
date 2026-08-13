@@ -32,6 +32,8 @@ type ProductItem struct {
 	Barcode           string
 	Name              string
 	Description       string
+	Brand             string
+	Reference         string
 	Price             float64
 	StockControl      bool
 	AvailableQuantity float64

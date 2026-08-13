@@ -27,7 +27,13 @@ type listProductsResponse struct {
 		} `json:"prices"`
 		StockControl      bool    `json:"stock_control"`
 		AvailableQuantity float64 `json:"available_quantity"`
-		Warehouses        []struct {
+		Reference         string  `json:"reference"`
+		AdditionalFields  struct {
+			Barcode string `json:"barcode"`
+			Brand   string `json:"brand"`
+			Model   string `json:"model"`
+		} `json:"additional_fields"`
+		Warehouses []struct {
 			ID       int     `json:"id"`
 			Name     string  `json:"name"`
 			Quantity float64 `json:"quantity"`
@@ -96,6 +102,9 @@ func (c *Client) ListProducts(ctx context.Context, credentials dtos.Credentials,
 			Code:              r.Code,
 			Name:              r.Name,
 			Description:       r.Description,
+			Barcode:           r.AdditionalFields.Barcode,
+			Brand:             r.AdditionalFields.Brand,
+			Reference:         r.Reference,
 			Price:             price,
 			StockControl:      r.StockControl,
 			AvailableQuantity: r.AvailableQuantity,

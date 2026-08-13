@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,8 @@ type matrixColumnResponse struct {
 	IntegrationID uint   `json:"integration_id"`
 	Name          string `json:"name"`
 	Code          string `json:"code"`
+	ImageURL      string `json:"image_url,omitempty"`
+	IsSales       bool   `json:"is_sales"`
 }
 
 type matrixCellResponse struct {
@@ -34,6 +37,7 @@ type matrixRowResponse struct {
 	SKU       string               `json:"sku"`
 	Barcode   string               `json:"barcode,omitempty"`
 	Name      string               `json:"name,omitempty"`
+	ImageURL  string               `json:"image_url,omitempty"`
 	Cells     []matrixCellResponse `json:"cells"`
 }
 
@@ -60,7 +64,8 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 	}
 	query.Page, _ = strconv.Atoi(c.Query("page"))
 	query.PageSize, _ = strconv.Atoi(c.Query("page_size"))
-	query.IntegrationIDs = uintListQuery(c, "integration_ids")
+	query.PresentIn = uintListQuery(c, "present_in")
+	query.MissingIn = uintListQuery(c, "missing_in")
 
 	page, err := h.useCase.MatchMatrix(c.Request.Context(), query)
 	if err != nil {
@@ -79,6 +84,7 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 	for _, col := range page.Columns {
 		columnas = append(columnas, matrixColumnResponse{
 			IntegrationID: col.IntegrationID, Name: col.Name, Code: col.Code,
+			ImageURL: h.urlAbsoluta(col.ImageURL), IsSales: col.IsSales,
 		})
 	}
 
@@ -95,7 +101,7 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 		}
 		filas = append(filas, matrixRowResponse{
 			ProductID: row.ProductID, SKU: row.SKU, Barcode: row.Barcode,
-			Name: row.Name, Cells: celdas,
+			Name: row.Name, ImageURL: h.urlAbsoluta(row.ImageURL), Cells: celdas,
 		})
 	}
 
@@ -108,6 +114,17 @@ func (h *handler) MatchMatrix(c *gin.Context) {
 		"page_size":   page.PageSize,
 		"total_pages": page.TotalPages,
 	})
+}
+
+func (h *handler) urlAbsoluta(path string) string {
+	if path == "" || strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		return path
+	}
+	base := strings.TrimRight(os.Getenv("URL_BASE_DOMAIN_S3"), "/")
+	if base == "" {
+		return path
+	}
+	return base + "/" + strings.TrimLeft(path, "/")
 }
 
 func uintListQuery(c *gin.Context, key string) []uint {

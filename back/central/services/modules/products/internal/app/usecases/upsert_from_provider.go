@@ -15,23 +15,27 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 	existing, err := uc.repo.GetProductBySKU(ctx, dto.BusinessID, dto.SKU)
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
+			variante := uc.resolverVariante(ctx, dto)
 			created, cerr := uc.ProductCRUD.CreateProduct(ctx, &domain.CreateProductRequest{
-				BusinessID:     dto.BusinessID,
-				SKU:            dto.SKU,
-				Name:           dto.Name,
-				ExternalID:     dto.ExternalID,
-				Price:          dto.Price,
-				Currency:       "COP",
-				TrackInventory: dto.TrackInventory,
-				Status:         "active",
-				IsActive:       true,
-				Weight:         dto.Weight,
-				WeightUnit:     dto.WeightUnit,
-				Length:         dto.Length,
-				Width:          dto.Width,
-				Height:         dto.Height,
-				DimensionUnit:  dto.DimensionUnit,
-				ImageURL:       dto.ImageURL,
+				BusinessID:        dto.BusinessID,
+				SKU:               dto.SKU,
+				Name:              dto.Name,
+				ExternalID:        dto.ExternalID,
+				Price:             dto.Price,
+				Currency:          "COP",
+				TrackInventory:    dto.TrackInventory,
+				Status:            "active",
+				IsActive:          true,
+				Weight:            dto.Weight,
+				WeightUnit:        dto.WeightUnit,
+				Length:            dto.Length,
+				Width:             dto.Width,
+				Height:            dto.Height,
+				DimensionUnit:     dto.DimensionUnit,
+				ImageURL:          dto.ImageURL,
+				FamilyID:          variante.FamilyID,
+				VariantLabel:      variante.Label,
+				VariantAttributes: variante.Attributes,
 			})
 			if cerr != nil {
 				return cerr
@@ -65,9 +69,18 @@ func (uc *UseCases) UpsertFromProvider(ctx context.Context, dto *domain.ProductP
 		imageURL := dto.ImageURL
 		req.ImageURL = &imageURL
 	}
+	if existing.FamilyID == nil {
+		if variante := uc.resolverVariante(ctx, dto); variante.FamilyID != nil {
+			label := variante.Label
+			req.FamilyID = variante.FamilyID
+			req.VariantLabel = &label
+			req.VariantAttributes = variante.Attributes
+		}
+	}
 	if _, uerr := uc.ProductCRUD.UpdateProduct(ctx, dto.BusinessID, existing.ID, req); uerr != nil {
 		return uerr
 	}
+	uc.stampOrigin(ctx, dto.BusinessID, existing, domain.ChannelOrigin(dto.IntegrationID), "")
 	return uc.ensureIntegrationMapping(ctx, existing.ID, dto.IntegrationID, dto.ExternalID)
 }
 

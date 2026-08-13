@@ -21,12 +21,13 @@ interface CyberHubProps {
     onSyncClick?: () => void;
     findingsCount?: number;
     onFindingsClick?: () => void;
+    onCompareClick?: () => void;
 }
 
 const ORBIT_RADIUS = 120;
 
 export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function CyberHub(
-    { integrations, resourceActive, onSyncClick, findingsCount = 0, onFindingsClick },
+    { integrations, resourceActive, onSyncClick, findingsCount = 0, onFindingsClick, onCompareClick },
     ref,
 ) {
     const { mode, nodes, running, environment, canRun, runCurrent } = useSyncActivity();
@@ -40,6 +41,7 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
             : finished
                 ? 'Sincronizacion completada'
                 : '';
+    const comparaInventario = environment === 'inventory' && Boolean(onCompareClick);
     const chargeColor = (mode === 'products' || (mode === 'idle' && environment === 'products')) ? '#8b5cf6' : '#22d3ee';
     const statusColor = mode === 'inventory'
         ? 'text-blue-600 dark:text-blue-400'
@@ -155,15 +157,24 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             ? ({ '--charge': chargeColor, animation: 'cyber-charge 1s ease-in-out infinite' } as CSSProperties)
                             : undefined}
                     >
-                        {findingsCount > 0 && onFindingsClick && (
+                        {onFindingsClick && (
                             <button
                                 onClick={onFindingsClick}
-                                title={`${findingsCount} ${findingsCount === 1 ? 'hallazgo' : 'hallazgos'} en tus integraciones`}
-                                aria-label={`Ver ${findingsCount} hallazgos de tus integraciones`}
-                                className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-amber-500 px-1 text-[11px] font-black text-white shadow-lg transition-transform hover:scale-110 dark:border-gray-900"
-                                style={{ animation: 'cyber-alert-pulse 2s ease-in-out infinite' }}
+                                title={
+                                    findingsCount > 0
+                                        ? `Resumen general y ${findingsCount} ${findingsCount === 1 ? 'hallazgo' : 'hallazgos'} en tus integraciones`
+                                        : 'Resumen general de tus integraciones'
+                                }
+                                aria-label="Ver el resumen general de tus integraciones"
+                                className={`absolute -top-3 left-1/2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full border-2 border-white px-2.5 py-1 text-[10.5px] font-bold shadow-lg transition-transform hover:scale-105 dark:border-gray-900 ${
+                                    findingsCount > 0 ? 'bg-amber-500 text-white' : 'bg-gray-700 text-white dark:bg-gray-600'
+                                }`}
+                                style={findingsCount > 0 ? { animation: 'cyber-alert-pulse 2s ease-in-out infinite' } : undefined}
                             >
-                                !
+                                Resumen general
+                                {findingsCount > 0 && (
+                                    <span className="rounded-full bg-white/25 px-1.5 text-[10px] font-black">{findingsCount}</span>
+                                )}
                             </button>
                         )}
                         <span className="text-[9px] uppercase tracking-[0.3em] text-gray-400">nucleo</span>
@@ -171,18 +182,18 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             Probability
                         </span>
                         <button
-                            onClick={onSyncClick ?? runCurrent}
-                            disabled={running || (!onSyncClick && !canRun)}
+                            onClick={comparaInventario ? onCompareClick : (onSyncClick ?? runCurrent)}
+                            disabled={running || (!comparaInventario && !onSyncClick && !canRun)}
                             title={
                                 environment === 'products'
                                     ? 'Iniciar comparacion de productos'
-                                    : environment === 'inventory'
-                                        ? 'Iniciar sincronizacion de inventario'
+                                    : comparaInventario
+                                        ? 'Comparar el stock de cada canal contra Probability'
                                         : 'Elige arriba que quieres sincronizar'
                             }
                             className="mt-1 flex h-7 items-center justify-center rounded-full border border-cyan-400/60 bg-cyan-50 px-3.5 text-[11px] font-bold uppercase tracking-wider text-cyan-600 transition-all hover:scale-110 hover:bg-cyan-100 hover:shadow-[0_0_12px_rgba(34,211,238,0.6)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >
-                            <span className={busy ? 'animate-pulse' : ''}>Iniciar</span>
+                            <span className={busy ? 'animate-pulse' : ''}>{comparaInventario ? 'Comparar' : 'Iniciar'}</span>
                         </button>
                     </div>
                 </div>

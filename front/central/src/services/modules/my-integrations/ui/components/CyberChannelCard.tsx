@@ -3,11 +3,12 @@
 import { useState, type CSSProperties } from 'react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import type { IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
-import { Clock, SlidersHorizontal, ChevronDown, RefreshCw } from 'lucide-react';
+import { Clock, SlidersHorizontal, ChevronDown, RefreshCw, Scale } from 'lucide-react';
 import { useSyncActivity, type DetailGroup, type SyncDetailItem, type SyncEnvironment, type SyncResult } from '../sync-activity-context';
 import type { SyncRunRecord } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { SyncDetailPanel, matchRuleLabel } from './SyncDetailPanel';
+import { InventoryCompareModal } from './InventoryCompareModal';
 
 interface CyberChannelCardProps {
     integration: Integration;
@@ -95,6 +96,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
 
     const { nodes, progress, results, details, environment, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, running, businessId } = useSyncActivity();
     const [openDetail, setOpenDetail] = useState(false);
+    const [comparandoInventario, setComparandoInventario] = useState(false);
     const syncState = nodes[integration.id] || 'idle';
     const syncProgress = progress[integration.id] || { processed: 0, total: 0 };
     const syncResult = results[integration.id];
@@ -235,6 +237,17 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                                     />
                                 </span>
                                 {inventoryEnabled ? 'Sync activo' : 'Sync apagado'}
+                            </button>
+                            <button
+                                onClick={() => setComparandoInventario(true)}
+                                disabled={!inventoryEnabled || running}
+                                title={inventoryEnabled
+                                    ? 'Ver que cambiaria antes de enviar el stock'
+                                    : 'Activa la sincronizacion para poder comparar'}
+                                className="flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10.5px] font-bold text-violet-700 transition-colors hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-violet-500/40 dark:bg-violet-900/30 dark:text-violet-300"
+                            >
+                                <Scale size={10} />
+                                Comparar
                             </button>
                             <button
                                 onClick={() => runInventoryOne(integration.id)}
@@ -503,6 +516,14 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                 </div>
             )}
             </div>
+
+            {comparandoInventario && (
+                <InventoryCompareModal
+                    integration={integration}
+                    businessId={businessId ?? null}
+                    onClose={() => setComparandoInventario(false)}
+                />
+            )}
         </div>
     );
 }

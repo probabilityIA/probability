@@ -47,6 +47,11 @@ type MeliProduct struct {
 	SKU           string
 	Barcode       string
 	Name          string
+	Brand         string
+	CategoryID    string
+	Category      string
+	Color         string
+	Size          string
 	Price         float64
 	StockQuantity int
 	ImageURL      string
@@ -99,5 +104,6 @@ type IProductRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]ProductForSync, error)
 	GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error)
 	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
+	SaveChannelSnapshots(ctx context.Context, businessID, integrationID uint, entries []productmatch.SnapshotEntry) error
 	ERPFeedsInventory(ctx context.Context, businessID uint) (bool, error)
 }

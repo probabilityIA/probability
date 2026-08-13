@@ -30,6 +30,14 @@ const baseSalesRuns = `
     JOIN integration_categories ic ON ic.id = it2.category_id AND ic.code = 'ecommerce'
     WHERE r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL`
 
+const baseRunsMarcados = `
+    SELECT r.id, i.name AS channel, (ic.code = 'ecommerce') AS es_venta
+    FROM integration_sync_runs r
+    JOIN integrations i ON i.id = r.integration_id AND i.deleted_at IS NULL AND i.is_active = true
+    JOIN integration_types it2 ON it2.id = i.integration_type_id AND it2.deleted_at IS NULL
+    JOIN integration_categories ic ON ic.id = it2.category_id
+    WHERE r.business_id = ? AND r.kind = ? AND r.deleted_at IS NULL`
+
 func (r *repository) FindingItems(ctx context.Context, q domain.FindingItemsQuery) (*domain.FindingItemsPage, error) {
 	q.Normalize()
 
@@ -152,7 +160,7 @@ func cruzado(q domain.FindingItemsQuery) (string, []interface{}, error) {
 	case domain.FindingNotPublished:
 		having = "presente = 0 AND solo_canal = 0 AND ausente > 0"
 		detail = "'no esta en ningun canal de venta'"
-		estaEn = "''"
+		estaEn = "COALESCE(en_inventario, '')"
 		faltaEn = "COALESCE(faltantes, '')"
 	case domain.FindingSoldNotOwned:
 		having = "solo_canal > 0 AND presente = 0"
@@ -179,15 +187,16 @@ SELECT sku,
 FROM (
     SELECT UPPER(TRIM(it.sku)) AS sku,
         MAX(NULLIF(it.parent_label, '')) AS nombre,
-        COUNT(*) FILTER (WHERE it.group_code IN ('both', 'not_associated')) AS presente,
-        COUNT(*) FILTER (WHERE it.group_code = 'only_probability')          AS ausente,
-        COUNT(*) FILTER (WHERE it.group_code = 'only_channel')              AS solo_canal,
-        string_agg(DISTINCT runs.channel, '|') AS todos,
-        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code IN ('both', 'not_associated')) AS presentes,
-        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code = 'only_probability')          AS faltantes,
-        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE it.group_code = 'only_channel')              AS en_canal
+        COUNT(*) FILTER (WHERE runs.es_venta AND it.group_code IN ('both', 'not_associated')) AS presente,
+        COUNT(*) FILTER (WHERE runs.es_venta AND it.group_code = 'only_probability')          AS ausente,
+        COUNT(*) FILTER (WHERE runs.es_venta AND it.group_code = 'only_channel')              AS solo_canal,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE runs.es_venta) AS todos,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE runs.es_venta AND it.group_code IN ('both', 'not_associated')) AS presentes,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE runs.es_venta AND it.group_code = 'only_probability')          AS faltantes,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE runs.es_venta AND it.group_code = 'only_channel')              AS en_canal,
+        string_agg(DISTINCT runs.channel, '|') FILTER (WHERE NOT runs.es_venta AND it.group_code IN ('both', 'not_associated')) AS en_inventario
     FROM integration_sync_run_items it
-    JOIN (` + baseSalesRuns + `) AS runs ON runs.id = it.run_id
+    JOIN (` + baseRunsMarcados + `) AS runs ON runs.id = it.run_id
     WHERE TRIM(it.sku) <> '' AND it.sku NOT LIKE '(%'
     GROUP BY UPPER(TRIM(it.sku))
 ) AS por_sku

@@ -39,6 +39,8 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		group.GET("/findings", h.Findings)
 		group.GET("/findings/items", h.FindingItems)
 		group.GET("/matrix", h.MatchMatrix)
+		group.GET("/data-summary", h.DataSummary)
+		group.POST("/data-preview", h.DataPreview)
 	}
 }
 

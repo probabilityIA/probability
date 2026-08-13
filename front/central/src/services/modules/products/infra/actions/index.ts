@@ -46,6 +46,14 @@ export const getProductByIdAction = async (id: string, businessId?: number) => {
     }
 };
 
+export const getProductDetailAction = async (id: string, businessId?: number) => {
+    try {
+        return await (await getUseCases()).getProductDetail(id, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al obtener el detalle', data: null };
+    }
+};
+
 export const createProductAction = async (data: CreateProductDTO, businessId?: number) => {
     try {
         const result = await (await getUseCases()).createProduct(data, businessId);

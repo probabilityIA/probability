@@ -20,6 +20,13 @@ type MeliItemVariation struct {
 	SellerSKU         string
 }
 
+type ChannelStock struct {
+	ExternalItemID    string
+	ExternalVariantID string
+	AvailableQuantity int
+	Found             bool
+}
+
 type UserProductStock struct {
 	Version   string
 	Locations []StockLocation

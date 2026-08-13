@@ -33,7 +33,7 @@ const ProductList = forwardRef(function ProductList(
 
     const [filters, setFilters] = useState<GetProductsParams>({
         page: 1,
-        page_size: 20,
+        page_size: 10,
     });
 
     useEffect(() => {
@@ -329,14 +329,14 @@ const ProductList = forwardRef(function ProductList(
                     <div className="px-3 py-2 flex flex-col sm:flex-row items-center justify-between gap-2" style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, white)' }}>
                         <div className="flex items-center gap-3">
                             <p className="text-[11px] text-white">
-                                Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
-                                <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
+                                Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 10) + 1}</span> a{' '}
+                                <span className="font-medium">{Math.min(page * (filters.page_size || 10), total)}</span> de{' '}
                                 <span className="font-medium">{total}</span> resultados
                             </p>
                             <div className="flex items-center gap-1">
                                 <label className="text-[11px] text-white whitespace-nowrap">Mostrar:</label>
                                 <select
-                                    value={filters.page_size || 20}
+                                    value={filters.page_size || 10}
                                     onChange={(e) => {
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });

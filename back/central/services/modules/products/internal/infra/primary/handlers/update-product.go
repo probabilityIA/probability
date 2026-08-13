@@ -5,25 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 )
 
-// UpdateProduct godoc
-// @Summary      Actualizar producto
-// @Description  Actualiza un producto existente
-// @Tags         Products
-// @Accept       json
-// @Produce      json
-// @Param        id           path      string                     true   "ID del producto (hash alfanumérico)"
-// @Param        business_id  query     int                        false  "ID del negocio (requerido para super admin)"
-// @Param        product      body      domain.UpdateProductRequest true  "Datos a actualizar"
-// @Security     BearerAuth
-// @Success      200  {object}  domain.ProductResponse
-// @Failure      400  {object}  map[string]interface{}
-// @Failure      404  {object}  map[string]interface{}
-// @Failure      409  {object}  map[string]interface{}
-// @Failure      500  {object}  map[string]interface{}
-// @Router       /products/{id} [put]
 func (h *Handlers) UpdateProduct(c *gin.Context) {
 	businessID, ok := h.resolveBusinessID(c)
 	if !ok {
@@ -35,7 +20,7 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "ID de producto inválido",
+			"message": "ID de producto invalido",
 			"error":   "El ID es requerido",
 		})
 		return
@@ -43,18 +28,18 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 
 	var req domain.UpdateProductRequest
 
-	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Datos de entrada inválidos",
+			"message": "Datos de entrada invalidos",
 			"error":   err.Error(),
 		})
 		return
 	}
 
-	// Llamar al caso de uso (valida que el producto pertenezca al negocio)
-	product, err := h.uc.UpdateProduct(c.Request.Context(), businessID, id, &req)
+	userID, _ := middleware.GetUserID(c)
+
+	product, err := h.uc.UpdateProductWithOrigin(c.Request.Context(), businessID, id, &req, domain.ManualOrigin(userID))
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -95,7 +80,7 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 		if errors.Is(err, domain.ErrInvalidProductData) {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
-				"message": "Datos de variante inválidos",
+				"message": "Datos de variante invalidos",
 				"error":   err.Error(),
 			})
 			return

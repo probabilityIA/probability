@@ -7,6 +7,7 @@ import type { SyncRunKind } from '../../domain/types';
 import { fetchSyncRunItems } from '../../infra/repository/sync-run-items';
 import type { ProductApplyActions } from '../providers';
 import type { DetailGroup, ProductActionKey, SyncDetailItem } from '../sync-activity-context';
+import { ChannelDataStrip } from './ChannelDataStrip';
 
 interface SyncDetailPanelProps {
     integrationId: number;
@@ -394,6 +395,10 @@ export function SyncDetailPanel({
                     </span>
                 )}
             </div>
+
+            {isProducts && (filter === 'all' || filter === 'both') && (
+                <ChannelDataStrip businessId={businessId} integrationId={integrationId} />
+            )}
 
             {typoCount > 0 && (filter === 'all' || filter === 'sku_typo') && (
                 <div className="flex items-start gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-[10.5px] leading-snug text-amber-900 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-300">

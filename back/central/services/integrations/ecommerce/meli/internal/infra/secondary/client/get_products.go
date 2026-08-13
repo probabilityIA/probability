@@ -57,6 +57,7 @@ func variationName(title string, v meliItemVariation) string {
 type meliItemDetail struct {
 	ID                string              `json:"id"`
 	Title             string              `json:"title"`
+	CategoryID        string              `json:"category_id"`
 	Price             float64             `json:"price"`
 	AvailableQuantity int                 `json:"available_quantity"`
 	SellerCustomField string              `json:"seller_custom_field"`
@@ -105,16 +106,28 @@ func extractSKU(item meliItemDetail) string {
 	return extractSKUFrom(item.SellerCustomField, item.Attributes)
 }
 
-func extractBarcode(item meliItemDetail) string {
-	for _, attr := range item.Attributes {
-		switch attr.ID {
-		case "GTIN", "EAN", "UPC":
-			if strings.TrimSpace(attr.ValueName) != "" {
+func atributo(attrs []meliItemAttribute, ids ...string) string {
+	for _, wanted := range ids {
+		for _, attr := range attrs {
+			if attr.ID == wanted && strings.TrimSpace(attr.ValueName) != "" {
 				return attr.ValueName
 			}
 		}
 	}
 	return ""
+}
+
+func extractBarcodeFrom(attrs ...[]meliItemAttribute) string {
+	for _, group := range attrs {
+		if value := atributo(group, "GTIN", "EAN", "UPC"); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func extractBarcode(item meliItemDetail) string {
+	return extractBarcodeFrom(item.Attributes)
 }
 
 func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, sellerID int64) ([]domain.MeliProduct, error) {
@@ -170,10 +183,25 @@ func (c *MeliClient) GetProducts(ctx context.Context, accessToken string, seller
 		}
 	}
 
+	c.resolveCategoryNames(ctx, accessToken, products)
+
 	return products, nil
 }
 
+func combinacion(v meliItemVariation, nombres ...string) string {
+	for _, wanted := range nombres {
+		for _, c := range v.AttributeCombinations {
+			if strings.EqualFold(c.Name, wanted) && strings.TrimSpace(c.ValueName) != "" {
+				return c.ValueName
+			}
+		}
+	}
+	return ""
+}
+
 func itemToProducts(d meliItemDetail) []domain.MeliProduct {
+	brand := atributo(d.Attributes, "BRAND")
+
 	if len(d.Variations) == 0 {
 		return []domain.MeliProduct{{
 			ID:            d.ID,
@@ -181,6 +209,10 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 			SKU:           extractSKU(d),
 			Barcode:       extractBarcode(d),
 			Name:          d.Title,
+			Brand:         brand,
+			CategoryID:    d.CategoryID,
+			Color:         atributo(d.Attributes, "COLOR", "MAIN_COLOR"),
+			Size:          atributo(d.Attributes, "SIZE"),
 			Price:         d.Price,
 			StockQuantity: d.AvailableQuantity,
 			ImageURL:      itemImageURL(d),
@@ -197,14 +229,27 @@ func itemToProducts(d meliItemDetail) []domain.MeliProduct {
 			VariantLabel:  variationLabel(v),
 			LogisticType:  d.Shipping.LogisticType,
 			SKU:           extractSKUFrom(v.SellerCustomField, v.Attributes),
-			Barcode:       extractBarcode(d),
+			Barcode:       extractBarcodeFrom(v.Attributes, d.Attributes),
 			Name:          variationName(d.Title, v),
+			Brand:         brand,
+			CategoryID:    d.CategoryID,
+			Color:         firstNonBlank(combinacion(v, "Color"), atributo(v.Attributes, "COLOR", "MAIN_COLOR")),
+			Size:          firstNonBlank(combinacion(v, "Talle", "Talla", "Size"), atributo(v.Attributes, "SIZE")),
 			Price:         d.Price,
 			StockQuantity: v.AvailableQuantity,
 			ImageURL:      image,
 		})
 	}
 	return products
+}
+
+func firstNonBlank(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func (c *MeliClient) multigetItems(ctx context.Context, accessToken string, ids []string) ([]meliItemDetail, error) {

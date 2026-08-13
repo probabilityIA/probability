@@ -109,6 +109,73 @@ export interface PaginatedResponse<T> {
     total_pages: number;
 }
 
+export interface ProductChannel {
+    integration_id: number;
+    integration_name: string;
+    integration_code: string;
+    integration_category: string;
+    integration_image_url?: string;
+    is_active: boolean;
+    external_product_id: string;
+    external_variant_id?: string;
+    external_sku?: string;
+    external_barcode?: string;
+    logistic_type?: string;
+    last_pushed_qty?: number;
+    linked_at: string;
+    updated_at: string;
+    inventory_sync_at?: string;
+    inventory_sync_status?: string;
+    compare_at?: string;
+    compare_status?: string;
+    sku_matches: boolean;
+}
+
+export interface ProductStockLevel {
+    warehouse_id: number;
+    warehouse_name: string;
+    warehouse_code: string;
+    quantity: number;
+    reserved_qty: number;
+    available_qty: number;
+    updated_at: string;
+}
+
+export interface ProductMovement {
+    created_at: string;
+    type_name: string;
+    direction: string;
+    reason: string;
+    quantity: number;
+    previous_qty: number;
+    new_qty: number;
+    warehouse_name?: string;
+    integration_name?: string;
+}
+
+export interface ProductFieldOrigin {
+    field: string;
+    source: 'channel' | 'manual' | 'import';
+    integration_id?: number;
+    integration_name?: string;
+    user_id?: number;
+    user_name?: string;
+    changed_at: string;
+    previous_value?: string;
+    previous_at?: string;
+}
+
+export interface ProductDetail extends Product {
+    origins: ProductFieldOrigin[];
+    channels: ProductChannel[];
+    stock_levels: ProductStockLevel[];
+    movements: ProductMovement[];
+    stock_total: number;
+    reserved_total: number;
+    available_total: number;
+    sibling_variants: number;
+}
+
 export interface SingleResponse<T> {
     success: boolean;
     message: string;
@@ -254,6 +321,7 @@ export interface GetFamiliesParams {
     brand?: string;
     channel_categories?: Record<string, string>;
     status?: string;
+    has_variants?: string;
     sort_by?: string;
     sort_order?: 'asc' | 'desc';
 }

@@ -9,8 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type inventorySyncRequest struct {
+	IntegrationID uint     `json:"integration_id" binding:"required"`
+	BusinessID    *uint    `json:"business_id"`
+	SKUs          []string `json:"skus"`
+}
+
 func (h *meliHandler) SyncInventory(c *gin.Context) {
-	var req reconcileRequest
+	var req inventorySyncRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "integration_id es requerido"})
 		return
@@ -25,7 +31,7 @@ func (h *meliHandler) SyncInventory(c *gin.Context) {
 
 	go func() {
 		ctx := context.Background()
-		if err := h.useCase.SyncInventory(ctx, integrationID, businessID, correlationID); err != nil {
+		if err := h.useCase.SyncInventory(ctx, integrationID, businessID, correlationID, req.SKUs...); err != nil {
 			h.logger.Error(ctx).Err(err).Msg("Error sincronizando inventario a MercadoLibre")
 		}
 	}()

@@ -53,7 +53,7 @@ func resolveWarehouseIDs(cfg domain.InventoryConfig) []uint {
 	return cfg.WarehouseIDs
 }
 
-func (uc *wooCommerceUseCase) SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func (uc *wooCommerceUseCase) SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
@@ -67,25 +67,16 @@ func (uc *wooCommerceUseCase) SyncInventory(ctx context.Context, integrationID s
 	cfg := parseInventoryConfig(integration.Config)
 	warehouseIDs := resolveWarehouseIDs(cfg)
 
-	storeURL, err := extractString(integration.Config, "store_url")
+	creds, err := uc.credenciales(ctx, integrationID, integration)
 	if err != nil {
-		return domain.ErrMissingStoreURL
-	}
-	storeURL = resolveEffectiveStoreURL(integration, storeURL)
-
-	consumerKey, err := uc.service.DecryptCredential(ctx, integrationID, "consumer_key")
-	if err != nil {
-		return fmt.Errorf("decrypting consumer_key: %w", err)
-	}
-	consumerSecret, err := uc.service.DecryptCredential(ctx, integrationID, "consumer_secret")
-	if err != nil {
-		return fmt.Errorf("decrypting consumer_secret: %w", err)
+		return err
 	}
 
 	mapped, err := uc.productRepo.ListMappedItems(ctx, uint(integIDUint))
 	if err != nil {
 		return fmt.Errorf("listing mapped items: %w", err)
 	}
+	mapped = filtrarPorSKU(mapped, skus)
 
 	productIDs := make([]string, 0, len(mapped))
 	for _, m := range mapped {
@@ -106,7 +97,7 @@ func (uc *wooCommerceUseCase) SyncInventory(ctx context.Context, integrationID s
 	for i, m := range mapped {
 		qty := stock[m.ProductID]
 		action := "updated"
-		if uerr := uc.client.UpdateProductStock(ctx, storeURL, consumerKey, consumerSecret, m.ExternalItemID, qty); uerr != nil {
+		if uerr := uc.client.UpdateProductStock(ctx, creds.StoreURL, creds.ConsumerKey, creds.ConsumerSecret, m.ExternalItemID, qty); uerr != nil {
 			uc.logger.Error(ctx).Err(uerr).Str("sku", m.SKU).Str("external_product_id", m.ExternalItemID).Msg("Error al actualizar stock en WooCommerce")
 			failed++
 			action = "failed"

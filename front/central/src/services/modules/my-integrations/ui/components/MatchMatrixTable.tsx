@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Download, Loader2, Search, TriangleAlert, X } from 'lucide-react';
+import { Check, Download, Eye, Loader2, Search, TriangleAlert, X } from 'lucide-react';
+import { ProductDetailModal } from '@/services/modules/products/ui/components/ProductDetailModal';
 import {
     fetchMatchMatrix,
     matchMatrixCsvUrl,
@@ -9,6 +10,7 @@ import {
     type MatrixColumn,
     type MatrixRow,
 } from '../../infra/repository/sync-findings';
+import { DynamicFilters, type ActiveFilter, type FilterOption } from '@/shared/ui/dynamic-filters';
 import { channelBrand } from '../../domain/types';
 import { PanelPager } from './PanelPager';
 import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER, inputCls } from '../panel-theme';
@@ -18,6 +20,15 @@ interface MatchMatrixTableProps {
 }
 
 const SEARCH_DEBOUNCE_MS = 400;
+
+function nombreDeArchivo(prefijo: string): string {
+    const hoy = new Date();
+    const dia = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+    return `${prefijo}-${dia}.csv`;
+}
+
+const PREFIJO_ESTA = 'esta_';
+const PREFIJO_FALTA = 'falta_';
 
 function Campo({ label, value, tone }: { label: string; value?: string; tone?: string }) {
     const vacio = !value;
@@ -66,20 +77,51 @@ function Celda({ cell }: { cell: MatrixCell }) {
     );
 }
 
-function Fila({ row, columns }: { row: MatrixRow; columns: MatrixColumn[] }) {
+function Fila({ row, columns, onDetail }: { row: MatrixRow; columns: MatrixColumn[]; onDetail: (productId: string) => void }) {
     return (
         <tr className="border-t transition-colors hover:bg-gray-50/70 dark:hover:bg-gray-800/40" style={{ borderColor: CARD_BORDER }}>
-            <td className="sticky left-0 z-10 bg-white px-3 py-2 align-top dark:bg-gray-900">
-                <span className="mb-1 block max-w-[20rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={row.name}>
-                    {row.name || 'Sin nombre'}
-                </span>
-                <div className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
-                    <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
-                    <span className="truncate font-bold" style={{ color: ACCENT }}>{row.sku || 'null'}</span>
-                </div>
-                <div className="mt-0.5 space-y-0.5">
-                    <Campo label="ean" value={row.barcode} />
-                    <Campo label="id" value={row.product_id} />
+            <td className="sticky left-0 z-10 w-9 bg-white px-1.5 py-2 align-top dark:bg-gray-900">
+                <button
+                    onClick={() => onDetail(row.product_id)}
+                    title="Ver detalle del producto"
+                    aria-label="Ver detalle del producto"
+                    className="flex h-6 w-6 items-center justify-center rounded-md border transition-colors hover:opacity-80"
+                    style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
+                >
+                    <Eye size={12} />
+                </button>
+            </td>
+            <td className="sticky left-9 z-10 bg-white px-3 py-2 align-top dark:bg-gray-900">
+                <div className="flex gap-2">
+                    {row.image_url ? (
+                        <img
+                            src={row.image_url}
+                            alt=""
+                            loading="lazy"
+                            className="h-11 w-11 flex-shrink-0 rounded-md border bg-white object-cover"
+                            style={{ borderColor: CARD_BORDER }}
+                        />
+                    ) : (
+                        <span
+                            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border text-[8.5px] italic text-gray-300"
+                            style={{ borderColor: CARD_BORDER }}
+                        >
+                            sin foto
+                        </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                        <span className="mb-1 block max-w-[18rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={row.name}>
+                            {row.name || 'Sin nombre'}
+                        </span>
+                        <div className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
+                            <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
+                            <span className="truncate font-bold" style={{ color: ACCENT }}>{row.sku || 'null'}</span>
+                        </div>
+                        <div className="mt-0.5 space-y-0.5">
+                            <Campo label="ean" value={row.barcode} />
+                            <Campo label="id" value={row.product_id} />
+                        </div>
+                    </div>
                 </div>
             </td>
             {columns.map(col => {
@@ -92,26 +134,6 @@ function Fila({ row, columns }: { row: MatrixRow; columns: MatrixColumn[] }) {
     );
 }
 
-function IntegrationToggle({ column, active, onToggle }: { column: MatrixColumn; active: boolean; onToggle: () => void }) {
-    const brand = channelBrand(column.code);
-    return (
-        <button
-            onClick={onToggle}
-            aria-pressed={active}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition-all ${
-                active ? brand.chip : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300'
-            }`}
-        >
-            <span
-                className="h-2 w-2 flex-shrink-0 rounded-full transition-opacity"
-                style={{ backgroundColor: brand.dot, opacity: active ? 1 : 0.35 }}
-            />
-            {column.name}
-            {active && <Check size={11} className="flex-shrink-0" strokeWidth={3} />}
-        </button>
-    );
-}
-
 export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const [columns, setColumns] = useState<MatrixColumn[]>([]);
     const [rows, setRows] = useState<MatrixRow[]>([]);
@@ -121,7 +143,9 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [term, setTerm] = useState('');
-    const [integrationIds, setIntegrationIds] = useState<number[]>([]);
+    const [seleccion, setSeleccion] = useState<Record<string, string | boolean>>({});
+    const [pageSize, setPageSize] = useState(10);
+    const [detalleID, setDetalleID] = useState<string | null>(null);
     const inFlight = useRef<AbortController | null>(null);
 
     useEffect(() => {
@@ -129,7 +153,63 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
         return () => clearTimeout(id);
     }, [search]);
 
-    const filters = useMemo(() => ({ search: term, integrationIds }), [term, integrationIds]);
+    const idsDe = useCallback((prefijo: string) => Object.keys(seleccion)
+        .filter(key => key.startsWith(prefijo) && seleccion[key])
+        .map(key => Number(key.slice(prefijo.length)))
+        .filter(id => id > 0), [seleccion]);
+
+    const presentIn = useMemo(() => idsDe(PREFIJO_ESTA), [idsDe]);
+    const missingIn = useMemo(() => idsDe(PREFIJO_FALTA), [idsDe]);
+
+    const filters = useMemo(() => ({ search: term, presentIn, missingIn }), [term, presentIn, missingIn]);
+
+    const opcionesFiltro: FilterOption[] = useMemo(() => {
+        const verbo = (col: MatrixColumn) => (col.is_sales ? 'Se vende en' : 'Esta en');
+        const negado = (col: MatrixColumn) => (col.is_sales ? 'No se vende en' : 'No esta en');
+        return [
+            ...columns.map(col => ({
+                key: `${PREFIJO_ESTA}${col.integration_id}`,
+                label: `${verbo(col)} ${col.name}`,
+                type: 'boolean' as const,
+                dot: channelBrand(col.code).dot,
+                imageUrl: col.image_url,
+            })),
+            ...columns.map(col => ({
+                key: `${PREFIJO_FALTA}${col.integration_id}`,
+                label: `${negado(col)} ${col.name}`,
+                type: 'boolean' as const,
+                dot: channelBrand(col.code).dot,
+                imageUrl: col.image_url,
+            })),
+        ];
+    }, [columns]);
+
+    const filtrosActivos: ActiveFilter[] = useMemo(
+        () => Object.entries(seleccion)
+            .filter(([, value]) => value !== '' && value !== false && value !== undefined)
+            .map(([key, value]) => {
+                const definicion = opcionesFiltro.find(opcion => opcion.key === key);
+                return {
+                    key,
+                    label: definicion?.label ?? key,
+                    value: value as ActiveFilter['value'],
+                    type: definicion?.type ?? 'text',
+                };
+            }),
+        [seleccion, opcionesFiltro],
+    );
+
+    const agregarFiltro = useCallback((key: string, value: string | boolean) => {
+        setSeleccion(prev => ({ ...prev, [key]: value }));
+    }, []);
+
+    const quitarFiltro = useCallback((key: string) => {
+        setSeleccion(prev => {
+            const siguiente = { ...prev };
+            delete siguiente[key];
+            return siguiente;
+        });
+    }, []);
 
     const load = useCallback(async (nextPage: number) => {
         inFlight.current?.abort();
@@ -137,17 +217,19 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
         inFlight.current = controller;
         setLoading(true);
         try {
-            const result = await fetchMatchMatrix(businessId ?? undefined, nextPage, filters, controller.signal);
+            const result = await fetchMatchMatrix(businessId ?? undefined, nextPage, filters, controller.signal, pageSize);
             if (controller.signal.aborted) return;
             setColumns(result.columns);
             setRows(result.rows);
             setPage(result.page);
             setTotalPages(result.total_pages);
             setTotal(result.total);
+        } catch (error) {
+            if (!(error instanceof DOMException && error.name === 'AbortError')) throw error;
         } finally {
             if (!controller.signal.aborted) setLoading(false);
         }
-    }, [businessId, filters]);
+    }, [businessId, filters, pageSize]);
 
     useEffect(() => {
         void load(1);
@@ -155,20 +237,25 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
 
     useEffect(() => () => inFlight.current?.abort(), []);
 
-    const hayFiltros = term !== '' || integrationIds.length > 0;
-
-    const alternar = (id: number) =>
-        setIntegrationIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+    const hayFiltros = term !== '' || filtrosActivos.length > 0;
+    const nombreArchivo = nombreDeArchivo(hayFiltros ? 'resumen-canales-filtrado' : 'resumen-canales');
 
     return (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <div className="flex items-center gap-2">
-                <div className="relative min-w-0 flex-1">
+            <p className="text-[12px] text-gray-500 dark:text-gray-400">
+                Una fila por producto, una columna por canal.{' '}
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">Verde</span> = el SKU coincide.
+                Combina <span className="font-semibold">se vende en</span> y{' '}
+                <span className="font-semibold">no se vende en</span> para encontrar lo que falta publicar.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="relative w-64 flex-shrink-0">
                     <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                         value={search}
                         onChange={event => setSearch(event.target.value)}
-                        placeholder="Buscar SKU, producto o codigo de barras"
+                        placeholder="Buscar SKU, producto o ean"
                         className={`${inputCls} py-1.5 pl-7 pr-7`}
                         style={{ borderColor: CARD_BORDER }}
                     />
@@ -181,8 +268,21 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
                         </button>
                     )}
                 </div>
+
+                <div className="min-w-0 flex-1">
+                    <DynamicFilters
+                        variant="bar"
+                        availableFilters={opcionesFiltro}
+                        activeFilters={filtrosActivos}
+                        onAddFilter={agregarFiltro}
+                        onRemoveFilter={quitarFiltro}
+                        triggerClassName="!h-8 !w-8 !rounded-lg"
+                    />
+                </div>
+
                 <a
                     href={matchMatrixCsvUrl(businessId ?? undefined, filters)}
+                    download={nombreArchivo}
                     className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-colors"
                     style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
                 >
@@ -191,40 +291,33 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
                 </a>
             </div>
 
-            {columns.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Coincide en</span>
-                    {columns.map(col => (
-                        <IntegrationToggle
-                            key={col.integration_id}
-                            column={col}
-                            active={integrationIds.includes(col.integration_id)}
-                            onToggle={() => alternar(col.integration_id)}
-                        />
-                    ))}
-                    {integrationIds.length > 0 && (
-                        <button
-                            onClick={() => setIntegrationIds([])}
-                            className="text-[11px] font-semibold text-gray-400 underline-offset-2 transition-colors hover:text-gray-700 hover:underline"
-                        >
-                            limpiar
-                        </button>
-                    )}
-                </div>
-            )}
-
             <div className="min-h-0 flex-1 overflow-auto rounded-xl border" style={{ borderColor: CARD_BORDER }}>
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-800">
                         <tr className="text-left">
-                            <th className="sticky left-0 z-30 min-w-[20rem] bg-gray-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:bg-gray-800">
+                            <th className="sticky left-0 z-30 w-9 bg-gray-50 px-1.5 py-2 dark:bg-gray-800" />
+                            <th className="sticky left-9 z-30 min-w-[20rem] bg-gray-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:bg-gray-800">
                                 Probability
                             </th>
                             {columns.map(col => (
                                 <th key={col.integration_id} className="min-w-[13rem] px-3 py-2">
                                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[11.5px] font-semibold text-gray-700 dark:text-gray-200">
-                                        <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: channelBrand(col.code).dot }} />
+                                        {col.image_url ? (
+                                            <img
+                                                src={col.image_url}
+                                                alt=""
+                                                className="h-5 w-5 flex-shrink-0 rounded border bg-white object-contain p-0.5"
+                                                style={{ borderColor: CARD_BORDER }}
+                                            />
+                                        ) : (
+                                            <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: channelBrand(col.code).dot }} />
+                                        )}
                                         {col.name}
+                                        {!col.is_sales && (
+                                            <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                                                ERP
+                                            </span>
+                                        )}
                                     </span>
                                 </th>
                             ))}
@@ -232,7 +325,7 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
                     </thead>
                     <tbody>
                         {rows.map(row => (
-                            <Fila key={row.product_id} row={row} columns={columns} />
+                            <Fila key={row.product_id} row={row} columns={columns} onDetail={setDetalleID} />
                         ))}
                     </tbody>
                 </table>
@@ -246,7 +339,7 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
 
                 {!loading && rows.length === 0 && (
                     <p className="px-3 py-8 text-center text-[12px] italic text-gray-400">
-                        {hayFiltros ? 'Ningun producto coincide en todas las integraciones elegidas' : 'Sin productos'}
+                        {hayFiltros ? 'Ningun producto cumple los filtros elegidos' : 'Sin productos'}
                     </p>
                 )}
             </div>
@@ -257,7 +350,15 @@ export function MatchMatrixTable({ businessId }: MatchMatrixTableProps) {
                 total={total}
                 shown={rows.length}
                 noun="productos"
+                pageSize={pageSize}
                 onPage={p => void load(p)}
+                onPageSize={setPageSize}
+            />
+
+            <ProductDetailModal
+                productId={detalleID}
+                businessId={businessId ?? undefined}
+                onClose={() => setDetalleID(null)}
             />
         </div>
     );

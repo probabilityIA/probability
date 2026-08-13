@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/productmatch"
@@ -94,7 +95,30 @@ func resolveWarehouseIDs(cfg domain.InventoryConfig) []uint {
 	return cfg.WarehouseIDs
 }
 
-func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error {
+func filtrarPorSKU(mapped []domain.MappedItem, skus []string) []domain.MappedItem {
+	if len(skus) == 0 {
+		return mapped
+	}
+	buscados := make(map[string]bool, len(skus))
+	for _, sku := range skus {
+		limpio := strings.ToUpper(strings.TrimSpace(sku))
+		if limpio != "" {
+			buscados[limpio] = true
+		}
+	}
+	if len(buscados) == 0 {
+		return mapped
+	}
+	filtrados := make([]domain.MappedItem, 0, len(buscados))
+	for _, m := range mapped {
+		if buscados[strings.ToUpper(strings.TrimSpace(m.SKU))] {
+			filtrados = append(filtrados, m)
+		}
+	}
+	return filtrados
+}
+
+func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error {
 	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
 
 	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
@@ -116,6 +140,7 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 	if err != nil {
 		return fmt.Errorf("listing mapped items: %w", err)
 	}
+	mapped = filtrarPorSKU(mapped, skus)
 
 	cli := uc.clientFor(ctx, integration)
 	rules := productmatch.Sanitize(integration.ProductMatchRules)
@@ -124,10 +149,10 @@ func (uc *meliUseCase) SyncInventory(ctx context.Context, integrationID string, 
 		return uc.syncInventoryMultiWarehouse(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, rules, correlationID)
 	}
 
-	return uc.syncInventorySingle(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID)
+	return uc.syncInventorySingle(ctx, cli, businessID, uint(integIDUint), integrationID, accessToken, cfg, mapped, correlationID, len(skus) > 0)
 }
 
-func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeliClient, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string) error {
+func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeliClient, businessID, integrationID uint, integrationIDStr, accessToken string, cfg domain.InventoryConfig, mapped []domain.MappedItem, correlationID string, seleccionManual bool) error {
 	warehouseIDs := resolveWarehouseIDs(cfg)
 
 	productIDs := make([]string, 0, len(mapped))
@@ -165,15 +190,18 @@ func (uc *meliUseCase) syncInventorySingle(ctx context.Context, cli domain.IMeli
 			continue
 		}
 		if !hasLevel {
-			skipped++
-			uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
-				"correlation_id": correlationID,
-				"sku":            m.SKU,
-				"action":         "skipped",
-				"error":          "el producto no tiene registro de inventario, se conserva el stock actual en MercadoLibre",
-			})
-			uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
-			continue
+			if !seleccionManual {
+				skipped++
+				uc.emitInventoryEvent(ctx, businessID, integrationID, "meli.inventory.sync.item", map[string]interface{}{
+					"correlation_id": correlationID,
+					"sku":            m.SKU,
+					"action":         "skipped",
+					"error":          "el producto no tiene registro de inventario, se conserva el stock actual en MercadoLibre",
+				})
+				uc.maybeInventoryProgress(ctx, businessID, integrationID, correlationID, i+1, total, updated, unchanged, skipped, failed)
+				continue
+			}
+			qty = 0
 		}
 		if uerr := cli.UpdateStock(ctx, accessToken, m.ExternalItemID, m.ExternalVariantID, qty); uerr != nil {
 			if uerr == domain.ErrTokenExpired {

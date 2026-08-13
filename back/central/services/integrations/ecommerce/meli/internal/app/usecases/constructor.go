@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -25,7 +26,8 @@ type IMeliUseCase interface {
 	ApplyProductsToProbability(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	AssociateProducts(ctx context.Context, integrationID string, businessID uint, correlationID string, skus []string) error
 
-	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string) error
+	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
+	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
 	UpdateItemStock(ctx context.Context, integrationID, productID, itemID, variantID string, quantity int) error
 
 	PushOrderStatus(ctx context.Context, integrationID string, shipmentID int64, status string) error

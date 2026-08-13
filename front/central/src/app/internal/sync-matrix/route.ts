@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { env } from '@/shared/config/env';
 
-const PASSTHROUGH = ['q', 'page', 'page_size', 'business_id', 'format', 'integration_ids'];
+const PASSTHROUGH = ['q', 'page', 'page_size', 'business_id', 'format', 'present_in', 'missing_in'];
 
 export async function GET(request: NextRequest) {
     const token = await getAuthToken();

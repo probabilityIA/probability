@@ -23,8 +23,13 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		products.GET("/skus/next", middleware.JWT(), h.GetNextSKU)
 		products.GET("/skus", middleware.JWT(), h.ListSKUs)
 
+		products.POST("/channel-data/apply", middleware.JWT(), h.ApplyChannelData)
+		products.POST("/channel-data/undo", middleware.JWT(), h.UndoChannelData)
+		products.GET("/channel-data/batches", middleware.JWT(), h.ListDataBatches)
+
 		products.GET("", middleware.JWT(), h.ListProducts)
 		products.GET("/:id", middleware.JWT(), h.GetProductByID)
+		products.GET("/:id/detail", middleware.JWT(), h.GetProductDetail)
 		products.POST("", middleware.JWT(), h.CreateProduct)
 		products.PUT("/:id", middleware.JWT(), h.UpdateProduct)
 		products.DELETE("/:id", middleware.JWT(), h.DeleteProduct)

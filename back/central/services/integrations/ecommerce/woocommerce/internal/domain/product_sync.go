@@ -6,6 +6,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
+type ChannelStock struct {
+	ExternalID        string
+	AvailableQuantity int
+	ManageStock       bool
+	Found             bool
+}
+
 type CreateProductInput struct {
 	Name          string
 	SKU           string
@@ -30,14 +37,24 @@ type ProductForSync struct {
 }
 
 type WooProduct struct {
-	ID            string
-	ParentID      string
-	SKU           string
-	Barcode       string
-	Name          string
-	Price         float64
-	StockQuantity int
-	ImageURL      string
+	ID                string
+	ParentID          string
+	ParentName        string
+	VariantLabel      string
+	VariantAttributes map[string]string
+	SKU               string
+	Barcode           string
+	Name              string
+	Description       string
+	Category          string
+	Brand             string
+	Weight            *float64
+	Length            *float64
+	Width             *float64
+	Height            *float64
+	Price             float64
+	StockQuantity     int
+	ImageURL          string
 }
 
 func (p ProductForSync) MatchItem() productmatch.Item {
@@ -87,6 +104,7 @@ type ReconcileResult struct {
 type MappedItem struct {
 	ProductID         string
 	SKU               string
+	Name              string
 	Barcode           string
 	ExternalItemID    string
 	ExternalVariantID string
@@ -105,6 +123,7 @@ type IProductRepository interface {
 	ListProductsByBusiness(ctx context.Context, businessID uint) ([]ProductForSync, error)
 	GetExternalProductID(ctx context.Context, productID string, integrationID uint) (string, bool, error)
 	UpsertProductIntegrationMapping(ctx context.Context, productID string, businessID, integrationID uint, refs productmatch.ExternalRefs) error
+	SaveChannelSnapshots(ctx context.Context, businessID, integrationID uint, entries []productmatch.SnapshotEntry) error
 	ListMappedItems(ctx context.Context, integrationID uint) ([]MappedItem, error)
 	GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error)
 	ERPFeedsInventory(ctx context.Context, businessID uint) (bool, error)

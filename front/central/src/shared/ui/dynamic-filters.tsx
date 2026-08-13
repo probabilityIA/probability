@@ -12,6 +12,8 @@ export interface FilterOption {
     type: 'text' | 'select' | 'date-range' | 'boolean';
     placeholder?: string;
     options?: Array<{ value: string; label: string }>;
+    dot?: string;
+    imageUrl?: string;
 }
 
 export interface ActiveFilter {
@@ -467,9 +469,21 @@ export function DynamicFilters({
                                                 <button
                                                     key={filter.key}
                                                     onClick={() => handleFilterSelect(filter.key)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                                    className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                                 >
-                                                    {filter.label}
+                                                    {filter.imageUrl ? (
+                                                        <img
+                                                            src={filter.imageUrl}
+                                                            alt=""
+                                                            className="h-5 w-5 flex-shrink-0 rounded border border-gray-200 bg-white object-contain p-0.5 dark:border-gray-600"
+                                                        />
+                                                    ) : filter.dot ? (
+                                                        <span
+                                                            className="h-2 w-2 flex-shrink-0 rounded-full"
+                                                            style={{ backgroundColor: filter.dot }}
+                                                        />
+                                                    ) : null}
+                                                    <span className="min-w-0">{filter.label}</span>
                                                 </button>
                                             ))
                                         )}

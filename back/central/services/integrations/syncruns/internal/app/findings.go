@@ -101,24 +101,6 @@ func (uc *useCase) Findings(ctx context.Context, businessID uint) (*domain.Findi
 			Count:    cross.SoldNotOwned,
 		})
 	}
-	if cross.NotPublished > 0 {
-		report.Findings = append(report.Findings, domain.Finding{
-			Code:     domain.FindingNotPublished,
-			Severity: domain.SeverityWarn,
-			Title:    "Productos que no se publican en ningun canal",
-			Detail:   "Existen en Probability y ningun canal de venta los tiene. Es inventario que no se esta ofreciendo.",
-			Count:    cross.NotPublished,
-		})
-	}
-	if cross.Imbalance > 0 {
-		report.Findings = append(report.Findings, domain.Finding{
-			Code:     domain.FindingImbalance,
-			Severity: domain.SeverityInfo,
-			Title:    "Publicados en unos canales y en otros no",
-			Detail:   "El mismo producto esta en al menos un canal y falta en otro. Puede ser intencional.",
-			Count:    cross.Imbalance,
-		})
-	}
 
 	orden := map[string]int{domain.SeverityError: 0, domain.SeverityWarn: 1, domain.SeverityInfo: 2}
 	sort.SliceStable(report.Findings, func(i, j int) bool {

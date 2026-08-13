@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/infra/secondary/repository/mappers"
@@ -330,54 +331,9 @@ func (r *Repository) GetProductFamilyByID(ctx context.Context, businessID uint, 
 	return mappers.ToDomainProductFamily(&family), nil
 }
 
-func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.ProductFamily, int64, error) {
-	var families []models.ProductFamily
-	var total int64
+const existeVariante = `EXISTS (SELECT 1 FROM products v WHERE v.family_id = product_families.id AND v.deleted_at IS NULL)`
 
-	base := r.db.Conn(ctx).Model(&models.ProductFamily{}).Where("product_families.business_id = ?", businessID)
-
-	if name, ok := filters["name"].(string); ok && name != "" {
-		base = base.Where("product_families.name ILIKE ?", "%"+name+"%")
-	}
-	if category, ok := filters["category"].(string); ok && category != "" {
-		base = base.Where("product_families.category ILIKE ?", "%"+category+"%")
-	}
-	if brand, ok := filters["brand"].(string); ok && brand != "" {
-		base = base.Where("product_families.brand ILIKE ?", "%"+brand+"%")
-	}
-	if status, ok := filters["status"].(string); ok && status != "" {
-		base = base.Where("product_families.status = ?", status)
-	}
-
-	if err := base.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	sortBy := "product_families.created_at"
-	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
-		sortFieldMap := map[string]string{
-			"id":         "product_families.id",
-			"name":       "product_families.name",
-			"created_at": "product_families.created_at",
-			"updated_at": "product_families.updated_at",
-		}
-		if mappedField, exists := sortFieldMap[sort]; exists {
-			sortBy = mappedField
-		}
-	}
-
-	sortOrder := "desc"
-	if order, ok := filters["sort_order"].(string); ok && order != "" {
-		sortOrder = order
-	}
-
-	offset := (page - 1) * pageSize
-	query := r.db.Conn(ctx).
-		Model(&models.ProductFamily{}).
-		Select("product_families.*, COUNT(products.id) AS variant_count").
-		Joins("LEFT JOIN products ON products.family_id = product_families.id AND products.deleted_at IS NULL").
-		Where("product_families.business_id = ?", businessID)
-
+func filtrosDeFamilia(query *gorm.DB, filters map[string]interface{}) *gorm.DB {
 	if name, ok := filters["name"].(string); ok && name != "" {
 		query = query.Where("product_families.name ILIKE ?", "%"+name+"%")
 	}
@@ -390,10 +346,65 @@ func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, p
 	if status, ok := filters["status"].(string); ok && status != "" {
 		query = query.Where("product_families.status = ?", status)
 	}
+	if variantes, ok := filters["has_variants"].(string); ok && variantes != "" {
+		if variantes == "true" {
+			query = query.Where(existeVariante)
+		} else {
+			query = query.Where("NOT " + existeVariante)
+		}
+	}
+	return query
+}
+
+func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.ProductFamily, int64, error) {
+	var families []models.ProductFamily
+	var total int64
+
+	base := filtrosDeFamilia(
+		r.db.Conn(ctx).Model(&models.ProductFamily{}).Where("product_families.business_id = ?", businessID),
+		filters,
+	)
+
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	sortBy := "product_families.created_at"
+	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
+		sortFieldMap := map[string]string{
+			"id":            "product_families.id",
+			"name":          "product_families.name",
+			"created_at":    "product_families.created_at",
+			"updated_at":    "product_families.updated_at",
+			"variant_count": "variant_count",
+		}
+		if mappedField, exists := sortFieldMap[sort]; exists {
+			sortBy = mappedField
+		}
+	}
+
+	sortOrder := "desc"
+	if order, ok := filters["sort_order"].(string); ok && order != "" {
+		sortOrder = order
+	}
+
+	offset := (page - 1) * pageSize
+	query := filtrosDeFamilia(
+		r.db.Conn(ctx).
+			Model(&models.ProductFamily{}).
+			Select("product_families.*, COUNT(products.id) AS variant_count").
+			Joins("LEFT JOIN products ON products.family_id = product_families.id AND products.deleted_at IS NULL").
+			Where("product_families.business_id = ?", businessID),
+		filters,
+	)
 
 	query = query.Group("product_families.id").Order(fmt.Sprintf("%s %s", sortBy, sortOrder)).Offset(offset).Limit(pageSize)
 
 	if err := query.Find(&families).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.imagenDesdeVariante(ctx, families); err != nil {
 		return nil, 0, err
 	}
 
@@ -403,6 +414,45 @@ func (r *Repository) ListProductFamilies(ctx context.Context, businessID uint, p
 	}
 
 	return result, total, nil
+}
+
+const imagenDeVarianteQuery = `
+SELECT DISTINCT ON (p.family_id) p.family_id, p.image_url
+FROM products p
+WHERE p.family_id IN ?
+  AND p.deleted_at IS NULL
+  AND COALESCE(p.image_url, '') <> ''
+ORDER BY p.family_id, p.created_at, p.id`
+
+func (r *Repository) imagenDesdeVariante(ctx context.Context, familias []models.ProductFamily) error {
+	sinImagen := make([]uint, 0, len(familias))
+	for i := range familias {
+		if strings.TrimSpace(familias[i].ImageURL) == "" {
+			sinImagen = append(sinImagen, familias[i].ID)
+		}
+	}
+	if len(sinImagen) == 0 {
+		return nil
+	}
+
+	var filas []struct {
+		FamilyID uint
+		ImageURL string
+	}
+	if err := r.db.Conn(ctx).Raw(imagenDeVarianteQuery, sinImagen).Scan(&filas).Error; err != nil {
+		return err
+	}
+
+	porFamilia := make(map[uint]string, len(filas))
+	for _, fila := range filas {
+		porFamilia[fila.FamilyID] = fila.ImageURL
+	}
+	for i := range familias {
+		if imagen, ok := porFamilia[familias[i].ID]; ok && strings.TrimSpace(familias[i].ImageURL) == "" {
+			familias[i].ImageURL = imagen
+		}
+	}
+	return nil
 }
 
 func (r *Repository) UpdateProductFamily(ctx context.Context, family *domain.ProductFamily) error {

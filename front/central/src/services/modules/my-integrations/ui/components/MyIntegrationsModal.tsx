@@ -57,6 +57,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const effectiveBusinessId = businessId ?? (isSuperAdmin ? null : permissions?.business_id ?? null);
     const [findings, setFindings] = useState<FindingsReport | null>(null);
     const [showFindings, setShowFindings] = useState(false);
+    const [findingsTab, setFindingsTab] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!isOpen) {
@@ -363,12 +364,15 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 integrations={internalIntegrations}
                                 resourceActive={resourceActive}
                                 findingsCount={findings?.findings.length ?? 0}
-                                onFindingsClick={() => setShowFindings(true)}
+                                onFindingsClick={() => { setFindingsTab(undefined); setShowFindings(true); }}
+                                onCompareClick={() => { setFindingsTab('inventario'); setShowFindings(true); }}
                             />
                             </div>
                             {showFindings && (
                                 <FindingsPanel
                                     businessId={effectiveBusinessId}
+                                    integrations={syncableIntegrations}
+                                    initialTab={findingsTab}
                                     onClose={() => setShowFindings(false)}
                                 />
                             )}

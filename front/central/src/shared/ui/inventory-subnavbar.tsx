@@ -20,6 +20,8 @@ const DEMO_ALLOWED_RESOURCES = new Set([
     'Inventario-Movimientos',
 ]);
 
+export const INVENTORY_FILTERS_SLOT_ID = 'inventory-filters-slot';
+
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const [tourOpen, setTourOpen] = useState(false);
     const [pulseTour, setPulseTour] = useState(false);
@@ -172,6 +174,10 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
                     </div>
                 </div>
             </div>
+            <div
+                id={INVENTORY_FILTERS_SLOT_ID}
+                className="empty:hidden px-4 sm:px-6 lg:px-8 py-2 border-t border-gray-100 dark:border-gray-700/60"
+            />
             <InventoryTour isOpen={tourOpen} onClose={() => setTourOpen(false)} />
             {!inventoryModuleLoading && !inventoryModuleActive && inventoryBusinessId !== null && (
                 <div className="px-4 sm:px-6 lg:px-8 py-2 bg-amber-50/50 dark:bg-amber-900/10 border-t border-amber-200 dark:border-amber-800">

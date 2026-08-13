@@ -12,6 +12,7 @@ type PushState struct {
 type MappedItem struct {
 	ProductID         string
 	SKU               string
+	Name              string
 	Barcode           string
 	ExternalItemID    string
 	ExternalVariantID string

@@ -59,10 +59,18 @@ export async function associateWooProductsAction(integrationId: number, business
     return postWithAuth('/woocommerce/products/associate', body);
 }
 
-export async function syncWooInventoryAction(integrationId: number, businessId?: number) {
+export async function syncWooInventoryAction(integrationId: number, businessId?: number, skus?: string[]) {
     const body: Record<string, unknown> = { integration_id: integrationId };
     if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
     return postWithAuth('/woocommerce/inventory/sync', body);
+}
+
+export async function compareWooInventoryAction(integrationId: number, businessId?: number, page = 1, pageSize = 100, skus?: string[]) {
+    const body: Record<string, unknown> = { integration_id: integrationId, page, page_size: pageSize };
+    if (businessId) body.business_id = businessId;
+    if (skus && skus.length > 0) body.skus = skus;
+    return postWithAuth('/woocommerce/inventory/compare', body);
 }
 
 export async function getWooPluginZipAction(): Promise<{ success: boolean; data?: string; message?: string }> {

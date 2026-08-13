@@ -42,3 +42,4 @@ No hace falta entrada para un fix trivial o un cambio de UI.
 | 2026-08-06 | [COD EnvioClick: valor a recaudar mal calibrado](2026-08-06-cod-envioclick-calibracion.md) | Corregido, pendiente deploy |
 | 2026-08-11 | [EnvioClick: cancelaciones con falso positivo](2026-08-11-envioclick-cancelacion-falso-positivo.md) | Fix desplegado, pendiente reclamo a EnvioClick |
 | 2026-08-12 | [El detector de SKU sugeria cambiar de talla](2026-08-12-detector-sku-sugerencias-falsas.md) | Corregido en local, sin desplegar |
+| 2026-08-13 | [Mappings duplicados rompian el apply con ON CONFLICT](2026-08-13-mappings-duplicados-on-conflict.md) | Corregido en local, sin desplegar |

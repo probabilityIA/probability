@@ -3,13 +3,17 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ACCENT, ACCENT_BORDER, ACCENT_SOFT, CARD_BORDER } from '../panel-theme';
 
+export const TAMANOS_PAGINA = [10, 25, 50, 100];
+
 interface PanelPagerProps {
     page: number;
     totalPages: number;
     total: number;
     shown: number;
     noun: string;
+    pageSize: number;
     onPage: (page: number) => void;
+    onPageSize?: (pageSize: number) => void;
 }
 
 function paginas(page: number, totalPages: number): (number | 'gap')[] {
@@ -39,18 +43,42 @@ function Total({ total, noun, detalle }: { total: number; noun: string; detalle?
     );
 }
 
-export function PanelPager({ page, totalPages, total, shown, noun, onPage }: PanelPagerProps) {
+export function PanelPager({ page, totalPages, total, shown, noun, pageSize, onPage, onPageSize }: PanelPagerProps) {
+    const selector = onPageSize && (
+        <label className="inline-flex items-center gap-1 text-[11px] text-gray-400">
+            ver
+            <select
+                value={pageSize}
+                onChange={event => onPageSize(Number(event.target.value))}
+                className="rounded-lg border bg-white px-1.5 py-0.5 text-[11px] font-semibold text-gray-600 outline-none dark:bg-gray-800 dark:text-gray-200"
+                style={{ borderColor: CARD_BORDER }}
+            >
+                {TAMANOS_PAGINA.map(tamano => (
+                    <option key={tamano} value={tamano}>{tamano}</option>
+                ))}
+            </select>
+        </label>
+    );
+
     if (totalPages <= 1) {
-        return <Total total={total} noun={noun} />;
+        return (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <Total total={total} noun={noun} />
+                {selector}
+            </div>
+        );
     }
 
-    const desde = total === 0 ? 0 : (page - 1) * 50 + 1;
-    const hasta = (page - 1) * 50 + shown;
+    const desde = total === 0 ? 0 : (page - 1) * pageSize + 1;
+    const hasta = (page - 1) * pageSize + shown;
     const fmt = (n: number) => n.toLocaleString('es-CO');
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-2">
-            <Total total={total} noun={noun} detalle={`viendo ${fmt(desde)}–${fmt(hasta)}`} />
+            <div className="flex flex-wrap items-center gap-2">
+                <Total total={total} noun={noun} detalle={`viendo ${fmt(desde)}–${fmt(hasta)}`} />
+                {selector}
+            </div>
 
             <div className="flex items-center gap-1">
                 <button

@@ -103,21 +103,14 @@ func TestReportaLoQueSeVendeSinExistir(t *testing.T) {
 	}
 }
 
-func TestReportaElStockQueNadieOfrece(t *testing.T) {
-	uc := nuevoCasoHallazgos(nil, domain.CrossChannelCounts{NotPublished: 120})
+func TestLaCoberturaNoEsUnHallazgo(t *testing.T) {
+	uc := nuevoCasoHallazgos(nil, domain.CrossChannelCounts{NotPublished: 120, Imbalance: 40})
 
-	f := buscar(mustFindings(t, uc), domain.FindingNotPublished)
-	if f == nil || f.Count != 120 {
-		t.Fatalf("obtuve %+v", f)
-	}
-}
-
-func TestElDesbalanceEsInformativoNoUnError(t *testing.T) {
-	uc := nuevoCasoHallazgos(nil, domain.CrossChannelCounts{Imbalance: 40})
-
-	f := buscar(mustFindings(t, uc), domain.FindingImbalance)
-	if f == nil || f.Severity != domain.SeverityInfo {
-		t.Fatalf("no publicar en todos los canales puede ser a proposito: %+v", f)
+	r := mustFindings(t, uc)
+	for _, code := range []string{domain.FindingNotPublished, domain.FindingImbalance} {
+		if f := buscar(r, code); f != nil {
+			t.Errorf("la cobertura por canal se ve con los filtros del resumen, no como hallazgo: %+v", f)
+		}
 	}
 }
 
@@ -127,7 +120,7 @@ func TestElTotalSumaTodosLosHallazgos(t *testing.T) {
 	}, domain.CrossChannelCounts{SoldNotOwned: 7, NotPublished: 120, Imbalance: 40})
 
 	r := mustFindings(t, uc)
-	if r.Total != 320+34+645+7+120+40 {
+	if r.Total != 320+34+645+7 {
 		t.Fatalf("obtuve %d", r.Total)
 	}
 }
@@ -192,8 +185,15 @@ func TestMatchMatrixNormalizaPaginacion(t *testing.T) {
 	if _, err := uc.MatchMatrix(context.Background(), domain.MatrixQuery{BusinessID: 46, Page: 0, PageSize: 9999}); err != nil {
 		t.Fatalf("error inesperado: %v", err)
 	}
-	if visto.Page != 1 || visto.PageSize != 50 {
-		t.Fatalf("no normalizo la paginacion: %+v", visto)
+	if visto.Page != 1 || visto.PageSize != 100 {
+		t.Fatalf("el tope de pagina lo pone el back, no el cliente: %+v", visto)
+	}
+
+	if _, err := uc.MatchMatrix(context.Background(), domain.MatrixQuery{BusinessID: 46}); err != nil {
+		t.Fatalf("error inesperado: %v", err)
+	}
+	if visto.PageSize != 10 {
+		t.Fatalf("sin page_size la matriz trae 10, trajo %d", visto.PageSize)
 	}
 }
 

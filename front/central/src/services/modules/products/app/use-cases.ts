@@ -21,6 +21,10 @@ export class ProductUseCases {
         return this.repository.getProductById(id, businessId);
     }
 
+    async getProductDetail(id: string, businessId?: number) {
+        return this.repository.getProductDetail(id, businessId);
+    }
+
     async createProduct(data: CreateProductDTO, businessId?: number) {
         return this.repository.createProduct(data, businessId);
     }
