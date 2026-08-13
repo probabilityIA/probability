@@ -47,6 +47,8 @@ type RepositoryMock struct {
 	ListOriginAddressesByBusinessFn   func(ctx context.Context, businessID uint) ([]domain.OriginAddress, error)
 	GetDefaultOriginAddressFn         func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
 	GetDefaultWarehouseOriginFn       func(ctx context.Context, businessID uint) (*domain.OriginAddress, error)
+	GetWarehouseShippingConfigFn      func(ctx context.Context, warehouseID uint) (*domain.ShippingPackageConfig, error)
+	GetProductDimensionsBySKUsFn      func(ctx context.Context, businessID uint, skus []string) (map[string]domain.ProductDimensions, error)
 	ListDaneStatesFn                  func(ctx context.Context) ([]domain.DaneItem, error)
 	ListDaneCitiesByStateFn           func(ctx context.Context, stateCode string) ([]domain.DaneItem, error)
 	UpdateOriginAddressFn             func(ctx context.Context, address *domain.OriginAddress) error
@@ -320,6 +322,20 @@ func (m *RepositoryMock) GetDefaultWarehouseOrigin(ctx context.Context, business
 		return m.GetDefaultWarehouseOriginFn(ctx, businessID)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*domain.ShippingPackageConfig, error) {
+	if m.GetWarehouseShippingConfigFn != nil {
+		return m.GetWarehouseShippingConfigFn(ctx, warehouseID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetProductDimensionsBySKUs(ctx context.Context, businessID uint, skus []string) (map[string]domain.ProductDimensions, error) {
+	if m.GetProductDimensionsBySKUsFn != nil {
+		return m.GetProductDimensionsBySKUsFn(ctx, businessID, skus)
+	}
+	return map[string]domain.ProductDimensions{}, nil
 }
 
 func (m *RepositoryMock) ListDaneStates(ctx context.Context) ([]domain.DaneItem, error) {
