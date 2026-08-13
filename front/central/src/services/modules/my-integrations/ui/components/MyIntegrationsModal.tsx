@@ -14,7 +14,7 @@ import { IntegrationForm, CreateIntegrationModal } from '@/services/integrations
 import { getIntegrationStatsAction, type IntegrationStatsItem } from '@/services/integrations/core/infra/actions/stats';
 import type { IntegrationCategory, Integration } from '@/services/integrations/core/domain/types';
 import { getBusinessConfiguredResourcesAction } from '@/services/auth/business/infra/actions';
-import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, CATEGORY_COLORS, CHANNELS_COLOR } from '../../domain/types';
+import { CHANNEL_CODES, SERVICE_CODES, INTERNAL_CODES, PLATFORM_CODE, CATEGORY_COLORS, CHANNELS_COLOR } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { CyberCluster } from './CyberCluster';
@@ -276,6 +276,27 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const channelIntegrations = channels.flatMap(cat => integrationsByCategory[cat.code] || []);
     const createCategories = categories.filter(c => c.code === 'ecommerce' || c.code === 'invoicing');
 
+    const platformIntegrations = integrations.filter(i => i.category === PLATFORM_CODE);
+    const ownStats = platformIntegrations.reduce<IntegrationStatsItem | null>((acc, integration) => {
+        const item = stats[integration.id];
+        if (!item) return acc;
+        if (!acc) return { ...item };
+        return {
+            ...acc,
+            orders_count: acc.orders_count + item.orders_count,
+            orders_in_progress: acc.orders_in_progress + item.orders_in_progress,
+            orders_delivered: acc.orders_delivered + item.orders_delivered,
+            orders_cancelled: acc.orders_cancelled + item.orders_cancelled,
+            orders_returned: acc.orders_returned + item.orders_returned,
+            products_count: acc.products_count + item.products_count,
+        };
+    }, null);
+    const lastOwnOrder = platformIntegrations
+        .map(integration => stats[integration.id]?.last_order_at)
+        .filter((value): value is string => Boolean(value))
+        .sort()
+        .pop();
+
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
     const serviceIntegrations = services.flatMap(cat => integrationsByCategory[cat.code] || []);
     const syncableIntegrations = [...channelIntegrations, ...serviceIntegrations.filter(i => getSyncProvider(i.integration_type_id))];
@@ -363,6 +384,8 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 ref={hubRef}
                                 integrations={internalIntegrations}
                                 resourceActive={resourceActive}
+                                ownStats={statsLoaded ? ownStats : null}
+                                lastOrderAt={lastOwnOrder}
                                 findingsCount={findings?.findings.length ?? 0}
                                 onFindingsClick={() => { setFindingsTab(undefined); setShowFindings(true); }}
                                 onCompareClick={() => { setFindingsTab('inventario'); setShowFindings(true); }}

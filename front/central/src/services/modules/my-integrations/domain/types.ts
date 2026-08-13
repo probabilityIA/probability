@@ -1,4 +1,5 @@
-export const CHANNEL_CODES = ['platform', 'ecommerce'] as const;
+export const PLATFORM_CODE = 'platform';
+export const CHANNEL_CODES = ['ecommerce'] as const;
 export const SERVICE_CODES = ['messaging', 'invoicing'] as const;
 export const INTERNAL_CODES = ['internal'] as const;
 
