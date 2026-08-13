@@ -3,9 +3,10 @@
 import { useState, useEffect, forwardRef, useImperativeHandle, Fragment } from 'react';
 import { ProductFamily, Product, GetFamiliesParams } from '../../domain/types';
 import { getProductFamiliesAction, deleteProductFamilyAction, getFamilyVariantsAction } from '../../infra/actions';
-import { ChevronRightIcon, ChevronDownIcon, XMarkIcon, PlusIcon, ScaleIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, ChevronDownIcon, XMarkIcon, PlusIcon, ScaleIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import AssociateProductModal from './AssociateProductModal';
 import FamilyDimensionsModal from './FamilyDimensionsModal';
+import ImportFamilyVariantsModal from './ImportFamilyVariantsModal';
 
 interface ProductFamilyListProps {
     onEdit?: (family: ProductFamily) => void;
@@ -36,6 +37,7 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
         const [modalPage, setModalPage] = useState(1);
         const [showAssociateModal, setShowAssociateModal] = useState(false);
         const [showDimensionsModal, setShowDimensionsModal] = useState(false);
+        const [showImportVariantsModal, setShowImportVariantsModal] = useState(false);
         const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
 
         useImperativeHandle(ref, () => ({ refresh: fetchFamilies }));
@@ -391,6 +393,13 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                                         </button>
                                     )}
                                     <button
+                                        onClick={() => setShowImportVariantsModal(true)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <ArrowUpTrayIcon className="w-4 h-4" />
+                                        Cargar productos
+                                    </button>
+                                    <button
                                         onClick={() => setShowAssociateModal(true)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 transition-opacity"
                                     >
@@ -569,6 +578,15 @@ const ProductFamilyList = forwardRef<ProductFamilyListHandle, ProductFamilyListP
                         variants={modalVariants}
                         onClose={() => setShowDimensionsModal(false)}
                         onApplied={() => fetchModalVariants(modalFamily.id)}
+                    />
+                )}
+
+                {modalFamily && showImportVariantsModal && (
+                    <ImportFamilyVariantsModal
+                        businessId={selectedBusinessId}
+                        family={modalFamily}
+                        onClose={() => setShowImportVariantsModal(false)}
+                        onAssociated={() => fetchModalVariants(modalFamily.id)}
                     />
                 )}
             </>

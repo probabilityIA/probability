@@ -16,6 +16,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 			families.POST("", middleware.JWT(), h.CreateProductFamily)
 			families.PUT("/:family_id", middleware.JWT(), h.UpdateProductFamily)
 			families.DELETE("/:family_id", middleware.JWT(), h.DeleteProductFamily)
+			families.POST("/:family_id/import-variants", middleware.JWT(), h.ImportFamilyVariants)
 		}
 
 		products.GET("/lookup-by-external", middleware.JWT(), h.LookupProductByExternalRef)

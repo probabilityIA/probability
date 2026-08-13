@@ -285,3 +285,37 @@ export const importProductDimensionsAction = async (file: File, businessId?: num
         return { success: false, message: error.message || 'Error al cargar el archivo' };
     }
 };
+
+export const importFamilyVariantsPreviewAction = async (familyId: number, file: File, businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = businessId
+            ? `${env.API_BASE_URL}/products/families/${familyId}/import-variants?business_id=${businessId}`
+            : `${env.API_BASE_URL}/products/families/${familyId}/import-variants`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+            cache: 'no-store',
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            return {
+                success: true,
+                message: result.message,
+                data: result.data || { matched: [], not_found: [] },
+            };
+        }
+        return { success: false, message: result.message || 'Error al procesar el archivo' };
+    } catch (error: any) {
+        console.error('Import Family Variants Error:', error.message);
+        return { success: false, message: error.message || 'Error al cargar el archivo' };
+    }
+};

@@ -50,7 +50,7 @@ func (h *Handlers) ImportProductsDimensions(c *gin.Context) {
 	}
 	defer file.Close()
 
-	rows, err := parseDimensionRows(file)
+	rows, err := parseDimensionRows(file, true)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -77,7 +77,7 @@ func (h *Handlers) ImportProductsDimensions(c *gin.Context) {
 	})
 }
 
-func parseDimensionRows(file io.Reader) ([]domain.DimensionRow, error) {
+func parseDimensionRows(file io.Reader, requireDimension bool) ([]domain.DimensionRow, error) {
 	f, err := excelize.OpenReader(file)
 	if err != nil {
 		return nil, fmt.Errorf("error al abrir el Excel: %w", err)
@@ -146,7 +146,7 @@ func parseDimensionRows(file io.Reader) ([]domain.DimensionRow, error) {
 			return nil, fmt.Errorf("SKU %s: alto inválido", sku)
 		}
 
-		if weight == nil && length == nil && width == nil && height == nil {
+		if requireDimension && weight == nil && length == nil && width == nil && height == nil {
 			continue
 		}
 
