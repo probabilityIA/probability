@@ -53,6 +53,7 @@ type OrderSummary struct {
 	Novelty                *string
 	IsTest                 bool
 	InvoiceStatus          string // "", "pending", "issued", "failed", "cancelled"
+	CodCutConfirmed        bool
 	Shipment               *ShipmentSummary
 	ShippingDetails        []byte
 	FreeShipping           bool

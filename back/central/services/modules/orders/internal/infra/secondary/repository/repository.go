@@ -364,7 +364,49 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	// Enriquecer con estado de factura (batch query)
 	r.enrichWithInvoiceStatus(ctx, orders)
 
+	r.enrichWithCodCutStatus(ctx, orders)
+
 	return orders, total, nil
+}
+
+func (r *Repository) enrichWithCodCutStatus(ctx context.Context, orders []entities.ProbabilityOrder) {
+	if len(orders) == 0 {
+		return
+	}
+
+	orderIDs := make([]string, 0, len(orders))
+	for _, o := range orders {
+		if o.IsCod {
+			orderIDs = append(orderIDs, o.ID)
+		}
+	}
+	if len(orderIDs) == 0 {
+		return
+	}
+
+	type cutResult struct {
+		OrderID string
+	}
+	var results []cutResult
+	r.db.Conn(ctx).Raw(`
+		SELECT DISTINCT cpo.order_id
+		FROM cod_payment_cut_order cpo
+		JOIN cod_payment_cut c ON c.id = cpo.cod_payment_cut_id AND c.deleted_at IS NULL
+		WHERE cpo.order_id IN (?)
+		  AND cpo.deleted_at IS NULL
+		  AND c.status = 'confirmed'
+	`, orderIDs).Scan(&results)
+
+	confirmed := make(map[string]bool, len(results))
+	for _, res := range results {
+		confirmed[res.OrderID] = true
+	}
+
+	for i := range orders {
+		if confirmed[orders[i].ID] {
+			orders[i].CodCutConfirmed = true
+		}
+	}
 }
 
 // enrichWithInvoiceStatus obtiene el estado de factura más reciente para cada orden.

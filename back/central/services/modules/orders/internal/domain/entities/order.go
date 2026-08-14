@@ -132,6 +132,8 @@ type ProbabilityOrder struct {
 	InvoiceProvider *string
 	InvoiceStatus   string // "", "pending", "issued", "failed", "cancelled"
 
+	CodCutConfirmed bool
+
 	// Enlaces Externos
 	OrderStatusURL string
 

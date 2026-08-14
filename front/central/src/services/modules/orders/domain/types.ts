@@ -157,6 +157,7 @@ export interface Order {
     invoice_id?: string;
     invoice_provider?: string;
     invoice_status?: string;
+    cod_cut_confirmed?: boolean;
 
     order_status_url?: string;
 

@@ -1055,7 +1055,8 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </div>
                                 {isCOD && (() => {
                                     const sumaProductoEnvio = formData.total_amount + formData.shipping_cost;
-                                    const montoCOD = formData.cod_total > 0 ? formData.cod_total : sumaProductoEnvio;
+                                    const yaLiquidadaEnCorte = order?.cod_cut_confirmed === true;
+                                    const montoCOD = !yaLiquidadaEnCorte && formData.cod_total > 0 ? formData.cod_total : sumaProductoEnvio;
                                     const liquidado = Math.abs(montoCOD - sumaProductoEnvio) >= 1;
                                     return (
                                         <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">

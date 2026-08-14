@@ -263,6 +263,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		Novelty:                dto.Novelty,
 		IsTest:                 dto.IsTest,
 		InvoiceStatus:          dto.InvoiceStatus,
+		CodCutConfirmed:        dto.CodCutConfirmed,
 		Shipment:               shipment,
 	}
 }

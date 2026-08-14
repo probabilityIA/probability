@@ -49,6 +49,7 @@ type OrderSummary struct {
 	Novelty                *string                `json:"novelty"`
 	IsTest                 bool                   `json:"is_test"`
 	InvoiceStatus          string                 `json:"invoice_status"`
+	CodCutConfirmed        bool                   `json:"cod_cut_confirmed"`
 	Shipment               *ShipmentSummary       `json:"shipment,omitempty"`
 	QuotedShipping         *QuotedShipping        `json:"quoted_shipping,omitempty"`
 	FreeShipping           bool                   `json:"free_shipping"`
