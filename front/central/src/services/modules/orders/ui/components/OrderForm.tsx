@@ -1053,12 +1053,19 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isCOD ? 'translate-x-6' : 'translate-x-1'}`} />
                                     </button>
                                 </div>
-                                {isCOD && (
-                                    <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                                        Se cobrara contra entrega: <strong>{formData.currency} {(formData.total_amount + formData.shipping_cost).toLocaleString()}</strong>
-                                        <span className="text-gray-400"> (producto + envio)</span>
-                                    </p>
-                                )}
+                                {isCOD && (() => {
+                                    const sumaProductoEnvio = formData.total_amount + formData.shipping_cost;
+                                    const montoCOD = formData.cod_total > 0 ? formData.cod_total : sumaProductoEnvio;
+                                    const liquidado = Math.abs(montoCOD - sumaProductoEnvio) >= 1;
+                                    return (
+                                        <p className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                                            Se cobrara contra entrega: <strong>{formData.currency} {montoCOD.toLocaleString()}</strong>
+                                            <span className="text-gray-400">
+                                                {liquidado ? ' (valor liquidado por la transportadora)' : ' (producto + envio)'}
+                                            </span>
+                                        </p>
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>
