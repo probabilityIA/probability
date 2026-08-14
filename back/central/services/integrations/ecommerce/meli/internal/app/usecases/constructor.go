@@ -28,6 +28,7 @@ type IMeliUseCase interface {
 
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
+	LoadInventoryCompare(ctx context.Context, integrationID string, businessID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
 	UpdateItemStock(ctx context.Context, integrationID, productID, itemID, variantID string, quantity int) error
 
 	PushOrderStatus(ctx context.Context, integrationID string, shipmentID int64, status string) error

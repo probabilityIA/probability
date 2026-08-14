@@ -16,6 +16,12 @@ export const CATEGORY_COLORS: Record<string, string> = {
 export { channelBrand } from '@/shared/utils/channel-brand';
 export type { ChannelBrand } from '@/shared/utils/channel-brand';
 
+export interface CompareInventoryOptions {
+    source?: 'snapshot';
+    only_diff?: boolean;
+    q?: string;
+}
+
 export type SyncRunKind = 'inventory' | 'products';
 
 export interface SyncRunDetail {

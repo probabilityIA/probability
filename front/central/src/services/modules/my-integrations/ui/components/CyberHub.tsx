@@ -21,8 +21,6 @@ interface CyberHubProps {
     resourceActive: Record<string, boolean>;
     onSyncClick?: () => void;
     findingsCount?: number;
-    onFindingsClick?: () => void;
-    onCompareClick?: () => void;
     ownStats?: IntegrationStatsItem | null;
     lastOrderAt?: string;
 }
@@ -73,10 +71,10 @@ function relativeTime(iso?: string): string | null {
 }
 
 export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function CyberHub(
-    { integrations, resourceActive, onSyncClick, findingsCount = 0, onFindingsClick, onCompareClick, ownStats, lastOrderAt },
+    { integrations, resourceActive, onSyncClick, findingsCount = 0, ownStats, lastOrderAt },
     ref,
 ) {
-    const { mode, nodes, running, environment, canRun, runCurrent } = useSyncActivity();
+    const { mode, nodes, running, environment, setEnvironment, setView, canRun, runCurrent } = useSyncActivity();
     const states = Object.values(nodes);
     const busy = mode !== 'idle' || states.some(s => s === 'active' || s === 'scan');
     const finished = !busy && states.length > 0 && states.every(s => s === 'done' || s === 'error');
@@ -87,7 +85,12 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
             : finished
                 ? 'Sincronizacion completada'
                 : '';
-    const comparaInventario = environment === 'inventory' && Boolean(onCompareClick);
+    const vaAlInforme = environment === 'inventory' || environment === 'data';
+    const etiquetaBoton = environment === 'inventory'
+        ? 'Comparar'
+        : environment === 'data'
+            ? 'Revisar'
+            : 'Iniciar';
     const chargeColor = (mode === 'products' || (mode === 'idle' && environment === 'products')) ? '#8b5cf6' : '#22d3ee';
     const statusColor = mode === 'inventory'
         ? 'text-blue-600 dark:text-blue-400'
@@ -209,43 +212,43 @@ export const CyberHub = forwardRef<HTMLDivElement, CyberHubProps>(function Cyber
                             ? ({ '--charge': chargeColor, animation: 'cyber-charge 1s ease-in-out infinite' } as CSSProperties)
                             : undefined}
                     >
-                        {onFindingsClick && (
-                            <button
-                                onClick={onFindingsClick}
-                                title={
-                                    findingsCount > 0
-                                        ? `Resumen general y ${findingsCount} ${findingsCount === 1 ? 'hallazgo' : 'hallazgos'} en tus integraciones`
-                                        : 'Resumen general de tus integraciones'
-                                }
-                                aria-label="Ver el resumen general de tus integraciones"
-                                className={`absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border-2 border-white px-3 py-1 text-[11px] font-bold shadow-lg transition-transform hover:scale-105 dark:border-gray-900 ${
-                                    findingsCount > 0 ? 'bg-amber-500 text-white' : 'bg-gray-700 text-white dark:bg-gray-600'
-                                }`}
-                                style={findingsCount > 0 ? { animation: 'cyber-alert-pulse 2s ease-in-out infinite' } : undefined}
-                            >
-                                Resumen general
-                                {findingsCount > 0 && (
-                                    <span className="rounded-full bg-white/25 px-1.5 text-[10px] font-black">{findingsCount}</span>
-                                )}
-                            </button>
-                        )}
+                        <button
+                            onClick={() => { setEnvironment(null); setView('informe'); }}
+                            title={
+                                findingsCount > 0
+                                    ? `Resumen general y ${findingsCount} ${findingsCount === 1 ? 'hallazgo' : 'hallazgos'} en tus integraciones`
+                                    : 'Resumen general de tus integraciones'
+                            }
+                            aria-label="Ver el resumen general de tus integraciones"
+                            className={`absolute -top-3.5 left-1/2 flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border-2 border-white px-3 py-1 text-[11px] font-bold shadow-lg transition-transform hover:scale-105 dark:border-gray-900 ${
+                                findingsCount > 0 ? 'bg-amber-500 text-white' : 'bg-gray-700 text-white dark:bg-gray-600'
+                            }`}
+                            style={findingsCount > 0 ? { animation: 'cyber-alert-pulse 2s ease-in-out infinite' } : undefined}
+                        >
+                            Resumen general
+                            {findingsCount > 0 && (
+                                <span className="rounded-full bg-white/25 px-1.5 text-[10px] font-black">{findingsCount}</span>
+                            )}
+                        </button>
                         <span className="text-[10px] uppercase tracking-[0.4em] text-gray-400 dark:text-gray-500">nucleo</span>
                         <span className="text-[23px] font-bold leading-none tracking-tight text-gray-800 dark:text-white">
                             Probability
                         </span>
                         <button
-                            onClick={comparaInventario ? onCompareClick : (onSyncClick ?? runCurrent)}
-                            disabled={running || (!comparaInventario && !onSyncClick && !canRun)}
+                            onClick={vaAlInforme ? () => setView('informe') : (onSyncClick ?? runCurrent)}
+                            disabled={running || (!vaAlInforme && !onSyncClick && !canRun)}
                             title={
                                 environment === 'products'
                                     ? 'Iniciar comparacion de productos'
-                                    : comparaInventario
+                                    : environment === 'inventory'
                                         ? 'Comparar el stock de cada canal contra Probability'
-                                        : 'Elige arriba que quieres sincronizar'
+                                        : environment === 'data'
+                                            ? 'Ver que dato puede entrar a Probability desde cada canal'
+                                            : 'Elige arriba que quieres sincronizar'
                             }
                             className="mt-1 flex h-9 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50/70 px-6 text-[12.5px] font-bold uppercase tracking-[0.12em] text-cyan-600 transition-all hover:scale-105 hover:bg-cyan-100 hover:shadow-[0_0_16px_rgba(34,211,238,0.55)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100 disabled:hover:shadow-none dark:border-cyan-500/40 dark:bg-cyan-900/30 dark:text-cyan-300 dark:hover:bg-cyan-900/50"
                         >
-                            <span className={busy ? 'animate-pulse' : ''}>{comparaInventario ? 'Comparar' : 'Iniciar'}</span>
+                            <span className={busy ? 'animate-pulse' : ''}>{etiquetaBoton}</span>
                         </button>
                     </div>
                 </div>

@@ -28,12 +28,13 @@ func (r *ProductReadRepository) ListProductsByBusiness(ctx context.Context, busi
 		SKU           string
 		Barcode       string
 		Name          string
+		ImageURL      string
 		StockQuantity int
 	}
 
 	err := r.db.Conn(ctx).
 		Table("products p").
-		Select(`p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.name,
+		Select(`p.id, p.sku, COALESCE(p.barcode, '') AS barcode, p.name, COALESCE(p.image_url, '') AS image_url,
 			COALESCE((SELECT SUM(il.quantity) FROM inventory_levels il
 				WHERE il.product_id = p.id AND il.deleted_at IS NULL), 0) AS stock_quantity`).
 		Where("p.business_id = ? AND p.deleted_at IS NULL AND p.is_active = ?", businessID, true).
@@ -50,6 +51,7 @@ func (r *ProductReadRepository) ListProductsByBusiness(ctx context.Context, busi
 			SKU:           row.SKU,
 			Barcode:       row.Barcode,
 			Name:          row.Name,
+			ImageURL:      row.ImageURL,
 			StockQuantity: row.StockQuantity,
 		})
 	}

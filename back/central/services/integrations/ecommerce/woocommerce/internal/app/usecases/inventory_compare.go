@@ -137,6 +137,7 @@ func (uc *wooCommerceUseCase) CompareInventory(ctx context.Context, integrationI
 			ProductID:         m.ProductID,
 			SKU:               m.SKU,
 			Name:              m.Name,
+			ImageURL:          m.ImageURL,
 			ExternalItemID:    m.ExternalItemID,
 			ExternalVariantID: m.ExternalVariantID,
 		}
@@ -154,5 +155,31 @@ func (uc *wooCommerceUseCase) CompareInventory(ctx context.Context, integrationI
 
 	resultado.Rows = inventorycompare.Build(items)
 	resultado.Totals = inventorycompare.Summarize(resultado.Rows)
+
+	if err := uc.productRepo.SaveCompareSnapshot(ctx, businessID, uint(integIDUint), resultado.Rows, resultado.CheckedAt); err != nil {
+		uc.logger.Warn(ctx).Err(err).
+			Uint64("integration_id", integIDUint).
+			Msg("No se pudo guardar la foto del comparativo de inventario")
+	}
+
 	return resultado, nil
+}
+
+func (uc *wooCommerceUseCase) LoadInventoryCompare(
+	ctx context.Context,
+	integrationID string,
+	businessID uint,
+	opts inventorycompare.LoadOptions,
+) (*inventorycompare.Page, error) {
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+
+	integration, err := uc.service.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("getting integration: %w", err)
+	}
+	if integration == nil || integration.BusinessID == nil || *integration.BusinessID != businessID {
+		return nil, domain.ErrIntegrationNotFound
+	}
+
+	return uc.productRepo.LoadCompareSnapshot(ctx, businessID, uint(integIDUint), opts)
 }

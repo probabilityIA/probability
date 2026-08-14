@@ -7,6 +7,7 @@ type ProductForSync struct {
 	SKU           string
 	Barcode       string
 	Name          string
+	ImageURL      string
 	StockQuantity int
 }
 

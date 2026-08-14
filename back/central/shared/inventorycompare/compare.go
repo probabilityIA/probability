@@ -18,6 +18,8 @@ type Page struct {
 	Total      int       `json:"total"`
 	TotalPages int       `json:"total_pages"`
 	CheckedAt  time.Time `json:"checked_at"`
+	NewestAt   time.Time `json:"newest_at,omitempty"`
+	FromCache  bool      `json:"from_cache"`
 }
 
 func NormalizePaging(page, pageSize int) (int, int) {
@@ -72,6 +74,7 @@ type Item struct {
 	ProductID         string
 	SKU               string
 	Name              string
+	ImageURL          string
 	ExternalItemID    string
 	ExternalVariantID string
 	ProbabilityQty    int
@@ -86,6 +89,7 @@ type Row struct {
 	ProductID         string `json:"product_id"`
 	SKU               string `json:"sku"`
 	Name              string `json:"name"`
+	ImageURL          string `json:"image_url,omitempty"`
 	ExternalItemID    string `json:"external_item_id"`
 	ExternalVariantID string `json:"external_variant_id,omitempty"`
 	ProbabilityQty    *int   `json:"probability_qty"`
@@ -107,6 +111,7 @@ func BuildRow(item Item) Row {
 		ProductID:         item.ProductID,
 		SKU:               item.SKU,
 		Name:              item.Name,
+		ImageURL:          item.ImageURL,
 		ExternalItemID:    item.ExternalItemID,
 		ExternalVariantID: item.ExternalVariantID,
 	}

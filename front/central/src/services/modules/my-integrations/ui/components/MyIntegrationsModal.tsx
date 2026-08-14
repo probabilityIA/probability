@@ -21,9 +21,9 @@ import { CyberCluster } from './CyberCluster';
 import { CyberChannelsCluster } from './CyberChannelsCluster';
 import { CyberHub } from './CyberHub';
 import { NetworkLinks, type NetworkTarget } from './NetworkLinks';
-import { SyncActivityProvider } from '../sync-activity-context';
+import { SyncActivityProvider, type HubView } from '../sync-activity-context';
 import { SyncActions } from './SyncActions';
-import { FindingsPanel } from './FindingsPanel';
+import { ReportView } from './ReportView';
 import { fetchSyncFindings } from '../../infra/repository/sync-findings';
 import type { FindingsReport } from '../../domain/types';
 
@@ -56,12 +56,11 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     const { permissions, isSuperAdmin } = usePermissions();
     const effectiveBusinessId = businessId ?? (isSuperAdmin ? null : permissions?.business_id ?? null);
     const [findings, setFindings] = useState<FindingsReport | null>(null);
-    const [showFindings, setShowFindings] = useState(false);
-    const [findingsTab, setFindingsTab] = useState<string | undefined>(undefined);
+    const [view, setView] = useState<HubView>('diagrama');
 
     useEffect(() => {
         if (!isOpen) {
-            setShowFindings(false);
+            setView('diagrama');
             return;
         }
         const controller = new AbortController();
@@ -297,6 +296,8 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
         .sort()
         .pop();
 
+    const orderSources = [...platformIntegrations, ...channelIntegrations];
+
     const internalIntegrations = internal.flatMap(cat => integrationsByCategory[cat.code] || []);
     const serviceIntegrations = services.flatMap(cat => integrationsByCategory[cat.code] || []);
     const syncableIntegrations = [...channelIntegrations, ...serviceIntegrations.filter(i => getSyncProvider(i.integration_type_id))];
@@ -324,7 +325,12 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
     );
 
     return (
-        <SyncActivityProvider integrations={syncableIntegrations} businessId={effectiveBusinessId}>
+        <SyncActivityProvider
+            integrations={syncableIntegrations}
+            businessId={effectiveBusinessId}
+            view={view}
+            onViewChange={setView}
+        >
             <Modal
                 isOpen={isOpen}
                 onClose={onClose}
@@ -348,7 +354,10 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                 size="6xl"
             >
                 <style>{HUB_KEYFRAMES}</style>
-                <div className="mx-auto" style={{ width: 'min(80rem, 92vw)', maxWidth: '100%' }}>
+                <div
+                    className="mx-auto"
+                    style={{ width: view === 'informe' ? 'min(96rem, 96vw)' : 'min(80rem, 92vw)', maxWidth: '100%' }}
+                >
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
                         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-purple-600" />
@@ -357,6 +366,14 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     <p className="py-12 text-center text-gray-500 dark:text-gray-400">
                         No hay categorias disponibles
                     </p>
+                ) : view === 'informe' ? (
+                    <ReportView
+                        businessId={effectiveBusinessId}
+                        integrations={syncableIntegrations}
+                        orderSources={orderSources}
+                        stats={stats}
+                        statsLoaded={statsLoaded}
+                    />
                 ) : (
                     <div ref={containerRef} className="relative">
                         <NetworkLinks
@@ -387,18 +404,8 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                                 ownStats={statsLoaded ? ownStats : null}
                                 lastOrderAt={lastOwnOrder}
                                 findingsCount={findings?.findings.length ?? 0}
-                                onFindingsClick={() => { setFindingsTab(undefined); setShowFindings(true); }}
-                                onCompareClick={() => { setFindingsTab('inventario'); setShowFindings(true); }}
                             />
                             </div>
-                            {showFindings && (
-                                <FindingsPanel
-                                    businessId={effectiveBusinessId}
-                                    integrations={syncableIntegrations}
-                                    initialTab={findingsTab}
-                                    onClose={() => setShowFindings(false)}
-                                />
-                            )}
                             <div className="flex flex-wrap gap-8 lg:flex-nowrap">
                                 {services.map(renderCluster)}
                             </div>

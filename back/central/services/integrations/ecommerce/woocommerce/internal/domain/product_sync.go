@@ -2,7 +2,9 @@ package domain
 
 import (
 	"context"
+	"time"
 
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 	"github.com/secamc93/probability/back/central/shared/productmatch"
 )
 
@@ -105,6 +107,7 @@ type MappedItem struct {
 	ProductID         string
 	SKU               string
 	Name              string
+	ImageURL          string
 	Barcode           string
 	ExternalItemID    string
 	ExternalVariantID string
@@ -127,4 +130,6 @@ type IProductRepository interface {
 	ListMappedItems(ctx context.Context, integrationID uint) ([]MappedItem, error)
 	GetStockForProducts(ctx context.Context, productIDs []string, warehouseIDs []uint) (map[string]int, error)
 	ERPFeedsInventory(ctx context.Context, businessID uint) (bool, error)
+	SaveCompareSnapshot(ctx context.Context, businessID, integrationID uint, rows []inventorycompare.Row, checkedAt time.Time) error
+	LoadCompareSnapshot(ctx context.Context, businessID, integrationID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
 }

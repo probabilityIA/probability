@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowRight, Filter, Loader2, RefreshCw, Search, Send } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Filter, History, Loader2, RefreshCw, Search, Send } from 'lucide-react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import {
     compararInventario,
@@ -43,6 +43,19 @@ function hora(iso: string) {
     return new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 }
 
+function fechaGuardada(iso: string) {
+    if (!iso) return 'de una comparacion anterior';
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime()) || fecha.getFullYear() < 2000) return 'de una comparacion anterior';
+    const minutos = Math.floor((Date.now() - fecha.getTime()) / 60000);
+    if (minutos < 1) return 'de hace un momento';
+    if (minutos < 60) return `de hace ${minutos} min`;
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `de hace ${horas} h`;
+    const dias = Math.floor(horas / 24);
+    return `de hace ${dias} d`;
+}
+
 function LogoCanal({ integracion, size = 20 }: { integracion: Integration; size?: number }) {
     const url = integracion.integration_type?.image_url;
     const clave = getSyncProvider(integracion.integration_type_id)?.key ?? '';
@@ -57,6 +70,28 @@ function LogoCanal({ integracion, size = 20 }: { integracion: Integration; size?
         );
     }
     return <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: channelBrand(clave).dot }} />;
+}
+
+function FotoProducto({ url }: { url?: string }) {
+    if (!url) {
+        return (
+            <span
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border text-[8.5px] italic text-gray-300 dark:text-gray-600"
+                style={{ borderColor: CARD_BORDER }}
+            >
+                sin foto
+            </span>
+        );
+    }
+    return (
+        <img
+            src={url}
+            alt=""
+            loading="lazy"
+            className="h-10 w-10 flex-shrink-0 rounded-md border bg-white object-cover"
+            style={{ borderColor: CARD_BORDER }}
+        />
+    );
 }
 
 function Cantidad({ valor }: { valor: number | null }) {
@@ -88,6 +123,32 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
     const claveCanal = canal ? getSyncProvider(canal.integration_type_id)?.key ?? '' : '';
     const esVenta = VENTAS[claveCanal] ?? true;
 
+    const [termino, setTermino] = useState('');
+
+    useEffect(() => {
+        const reloj = window.setTimeout(() => setTermino(busqueda.trim()), 350);
+        return () => window.clearTimeout(reloj);
+    }, [busqueda]);
+
+    const leerGuardado = useCallback(async (page: number) => {
+        if (!canalID || !tipoCanal) return;
+        setCargando(true);
+        setError(null);
+        try {
+            const respuesta = await compararInventario(
+                tipoCanal, canalID, businessId ?? undefined, page, undefined, tamano,
+                { source: 'snapshot', only_diff: soloCambios, q: termino },
+            );
+            setDatos(respuesta);
+            setSeleccion(new Set());
+        } catch (e) {
+            setDatos(null);
+            setError(e instanceof Error ? e.message : 'No se pudo leer la ultima comparacion guardada');
+        } finally {
+            setCargando(false);
+        }
+    }, [businessId, canalID, tipoCanal, tamano, soloCambios, termino]);
+
     const comparar = useCallback(async (page: number) => {
         if (!canalID || !tipoCanal) return;
         setCargando(true);
@@ -105,8 +166,8 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
     }, [businessId, canalID, tipoCanal, tamano]);
 
     useEffect(() => {
-        void comparar(pagina);
-    }, [comparar, pagina]);
+        void leerGuardado(pagina);
+    }, [leerGuardado, pagina]);
 
     const resultado = canalID ? results[canalID] : undefined;
     const avance = canalID ? progress[canalID] : undefined;
@@ -118,12 +179,13 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
         }
     }, [resultado, enviado, pagina, comparar]);
 
+    const guardado = datos?.from_cache === true;
     const filas = datos?.rows ?? [];
-    const termino = busqueda.trim().toLowerCase();
-    const visibles = filas.filter(f => {
+    const buscado = termino.toLowerCase();
+    const visibles = guardado ? filas : filas.filter(f => {
         if (soloCambios && f.action !== 'update') return false;
-        if (!termino) return true;
-        return f.sku.toLowerCase().includes(termino) || f.name.toLowerCase().includes(termino);
+        if (!buscado) return true;
+        return f.sku.toLowerCase().includes(buscado) || f.name.toLowerCase().includes(buscado);
     });
     const seleccionables = filas.filter(f => f.action !== 'skip');
     const cambian = filas.filter(f => f.action === 'update');
@@ -211,15 +273,16 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                 <button
                     onClick={() => comparar(pagina)}
                     disabled={cargando || !canalID}
+                    title={`Le pregunta a ${canal?.name ?? 'el canal'} cuanto stock tiene ahora mismo, de a ${tamano} productos`}
                     className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors hover:opacity-80 disabled:opacity-50"
                     style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
                 >
                     {cargando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                    Volver a comparar
+                    Comparar ahora
                 </button>
             </div>
 
-            {datos && (
+            {datos && (datos.totals.total > 0 || !guardado) && (
                 <div className="flex flex-wrap items-center gap-2 text-[11.5px]">
                     <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                         {datos.totals.to_update} se actualizarian
@@ -230,7 +293,17 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                         {datos.totals.skipped} no aplican
                     </span>
-                    <span className="text-gray-400">Stock del canal leido a las {hora(datos.checked_at)}</span>
+                    {guardado ? (
+                        <span
+                            className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-200"
+                            title="Estos numeros salen de la ultima comparacion guardada, no se le pregunto al canal ahora"
+                        >
+                            <History size={11} />
+                            Foto guardada {fechaGuardada(datos.checked_at)} · vuelve a comparar para confirmar
+                        </span>
+                    ) : (
+                        <span className="text-gray-400">Stock del canal leido a las {hora(datos.checked_at)}</span>
+                    )}
                 </div>
             )}
 
@@ -292,13 +365,18 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                         />
                                     </td>
                                     <td className="px-3 py-2 align-top">
-                                        <span className="mb-0.5 block max-w-[24rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={fila.name}>
-                                            {fila.name || 'Sin nombre'}
-                                        </span>
-                                        <span className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
-                                            <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
-                                            <span className="font-semibold" style={{ color: ACCENT }}>{fila.sku}</span>
-                                        </span>
+                                        <div className="flex gap-2">
+                                            <FotoProducto url={fila.image_url} />
+                                            <div className="min-w-0 flex-1">
+                                                <span className="mb-0.5 block max-w-[22rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={fila.name}>
+                                                    {fila.name || 'Sin nombre'}
+                                                </span>
+                                                <span className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
+                                                    <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
+                                                    <span className="font-semibold" style={{ color: ACCENT }}>{fila.sku}</span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td className="px-3 py-2 text-center align-top text-[12px] text-gray-800 dark:text-gray-100">
                                         <Cantidad valor={fila.probability_qty} />
@@ -334,7 +412,9 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                 {cargando && (
                     <p className="flex items-center justify-center gap-2 py-10 text-[12px] text-gray-500">
                         <Loader2 size={14} className="animate-spin" />
-                        Preguntandole a {canal?.name ?? 'el canal'} cuanto stock tiene ahora mismo
+                        {guardado
+                            ? 'Leyendo la ultima comparacion guardada'
+                            : `Preguntandole a ${canal?.name ?? 'el canal'} cuanto stock tiene ahora mismo`}
                     </p>
                 )}
 
@@ -347,11 +427,13 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
 
                 {!cargando && !error && visibles.length === 0 && (
                     <p className="px-3 py-10 text-center text-[12px] italic text-gray-400">
-                        {filas.length === 0
-                            ? 'Este canal no tiene productos asociados para comparar.'
-                            : soloCambios
-                                ? 'En este grupo todo esta igual, no hay nada que enviar.'
-                                : 'Ningun producto de este grupo coincide con la busqueda.'}
+                        {filas.length === 0 && guardado && (datos?.totals.total ?? 0) === 0
+                            ? 'Todavia no hay una comparacion guardada de este canal. Dale a "Comparar ahora" para preguntarle su stock.'
+                            : filas.length === 0
+                                ? 'Este canal no tiene productos asociados para comparar.'
+                                : soloCambios
+                                    ? 'En este grupo todo esta igual, no hay nada que enviar.'
+                                    : 'Ningun producto de este grupo coincide con la busqueda.'}
                     </p>
                 )}
             </div>

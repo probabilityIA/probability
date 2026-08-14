@@ -72,6 +72,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 		ProductID         string
 		SKU               string
 		Name              string
+		ImageURL          string
 		Barcode           string
 		ExternalProductID string
 		ExternalVariantID string
@@ -80,7 +81,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 	}
 	err := r.db.Conn(ctx).
 		Table("product_business_integrations AS pbi").
-		Select(`pbi.product_id, p.sku, COALESCE(p.name, '') AS name, COALESCE(p.barcode, '') AS barcode, pbi.external_product_id,
+		Select(`pbi.product_id, p.sku, COALESCE(p.name, '') AS name, COALESCE(p.image_url, '') AS image_url, COALESCE(p.barcode, '') AS barcode, pbi.external_product_id,
 			COALESCE(pbi.external_variant_id, '') AS external_variant_id,
 			COALESCE(pbi.external_sku, '') AS external_sku,
 			COALESCE(pbi.external_barcode, '') AS external_barcode`).
@@ -97,6 +98,7 @@ func (r *ProductRepository) ListMappedItems(ctx context.Context, integrationID u
 			ProductID:         row.ProductID,
 			SKU:               row.SKU,
 			Name:              row.Name,
+			ImageURL:          row.ImageURL,
 			Barcode:           row.Barcode,
 			ExternalItemID:    row.ExternalProductID,
 			ExternalVariantID: row.ExternalVariantID,

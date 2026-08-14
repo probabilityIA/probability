@@ -1,6 +1,11 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
+)
 
 const LogisticFulfillment = "fulfillment"
 
@@ -13,6 +18,7 @@ type MappedItem struct {
 	ProductID         string
 	SKU               string
 	Name              string
+	ImageURL          string
 	Barcode           string
 	ExternalItemID    string
 	ExternalVariantID string
@@ -43,4 +49,6 @@ type IInventoryRepository interface {
 	UpdateLogisticType(ctx context.Context, integrationID uint, externalItemID, logisticType string) error
 	MarkPushedQty(ctx context.Context, integrationID uint, productID, variantID string, quantity int) error
 	GetPushState(ctx context.Context, integrationID uint, productID, variantID string) (*PushState, error)
+	SaveCompareSnapshot(ctx context.Context, businessID, integrationID uint, rows []inventorycompare.Row, checkedAt time.Time) error
+	LoadCompareSnapshot(ctx context.Context, businessID, integrationID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
 }

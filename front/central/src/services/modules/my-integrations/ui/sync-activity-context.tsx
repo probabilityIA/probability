@@ -18,7 +18,8 @@ import { getSyncProvider, GLOBAL_INVENTORY_EVENT_TYPES } from './providers';
 
 export type SyncNodeState = 'idle' | 'queued' | 'active' | 'scan' | 'done' | 'error';
 export type SyncMode = 'idle' | 'inventory' | 'products';
-export type SyncEnvironment = 'inventory' | 'products' | 'invoicing';
+export type SyncEnvironment = 'inventory' | 'products' | 'data' | 'invoicing';
+export type HubView = 'diagrama' | 'informe';
 
 export interface InventoryResult {
     kind: 'inventory';
@@ -91,6 +92,8 @@ interface SyncActivityValue {
     details: Record<number, SyncDetailItem[]>;
     environment: SyncEnvironment | null;
     setEnvironment: (env: SyncEnvironment | null) => void;
+    view: HubView;
+    setView: (view: HubView) => void;
     canRun: boolean;
     lastRuns: Record<number, Partial<Record<SyncRunKind, SyncRunRecord>>>;
     actionBusy: Record<number, ProductActionKey | null>;
@@ -161,9 +164,11 @@ interface ProviderProps {
     children: ReactNode;
     integrations: Integration[];
     businessId: number | null;
+    view: HubView;
+    onViewChange: (view: HubView) => void;
 }
 
-export function SyncActivityProvider({ children, integrations, businessId }: ProviderProps) {
+export function SyncActivityProvider({ children, integrations, businessId, view, onViewChange }: ProviderProps) {
     const [mode, setMode] = useState<SyncMode>('idle');
     const [running, setRunning] = useState(false);
     const [nodes, setNodes] = useState<Record<number, SyncNodeState>>({});
@@ -667,6 +672,8 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         details,
         environment,
         setEnvironment,
+        view,
+        setView: onViewChange,
         canRun,
         lastRuns,
         actionBusy,
@@ -677,7 +684,7 @@ export function SyncActivityProvider({ children, integrations, businessId }: Pro
         runInventory,
         runProducts,
         reset,
-    }), [mode, businessId, running, nodes, progress, results, details, environment, canRun, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, runCurrent, runInventory, runProducts, reset]);
+    }), [mode, businessId, running, nodes, progress, results, details, environment, view, onViewChange, canRun, lastRuns, actionBusy, actionResult, runProductAction, runInventoryOne, runCurrent, runInventory, runProducts, reset]);
 
     return <SyncActivityContext.Provider value={value}>{children}</SyncActivityContext.Provider>;
 }
@@ -692,6 +699,8 @@ const EMPTY: SyncActivityValue = {
     details: {},
     environment: null,
     setEnvironment: () => undefined,
+    view: 'diagrama',
+    setView: () => undefined,
     canRun: false,
     lastRuns: {},
     actionBusy: {},

@@ -12,11 +12,14 @@ import {
     type DataSummaryRow,
 } from '../../infra/repository/channel-data';
 import { ChannelDataApplyModal, fechaCorta, type ObjetivoDato } from './ChannelDataApplyModal';
+import { ChannelLogo } from './ChannelLogo';
 import { channelBrand } from '../../domain/types';
+import type { Integration } from '@/services/integrations/core/domain/types';
 import { CARD_BORDER } from '../panel-theme';
 
 interface ChannelDataTableProps {
     businessId: number | null;
+    integrations: Integration[];
 }
 
 function BotonCanal({ cell, onPick }: { cell: DataSummaryCell; onPick: (mode: DataMode) => void }) {
@@ -50,7 +53,7 @@ function BotonCanal({ cell, onPick }: { cell: DataSummaryCell; onPick: (mode: Da
     );
 }
 
-export function ChannelDataTable({ businessId }: ChannelDataTableProps) {
+export function ChannelDataTable({ businessId, integrations }: ChannelDataTableProps) {
     const [rows, setRows] = useState<DataSummaryRow[]>([]);
     const [snapshotAt, setSnapshotAt] = useState<string | undefined>(undefined);
     const [loading, setLoading] = useState(true);
@@ -74,6 +77,10 @@ export function ChannelDataTable({ businessId }: ChannelDataTableProps) {
     }, [cargar]);
 
     const canales = rows[0]?.cells ?? [];
+    const logoPorCanal: Record<number, string | undefined> = {};
+    for (const integracion of integrations) {
+        logoPorCanal[integracion.id] = integracion.integration_type?.image_url;
+    }
 
     const deshacer = async () => {
         if (!ultimo) return;
@@ -115,7 +122,7 @@ export function ChannelDataTable({ businessId }: ChannelDataTableProps) {
                             {canales.map(cell => (
                                 <th key={cell.integration_id} className="min-w-[11rem] px-3 py-2">
                                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[11.5px] font-semibold text-gray-700 dark:text-gray-200">
-                                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: channelBrand(cell.channel_code).dot }} />
+                                        <ChannelLogo url={logoPorCanal[cell.integration_id]} code={cell.channel_code} />
                                         {cell.integration_name}
                                     </span>
                                 </th>

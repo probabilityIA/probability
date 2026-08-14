@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -168,6 +169,14 @@ func (m *mockInventoryRepo) GetPushState(_ context.Context, _ uint, productID, v
 	m.stateQueries = append(m.stateQueries, productID+"|"+variantID)
 	m.mu.Unlock()
 	return m.pushState, m.pushStateErr
+}
+
+func (m *mockInventoryRepo) SaveCompareSnapshot(context.Context, uint, uint, []inventorycompare.Row, time.Time) error {
+	return nil
+}
+
+func (m *mockInventoryRepo) LoadCompareSnapshot(context.Context, uint, uint, inventorycompare.LoadOptions) (*inventorycompare.Page, error) {
+	return &inventorycompare.Page{}, nil
 }
 
 func (m *mockInventoryRepo) markedQty() []markCall {

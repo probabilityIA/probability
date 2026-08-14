@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { CompareInventoryOptions } from '../domain/types';
 import { syncShopifyInventoryAction, reconcileShopifyProductsAction, associateShopifyProductsAction, applyShopifyProductsAction } from '@/services/integrations/ecommerce/shopify/infra/actions';
 import { syncMeliInventoryAction, compareMeliInventoryAction, reconcileMeliProductsAction, associateMeliProductsAction, applyMeliProductsAction } from '@/services/integrations/ecommerce/mercadolibre/infra/actions';
 import { syncWooInventoryAction, compareWooInventoryAction, reconcileWooProductsAction, associateWooProductsAction, applyWooProductsAction } from '@/services/integrations/ecommerce/woocommerce/infra/actions';
@@ -33,7 +34,7 @@ export interface SyncProvider {
     inventoryEventPrefix: string;
     productEventPrefix?: string;
     syncInventory: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
-    compareInventory?: (integrationId: number, businessId?: number, page?: number, pageSize?: number, skus?: string[]) => Promise<unknown>;
+    compareInventory?: (integrationId: number, businessId?: number, page?: number, pageSize?: number, skus?: string[], opciones?: CompareInventoryOptions) => Promise<unknown>;
     reconcileProducts: (integrationId: number, businessId?: number) => Promise<unknown>;
     associateProducts?: (integrationId: number, businessId?: number, skus?: string[]) => Promise<unknown>;
     apply: ProductApplyActions;

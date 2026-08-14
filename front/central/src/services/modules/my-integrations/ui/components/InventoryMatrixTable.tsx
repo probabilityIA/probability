@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowRight, Filter, Loader2, RefreshCw, Search, Send } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Ban, Filter, History, Loader2, RefreshCw, Search, Send } from 'lucide-react';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { fetchMatchMatrix, type MatrixRow } from '../../infra/repository/sync-findings';
 import { compararInventario, type CompareRow } from '../../infra/repository/inventory-compare';
@@ -21,6 +21,34 @@ const NO_VENTA: Record<string, boolean> = { siigo: true };
 
 type PorCanal = Record<number, Record<string, CompareRow>>;
 
+type FotoCanal = Record<number, { guardada: boolean; cuando: string }>;
+
+function FotoProducto({ url }: { url?: string }) {
+    if (!url) {
+        return (
+            <span
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border text-[8.5px] italic text-gray-300 dark:text-gray-600"
+                style={{ borderColor: CARD_BORDER }}
+            >
+                sin foto
+            </span>
+        );
+    }
+    return (
+        <img
+            src={url}
+            alt=""
+            loading="lazy"
+            className="h-10 w-10 flex-shrink-0 rounded-md border bg-white object-cover"
+            style={{ borderColor: CARD_BORDER }}
+        />
+    );
+}
+
+function estaEnCanal(producto: MatrixRow, integrationID: number): boolean {
+    return producto.cells.some(celda => celda.integration_id === integrationID && celda.present);
+}
+
 function LogoCanal({ integracion }: { integracion: Integration }) {
     const url = integracion.integration_type?.image_url;
     const clave = getSyncProvider(integracion.integration_type_id)?.key ?? '';
@@ -37,8 +65,84 @@ function LogoCanal({ integracion }: { integracion: Integration }) {
     return <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: channelBrand(clave).dot }} />;
 }
 
-function Celda({ fila }: { fila?: CompareRow }) {
-    if (!fila) return <span className="text-[11px] text-gray-300 dark:text-gray-600">—</span>;
+function edad(iso: string) {
+    if (!iso) return '';
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime()) || fecha.getFullYear() < 2000) return '';
+    const minutos = Math.floor((Date.now() - fecha.getTime()) / 60000);
+    if (minutos < 1) return 'hace un momento';
+    if (minutos < 60) return `hace ${minutos} min`;
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `hace ${horas} h`;
+    return `hace ${Math.floor(horas / 24)} d`;
+}
+
+function EstadoFoto({
+    foto,
+    onComparar,
+    ocupado,
+}: {
+    foto?: { guardada: boolean; cuando: string };
+    onComparar: () => void;
+    ocupado: boolean;
+}) {
+    const guardada = foto?.guardada !== false;
+    const cuando = edad(foto?.cuando ?? '');
+    return (
+        <button
+            onClick={onComparar}
+            disabled={ocupado}
+            title={!guardada
+                ? 'Recien consultado. Clic para volver a preguntar'
+                : cuando === ''
+                    ? 'Este canal no tiene comparacion guardada. Clic para preguntarle su stock ahora'
+                    : 'Estos numeros son de la ultima comparacion guardada. Clic para preguntarle el stock a este canal ahora'}
+            className={`mx-auto mt-1 flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9.5px] font-bold transition-colors disabled:opacity-40 ${
+                !guardada
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-900/25 dark:text-emerald-200'
+                    : cuando === ''
+                        ? 'border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                        : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-900/25 dark:text-amber-200'
+            }`}
+        >
+            {guardada ? <History size={9} /> : <RefreshCw size={9} />}
+            {!guardada ? 'recien leido' : cuando === '' ? 'sin comparar' : `guardado ${cuando}`}
+        </button>
+    );
+}
+
+function Celda({ fila, publicado, comparado }: { fila?: CompareRow; publicado: boolean; comparado: boolean }) {
+    if (!fila) {
+        if (!publicado) {
+            return (
+                <span
+                    className="inline-flex items-center gap-1 text-[10.5px] italic text-gray-400 dark:text-gray-500"
+                    title="Segun el comparador de productos, este producto no esta publicado en este canal"
+                >
+                    <Ban size={9} />
+                    no esta aqui
+                </span>
+            );
+        }
+        if (!comparado) {
+            return (
+                <span
+                    className="text-[10.5px] italic text-gray-300 dark:text-gray-600"
+                    title="Esta publicado en este canal, pero todavia no se ha comparado su stock"
+                >
+                    sin comparar
+                </span>
+            );
+        }
+        return (
+            <span
+                className="text-[10.5px] italic text-amber-600 dark:text-amber-400"
+                title="Esta publicado en este canal pero la comparacion no lo devolvio. Vuelve a comparar este canal"
+            >
+                sin dato
+            </span>
+        );
+    }
 
     if (fila.action === 'update') {
         return (
@@ -86,15 +190,17 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
     const [enviando, setEnviando] = useState(false);
     const [barriendo, setBarriendo] = useState(false);
     const [avanceBarrido, setAvanceBarrido] = useState({ grupo: 0, grupos: 0 });
+    const [fotos, setFotos] = useState<FotoCanal>({});
     const cortar = useRef(false);
 
-    const leerGrupo = useCallback(async (page: number) => {
+    const leerGrupo = useCallback(async (page: number, vivos?: Set<number>) => {
         const matriz = await fetchMatchMatrix(businessId ?? undefined, page, {}, undefined, tamano);
         const skus = matriz.rows.map(r => r.sku).filter(Boolean);
-        if (skus.length === 0) return { matriz, mapa: {} as PorCanal };
+        if (skus.length === 0) return { matriz, mapa: {} as PorCanal, fotos: {} as FotoCanal };
 
         const lecturas = await Promise.all(
             canales.map(async canal => {
+                const enVivo = vivos?.has(canal.id) === true;
                 try {
                     const respuesta = await compararInventario(
                         canal.integration_type_id,
@@ -102,31 +208,51 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                         businessId ?? undefined,
                         1,
                         skus,
+                        undefined,
+                        enVivo ? undefined : { source: 'snapshot' },
                     );
-                    return [canal.id, respuesta.rows] as const;
+                    return [canal.id, respuesta.rows, respuesta.from_cache === true, respuesta.checked_at] as const;
                 } catch {
-                    return [canal.id, [] as CompareRow[]] as const;
+                    return [canal.id, [] as CompareRow[], !enVivo, ''] as const;
                 }
             }),
         );
 
         const mapa: PorCanal = {};
-        for (const [id, filas] of lecturas) {
+        const fotos: FotoCanal = {};
+        for (const [id, filas, deCache, cuando] of lecturas) {
             mapa[id] = Object.fromEntries(filas.map(f => [f.sku, f]));
+            fotos[id] = { guardada: deCache, cuando };
         }
-        return { matriz, mapa };
+        return { matriz, mapa, fotos };
     }, [businessId, canales, tamano]);
 
-    const comparar = useCallback(async (page: number) => {
+    const compararCanal = useCallback(async (canalID: number) => {
+        setCargando(true);
+        setError(null);
+        try {
+            const { mapa, fotos } = await leerGrupo(pagina, new Set([canalID]));
+            setPorCanal(previo => ({ ...previo, [canalID]: mapa[canalID] ?? {} }));
+            setFotos(previo => ({ ...previo, [canalID]: fotos[canalID] ?? { guardada: false, cuando: '' } }));
+            setLeidoA(new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'No se pudo comparar el inventario');
+        } finally {
+            setCargando(false);
+        }
+    }, [leerGrupo, pagina]);
+
+    const comparar = useCallback(async (page: number, vivos?: Set<number>) => {
         setCargando(true);
         setError(null);
         setSeleccion(new Set());
         try {
-            const { matriz, mapa } = await leerGrupo(page);
+            const { matriz, mapa, fotos: foto } = await leerGrupo(page, vivos);
             setProductos(matriz.rows);
             setTotalPaginas(matriz.total_pages || 1);
             setTotal(matriz.total);
             setPorCanal(mapa);
+            setFotos(foto);
             setLeidoA(new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
         } catch (e) {
             setError(e instanceof Error ? e.message : 'No se pudo comparar el inventario');
@@ -150,7 +276,8 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                 if (cortar.current) break;
                 setAvanceBarrido({ grupo: page, grupos });
 
-                const { matriz, mapa } = await leerGrupo(page);
+                const { matriz, mapa, fotos: foto } = await leerGrupo(page);
+                setFotos(previo => ({ ...previo, ...foto }));
                 grupos = matriz.total_pages || grupos;
                 setTotal(matriz.total);
                 setTotalPaginas(matriz.total_pages || grupos);
@@ -224,9 +351,20 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
         <div className="flex min-h-0 flex-1 flex-col gap-2">
             <p className="text-[12px] text-gray-500 dark:text-gray-400">
                 Una fila por producto. Se lee de izquierda a derecha: primero el ERP que te sirve de origen de inventario,
-                despues lo que tiene Probability, y despues cada canal de venta. Le preguntamos a cada uno cuanto stock
-                tiene <span className="font-semibold text-gray-600 dark:text-gray-300">ahora mismo</span>, de a {tamano} productos.
-                La flecha muestra en cuanto quedaria el canal si lo envias.
+                despues lo que tiene Probability, y despues cada canal de venta. Arranca con la
+                <span className="font-semibold text-amber-700 dark:text-amber-300"> ultima comparacion guardada</span>, para no
+                pegarle a la API de cada canal cada vez que abres. Usa el boton bajo cada canal para preguntarle su stock
+                ahora mismo. La flecha muestra en cuanto quedaria el canal si lo envias.
+            </p>
+
+            <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-400 dark:text-gray-500">
+                <span className="inline-flex items-center gap-1">
+                    <Ban size={9} />
+                    <span className="italic">no esta aqui</span>: el producto no esta publicado en ese canal (sale del comparador de productos)
+                </span>
+                <span className="inline-flex items-center gap-1">
+                    <span className="italic">sin comparar</span>: si esta publicado, pero todavia no le hemos preguntado su stock
+                </span>
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -272,13 +410,14 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                 ))}
 
                 <button
-                    onClick={() => comparar(pagina)}
+                    onClick={() => comparar(pagina, new Set(canales.map(canal => canal.id)))}
                     disabled={cargando}
+                    title="Le pregunta el stock a todos los canales de este grupo"
                     className="ml-auto inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-semibold transition-colors hover:opacity-80 disabled:opacity-50"
                     style={{ borderColor: ACCENT_BORDER, backgroundColor: ACCENT_SOFT, color: ACCENT }}
                 >
                     {cargando ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                    Volver a comparar
+                    Comparar todos ahora
                 </button>
                 {leidoA && <span className="text-[11px] text-gray-400">Stock leido a las {leidoA}</span>}
             </div>
@@ -308,6 +447,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                                             ERP origen
                                         </span>
                                     </span>
+                                    <EstadoFoto foto={fotos[canal.id]} onComparar={() => void compararCanal(canal.id)} ocupado={cargando || barriendo} />
                                 </th>
                             ))}
                             <th className="w-28 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
@@ -319,6 +459,7 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                                         <LogoCanal integracion={canal} />
                                         {canal.name}
                                     </span>
+                                    <EstadoFoto foto={fotos[canal.id]} onComparar={() => void compararCanal(canal.id)} ocupado={cargando || barriendo} />
                                 </th>
                             ))}
                         </tr>
@@ -345,17 +486,26 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                                         />
                                     </td>
                                     <td className="px-3 py-2 align-top">
-                                        <span className="mb-0.5 block max-w-[22rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={producto.name}>
-                                            {producto.name || 'Sin nombre'}
-                                        </span>
-                                        <span className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
-                                            <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
-                                            <span className="font-semibold" style={{ color: ACCENT }}>{producto.sku}</span>
-                                        </span>
+                                        <div className="flex gap-2">
+                                            <FotoProducto url={producto.image_url} />
+                                            <div className="min-w-0 flex-1">
+                                                <span className="mb-0.5 block max-w-[20rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={producto.name}>
+                                                    {producto.name || 'Sin nombre'}
+                                                </span>
+                                                <span className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
+                                                    <span className="w-6 flex-shrink-0 text-gray-400">sku</span>
+                                                    <span className="font-semibold" style={{ color: ACCENT }}>{producto.sku}</span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </td>
                                     {origenes.map(canal => (
                                         <td key={canal.id} className="px-3 py-2 text-center align-top">
-                                            <Celda fila={porCanal[canal.id]?.[producto.sku]} />
+                                            <Celda
+                                                fila={porCanal[canal.id]?.[producto.sku]}
+                                                publicado={estaEnCanal(producto, canal.id)}
+                                                comparado={Boolean(porCanal[canal.id])}
+                                            />
                                         </td>
                                     ))}
                                     <td className="px-3 py-2 text-center align-top text-[12px] font-semibold tabular-nums text-gray-800 dark:text-gray-100">
@@ -363,7 +513,11 @@ export function InventoryMatrixTable({ businessId, integrations }: InventoryMatr
                                     </td>
                                     {ventas.map(canal => (
                                         <td key={canal.id} className="px-3 py-2 text-center align-top">
-                                            <Celda fila={porCanal[canal.id]?.[producto.sku]} />
+                                            <Celda
+                                                fila={porCanal[canal.id]?.[producto.sku]}
+                                                publicado={estaEnCanal(producto, canal.id)}
+                                                comparado={Boolean(porCanal[canal.id])}
+                                            />
                                         </td>
                                     ))}
                                 </tr>

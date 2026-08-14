@@ -1,5 +1,7 @@
 'use server';
 
+import type { CompareInventoryOptions } from '@/services/modules/my-integrations/domain/types';
+
 import { cookies } from 'next/headers';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -39,10 +41,13 @@ export async function syncSiigoInventoryAction(integrationId: number, businessId
     return postWithAuth('/invoicing/inventory/sync', body);
 }
 
-export async function compareSiigoInventoryAction(integrationId: number, businessId?: number, page = 1, pageSize = 100, skus?: string[]) {
+export async function compareSiigoInventoryAction(integrationId: number, businessId?: number, page = 1, pageSize = 100, skus?: string[], opciones?: CompareInventoryOptions) {
     const body: Record<string, unknown> = { integration_id: integrationId, page, page_size: pageSize };
     if (businessId) body.business_id = businessId;
     if (skus && skus.length > 0) body.skus = skus;
+    if (opciones?.source) body.source = opciones.source;
+    if (opciones?.only_diff) body.only_diff = true;
+    if (opciones?.q) body.q = opciones.q;
     return postWithAuth('/siigo/inventory/compare', body);
 }
 

@@ -28,6 +28,7 @@ type IWooCommerceUseCase interface {
 
 	SyncInventory(ctx context.Context, integrationID string, businessID uint, correlationID string, skus ...string) error
 	CompareInventory(ctx context.Context, integrationID string, businessID uint, page, pageSize int, skus ...string) (*inventorycompare.Page, error)
+	LoadInventoryCompare(ctx context.Context, integrationID string, businessID uint, opts inventorycompare.LoadOptions) (*inventorycompare.Page, error)
 
 	RequestProductSync(ctx context.Context, integrationID uint, businessID uint) (string, error)
 	SyncProducts(ctx context.Context, integrationID string, businessID uint, correlationID string) error

@@ -48,5 +48,7 @@ entorno desde cero si algun dia hace falta.
 | 2026-08-12 | `migrateProductFieldProvenance` | Crea `product_field_origins` (estado actual: quien fue el ultimo en escribir cada campo de cada producto, canal o usuario) y `product_field_changes` (historial append-only con el valor anterior, tope 5 por producto+campo, retencion 12 meses). Base del motor de comparacion de datos entre canales: sin esto no se puede advertir "300 de estos productos vienen de WooCommerce" ni deshacer una aplicacion masiva | produccion |
 | 2026-08-12 | `migrateProductFieldProvenance` (2da parte) | Agrego `channel_snapshot` (jsonb) y `snapshot_at` a `product_business_integrations`: la foto de como se ve el producto en cada canal, tomada en la comparacion. Sin esto, abrir el diff de un producto tendria que pegarle en vivo a la API de cada canal | produccion |
 
+| 2026-08-13 | `migrateInventoryCompareSnapshot` | Crea `inventory_compare_snapshots`: la foto del ultimo comparativo de inventario por integracion (stock de Probability vs stock del canal, accion, motivo e imagen del producto). Sin esto, abrir "Sincronizar inventario" le pega en vivo a la API de todos los canales cada vez y quema rate limit | produccion |
+
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.

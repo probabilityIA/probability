@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/secamc93/probability/back/central/shared/inventorycompare"
 )
 
 type inventorySyncRequest struct {
@@ -21,6 +22,9 @@ type inventoryCompareRequest struct {
 	Page          int      `json:"page"`
 	PageSize      int      `json:"page_size"`
 	SKUs          []string `json:"skus"`
+	Source        string   `json:"source"`
+	OnlyDiff      bool     `json:"only_diff"`
+	Search        string   `json:"q"`
 }
 
 func (h *wooCommerceHandler) CompareInventory(c *gin.Context) {
@@ -35,6 +39,29 @@ func (h *wooCommerceHandler) CompareInventory(c *gin.Context) {
 	}
 
 	integrationID := strconv.FormatUint(uint64(req.IntegrationID), 10)
+
+	if req.Source == "snapshot" {
+		guardado, err := h.useCase.LoadInventoryCompare(c.Request.Context(), integrationID, businessID, inventorycompare.LoadOptions{
+			Page:     req.Page,
+			PageSize: req.PageSize,
+			OnlyDiff: req.OnlyDiff,
+			Search:   req.Search,
+			SKUs:     req.SKUs,
+		})
+		if err != nil {
+			h.logger.Error(c.Request.Context()).Err(err).
+				Uint("integration_id", req.IntegrationID).
+				Msg("Error leyendo la foto guardada del comparativo")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   err.Error(),
+				"message": "No se pudo leer la ultima comparacion guardada",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"success": true, "data": guardado})
+		return
+	}
 
 	resultado, err := h.useCase.CompareInventory(c.Request.Context(), integrationID, businessID, req.Page, req.PageSize, req.SKUs...)
 	if err != nil {

@@ -133,6 +133,7 @@ func (uc *invoicingUseCase) CompareInventory(
 			ProductID:      producto.ID,
 			SKU:            producto.SKU,
 			Name:           producto.Name,
+			ImageURL:       producto.ImageURL,
 			ProbabilityQty: producto.StockQuantity,
 			HasStock:       true,
 		}
@@ -150,5 +151,30 @@ func (uc *invoicingUseCase) CompareInventory(
 
 	resultado.Rows = inventorycompare.Build(items)
 	resultado.Totals = inventorycompare.Summarize(resultado.Rows)
+
+	if err := uc.productRepo.SaveCompareSnapshot(ctx, businessID, uint(integIDUint), resultado.Rows, resultado.CheckedAt); err != nil {
+		uc.log.Warn(ctx).Err(err).
+			Uint64("integration_id", integIDUint).
+			Msg("No se pudo guardar la foto del comparativo de inventario")
+	}
+
 	return resultado, nil
+}
+
+func (uc *invoicingUseCase) LoadInventoryCompare(
+	ctx context.Context,
+	integrationID string,
+	businessID uint,
+	opts inventorycompare.LoadOptions,
+) (*inventorycompare.Page, error) {
+	integration, err := uc.integrationCore.GetIntegrationByID(ctx, integrationID)
+	if err != nil || integration == nil {
+		return nil, fmt.Errorf("integracion no encontrada")
+	}
+	if integration.BusinessID == nil || *integration.BusinessID != businessID {
+		return nil, fmt.Errorf("la integracion no pertenece al negocio")
+	}
+
+	integIDUint, _ := strconv.ParseUint(integrationID, 10, 64)
+	return uc.productRepo.LoadCompareSnapshot(ctx, businessID, uint(integIDUint), opts)
 }

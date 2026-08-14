@@ -9,6 +9,7 @@ import type { SyncRunRecord } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { SyncDetailPanel, matchRuleLabel } from './SyncDetailPanel';
 import { InventoryCompareModal } from './InventoryCompareModal';
+import { ChannelDataStrip } from './ChannelDataStrip';
 
 interface CyberChannelCardProps {
     integration: Integration;
@@ -405,6 +406,12 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">Ult. comparacion {lastRunTime}</span>
                         )}
                     </div>
+                ) : envView === 'data' ? (
+                    <ChannelDataStrip
+                        businessId={businessId ?? undefined}
+                        integrationId={integration.id}
+                        emptyLabel="Este canal no tiene datos nuevos para traer"
+                    />
                 ) : envView === 'invoicing' ? (
                     <span className="text-right text-[11px] italic text-gray-400 dark:text-gray-500">
                         Facturacion desde el hub: proximamente
@@ -490,7 +497,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                     </span>
                 </div>
             )}
-            {hasDetail && (
+            {hasDetail && envView !== 'data' && (
                 <div className="border-t border-gray-100 px-3 pb-2 dark:border-gray-700">
                     <button
                         onClick={() => setOpenDetail(v => !v)}

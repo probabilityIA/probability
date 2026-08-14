@@ -1,7 +1,7 @@
 'use client';
 
-import { RefreshCw, ArrowRightLeft, ReceiptText, LayoutGrid, type LucideIcon } from 'lucide-react';
-import { useSyncActivity, type SyncEnvironment } from '../sync-activity-context';
+import { RefreshCw, ArrowRightLeft, ArrowDownToLine, ReceiptText, LayoutGrid, Share2, Table2, type LucideIcon } from 'lucide-react';
+import { useSyncActivity, type HubView, type SyncEnvironment } from '../sync-activity-context';
 
 interface EnvironmentAction {
     key: SyncEnvironment;
@@ -13,16 +13,22 @@ interface EnvironmentAction {
 
 const ACTIONS: EnvironmentAction[] = [
     {
-        key: 'inventory',
-        label: 'Sincronizar inventario',
-        icon: RefreshCw,
-        hint: 'Las tarjetas muestran el estado del inventario y su ultima sincronizacion',
-    },
-    {
         key: 'products',
         label: 'Comparar productos',
         icon: ArrowRightLeft,
-        hint: 'Las tarjetas muestran la comparacion de catalogo con cada canal',
+        hint: 'Que producto esta en cada canal y cual falta por publicar',
+    },
+    {
+        key: 'data',
+        label: 'Actualizar productos',
+        icon: ArrowDownToLine,
+        hint: 'Que dato del canal (nombre, imagen, categoria) puede entrar a Probability',
+    },
+    {
+        key: 'inventory',
+        label: 'Sincronizar inventario',
+        icon: RefreshCw,
+        hint: 'Cuanto stock tiene cada canal y cual quedaria distinto al de Probability',
     },
     {
         key: 'invoicing',
@@ -33,17 +39,53 @@ const ACTIONS: EnvironmentAction[] = [
     },
 ];
 
+const VIEWS: { key: HubView; label: string; icon: LucideIcon; hint: string }[] = [
+    {
+        key: 'diagrama',
+        label: 'Diagrama',
+        icon: Share2,
+        hint: 'Ver tus canales conectados al nucleo, con el resumen de cada uno',
+    },
+    {
+        key: 'informe',
+        label: 'Informe',
+        icon: Table2,
+        hint: 'Ver lo mismo como tabla: una fila por producto y una columna por canal',
+    },
+];
+
 export function SyncActions() {
-    const { running, nodes, environment, setEnvironment, reset } = useSyncActivity();
+    const { running, nodes, environment, setEnvironment, view, setView, reset } = useSyncActivity();
     const states = Object.values(nodes);
     const finished = !running && states.length > 0 && states.every(s => s === 'done' || s === 'error');
 
     return (
         <span className="flex items-center gap-2">
+            <span className="mr-1 flex items-center gap-0.5 rounded-xl border border-white/25 bg-white/10 p-0.5">
+                {VIEWS.map(item => {
+                    const Icon = item.icon;
+                    const active = view === item.key;
+                    return (
+                        <button
+                            key={item.key}
+                            onClick={() => setView(item.key)}
+                            title={item.hint}
+                            className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                                active
+                                    ? 'bg-white text-[#0d5c80] shadow-sm'
+                                    : 'text-white/85 hover:bg-white/15 hover:text-white'
+                            }`}
+                        >
+                            <Icon size={13} />
+                            {item.label}
+                        </button>
+                    );
+                })}
+            </span>
             <button
                 onClick={() => { reset(); setEnvironment(null); }}
                 disabled={running}
-                title="Vista general: ordenes y productos de cada canal, sin acciones sobre el nucleo"
+                title="Resumen de ordenes: cuantas entraron por cada canal y como van"
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                     environment === null
                         ? 'border-white bg-white text-[#0d5c80] shadow-sm'

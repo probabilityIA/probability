@@ -16,6 +16,7 @@ import { CARD_BG, CARD_BORDER } from '../panel-theme';
 interface ChannelDataStripProps {
     businessId?: number;
     integrationId: number;
+    emptyLabel?: string;
 }
 
 interface Disponible {
@@ -23,7 +24,7 @@ interface Disponible {
     cell: DataSummaryCell;
 }
 
-export function ChannelDataStrip({ businessId, integrationId }: ChannelDataStripProps) {
+export function ChannelDataStrip({ businessId, integrationId, emptyLabel }: ChannelDataStripProps) {
     const [rows, setRows] = useState<DataSummaryRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [objetivo, setObjetivo] = useState<ObjetivoDato | null>(null);
@@ -68,7 +69,12 @@ export function ChannelDataStrip({ businessId, integrationId }: ChannelDataStrip
         );
     }
 
-    if (disponibles.length === 0) return null;
+    if (disponibles.length === 0) {
+        if (!emptyLabel) return null;
+        return (
+            <span className="text-right text-[11px] italic text-gray-300 dark:text-gray-600">{emptyLabel}</span>
+        );
+    }
 
     return (
         <div className="rounded-lg border px-2.5 py-2" style={{ borderColor: CARD_BORDER, backgroundColor: CARD_BG }}>

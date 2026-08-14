@@ -1,4 +1,5 @@
 import { getSyncProvider } from '../../ui/providers';
+import type { CompareInventoryOptions } from '../../domain/types';
 
 export type CompareAction = 'update' | 'unchanged' | 'skip';
 
@@ -6,6 +7,7 @@ export interface CompareRow {
     product_id: string;
     sku: string;
     name: string;
+    image_url?: string;
     external_item_id: string;
     external_variant_id?: string;
     probability_qty: number | null;
@@ -30,6 +32,8 @@ export interface ComparePage {
     total: number;
     total_pages: number;
     checked_at: string;
+    newest_at?: string;
+    from_cache?: boolean;
 }
 
 export const GRUPO_INVENTARIO = 100;
@@ -41,6 +45,7 @@ export async function compararInventario(
     page: number,
     skus?: string[],
     pageSize: number = GRUPO_INVENTARIO,
+    opciones?: CompareInventoryOptions,
 ): Promise<ComparePage> {
     const provider = getSyncProvider(integrationTypeId);
     if (!provider?.compareInventory) {
@@ -53,6 +58,7 @@ export async function compararInventario(
         page,
         pageSize,
         skus,
+        opciones,
     ) as { success?: boolean; data?: ComparePage; message?: string; error?: string };
 
     if (!respuesta?.success || !respuesta.data) {
