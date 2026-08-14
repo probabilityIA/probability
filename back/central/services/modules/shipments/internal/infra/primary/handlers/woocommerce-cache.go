@@ -11,17 +11,19 @@ import (
 )
 
 type wooResolved struct {
-	Found                  bool                  `json:"found"`
-	Salt                   string                `json:"salt"`
-	Revoked                bool                  `json:"revoked"`
-	BusinessID             uint                  `json:"business_id"`
-	Carrier                *domain.CarrierInfo   `json:"carrier"`
-	Origin                 *domain.OriginAddress `json:"origin"`
-	FreeShippingEnabled    bool                  `json:"free_shipping_enabled"`
-	FreeShippingMin        float64               `json:"free_shipping_min"`
-	CODQuotingDisabled     bool                  `json:"cod_quoting_disabled"`
-	AllowedCarriersCOD     []string              `json:"allowed_carriers_cod"`
-	AllowedCarriersPrepaid []string              `json:"allowed_carriers_prepaid"`
+	Found                  bool                          `json:"found"`
+	Salt                   string                        `json:"salt"`
+	Revoked                bool                          `json:"revoked"`
+	BusinessID             uint                          `json:"business_id"`
+	Carrier                *domain.CarrierInfo           `json:"carrier"`
+	Origin                 *domain.OriginAddress         `json:"origin"`
+	OriginIsWarehouse      bool                          `json:"origin_is_warehouse"`
+	PackageConfig          *domain.ShippingPackageConfig `json:"package_config"`
+	FreeShippingEnabled    bool                          `json:"free_shipping_enabled"`
+	FreeShippingMin        float64                       `json:"free_shipping_min"`
+	CODQuotingDisabled     bool                          `json:"cod_quoting_disabled"`
+	AllowedCarriersCOD     []string                      `json:"allowed_carriers_cod"`
+	AllowedCarriersPrepaid []string                      `json:"allowed_carriers_prepaid"`
 }
 
 func wooResKey(integrationID uint) string {
@@ -54,6 +56,10 @@ func (h *Handlers) resolveWoo(ctx context.Context, integrationID uint) (*wooReso
 		}
 		if origin, oerr := h.uc.Repo().GetDefaultWarehouseOrigin(ctx, bid); oerr == nil && origin != nil {
 			r.Origin = origin
+			r.OriginIsWarehouse = true
+			if cfg, cferr := h.uc.Repo().GetWarehouseShippingConfig(ctx, origin.ID); cferr == nil {
+				r.PackageConfig = cfg
+			}
 		} else if origin, oerr := h.uc.Repo().GetDefaultOriginAddress(ctx, bid); oerr == nil {
 			r.Origin = origin
 		}

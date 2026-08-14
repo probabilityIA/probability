@@ -149,6 +149,9 @@ type IRepository interface {
 	ListPendingCarriers(ctx context.Context, businessID uint, includeChildren bool) ([]ManifestCarrierCount, error)
 	GetBusinessForManifest(ctx context.Context, businessID uint) (*ManifestBusinessInfo, error)
 	GetChildBusinessIDs(ctx context.Context, parentID uint) ([]uint, error)
+
+	GetWarehouseShippingConfig(ctx context.Context, warehouseID uint) (*ShippingPackageConfig, error)
+	GetProductDimensionsBySKUs(ctx context.Context, businessID uint, skus []string) (map[string]ProductDimensions, error)
 }
 
 type ShipmentStatsFilter struct {

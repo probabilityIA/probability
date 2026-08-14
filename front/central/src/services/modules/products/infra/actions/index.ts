@@ -2,6 +2,8 @@
 
 import { cookies } from 'next/headers';
 import { updateTag } from 'next/cache';
+import { getAuthToken } from '@/shared/utils/server-auth';
+import { env } from '@/shared/config/env';
 import { ProductApiRepository } from '../repository/api-repository';
 import { ProductUseCases } from '../../app/use-cases';
 import {
@@ -216,5 +218,104 @@ export const getNextSKUBatchAction = async (prefix: string, count: number, busin
         return await (await getUseCases()).getNextSKUBatch(prefix, count, businessId);
     } catch (error: any) {
         return { success: false, data: [] };
+    }
+};
+
+export const exportProductDimensionsAction = async (businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+        const url = businessId
+            ? `${env.API_BASE_URL}/products/dimensions/export?business_id=${businessId}`
+            : `${env.API_BASE_URL}/products/dimensions/export`;
+
+        const response = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            return { success: false, message: text || 'Error al generar el archivo' };
+        }
+
+        const buf = Buffer.from(await response.arrayBuffer());
+        const disp = response.headers.get('content-disposition') || '';
+        const match = disp.match(/filename="([^"]+)"/);
+        const filename = match ? match[1] : 'dimensiones-productos.xlsx';
+        const contentType = response.headers.get('content-type') || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        const dataUrl = `data:${contentType};base64,${buf.toString('base64')}`;
+
+        return { success: true, blob: dataUrl, filename };
+    } catch (error: any) {
+        console.error('Export Product Dimensions Error:', error.message);
+        return { success: false, message: error.message || 'Error al generar el archivo' };
+    }
+};
+
+export const importProductDimensionsAction = async (file: File, businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = businessId
+            ? `${env.API_BASE_URL}/products/dimensions/import?business_id=${businessId}`
+            : `${env.API_BASE_URL}/products/dimensions/import`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+            cache: 'no-store',
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            return {
+                success: true,
+                message: result.message,
+                data: result.data || { total_rows: 0, success_count: 0, failed_count: 0, errors: [] },
+            };
+        }
+        return { success: false, message: result.message || 'Error al procesar el archivo', data: result.data };
+    } catch (error: any) {
+        console.error('Import Product Dimensions Error:', error.message);
+        return { success: false, message: error.message || 'Error al cargar el archivo' };
+    }
+};
+
+export const importFamilyVariantsPreviewAction = async (familyId: number, file: File, businessId?: number) => {
+    try {
+        const token = await getAuthToken();
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const url = businessId
+            ? `${env.API_BASE_URL}/products/families/${familyId}/import-variants?business_id=${businessId}`
+            : `${env.API_BASE_URL}/products/families/${familyId}/import-variants`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+            cache: 'no-store',
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            return {
+                success: true,
+                message: result.message,
+                data: result.data || { matched: [], not_found: [] },
+            };
+        }
+        return { success: false, message: result.message || 'Error al procesar el archivo' };
+    } catch (error: any) {
+        console.error('Import Family Variants Error:', error.message);
+        return { success: false, message: error.message || 'Error al cargar el archivo' };
     }
 };

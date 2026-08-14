@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -32,6 +33,8 @@ type wooRateItem struct {
 	WeightGrams float64 `json:"weight_grams"`
 	Price       float64 `json:"price"`
 }
+
+const defaultPackageDimCm = 10.0
 
 type wooRateRequest struct {
 	Destination wooRateDestination `json:"destination"`
@@ -122,7 +125,9 @@ func (h *Handlers) WooCommerceShippingRates(c *gin.Context) {
 		return
 	}
 
-	payload := buildWooQuotePayload(req, resolved.Origin, normalizeDaneCode(destDane))
+	pkg := h.resolveWooPackageDimensions(ctx, businessID, resolved, req)
+
+	payload := buildWooQuotePayload(req, resolved.Origin, normalizeDaneCode(destDane), pkg)
 
 	correlationID := uuid.New().String()
 	result, err := h.runQuote(ctx, carrier, businessID, payload, correlationID, 12*time.Second)
@@ -199,7 +204,82 @@ func normalizeDaneCode(code string) string {
 	return code
 }
 
-func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, destDane string) map[string]interface{} {
+type wooPackageDims struct {
+	Weight float64
+	Length float64
+	Width  float64
+	Height float64
+}
+
+func (h *Handlers) resolveWooPackageDimensions(ctx context.Context, businessID uint, resolved *wooResolved, req wooRateRequest) wooPackageDims {
+	var totalGrams float64
+	var totalQuantity int
+	skus := make([]string, 0, len(req.Contents))
+	for _, it := range req.Contents {
+		qty := it.Quantity
+		if qty <= 0 {
+			qty = 1
+		}
+		totalGrams += it.WeightGrams * float64(qty)
+		totalQuantity += qty
+		if it.Sku != "" {
+			skus = append(skus, it.Sku)
+		}
+	}
+
+	weightKg := totalGrams / 1000.0
+	if weightKg <= 0 {
+		weightKg = 1
+	}
+
+	var maxLength, maxWidth, maxHeight float64
+	if businessID > 0 && len(skus) > 0 {
+		dims, err := h.uc.Repo().GetProductDimensionsBySKUs(ctx, businessID, skus)
+		if err == nil {
+			for _, d := range dims {
+				if d.Length != nil && *d.Length > maxLength {
+					maxLength = *d.Length
+				}
+				if d.Width != nil && *d.Width > maxWidth {
+					maxWidth = *d.Width
+				}
+				if d.Height != nil && *d.Height > maxHeight {
+					maxHeight = *d.Height
+				}
+			}
+		}
+	}
+
+	if resolved.OriginIsWarehouse && resolved.PackageConfig != nil &&
+		resolved.PackageConfig.Strategy == domain.ShippingPackageStrategyStandardBox {
+		if box := resolved.PackageConfig.SelectBox(totalQuantity, maxLength, maxWidth, maxHeight); box != nil {
+			out := wooPackageDims{Weight: weightKg, Length: maxLength, Width: maxWidth, Height: maxHeight}
+			if box.Weight != nil {
+				out.Weight = *box.Weight
+			}
+			if box.Length != nil {
+				out.Length = *box.Length
+			}
+			if box.Width != nil {
+				out.Width = *box.Width
+			}
+			if box.Height != nil {
+				out.Height = *box.Height
+			}
+			if out.Length > 0 && out.Width > 0 && out.Height > 0 {
+				return out
+			}
+		}
+	}
+
+	if maxLength > 0 && maxWidth > 0 && maxHeight > 0 {
+		return wooPackageDims{Weight: weightKg, Length: maxLength, Width: maxWidth, Height: maxHeight}
+	}
+
+	return wooPackageDims{Weight: weightKg, Length: defaultPackageDimCm, Width: defaultPackageDimCm, Height: defaultPackageDimCm}
+}
+
+func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, destDane string, pkgDims wooPackageDims) map[string]interface{} {
 	dest := req.Destination
 
 	firstName, lastName := splitName(dest.Name)
@@ -209,27 +289,20 @@ func buildWooQuotePayload(req wooRateRequest, origin *domain.OriginAddress, dest
 		street = strings.TrimSpace(street + " " + dest.Address2)
 	}
 
-	var totalGrams float64
 	var contentValue float64
 	for _, it := range req.Contents {
 		qty := it.Quantity
 		if qty <= 0 {
 			qty = 1
 		}
-		totalGrams += it.WeightGrams * float64(qty)
 		contentValue += it.Price * float64(qty)
 	}
 
-	weightKg := totalGrams / 1000.0
-	if weightKg <= 0 {
-		weightKg = 1
-	}
-
 	pkg := map[string]interface{}{
-		"weight": weightKg,
-		"height": 10.0,
-		"width":  10.0,
-		"length": 10.0,
+		"weight": pkgDims.Weight,
+		"height": pkgDims.Height,
+		"width":  pkgDims.Width,
+		"length": pkgDims.Length,
 	}
 
 	return map[string]interface{}{

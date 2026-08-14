@@ -11,6 +11,7 @@ import ProductFamilyForm from '@/services/modules/products/ui/components/Product
 import ProductTour from '@/services/modules/products/ui/components/ProductTour';
 import { ProductDetailModal } from '@/services/modules/products/ui/components/ProductDetailModal';
 import { CatalogPricingModal } from '@/services/modules/pricing/ui/components/CatalogPricingModal';
+import ProductDimensionsUploadModal from '@/services/modules/products/ui/components/ProductDimensionsUploadModal';
 import { Product, ProductFamily } from '@/services/modules/products/domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
@@ -121,6 +122,7 @@ export default function ProductsPage() {
     const [isTourOpen, setIsTourOpen] = useState(false);
     const [pulseTour, setPulseTour] = useState(false);
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+    const [isDimensionsModalOpen, setIsDimensionsModalOpen] = useState(false);
     const [filtersSlot, setFiltersSlot] = useState<HTMLElement | null>(null);
 
     useEffect(() => {
@@ -291,6 +293,15 @@ export default function ProductsPage() {
                     )}
                 </div>
                 <button
+                    onClick={() => setIsDimensionsModalOpen(true)}
+                    title="Cargar/descargar peso y dimensiones en Excel"
+                    className={iconBtnClass}
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M4 4h16v4H4V4zm0 8h16v8H4v-8z" />
+                    </svg>
+                </button>
+                <button
                     onClick={() => setIsPricingModalOpen(true)}
                     title="Grupos de clientes y precios por catalogo"
                     className={iconBtnClass}
@@ -400,6 +411,13 @@ export default function ProductsPage() {
             <CatalogPricingModal
                 isOpen={isPricingModalOpen}
                 onClose={() => setIsPricingModalOpen(false)}
+                businessId={effectiveBusinessId}
+            />
+
+            <ProductDimensionsUploadModal
+                isOpen={isDimensionsModalOpen}
+                onClose={() => setIsDimensionsModalOpen(false)}
+                onUploadComplete={() => productListRef.current?.refreshProducts()}
                 businessId={effectiveBusinessId}
             />
         </div>

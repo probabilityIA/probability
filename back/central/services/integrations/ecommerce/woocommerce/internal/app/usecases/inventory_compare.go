@@ -148,7 +148,7 @@ func (uc *wooCommerceUseCase) CompareInventory(ctx context.Context, integrationI
 		if canal, ok := porPublicacion[m.ExternalItemID]; ok {
 			item.ChannelQty = canal.AvailableQuantity
 			item.ChannelFound = true
-			item.ChannelManaged = true
+			item.ChannelManaged = canal.ManageStock
 		}
 		items = append(items, item)
 	}
