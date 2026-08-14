@@ -127,6 +127,18 @@ export interface SaveCarrierConfigInput {
     is_active: boolean;
 }
 
+export interface UpdateCarrierFeeInput {
+    shipment_id: number;
+    cod_carrier_fee: number;
+}
+
+export interface UpdateCarrierFeeResult {
+    shipment_id: number;
+    order_number: string;
+    previous_fee: number;
+    cod_carrier_fee: number;
+}
+
 export interface Paginated<T> {
     success: boolean;
     message?: string;

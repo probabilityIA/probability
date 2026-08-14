@@ -18,5 +18,6 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.DELETE("/cuts", h.DeleteCut)
 		g.GET("/carrier-config", h.CarrierConfigs)
 		g.PUT("/carrier-config", h.SaveCarrierConfig)
+		g.PUT("/orders/carrier-fee", h.UpdateCarrierFee)
 	}
 }

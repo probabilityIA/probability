@@ -12,16 +12,16 @@ const (
 	codProbeGap       = 10000.0
 )
 
-func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, rateID int64, netTarget float64, metas *[]domain.SyncMeta) (float64, bool) {
+func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, rateID int64, netTarget float64, metas *[]domain.SyncMeta) (float64, float64, bool) {
 	if netTarget <= 0 {
-		return 0, false
+		return 0, 0, false
 	}
 
 	target := math.Ceil(netTarget)
 
 	firstFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, target, metas)
 	if !ok {
-		return 0, false
+		return 0, 0, false
 	}
 
 	secondDeclared := target + firstFee
@@ -31,7 +31,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 
 	secondFee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, secondDeclared, metas)
 	if !ok {
-		return 0, false
+		return 0, 0, false
 	}
 
 	declared, ok := domain.SolveCODDeclaredValue(
@@ -46,7 +46,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 	for i := 0; i < codMaxRefinements; i++ {
 		fee, ok := u.probeCODFee(ctx, baseURL, apiKey, req, carrier, rateID, declared, metas)
 		if !ok {
-			return 0, false
+			return 0, 0, false
 		}
 
 		if declared-fee >= target {
@@ -58,7 +58,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 				Float64("net_recibido", declared-fee).
 				Int("refinamientos", i).
 				Msg("Valor COD declarado resuelto contra la comision real del carrier")
-			return declared, true
+			return declared, fee, true
 		}
 
 		next := math.Ceil(target + fee)
@@ -74,7 +74,7 @@ func (u *useCase) ResolveCODValue(ctx context.Context, baseURL, apiKey string, r
 		Float64("declared", declared).
 		Msg("No se logro converger al valor COD que deja el neto esperado, se conserva el valor original")
 
-	return 0, false
+	return 0, 0, false
 }
 
 func (u *useCase) probeCODFee(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest, carrier string, rateID int64, declared float64, metas *[]domain.SyncMeta) (float64, bool) {

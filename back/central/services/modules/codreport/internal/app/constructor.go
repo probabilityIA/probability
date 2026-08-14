@@ -20,6 +20,7 @@ type Iapp interface {
 	ConfirmCut(ctx context.Context, businessID uint, cutID uint, userID uint, userName string) error
 	CarrierConfigs(ctx context.Context, businessID uint) ([]entities.CarrierConfig, error)
 	SaveCarrierConfig(ctx context.Context, d dtos.SaveCarrierConfigDTO) (*entities.CarrierConfig, error)
+	UpdateCarrierFee(ctx context.Context, d dtos.UpdateCarrierFeeDTO) (*dtos.UpdateCarrierFeeResult, error)
 }
 
 type UseCase struct {

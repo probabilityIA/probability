@@ -17,7 +17,8 @@ import (
 )
 
 type ucMock struct {
-	listOrdersFn func(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
+	listOrdersFn  func(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
+	carrierFeeDTO *dtos.UpdateCarrierFeeDTO
 }
 
 func (m *ucMock) Summary(_ context.Context, _ dtos.ReportFilter) (*entities.CodSummary, error) {
@@ -58,6 +59,11 @@ func (m *ucMock) CarrierConfigs(_ context.Context, _ uint) ([]entities.CarrierCo
 
 func (m *ucMock) SaveCarrierConfig(_ context.Context, _ dtos.SaveCarrierConfigDTO) (*entities.CarrierConfig, error) {
 	return &entities.CarrierConfig{}, nil
+}
+
+func (m *ucMock) UpdateCarrierFee(_ context.Context, d dtos.UpdateCarrierFeeDTO) (*dtos.UpdateCarrierFeeResult, error) {
+	m.carrierFeeDTO = &d
+	return &dtos.UpdateCarrierFeeResult{OrderNumber: "VIG-0083", PreviousFee: 6236, NewFee: d.Fee}, nil
 }
 
 func newOrdersRequest(uc *ucMock, query string) *httptest.ResponseRecorder {

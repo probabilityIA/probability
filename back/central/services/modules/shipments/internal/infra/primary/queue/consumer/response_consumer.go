@@ -162,6 +162,11 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 	carrier, _ := dataField["carrier"].(string)
 	idOrder, _ := dataField["idOrder"].(float64)
 
+	calibratedCODFee, _ := toFloat(data["codCarrierFee"])
+	if calibratedCODFee <= 0 {
+		calibratedCODFee, _ = toFloat(dataField["codCarrierFee"])
+	}
+
 	if carrier == "" && trackingNumber != "" {
 		carrier = inferCarrierFromTrackingNumber(trackingNumber)
 	}
@@ -218,6 +223,22 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 
 			shipment.Status = "pending"
 			shipment.IsTest = response.IsTest
+
+			if calibratedCODFee > 0 {
+				previousFee := 0.0
+				if shipment.CodCarrierFee != nil {
+					previousFee = *shipment.CodCarrierFee
+				}
+				if previousFee != calibratedCODFee {
+					c.log.Info(ctx).
+						Uint("shipment_id", shipment.ID).
+						Str("tracking_number", trackingNumber).
+						Float64("cod_carrier_fee_anterior", previousFee).
+						Float64("cod_carrier_fee_real", calibratedCODFee).
+						Msg("Comision COD actualizada a la medida sobre el valor finalmente declarado")
+				}
+				shipment.CodCarrierFee = &calibratedCODFee
+			}
 
 			appendGuideGeneratedEvent(shipment, response.Provider, trackingNumber, carrier)
 

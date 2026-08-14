@@ -7,6 +7,8 @@ import {
     ReportFilters,
     CodOrdersParams,
     SaveCarrierConfigInput,
+    UpdateCarrierFeeInput,
+    UpdateCarrierFeeResult,
     Paginated,
     SingleResult,
     CutsResult,
@@ -119,6 +121,15 @@ export class CodReportApiRepository {
         const sp = new URLSearchParams();
         if (businessId) sp.append('business_id', String(businessId));
         return this.request<SingleResult<CarrierConfig>>(`/cod-report/carrier-config?${sp.toString()}`, {
+            method: 'PUT',
+            body: JSON.stringify(input),
+        });
+    }
+
+    async updateCarrierFee(input: UpdateCarrierFeeInput, businessId?: number): Promise<SingleResult<UpdateCarrierFeeResult>> {
+        const sp = new URLSearchParams();
+        if (businessId) sp.append('business_id', String(businessId));
+        return this.request<SingleResult<UpdateCarrierFeeResult>>(`/cod-report/orders/carrier-fee?${sp.toString()}`, {
             method: 'PUT',
             body: JSON.stringify(input),
         });

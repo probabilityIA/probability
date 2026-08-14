@@ -29,4 +29,6 @@ type IRepository interface {
 	CutOrders(ctx context.Context, businessID uint, cutID uint) ([]entities.CodOrder, error)
 	ConfirmDraftCut(ctx context.Context, businessID uint, cutID uint, userID uint, userName string) error
 	DeleteCut(ctx context.Context, businessID uint, cutID uint) error
+	UpdateShipmentCarrierFee(ctx context.Context, businessID uint, shipmentID uint, fee float64) error
+	ShipmentCarrierFee(ctx context.Context, businessID uint, shipmentID uint) (float64, string, error)
 }

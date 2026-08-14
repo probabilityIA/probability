@@ -6,6 +6,7 @@ import {
     ReportFilters,
     CodOrdersParams,
     SaveCarrierConfigInput,
+    UpdateCarrierFeeInput,
 } from '../../domain/types';
 
 const getRepo = async () => {
@@ -98,5 +99,13 @@ export const saveCarrierConfigAction = async (input: SaveCarrierConfigInput, bus
         return await (await getRepo()).saveCarrierConfig(input, businessId);
     } catch (error: any) {
         return { success: false, message: error.message || 'Error al guardar la configuracion', data: null as any };
+    }
+};
+
+export const updateCarrierFeeAction = async (input: UpdateCarrierFeeInput, businessId?: number) => {
+    try {
+        return await (await getRepo()).updateCarrierFee(input, businessId);
+    } catch (error: any) {
+        return { success: false, message: error.message || 'Error al actualizar la comision', data: null as any };
     }
 };

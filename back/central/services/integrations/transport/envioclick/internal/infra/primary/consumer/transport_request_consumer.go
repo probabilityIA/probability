@@ -303,7 +303,7 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 
 	var metas []domain.SyncMeta
 
-	c.applyCODCalibration(ctx, request, &req, baseURL, apiKey, &metas)
+	calibratedFee := c.applyCODCalibration(ctx, request, &req, baseURL, apiKey, &metas)
 
 	resp, err := c.useCase.Generate(ctx, baseURL, apiKey, req, &metas)
 	c.persistSyncLogs(ctx, request, "generate", metas, err)
@@ -317,6 +317,14 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 		}
 	}
 
+	data := toMap(resp)
+	if calibratedFee > 0 {
+		if data == nil {
+			data = make(map[string]interface{})
+		}
+		data["codCarrierFee"] = calibratedFee
+	}
+
 	return &queue.TransportResponseMessage{
 		ShipmentID:    request.ShipmentID,
 		BusinessID:    request.BusinessID,
@@ -326,42 +334,45 @@ func (c *TransportRequestConsumer) processGenerate(ctx context.Context, request 
 		CorrelationID: request.CorrelationID,
 		IsTest:        request.IsTest,
 		Timestamp:     time.Now(),
-		Data:          toMap(resp),
+		Data:          data,
 	}
 }
 
-func (c *TransportRequestConsumer) applyCODCalibration(ctx context.Context, request *TransportRequestMessage, req *domain.QuoteRequest, baseURL, apiKey string, metas *[]domain.SyncMeta) {
+func (c *TransportRequestConsumer) applyCODCalibration(ctx context.Context, request *TransportRequestMessage, req *domain.QuoteRequest, baseURL, apiKey string, metas *[]domain.SyncMeta) float64 {
 	if req.CODValue <= 0 {
-		return
+		return 0
 	}
 
 	netTarget, _ := request.Payload["codNetTarget"].(float64)
 	if netTarget <= 0 {
-		return
+		return 0
 	}
 
 	carrier, _ := request.Payload["carrier"].(string)
 
-	declared, ok := c.useCase.ResolveCODValue(ctx, baseURL, apiKey, *req, carrier, req.IDRate, netTarget, metas)
+	declared, fee, ok := c.useCase.ResolveCODValue(ctx, baseURL, apiKey, *req, carrier, req.IDRate, netTarget, metas)
 	if !ok {
 		c.log.Warn(ctx).
 			Str("correlation_id", request.CorrelationID).
 			Float64("cod_value", req.CODValue).
 			Msg("No se pudo calibrar la comision COD, se declara el valor recibido")
-		return
+		return 0
 	}
 
 	if declared == req.CODValue {
-		return
+		return fee
 	}
 
 	c.log.Info(ctx).
 		Str("correlation_id", request.CorrelationID).
 		Float64("cod_value_anterior", req.CODValue).
 		Float64("cod_value_declarado", declared).
+		Float64("cod_carrier_fee", fee).
 		Msg("Valor COD declarado ajustado para que el negocio reciba el neto esperado")
 
 	req.CODValue = declared
+
+	return fee
 }
 
 func (c *TransportRequestConsumer) processTrack(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {

@@ -13,6 +13,12 @@ import (
 
 type repoMock struct {
 	listCodOrdersFn func(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error)
+	feeBusinessID   uint
+	feeShipmentID   uint
+	feeAplicada     float64
+	feePrevia       float64
+	feeLlamadas     int
+	feeErr          error
 }
 
 func (m *repoMock) ListCodOrders(ctx context.Context, f dtos.OrdersFilter) ([]entities.CodOrder, int64, error) {
@@ -73,6 +79,18 @@ func (m *repoMock) ConfirmDraftCut(_ context.Context, _ uint, _ uint, _ uint, _ 
 }
 func (m *repoMock) DeleteCut(_ context.Context, _ uint, _ uint) error {
 	return nil
+}
+
+func (m *repoMock) UpdateShipmentCarrierFee(_ context.Context, businessID uint, shipmentID uint, fee float64) error {
+	m.feeBusinessID = businessID
+	m.feeShipmentID = shipmentID
+	m.feeAplicada = fee
+	m.feeLlamadas++
+	return m.feeErr
+}
+
+func (m *repoMock) ShipmentCarrierFee(_ context.Context, _ uint, _ uint) (float64, string, error) {
+	return m.feePrevia, "VIG-0083", nil
 }
 
 func TestListOrders_ForwardsHasGuideFilter(t *testing.T) {

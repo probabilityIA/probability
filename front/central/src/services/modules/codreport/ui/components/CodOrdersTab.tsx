@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
-    RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileText, Truck, Ban, Copy, Check,
+    RefreshCw, ChevronLeft, ChevronRight, Package, AlertCircle, CheckCircle2, Clock, Lock, FileText, Truck, Ban, Copy, Check, Pencil, X, Loader2,
 } from 'lucide-react';
-import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction } from '../../infra/actions';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getCodOrdersAction, getCodSummaryAction, getCarrierConfigsAction, updateCarrierFeeAction } from '../../infra/actions';
 import { CodOrder, CodState, CodSummary, ReportFilters } from '../../domain/types';
 import { formatMoney, formatDateTime, browserTimeZone, carrierLabel } from './helpers';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
@@ -55,6 +56,109 @@ function RecaudoBadge({ state }: { state: CodState }) {
     );
 }
 
+interface CarrierFeeCellProps {
+    order: CodOrder;
+    editable: boolean;
+    businessId?: number;
+    onSaved: (shipmentId: number, fee: number) => void;
+    onError: (message: string) => void;
+}
+
+function CarrierFeeCell({ order, editable, businessId, onSaved, onError }: CarrierFeeCellProps) {
+    const [editing, setEditing] = useState(false);
+    const [value, setValue] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const canEdit = editable && order.shipment_id > 0;
+
+    const open = () => {
+        setValue(String(order.cod_carrier_fee || 0));
+        setEditing(true);
+    };
+
+    const cancel = () => {
+        setEditing(false);
+        setSaving(false);
+    };
+
+    const save = async () => {
+        const parsed = Number(value.replace(/[^0-9.,-]/g, '').replace(',', '.'));
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            onError('La comision debe ser un numero mayor o igual a cero');
+            return;
+        }
+        if (parsed === order.cod_carrier_fee) {
+            cancel();
+            return;
+        }
+        setSaving(true);
+        const res = await updateCarrierFeeAction(
+            { shipment_id: order.shipment_id, cod_carrier_fee: parsed },
+            businessId,
+        );
+        setSaving(false);
+        if (!res.success) {
+            onError((res as any).message || 'No se pudo actualizar la comision');
+            return;
+        }
+        onSaved(order.shipment_id, parsed);
+        setEditing(false);
+    };
+
+    if (editing) {
+        return (
+            <div className="flex items-center justify-end gap-1">
+                <input
+                    autoFocus
+                    type="text"
+                    inputMode="decimal"
+                    value={value}
+                    disabled={saving}
+                    onChange={e => setValue(e.target.value)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter') save();
+                        if (e.key === 'Escape') cancel();
+                    }}
+                    className="w-[92px] px-2 py-1 text-[13px] text-right tabular-nums rounded-md border border-[#c2410c] bg-white dark:bg-gray-900 text-[#c2410c] outline-none focus:ring-2 focus:ring-orange-200"
+                />
+                <button
+                    onClick={save}
+                    disabled={saving}
+                    title="Guardar comision"
+                    className="p-1 rounded-md text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 disabled:opacity-40"
+                >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                </button>
+                <button
+                    onClick={cancel}
+                    disabled={saving}
+                    title="Cancelar"
+                    className="p-1 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
+                >
+                    <X size={14} />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="group/fee flex items-center justify-end gap-1.5">
+            <span className="text-[13px] text-[#c2410c] tabular-nums whitespace-nowrap">
+                {order.cod_carrier_fee > 0 ? formatMoney(order.cod_carrier_fee, order.currency) : '-'}
+            </span>
+            {canEdit && (
+                <button
+                    onClick={open}
+                    title="Corregir la comision cobrada por la transportadora"
+                    className="p-1 rounded-md text-[#9a9aa5] opacity-0 group-hover/fee:opacity-100 focus:opacity-100 hover:text-[#c2410c] hover:bg-orange-50 dark:hover:bg-orange-900/30 transition-opacity"
+                >
+                    <Pencil size={12} />
+                </button>
+            )}
+        </div>
+    );
+}
+
 interface KpiProps { accent: string; label: string; value: string; sub: string; }
 function KpiCard({ accent, label, value, sub }: KpiProps) {
     return (
@@ -82,6 +186,7 @@ const ESTADO_TABS:{ key: '' | 'false' | 'true'; label: string }[] = [
 ];
 
 export default function CodOrdersTab({ filters }: Props) {
+    const { isSuperAdmin } = usePermissions();
     const [orders, setOrders] = useState<CodOrder[]>([]);
     const [summary, setSummary] = useState<CodSummary | null>(null);
     const [loading, setLoading] = useState(true);
@@ -204,6 +309,11 @@ export default function CodOrdersTab({ filters }: Props) {
     }, [filters, page, collected, hasGuide, status, carrier, debounced, guidesParam]);
 
     useEffect(() => { load(); }, [load]);
+
+    const applyCarrierFee = useCallback((shipmentId: number, fee: number) => {
+        setOrders(prev => prev.map(o => (o.shipment_id === shipmentId ? { ...o, cod_carrier_fee: fee } : o)));
+        setError(null);
+    }, []);
 
     const filteredTotal = orders.reduce((a, o) => a + o.cod_total + (o.cod_carrier_fee || 0), 0);
     const currency = orders[0]?.currency;
@@ -352,7 +462,15 @@ export default function CodOrdersTab({ filters }: Props) {
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-bold whitespace-nowrap" style={{ background: st.bg, color: st.c }}>{st.label}</span>
                                         </td>
                                         <td className="px-3 py-3.5 text-right text-[13px] text-[#4a4a54] dark:text-gray-300 tabular-nums whitespace-nowrap">{formatMoney(o.cod_total, o.currency)}</td>
-                                        <td className="px-3 py-3.5 text-right text-[13px] text-[#c2410c] tabular-nums whitespace-nowrap">{o.cod_carrier_fee > 0 ? formatMoney(o.cod_carrier_fee, o.currency) : '-'}</td>
+                                        <td className="px-3 py-3.5">
+                                            <CarrierFeeCell
+                                                order={o}
+                                                editable={isSuperAdmin}
+                                                businessId={filters.business_id}
+                                                onSaved={applyCarrierFee}
+                                                onError={setError}
+                                            />
+                                        </td>
                                         <td className="px-3 py-3.5 text-right text-[13.5px] font-bold text-gray-900 dark:text-white tabular-nums whitespace-nowrap">{formatMoney(o.cod_total + (o.cod_carrier_fee || 0), o.currency)}</td>
                                         <td className="px-3 py-3.5"><RecaudoBadge state={o.cod_state} /></td>
                                         <td className="px-3 py-3.5">

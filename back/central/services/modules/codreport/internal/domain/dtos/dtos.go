@@ -45,3 +45,17 @@ type SelectableOrdersFilter struct {
 	PeriodStart time.Time
 	PeriodEnd   time.Time
 }
+
+type UpdateCarrierFeeDTO struct {
+	BusinessID uint
+	ShipmentID uint
+	Fee        float64
+	UserID     uint
+	UserName   string
+}
+
+type UpdateCarrierFeeResult struct {
+	OrderNumber string
+	PreviousFee float64
+	NewFee      float64
+}
