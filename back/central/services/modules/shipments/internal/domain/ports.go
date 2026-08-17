@@ -113,6 +113,7 @@ type IRepository interface {
 
 	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetSavedQuoteByID(ctx context.Context, id uint) (*SavedQuote, error)
+	GetSavedQuoteByOrderUUID(ctx context.Context, orderUUID string) (*SavedQuote, error)
 	ListSavedQuotes(ctx context.Context, filter SavedQuoteFilter) ([]SavedQuote, int64, error)
 	UpdateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetOrderSelectedShipping(ctx context.Context, orderUUID string) (*OrderSelectedShipping, error)

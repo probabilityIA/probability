@@ -36,6 +36,7 @@ type RepositoryMock struct {
 	GetCityDaneByNameFn               func(ctx context.Context, city, province string) (string, error)
 	CreateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
 	GetSavedQuoteByIDFn               func(ctx context.Context, id uint) (*domain.SavedQuote, error)
+	GetSavedQuoteByOrderUUIDFn        func(ctx context.Context, orderUUID string) (*domain.SavedQuote, error)
 	ListSavedQuotesFn                 func(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error)
 	UpdateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
 	GetOrderSelectedShippingFn        func(ctx context.Context, orderUUID string) (*domain.OrderSelectedShipping, error)
@@ -243,6 +244,13 @@ func (m *RepositoryMock) CreateSavedQuote(ctx context.Context, quote *domain.Sav
 func (m *RepositoryMock) GetSavedQuoteByID(ctx context.Context, id uint) (*domain.SavedQuote, error) {
 	if m.GetSavedQuoteByIDFn != nil {
 		return m.GetSavedQuoteByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetSavedQuoteByOrderUUID(ctx context.Context, orderUUID string) (*domain.SavedQuote, error) {
+	if m.GetSavedQuoteByOrderUUIDFn != nil {
+		return m.GetSavedQuoteByOrderUUIDFn(ctx, orderUUID)
 	}
 	return nil, nil
 }

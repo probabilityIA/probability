@@ -24,6 +24,7 @@ export interface SavedQuote {
     selected_carrier?: string;
     selected_service_code?: string;
     status: string;
+    error_message?: string;
     expires_at?: string | null;
     created_at: string;
 }

@@ -189,7 +189,7 @@ func (c *OrderCreatedConsumer) processAssociation(ctx context.Context, msg *orde
 		c.log.Warn(ctx).Str("order_id", msg.OrderID).Uint("quote_id", quoteID).Msg("Saved quote not found for order")
 		return
 	}
-	if quote.Status == domain.QuoteStatusGuideGenerated {
+	if quote.Status == domain.QuoteStatusGuideGenerated || quote.Status == domain.QuoteStatusGenerating {
 		return
 	}
 

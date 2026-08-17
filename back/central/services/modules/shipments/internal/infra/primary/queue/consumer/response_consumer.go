@@ -135,6 +135,9 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 					c.log.Error(ctx).Err(err).Msg("Failed to update shipment status to failed")
 				}
+				if shipment.OrderID != nil {
+					c.markQuoteFailed(ctx, *shipment.OrderID, response.Error)
+				}
 			}
 			c.ssePublisher.PublishGuideFailed(ctx, businessID, *response.ShipmentID, response.CorrelationID, response.Error)
 		}
@@ -276,6 +279,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
+				c.markQuoteGuideGenerated(ctx, *shipment.OrderID)
+
 				orderShippingCost := 0.0
 				if shipment.TotalCost != nil {
 					orderShippingCost = *shipment.TotalCost
@@ -930,4 +935,51 @@ func (c *ResponseConsumer) applyCODFee(ctx context.Context, rate map[string]inte
 		Float64("cod_margin_amount", margin.CODMarginAmount).
 		Float64("cod_probability_margin", codProbabilityMargin).
 		Msg("COD fee applied to quote")
+}
+
+func (c *ResponseConsumer) markQuoteFailed(ctx context.Context, orderUUID, rawError string) {
+	if strings.TrimSpace(orderUUID) == "" {
+		return
+	}
+	quote, err := c.repo.GetSavedQuoteByOrderUUID(ctx, orderUUID)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("order_id", orderUUID).Msg("Failed to load saved quote to mark as failed")
+		return
+	}
+	if quote == nil {
+		return
+	}
+
+	quote.Status = domain.QuoteStatusFailed
+	quote.ErrorMessage = domain.SanitizeGuideError(rawError)
+
+	if err := c.repo.UpdateSavedQuote(ctx, quote); err != nil {
+		c.log.Error(ctx).Err(err).Uint("quote_id", quote.ID).Msg("Failed to mark saved quote as failed")
+		return
+	}
+
+	c.log.Warn(ctx).
+		Uint("quote_id", quote.ID).
+		Str("order_id", orderUUID).
+		Msg("Saved quote marked as failed after guide generation error")
+}
+
+func (c *ResponseConsumer) markQuoteGuideGenerated(ctx context.Context, orderUUID string) {
+	if strings.TrimSpace(orderUUID) == "" {
+		return
+	}
+	quote, err := c.repo.GetSavedQuoteByOrderUUID(ctx, orderUUID)
+	if err != nil || quote == nil {
+		return
+	}
+	if quote.Status == domain.QuoteStatusGuideGenerated && quote.ErrorMessage == "" {
+		return
+	}
+
+	quote.Status = domain.QuoteStatusGuideGenerated
+	quote.ErrorMessage = ""
+
+	if err := c.repo.UpdateSavedQuote(ctx, quote); err != nil {
+		c.log.Error(ctx).Err(err).Uint("quote_id", quote.ID).Msg("Failed to mark saved quote as guide generated")
+	}
 }

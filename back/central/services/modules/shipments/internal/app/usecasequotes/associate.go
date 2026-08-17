@@ -36,10 +36,11 @@ func (uc *UseCaseQuotes) Associate(ctx context.Context, in domain.AssociateQuote
 		quote.SelectedIDRate = in.SelectedIDRate
 	}
 	if in.GuideRequested {
-		quote.Status = domain.QuoteStatusGuideGenerated
+		quote.Status = domain.QuoteStatusGenerating
 	} else {
 		quote.Status = domain.QuoteStatusAssociated
 	}
+	quote.ErrorMessage = ""
 
 	if err := uc.repo.UpdateSavedQuote(ctx, quote); err != nil {
 		return nil, err

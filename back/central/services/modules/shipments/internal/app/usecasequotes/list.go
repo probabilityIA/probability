@@ -64,6 +64,7 @@ func toResponse(q *domain.SavedQuote) domain.SavedQuoteResponse {
 		SelectedCarrier:     q.SelectedCarrier,
 		SelectedServiceCode: q.SelectedServiceCode,
 		Status:              q.Status,
+		ErrorMessage:        q.ErrorMessage,
 		ExpiresAt:           q.ExpiresAt,
 		CreatedAt:           q.CreatedAt,
 	}

@@ -375,3 +375,90 @@ func TestHandleCancelResponse_ShipmentWithEmptyOrderID_SkipsOrderClear(t *testin
 		t.Error("expected ClearOrderGuideData not to be called when OrderID is empty string")
 	}
 }
+
+func buildGenerateErrorMessage(shipmentID *uint, businessID uint, errMsg string) []byte {
+	msg := TransportResponseMessage{
+		ShipmentID:    shipmentID,
+		BusinessID:    businessID,
+		Provider:      "envioclick",
+		Operation:     "generate",
+		Status:        "error",
+		CorrelationID: "corr-generate-001",
+		Timestamp:     time.Now(),
+		Error:         errMsg,
+	}
+	b, _ := json.Marshal(msg)
+	return b
+}
+
+func TestHandleGenerateResponse_Error_MarcaCotizacionFallidaSinExponerProveedor(t *testing.T) {
+	shipmentID := uint(43412)
+	orderID := "f7e14413-b4a5-4f25-8464-4460549f3272"
+
+	var savedQuote *domain.SavedQuote
+	queriedOrderID := ""
+
+	repoMock := &mocks.RepositoryMock{
+		GetShipmentByIDFn: func(ctx context.Context, id uint) (*domain.Shipment, error) {
+			return &domain.Shipment{ID: id, OrderID: orderIDPtr(orderID), Status: "pending"}, nil
+		},
+		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
+			return nil
+		},
+		GetSavedQuoteByOrderUUIDFn: func(ctx context.Context, uuid string) (*domain.SavedQuote, error) {
+			queriedOrderID = uuid
+			return &domain.SavedQuote{ID: 6542, Status: domain.QuoteStatusGenerating}, nil
+		},
+		UpdateSavedQuoteFn: func(ctx context.Context, quote *domain.SavedQuote) error {
+			savedQuote = quote
+			return nil
+		},
+	}
+
+	consumer := newTestConsumer(repoMock, &mocks.SSEPublisherMock{})
+	rawError := `Error de Transporte: EnvioClick rechazo {"destination":{"email":["Dato invalido, el campo debe ser de tipo email"]}}`
+
+	if err := consumer.handleResponse(buildGenerateErrorMessage(shipmentIDPtr(shipmentID), 46, rawError)); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if queriedOrderID != orderID {
+		t.Fatalf("expected quote lookup by order '%s', got '%s'", orderID, queriedOrderID)
+	}
+	if savedQuote == nil {
+		t.Fatal("expected saved quote to be updated")
+	}
+	if savedQuote.Status != domain.QuoteStatusFailed {
+		t.Errorf("expected quote status 'failed', got '%s'", savedQuote.Status)
+	}
+	if savedQuote.ErrorMessage == "" {
+		t.Error("expected quote to carry an error message")
+	}
+	if domain.MentionsProvider(savedQuote.ErrorMessage) {
+		t.Errorf("quote error message leaks the provider: %q", savedQuote.ErrorMessage)
+	}
+}
+
+func TestHandleGenerateResponse_Error_SinCotizacionNoRompe(t *testing.T) {
+	repoMock := &mocks.RepositoryMock{
+		GetShipmentByIDFn: func(ctx context.Context, id uint) (*domain.Shipment, error) {
+			return &domain.Shipment{ID: id, OrderID: orderIDPtr("order-sin-cotizacion"), Status: "pending"}, nil
+		},
+		UpdateShipmentFn: func(ctx context.Context, shipment *domain.Shipment) error {
+			return nil
+		},
+		GetSavedQuoteByOrderUUIDFn: func(ctx context.Context, uuid string) (*domain.SavedQuote, error) {
+			return nil, nil
+		},
+		UpdateSavedQuoteFn: func(ctx context.Context, quote *domain.SavedQuote) error {
+			t.Fatal("no deberia actualizar una cotizacion inexistente")
+			return nil
+		},
+	}
+
+	consumer := newTestConsumer(repoMock, &mocks.SSEPublisherMock{})
+
+	if err := consumer.handleResponse(buildGenerateErrorMessage(shipmentIDPtr(1), 46, "boom")); err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}

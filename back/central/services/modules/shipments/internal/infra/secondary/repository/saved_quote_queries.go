@@ -53,6 +53,24 @@ func (r *Repository) GetSavedQuoteByID(ctx context.Context, id uint) (*domain.Sa
 	return q, nil
 }
 
+func (r *Repository) GetSavedQuoteByOrderUUID(ctx context.Context, orderUUID string) (*domain.SavedQuote, error) {
+	if strings.TrimSpace(orderUUID) == "" {
+		return nil, nil
+	}
+	var m models.ShippingQuote
+	err := r.db.Conn(ctx).
+		Where("order_uuid = ?", orderUUID).
+		Order("created_at DESC").
+		First(&m).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return savedQuoteModelToDomain(&m), nil
+}
+
 func (r *Repository) ListSavedQuotes(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error) {
 	q := r.db.Conn(ctx).Model(&models.ShippingQuote{}).Where("business_id = ?", filter.BusinessID)
 	if filter.Source != "" {
@@ -141,6 +159,7 @@ func (r *Repository) UpdateSavedQuote(ctx context.Context, quote *domain.SavedQu
 		"selected_service_code": quote.SelectedServiceCode,
 		"selected_id_rate":      quote.SelectedIDRate,
 		"status":                quote.Status,
+		"error_message":         quote.ErrorMessage,
 	}
 	return r.db.Conn(ctx).
 		Model(&models.ShippingQuote{}).
@@ -239,6 +258,7 @@ func savedQuoteModelToDomain(m *models.ShippingQuote) *domain.SavedQuote {
 		SelectedServiceCode: m.SelectedServiceCode,
 		SelectedIDRate:      m.SelectedIDRate,
 		Status:              m.Status,
+		ErrorMessage:        m.ErrorMessage,
 		ExpiresAt:           m.ExpiresAt,
 		CreatedAt:           m.CreatedAt,
 		UpdatedAt:           m.UpdatedAt,

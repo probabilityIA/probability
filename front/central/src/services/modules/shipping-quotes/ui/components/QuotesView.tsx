@@ -8,6 +8,7 @@ import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 import { Order } from '@/services/modules/orders/domain/types';
 import OrderDetails from '@/services/modules/orders/ui/components/OrderDetails';
 import { Modal } from '@/shared/ui';
+import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { getSavedQuotesAction, SavedQuote } from '../../infra/actions';
 import CreateOrderFromQuoteModal from './CreateOrderFromQuoteModal';
 
@@ -27,6 +28,7 @@ interface AutoGuideIntegration {
 const statusStyles: Record<string, string> = {
     created: 'bg-gray-100 text-gray-700',
     associated: 'bg-blue-100 text-blue-700',
+    generating: 'bg-indigo-100 text-indigo-700',
     guide_generated: 'bg-emerald-100 text-emerald-700',
     failed: 'bg-red-100 text-red-700',
     expired: 'bg-amber-100 text-amber-700',
@@ -35,10 +37,13 @@ const statusStyles: Record<string, string> = {
 const statusLabels: Record<string, string> = {
     created: 'Creada',
     associated: 'Asociada',
+    generating: 'Generando guía',
     guide_generated: 'Guía generada',
     failed: 'Fallida',
     expired: 'Expirada',
 };
+
+const GENERIC_QUOTE_ERROR = 'No fue posible generar la guía. Revisa los datos del destinatario e inténtalo de nuevo.';
 
 export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
     const { showToast } = useToast();
@@ -55,6 +60,8 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
     const [createFromQuote, setCreateFromQuote] = useState<SavedQuote | null>(null);
     const [viewOrder, setViewOrder] = useState<Order | null>(null);
     const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
+    const [retryOrder, setRetryOrder] = useState<Order | null>(null);
+    const [retryingQuoteId, setRetryingQuoteId] = useState<number | null>(null);
 
     const needsBusiness = isSuperAdmin && !selectedBusinessId;
 
@@ -121,6 +128,24 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
         }
     };
 
+    const retryGuide = async (quote: SavedQuote) => {
+        if (!quote.order_uuid) return;
+        setRetryingQuoteId(quote.id);
+        try {
+            const res: any = await getOrderByIdAction(quote.order_uuid);
+            const order = res?.data;
+            if (res?.success && order) {
+                setRetryOrder(order);
+            } else {
+                showToast(res?.message || 'No se pudo cargar la orden para reintentar', 'error');
+            }
+        } catch {
+            showToast('No se pudo cargar la orden para reintentar', 'error');
+        } finally {
+            setRetryingQuoteId(null);
+        }
+    };
+
     const toggleAutoGuide = async (integ: AutoGuideIntegration) => {
         setIntegrations((prev) => prev.map((i) => (i.id === integ.id ? { ...i, loading: true } : i)));
         const next = !integ.enabled;
@@ -163,7 +188,6 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                     <div className="flex items-center gap-3 min-w-0">
                                         <span className="w-9 h-9 rounded-lg border border-gray-200 dark:border-gray-700 bg-white flex items-center justify-center overflow-hidden shrink-0">
                                             {integ.imageUrl ? (
-                                                // eslint-disable-next-line @next/next/no-img-element
                                                 <img
                                                     src={integ.imageUrl}
                                                     alt={integ.type}
@@ -220,6 +244,7 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                             <option value="">Todos los estados</option>
                             <option value="created">Creada</option>
                             <option value="associated">Asociada</option>
+                            <option value="generating">Generando guía</option>
                             <option value="guide_generated">Guía generada</option>
                             <option value="failed">Fallida</option>
                         </select>
@@ -236,14 +261,15 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                 <th className="px-4 py-2 font-medium">Tarifas</th>
                                 <th className="px-4 py-2 font-medium">Orden</th>
                                 <th className="px-4 py-2 font-medium">Estado</th>
+                                <th className="px-4 py-2 font-medium">Motivo del error</th>
                                 <th className="px-4 py-2 font-medium text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
+                                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
                             ) : quotes.length === 0 ? (
-                                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No hay cotizaciones.</td></tr>
+                                <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No hay cotizaciones.</td></tr>
                             ) : (
                                 quotes.map((q) => (
                                     <tr key={q.id} className="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50/60 dark:hover:bg-gray-700/30">
@@ -270,6 +296,15 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                                 {statusLabels[q.status] || q.status}
                                             </span>
                                         </td>
+                                        <td className="px-4 py-2.5">
+                                            {q.status === 'failed' ? (
+                                                <p className="max-w-sm text-xs leading-snug text-red-600 dark:text-red-400">
+                                                    {q.error_message || GENERIC_QUOTE_ERROR}
+                                                </p>
+                                            ) : (
+                                                <span className="text-gray-400">—</span>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-2.5 text-right">
                                             {!q.order_uuid && (q.rates?.length || 0) > 0 && (
                                                 <button
@@ -277,6 +312,15 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                                     className="text-xs font-semibold px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white"
                                                 >
                                                     Crear orden
+                                                </button>
+                                            )}
+                                            {q.status === 'failed' && q.order_uuid && (
+                                                <button
+                                                    onClick={() => retryGuide(q)}
+                                                    disabled={retryingQuoteId === q.id}
+                                                    className="text-xs font-semibold px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                                                >
+                                                    {retryingQuoteId === q.id ? 'Abriendo...' : 'Reintentar'}
                                                 </button>
                                             )}
                                         </td>
@@ -312,6 +356,19 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                     businessId={selectedBusinessId}
                     onClose={() => setCreateFromQuote(null)}
                     onSuccess={loadQuotes}
+                />
+            )}
+
+            {retryOrder && (
+                <ShipmentGuideModal
+                    isOpen={!!retryOrder}
+                    onClose={() => setRetryOrder(null)}
+                    order={retryOrder}
+                    onGuideGenerated={() => {
+                        setRetryOrder(null);
+                        showToast('Guía generada. La cotización se actualizará en unos segundos.', 'success');
+                        loadQuotes();
+                    }}
                 />
             )}
 

@@ -140,7 +140,7 @@ func TestAssociate_OrderUUIDVacioEnLaCotizacion_PermiteAsociar(t *testing.T) {
 	assert.Equal(t, "order-uuid", *resp.OrderUUID)
 }
 
-func TestAssociate_ConGuiaSolicitada_MarcaGuideGenerated(t *testing.T) {
+func TestAssociate_ConGuiaSolicitada_MarcaGenerating(t *testing.T) {
 	var saved *domain.SavedQuote
 	repo := &mocks.RepositoryMock{
 		GetSavedQuoteByIDFn: func(ctx context.Context, id uint) (*domain.SavedQuote, error) {
@@ -164,11 +164,11 @@ func TestAssociate_ConGuiaSolicitada_MarcaGuideGenerated(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, saved)
-	assert.Equal(t, domain.QuoteStatusGuideGenerated, saved.Status)
+	assert.Equal(t, domain.QuoteStatusGenerating, saved.Status)
 	assert.Equal(t, "Servientrega", saved.SelectedCarrier)
 	require.NotNil(t, saved.SelectedIDRate)
 	assert.Equal(t, int64(4521), *saved.SelectedIDRate)
-	assert.Equal(t, domain.QuoteStatusGuideGenerated, resp.Status)
+	assert.Equal(t, domain.QuoteStatusGenerating, resp.Status)
 }
 
 func TestAssociate_SinCarrierNiRate_NoSobreescribeLosExistentes(t *testing.T) {

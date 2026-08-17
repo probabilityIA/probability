@@ -9,6 +9,7 @@ const (
 
 	QuoteStatusCreated        = "created"
 	QuoteStatusAssociated     = "associated"
+	QuoteStatusGenerating     = "generating"
 	QuoteStatusGuideGenerated = "guide_generated"
 	QuoteStatusExpired        = "expired"
 	QuoteStatusFailed         = "failed"
@@ -29,6 +30,7 @@ type SavedQuote struct {
 	SelectedServiceCode string
 	SelectedIDRate      *int64
 	Status              string
+	ErrorMessage        string
 	ExpiresAt           *time.Time
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -69,6 +71,7 @@ type SavedQuoteResponse struct {
 	SelectedCarrier     string                   `json:"selected_carrier,omitempty"`
 	SelectedServiceCode string                   `json:"selected_service_code,omitempty"`
 	Status              string                   `json:"status"`
+	ErrorMessage        string                   `json:"error_message,omitempty"`
 	ExpiresAt           *time.Time               `json:"expires_at,omitempty"`
 	CreatedAt           time.Time                `json:"created_at"`
 }
