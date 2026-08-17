@@ -18,11 +18,15 @@ salio. Diagnostico completo en
 
 ## Mitigacion parcial (2026-08-17)
 
-El modulo de cotizaciones ya permite reintentar: el boton abre
-`ShipmentGuideModal` con la orden, que arma el destino con los datos reales y
-exige email valido por schema (zod). Eso da salida manual al caso atascado, pero
-**no arregla la autogeneracion**, que sigue mandando el destino de la cotizacion
-sin que nadie lo revise.
+`POST /shipments/quotes/:id/retry-guide` reintenta la MISMA cotizacion (misma
+tarifa y mismo idRate) pero reconstruyendo el bloque `destination` con los datos
+reales de la orden, y valida email/telefono/direccion antes de gastar el viaje al
+carrier. `buildRetryPayload` en `handlers/retry-quote-guide.go` es la referencia
+de como debe quedar el payload.
+
+**La autogeneracion sigue sin ese refresco**: publica el destino de la
+cotizacion tal cual. El arreglo de fondo es que `maybeAutoGenerate` use la misma
+construccion que el reintento.
 
 ## Items
 

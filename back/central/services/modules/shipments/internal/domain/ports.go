@@ -101,6 +101,7 @@ type IRepository interface {
 	GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error)
 	GetOrderCodBasis(ctx context.Context, orderUUID string) (*OrderCodBasis, error)
 	GetOrderExternalGuide(ctx context.Context, orderUUID string) (*OrderExternalGuide, error)
+	GetOrderRecipient(ctx context.Context, orderUUID string) (*OrderRecipient, error)
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
@@ -271,6 +272,19 @@ func (g OrderExternalGuide) HasGuide() bool {
 		return false
 	}
 	return g.TrackingNumber != "" || g.GuideID != "" || g.GuideURL != ""
+}
+
+type OrderRecipient struct {
+	BusinessID   *uint
+	FullName     string
+	FirstName    string
+	LastName     string
+	Email        string
+	Phone        string
+	Address      string
+	City         string
+	State        string
+	Neighborhood string
 }
 
 type OrderCodBasis struct {

@@ -9,7 +9,7 @@ import { Order } from '@/services/modules/orders/domain/types';
 import OrderDetails from '@/services/modules/orders/ui/components/OrderDetails';
 import { Modal } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
-import { getSavedQuotesAction, SavedQuote } from '../../infra/actions';
+import { getSavedQuotesAction, retryQuoteGuideAction, SavedQuote } from '../../infra/actions';
 import CreateOrderFromQuoteModal from './CreateOrderFromQuoteModal';
 
 interface QuotesViewProps {
@@ -128,19 +128,39 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
         }
     };
 
-    const retryGuide = async (quote: SavedQuote) => {
+    const openGuideModal = async (quote: SavedQuote) => {
         if (!quote.order_uuid) return;
-        setRetryingQuoteId(quote.id);
         try {
             const res: any = await getOrderByIdAction(quote.order_uuid);
             const order = res?.data;
             if (res?.success && order) {
                 setRetryOrder(order);
             } else {
-                showToast(res?.message || 'No se pudo cargar la orden para reintentar', 'error');
+                showToast(res?.message || 'No se pudo cargar la orden', 'error');
             }
         } catch {
-            showToast('No se pudo cargar la orden para reintentar', 'error');
+            showToast('No se pudo cargar la orden', 'error');
+        }
+    };
+
+    const retryGuide = async (quote: SavedQuote) => {
+        if (!quote.order_uuid) return;
+        setRetryingQuoteId(quote.id);
+        try {
+            const res = await retryQuoteGuideAction(quote.id, selectedBusinessId);
+            if (res.success) {
+                showToast(res.message || 'Reintento enviado. La guía se generará en breve.', 'success');
+                loadQuotes();
+                return;
+            }
+            if (res.expired || res.needsData) {
+                showToast(res.message || 'La tarifa de esta cotización expiró, hay que cotizar de nuevo.', 'warning');
+                loadQuotes();
+                await openGuideModal(quote);
+                return;
+            }
+            showToast(res.message || 'No se pudo reintentar la guía', 'error');
+            loadQuotes();
         } finally {
             setRetryingQuoteId(null);
         }
@@ -320,7 +340,7 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                                     disabled={retryingQuoteId === q.id}
                                                     className="text-xs font-semibold px-3 py-1.5 rounded-md bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                                                 >
-                                                    {retryingQuoteId === q.id ? 'Abriendo...' : 'Reintentar'}
+                                                    {retryingQuoteId === q.id ? 'Reintentando...' : 'Reintentar'}
                                                 </button>
                                             )}
                                         </td>

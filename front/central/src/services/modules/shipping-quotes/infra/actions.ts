@@ -146,3 +146,37 @@ export async function setQuoteSelectionAction(
         return { success: false, message: e?.message || 'Error de red' };
     }
 }
+
+export async function retryQuoteGuideAction(
+    quoteId: number,
+    businessId?: number | null,
+): Promise<{ success: boolean; message?: string; expired?: boolean; needsData?: boolean }> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const qs = businessId ? `?business_id=${businessId}` : '';
+        const res = await fetch(`${env.API_BASE_URL}/shipments/quotes/${quoteId}/retry-guide${qs}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return {
+                success: false,
+                message: data?.error || 'No se pudo reintentar la guia',
+                expired: data?.expired === true,
+                needsData: data?.needs_data === true,
+            };
+        }
+        return { success: true, message: data?.message };
+    } catch (e: any) {
+        console.error('retryQuoteGuideAction error:', e);
+        return { success: false, message: e?.message || 'Error de red' };
+    }
+}
