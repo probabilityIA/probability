@@ -22,6 +22,7 @@ export interface SavedQuote {
     request_payload?: Record<string, any>;
     rates: SavedQuoteRate[];
     selected_carrier?: string;
+    selected_id_rate?: number;
     selected_service_code?: string;
     status: string;
     error_message?: string;
@@ -111,6 +112,37 @@ export async function associateQuoteAction(
         return { success: true };
     } catch (e: any) {
         console.error('associateQuoteAction error:', e);
+        return { success: false, message: e?.message || 'Error de red' };
+    }
+}
+
+export async function setQuoteSelectionAction(
+    quoteId: number,
+    body: { selected_carrier?: string; selected_id_rate?: number },
+    businessId?: number | null,
+): Promise<{ success: boolean; message?: string }> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const qs = businessId ? `?business_id=${businessId}` : '';
+        const res = await fetch(`${env.API_BASE_URL}/shipments/quotes/${quoteId}/selection${qs}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+            cache: 'no-store',
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            return { success: false, message: data?.error || 'No se pudo guardar la tarifa elegida' };
+        }
+        return { success: true };
+    } catch (e: any) {
+        console.error('setQuoteSelectionAction error:', e);
         return { success: false, message: e?.message || 'Error de red' };
     }
 }

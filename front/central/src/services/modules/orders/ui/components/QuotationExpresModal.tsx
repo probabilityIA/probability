@@ -7,11 +7,13 @@ import * as z from "zod";
 import { Input, Button, Stepper } from "@/shared/ui";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions";
+import { setQuoteSelectionAction } from "@/services/modules/shipping-quotes/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { findDaneCode } from "@/shared/utils/dane-lookup";
 import { getActionError } from '@/shared/utils/action-result';
+import { rateBreakdown } from '@/shared/utils/rate-pricing';
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 
@@ -91,6 +93,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
+    const [quoteId, setQuoteId] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
     const [originSearch, setOriginSearch] = useState("");
@@ -320,6 +323,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             if (syncRates.length > 0) {
                 const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destDaneCode);
                 setRates(enrichedRates);
+                setQuoteId(Number(response.quote_id) || null);
                 setCurrentStep(2);
             } else {
                 setError("No hay transportadoras disponibles para esta ruta");
@@ -329,6 +333,18 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleConfirmSelection = async () => {
+        const chosen = rates.find(r => r.idRate === selectedRate);
+        if (quoteId && chosen) {
+            await setQuoteSelectionAction(
+                quoteId,
+                { selected_carrier: chosen.carrier, selected_id_rate: chosen.idRate },
+                business_id,
+            );
+        }
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -647,15 +663,16 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                             setSelectedRate(rate.idRate);
                                         }
 
-                                        const getDisplayPrice = (r: EnvioClickRate) => {
-                                            const basePrice = r.flete;
-                                            const minimumIns = r.minimumInsurance ?? 0;
-                                            const insuranceCost = form.watch("enableInsurance") ? (r.extraInsurance ?? 0) : 0;
-                                            return basePrice + minimumIns + insuranceCost;
+                                        const pricingOpts = {
+                                            cod: Boolean(form.watch("enableCod")),
+                                            insured: Boolean(form.watch("enableInsurance")),
                                         };
 
                                         const isSelected = selectedRate === rate.idRate;
-                                        const displayPrice = getDisplayPrice(rate);
+                                        const desglose = rateBreakdown(rate, pricingOpts);
+                                        const displayPrice = desglose.guideCost;
+                                        const carrierFee = desglose.carrierFee;
+                                        const totalPrice = desglose.total;
 
                                         return (
                                             <div
@@ -727,42 +744,42 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${desglose.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
 
-                                                            {(rate.minimumInsurance ?? 0) > 0 && (
+                                                            {desglose.minimumInsurance > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9500' }}></div>
                                                                         <span className="text-gray-700 dark:text-gray-300">Seguro mín.</span>
                                                                     </div>
                                                                     <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.minimumInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        ${desglose.minimumInsurance.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                     </span>
                                                                 </div>
                                                             )}
 
-                                                            {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                            {desglose.extraInsurance > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
                                                                         <span className="text-gray-700 dark:text-gray-300">Seguro</span>
                                                                     </div>
                                                                     <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.extraInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        ${desglose.extraInsurance.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                     </span>
                                                                 </div>
                                                             )}
 
-                                                            {form.watch("enableCod") && (rate.codCarrierFee ?? 0) > 0 && (
+                                                            {carrierFee > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: businessColors.tertiary }}></div>
                                                                         <span className="text-gray-700 dark:text-gray-300">Comisión carrier</span>
                                                                     </div>
                                                                     <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.codCarrierFee ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        ${carrierFee.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                     </span>
                                                                 </div>
                                                             )}
@@ -774,11 +791,11 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums', marginBottom: '2px' }}>
                                                             ${displayPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                         </div>
-                                                        {rate.cod && (rate.codCarrierFee ?? 0) > 0 && (
+                                                        {carrierFee > 0 && (
                                                             <div className="pt-3 mt-3 border-t border-gray-300 dark:border-gray-600">
                                                                 <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">+ Comisión carrier</div>
                                                                 <div className="text-lg font-bold text-gray-900 dark:text-gray-100" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${(displayPrice + (rate.codCarrierFee ?? 0)).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${totalPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </div>
                                                             </div>
                                                         )}
@@ -808,7 +825,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                     Atrás
                                 </Button>
                                 <Button
-                                    onClick={onClose}
+                                    onClick={handleConfirmSelection}
                                     className="flex-1"
                                     style={{ backgroundColor: businessColors.tertiary }}
                                 >

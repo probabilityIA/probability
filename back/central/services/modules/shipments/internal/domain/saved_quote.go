@@ -70,10 +70,18 @@ type SavedQuoteResponse struct {
 	Rates               []map[string]interface{} `json:"rates"`
 	SelectedCarrier     string                   `json:"selected_carrier,omitempty"`
 	SelectedServiceCode string                   `json:"selected_service_code,omitempty"`
+	SelectedIDRate      *int64                   `json:"selected_id_rate,omitempty"`
 	Status              string                   `json:"status"`
 	ErrorMessage        string                   `json:"error_message,omitempty"`
 	ExpiresAt           *time.Time               `json:"expires_at,omitempty"`
 	CreatedAt           time.Time                `json:"created_at"`
+}
+
+type QuoteSelectionInput struct {
+	QuoteID         uint
+	BusinessID      uint
+	SelectedCarrier string
+	SelectedIDRate  *int64
 }
 
 type AssociateQuoteInput struct {

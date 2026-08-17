@@ -9,6 +9,7 @@ import type { SyncRunRecord } from '../../domain/types';
 import { getSyncProvider } from '../providers';
 import { SyncDetailPanel, matchRuleLabel } from './SyncDetailPanel';
 import { InventoryCompareModal } from './InventoryCompareModal';
+import { InventoryCompareTable } from './InventoryCompareTable';
 import { ChannelDataStrip } from './ChannelDataStrip';
 
 interface CyberChannelCardProps {
@@ -118,6 +119,7 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
         : undefined;
     const lastRunTime = relativeTime(lastRun?.finished_at);
     const inventoryEnabled = integration.config?.inventory_sync_enabled === true;
+    const esInventario = envView === 'inventory' && syncable;
     const liveDetail: SyncDetailItem[] = details[integration.id] || [];
     const detailCounts = detailCountsOf(envView, syncResult, lastRun);
     const detailTotal = Object.values(detailCounts).reduce((sum, value) => sum + (value ?? 0), 0);
@@ -497,16 +499,30 @@ export function CyberChannelCard({ integration, color, stats, onToggle, onToggle
                     </span>
                 </div>
             )}
-            {hasDetail && envView !== 'data' && (
+            {(hasDetail || esInventario) && envView !== 'data' && (
                 <div className="border-t border-gray-100 px-3 pb-2 dark:border-gray-700">
                     <button
                         onClick={() => setOpenDetail(v => !v)}
                         className="flex w-full items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-gray-500 transition-colors hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
                     >
                         <ChevronDown size={12} className={`transition-transform ${openDetail ? 'rotate-180' : ''}`} />
-                        {openDetail ? 'Ocultar detalle' : `Ver detalle (${liveDetail.length > 0 ? liveDetail.length : detailTotal})`}
+                        {openDetail
+                            ? 'Ocultar detalle'
+                            : esInventario
+                                ? 'Ver comparativo de stock'
+                                : `Ver detalle (${liveDetail.length > 0 ? liveDetail.length : detailTotal})`}
                     </button>
-                    {openDetail && provider && (
+                    {openDetail && esInventario && (
+                        <div className="h-[24rem] pb-2">
+                            <InventoryCompareTable
+                                businessId={businessId ?? null}
+                                integrations={[integration]}
+                                fixedIntegrationId={integration.id}
+                                compacto
+                            />
+                        </div>
+                    )}
+                    {openDetail && !esInventario && provider && (
                         <SyncDetailPanel
                             integrationId={integration.id}
                             kind={envView === 'products' ? 'products' : 'inventory'}

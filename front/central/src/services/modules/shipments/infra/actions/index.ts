@@ -82,7 +82,7 @@ export const createShipmentAction = async (req: CreateShipmentRequest) => {
 export const quoteShipmentAction = async (req: any) => {
     try {
         const response = await (await getUseCases()).quoteShipment(req);
-        return { success: response.success, data: response.data, message: response.message, correlation_id: response.correlation_id };
+        return { success: response.success, data: response.data, message: response.message, correlation_id: response.correlation_id, quote_id: (response as any).quote_id };
     } catch (error: any) {
         console.error('Quote Shipment Action Error:', error.message);
         return { success: false, message: error.message || 'Error al cotizar envío', data: undefined };

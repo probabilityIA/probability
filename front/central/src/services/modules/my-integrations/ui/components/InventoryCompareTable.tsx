@@ -19,6 +19,7 @@ interface InventoryCompareTableProps {
     businessId: number | null;
     integrations: Integration[];
     fixedIntegrationId?: number;
+    compacto?: boolean;
 }
 
 const ETIQUETA_ACCION: Record<string, { texto: string; clase: string }> = {
@@ -72,12 +73,12 @@ function LogoCanal({ integracion, size = 20 }: { integracion: Integration; size?
     return <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: channelBrand(clave).dot }} />;
 }
 
-function FotoProducto({ url }: { url?: string }) {
+function FotoProducto({ url, size = 40 }: { url?: string; size?: number }) {
     if (!url) {
         return (
             <span
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border text-[8.5px] italic text-gray-300 dark:text-gray-600"
-                style={{ borderColor: CARD_BORDER }}
+                className="flex flex-shrink-0 items-center justify-center rounded-md border text-[8.5px] italic text-gray-300 dark:text-gray-600"
+                style={{ borderColor: CARD_BORDER, width: size, height: size }}
             >
                 sin foto
             </span>
@@ -88,8 +89,8 @@ function FotoProducto({ url }: { url?: string }) {
             src={url}
             alt=""
             loading="lazy"
-            className="h-10 w-10 flex-shrink-0 rounded-md border bg-white object-cover"
-            style={{ borderColor: CARD_BORDER }}
+            className="flex-shrink-0 rounded-md border bg-white object-cover"
+            style={{ borderColor: CARD_BORDER, width: size, height: size }}
         />
     );
 }
@@ -99,7 +100,7 @@ function Cantidad({ valor }: { valor: number | null }) {
     return <span className="font-semibold tabular-nums">{valor}</span>;
 }
 
-export function InventoryCompareTable({ businessId, integrations, fixedIntegrationId }: InventoryCompareTableProps) {
+export function InventoryCompareTable({ businessId, integrations, fixedIntegrationId, compacto }: InventoryCompareTableProps) {
     const { runInventoryOne, running, progress, results } = useSyncActivity();
 
     const comparables = useMemo(
@@ -109,7 +110,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
 
     const [canalID, setCanalID] = useState<number | null>(fixedIntegrationId ?? comparables[0]?.id ?? null);
     const [pagina, setPagina] = useState(1);
-    const [tamano, setTamano] = useState(GRUPO_INVENTARIO);
+    const [tamano, setTamano] = useState(compacto ? 10 : GRUPO_INVENTARIO);
     const [datos, setDatos] = useState<ComparePage | null>(null);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -253,7 +254,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                         value={busqueda}
                         onChange={event => setBusqueda(event.target.value)}
                         placeholder="Buscar SKU o producto en este grupo"
-                        className="w-64 rounded-lg border bg-white py-1.5 pl-7 pr-2 text-[12px] text-gray-700 outline-none placeholder:text-gray-400 dark:bg-gray-800 dark:text-gray-200"
+                        className={`${compacto ? 'w-44' : 'w-64'} rounded-lg border bg-white py-1.5 pl-7 pr-2 text-[12px] text-gray-700 outline-none placeholder:text-gray-400 dark:bg-gray-800 dark:text-gray-200`}
                         style={{ borderColor: CARD_BORDER }}
                     />
                 </div>
@@ -267,7 +268,7 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                     }`}
                 >
                     <Filter size={11} />
-                    Solo los que no estan iguales
+                    {compacto ? 'Solo diferentes' : 'Solo los que no estan iguales'}
                 </button>
 
                 <button
@@ -320,13 +321,13 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                     className="h-3.5 w-3.5 accent-blue-600"
                                 />
                             </th>
-                            <th className="min-w-[22rem] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            <th className={`${compacto ? 'min-w-[11rem]' : 'min-w-[22rem]'} px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400`}>
                                 Probability
                             </th>
-                            <th className="w-28 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                                Stock aqui
+                            <th className={`${compacto ? 'w-14' : 'w-28'} px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400`}>
+                                {compacto ? 'Aqui' : 'Stock aqui'}
                             </th>
-                            <th className="min-w-[11rem] px-3 py-2 text-center">
+                            <th className={`${compacto ? 'min-w-[6rem]' : 'min-w-[11rem]'} px-3 py-2 text-center`}>
                                 <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[11.5px] font-semibold text-gray-700 dark:text-gray-200">
                                     {canal && <LogoCanal integracion={canal} />}
                                     {canal?.name ?? 'Canal'}
@@ -337,12 +338,14 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                     )}
                                 </span>
                             </th>
-                            <th className="w-32 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                            <th className={`${compacto ? 'w-24' : 'w-32'} px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400`}>
                                 Quedaria
                             </th>
-                            <th className="min-w-[13rem] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                                Que pasaria
-                            </th>
+                            {!compacto && (
+                                <th className="min-w-[13rem] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                    Que pasaria
+                                </th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -366,9 +369,12 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                     </td>
                                     <td className="px-3 py-2 align-top">
                                         <div className="flex gap-2">
-                                            <FotoProducto url={fila.image_url} />
+                                            <FotoProducto url={fila.image_url} size={compacto ? 30 : 40} />
                                             <div className="min-w-0 flex-1">
-                                                <span className="mb-0.5 block max-w-[22rem] truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200" title={fila.name}>
+                                                <span
+                                                    className={`mb-0.5 block ${compacto ? 'max-w-[12rem]' : 'max-w-[22rem]'} truncate text-[11.5px] font-semibold text-gray-700 dark:text-gray-200`}
+                                                    title={fila.reason ? `${fila.name} — ${fila.reason}` : fila.name}
+                                                >
                                                     {fila.name || 'Sin nombre'}
                                                 </span>
                                                 <span className="flex items-baseline gap-1.5 font-mono text-[11.5px] leading-tight">
@@ -395,14 +401,16 @@ export function InventoryCompareTable({ businessId, integrations, fixedIntegrati
                                             <span className="text-gray-300 dark:text-gray-600">—</span>
                                         )}
                                     </td>
-                                    <td className="px-3 py-2 align-top">
-                                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10.5px] font-bold ${etiqueta.clase}`}>
-                                            {etiqueta.texto}
-                                        </span>
-                                        {fila.reason && (
-                                            <span className="mt-0.5 block text-[10.5px] italic text-gray-400">{fila.reason}</span>
-                                        )}
-                                    </td>
+                                    {!compacto && (
+                                        <td className="px-3 py-2 align-top">
+                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[10.5px] font-bold ${etiqueta.clase}`}>
+                                                {etiqueta.texto}
+                                            </span>
+                                            {fila.reason && (
+                                                <span className="mt-0.5 block text-[10.5px] italic text-gray-400">{fila.reason}</span>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })}
