@@ -7,6 +7,7 @@ import * as z from "zod";
 import { Input, Button, Stepper } from "@/shared/ui";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { quoteShipmentAction } from "@/services/modules/shipments/infra/actions";
+import { setQuoteSelectionAction } from "@/services/modules/shipping-quotes/infra/actions";
 import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
 import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
@@ -92,6 +93,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
+    const [quoteId, setQuoteId] = useState<number | null>(null);
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [selectedOriginWarehouse, setSelectedOriginWarehouse] = useState<Warehouse | null>(null);
     const [originSearch, setOriginSearch] = useState("");
@@ -321,6 +323,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
             if (syncRates.length > 0) {
                 const enrichedRates = await enrichRatesWithEffectivity(syncRates, data.destDaneCode);
                 setRates(enrichedRates);
+                setQuoteId(Number(response.quote_id) || null);
                 setCurrentStep(2);
             } else {
                 setError("No hay transportadoras disponibles para esta ruta");
@@ -330,6 +333,18 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleConfirmSelection = async () => {
+        const chosen = rates.find(r => r.idRate === selectedRate);
+        if (quoteId && chosen) {
+            await setQuoteSelectionAction(
+                quoteId,
+                { selected_carrier: chosen.carrier, selected_id_rate: chosen.idRate },
+                business_id,
+            );
+        }
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -809,7 +824,7 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                     Atrás
                                 </Button>
                                 <Button
-                                    onClick={onClose}
+                                    onClick={handleConfirmSelection}
                                     className="flex-1"
                                     style={{ backgroundColor: businessColors.tertiary }}
                                 >

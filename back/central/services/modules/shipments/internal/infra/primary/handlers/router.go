@@ -53,6 +53,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.GET("/quotes", h.ListSavedQuotes)
 		shipments.GET("/quotes/:id", h.GetSavedQuote)
 		shipments.PATCH("/quotes/:id/associate", h.AssociateSavedQuote)
+		shipments.PATCH("/quotes/:id/selection", h.SetSavedQuoteSelection)
 
 		shipments.GET("/origin-addresses", h.ListOriginAddresses)
 		shipments.POST("/origin-addresses", h.CreateOriginAddress)

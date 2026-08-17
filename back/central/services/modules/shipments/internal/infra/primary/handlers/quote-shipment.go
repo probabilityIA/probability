@@ -76,9 +76,10 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		})
 	default:
 		ratesList := toRatesList(getRatesFromData(result.Data))
+		var quoteID uint
 		if len(ratesList) > 0 {
 			orderRef, _ := raw["order_uuid"].(string)
-			_, _ = h.uc.Quotes.SaveQuote(c.Request.Context(), domain.SaveQuoteInput{
+			saved, saveErr := h.uc.Quotes.SaveQuote(c.Request.Context(), domain.SaveQuoteInput{
 				BusinessID:       businessID,
 				IntegrationID:    carrier.IntegrationID,
 				Source:           domain.QuoteSourcePanel,
@@ -87,11 +88,15 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 				RequestPayload:   raw,
 				Rates:            ratesList,
 			})
+			if saveErr == nil && saved != nil {
+				quoteID = saved.ID
+			}
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"success":        true,
 			"message":        "Cotización exitosa",
 			"correlation_id": correlationID,
+			"quote_id":       quoteID,
 			"data":           gin.H{"rates": getRatesFromData(result.Data)},
 		})
 	}

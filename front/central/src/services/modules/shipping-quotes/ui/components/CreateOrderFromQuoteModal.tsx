@@ -73,7 +73,8 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     const [isCOD, setIsCOD] = useState(initialCOD);
 
     const rates = useMemo(() => {
-        const list = [...(quote.rates || [])] as SavedQuoteRate[];
+        const all = (quote.rates || []) as SavedQuoteRate[];
+        const list = initialCOD ? all.filter(r => (r as any).cod === true) : [...all];
         list.sort((a, b) => rateGuideCost(a, { cod: initialCOD, insured }) - rateGuideCost(b, { cod: initialCOD, insured }));
         return list;
     }, [quote.rates, initialCOD, insured]);
@@ -81,6 +82,10 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     const [autoGuide, setAutoGuide] = useState(false);
     const [confirmGuide, setConfirmGuide] = useState(false);
     const [rateIdx, setRateIdx] = useState(() => {
+        if (quote.selected_id_rate) {
+            const i = rates.findIndex(r => Number((r as any).idRate) === Number(quote.selected_id_rate));
+            if (i >= 0) return i;
+        }
         const wanted = (quote.selected_carrier || '').toUpperCase().trim();
         if (wanted) {
             const i = rates.findIndex(r => (r.carrier || '').toUpperCase().trim() === wanted);
