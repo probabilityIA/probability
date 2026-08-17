@@ -12,6 +12,7 @@ import type { Geozone, ProbabilityResult } from '@/services/modules/geozones/dom
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { associateQuoteAction, SavedQuote, SavedQuoteRate } from '../../infra/actions';
 import PaymentMethodSelect from '@/services/modules/paymentmethods/ui/components/PaymentMethodSelect';
+import { rateCarrierFee, rateGuideCost } from '@/shared/utils/rate-pricing';
 
 const GeozoneMiniMap = dynamic(
     () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
@@ -37,6 +38,13 @@ const daneInfo = (code?: string): { city: string; state: string } | null => {
     return d ? { city: titleCase(d.ciudad), state: titleCase(d.departamento) } : null;
 };
 
+const MAX_SHIPMENT_REFERENCE = 28;
+
+const shipmentReference = (orderNumber: string, orderId: string): string => {
+    const candidate = (orderNumber || '').trim() || orderId.replace(/-/g, '');
+    return candidate.slice(0, MAX_SHIPMENT_REFERENCE);
+};
+
 const geocodeAddress = async (address: string, city: string): Promise<{ lat: number; lng: number } | null> => {
     if (!city.trim()) return null;
     try {
@@ -59,14 +67,17 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     const destination = (payload.destination || {}) as Record<string, any>;
     const pkg = ((payload.packages || [])[0] || {}) as Record<string, any>;
 
-    const rates = useMemo(() => {
-        const list = [...(quote.rates || [])] as SavedQuoteRate[];
-        list.sort((a, b) => (a.flete || 0) - (b.flete || 0));
-        return list;
-    }, [quote.rates]);
+    const insured = payload.insurance === true;
 
     const initialCOD = Number(payload.codValue || 0) > 0;
     const [isCOD, setIsCOD] = useState(initialCOD);
+
+    const rates = useMemo(() => {
+        const list = [...(quote.rates || [])] as SavedQuoteRate[];
+        list.sort((a, b) => rateGuideCost(a, { cod: initialCOD, insured }) - rateGuideCost(b, { cod: initialCOD, insured }));
+        return list;
+    }, [quote.rates, initialCOD, insured]);
+
     const [autoGuide, setAutoGuide] = useState(false);
     const [confirmGuide, setConfirmGuide] = useState(false);
     const [rateIdx, setRateIdx] = useState(() => {
@@ -162,8 +173,8 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     }, [destCoords, effectiveBusinessId, selectedRate?.carrier]);
 
     const rateIsCOD = (selectedRate as any)?.cod === true;
-    const fleteEstimate = selectedRate ? (selectedRate.flete || 0) + Number((selectedRate as any).codProbabilityMargin || 0) : 0;
-    const codFee = isCOD ? Number((selectedRate as any)?.codCarrierFee || 0) : 0;
+    const fleteEstimate = rateGuideCost(selectedRate, { cod: isCOD, insured });
+    const codFee = rateCarrierFee(selectedRate, { cod: isCOD, insured });
     const codToCollect = productValue + fleteEstimate + codFee;
 
     const expired = quote.expires_at ? new Date(quote.expires_at).getTime() < Date.now() : false;
@@ -275,18 +286,25 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
             let guideOk = false;
 
             if (autoGuide && selectedRate) {
+                const origin = (payload.origin || {}) as Record<string, any>;
+                const originCity = String(origin.city || originDane?.city || '');
+                const reference = shipmentReference(orderNumber, orderId);
                 const guidePayload: any = {
                     ...payload,
                     idRate: (selectedRate as any).idRate,
                     carrier: selectedRate.carrier,
                     order_uuid: orderId,
-                    external_order_id: orderId,
-                    myShipmentReference: orderId,
+                    external_order_id: reference,
+                    myShipmentReference: reference,
                     contentValue: productValue,
                     codValue: isCOD ? productValue + fleteEstimate + codFee : 0,
                     codPaymentMethod: isCOD ? 'cash' : '',
                     includeGuideCost: false,
                     totalCost: fleteEstimate,
+                    origin: {
+                        ...origin,
+                        suburb: String(origin.suburb || originCity).slice(0, 30),
+                    },
                     destination: {
                         ...destination,
                         firstName: firstName.trim(),
@@ -296,6 +314,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                         address: address.trim(),
                         city: city.trim(),
                         state: state.trim(),
+                        suburb: String(destination.suburb || city).trim().slice(0, 30),
                     },
                 };
                 if (isCOD && codFee > 0) guidePayload.codCarrierFee = codFee;
@@ -406,7 +425,7 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                         <span className="font-medium text-gray-800 dark:text-gray-100 w-36 truncate">{r.carrier}</span>
                                         <span className="text-xs text-gray-500 w-24 truncate">{r.product}</span>
                                         <span className="text-xs text-gray-500">{r.deliveryDays ? `${r.deliveryDays}d` : ''}</span>
-                                        <span className="ml-auto font-semibold text-gray-900 dark:text-white">{money((r.flete || 0) + Number((r as any).codProbabilityMargin || 0))}</span>
+                                        <span className="ml-auto font-semibold text-gray-900 dark:text-white">{money(rateGuideCost(r, { cod: isCOD, insured }))}</span>
                                         {cod && (
                                             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                                                 COD {Number((r as any).codCarrierFee || 0) > 0 ? `+${money(Number((r as any).codCarrierFee))}` : ''}
@@ -533,9 +552,16 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200">Contra entrega</p>
                                 <p className="text-[11px] text-gray-400">Cuando se cobra: el dinero se recauda al entregar.</p>
                                 {isCOD && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Se cobrara al cliente: <strong className="text-emerald-600">{money(codToCollect)}</strong> (producto + envio{codFee > 0 ? ' + cargo COD' : ''})
-                                    </p>
+                                    <>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            Se cobrara al cliente (estimado): <strong className="text-emerald-600">{money(codToCollect)}</strong> (producto + envio{codFee > 0 ? ' + cargo COD' : ''})
+                                        </p>
+                                        {codFee > 0 && (
+                                            <p className="text-[11px] text-gray-400">
+                                                El cargo COD lo cobra la transportadora sobre el valor declarado, que incluye el envio, no solo sobre el producto. Por eso al generar la guia puede quedar un poco mas alto que este estimado.
+                                            </p>
+                                        )}
+                                    </>
                                 )}
                             </div>
                             <button
