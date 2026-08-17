@@ -1262,3 +1262,115 @@ func TestResolveCodIncludesShipping(t *testing.T) {
 		})
 	}
 }
+
+func TestMapAndSaveOrder_OrdenNueva_RegistraLaCreacionEnElHistorial(t *testing.T) {
+	var saved *entities.OrderHistory
+	repo := &mockRepository{
+		OrderExistsFn: func(ctx context.Context, externalID string, integrationID uint) (bool, error) {
+			return false, nil
+		},
+		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
+			return &entities.Client{ID: 99, Email: &email}, nil
+		},
+		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
+			order.ID = "ORDER-HIST-1"
+			return nil
+		},
+		CreateOrderHistoryFn: func(ctx context.Context, history *entities.OrderHistory) error {
+			saved = history
+			return nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+	dto := newMinimalDTO("EXT-HIST-1", 10, 1)
+	dto.Platform = "shopify"
+	dto.Status = "pending"
+
+	if _, err := uc.MapAndSaveOrder(context.Background(), dto); err != nil {
+		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
+	}
+
+	if saved == nil {
+		t.Fatal("se esperaba un registro de historial por la creacion, no se creo ninguno")
+	}
+	if saved.OrderID != "ORDER-HIST-1" {
+		t.Errorf("OrderID esperado: %q, obtenido: %q", "ORDER-HIST-1", saved.OrderID)
+	}
+	if saved.PreviousStatus != "" {
+		t.Errorf("la creacion no tiene estado anterior, se obtuvo: %q", saved.PreviousStatus)
+	}
+	if saved.NewStatus != "pending" {
+		t.Errorf("NewStatus esperado: %q, obtenido: %q", "pending", saved.NewStatus)
+	}
+	if saved.Source != entities.StatusSourceSalesChannel {
+		t.Errorf("Source esperado: %q, obtenido: %q", entities.StatusSourceSalesChannel, saved.Source)
+	}
+	if saved.Reason == nil || *saved.Reason == "" {
+		t.Error("se esperaba un motivo legible en el registro de creacion")
+	}
+}
+
+func TestMapAndSaveOrder_OrdenManual_MarcaElHistorialComoDeUsuario(t *testing.T) {
+	var saved *entities.OrderHistory
+	repo := &mockRepository{
+		OrderExistsFn: func(ctx context.Context, externalID string, integrationID uint) (bool, error) {
+			return false, nil
+		},
+		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
+			return &entities.Client{ID: 99, Email: &email}, nil
+		},
+		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
+			order.ID = "ORDER-HIST-2"
+			return nil
+		},
+		CreateOrderHistoryFn: func(ctx context.Context, history *entities.OrderHistory) error {
+			saved = history
+			return nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+	dto := newMinimalDTO("EXT-HIST-2", 10, 1)
+	dto.IsManualOrder = true
+
+	if _, err := uc.MapAndSaveOrder(context.Background(), dto); err != nil {
+		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
+	}
+
+	if saved == nil {
+		t.Fatal("se esperaba un registro de historial por la creacion manual")
+	}
+	if saved.Source != entities.StatusSourceUser {
+		t.Errorf("Source esperado: %q, obtenido: %q", entities.StatusSourceUser, saved.Source)
+	}
+	if saved.ChangedByName == "" {
+		t.Error("se esperaba un autor legible en el registro de creacion manual")
+	}
+}
+
+func TestMapAndSaveOrder_FalloAlGuardarHistorial_NoRompeLaCreacion(t *testing.T) {
+	repo := &mockRepository{
+		OrderExistsFn: func(ctx context.Context, externalID string, integrationID uint) (bool, error) {
+			return false, nil
+		},
+		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
+			return &entities.Client{ID: 99, Email: &email}, nil
+		},
+		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
+			order.ID = "ORDER-HIST-3"
+			return nil
+		},
+		CreateOrderHistoryFn: func(ctx context.Context, history *entities.OrderHistory) error {
+			return errors.New("historial caido")
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+
+	result, err := uc.MapAndSaveOrder(context.Background(), newMinimalDTO("EXT-HIST-3", 10, 1))
+
+	if err != nil {
+		t.Fatalf("un fallo del historial no debe romper la creacion, se obtuvo: %v", err)
+	}
+	if result == nil {
+		t.Fatal("se esperaba la orden creada pese al fallo del historial")
+	}
+}

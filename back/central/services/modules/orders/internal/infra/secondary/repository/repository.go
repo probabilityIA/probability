@@ -1242,6 +1242,7 @@ func (r *Repository) GetOrderHistory(ctx context.Context, orderID string) ([]ent
 			NewStatus:      h.NewStatus,
 			ChangedBy:      h.ChangedBy,
 			ChangedByName:  h.ChangedByName,
+			Source:         h.Source,
 			Reason:         h.Reason,
 		}
 	}

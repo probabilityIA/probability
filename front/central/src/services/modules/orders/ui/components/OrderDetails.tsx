@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { ChangeStatusModal } from './ChangeStatusModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
+import { getOrderStatusLabel } from '../../domain/order-status-labels';
 import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
 import { useDynamicBusinessColors } from '../hooks/useDynamicBusinessColors';
@@ -32,6 +33,14 @@ interface OrderDetailsProps {
     onClose?: () => void;
     mode?: 'details' | 'recommendation';
 }
+
+const SOURCE_LABELS: Record<string, string> = {
+    user: 'Usuario',
+    sales_channel: 'Canal de venta',
+    carrier: 'Transportadora',
+    inventory: 'Inventario',
+    system: 'Sistema',
+};
 
 function statusSourceStyle(source?: string): string {
     switch (source) {
@@ -864,7 +873,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         </svg>
                                                     </div>
                                                     <span className="text-[9px] font-bold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 mt-1">
-                                                        {statusHistory[0].previous_status || 'Creada'}
+                                                        {getOrderStatusLabel(statusHistory[0].previous_status) || "Creada"}
                                                     </span>
                                                 </div>
                                                 {statusHistory.map((entry, idx) => {
@@ -899,7 +908,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                     color: isLast ? secondaryColor : primaryColor
                                                                 }}
                                                             >
-                                                                {entry.new_status}
+                                                                {getOrderStatusLabel(entry.new_status) || 'Creada'}
                                                             </span>
                                                             <p className="text-[9px] text-gray-500 dark:text-gray-400 mt-1 text-center leading-tight">
                                                                 {new Date(entry.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
@@ -909,7 +918,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                             {entry.changed_by_name && (
                                                                 <span
                                                                     className={`mt-1 max-w-[104px] truncate rounded-full px-1.5 py-px text-[8px] font-semibold leading-tight ${statusSourceStyle(entry.source)}`}
-                                                                    title={`${entry.source === 'user' ? 'Modificado por' : 'Modificado desde'}: ${entry.changed_by_name}`}
+                                                                    title={[
+                                                                        `${entry.source === 'user' ? 'Registrado por' : 'Registrado desde'}: ${entry.changed_by_name}`,
+                                                                        entry.source ? `Origen: ${SOURCE_LABELS[entry.source] || entry.source}` : '',
+                                                                        entry.reason ? `Motivo: ${entry.reason}` : '',
+                                                                    ].filter(Boolean).join('\n')}
                                                                 >
                                                                     {entry.changed_by_name}
                                                                 </span>
