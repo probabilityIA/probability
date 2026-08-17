@@ -13,7 +13,7 @@ import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { findDaneCode } from "@/shared/utils/dane-lookup";
 import { getActionError } from '@/shared/utils/action-result';
-import { rateCarrierFee, rateGuideCost, rateTotalCost } from '@/shared/utils/rate-pricing';
+import { rateBreakdown } from '@/shared/utils/rate-pricing';
 import { CookieStorage } from "@/shared/config";
 import '@/shared/ui/styles/shipment-modals.css';
 
@@ -669,9 +669,10 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                         };
 
                                         const isSelected = selectedRate === rate.idRate;
-                                        const displayPrice = rateGuideCost(rate, pricingOpts);
-                                        const carrierFee = rateCarrierFee(rate, pricingOpts);
-                                        const totalPrice = rateTotalCost(rate, pricingOpts);
+                                        const desglose = rateBreakdown(rate, pricingOpts);
+                                        const displayPrice = desglose.guideCost;
+                                        const carrierFee = desglose.carrierFee;
+                                        const totalPrice = desglose.total;
 
                                         return (
                                             <div
@@ -743,30 +744,30 @@ export function QuotationExpresModal({ isOpen, onClose, business_id }: Quotation
                                                                     <span className="text-gray-700 dark:text-gray-300">Flete</span>
                                                                 </div>
                                                                 <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                    ${rate.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                    ${desglose.flete.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                 </span>
                                                             </div>
 
-                                                            {(rate.minimumInsurance ?? 0) > 0 && (
+                                                            {desglose.minimumInsurance > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#ff9500' }}></div>
                                                                         <span className="text-gray-700 dark:text-gray-300">Seguro mín.</span>
                                                                     </div>
                                                                     <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.minimumInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        ${desglose.minimumInsurance.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                     </span>
                                                                 </div>
                                                             )}
 
-                                                            {form.watch("enableInsurance") && (rate.extraInsurance ?? 0) > 0 && (
+                                                            {desglose.extraInsurance > 0 && (
                                                                 <div className="flex justify-between items-center text-sm">
                                                                     <div className="flex items-center gap-2">
                                                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
                                                                         <span className="text-gray-700 dark:text-gray-300">Seguro</span>
                                                                     </div>
                                                                     <span className="text-gray-900 dark:text-gray-100 font-semibold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                                                        ${(rate.extraInsurance ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}
+                                                                        ${desglose.extraInsurance.toLocaleString('es-CO', { maximumFractionDigits: 0 })}
                                                                     </span>
                                                                 </div>
                                                             )}

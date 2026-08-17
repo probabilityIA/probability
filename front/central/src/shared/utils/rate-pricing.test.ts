@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { rateGuideCost, rateCarrierFee, rateTotalCost, rateAppliesCOD } from './rate-pricing';
+import { rateGuideCost, rateCarrierFee, rateTotalCost, rateAppliesCOD, rateBreakdown } from './rate-pricing';
 
 const coordinadora = {
     flete: 7796,
@@ -54,6 +54,21 @@ describe('rate-pricing', () => {
     it('el total suma guia mas comision', () => {
         expect(rateTotalCost(coordinadora, { cod: true })).toBe(14992);
         expect(rateTotalCost(servientrega, { cod: true })).toBe(24389);
+    });
+
+    it('el desglose suma exactamente el total', () => {
+        const d = rateBreakdown(coordinadora, { cod: true, insured: true });
+        expect(d.flete).toBe(8296);
+        expect(d.flete + d.minimumInsurance + d.extraInsurance).toBe(d.guideCost);
+        expect(d.guideCost + d.carrierFee).toBe(d.total);
+        expect(d.total).toBe(rateTotalCost(coordinadora, { cod: true, insured: true }));
+    });
+
+    it('el desglose sin contra entrega no trae margen ni comision', () => {
+        const d = rateBreakdown(coordinadora, { cod: false });
+        expect(d.flete).toBe(7796);
+        expect(d.carrierFee).toBe(0);
+        expect(d.total).toBe(8376);
     });
 
     it('tolera tarifas incompletas', () => {

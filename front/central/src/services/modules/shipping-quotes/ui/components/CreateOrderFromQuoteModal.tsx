@@ -12,7 +12,7 @@ import type { Geozone, ProbabilityResult } from '@/services/modules/geozones/dom
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 import { associateQuoteAction, SavedQuote, SavedQuoteRate } from '../../infra/actions';
 import PaymentMethodSelect from '@/services/modules/paymentmethods/ui/components/PaymentMethodSelect';
-import { rateCarrierFee, rateGuideCost } from '@/shared/utils/rate-pricing';
+import { rateBreakdown, rateGuideCost } from '@/shared/utils/rate-pricing';
 
 const GeozoneMiniMap = dynamic(
     () => import('@/services/modules/geozones/ui/components/GeozoneMiniMap').then(m => m.GeozoneMiniMap),
@@ -178,8 +178,9 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
     }, [destCoords, effectiveBusinessId, selectedRate?.carrier]);
 
     const rateIsCOD = (selectedRate as any)?.cod === true;
-    const fleteEstimate = rateGuideCost(selectedRate, { cod: isCOD, insured });
-    const codFee = rateCarrierFee(selectedRate, { cod: isCOD, insured });
+    const desglose = rateBreakdown(selectedRate, { cod: isCOD, insured });
+    const fleteEstimate = desglose.guideCost;
+    const codFee = desglose.carrierFee;
     const codToCollect = productValue + fleteEstimate + codFee;
 
     const expired = quote.expires_at ? new Date(quote.expires_at).getTime() < Date.now() : false;
@@ -442,6 +443,48 @@ export default function CreateOrderFromQuoteModal({ quote, businessId, onClose, 
                             {rates.length === 0 && <p className="text-xs text-gray-400">La cotizacion no tiene tarifas guardadas.</p>}
                         </div>
                         {fieldError('rate')}
+
+                        {selectedRate && (
+                            <div className="mt-3 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between">
+                                    <span className="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">Desglose</span>
+                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{selectedRate.carrier}</span>
+                                </div>
+                                <div className="px-3 py-2 space-y-1.5">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-600 dark:text-gray-300">Flete</span>
+                                        <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.flete)}</span>
+                                    </div>
+                                    {desglose.minimumInsurance > 0 && (
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-gray-600 dark:text-gray-300">Seguro minimo</span>
+                                            <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.minimumInsurance)}</span>
+                                        </div>
+                                    )}
+                                    {desglose.extraInsurance > 0 && (
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-gray-600 dark:text-gray-300">Seguro adicional</span>
+                                            <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.extraInsurance)}</span>
+                                        </div>
+                                    )}
+                                    {desglose.carrierFee > 0 && (
+                                        <div className="flex justify-between text-xs">
+                                            <span className="text-gray-600 dark:text-gray-300">Comision carrier</span>
+                                            <span className="font-medium text-gray-900 dark:text-white tabular-nums">{money(desglose.carrierFee)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="px-3 py-2.5 border-t border-gray-200 dark:border-gray-700 bg-purple-50 dark:bg-purple-900/20 flex items-center justify-between">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-purple-700 dark:text-purple-300">Total a pagar</span>
+                                    <span className="text-base font-bold text-purple-700 dark:text-purple-300 tabular-nums">{money(desglose.total)}</span>
+                                </div>
+                                {desglose.carrierFee > 0 && (
+                                    <div className="px-3 pb-2 text-[11px] text-gray-400">
+                                        Envio {money(desglose.guideCost)} + comision {money(desglose.carrierFee)}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {(destCoords || destZone) && (
