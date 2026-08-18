@@ -171,6 +171,12 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.fixVig0010Cod(ctx); err != nil {
 		return err
 	}
+	if err := r.fixVig0095CotizacionFallida(ctx); err != nil {
+		return err
+	}
+	if err := r.migrateTrazabilidadUsuario(ctx); err != nil {
+		return err
+	}
 	if err := r.fixVigaCodRealPayout(ctx); err != nil {
 		return err
 	}

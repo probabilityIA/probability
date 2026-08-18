@@ -338,3 +338,93 @@ func (r *Repository) EnsureAllBusinessesActive(ctx context.Context) error {
 		Where("deleted_at IS NULL").
 		Update("is_active", true).Error
 }
+
+func (r *Repository) GetOrderRecipient(ctx context.Context, orderUUID string) (*domain.OrderRecipient, error) {
+	var result struct {
+		CustomerName         string  `gorm:"column:customer_name"`
+		CustomerFirstName    string  `gorm:"column:customer_first_name"`
+		CustomerLastName     string  `gorm:"column:customer_last_name"`
+		CustomerEmail        string  `gorm:"column:customer_email"`
+		CustomerPhone        string  `gorm:"column:customer_phone"`
+		ShippingStreet       string  `gorm:"column:shipping_street"`
+		ShippingCity         string  `gorm:"column:shipping_city"`
+		ShippingState        string  `gorm:"column:shipping_state"`
+		ShippingNeighborhood string  `gorm:"column:shipping_neighborhood"`
+		BusinessID           *uint   `gorm:"column:business_id"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("orders").
+		Select(`COALESCE(customer_name,'') AS customer_name,
+			COALESCE(customer_first_name,'') AS customer_first_name,
+			COALESCE(customer_last_name,'') AS customer_last_name,
+			COALESCE(customer_email,'') AS customer_email,
+			COALESCE(customer_phone,'') AS customer_phone,
+			COALESCE(shipping_street,'') AS shipping_street,
+			COALESCE(shipping_city,'') AS shipping_city,
+			COALESCE(shipping_state,'') AS shipping_state,
+			COALESCE(shipping_neighborhood,'') AS shipping_neighborhood,
+			business_id`).
+		Where("id = ?", orderUUID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if result.CustomerName == "" && result.ShippingStreet == "" && result.BusinessID == nil {
+		return nil, nil
+	}
+
+	first := strings.TrimSpace(result.CustomerFirstName)
+	last := strings.TrimSpace(result.CustomerLastName)
+	if first == "" && last == "" {
+		parts := strings.Fields(strings.TrimSpace(result.CustomerName))
+		if len(parts) > 0 {
+			first = parts[0]
+		}
+		if len(parts) > 1 {
+			last = strings.Join(parts[1:], " ")
+		}
+	}
+
+	return &domain.OrderRecipient{
+		BusinessID:   result.BusinessID,
+		FullName:     strings.TrimSpace(result.CustomerName),
+		FirstName:    first,
+		LastName:     last,
+		Email:        strings.TrimSpace(result.CustomerEmail),
+		Phone:        strings.TrimSpace(result.CustomerPhone),
+		Address:      strings.TrimSpace(result.ShippingStreet),
+		City:         strings.TrimSpace(result.ShippingCity),
+		State:        strings.TrimSpace(result.ShippingState),
+		Neighborhood: strings.TrimSpace(result.ShippingNeighborhood),
+	}, nil
+}
+
+func (r *Repository) GetUserDisplayName(ctx context.Context, userID uint) string {
+	if userID == 0 {
+		return ""
+	}
+	var row struct {
+		Name  string `gorm:"column:name"`
+		Email string `gorm:"column:email"`
+	}
+	err := r.db.Conn(ctx).
+		Table(`"user"`).
+		Select("COALESCE(name,'') AS name, COALESCE(email,'') AS email").
+		Where("id = ?", userID).
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return ""
+	}
+	if name := strings.TrimSpace(row.Name); name != "" {
+		return name
+	}
+	return strings.TrimSpace(row.Email)
+}

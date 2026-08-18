@@ -634,3 +634,7 @@ func TestUpdateOrder_CambioInformacionCliente_ActualizaCampos(t *testing.T) {
 		t.Errorf("CustomerEmail esperado: %q, obtenido: %q", "juancarlos@example.com", result.CustomerEmail)
 	}
 }
+
+func (m *mockRepository) GetUserDisplayName(ctx context.Context, userID uint) string {
+	return ""
+}

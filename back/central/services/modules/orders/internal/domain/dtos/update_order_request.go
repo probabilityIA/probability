@@ -97,4 +97,7 @@ type UpdateOrderRequest struct {
 	ShippingDetails    []byte
 	PaymentDetails     []byte
 	FulfillmentDetails []byte
+
+	UpdatedBy     *uint
+	UpdatedByName string
 }

@@ -58,4 +58,3 @@ func (h *Handlers) DeleteShipment(c *gin.Context) {
 		"message": "Envío eliminado exitosamente",
 	})
 }
-

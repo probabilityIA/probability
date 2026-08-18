@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { ChangeStatusModal } from './ChangeStatusModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
-import { orderStatusLabel, isPaymentStatus } from '../../domain/order-status-labels';
+import { getOrderStatusLabel, isPaymentStatus } from '../../domain/order-status-labels';
 import { salesChannelLabel } from '../../domain/sales-channel-labels';
 import { useToast } from '@/shared/providers/toast-provider';
 import { IVAIncludedBadge } from './IVAIncludedBadge';
@@ -35,6 +35,14 @@ interface OrderDetailsProps {
     onClose?: () => void;
     mode?: 'details' | 'recommendation';
 }
+
+const SOURCE_LABELS: Record<string, string> = {
+    user: 'Usuario',
+    sales_channel: 'Canal de venta',
+    carrier: 'Transportadora',
+    inventory: 'Inventario',
+    system: 'Sistema',
+};
 
 function statusSourceStyle(source?: string): string {
     switch (source) {
@@ -887,7 +895,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         className="mt-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-gray-700 dark:text-gray-300"
                                                         title={statusHistory[0].previous_status || ''}
                                                     >
-                                                        {statusHistory[0].previous_status ? orderStatusLabel(statusHistory[0].previous_status) : 'Creada'}
+                                                        {getOrderStatusLabel(statusHistory[0].previous_status) || 'Creada'}
                                                     </span>
                                                 </div>
                                                 {statusHistory.map((entry, idx) => {
@@ -911,7 +919,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 }}
                                                                 title={entry.new_status}
                                                             >
-                                                                {orderStatusLabel(entry.new_status)}
+                                                                {getOrderStatusLabel(entry.new_status) || entry.new_status}
                                                             </span>
                                                             {isPaymentStatus(entry.new_status) && (
                                                                 <span className="mt-1 rounded-full bg-slate-100 px-1.5 py-px text-[9px] font-semibold text-slate-500 dark:bg-gray-700 dark:text-gray-300">
@@ -926,7 +934,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                             {entry.changed_by_name && (
                                                                 <span
                                                                     className={`mt-1 max-w-[112px] truncate rounded-full px-1.5 py-px text-[9px] font-semibold leading-tight ${statusSourceStyle(entry.source)}`}
-                                                                    title={`${entry.source === 'user' ? 'Modificado por' : 'Modificado desde'}: ${entry.changed_by_name}`}
+                                                                    title={[
+                                                                        `${entry.source === 'user' ? 'Registrado por' : 'Registrado desde'}: ${entry.changed_by_name}`,
+                                                                        entry.source ? `Origen: ${SOURCE_LABELS[entry.source] || entry.source}` : '',
+                                                                        entry.reason ? `Motivo: ${entry.reason}` : '',
+                                                                    ].filter(Boolean).join('\n')}
                                                                 >
                                                                     {entry.changed_by_name}
                                                                 </span>

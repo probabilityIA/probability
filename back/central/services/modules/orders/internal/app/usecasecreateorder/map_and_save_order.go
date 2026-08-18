@@ -56,6 +56,10 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		dto.CustomerName = fmt.Sprintf("%s %s", dto.CustomerFirstName, dto.CustomerLastName)
 	}
 
+	if dto.UserID != nil && *dto.UserID > 0 && dto.UserName == "" {
+		dto.UserName = uc.repo.GetUserDisplayName(ctx, *dto.UserID)
+	}
+
 	statusMapping := uc.mapOrderStatuses(ctx, dto)
 
 	uc.resolveCodIncludesShipping(ctx, dto)
@@ -82,6 +86,8 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		}
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
+
+	uc.saveCreationHistory(ctx, order, dto)
 
 	if dto.BusinessID != nil {
 		if err := uc.repo.ResolveOrderGeozone(ctx, order.ID, *dto.BusinessID); err != nil {

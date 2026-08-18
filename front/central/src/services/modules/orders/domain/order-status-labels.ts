@@ -1,40 +1,30 @@
-const STATUS_LABELS: Record<string, string> = {
-    pending: 'Pendiente',
-    processing: 'En procesamiento',
+import { getStatusByCode } from './order-status-transitions';
+
+const PLATFORM_STATUS_LABELS: Record<string, string> = {
+    authorized: 'Autorizada',
     confirmed: 'Confirmada',
-    on_hold: 'En espera',
-    'on-hold': 'En espera',
-    picking: 'Seleccionando productos',
-    packing: 'Empacando',
-    ready_to_ship: 'Listo para despacho',
-    ready_for_pickup: 'Listo para recoger',
-    assigned_to_driver: 'Asignado a piloto',
-    picked_up: 'Recogido',
-    shipped: 'Enviada',
-    in_transit: 'En camino',
-    out_for_delivery: 'En reparto final',
-    delivered: 'Entregada',
-    completed: 'Completada',
-    fulfilled: 'Preparada',
-    unfulfilled: 'Sin preparar',
-    delivery_novelty: 'Novedad de entrega',
-    delivery_failed: 'Entrega fallida',
     failed: 'Fallida',
-    returned: 'Devuelta',
-    return_in_transit: 'Devoluci\u00f3n en camino',
-    rejected: 'Rechazada',
-    cancelled: 'Cancelada',
-    canceled: 'Cancelada',
-    inventory_issue: 'Novedad de inventario',
-    authorized: 'Pago autorizado',
+    fulfilled: 'Despachada',
     paid: 'Pagada',
     partially_paid: 'Pago parcial',
-    unpaid: 'Sin pagar',
-    refunded: 'Reembolsada',
     partially_refunded: 'Reembolso parcial',
-    voided: 'Pago anulado',
-    pending_payment: 'Pago pendiente',
+    processing: 'En proceso',
+    ready_for_pickup: 'Lista para recoger',
+    unfulfilled: 'Sin despachar',
+    unpaid: 'Sin pagar',
+    voided: 'Anulada',
 };
+
+export function getOrderStatusLabel(code?: string | null): string {
+    if (!code) return '';
+    const trimmed = code.trim();
+    if (!trimmed) return '';
+
+    const fromFlow = getStatusByCode(trimmed);
+    if (fromFlow) return fromFlow.name;
+
+    return PLATFORM_STATUS_LABELS[trimmed] || trimmed;
+}
 
 const PAYMENT_STATUSES = new Set([
     'authorized',
@@ -46,14 +36,6 @@ const PAYMENT_STATUSES = new Set([
     'voided',
     'pending_payment',
 ]);
-
-export function orderStatusLabel(status?: string | null): string {
-    if (!status) return '-';
-    const key = status.trim().toLowerCase().replace(/^wc-/, '');
-    if (STATUS_LABELS[key]) return STATUS_LABELS[key];
-    const words = key.replace(/[_-]+/g, ' ').trim();
-    return words.charAt(0).toUpperCase() + words.slice(1);
-}
 
 export function isPaymentStatus(status?: string | null): boolean {
     if (!status) return false;

@@ -9,6 +9,7 @@ const (
 
 	QuoteStatusCreated        = "created"
 	QuoteStatusAssociated     = "associated"
+	QuoteStatusGenerating     = "generating"
 	QuoteStatusGuideGenerated = "guide_generated"
 	QuoteStatusExpired        = "expired"
 	QuoteStatusFailed         = "failed"
@@ -29,6 +30,11 @@ type SavedQuote struct {
 	SelectedServiceCode string
 	SelectedIDRate      *int64
 	Status              string
+	ErrorMessage        string
+	CreatedBy           *uint
+	CreatedByName       string
+	UpdatedBy           *uint
+	UpdatedByName       string
 	ExpiresAt           *time.Time
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -37,6 +43,8 @@ type SavedQuote struct {
 type SaveQuoteInput struct {
 	BusinessID       uint
 	IntegrationID    uint
+	CreatedBy        *uint
+	CreatedByName    string
 	Source           string
 	CorrelationID    string
 	OrderUUID        *string
@@ -70,6 +78,9 @@ type SavedQuoteResponse struct {
 	SelectedServiceCode string                   `json:"selected_service_code,omitempty"`
 	SelectedIDRate      *int64                   `json:"selected_id_rate,omitempty"`
 	Status              string                   `json:"status"`
+	ErrorMessage        string                   `json:"error_message,omitempty"`
+	CreatedByName       string                   `json:"created_by_name,omitempty"`
+	UpdatedByName       string                   `json:"updated_by_name,omitempty"`
 	ExpiresAt           *time.Time               `json:"expires_at,omitempty"`
 	CreatedAt           time.Time                `json:"created_at"`
 }
@@ -77,6 +88,8 @@ type SavedQuoteResponse struct {
 type QuoteSelectionInput struct {
 	QuoteID         uint
 	BusinessID      uint
+	UpdatedBy       *uint
+	UpdatedByName   string
 	SelectedCarrier string
 	SelectedIDRate  *int64
 }
@@ -84,6 +97,8 @@ type QuoteSelectionInput struct {
 type AssociateQuoteInput struct {
 	QuoteID         uint
 	BusinessID      uint
+	UpdatedBy       *uint
+	UpdatedByName   string
 	OrderUUID       string
 	SelectedCarrier string
 	SelectedIDRate  *int64

@@ -15,9 +15,8 @@ import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shi
 import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 import daneCodes from "../resources/municipios_dane_extendido.json";
 
-// Zod Schema
 const addressSchema = z.object({
-    company: z.string().optional(), // Made optional as per some flows, but validation might be needed on backend
+    company: z.string().optional(),
     firstName: z.string().min(1, "Nombre es requerido"),
     lastName: z.string().min(1, "Apellido es requerido"),
     email: z.string().email("Email inválido"),
@@ -66,14 +65,12 @@ const findDaneCode = (city: string, state: string) => {
 
     const entries = Object.entries(daneCodes);
 
-    // 1. Try exact match with city and state
     const exactMatch = entries.find(([_, data]: [string, any]) =>
         normalizeString(data.ciudad) === targetCity &&
         normalizeString(data.departamento) === targetState
     );
     if (exactMatch) return exactMatch[0];
 
-    // 2. Try match with city only
     const cityMatch = entries.find(([_, data]: [string, any]) =>
         normalizeString(data.ciudad) === targetCity
     );
@@ -97,13 +94,11 @@ export const ShippingForm = () => {
     const [showBalanceModal, setShowBalanceModal] = useState(false);
     const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
 
-    // Filter states
     const [originSearch, setOriginSearch] = useState("");
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
     
-    // Carrier Offices states
     const [showOriginOffices, setShowOriginOffices] = useState(false);
     const [showDestOffices, setShowDestOffices] = useState(false);
 
@@ -133,7 +128,6 @@ export const ShippingForm = () => {
         resolver: zodResolver(formSchema),
         defaultValues: {
             origin: {
-                // Default origin for convenience (as per user example)
                 company: "", firstName: "", lastName: "", email: "", phone: "",
                 address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
             },
@@ -155,7 +149,6 @@ export const ShippingForm = () => {
         const fetchOrders = async () => {
             const repo = new OrderApiRepository();
             try {
-                // Fetching first page of orders
                 const res = await repo.getOrders({ page_size: 50 });
                 setOrders(res.data);
             } catch (e) {
@@ -174,15 +167,13 @@ export const ShippingForm = () => {
         const order = orders.find(o => o.id === orderId);
         setSelectedOrder(order || null);
         if (order) {
-            // Populate destination from order
-            setValue("destination.company", order.customer_name); // Or business name if available
+            setValue("destination.company", order.customer_name);
             setValue("destination.firstName", order.customer_name.split(" ")[0] || "");
             setValue("destination.lastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             setValue("destination.email", order.customer_email);
             setValue("destination.phone", order.customer_phone);
             setValue("destination.address", order.shipping_street);
-            setValue("destination.suburb", order.shipping_state || ""); // Mapping state to suburb as fallback, simplistic
-            // Note: EnvioClick requires specific suburb/daneCode often. User might need to edit.
+            setValue("destination.suburb", order.shipping_state || "");
             setValue("destination.crossStreet", "");
             setValue("destination.reference", "");
 
@@ -200,7 +191,6 @@ export const ShippingForm = () => {
             setValue("external_order_id", order.order_number);
             setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
 
-            // Try to map dimensions if available
             if (order.weight && order.weight > 0) {
                 setValue("packageSize", "custom");
                 setValue("customPackage.weight", order.weight);
@@ -360,7 +350,6 @@ export const ShippingForm = () => {
             } else {
                 setError(res.message || "Error generando guía");
             }
-            // Reset logic if needed
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error generando guía";
             setError(errorMessage);
@@ -369,7 +358,6 @@ export const ShippingForm = () => {
         }
     };
 
-    // Prepare city options derived from the JSON import
     const cityOptions = Object.entries(daneCodes).map(([code, data]) => ({
         code,
         label: `${(data as any).ciudad} (${(data as any).departamento})`,
@@ -387,7 +375,7 @@ export const ShippingForm = () => {
     return (
         <div>
             <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía de Envío</h2>
 
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Seleccionar Orden</label>

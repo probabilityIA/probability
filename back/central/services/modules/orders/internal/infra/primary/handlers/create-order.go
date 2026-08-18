@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,6 +32,11 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 			"error":   err.Error(),
 		})
 		return
+	}
+
+	if uid, ok := middleware.GetUserID(c); ok && uid > 0 {
+		req.UserID = &uid
+		req.UserName = ""
 	}
 
 	h.logger.Info(c.Request.Context()).

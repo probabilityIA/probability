@@ -57,6 +57,7 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 		c.Set("auth_info", authInfo)
 		c.Set("auth_type", authInfo.Type)
 		c.Set("user_id", authInfo.UserID)
+		c.Set("user_email", authInfo.Email)
 		c.Set("business_id", authInfo.BusinessID)
 		c.Set("business_type_id", authInfo.BusinessTypeID)
 		c.Set("role_id", authInfo.RoleID)

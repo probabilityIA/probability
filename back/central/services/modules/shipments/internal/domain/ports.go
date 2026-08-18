@@ -101,6 +101,8 @@ type IRepository interface {
 	GetOrderCodTotal(ctx context.Context, orderUUID string) (*float64, error)
 	GetOrderCodBasis(ctx context.Context, orderUUID string) (*OrderCodBasis, error)
 	GetOrderExternalGuide(ctx context.Context, orderUUID string) (*OrderExternalGuide, error)
+	GetOrderRecipient(ctx context.Context, orderUUID string) (*OrderRecipient, error)
+	GetUserDisplayName(ctx context.Context, userID uint) string
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
@@ -113,6 +115,7 @@ type IRepository interface {
 
 	CreateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetSavedQuoteByID(ctx context.Context, id uint) (*SavedQuote, error)
+	GetSavedQuoteByOrderUUID(ctx context.Context, orderUUID string) (*SavedQuote, error)
 	ListSavedQuotes(ctx context.Context, filter SavedQuoteFilter) ([]SavedQuote, int64, error)
 	UpdateSavedQuote(ctx context.Context, quote *SavedQuote) error
 	GetOrderSelectedShipping(ctx context.Context, orderUUID string) (*OrderSelectedShipping, error)
@@ -233,6 +236,8 @@ type TransportRequestMessage struct {
 	IsTest            bool                   `json:"is_test,omitempty"`
 	Timestamp         time.Time              `json:"timestamp"`
 	Payload           map[string]interface{} `json:"payload"`
+	UserID            *uint                  `json:"user_id,omitempty"`
+	TriggeredBy       string                 `json:"triggered_by,omitempty"`
 }
 
 type ITransportRequestPublisher interface {
@@ -270,6 +275,19 @@ func (g OrderExternalGuide) HasGuide() bool {
 		return false
 	}
 	return g.TrackingNumber != "" || g.GuideID != "" || g.GuideURL != ""
+}
+
+type OrderRecipient struct {
+	BusinessID   *uint
+	FullName     string
+	FirstName    string
+	LastName     string
+	Email        string
+	Phone        string
+	Address      string
+	City         string
+	State        string
+	Neighborhood string
 }
 
 type OrderCodBasis struct {

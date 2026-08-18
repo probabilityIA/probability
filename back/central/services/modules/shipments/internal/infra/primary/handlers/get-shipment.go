@@ -59,4 +59,3 @@ func (h *Handlers) GetShipmentByID(c *gin.Context) {
 		"data":    shipment,
 	})
 }
-

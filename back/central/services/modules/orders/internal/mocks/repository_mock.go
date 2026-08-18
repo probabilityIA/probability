@@ -351,3 +351,7 @@ func (m *RepositoryMock) SaveOrderItems(ctx context.Context, orderID string, ite
 	args := m.Called(ctx, orderID, items)
 	return args.Error(0)
 }
+
+func (m *RepositoryMock) GetUserDisplayName(ctx context.Context, userID uint) string {
+	return ""
+}

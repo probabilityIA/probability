@@ -48,6 +48,10 @@ func (h *Handlers) UpdateShipment(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
+	a := h.resolveActor(c)
+	req.UpdatedBy = a.ID
+	req.UpdatedByName = a.Name
+
 	shipment, err := h.uc.UpdateShipment(c.Request.Context(), uint(id), &req)
 	if err != nil {
 		if err == domain.ErrShipmentNotFound {
@@ -82,4 +86,3 @@ func (h *Handlers) UpdateShipment(c *gin.Context) {
 		"data":    shipment,
 	})
 }
-

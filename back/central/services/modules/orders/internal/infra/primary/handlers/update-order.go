@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -67,6 +68,9 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 	c.Request.Header.Set("X-Debug-Items-Count", fmt.Sprintf("%d", len(req.Items)))
 
 	domainReq := mappers.MapUpdateOrderRequestToDomain(&req)
+	if uid, ok := middleware.GetUserID(c); ok && uid > 0 {
+		domainReq.UpdatedBy = &uid
+	}
 
 	order, err := h.orderCRUD.UpdateOrder(c.Request.Context(), id, domainReq)
 	if err != nil {

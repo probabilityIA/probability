@@ -73,13 +73,15 @@ func (c *OrderCreatedConsumer) maybeAutoGenerate(ctx context.Context, msg *order
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
 		Payload:           payload,
+		TriggeredBy:       "auto",
 	}
 	if err := c.transportPub.PublishTransportRequest(ctx, out); err != nil {
 		c.log.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to publish auto generate request")
 		return
 	}
 
-	quote.Status = domain.QuoteStatusGuideGenerated
+	quote.Status = domain.QuoteStatusGenerating
+	quote.ErrorMessage = ""
 	_ = repo.UpdateSavedQuote(ctx, quote)
 
 	c.log.Info(ctx).
@@ -208,6 +210,7 @@ func (c *OrderCreatedConsumer) createOrReusePendingShipment(ctx context.Context,
 
 func (c *OrderCreatedConsumer) failQuote(ctx context.Context, quote *domain.SavedQuote, reason string) {
 	quote.Status = domain.QuoteStatusFailed
+	quote.ErrorMessage = domain.SafeQuoteMessage(reason)
 	if err := c.uc.Repo().UpdateSavedQuote(ctx, quote); err != nil {
 		c.log.Error(ctx).Err(err).Uint("quote_id", quote.ID).Msg("Failed to mark saved quote as failed")
 	}

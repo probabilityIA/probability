@@ -70,6 +70,11 @@ type Shipment struct {
 	DeliveryNotes     *string        `gorm:"type:text"`
 	Metadata          datatypes.JSON `gorm:"type:jsonb"`
 
+	CreatedBy     *uint  `gorm:"index"`
+	CreatedByName string `gorm:"size:255"`
+	UpdatedBy     *uint  `gorm:"index"`
+	UpdatedByName string `gorm:"size:255"`
+
 	Order *Order `gorm:"foreignKey:OrderID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 

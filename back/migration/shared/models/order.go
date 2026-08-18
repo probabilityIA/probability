@@ -115,6 +115,9 @@ type Order struct {
 	UserID   *uint  `gorm:"index"`
 	UserName string `gorm:"size:255"`
 
+	UpdatedBy     *uint  `gorm:"index"`
+	UpdatedByName string `gorm:"size:255"`
+
 	IsConfirmed *bool   `gorm:"default:false"`
 	Novelty     *string `gorm:"type:text"`
 

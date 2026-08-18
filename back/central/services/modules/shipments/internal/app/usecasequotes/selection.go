@@ -20,6 +20,10 @@ func (uc *UseCaseQuotes) SetSelection(ctx context.Context, in domain.QuoteSelect
 
 	quote.SelectedCarrier = in.SelectedCarrier
 	quote.SelectedIDRate = in.SelectedIDRate
+	if in.UpdatedBy != nil {
+		quote.UpdatedBy = in.UpdatedBy
+		quote.UpdatedByName = in.UpdatedByName
+	}
 
 	if err := uc.repo.UpdateSavedQuote(ctx, quote); err != nil {
 		return nil, err

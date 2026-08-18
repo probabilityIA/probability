@@ -118,6 +118,9 @@ type ProbabilityOrder struct {
 	UserID   *uint
 	UserName string
 
+	UpdatedBy     *uint
+	UpdatedByName string
+
 	// Novedades
 	IsConfirmed *bool
 	Novelty     *string

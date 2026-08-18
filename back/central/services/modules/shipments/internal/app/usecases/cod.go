@@ -44,7 +44,7 @@ func (uc *UseCases) ListCODShipments(ctx context.Context, filter domain.CODFilte
 	}, nil
 }
 
-func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes string) (*domain.ShipmentResponse, error) {
+func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes string, actorID *uint, actorName string) (*domain.ShipmentResponse, error) {
 	shipment, err := uc.repo.GetShipmentByID(ctx, shipmentID)
 	if err != nil {
 		return nil, err
@@ -75,6 +75,15 @@ func (uc *UseCases) CollectCOD(ctx context.Context, shipmentID uint, notes strin
 	if err != nil {
 		return nil, err
 	}
+
+	if actorID != nil && updated != nil {
+		updated.UpdatedBy = actorID
+		updated.UpdatedByName = actorName
+		if err := uc.repo.UpdateShipment(ctx, updated); err != nil {
+			return nil, err
+		}
+	}
+
 	resp := mapShipmentToCODResponse(updated)
 	return &resp, nil
 }
@@ -113,6 +122,8 @@ func mapShipmentToCODResponse(s *domain.Shipment) domain.ShipmentResponse {
 		EstimatedDelivery:  s.EstimatedDelivery,
 		DeliveryNotes:      s.DeliveryNotes,
 		Metadata:           s.Metadata,
+		CreatedByName:      s.CreatedByName,
+		UpdatedByName:      s.UpdatedByName,
 		CustomerName:       s.CustomerName,
 		CustomerEmail:      s.CustomerEmail,
 		CustomerPhone:      s.CustomerPhone,

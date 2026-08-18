@@ -58,4 +58,3 @@ func (h *Handlers) GetShipmentByTrackingNumber(c *gin.Context) {
 		"data":    shipment,
 	})
 }
-
