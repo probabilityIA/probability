@@ -15,6 +15,7 @@ type MeliShippingDetailResponse struct {
 	TrackingMethod  string                   `json:"tracking_method"`
 	DateCreated     *string                  `json:"date_created"`
 	ReceiverAddress *MeliReceiverAddressResp `json:"receiver_address"`
+	Destination     *MeliDestinationResp     `json:"destination"`
 	SenderAddress   *MeliSenderAddressResp   `json:"sender_address"`
 	ShippingOption  *MeliShippingOptionResp  `json:"shipping_option"`
 	Logistic        *MeliLogisticResp        `json:"logistic"`
@@ -23,6 +24,30 @@ type MeliShippingDetailResponse struct {
 type MeliLogisticResp struct {
 	Type string `json:"type"`
 	Mode string `json:"mode"`
+}
+
+// MeliDestinationResp es el formato vigente de GET /shipments/{id}: la direccion
+// del comprador llega en destination.shipping_address, no en receiver_address.
+type MeliDestinationResp struct {
+	Type            string                   `json:"type"`
+	ReceiverName    string                   `json:"receiver_name"`
+	ReceiverPhone   string                   `json:"receiver_phone"`
+	Comments        string                   `json:"comments"`
+	ShippingAddress *MeliShippingAddressResp `json:"shipping_address"`
+}
+
+type MeliShippingAddressResp struct {
+	AddressLine  string            `json:"address_line"`
+	StreetName   string            `json:"street_name"`
+	StreetNumber string            `json:"street_number"`
+	ZipCode      string            `json:"zip_code"`
+	City         MeliLocationResp  `json:"city"`
+	State        MeliLocationResp  `json:"state"`
+	Country      MeliLocationResp  `json:"country"`
+	Neighborhood *MeliLocationResp `json:"neighborhood"`
+	Latitude     *float64          `json:"latitude"`
+	Longitude    *float64          `json:"longitude"`
+	Comment      string            `json:"comment"`
 }
 
 type MeliReceiverAddressResp struct {
@@ -119,6 +144,29 @@ func (r *MeliShippingDetailResponse) ToDomain() domain.MeliShippingDetail {
 		detail.ReceiverAddress = ra
 	}
 
+	if detail.ReceiverAddress == nil && r.Destination != nil && r.Destination.ShippingAddress != nil {
+		sa := r.Destination.ShippingAddress
+		ra := &domain.MeliReceiverAddress{
+			AddressLine:   sa.AddressLine,
+			StreetName:    sa.StreetName,
+			StreetNumber:  sa.StreetNumber,
+			ZipCode:       sa.ZipCode,
+			City:          mapLocation(sa.City),
+			State:         mapLocation(sa.State),
+			Country:       mapLocation(sa.Country),
+			Latitude:      sa.Latitude,
+			Longitude:     sa.Longitude,
+			Comment:       firstNonEmpty(sa.Comment, r.Destination.Comments),
+			ReceiverName:  r.Destination.ReceiverName,
+			ReceiverPhone: r.Destination.ReceiverPhone,
+		}
+		if sa.Neighborhood != nil {
+			n := mapLocation(*sa.Neighborhood)
+			ra.Neighborhood = &n
+		}
+		detail.ReceiverAddress = ra
+	}
+
 	if r.SenderAddress != nil {
 		detail.SenderAddress = &domain.MeliSenderAddress{
 			ID:           r.SenderAddress.ID,
@@ -159,4 +207,13 @@ func mapLocation(loc MeliLocationResp) domain.MeliLocation {
 		ID:   loc.ID,
 		Name: loc.Name,
 	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+	return ""
 }

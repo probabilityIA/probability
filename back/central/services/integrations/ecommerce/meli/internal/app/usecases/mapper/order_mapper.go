@@ -39,7 +39,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 		}
 	}
 	if customerPhone == "" && shippingDetail != nil && shippingDetail.ReceiverAddress != nil {
-		customerPhone = shippingDetail.ReceiverAddress.ReceiverPhone
+		customerPhone = sanitizePhone(shippingDetail.ReceiverAddress.ReceiverPhone)
 	}
 
 	customerDNI := ""
@@ -122,7 +122,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 
 		address := canonical.ProbabilityAddressDTO{
 			Type:       "shipping",
-			FirstName:  customerName,
+			FirstName:  firstNonEmptyStr(addr.ReceiverName, customerName),
 			Phone:      customerPhone,
 			Street:     street,
 			City:       city,
@@ -298,4 +298,28 @@ func withShipmentRaw(orderRaw []byte, shipmentRaw []byte) []byte {
 		return orderRaw
 	}
 	return out
+}
+
+// sanitizePhone descarta los telefonos enmascarados que manda MercadoLibre
+// (llegan como "XXXXXXX" cuando el comprador tiene los datos protegidos).
+func sanitizePhone(phone string) string {
+	digits := 0
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			digits++
+		}
+	}
+	if digits < 7 {
+		return ""
+	}
+	return phone
+}
+
+func firstNonEmptyStr(values ...string) string {
+	for _, v := range values {
+		if strings.TrimSpace(v) != "" {
+			return v
+		}
+	}
+	return ""
 }
