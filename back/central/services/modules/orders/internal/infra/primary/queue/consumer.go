@@ -116,6 +116,16 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
+		if errors.Is(err, domainerrors.ErrOrderBusinessDeleted) {
+			c.logger.Warn().
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Uint("integration_id", orderDTO.IntegrationID).
+				Msg("Discarding order: business is deleted or does not exist (ACK)")
+			c.publishRejected(ctx, &orderDTO, "Negocio eliminado o inexistente")
+			return nil
+		}
+
 		if contains(errStr, "business_id is required") || contains(errStr, "integration_id is required") {
 			c.logger.Warn().
 				Str("queue", OrdersCanonicalQueueName).
@@ -252,7 +262,7 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 		Platform:        platform,
 		ErrorType:       errorType,
 		ErrorMessage:    err.Error(),
-		RawData:         messageBody, // JSON original
+		RawData:         messageBody,
 		Status:          "new",
 	}
 

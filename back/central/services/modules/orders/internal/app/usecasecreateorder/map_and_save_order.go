@@ -18,6 +18,14 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		return nil, errors.New("business_id is required")
 	}
 
+	businessName, err := uc.repo.GetBusinessNameByID(ctx, *dto.BusinessID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking business: %w", err)
+	}
+	if businessName == "" {
+		return nil, domainerrors.ErrOrderBusinessDeleted
+	}
+
 	if err := normalizeCodOnDTO(dto); err != nil {
 		return nil, err
 	}

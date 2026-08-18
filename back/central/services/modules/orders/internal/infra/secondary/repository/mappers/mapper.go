@@ -143,13 +143,18 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		integrationLogoURL = &logoURL
 	}
 
+	var businessName string
+	if o.Business != nil {
+		businessName = o.Business.Name
+	}
+
 	result := &entities.ProbabilityOrder{
 		ID:                          o.ID,
 		CreatedAt:                   o.CreatedAt,
 		UpdatedAt:                   o.UpdatedAt,
 		DeletedAt:                   o.DeletedAt,
 		BusinessID:                  o.BusinessID,
-		BusinessName:                o.Business.Name,
+		BusinessName:                businessName,
 		IntegrationID:               o.IntegrationID,
 		IntegrationType:             o.IntegrationType,
 		IntegrationLogoURL:          integrationLogoURL,

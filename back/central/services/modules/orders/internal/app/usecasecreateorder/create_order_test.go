@@ -8,10 +8,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// Mock: IRepository
 type mockRepository struct {
 	CreateOrderFn                                        func(ctx context.Context, order *entities.ProbabilityOrder) error
 	GetOrderByIDFn                                       func(ctx context.Context, id string) (*entities.ProbabilityOrder, error)
@@ -23,6 +23,7 @@ type mockRepository struct {
 	GetOrderRawFn                                        func(ctx context.Context, id string) (*entities.ProbabilityOrderChannelMetadata, error)
 	CountOrdersByClientIDFn                              func(ctx context.Context, clientID uint) (int64, error)
 	GetLastManualOrderNumberFn                           func(ctx context.Context, businessID uint) (int, error)
+	GetBusinessNameByIDFn                                func(ctx context.Context, businessID uint) (string, error)
 	GetFirstIntegrationIDByBusinessIDFn                  func(ctx context.Context, businessID uint) (uint, error)
 	GetPlatformIntegrationIDByBusinessIDFn               func(ctx context.Context, businessID uint) (uint, error)
 	GetIntegrationCodIncludesShippingFn                  func(ctx context.Context, integrationID uint) (bool, error)
@@ -133,7 +134,10 @@ func (m *mockRepository) GetBusinessOrderPrefix(ctx context.Context, businessID 
 	return "", nil
 }
 func (m *mockRepository) GetBusinessNameByID(ctx context.Context, businessID uint) (string, error) {
-	return "", nil
+	if m.GetBusinessNameByIDFn != nil {
+		return m.GetBusinessNameByIDFn(ctx, businessID)
+	}
+	return "Test Business", nil
 }
 func (m *mockRepository) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
 	if m.GetFirstIntegrationIDByBusinessIDFn != nil {
@@ -320,7 +324,6 @@ func (m *mockRepository) SaveOrderItems(ctx context.Context, orderID string, ite
 	return nil
 }
 
-// Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {
 	PublishOrderCreatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderUpdatedFn               func(ctx context.Context, order *entities.ProbabilityOrder) error
@@ -374,7 +377,6 @@ func (m *mockRabbitPublisher) PublishGuideNotificationRequested(ctx context.Cont
 	return nil
 }
 
-// Mock: IIntegrationEventPublisher
 type mockIntegrationEventPublisher struct {
 	PublishSyncOrderCreatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 	PublishSyncOrderUpdatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
@@ -397,7 +399,6 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Con
 	}
 }
 
-// Mock: IOrderUpdateUseCase
 type mockUpdateUseCase struct {
 	UpdateOrderFn func(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
 }
@@ -409,7 +410,6 @@ func (m *mockUpdateUseCase) UpdateOrder(ctx context.Context, existingOrder *enti
 	return &dtos.OrderResponse{ID: existingOrder.ID}, nil
 }
 
-// Mock: log.ILogger
 type mockLogger struct{}
 
 func (m *mockLogger) Info(ctx ...context.Context) *zerolog.Event {
@@ -444,7 +444,6 @@ func (m *mockLogger) WithService(service string) log.ILogger     { return m }
 func (m *mockLogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
-// Helpers de construcción
 func newTestCreateUseCase(
 	repo *mockRepository,
 	rabbitPublisher *mockRabbitPublisher,
@@ -493,14 +492,13 @@ func newMinimalDTO(externalID string, integrationID uint, businessID uint) *dtos
 	}
 }
 
-// Tests: MapAndSaveOrder
 func TestMapAndSaveOrder_FaltaIntegrationID_RetornaError(t *testing.T) {
 	repo := &mockRepository{}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	bID := uint(1)
 	dto := &dtos.ProbabilityOrderDTO{
 		BusinessID:    &bID,
-		IntegrationID: 0, // Falta IntegrationID
+		IntegrationID: 0,
 		ExternalID:    "EXT-001",
 	}
 
@@ -521,7 +519,7 @@ func TestMapAndSaveOrder_FaltaBusinessID_RetornaError(t *testing.T) {
 	repo := &mockRepository{}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
-		BusinessID:    nil, // Falta BusinessID
+		BusinessID:    nil,
 		IntegrationID: 10,
 		ExternalID:    "EXT-001",
 	}
@@ -544,7 +542,7 @@ func TestMapAndSaveOrder_BusinessIDCero_RetornaError(t *testing.T) {
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	zeroID := uint(0)
 	dto := &dtos.ProbabilityOrderDTO{
-		BusinessID:    &zeroID, // BusinessID = 0
+		BusinessID:    &zeroID,
 		IntegrationID: 10,
 		ExternalID:    "EXT-001",
 	}
@@ -556,6 +554,28 @@ func TestMapAndSaveOrder_BusinessIDCero_RetornaError(t *testing.T) {
 	}
 	if result != nil {
 		t.Errorf("se esperaba resultado nil, pero se obtuvo: %v", result)
+	}
+}
+
+func TestMapAndSaveOrder_NegocioEliminado_RetornaErrorDeDominio(t *testing.T) {
+	repo := &mockRepository{
+		GetBusinessNameByIDFn: func(ctx context.Context, businessID uint) (string, error) {
+			return "", nil
+		},
+	}
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
+	dto := newMinimalDTO("EXT-001", 10, 1)
+
+	result, err := uc.MapAndSaveOrder(context.Background(), dto)
+
+	if err == nil {
+		t.Fatal("se esperaba error cuando el negocio esta eliminado, pero no se obtuvo ninguno")
+	}
+	if result != nil {
+		t.Errorf("se esperaba resultado nil, pero se obtuvo: %v", result)
+	}
+	if !errors.Is(err, domainerrors.ErrOrderBusinessDeleted) {
+		t.Errorf("se esperaba ErrOrderBusinessDeleted, pero se obtuvo: %v", err)
 	}
 }
 
@@ -586,14 +606,14 @@ func TestMapAndSaveOrder_OrdenNueva_ExitoSinEntidadesRelacionadas(t *testing.T) 
 	createOrderCalled := false
 	repo := &mockRepository{
 		OrderExistsFn: func(ctx context.Context, externalID string, integrationID uint) (bool, error) {
-			return false, nil // Orden no existe aun
+			return false, nil
 		},
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return &entities.Client{ID: 99, Email: &email}, nil // Cliente ya existe
+			return &entities.Client{ID: 99, Email: &email}, nil
 		},
 		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
 			createOrderCalled = true
-			order.ID = "ORDER-123" // Simular que la DB asigna un ID
+			order.ID = "ORDER-123"
 			return nil
 		},
 	}
@@ -630,7 +650,7 @@ func TestMapAndSaveOrder_OrdenExistente_LlamaUpdateOrder(t *testing.T) {
 	}
 	repo := &mockRepository{
 		OrderExistsFn: func(ctx context.Context, externalID string, integrationID uint) (bool, error) {
-			return true, nil // Orden ya existe
+			return true, nil
 		},
 		GetOrderByExternalIDFn: func(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error) {
 			return existingOrder, nil
@@ -647,7 +667,7 @@ func TestMapAndSaveOrder_OrdenExistente_LlamaUpdateOrder(t *testing.T) {
 	}
 	uc := newTestCreateUseCase(repo, nil, nil, mockUpdate)
 	dto := newMinimalDTO("EXT-003", 10, 1)
-	dto.Status = "completed" // Estado diferente para forzar cambio
+	dto.Status = "completed"
 
 	result, err := uc.MapAndSaveOrder(context.Background(), dto)
 
@@ -669,16 +689,16 @@ func TestMapAndSaveOrder_ErrorAlCrearOrden_RetornaError(t *testing.T) {
 			return false, nil
 		},
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return nil, nil // Cliente no existe
+			return nil, nil
 		},
 		GetClientByDNIFn: func(ctx context.Context, businessID uint, dni string) (*entities.Client, error) {
 			return nil, nil
 		},
 		CreateClientFn: func(ctx context.Context, client *entities.Client) error {
-			return nil // Crear cliente exitoso
+			return nil
 		},
 		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
-			return expectedErr // Fallo al crear la orden
+			return expectedErr
 		},
 	}
 	integrationPub := &mockIntegrationEventPublisher{}
@@ -705,7 +725,7 @@ func TestMapAndSaveOrder_ErrorAlProcesarCliente_RetornaError(t *testing.T) {
 			return false, nil
 		},
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return nil, expectedErr // Error al buscar cliente
+			return nil, expectedErr
 		},
 	}
 	integrationPub := &mockIntegrationEventPublisher{}
@@ -725,7 +745,6 @@ func TestMapAndSaveOrder_ErrorAlProcesarCliente_RetornaError(t *testing.T) {
 	}
 }
 
-// Tests: buildOrderEntity
 func TestBuildOrderEntity_MapeaCamposCorrectamente(t *testing.T) {
 	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	bID := uint(42)
@@ -779,12 +798,11 @@ func TestBuildOrderEntity_MapeaCamposCorrectamente(t *testing.T) {
 	}
 }
 
-// Tests: assignPaymentMethodID
 func TestAssignPaymentMethodID_SinPagos_AsignaValorPorDefecto(t *testing.T) {
 	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{}
 	dto := &dtos.ProbabilityOrderDTO{
-		Payments: nil, // Sin pagos
+		Payments: nil,
 	}
 
 	uc.assignPaymentMethodID(order, dto)
@@ -801,7 +819,7 @@ func TestAssignPaymentMethodID_ConPagoCompletado_AsignaPaymentMethodID(t *testin
 		Payments: []dtos.ProbabilityPaymentDTO{
 			{
 				PaymentMethodID: 3,
-				Status:          "pending", // No "completed" para evitar requerir PaidAt
+				Status:          "pending",
 			},
 		},
 	}
@@ -813,7 +831,6 @@ func TestAssignPaymentMethodID_ConPagoCompletado_AsignaPaymentMethodID(t *testin
 	}
 }
 
-// Tests: populateOrderFields
 func TestPopulateOrderFields_DireccionDeEnvio_PopulaCamposPlanos(t *testing.T) {
 	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{}
@@ -856,7 +873,7 @@ func TestPopulateOrderFields_SinDireccionDeEnvio_NoModificaCampos(t *testing.T) 
 	dto := &dtos.ProbabilityOrderDTO{
 		Addresses: []dtos.ProbabilityAddressDTO{
 			{
-				Type:   "billing", // No es shipping
+				Type:   "billing",
 				Street: "Otra calle",
 			},
 		},
@@ -864,7 +881,6 @@ func TestPopulateOrderFields_SinDireccionDeEnvio_NoModificaCampos(t *testing.T) 
 
 	uc.populateOrderFields(order, dto)
 
-	// Assert: Los campos no deberian cambiar porque no hay dirección de tipo "shipping"
 	if order.ShippingCity != "CiudadOriginal" {
 		t.Errorf("ShippingCity no debería cambiar: se esperaba %q, obtenida: %q", "CiudadOriginal", order.ShippingCity)
 	}
@@ -873,13 +889,12 @@ func TestPopulateOrderFields_SinDireccionDeEnvio_NoModificaCampos(t *testing.T) 
 	}
 }
 
-// Tests: GetOrCreateCustomer
 func TestGetOrCreateCustomer_SinEmailNiNombre_RetornaNilSinError(t *testing.T) {
 	repo := &mockRepository{}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
-		CustomerEmail: "", // Sin email
-		CustomerName:  "", // Sin nombre
+		CustomerEmail: "",
+		CustomerName:  "",
 	}
 
 	client, err := uc.GetOrCreateCustomer(context.Background(), 1, dto)
@@ -900,7 +915,7 @@ func TestGetOrCreateCustomer_ClienteExistentePorEmail_RetornaClienteExistente(t 
 	}
 	repo := &mockRepository{
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return existingClient, nil // Cliente encontrado
+			return existingClient, nil
 		},
 	}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
@@ -925,14 +940,14 @@ func TestGetOrCreateCustomer_ClienteNuevo_CreaYRetorna(t *testing.T) {
 	createClientCalled := false
 	repo := &mockRepository{
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return nil, nil // No existe por email
+			return nil, nil
 		},
 		GetClientByDNIFn: func(ctx context.Context, businessID uint, dni string) (*entities.Client, error) {
-			return nil, nil // No existe por DNI
+			return nil, nil
 		},
 		CreateClientFn: func(ctx context.Context, client *entities.Client) error {
 			createClientCalled = true
-			client.ID = 100 // Simula ID asignado por BD
+			client.ID = 100
 			return nil
 		},
 	}
@@ -985,12 +1000,11 @@ func TestGetOrCreateCustomer_ErrorAlBuscarPorEmail_RetornaError(t *testing.T) {
 	}
 }
 
-// Tests: GetOrCreateProduct
 func TestGetOrCreateProduct_SinSKU_RetornaError(t *testing.T) {
 	repo := &mockRepository{}
 	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	itemDTO := dtos.ProbabilityOrderItemDTO{
-		ProductSKU: "", // Sin SKU
+		ProductSKU: "",
 	}
 
 	product, err := uc.GetOrCreateProduct(context.Background(), 1, 10, itemDTO)
@@ -1036,7 +1050,7 @@ func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 	upsertMappingCalled := false
 	repo := &mockRepository{
 		ResolveProductForOrderItemFn: func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
-			return nil, nil // No existe
+			return nil, nil
 		},
 		CreateProductFn: func(ctx context.Context, product *entities.Product) error {
 			createProductCalled = true
@@ -1160,7 +1174,6 @@ func TestGetOrCreateProduct_SinSKU_GeneraFallbackConVariantID(t *testing.T) {
 	}
 }
 
-// Tests: mapOrderToResponse
 func TestMapOrderToResponse_MapeaTodosLosCamposPrincipales(t *testing.T) {
 	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	bID := uint(10)
