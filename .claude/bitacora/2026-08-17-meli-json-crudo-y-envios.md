@@ -113,14 +113,80 @@ WHERE o.order_number = '2000014575744355';
 La direccion **sigue vacia**: el raw de la orden confirma que ML solo manda
 `shipping.id`.
 
+## Cierre (2026-08-18)
+
+Se guardo tambien el JSON de `GET /shipments/{id}` (adjunto al raw de la orden
+bajo `shipment_detail`) y con eso quedo a la vista la causa real de la falta de
+direccion: **ML no devuelve `receiver_address`, devuelve `destination`**.
+
+```json
+"destination": {
+  "receiver_name": "Jose de Jesus Mejia Rodriguez",
+  "receiver_phone": "XXXXXXX",
+  "shipping_address": {
+    "address_line": "CALLE 6 15-03", "street_name": "CALLE 6", "street_number": "15-03",
+    "city": { "name": "Aguachica" }, "state": { "id": "CO-CES", "name": "Cesar" },
+    "zip_code": "205010", "latitude": 8.308608, "longitude": -73.6192217,
+    "neighborhood": { "name": "Olaya Herrera" }
+  }
+}
+```
+
+El struct esperaba el formato viejo (`receiver_address`), asi que
+`ReceiverAddress` quedaba siempre nil y la orden entraba sin destino. La
+hipotesis de que ML ocultaba la direccion por privacidad era **falsa**: lo unico
+enmascarado es el telefono (`"XXXXXXX"`, ahora se descarta en vez de guardarse).
+
+Corregido leyendo `destination.shipping_address` con fallback al formato viejo,
+con test sobre el payload real.
+
+### Packs duplicados
+
+Al sincronizar aparecio el segundo problema: un carrito de MeLi es **una orden
+por producto** agrupadas por `pack_id`, y las dos rutas lo guardaban distinto.
+
+| Ruta | external_id | Resultado |
+|---|---|---|
+| Webhook | `pack_id` (consolidado) | 1 orden con N items |
+| Sync | `order_id` de cada hija | N ordenes de 1 item |
+
+Dos claves distintas para la misma compra, asi que quedaba duplicada. En Viga
+Sport: 2 packs + sus 5 hijas, **$287.900 contados dos veces**.
+
+Se unifico: el sync consolida igual que el webhook y publica el pack una sola
+vez; los ids reales de las hijas quedan en el raw (`pack_order_ids`); y la orden
+lleva `channel_pack_id` con badge **PACK** en el listado y el detalle.
+
+### Estados sin mapear
+
+`order_status_mappings` no tenia **ninguna** fila para MercadoLibre
+(integration_type_id 3), mientras Shopify tenia 20 y WooCommerce 10. Sin mapeo,
+el fallback busca "paid" en `order_statuses` (que no existe) y la orden quedaba
+con `status_id` NULL: la lista mostraba el string crudo en gris. Se sembraron
+los 8 estados con el criterio de los demas canales.
+
+### Etiqueta de envio
+
+El `guide_url` que guardamos es la URL de la API de ML, que exige el token del
+vendedor: abrirla en el navegador da `{"status":401,"message":"Invalid token"}`.
+El modulo de envios ya lo resolvia con `guideHref` -> `/internal/meli-label/{id}`,
+pero el listado de ordenes abria la URL cruda. Se movio el helper a
+`shared/utils` y ahora ambos lo usan.
+
+### Limpieza de datos (produccion)
+
+- Se borraron 333 ordenes de ML del business 46 que importo un sync historico
+  (dejando las 10 recientes) y luego las 5 hijas de los 2 packs.
+- Quedaron 5 ordenes, todas con direccion, coordenadas y estado mapeado.
+- El borrado fue **fisico**: `orders.DeletedAt` es `*time.Time` y no
+  `gorm.DeletedAt`, asi que GORM no filtra por `deleted_at` y el soft delete no
+  ocultaba nada en la UI.
+
 ## Pendientes
 
-- **Direccion de destino**: falta comprobar que devuelve `/shipments/{id}` para
-  este vendedor. Sospecha principal: ML protege los datos del comprador
-  (Mercado Envios Full) o falta permiso en la app. Para cerrarlo hace falta
-  guardar tambien el JSON del shipment, no solo el de la orden.
-- **`pack_id` como numero de orden**: agrupar el pack esta bien, pero se pierde
-  el order_id real y no se puede volver a consultar la orden por API. Conviene
-  conservarlo (en `external_id` o en metadata).
-- **Token de ML**: durante la prueba salio `"meli: access token expired"` en
+- **`orders.DeletedAt` es `*time.Time`** (`migration/shared/models/order.go:17`):
+  el soft delete no oculta nada porque ninguna consulta agrega
+  `deleted_at IS NULL`. Cambiarlo a `gorm.DeletedAt` afecta a todas las
+  consultas de ordenes, hay que hacerlo con pruebas.
+- **Token de ML**: durante las pruebas salio `"meli: access token expired"` en
   `enrichBillingInfo`. Revisar el refresco del token de la integracion 254.

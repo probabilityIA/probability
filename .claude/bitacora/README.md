@@ -45,4 +45,4 @@ No hace falta entrada para un fix trivial o un cambio de UI.
 | 2026-08-13 | [Mappings duplicados rompian el apply con ON CONFLICT](2026-08-13-mappings-duplicados-on-conflict.md) | Corregido en local, sin desplegar |
 | 2026-08-17 | [Cotizaciones mostraba "Guia generada" para guias que nunca salieron](2026-08-17-cotizacion-guia-generada-fantasma.md) | Data corregida en produccion, codigo sin desplegar, causa raiz abierta |
 | 2026-08-17 | [WooCommerce: las ordenes entraban sin direccion de envio](2026-08-17-woocommerce-direccion-en-billing.md) | Fix desplegado, 53 ordenes corregidas en produccion |
-| 2026-08-17 | [MercadoLibre: sin JSON crudo, sin direccion y notificaciones de envio rotas](2026-08-17-meli-json-crudo-y-envios.md) | Parseo y JSON crudo corregidos y desplegados, direccion pendiente |
+| 2026-08-17 | [MercadoLibre: sin JSON crudo, sin direccion y notificaciones de envio rotas](2026-08-17-meli-json-crudo-y-envios.md) | Cerrado: direccion, packs duplicados, estados y etiqueta corregidos y desplegados |
