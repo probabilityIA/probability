@@ -116,20 +116,22 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			}
 
 			var shippingDetail *domain.MeliShippingDetail
+			var shipmentRaw []byte
 			if order.Shipping != nil && order.Shipping.ID > 0 {
-				detail, shErr := cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
+				detail, raw, shErr := cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
 				if shErr != nil {
 					uc.logger.Warn(ctx).Err(shErr).
 						Int64("shipment_id", order.Shipping.ID).
 						Msg("Failed to fetch shipment detail during sync")
 				} else {
 					shippingDetail = detail
+					shipmentRaw = raw
 				}
 			}
 
 			uc.enrichBillingInfo(ctx, accessToken, &order)
 
-			dto := mapper.MapMeliOrderToProbability(&order, shippingDetail, rawJSON)
+			dto := mapper.MapMeliOrderToProbability(&order, shippingDetail, rawJSON, shipmentRaw)
 			dto.IntegrationID = integration.ID
 			dto.BusinessID = integration.BusinessID
 

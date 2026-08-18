@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
@@ -61,7 +62,7 @@ func TestMapCustomerAndGuide(t *testing.T) {
 		},
 	}
 
-	dto := MapMeliOrderToProbability(order, shipping, []byte(`{"raw":1}`))
+	dto := MapMeliOrderToProbability(order, shipping, []byte(`{"raw":1}`), nil)
 
 	if dto.CustomerName != "Ana Perez" {
 		t.Errorf("customer name: got %q", dto.CustomerName)
@@ -84,5 +85,47 @@ func TestMapCustomerAndGuide(t *testing.T) {
 	}
 	if len(dto.Addresses) != 1 || dto.Addresses[0].City != "Bogota D.C." {
 		t.Errorf("bogota special-case not applied: %+v", dto.Addresses)
+	}
+}
+
+func TestMapMeliOrderToProbability_AdjuntaShipmentAlRaw(t *testing.T) {
+	order := &domain.MeliOrder{
+		ID:          2000014575744355,
+		Status:      "paid",
+		CurrencyID:  "COP",
+		TotalAmount: 109400,
+	}
+	orderRaw := []byte(`{"id":2000014575744355,"shipping":{"id":47791295504}}`)
+	shipmentRaw := []byte(`{"id":47791295504,"receiver_address":{"city":{"name":"BOGOTA"}}}`)
+
+	dto := MapMeliOrderToProbability(order, nil, orderRaw, shipmentRaw)
+
+	if dto.ChannelMetadata == nil {
+		t.Fatal("no se genero channel metadata")
+	}
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(dto.ChannelMetadata.RawData, &got); err != nil {
+		t.Fatalf("raw_data no es JSON valido: %v", err)
+	}
+	if _, ok := got["shipment_detail"]; !ok {
+		t.Fatal("raw_data no incluye shipment_detail")
+	}
+	if _, ok := got["shipping"]; !ok {
+		t.Error("raw_data perdio las claves originales de la orden")
+	}
+}
+
+func TestMapMeliOrderToProbability_SinShipmentRawDejaElOrderRaw(t *testing.T) {
+	order := &domain.MeliOrder{ID: 123, Status: "paid", CurrencyID: "COP"}
+	orderRaw := []byte(`{"id":123}`)
+
+	dto := MapMeliOrderToProbability(order, nil, orderRaw, nil)
+
+	if dto.ChannelMetadata == nil {
+		t.Fatal("no se genero channel metadata")
+	}
+	if string(dto.ChannelMetadata.RawData) != string(orderRaw) {
+		t.Errorf("raw_data modificado sin necesidad: got %s, want %s", dto.ChannelMetadata.RawData, orderRaw)
 	}
 }

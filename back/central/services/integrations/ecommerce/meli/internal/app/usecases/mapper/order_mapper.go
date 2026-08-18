@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 const meliAPIBaseURL = "https://api.mercadolibre.com"
 
-func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.MeliShippingDetail, rawJSON []byte) *canonical.ProbabilityOrderDTO {
+func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.MeliShippingDetail, rawJSON []byte, shipmentRaw []byte) *canonical.ProbabilityOrderDTO {
 	now := time.Now()
 
 	shippingCost := 0.0
@@ -188,7 +189,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "mercadolibre",
-			RawData:       rawJSON,
+			RawData:       withShipmentRaw(rawJSON, shipmentRaw),
 			Version:       "v2",
 			ReceivedAt:    now,
 			IsLatest:      true,
@@ -275,4 +276,26 @@ func mapMeliShippingStatus(meliStatus string) string {
 	default:
 		return "pending"
 	}
+}
+
+// withShipmentRaw adjunta la respuesta cruda de /shipments/{id} al JSON de la
+// orden bajo la clave shipment_detail. MercadoLibre no manda la direccion del
+// comprador en la orden (solo shipping.id), asi que sin esto el JSON guardado
+// queda sin el destino.
+func withShipmentRaw(orderRaw []byte, shipmentRaw []byte) []byte {
+	if len(shipmentRaw) == 0 {
+		return orderRaw
+	}
+
+	var merged map[string]json.RawMessage
+	if err := json.Unmarshal(orderRaw, &merged); err != nil {
+		return orderRaw
+	}
+	merged["shipment_detail"] = json.RawMessage(shipmentRaw)
+
+	out, err := json.Marshal(merged)
+	if err != nil {
+		return orderRaw
+	}
+	return out
 }

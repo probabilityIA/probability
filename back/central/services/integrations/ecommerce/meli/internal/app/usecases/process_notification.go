@@ -71,17 +71,19 @@ func (uc *meliUseCase) fetchOrderDTO(ctx context.Context, integration *domain.In
 	}
 
 	var shippingDetail *domain.MeliShippingDetail
+	var shipmentRaw []byte
 	if order.Shipping != nil && order.Shipping.ID > 0 {
-		shippingDetail, err = cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
+		shippingDetail, shipmentRaw, err = cli.GetShipmentDetail(ctx, accessToken, order.Shipping.ID)
 		if err != nil {
 			uc.logger.Warn(ctx).Err(err).
 				Int64("shipment_id", order.Shipping.ID).
 				Msg("Failed to fetch shipment detail, continuing without shipping data")
 			shippingDetail = nil
+			shipmentRaw = nil
 		}
 	}
 
-	dto := mapper.MapMeliOrderToProbability(order, shippingDetail, rawJSON)
+	dto := mapper.MapMeliOrderToProbability(order, shippingDetail, rawJSON, shipmentRaw)
 	dto.IntegrationID = integration.ID
 	dto.BusinessID = integration.BusinessID
 	return dto, nil

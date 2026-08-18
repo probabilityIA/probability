@@ -14,42 +14,43 @@ import (
 // GetShipmentDetail obtiene los detalles completos de un envío.
 // GET https://api.mercadolibre.com/shipments/{shipment_id}
 // La orden solo trae shipping.id; esta llamada obtiene dirección, estado y opción de envío.
-func (c *MeliClient) GetShipmentDetail(ctx context.Context, accessToken string, shipmentID int64) (*domain.MeliShippingDetail, error) {
+// Retorna el detalle tipado y los bytes crudos (se adjuntan al ChannelMetadata de la orden).
+func (c *MeliClient) GetShipmentDetail(ctx context.Context, accessToken string, shipmentID int64) (*domain.MeliShippingDetail, []byte, error) {
 	endpoint := fmt.Sprintf("%s/shipments/%d", c.baseURL, shipmentID)
 
 	req, err := c.newAuthorizedRequest(ctx, http.MethodGet, endpoint, accessToken)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("meli client: request failed: %w", err)
+		return nil, nil, fmt.Errorf("meli client: request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, domain.ErrTokenExpired
+		return nil, nil, domain.ErrTokenExpired
 	}
 
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, domain.ErrRateLimited
+		return nil, nil, domain.ErrRateLimited
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("meli client: reading response: %w", err)
+		return nil, nil, fmt.Errorf("meli client: reading response: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("meli client: unexpected status %d: %s", resp.StatusCode, string(body))
+		return nil, nil, fmt.Errorf("meli client: unexpected status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var shippingResp response.MeliShippingDetailResponse
 	if err := json.Unmarshal(body, &shippingResp); err != nil {
-		return nil, fmt.Errorf("meli client: parsing shipping response: %w", err)
+		return nil, nil, fmt.Errorf("meli client: parsing shipping response: %w", err)
 	}
 
 	detail := shippingResp.ToDomain()
-	return &detail, nil
+	return &detail, body, nil
 }
