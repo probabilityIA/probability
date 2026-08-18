@@ -29,6 +29,7 @@ import { QuotationExpresModal } from './QuotationExpresModal';
 import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
 import { getCarrierLogo } from '@/shared/utils/carrier-logos';
+import { guideHref } from '@/shared/utils/guide-link';
 
 const COMBINING_MARK_MIN = 0x0300;
 const COMBINING_MARK_MAX = 0x036f;
@@ -572,7 +573,7 @@ const OrderRow = memo(({
                     )}
                     {order.guide_link && (
                         <button
-                            onClick={() => onShowGuide(order.guide_link!)}
+                            onClick={() => onShowGuide(guideHref(order.shipment?.id, order.guide_link, order.business_id))}
                             className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                             title="Ver guía de envío"
                             aria-label="Ver guía de envío"
