@@ -19,6 +19,7 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		// Identificadores de la orden
 		Platform:       dto.Platform,
 		ExternalID:     dto.ExternalID,
+		ChannelPackID:  dto.ChannelPackID,
 		OrderNumber:    dto.OrderNumber,
 		InternalNumber: dto.InternalNumber,
 

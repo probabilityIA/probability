@@ -24,6 +24,7 @@ type Order struct {
 	ExternalID     string `gorm:"size:255;not null;index;uniqueIndex:idx_integration_external_id,priority:2"`
 	OrderNumber    string `gorm:"size:128;index"`
 	InternalNumber string `gorm:"size:128;unique;index"`
+	ChannelPackID  string `gorm:"size:64;index"`
 
 	Subtotal            float64  `gorm:"type:decimal(12,2);not null;default:0"`
 	Tax                 float64  `gorm:"type:decimal(12,2);not null;default:0"`

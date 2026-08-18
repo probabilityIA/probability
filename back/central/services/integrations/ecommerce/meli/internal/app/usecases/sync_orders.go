@@ -79,6 +79,9 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 
 	integrationID := fmt.Sprintf("%d", integration.ID)
 
+	// Un pack se publica una sola vez aunque ML devuelva todas sus hermanas.
+	syncedPacks := make(map[int64]bool)
+
 	for {
 		params.Offset = offset
 
@@ -113,6 +116,26 @@ func (uc *meliUseCase) syncOrdersAsync(ctx context.Context, integration *domain.
 			var rawJSON []byte
 			if i < len(rawOrders) {
 				rawJSON = rawOrders[i]
+			}
+
+			// Los carritos de MeLi llegan como una orden por producto. Se consolidan
+			// en la orden del pack (igual que en el flujo de notificaciones) para que
+			// un paquete sea una sola orden en Probability y no se dupliquen las
+			// hermanas del mismo pack.
+			if order.PackID != nil && *order.PackID > 0 {
+				if syncedPacks[*order.PackID] {
+					continue
+				}
+				syncedPacks[*order.PackID] = true
+
+				merged, perr := uc.consolidatePack(ctx, accessToken, *order.PackID, &order)
+				if perr != nil {
+					uc.logger.Warn(ctx).Err(perr).
+						Int64("pack_id", *order.PackID).
+						Msg("Failed to consolidate pack during sync, using single order")
+				} else if merged != nil {
+					order = *merged
+				}
 			}
 
 			var shippingDetail *domain.MeliShippingDetail

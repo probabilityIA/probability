@@ -54,10 +54,16 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 
 	status := mapMeliOrderStatus(order.Status)
 
+	packID := ""
+	if order.PackID != nil && *order.PackID > 0 {
+		packID = fmt.Sprintf("%d", *order.PackID)
+	}
+
 	dto := &canonical.ProbabilityOrderDTO{
 		IntegrationType: "mercado_libre",
 		Platform:        "mercadolibre",
 		ExternalID:      fmt.Sprintf("%d", order.ID),
+		ChannelPackID:   packID,
 		OrderNumber:     fmt.Sprintf("%d", order.ID),
 		Subtotal:        subtotal,
 		Tax:             0,
@@ -189,7 +195,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "mercadolibre",
-			RawData:       withShipmentRaw(rawJSON, shipmentRaw),
+			RawData:       withPackOrderIDs(withShipmentRaw(rawJSON, shipmentRaw), order.PackOrderIDs),
 			Version:       "v2",
 			ReceivedAt:    now,
 			IsLatest:      true,
@@ -322,4 +328,30 @@ func firstNonEmptyStr(values ...string) string {
 		}
 	}
 	return ""
+}
+
+// withPackOrderIDs deja en el raw los ids reales de las ordenes del carrito.
+// La orden consolidada se guarda con el pack_id como numero, que no es
+// consultable en la API de MeLi; sin estos ids no hay como volver a pedirlas.
+func withPackOrderIDs(orderRaw []byte, packOrderIDs []int64) []byte {
+	if len(packOrderIDs) == 0 {
+		return orderRaw
+	}
+
+	ids, err := json.Marshal(packOrderIDs)
+	if err != nil {
+		return orderRaw
+	}
+
+	var merged map[string]json.RawMessage
+	if err := json.Unmarshal(orderRaw, &merged); err != nil {
+		return orderRaw
+	}
+	merged["pack_order_ids"] = json.RawMessage(ids)
+
+	out, err := json.Marshal(merged)
+	if err != nil {
+		return orderRaw
+	}
+	return out
 }

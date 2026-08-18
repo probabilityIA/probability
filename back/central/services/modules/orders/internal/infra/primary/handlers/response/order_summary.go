@@ -16,6 +16,7 @@ type OrderSummary struct {
 	IntegrationLogoURL     *string                `json:"integration_logo_url,omitempty"`
 	Platform               string                 `json:"platform"`
 	ExternalID             string                 `json:"external_id"`
+	ChannelPackID          string                 `json:"channel_pack_id,omitempty"`
 	OrderNumber            string                 `json:"order_number"`
 	TotalAmount            float64                `json:"total_amount"`
 	Currency               string                 `json:"currency"`

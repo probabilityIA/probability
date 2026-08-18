@@ -25,6 +25,7 @@ type Order struct {
 	// Identificadores de la orden
 	Platform       string `json:"platform"`
 	ExternalID     string `json:"external_id"`
+	ChannelPackID  string `json:"channel_pack_id,omitempty"`
 	OrderNumber    string `json:"order_number"`
 	InternalNumber string `json:"internal_number"`
 

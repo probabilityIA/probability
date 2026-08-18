@@ -39,6 +39,7 @@ export interface Order {
 
     platform: string;
     external_id: string;
+    channel_pack_id?: string;
     order_number: string;
     internal_number: string;
 

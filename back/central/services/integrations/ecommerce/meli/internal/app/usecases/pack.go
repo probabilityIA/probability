@@ -17,6 +17,7 @@ func (uc *meliUseCase) consolidatePack(ctx context.Context, accessToken string, 
 
 	merged := *primary
 	merged.ID = packID
+	merged.PackOrderIDs = pack.OrderIDs
 	merged.OrderItems = nil
 	merged.Payments = nil
 	merged.TotalAmount = 0

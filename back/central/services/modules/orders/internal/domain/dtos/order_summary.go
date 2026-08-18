@@ -18,6 +18,7 @@ type OrderSummary struct {
 	IntegrationLogoURL     *string
 	Platform               string
 	ExternalID             string
+	ChannelPackID          string
 	OrderNumber            string
 	TotalAmount            float64
 	Currency               string

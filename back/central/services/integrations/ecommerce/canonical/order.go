@@ -19,6 +19,7 @@ type ProbabilityOrderDTO struct {
 	IntegrationType string
 	Platform        string
 	ExternalID      string
+	ChannelPackID   string
 	OrderNumber     string
 	InternalNumber  string
 	Subtotal        float64

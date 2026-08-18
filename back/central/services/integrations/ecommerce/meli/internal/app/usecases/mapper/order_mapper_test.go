@@ -129,3 +129,49 @@ func TestMapMeliOrderToProbability_SinShipmentRawDejaElOrderRaw(t *testing.T) {
 		t.Errorf("raw_data modificado sin necesidad: got %s, want %s", dto.ChannelMetadata.RawData, orderRaw)
 	}
 }
+
+func TestMapMeliOrderToProbability_GuardaLosIDsDelPack(t *testing.T) {
+	packID := int64(2000014575744355)
+	order := &domain.MeliOrder{
+		ID:           packID,
+		Status:       "paid",
+		CurrencyID:   "COP",
+		TotalAmount:  109400,
+		PackID:       &packID,
+		PackOrderIDs: []int64{2000017981110684, 2000017981120028},
+	}
+	orderRaw := []byte(`{"id":2000014575744355}`)
+
+	dto := MapMeliOrderToProbability(order, nil, orderRaw, nil)
+
+	if dto.ExternalID != "2000014575744355" {
+		t.Errorf("ExternalID: got %q, want el pack_id", dto.ExternalID)
+	}
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(dto.ChannelMetadata.RawData, &got); err != nil {
+		t.Fatalf("raw_data invalido: %v", err)
+	}
+	ids, ok := got["pack_order_ids"]
+	if !ok {
+		t.Fatal("raw_data no incluye pack_order_ids")
+	}
+	if string(ids) != "[2000017981110684,2000017981120028]" {
+		t.Errorf("pack_order_ids: got %s", ids)
+	}
+}
+
+func TestMapMeliOrderToProbability_SinPackNoAgregaIDs(t *testing.T) {
+	order := &domain.MeliOrder{ID: 123, Status: "paid", CurrencyID: "COP"}
+	orderRaw := []byte(`{"id":123}`)
+
+	dto := MapMeliOrderToProbability(order, nil, orderRaw, nil)
+
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(dto.ChannelMetadata.RawData, &got); err != nil {
+		t.Fatalf("raw_data invalido: %v", err)
+	}
+	if _, ok := got["pack_order_ids"]; ok {
+		t.Error("una orden sin pack no deberia traer pack_order_ids")
+	}
+}

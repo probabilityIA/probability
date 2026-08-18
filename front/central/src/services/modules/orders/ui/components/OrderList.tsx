@@ -172,6 +172,14 @@ const OrderRow = memo(({
                             TEST
                         </span>
                     )}
+                    {order.channel_pack_id && (
+                        <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-800 border border-yellow-300 uppercase tracking-widest"
+                            title={`Carrito de MercadoLibre: agrupa varias ordenes del canal en un solo envio (pack ${order.channel_pack_id})`}
+                        >
+                            PACK
+                        </span>
+                    )}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
                     {order.customer_name}

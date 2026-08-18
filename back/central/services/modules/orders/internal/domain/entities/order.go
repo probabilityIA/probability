@@ -21,6 +21,7 @@ type ProbabilityOrder struct {
 	// Identificadores de la orden
 	Platform       string
 	ExternalID     string
+	ChannelPackID  string
 	OrderNumber    string
 	InternalNumber string
 

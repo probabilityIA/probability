@@ -473,6 +473,16 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 <p className="truncate font-mono text-[11px] text-slate-400">{order.internal_number || '-'}</p>
                             </div>
 
+                            {order.channel_pack_id && (
+                                <span
+                                    className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase text-amber-700"
+                                    title={`Carrito de MercadoLibre (pack ${order.channel_pack_id}): agrupa varias ordenes del canal en un solo envio`}
+                                >
+                                    <ShoppingBag className="h-3 w-3" />
+                                    Pack
+                                </span>
+                            )}
+
                             {order.order_status?.color ? (
                                 <span
                                     className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"

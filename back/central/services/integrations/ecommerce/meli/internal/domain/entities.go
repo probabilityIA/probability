@@ -34,6 +34,7 @@ type MeliOrder struct {
 	Shipping                *MeliShippingRef
 	Tags                    []string
 	PackID                  *int64
+	PackOrderIDs            []int64
 	CouponAmount            float64
 	CouponID                *string
 	ManufacturingEndingDate *time.Time

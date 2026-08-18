@@ -54,6 +54,7 @@ entorno desde cero si algun dia hace falta.
 | 2026-08-17 | `migrateTrazabilidadUsuario` | Agrego `created_by`/`created_by_name`/`updated_by`/`updated_by_name` a `shipments` y `shipping_quotes`, y `updated_by`/`updated_by_name` a `orders`. Sin esto no se puede saber que usuario genero una guia, cotizo o modifico una orden | produccion |
 | 2026-08-17 | `fixVig0095CotizacionFallida` | Marco como `failed` las cotizaciones 6542 (VIG-0095, business 46) y 6441 (DEM-0040, business 26), que seguian en `guide_generated` con el shipment fallido, y les cargo el motivo real (correo invalido y telefono invalido). DML puntual, se puede borrar | produccion |
 | 2026-08-18 | `migrateMeliStatusMappings` | Sembro los 8 mapeos de estado de MercadoLibre en `order_status_mappings` (integration_type_id 3), que no existian: por eso las ordenes de ML quedaban con `status_id` NULL y la UI mostraba el string crudo ("paid") en gris. Ademas hizo backfill del `status_id` de las ordenes de ML ya cargadas (10 filas). DML/seed, se puede borrar | produccion |
+| 2026-08-18 | `migrateOrderChannelPack` | Agrego `orders.channel_pack_id` (+ indice): el id del carrito del canal cuando la orden consolida varias ordenes de MercadoLibre. Sin esto no hay como distinguir en la UI una orden normal de una que agrupa un pack, ni saber por que su numero es el del pack. Incluye backfill desde el JSON crudo | produccion |
 
 Antes de esta fecha no habia registro: todas las migraciones listadas en
 `migrateHistorico()` se aplicaron corriendo la cadena completa.

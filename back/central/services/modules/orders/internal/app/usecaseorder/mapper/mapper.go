@@ -30,6 +30,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		// Identificadores de la orden
 		Platform:       order.Platform,
 		ExternalID:     order.ExternalID,
+		ChannelPackID:  order.ChannelPackID,
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 
@@ -234,6 +235,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		IntegrationLogoURL:     order.IntegrationLogoURL,
 		Platform:               order.Platform,
 		ExternalID:             order.ExternalID,
+		ChannelPackID:          order.ChannelPackID,
 		OrderNumber:            order.OrderNumber,
 		TotalAmount:            order.TotalAmount,
 		Currency:               order.Currency,
