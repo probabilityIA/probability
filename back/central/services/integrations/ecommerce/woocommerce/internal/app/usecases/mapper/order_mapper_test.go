@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
+
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
 
@@ -469,5 +471,52 @@ func TestMapWooOrderToProbability_FreeShipping(t *testing.T) {
 				t.Errorf("FreeShipping = %v, se esperaba %v", dto.FreeShipping, tt.want)
 			}
 		})
+	}
+}
+
+func TestMapWooOrderToProbability_ShippingVacioUsaBilling(t *testing.T) {
+	order := &domain.WooCommerceOrder{
+		ID:          98765,
+		Number:      "148236",
+		Status:      "pending",
+		Currency:    "COP",
+		Total:       "176376.00",
+		DateCreated: time.Now(),
+		Billing: domain.WooCommerceBilling{
+			FirstName: "Santiago",
+			LastName:  "Orozco",
+			Phone:     "+573001112233",
+			Address1:  "Carrera 6 # 17 90",
+			City:      "FUNZA",
+			State:     "CO-CUN",
+			Country:   "CO",
+			Postcode:  "250027",
+		},
+	}
+
+	dto := MapWooOrderToProbability(order, nil)
+
+	var shipping *canonical.ProbabilityAddressDTO
+	for i := range dto.Addresses {
+		if dto.Addresses[i].Type == "shipping" {
+			shipping = &dto.Addresses[i]
+			break
+		}
+	}
+
+	if shipping == nil {
+		t.Fatal("no se genero direccion de envio")
+	}
+	if shipping.Street != "Carrera 6 # 17 90" {
+		t.Errorf("Street: got %q, want %q", shipping.Street, "Carrera 6 # 17 90")
+	}
+	if shipping.City != "FUNZA" {
+		t.Errorf("City: got %q, want %q", shipping.City, "FUNZA")
+	}
+	if shipping.State != "CO-CUN" {
+		t.Errorf("State: got %q, want %q", shipping.State, "CO-CUN")
+	}
+	if shipping.Phone != "+573001112233" {
+		t.Errorf("Phone: got %q, want %q", shipping.Phone, "+573001112233")
 	}
 }

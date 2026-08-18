@@ -142,7 +142,9 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	})
 
 	// Shipping address
-	dto.Addresses = append(dto.Addresses, canonical.ProbabilityAddressDTO{
+	// WooCommerce deja shipping vacio cuando el comprador no pide una direccion
+	// de envio distinta a la de facturacion: en ese caso se envia a la de billing.
+	shippingAddress := canonical.ProbabilityAddressDTO{
 		Type:       "shipping",
 		FirstName:  order.Shipping.FirstName,
 		LastName:   order.Shipping.LastName,
@@ -154,7 +156,20 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 		State:      order.Shipping.State,
 		Country:    order.Shipping.Country,
 		PostalCode: order.Shipping.Postcode,
-	})
+	}
+	if strings.TrimSpace(shippingAddress.Street) == "" && strings.TrimSpace(shippingAddress.City) == "" {
+		shippingAddress.FirstName = order.Billing.FirstName
+		shippingAddress.LastName = order.Billing.LastName
+		shippingAddress.Company = order.Billing.Company
+		shippingAddress.Phone = order.Billing.Phone
+		shippingAddress.Street = order.Billing.Address1
+		shippingAddress.Street2 = order.Billing.Address2
+		shippingAddress.City = order.Billing.City
+		shippingAddress.State = order.Billing.State
+		shippingAddress.Country = order.Billing.Country
+		shippingAddress.PostalCode = order.Billing.Postcode
+	}
+	dto.Addresses = append(dto.Addresses, shippingAddress)
 
 	// Payment
 	if order.PaymentMethod != "" {
