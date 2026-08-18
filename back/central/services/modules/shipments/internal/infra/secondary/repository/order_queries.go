@@ -405,3 +405,26 @@ func (r *Repository) GetOrderRecipient(ctx context.Context, orderUUID string) (*
 		Neighborhood: strings.TrimSpace(result.ShippingNeighborhood),
 	}, nil
 }
+
+func (r *Repository) GetUserDisplayName(ctx context.Context, userID uint) string {
+	if userID == 0 {
+		return ""
+	}
+	var row struct {
+		Name  string `gorm:"column:name"`
+		Email string `gorm:"column:email"`
+	}
+	err := r.db.Conn(ctx).
+		Table(`"user"`).
+		Select("COALESCE(name,'') AS name, COALESCE(email,'') AS email").
+		Where("id = ?", userID).
+		Limit(1).
+		Scan(&row).Error
+	if err != nil {
+		return ""
+	}
+	if name := strings.TrimSpace(row.Name); name != "" {
+		return name
+	}
+	return strings.TrimSpace(row.Email)
+}

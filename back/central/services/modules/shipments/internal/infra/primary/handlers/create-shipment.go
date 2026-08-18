@@ -34,6 +34,10 @@ func (h *Handlers) CreateShipment(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
+	a := h.resolveActor(c)
+	req.CreatedBy = a.ID
+	req.CreatedByName = a.Name
+
 	shipment, err := h.uc.CreateShipment(c.Request.Context(), &req)
 	if err != nil {
 		// Verificar si es un error de duplicado
@@ -69,4 +73,3 @@ func (h *Handlers) CreateShipment(c *gin.Context) {
 		"data":    shipment,
 	})
 }
-

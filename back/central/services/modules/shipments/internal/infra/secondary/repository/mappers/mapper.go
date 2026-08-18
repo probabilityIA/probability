@@ -59,6 +59,10 @@ func ToDBShipment(s *domain.Shipment) *models.Shipment {
 		EstimatedDelivery:   s.EstimatedDelivery,
 		DeliveryNotes:       s.DeliveryNotes,
 		Metadata:            s.Metadata,
+		CreatedBy:           s.CreatedBy,
+		CreatedByName:       s.CreatedByName,
+		UpdatedBy:           s.UpdatedBy,
+		UpdatedByName:       s.UpdatedByName,
 	}
 	if s.DeletedAt != nil {
 		dbShipment.DeletedAt = gorm.DeletedAt{Time: *s.DeletedAt, Valid: true}
@@ -125,6 +129,10 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		EstimatedDelivery:   s.EstimatedDelivery,
 		DeliveryNotes:       s.DeliveryNotes,
 		Metadata:            s.Metadata,
+		CreatedBy:           s.CreatedBy,
+		CreatedByName:       s.CreatedByName,
+		UpdatedBy:           s.UpdatedBy,
+		UpdatedByName:       s.UpdatedByName,
 	}
 
 	if s.Order != nil {

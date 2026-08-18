@@ -26,6 +26,8 @@ func (uc *UseCaseQuotes) SaveQuote(ctx context.Context, in domain.SaveQuoteInput
 		RequestPayload:   in.RequestPayload,
 		Rates:            in.Rates,
 		Status:           domain.QuoteStatusCreated,
+		CreatedBy:        in.CreatedBy,
+		CreatedByName:    in.CreatedByName,
 		ExpiresAt:        &expiresAt,
 	}
 

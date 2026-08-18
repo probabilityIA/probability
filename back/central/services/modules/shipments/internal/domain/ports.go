@@ -102,6 +102,7 @@ type IRepository interface {
 	GetOrderCodBasis(ctx context.Context, orderUUID string) (*OrderCodBasis, error)
 	GetOrderExternalGuide(ctx context.Context, orderUUID string) (*OrderExternalGuide, error)
 	GetOrderRecipient(ctx context.Context, orderUUID string) (*OrderRecipient, error)
+	GetUserDisplayName(ctx context.Context, userID uint) string
 
 	GetIntegrationBusinessID(ctx context.Context, integrationID uint) (uint, error)
 	GetWooShippingToken(ctx context.Context, integrationID uint) (salt string, revoked bool, found bool, err error)
@@ -235,6 +236,8 @@ type TransportRequestMessage struct {
 	IsTest            bool                   `json:"is_test,omitempty"`
 	Timestamp         time.Time              `json:"timestamp"`
 	Payload           map[string]interface{} `json:"payload"`
+	UserID            *uint                  `json:"user_id,omitempty"`
+	TriggeredBy       string                 `json:"triggered_by,omitempty"`
 }
 
 type ITransportRequestPublisher interface {

@@ -56,6 +56,10 @@ func (uc *UseCaseCreateOrder) MapAndSaveOrder(ctx context.Context, dto *dtos.Pro
 		dto.CustomerName = fmt.Sprintf("%s %s", dto.CustomerFirstName, dto.CustomerLastName)
 	}
 
+	if dto.UserID != nil && *dto.UserID > 0 && dto.UserName == "" {
+		dto.UserName = uc.repo.GetUserDisplayName(ctx, *dto.UserID)
+	}
+
 	statusMapping := uc.mapOrderStatuses(ctx, dto)
 
 	uc.resolveCodIncludesShipping(ctx, dto)

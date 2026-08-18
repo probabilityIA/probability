@@ -29,6 +29,10 @@ func (r *Repository) CreateSavedQuote(ctx context.Context, quote *domain.SavedQu
 		SelectedServiceCode: quote.SelectedServiceCode,
 		SelectedIDRate:      quote.SelectedIDRate,
 		Status:              quote.Status,
+		CreatedBy:           quote.CreatedBy,
+		CreatedByName:       quote.CreatedByName,
+		UpdatedBy:           quote.CreatedBy,
+		UpdatedByName:       quote.CreatedByName,
 		ExpiresAt:           quote.ExpiresAt,
 	}
 	if err := r.db.Conn(ctx).Create(m).Error; err != nil {
@@ -161,6 +165,10 @@ func (r *Repository) UpdateSavedQuote(ctx context.Context, quote *domain.SavedQu
 		"status":                quote.Status,
 		"error_message":         quote.ErrorMessage,
 	}
+	if quote.UpdatedBy != nil {
+		updates["updated_by"] = quote.UpdatedBy
+		updates["updated_by_name"] = quote.UpdatedByName
+	}
 	return r.db.Conn(ctx).
 		Model(&models.ShippingQuote{}).
 		Where("id = ?", quote.ID).
@@ -259,6 +267,10 @@ func savedQuoteModelToDomain(m *models.ShippingQuote) *domain.SavedQuote {
 		SelectedIDRate:      m.SelectedIDRate,
 		Status:              m.Status,
 		ErrorMessage:        m.ErrorMessage,
+		CreatedBy:           m.CreatedBy,
+		CreatedByName:       m.CreatedByName,
+		UpdatedBy:           m.UpdatedBy,
+		UpdatedByName:       m.UpdatedByName,
 		ExpiresAt:           m.ExpiresAt,
 		CreatedAt:           m.CreatedAt,
 		UpdatedAt:           m.UpdatedAt,

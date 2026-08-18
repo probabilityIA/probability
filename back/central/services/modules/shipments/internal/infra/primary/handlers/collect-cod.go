@@ -26,7 +26,9 @@ func (h *Handlers) CollectCOD(c *gin.Context) {
 		_ = c.ShouldBindJSON(&req)
 	}
 
-	resp, err := h.uc.CollectCOD(c.Request.Context(), uint(id), req.Notes)
+	a := h.resolveActor(c)
+
+	resp, err := h.uc.CollectCOD(c.Request.Context(), uint(id), req.Notes, a.ID, a.Name)
 	if err != nil {
 		status := http.StatusInternalServerError
 		switch {

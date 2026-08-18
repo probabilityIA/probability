@@ -38,6 +38,7 @@ type RepositoryMock struct {
 	GetSavedQuoteByIDFn               func(ctx context.Context, id uint) (*domain.SavedQuote, error)
 	GetSavedQuoteByOrderUUIDFn        func(ctx context.Context, orderUUID string) (*domain.SavedQuote, error)
 	GetOrderRecipientFn               func(ctx context.Context, orderUUID string) (*domain.OrderRecipient, error)
+	GetUserDisplayNameFn              func(ctx context.Context, userID uint) string
 	ListSavedQuotesFn                 func(ctx context.Context, filter domain.SavedQuoteFilter) ([]domain.SavedQuote, int64, error)
 	UpdateSavedQuoteFn                func(ctx context.Context, quote *domain.SavedQuote) error
 	GetOrderSelectedShippingFn        func(ctx context.Context, orderUUID string) (*domain.OrderSelectedShipping, error)
@@ -247,6 +248,13 @@ func (m *RepositoryMock) GetSavedQuoteByID(ctx context.Context, id uint) (*domai
 		return m.GetSavedQuoteByIDFn(ctx, id)
 	}
 	return nil, nil
+}
+
+func (m *RepositoryMock) GetUserDisplayName(ctx context.Context, userID uint) string {
+	if m.GetUserDisplayNameFn != nil {
+		return m.GetUserDisplayNameFn(ctx, userID)
+	}
+	return ""
 }
 
 func (m *RepositoryMock) GetOrderRecipient(ctx context.Context, orderUUID string) (*domain.OrderRecipient, error) {

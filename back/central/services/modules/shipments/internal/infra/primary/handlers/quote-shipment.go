@@ -79,7 +79,10 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		var quoteID uint
 		if len(ratesList) > 0 {
 			orderRef, _ := raw["order_uuid"].(string)
+			who := h.resolveActor(c)
 			saved, saveErr := h.uc.Quotes.SaveQuote(c.Request.Context(), domain.SaveQuoteInput{
+				CreatedBy:        who.ID,
+				CreatedByName:    who.Name,
 				BusinessID:       businessID,
 				IntegrationID:    carrier.IntegrationID,
 				Source:           domain.QuoteSourcePanel,

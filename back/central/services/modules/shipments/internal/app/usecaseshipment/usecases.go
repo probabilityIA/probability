@@ -79,6 +79,11 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 		EstimatedDelivery: req.EstimatedDelivery,
 		DeliveryNotes:     req.DeliveryNotes,
 		Metadata:          req.Metadata,
+
+		CreatedBy:     req.CreatedBy,
+		CreatedByName: req.CreatedByName,
+		UpdatedBy:     req.CreatedBy,
+		UpdatedByName: req.CreatedByName,
 	}
 
 	uc.applyCarrierCost(ctx, shipment)
@@ -283,6 +288,10 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 	}
 	if req.Metadata != nil {
 		shipment.Metadata = req.Metadata
+	}
+	if req.UpdatedBy != nil {
+		shipment.UpdatedBy = req.UpdatedBy
+		shipment.UpdatedByName = req.UpdatedByName
 	}
 
 	uc.applyCarrierCost(ctx, shipment)

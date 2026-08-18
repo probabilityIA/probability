@@ -28,6 +28,11 @@ type ShippingQuote struct {
 	Status       string `gorm:"size:32;not null;default:'created';index"`
 	ErrorMessage string `gorm:"size:255"`
 
+	CreatedBy     *uint  `gorm:"index"`
+	CreatedByName string `gorm:"size:255"`
+	UpdatedBy     *uint  `gorm:"index"`
+	UpdatedByName string `gorm:"size:255"`
+
 	ExpiresAt *time.Time `gorm:"index"`
 }
 

@@ -73,6 +73,7 @@ func (c *OrderCreatedConsumer) maybeAutoGenerate(ctx context.Context, msg *order
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
 		Payload:           payload,
+		TriggeredBy:       "auto",
 	}
 	if err := c.transportPub.PublishTransportRequest(ctx, out); err != nil {
 		c.log.Error(ctx).Err(err).Str("order_id", msg.OrderID).Msg("Failed to publish auto generate request")

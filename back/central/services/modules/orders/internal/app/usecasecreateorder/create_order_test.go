@@ -1374,3 +1374,7 @@ func TestMapAndSaveOrder_FalloAlGuardarHistorial_NoRompeLaCreacion(t *testing.T)
 		t.Fatal("se esperaba la orden creada pese al fallo del historial")
 	}
 }
+
+func (m *mockRepository) GetUserDisplayName(ctx context.Context, userID uint) string {
+	return ""
+}

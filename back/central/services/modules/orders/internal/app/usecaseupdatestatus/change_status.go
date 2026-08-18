@@ -157,12 +157,17 @@ func (uc *UseCaseUpdateStatus) saveOrderHistory(ctx context.Context, order *enti
 		metadataBytes, _ = json.Marshal(req.Metadata)
 	}
 
+	changedByName := req.UserName
+	if changedByName == "" && req.UserID != nil && *req.UserID > 0 {
+		changedByName = uc.repo.GetUserDisplayName(ctx, *req.UserID)
+	}
+
 	history := &entities.OrderHistory{
 		OrderID:        order.ID,
 		PreviousStatus: previousStatus,
 		NewStatus:      req.Status,
 		ChangedBy:      req.UserID,
-		ChangedByName:  req.UserName,
+		ChangedByName:  changedByName,
 		Source:         entities.StatusSourceUser,
 		Reason:         reason,
 		Metadata:       metadataBytes,

@@ -64,6 +64,11 @@ type Shipment struct {
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
 
+	CreatedBy     *uint  `json:"created_by,omitempty"`
+	CreatedByName string `json:"created_by_name,omitempty"`
+	UpdatedBy     *uint  `json:"updated_by,omitempty"`
+	UpdatedByName string `json:"updated_by_name,omitempty"`
+
 	CustomerName  string `json:"customer_name,omitempty"`
 	CustomerEmail string `json:"customer_email,omitempty"`
 	CustomerPhone string `json:"customer_phone,omitempty"`

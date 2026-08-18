@@ -34,9 +34,13 @@ func (h *Handlers) SetSavedQuoteSelection(c *gin.Context) {
 		return
 	}
 
+	a := h.resolveActor(c)
+
 	resp, err := h.uc.Quotes.SetSelection(c.Request.Context(), domain.QuoteSelectionInput{
 		QuoteID:         uint(id),
 		BusinessID:      businessID,
+		UpdatedBy:       a.ID,
+		UpdatedByName:   a.Name,
 		SelectedCarrier: req.SelectedCarrier,
 		SelectedIDRate:  req.SelectedIDRate,
 	})

@@ -30,6 +30,8 @@ type TransportRequestMessage struct {
 	IsTest        bool                   `json:"is_test,omitempty"`
 	Timestamp     time.Time              `json:"timestamp"`
 	Payload       map[string]interface{} `json:"payload"`
+	UserID        *uint                  `json:"user_id,omitempty"`
+	TriggeredBy   string                 `json:"triggered_by,omitempty"`
 }
 
 const (
@@ -104,7 +106,8 @@ func (c *TransportRequestConsumer) persistSyncLogs(ctx context.Context, request 
 			ResponseBody:   m.ResponseBody,
 			ErrorMessage:   errMsg,
 			CorrelationID:  request.CorrelationID,
-			TriggeredBy:    "auto",
+			TriggeredBy:    triggeredByOrAuto(request.TriggeredBy),
+			UserID:         request.UserID,
 			StartedAt:      m.StartedAt,
 			CompletedAt:    completed,
 			Duration:       duration,
@@ -561,4 +564,11 @@ func toMap(v interface{}) map[string]interface{} {
 		return nil
 	}
 	return result
+}
+
+func triggeredByOrAuto(v string) string {
+	if v == "" {
+		return "auto"
+	}
+	return v
 }

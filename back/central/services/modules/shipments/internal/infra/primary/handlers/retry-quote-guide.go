@@ -27,6 +27,7 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 		return
 	}
 
+	who := h.resolveActor(c)
 	repo := h.uc.Repo()
 
 	quote, err := repo.GetSavedQuoteByID(ctx, uint(id))
@@ -82,6 +83,8 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 	}
 
 	if msg := missingRecipientData(recipient); msg != "" {
+		quote.UpdatedBy = who.ID
+		quote.UpdatedByName = who.Name
 		h.failQuoteWithMessage(ctx, quote, msg)
 		c.JSON(http.StatusBadRequest, gin.H{"error": msg, "needs_data": true})
 		return
@@ -95,7 +98,7 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 
 	payload := buildRetryPayload(quote, recipient, orderUUID)
 
-	shipmentID, err := h.createOrReuseShipmentForRetry(ctx, payload, carrier, orderUUID, existing)
+	shipmentID, err := h.createOrReuseShipmentForRetry(c, payload, carrier, orderUUID, existing)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al preparar el envio: " + err.Error()})
 		return
@@ -119,6 +122,8 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
 		Payload:           payload,
+		UserID:            who.ID,
+		TriggeredBy:       "user",
 	}
 
 	if err := h.transportPub.PublishTransportRequest(ctx, msg); err != nil {
@@ -128,6 +133,8 @@ func (h *Handlers) RetrySavedQuoteGuide(c *gin.Context) {
 
 	quote.Status = domain.QuoteStatusGenerating
 	quote.ErrorMessage = ""
+	quote.UpdatedBy = who.ID
+	quote.UpdatedByName = who.Name
 	_ = repo.UpdateSavedQuote(ctx, quote)
 
 	c.JSON(http.StatusAccepted, gin.H{
@@ -145,7 +152,7 @@ func (h *Handlers) failQuoteWithMessage(ctx context.Context, quote *domain.Saved
 }
 
 func (h *Handlers) createOrReuseShipmentForRetry(
-	ctx context.Context,
+	c *gin.Context,
 	payload map[string]interface{},
 	carrier *domain.CarrierInfo,
 	orderUUID string,
@@ -160,7 +167,10 @@ func (h *Handlers) createOrReuseShipmentForRetry(
 
 	req := buildShipmentRequest(payload, carrier)
 	req.OrderID = &orderUUID
-	resp, err := h.uc.CreateShipment(ctx, req)
+	a := h.resolveActor(c)
+	req.CreatedBy = a.ID
+	req.CreatedByName = a.Name
+	resp, err := h.uc.CreateShipment(c.Request.Context(), req)
 	if err != nil {
 		return 0, err
 	}

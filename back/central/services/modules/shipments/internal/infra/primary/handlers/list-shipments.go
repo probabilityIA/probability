@@ -297,4 +297,3 @@ func (h *Handlers) ListShipments(c *gin.Context) {
 		"total_pages": response.TotalPages,
 	})
 }
-

@@ -44,6 +44,10 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 
 	shipmentReq := buildShipmentRequest(raw, carrier)
 
+	actor := h.resolveActor(c)
+	shipmentReq.CreatedBy = actor.ID
+	shipmentReq.CreatedByName = actor.Name
+
 	var shipmentID uint
 	if shipmentReq.OrderID != nil && *shipmentReq.OrderID != "" {
 		existing, _ := h.uc.Repo().GetShipmentsByOrderID(c.Request.Context(), *shipmentReq.OrderID)
@@ -79,6 +83,8 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		shipmentID = shipmentResp.ID
 	} else {
 		updateReq := &domain.UpdateShipmentRequest{
+			UpdatedBy:     actor.ID,
+			UpdatedByName: actor.Name,
 			TotalCost:     shipmentReq.TotalCost,
 			CodCarrierFee: shipmentReq.CodCarrierFee,
 			Carrier:       shipmentReq.Carrier,
@@ -115,6 +121,8 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		IsTest:            carrier.IsTesting,
 		Timestamp:         time.Now(),
 		Payload:           raw,
+		UserID:            actor.ID,
+		TriggeredBy:       "user",
 	}
 
 	if err := h.transportPub.PublishTransportRequest(c.Request.Context(), msg); err != nil {

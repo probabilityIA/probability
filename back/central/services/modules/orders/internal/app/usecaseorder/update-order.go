@@ -292,6 +292,14 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	}
 
 	// Guardar cambios
+	if req.UpdatedBy != nil && *req.UpdatedBy > 0 {
+		order.UpdatedBy = req.UpdatedBy
+		order.UpdatedByName = req.UpdatedByName
+		if order.UpdatedByName == "" {
+			order.UpdatedByName = uc.repo.GetUserDisplayName(ctx, *req.UpdatedBy)
+		}
+	}
+
 	if err := uc.repo.UpdateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)
 	}

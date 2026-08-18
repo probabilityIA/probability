@@ -66,6 +66,8 @@ func toResponse(q *domain.SavedQuote) domain.SavedQuoteResponse {
 		SelectedIDRate:      q.SelectedIDRate,
 		Status:              q.Status,
 		ErrorMessage:        q.ErrorMessage,
+		CreatedByName:       q.CreatedByName,
+		UpdatedByName:       q.UpdatedByName,
 		ExpiresAt:           q.ExpiresAt,
 		CreatedAt:           q.CreatedAt,
 	}

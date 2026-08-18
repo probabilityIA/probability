@@ -41,6 +41,10 @@ func (uc *UseCaseQuotes) Associate(ctx context.Context, in domain.AssociateQuote
 		quote.Status = domain.QuoteStatusAssociated
 	}
 	quote.ErrorMessage = ""
+	if in.UpdatedBy != nil {
+		quote.UpdatedBy = in.UpdatedBy
+		quote.UpdatedByName = in.UpdatedByName
+	}
 
 	if err := uc.repo.UpdateSavedQuote(ctx, quote); err != nil {
 		return nil, err

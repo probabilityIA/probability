@@ -53,6 +53,9 @@ type CreateShipmentRequest struct {
 	EstimatedDelivery *time.Time     `json:"estimated_delivery"`
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
+
+	CreatedBy     *uint  `json:"-"`
+	CreatedByName string `json:"-"`
 }
 
 // UpdateShipmentRequest representa la solicitud para actualizar un envío
@@ -90,6 +93,9 @@ type UpdateShipmentRequest struct {
 	EstimatedDelivery *time.Time     `json:"estimated_delivery"`
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
+
+	UpdatedBy     *uint  `json:"-"`
+	UpdatedByName string `json:"-"`
 }
 
 // ShipmentResponse representa la respuesta de un envío

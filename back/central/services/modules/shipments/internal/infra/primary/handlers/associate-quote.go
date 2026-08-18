@@ -36,9 +36,13 @@ func (h *Handlers) AssociateSavedQuote(c *gin.Context) {
 		return
 	}
 
+	a := h.resolveActor(c)
+
 	resp, err := h.uc.Quotes.Associate(c.Request.Context(), domain.AssociateQuoteInput{
 		QuoteID:         uint(id),
 		BusinessID:      businessID,
+		UpdatedBy:       a.ID,
+		UpdatedByName:   a.Name,
 		OrderUUID:       req.OrderUUID,
 		SelectedCarrier: req.SelectedCarrier,
 		SelectedIDRate:  req.SelectedIDRate,
