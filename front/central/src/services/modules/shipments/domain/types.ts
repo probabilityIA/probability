@@ -35,6 +35,8 @@ export interface Shipment {
     is_test: boolean;
     estimated_delivery?: string;
     delivery_notes?: string;
+    created_by_name?: string;
+    updated_by_name?: string;
     // Datos del cliente desde la orden
     customer_name?: string;
     customer_email?: string;

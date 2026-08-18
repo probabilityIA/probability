@@ -26,6 +26,8 @@ export interface SavedQuote {
     selected_service_code?: string;
     status: string;
     error_message?: string;
+    created_by_name?: string;
+    updated_by_name?: string;
     expires_at?: string | null;
     created_at: string;
 }

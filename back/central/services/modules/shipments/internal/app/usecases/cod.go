@@ -122,6 +122,8 @@ func mapShipmentToCODResponse(s *domain.Shipment) domain.ShipmentResponse {
 		EstimatedDelivery:  s.EstimatedDelivery,
 		DeliveryNotes:      s.DeliveryNotes,
 		Metadata:           s.Metadata,
+		CreatedByName:      s.CreatedByName,
+		UpdatedByName:      s.UpdatedByName,
 		CustomerName:       s.CustomerName,
 		CustomerEmail:      s.CustomerEmail,
 		CustomerPhone:      s.CustomerPhone,

@@ -12,10 +12,10 @@ import (
 )
 
 type marginReaderStub struct {
-	margin     domain.ShippingMargin
-	err        error
-	calls      int
-	lastBiz    uint
+	margin      domain.ShippingMargin
+	err         error
+	calls       int
+	lastBiz     uint
 	lastCarrier string
 }
 

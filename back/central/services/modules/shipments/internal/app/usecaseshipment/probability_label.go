@@ -865,7 +865,7 @@ func drawTrackingSectionNewDesign(pdf *gofpdf.Fpdf, tr func(string) string, c *d
 		barcodeKey := fmt.Sprintf("barcode_%d", time.Now().UnixNano())
 		pdf.RegisterImageOptionsReader(barcodeKey, opts, bytes.NewReader(barcodePNG))
 
-		barcodeX := margin + (usableW - (usableW * 0.8)) / 2
+		barcodeX := margin + (usableW-(usableW*0.8))/2
 		pdf.ImageOptions(barcodeKey, barcodeX, barcodeY, usableW*0.8, barcodeH*0.8, false, opts, 0, "")
 	}
 
@@ -966,7 +966,7 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 		pdf.CellFormat(leftW-3, 1.8*scale, tr(c.WarehouseCity), "", 1, "L", false, 0, "")
 	}
 
-	pdf.Ln(0.5*scale)
+	pdf.Ln(0.5 * scale)
 	pdf.SetX(3)
 	pdf.SetFont("Helvetica", "B", 5.5*scale)
 	pdf.SetTextColor(20, 40, 90)
@@ -1034,7 +1034,7 @@ func drawProbLabelLandscape(pdf *gofpdf.Fpdf, tr func(string) string, c *domain.
 	lic2 := "Autorretenedores Res 4327 (Jul/97) | Grandes Contribuyentes Res 9061 (Dic/20) | Agente Retenedor de IVA"
 	pdf.MultiCell(wMm-6, 1.3*scale, tr(lic2), "", "L", false)
 
-	pdf.Ln(0.3*scale)
+	pdf.Ln(0.3 * scale)
 	pdf.SetFont("Helvetica", "", 3.5*scale)
 	pdf.SetTextColor(80, 80, 80)
 	weight := "N/D"

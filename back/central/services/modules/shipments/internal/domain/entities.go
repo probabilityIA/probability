@@ -156,6 +156,9 @@ type ShipmentResponse struct {
 	DeliveryNotes     *string        `json:"delivery_notes,omitempty"`
 	Metadata          datatypes.JSON `json:"metadata,omitempty"`
 
+	CreatedByName string `json:"created_by_name,omitempty"`
+	UpdatedByName string `json:"updated_by_name,omitempty"`
+
 	// Datos del cliente desde la orden
 	CustomerName  string `json:"customer_name,omitempty"`
 	CustomerEmail string `json:"customer_email,omitempty"`

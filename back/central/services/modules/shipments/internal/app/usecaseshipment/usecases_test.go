@@ -253,9 +253,9 @@ func TestListShipments_NormalizaPaginacion(t *testing.T) {
 
 func TestListShipments_CalculaTotalDePaginas(t *testing.T) {
 	cases := []struct {
-		total      int64
-		pageSize   int
-		wantPages  int
+		total     int64
+		pageSize  int
+		wantPages int
 	}{
 		{total: 0, pageSize: 10, wantPages: 0},
 		{total: 1, pageSize: 10, wantPages: 1},

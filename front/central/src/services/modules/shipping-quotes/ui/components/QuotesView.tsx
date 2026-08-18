@@ -296,7 +296,19 @@ export default function QuotesView({ selectedBusinessId }: QuotesViewProps) {
                                         <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                                             {new Date(q.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
                                         </td>
-                                        <td className="px-4 py-2.5 capitalize">{q.source}</td>
+                                        <td className="px-4 py-2.5">
+                                            <span className="capitalize">{q.source}</span>
+                                            {q.created_by_name && (
+                                                <p
+                                                    className="text-xs text-gray-400 truncate max-w-[160px]"
+                                                    title={q.updated_by_name && q.updated_by_name !== q.created_by_name
+                                                        ? `Cotizó: ${q.created_by_name} · Última acción: ${q.updated_by_name}`
+                                                        : `Cotizó: ${q.created_by_name}`}
+                                                >
+                                                    {q.created_by_name}
+                                                </p>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-2.5">{q.selected_carrier || <span className="text-gray-400">—</span>}</td>
                                         <td className="px-4 py-2.5 text-gray-500">{q.rates?.length || 0}</td>
                                         <td className="px-4 py-2.5 font-mono text-xs">

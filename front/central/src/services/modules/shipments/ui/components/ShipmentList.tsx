@@ -222,6 +222,16 @@ function TrackingDetail({ shipment, businessId, onClose, onCancel, cancelingId, 
                         {shipment.tracking_number && (
                             <p className="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">#{shipment.tracking_number}</p>
                         )}
+                        {shipment.created_by_name && (
+                            <p
+                                className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate"
+                                title={shipment.updated_by_name && shipment.updated_by_name !== shipment.created_by_name
+                                    ? `Generada por ${shipment.created_by_name} · Última acción: ${shipment.updated_by_name}`
+                                    : `Generada por ${shipment.created_by_name}`}
+                            >
+                                Generada por {shipment.created_by_name}
+                            </p>
+                        )}
                     </div>
                 </div>
                 <button

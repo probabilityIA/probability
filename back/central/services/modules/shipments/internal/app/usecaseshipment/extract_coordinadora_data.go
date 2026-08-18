@@ -90,5 +90,3 @@ func extractCoordinadoraFields(pdfText string) map[string]interface{} {
 func normalizeExtractedField(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
-
-
