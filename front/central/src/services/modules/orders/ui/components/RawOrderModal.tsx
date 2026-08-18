@@ -2,6 +2,7 @@ import { FullWidthModal } from '@/shared/ui/full-width-modal';
 import { useEffect, useState } from 'react';
 import { getOrderRawAction } from '../../infra/actions';
 import { getActionError } from '@/shared/utils/action-result';
+import { salesChannelLabel } from '../../domain/sales-channel-labels';
 
 interface RawOrderModalProps {
     orderId: string;
@@ -111,7 +112,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                         setError('Error al parsear los datos crudos de la orden');
                     }
                 } else {
-                    setError('Esta orden no tiene datos crudos guardados. Los datos crudos solo están disponibles para órdenes creadas después de la implementación de esta funcionalidad.');
+                    setError('Esta orden todavía no tiene el JSON del canal guardado. Se guarda al recibir la próxima sincronización o notificación del canal para esta orden.');
                 }
             } else {
                 setError(response.message || 'Error al cargar los datos crudos');
@@ -123,7 +124,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                 errorMessage.includes('no encontrado') ||
                 errorMessage.includes('raw data not found') ||
                 errorMessage.includes('Datos crudos no encontrados')) {
-                setError('Esta orden no tiene datos crudos guardados. Los datos crudos solo están disponibles para órdenes creadas después de la implementación de esta funcionalidad.');
+                setError('Esta orden todavía no tiene el JSON del canal guardado. Se guarda al recibir la próxima sincronización o notificación del canal para esta orden.');
             } else {
                 setError(getActionError(err, 'Error al cargar los datos crudos'));
             }
@@ -178,7 +179,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             </span>
                         </div>
                     ) : null}
-                    <span>Orden Original de {platform || 'Shopify'}</span>
+                    <span>Orden Original {platform ? `de ${salesChannelLabel(platform)}` : 'del Canal'}</span>
                 </div>
             }
             width="95vw"

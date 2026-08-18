@@ -11,4 +11,5 @@ type ShipmentSummary struct {
 	CarrierStatus       *string  `json:"carrier_status,omitempty"`
 	CarrierStatusDetail *string  `json:"carrier_status_detail,omitempty"`
 	TotalCost           *float64 `json:"total_cost,omitempty"`
+	CodCarrierFee       *float64 `json:"cod_carrier_fee,omitempty"`
 }

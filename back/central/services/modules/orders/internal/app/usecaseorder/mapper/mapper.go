@@ -44,6 +44,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		Currency:                    order.Currency,
 		IsCod:                       order.IsCod,
 		CodTotal:                    order.CodTotal,
+		CodCutConfirmed:             order.CodCutConfirmed,
 		SubtotalPresentment:         order.SubtotalPresentment,
 		TaxPresentment:              order.TaxPresentment,
 		DiscountPresentment:         order.DiscountPresentment,
@@ -173,6 +174,15 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 	}
 
 	s := shipments[0]
+	codCarrierFee := s.CodCarrierFee
+	if codCarrierFee == nil || *codCarrierFee == 0 {
+		for i := range shipments {
+			if shipments[i].CodCarrierFee != nil && *shipments[i].CodCarrierFee > 0 {
+				codCarrierFee = shipments[i].CodCarrierFee
+				break
+			}
+		}
+	}
 	return &dtos.ShipmentData{
 		ID:                  s.ID,
 		Carrier:             s.Carrier,
@@ -182,6 +192,7 @@ func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.Shipm
 		CarrierStatus:       s.CarrierStatus,
 		CarrierStatusDetail: s.CarrierStatusDetail,
 		TotalCost:           s.TotalCost,
+		CodCarrierFee:       codCarrierFee,
 	}
 }
 
@@ -205,6 +216,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 			CarrierStatus:       s.CarrierStatus,
 			CarrierStatusDetail: s.CarrierStatusDetail,
 			TotalCost:           s.TotalCost,
+			CodCarrierFee:       s.CodCarrierFee,
 		}
 	}
 

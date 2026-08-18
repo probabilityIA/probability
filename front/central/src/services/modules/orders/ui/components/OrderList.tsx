@@ -233,9 +233,21 @@ const OrderRow = memo(({
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                 <div className="flex flex-col items-center gap-1">
                     {(order.cod_total || 0) > 0 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700">
-                            Contra Entrega
-                        </span>
+                        order.cod_cut_confirmed ? (
+                            <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700"
+                                title="Contra entrega liquidada en un corte de pago confirmado"
+                            >
+                                COD Pagado
+                            </span>
+                        ) : (
+                            <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-700"
+                                title="Contra entrega pendiente de corte de pago"
+                            >
+                                Contra Entrega
+                            </span>
+                        )
                     )}
                     {order.payment_status?.name ? (
                         getStatusBadge(order.payment_status.name, order.payment_status.color)

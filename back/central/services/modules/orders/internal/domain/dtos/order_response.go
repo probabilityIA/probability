@@ -39,6 +39,7 @@ type OrderResponse struct {
 	Currency                    string
 	IsCod                       bool
 	CodTotal                    *float64
+	CodCutConfirmed             bool
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment     float64
@@ -167,6 +168,7 @@ type ShipmentData struct {
 	CarrierStatus       *string
 	CarrierStatusDetail *string
 	TotalCost           *float64
+	CodCarrierFee       *float64
 }
 
 // InvoiceData contiene información de la factura asociada a la orden

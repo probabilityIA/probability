@@ -107,7 +107,24 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	result := mappers.ToDomainOrder(&order, r.imageURLBase)
 	result.DestinationDaneCode = r.getGeozoneCode(ctx, order.GeozoneCityID)
+	result.CodCutConfirmed = r.hasConfirmedCodCut(ctx, result.ID)
 	return result, nil
+}
+
+func (r *Repository) hasConfirmedCodCut(ctx context.Context, orderID string) bool {
+	var count int64
+	err := r.db.Conn(ctx).Raw(`
+		SELECT COUNT(*)
+		FROM cod_payment_cut_order cpo
+		JOIN cod_payment_cut c ON c.id = cpo.cod_payment_cut_id AND c.deleted_at IS NULL
+		WHERE cpo.order_id = ?
+		  AND cpo.deleted_at IS NULL
+		  AND c.status = 'confirmed'
+	`, orderID).Scan(&count).Error
+	if err != nil {
+		return false
+	}
+	return count > 0
 }
 
 // getGeozoneCode obtiene el codigo DANE de una geozona (usado para prellenar destino de guias)
@@ -730,6 +747,13 @@ func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *entiti
 	}
 	dbMetadata := mappers.ToDBChannelMetadata(metadata)
 	return r.db.Conn(ctx).Create(dbMetadata).Error
+}
+
+func (r *Repository) MarkChannelMetadataNotLatest(ctx context.Context, orderID string) error {
+	return r.db.Conn(ctx).
+		Model(&models.OrderChannelMetadata{}).
+		Where("order_id = ? AND is_latest = ?", orderID, true).
+		Update("is_latest", false).Error
 }
 
 //

@@ -64,6 +64,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 			CarrierStatus:       dto.Shipment.CarrierStatus,
 			CarrierStatusDetail: dto.Shipment.CarrierStatusDetail,
 			TotalCost:           dto.Shipment.TotalCost,
+			CodCarrierFee:       dto.Shipment.CodCarrierFee,
 		}
 	}
 
@@ -102,6 +103,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		Currency:                    dto.Currency,
 		IsCod:                       dto.IsCod,
 		CodTotal:                    dto.CodTotal,
+		CodCutConfirmed:             dto.CodCutConfirmed,
 		SubtotalPresentment:         dto.SubtotalPresentment,
 		TaxPresentment:              dto.TaxPresentment,
 		DiscountPresentment:         dto.DiscountPresentment,
@@ -212,6 +214,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 			CarrierStatus:       dto.Shipment.CarrierStatus,
 			CarrierStatusDetail: dto.Shipment.CarrierStatusDetail,
 			TotalCost:           dto.Shipment.TotalCost,
+			CodCarrierFee:       dto.Shipment.CodCarrierFee,
 		}
 	}
 

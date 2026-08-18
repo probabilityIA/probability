@@ -14,6 +14,8 @@ func (uc *UseCaseUpdateOrder) UpdateOrder(ctx context.Context, existingOrder *en
 	// Guardar el estado anterior antes de actualizar (para detectar cambios de estado)
 	previousStatus := existingOrder.Status
 
+	uc.saveChannelMetadata(ctx, existingOrder, dto)
+
 	// 1. Validar y actualizar todos los campos de la orden
 	hasChanges := uc.updateOrderFields(ctx, existingOrder, dto)
 
@@ -106,4 +108,43 @@ func (uc *UseCaseUpdateOrder) updateOrderFields(ctx context.Context, order *enti
 	}
 
 	return hasChanges
+}
+
+func (uc *UseCaseUpdateOrder) saveChannelMetadata(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
+	if dto.ChannelMetadata == nil || len(dto.ChannelMetadata.RawData) == 0 {
+		return
+	}
+
+	if err := uc.repo.MarkChannelMetadataNotLatest(ctx, order.ID); err != nil {
+		uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("No se pudo marcar el raw anterior como no vigente")
+	}
+
+	metadata := &entities.ProbabilityOrderChannelMetadata{
+		OrderID:       order.ID,
+		ChannelSource: dto.ChannelMetadata.ChannelSource,
+		IntegrationID: dto.IntegrationID,
+		RawData:       dto.ChannelMetadata.RawData,
+		Version:       dto.ChannelMetadata.Version,
+		ReceivedAt:    dto.ChannelMetadata.ReceivedAt,
+		ProcessedAt:   dto.ChannelMetadata.ProcessedAt,
+		IsLatest:      true,
+		LastSyncedAt:  dto.ChannelMetadata.LastSyncedAt,
+		SyncStatus:    dto.ChannelMetadata.SyncStatus,
+	}
+	if metadata.ChannelSource == "" {
+		metadata.ChannelSource = order.Platform
+	}
+	if metadata.IntegrationID == 0 {
+		metadata.IntegrationID = order.IntegrationID
+	}
+	if metadata.ReceivedAt.IsZero() {
+		metadata.ReceivedAt = time.Now()
+	}
+	if metadata.SyncStatus == "" {
+		metadata.SyncStatus = "synced"
+	}
+
+	if err := uc.repo.CreateChannelMetadata(ctx, metadata); err != nil {
+		uc.logger.Warn(ctx).Err(err).Str("order_id", order.ID).Msg("No se pudo guardar el JSON crudo del canal")
+	}
 }

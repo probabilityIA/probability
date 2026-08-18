@@ -39,6 +39,7 @@ type Order struct {
 	Currency                    string   `json:"currency"`
 	IsCod                       bool     `json:"is_cod"`
 	CodTotal                    *float64 `json:"cod_total,omitempty"`
+	CodCutConfirmed             bool     `json:"cod_cut_confirmed"`
 
 	// Precios en moneda presentment
 	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`

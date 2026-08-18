@@ -11,4 +11,5 @@ type ShipmentSummary struct {
 	CarrierStatus       *string
 	CarrierStatusDetail *string
 	TotalCost           *float64
+	CodCarrierFee       *float64
 }

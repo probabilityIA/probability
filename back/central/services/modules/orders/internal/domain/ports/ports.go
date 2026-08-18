@@ -41,6 +41,7 @@ type IRepository interface {
 	CreatePayments(ctx context.Context, payments []*entities.ProbabilityPayment) error
 	CreateShipments(ctx context.Context, shipments []*entities.ProbabilityShipment) error
 	CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error
+	MarkChannelMetadataNotLatest(ctx context.Context, orderID string) error
 
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
 	ResolveProductForOrderItem(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)

@@ -101,6 +101,7 @@ export interface Order {
         carrier_status?: string;
         carrier_status_detail?: string;
         total_cost?: number;
+        cod_carrier_fee?: number;
     };
 
     free_shipping?: boolean;

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
@@ -30,7 +32,7 @@ func (c *MeliClient) GetShipmentOrderIDs(ctx context.Context, accessToken string
 	}
 
 	var items []struct {
-		OrderID int64 `json:"order_id"`
+		OrderID flexibleInt64 `json:"order_id"`
 	}
 	if err := json.Unmarshal(body, &items); err != nil {
 		return nil, fmt.Errorf("meli client: parsing shipment items: %w", err)
@@ -39,10 +41,27 @@ func (c *MeliClient) GetShipmentOrderIDs(ctx context.Context, accessToken string
 	seen := make(map[int64]bool)
 	var ids []int64
 	for _, it := range items {
-		if it.OrderID > 0 && !seen[it.OrderID] {
-			seen[it.OrderID] = true
-			ids = append(ids, it.OrderID)
+		id := int64(it.OrderID)
+		if id > 0 && !seen[id] {
+			seen[id] = true
+			ids = append(ids, id)
 		}
 	}
 	return ids, nil
+}
+
+type flexibleInt64 int64
+
+func (f *flexibleInt64) UnmarshalJSON(data []byte) error {
+	trimmed := strings.Trim(string(data), "\"")
+	if trimmed == "" || trimmed == "null" {
+		*f = 0
+		return nil
+	}
+	value, err := strconv.ParseInt(trimmed, 10, 64)
+	if err != nil {
+		return err
+	}
+	*f = flexibleInt64(value)
+	return nil
 }

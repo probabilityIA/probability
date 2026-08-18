@@ -202,6 +202,11 @@ func (m *RepositoryMock) CreateShipments(ctx context.Context, shipments []*entit
 	return args.Error(0)
 }
 
+func (m *RepositoryMock) MarkChannelMetadataNotLatest(ctx context.Context, orderID string) error {
+	args := m.Called(ctx, orderID)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error {
 	args := m.Called(ctx, metadata)
 	return args.Error(0)

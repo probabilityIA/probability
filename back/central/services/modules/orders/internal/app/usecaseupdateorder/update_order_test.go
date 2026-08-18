@@ -34,6 +34,7 @@ type mockRepository struct {
 	CreatePaymentsFn                                     func(ctx context.Context, payments []*entities.ProbabilityPayment) error
 	CreateShipmentsFn                                    func(ctx context.Context, shipments []*entities.ProbabilityShipment) error
 	CreateChannelMetadataFn                              func(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error
+	MarkChannelMetadataNotLatestFn                       func(ctx context.Context, orderID string) error
 	GetProductBySKUFn                                    func(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
 	ResolveProductForOrderItemFn                         func(ctx context.Context, businessID uint, integrationID uint, item dtos.ProbabilityOrderItemDTO) (*entities.Product, error)
 	CreateProductFn                                      func(ctx context.Context, product *entities.Product) error
@@ -198,6 +199,13 @@ func (m *mockRepository) CreateShipments(ctx context.Context, shipments []*entit
 	}
 	return nil
 }
+func (m *mockRepository) MarkChannelMetadataNotLatest(ctx context.Context, orderID string) error {
+	if m.MarkChannelMetadataNotLatestFn != nil {
+		return m.MarkChannelMetadataNotLatestFn(ctx, orderID)
+	}
+	return nil
+}
+
 func (m *mockRepository) CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error {
 	if m.CreateChannelMetadataFn != nil {
 		return m.CreateChannelMetadataFn(ctx, metadata)
