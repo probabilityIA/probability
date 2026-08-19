@@ -13,7 +13,7 @@ import (
 )
 
 // RetryInvoice reintenta la creación de una factura fallida (in-place, sin eliminar)
-func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
+func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint, manual bool) error {
 	uc.log.Info(ctx).Uint("invoice_id", invoiceID).Msg("Retrying invoice creation")
 
 	// 1. Obtener factura existente (NO se elimina)
@@ -64,13 +64,14 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	// 3. Obtener logs de sincronización para verificar reintentos
 	logs, err := uc.repo.GetSyncLogsByInvoiceID(ctx, invoiceID)
 	if err != nil || len(logs) == 0 {
+		uc.restoreFailedStatus(ctx, invoice)
 		return fmt.Errorf("no sync logs found for invoice")
 	}
 
 	lastLog := logs[0] // Ordenados por created_at DESC
 
-	// 4. Validar que no se haya excedido el máximo de reintentos
-	if lastLog.RetryCount >= lastLog.MaxRetries {
+	if !manual && lastLog.RetryCount >= lastLog.MaxRetries {
+		uc.restoreFailedStatus(ctx, invoice)
 		return errors.ErrMaxRetriesExceeded
 	}
 
@@ -258,4 +259,12 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 
 	// 15. Retornar éxito (invoice queda en pending, consumer lo actualizará)
 	return nil
+}
+
+func (uc *useCase) restoreFailedStatus(ctx context.Context, invoice *entities.Invoice) {
+	invoice.Status = constants.InvoiceStatusFailed
+	if err := uc.repo.UpdateInvoice(ctx, invoice); err != nil {
+		uc.log.Error(ctx).Err(err).Uint("invoice_id", invoice.ID).
+			Msg("No se pudo devolver la factura a failed: queda trabada en pending y el boton de reintentar no va a responder")
+	}
 }

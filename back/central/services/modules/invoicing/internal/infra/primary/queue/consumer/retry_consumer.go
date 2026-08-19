@@ -92,7 +92,7 @@ func (c *RetryConsumer) processRetries(ctx context.Context) {
 			err = c.useCase.CheckPendingInvoice(ctx, syncLog.InvoiceID)
 		} else {
 			// Failed: reintentar con POST (incluye verificación de idempotencia)
-			err = c.useCase.RetryInvoice(ctx, syncLog.InvoiceID)
+			err = c.useCase.RetryInvoice(ctx, syncLog.InvoiceID, false)
 		}
 
 		if err != nil {
