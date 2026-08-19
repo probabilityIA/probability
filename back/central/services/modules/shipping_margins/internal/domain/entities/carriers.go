@@ -17,5 +17,5 @@ var DefaultCarriers = []CarrierCatalog{
 	{Code: "enviame", Name: "Enviame"},
 	{Code: "pibox", Name: "Pibox"},
 	{Code: "rappi", Name: "Rappi"},
-	{Code: "mensajerosurbanos", Name: "Mensajeros Urbanos"},
+	{Code: "mensajeros_urbanos_express", Name: "Mensajeros Urbanos"},
 }
