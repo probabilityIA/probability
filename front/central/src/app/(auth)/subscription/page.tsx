@@ -2,12 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { Spinner, Button, Modal, Alert, Input } from '@/shared/ui';
+import { Spinner, Button, Modal, Alert, Input, ConfirmModal } from '@/shared/ui';
 import {
     getMySubscriptionAction,
     registerSubscriptionPaymentAction,
     editSubscriptionDatesAction,
     disableSubscriptionAction,
+    reactivateSubscriptionAction,
+    extendCourtesyAction,
+    revertPaymentAction,
+    listPaymentHistoryAction,
+    listAuditLogsAction,
+    listAdminBusinessesAction,
+    getAdminKPIsAction,
     listSubscriptionTypesAction,
     createSubscriptionTypeAction,
     updateSubscriptionTypeAction,
@@ -24,6 +31,9 @@ import {
     BusinessSubscription,
     SubscriptionType,
     BusinessModuleOverride,
+    SubscriptionAuditLog,
+    AdminBusinessRow,
+    AdminKPIs,
     ModuleInfo,
 } from '@/services/modules/wallet/infra/subscription-actions';
 import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions';
@@ -33,11 +43,6 @@ import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusine
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
-
-const toDateInputValue = (dateStr?: string) => {
-    if (!dateStr) return '';
-    return dateStr.slice(0, 10);
-};
 
 const formatDate = (dateStr?: string) => {
     if (!dateStr) return '—';
@@ -60,6 +65,42 @@ function StatusBadge({ status }: { status?: string }) {
             {entry.label}
         </span>
     );
+}
+
+function PaymentStatusBadge({ status }: { status?: string }) {
+    const map: Record<string, { label: string; cls: string }> = {
+        paid: { label: 'Pagado', cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' },
+        reverted: { label: 'Revertido', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' },
+        pending: { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' },
+        rejected: { label: 'Rechazado', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' },
+    };
+    const entry = map[status ?? ''] ?? { label: status || '—', cls: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' };
+    return <span className={`text-xs px-2 py-1 rounded-full font-medium ${entry.cls}`}>{entry.label}</span>;
+}
+
+function paymentMethodLabel(method?: string) {
+    const map: Record<string, string> = {
+        WALLET: 'Wallet',
+        MANUAL: 'Manual',
+        TRANSFER: 'Transferencia',
+        CASH: 'Efectivo',
+        COURTESY: 'Cortesía',
+    };
+    return map[method ?? ''] || method || '—';
+}
+
+function auditDotColor(action: string) {
+    const map: Record<string, string> = {
+        payment_registered: '#16a34a',
+        payment_reverted: '#dc2626',
+        dates_edited: '#f59e0b',
+        courtesy_extended: '#f59e0b',
+        override_granted: '#7c3aed',
+        override_revoked: '#7c3aed',
+        subscription_suspended: '#dc2626',
+        subscription_reactivated: '#16a34a',
+    };
+    return map[action] || '#9ca3af';
 }
 
 export default function SubscriptionPage() {
@@ -138,7 +179,7 @@ export default function SubscriptionPage() {
                                         Planes Personalizados
                                     </button>
                                 </div>
-                                {adminTab === 'businesses' && <AdminSubscriptionsView businesses={businesses} />}
+                                {adminTab === 'businesses' && <AdminSubscriptionsView />}
                                 {adminTab === 'types' && <SubscriptionTypesAdminPanel />}
                                 {adminTab === 'custom' && <CustomPlansAdminPanel businesses={businesses} />}
                             </div>
@@ -196,211 +237,359 @@ function MembershipProgress({ startDate, endDate }: { startDate?: string; endDat
     );
 }
 
-function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number; name: string }> }) {
-    const [filter, setFilter] = useState('all');
+const ADMIN_STATUS_FILTERS: Array<{ value: string; label: string }> = [
+    { value: '', label: 'Todos' },
+    { value: 'active', label: 'Activos' },
+    { value: 'expiring_soon', label: 'Por vencer' },
+    { value: 'expired', label: 'Vencidos' },
+    { value: 'cancelled', label: 'Suspendidos' },
+    { value: 'no_plan', label: 'Sin plan' },
+];
+
+const ROW_TONE: Record<string, { bg: string; fg: string; bd: string; dot: string; label: string }> = {
+    active: { bg: '#f0fdf4', fg: '#15803d', bd: '#bbf7d0', dot: '#16a34a', label: 'Activo' },
+    soon: { bg: '#fffbeb', fg: '#b45309', bd: '#fde68a', dot: '#f59e0b', label: 'Por vencer' },
+    expired: { bg: '#fef2f2', fg: '#b91c1c', bd: '#fecaca', dot: '#dc2626', label: 'Vencido' },
+    suspended: { bg: '#f4f4f5', fg: '#3f3f46', bd: '#dcdce0', dot: '#71717a', label: 'Suspendido' },
+    none: { bg: '#f8f9fa', fg: '#6b7280', bd: '#e4e6eb', dot: '#9ca3af', label: 'Sin plan' },
+};
+
+function getRowTone(row: AdminBusinessRow): keyof typeof ROW_TONE {
+    if (row.status === 'cancelled') return 'suspended';
+    if (!row.plan_name) return 'none';
+    if (row.status === 'expired') return 'expired';
+    if (row.status === 'active' && row.cycle_end_date) {
+        const daysLeft = Math.ceil((new Date(row.cycle_end_date).getTime() - Date.now()) / 86400000);
+        if (daysLeft <= 5) return 'soon';
+    }
+    return 'active';
+}
+
+const PLAN_TONE: Record<string, { bg: string; fg: string; bd: string }> = {
+    premium: { bg: '#f3f0ff', fg: '#6d28d9', bd: '#e6dfff' },
+    pro: { bg: '#f5f2ff', fg: '#7c3aed', bd: '#ebe4ff' },
+    basico: { bg: '#f4f5f7', fg: '#4b5563', bd: '#e4e6eb' },
+};
+
+function getPlanTone(planName?: string) {
+    if (!planName) return { bg: '#f8f9fa', fg: '#9ca3af', bd: '#e4e6eb' };
+    const key = planName.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '');
+    return PLAN_TONE[key] || { bg: '#f3f0ff', fg: '#6d28d9', bd: '#e6dfff' };
+}
+
+function formatDueRel(row: AdminBusinessRow): string {
+    if (!row.cycle_end_date) return 'sin plan asignado';
+    const days = Math.round((new Date(row.cycle_end_date).getTime() - Date.now()) / 86400000);
+    if (row.status === 'cancelled') return `suspendida hace ${Math.abs(days)} días`;
+    if (days < 0) return `vencida ${Math.abs(days)} días`;
+    if (days === 0) return 'vence hoy';
+    return `en ${days} días`;
+}
+
+const ADMIN_ROW_GRID = '36px minmax(190px,240px) 160px 130px 170px 140px minmax(140px,1fr) minmax(140px,1fr) 44px';
+
+function KpiCard({ label, value, note }: { label: string; value: string; note?: string }) {
+    return (
+        <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="text-xl font-semibold text-gray-900 dark:text-white mt-1">{value}</p>
+            {note && <p className="text-xs text-gray-400 mt-0.5">{note}</p>}
+        </div>
+    );
+}
+
+function AdminSubscriptionsView() {
+    const [kpis, setKpis] = useState<AdminKPIs | null>(null);
+    const [rows, setRows] = useState<AdminBusinessRow[]>([]);
+    const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(10);
     const [search, setSearch] = useState('');
-    const [registerModal, setRegisterModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
-    const [editDatesModal, setEditDatesModal] = useState<{ open: boolean; business?: { id: number; name: string } }>({ open: false });
-    const [editStartDate, setEditStartDate] = useState('');
-    const [editEndDate, setEditEndDate] = useState('');
-    const [editingDates, setEditingDates] = useState(false);
-    const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
-    const [selectedTypeId, setSelectedTypeId] = useState('');
-    const [months, setMonths] = useState('1');
-    const [payRef, setPayRef] = useState('');
-    const [notes, setNotes] = useState('');
-    const [startDate, setStartDate] = useState('');
+    const [status, setStatus] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-    const [disablingId, setDisablingId] = useState<number | null>(null);
+    const [activeRow, setActiveRow] = useState<AdminBusinessRow | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
+    const [bulkBusy, setBulkBusy] = useState(false);
+    const [bulkMessage, setBulkMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    const [subStatuses, setSubStatuses] = useState<Record<number, { status: string; startDate?: string; endDate?: string; typeName?: string }>>({});
+    const [bulkPagoOpen, setBulkPagoOpen] = useState(false);
+    const [bulkTypeId, setBulkTypeId] = useState('');
+    const [bulkMonths, setBulkMonths] = useState('1');
+    const [bulkMethod, setBulkMethod] = useState('TRANSFER');
+    const [bulkRef, setBulkRef] = useState('');
+    const [bulkNotes, setBulkNotes] = useState('');
+    const [bulkExtendOpen, setBulkExtendOpen] = useState(false);
+    const [bulkDays, setBulkDays] = useState(7);
+    const [bulkReason, setBulkReason] = useState('');
+    const [bulkSuspendOpen, setBulkSuspendOpen] = useState(false);
 
-    useEffect(() => {
-        listSubscriptionTypesAction(true).then((res) => {
-            if (res.success && res.data) setSubscriptionTypes(res.data);
+    const refreshKpis = useCallback(() => {
+        getAdminKPIsAction().then((res) => {
+            if (res.success && res.data) setKpis(res.data);
         });
     }, []);
 
-    useEffect(() => {
-        if (!businesses.length) return;
-        businesses.forEach(async (biz) => {
-            const res = await getMySubscriptionAction(biz.id);
-            if (res.success) {
-                setSubStatuses((prev) => ({
-                    ...prev,
-                    [biz.id]: {
-                        status: res.data?.status ?? 'pending',
-                        startDate: res.data?.start_date,
-                        endDate: res.data?.end_date,
-                        typeName: res.data?.subscription_type_name,
-                    },
-                }));
-            }
-        });
-    }, [businesses]);
-
-    const openEditDates = (biz: { id: number; name: string }) => {
-        const info = subStatuses[biz.id];
-        setEditStartDate(toDateInputValue(info?.startDate));
-        setEditEndDate(toDateInputValue(info?.endDate));
-        setEditDatesModal({ open: true, business: biz });
-    };
-
-    const handleEditDates = async () => {
-        if (!editDatesModal.business || !editStartDate || !editEndDate) return;
-        setEditingDates(true);
-        const res = await editSubscriptionDatesAction({
-            businessId: editDatesModal.business.id,
-            startDate: editStartDate,
-            endDate: editEndDate,
-        });
-        setEditingDates(false);
-        if (res.success) {
-            setMessage({ type: 'success', text: `Fechas actualizadas para ${editDatesModal.business.name}.` });
-            setSubStatuses((prev) => ({
-                ...prev,
-                [editDatesModal.business!.id]: {
-                    ...prev[editDatesModal.business!.id],
-                    status: prev[editDatesModal.business!.id]?.status ?? 'active',
-                    startDate: `${editStartDate}T00:00:00Z`,
-                    endDate: `${editEndDate}T00:00:00Z`,
-                },
-            }));
-            setEditDatesModal({ open: false });
-        } else {
-            setMessage({ type: 'error', text: res.error || 'Error al actualizar las fechas' });
-        }
-    };
-
-    const handleRegisterPayment = async () => {
-        if (!registerModal.business || !selectedTypeId) return;
+    const refreshRows = useCallback(async () => {
         setLoading(true);
-        const res = await registerSubscriptionPaymentAction({
-            businessId: registerModal.business.id,
-            subscriptionTypeId: Number(selectedTypeId),
-            monthsToAdd: Number(months),
-            paymentReference: payRef || undefined,
-            notes: notes || undefined,
-            startDate: startDate || undefined,
-        });
+        const res = await listAdminBusinessesAction({ page, pageSize, search: search.trim() || undefined, status: status || undefined });
         setLoading(false);
         if (res.success) {
-            setMessage({ type: 'success', text: `Pago registrado para ${registerModal.business.name}. Ahora puede usar la plataforma.` });
-            setRegisterModal({ open: false });
-            setSelectedTypeId(''); setMonths('1'); setPayRef(''); setNotes(''); setStartDate('');
-            setSubStatuses((prev) => ({
-                ...prev,
-                [registerModal.business!.id]: { status: 'paid' },
-            }));
-        } else {
-            setMessage({ type: 'error', text: res.error || 'Error al registrar pago' });
+            setRows(res.data || []);
+            setTotal(res.total || 0);
         }
+    }, [page, pageSize, search, status]);
+
+    useEffect(() => { refreshKpis(); }, [refreshKpis]);
+    useEffect(() => { refreshRows(); }, [refreshRows]);
+    useEffect(() => {
+        listSubscriptionTypesAction(true).then((res) => { if (res.success && res.data) setSubscriptionTypes(res.data); });
+    }, []);
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const allChecked = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
+
+    const toggleAll = () => {
+        setSelectedIds(allChecked ? new Set() : new Set(rows.map((r) => r.id)));
+    };
+    const toggleOne = (id: number) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
     };
 
-    const handleDisable = async (biz: { id: number; name: string }) => {
-        if (!confirm(`¿Deseas suspender la cuenta de ${biz.name}?`)) return;
-        setDisablingId(biz.id);
-        const res = await disableSubscriptionAction(biz.id);
-        setDisablingId(null);
-        if (res.success) {
-            setMessage({ type: 'success', text: `Cuenta de ${biz.name} suspendida.` });
-            setSubStatuses((prev) => ({ ...prev, [biz.id]: { status: 'cancelled' } }));
-        } else {
-            setMessage({ type: 'error', text: res.error || 'Error al suspender' });
+    const runBulk = async (fn: (id: number) => Promise<{ success: boolean; error?: string }>, successText: string) => {
+        setBulkBusy(true);
+        let okCount = 0;
+        let failCount = 0;
+        for (const id of selectedIds) {
+            const res = await fn(id);
+            if (res.success) okCount++; else failCount++;
         }
+        setBulkBusy(false);
+        setSelectedIds(new Set());
+        await refreshRows();
+        await refreshKpis();
+        setBulkMessage(failCount
+            ? { type: 'error', text: `${okCount} aplicados, ${failCount} con error.` }
+            : { type: 'success', text: successText });
     };
 
-    const filteredBusinesses = businesses.filter((biz) => {
-        const s = subStatuses[biz.id]?.status;
-        if (filter === 'active' && !(s === 'active' || s === 'paid')) return false;
-        if (filter === 'expired' && !(s === 'expired' || s === 'cancelled' || s === 'pending' || !s)) return false;
-        if (search.trim() && !biz.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
-        return true;
-    });
+    const handleBulkRegisterPayment = async () => {
+        if (!bulkTypeId) return;
+        await runBulk((id) => registerSubscriptionPaymentAction({
+            businessId: id,
+            subscriptionTypeId: Number(bulkTypeId),
+            monthsToAdd: Number(bulkMonths),
+            paymentMethod: bulkMethod,
+            paymentReference: bulkRef || undefined,
+            notes: bulkNotes || undefined,
+        }), 'Pagos registrados.');
+        setBulkPagoOpen(false); setBulkTypeId(''); setBulkMonths('1'); setBulkRef(''); setBulkNotes('');
+    };
+
+    const handleBulkExtend = async () => {
+        if (bulkDays <= 0 || !bulkReason.trim()) return;
+        await runBulk((id) => extendCourtesyAction({ businessId: id, days: bulkDays, reason: bulkReason.trim() }), 'Días de cortesía aplicados.');
+        setBulkExtendOpen(false); setBulkReason(''); setBulkDays(7);
+    };
+
+    const handleBulkSuspend = async () => {
+        await runBulk((id) => disableSubscriptionAction(id), 'Negocios suspendidos.');
+        setBulkSuspendOpen(false);
+    };
+
+    const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1).filter((n) => Math.abs(n - page) <= 1 || n === 1 || n === totalPages);
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Clientes y Suscripciones</h2>
-                <div className="flex flex-col sm:flex-row gap-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <KpiCard label="Activos" value={String(kpis?.active_count ?? '—')} />
+                <KpiCard label="Por vencer (5 días)" value={String(kpis?.expiring_soon_count ?? '—')} />
+                <KpiCard label="Vencidos / suspendidos" value={String(kpis?.expired_or_suspended_count ?? '—')} />
+                <KpiCard label="MRR" value={kpis ? formatCurrency(kpis.mrr) : '—'} note="por mes" />
+            </div>
+
+            {bulkMessage && <Alert type={bulkMessage.type} onClose={() => setBulkMessage(null)}>{bulkMessage.text}</Alert>}
+
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center gap-3 flex-wrap">
                     <input
                         type="text"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Buscar por nombre de negocio..."
-                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[220px]"
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        placeholder="Buscar negocio, ID o plan..."
+                        className="flex-none w-[280px] px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
                     />
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="all">Todos</option>
-                        <option value="active">Activos</option>
-                        <option value="expired">Vencidos / Suspendidos</option>
-                    </select>
+                    <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-900/40 rounded-lg">
+                        {ADMIN_STATUS_FILTERS.map((f) => (
+                            <button
+                                key={f.value}
+                                onClick={() => { setStatus(f.value); setPage(1); }}
+                                className={`h-7 px-2.5 rounded-md text-xs font-medium ${status === f.value ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                    <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">{loading ? 'Cargando...' : `${total} negocios`}</span>
                 </div>
-            </div>
 
-            {search.trim() && (
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                    {filteredBusinesses.length} resultado{filteredBusinesses.length !== 1 ? 's' : ''} para "{search.trim()}"
-                </p>
-            )}
+                {selectedIds.size > 0 && (
+                    <div className="px-4 py-2.5 bg-violet-50 dark:bg-violet-900/20 border-b border-violet-100 dark:border-violet-800 flex items-center gap-3">
+                        <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">
+                            {selectedIds.size} {selectedIds.size === 1 ? 'negocio seleccionado' : 'negocios seleccionados'}
+                        </span>
+                        <div className="w-px h-4 bg-violet-200 dark:bg-violet-700" />
+                        <button onClick={() => setBulkPagoOpen(true)} className="h-7 px-2.5 rounded-md border border-green-200 bg-white dark:bg-gray-800 text-green-700 dark:text-green-400 text-xs font-semibold hover:bg-green-50">Registrar pago</button>
+                        <button onClick={() => setBulkExtendOpen(true)} className="h-7 px-2.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Extender días</button>
+                        <button onClick={() => setBulkSuspendOpen(true)} className="h-7 px-2.5 rounded-md border border-red-200 bg-white dark:bg-gray-800 text-red-700 dark:text-red-400 text-xs font-semibold hover:bg-red-50">Suspender</button>
+                        <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-gray-500 dark:text-gray-400 hover:underline">Limpiar</button>
+                    </div>
+                )}
 
-            {message && (
-                <Alert type={message.type} onClose={() => setMessage(null)}>
-                    {message.text}
-                </Alert>
-            )}
+                <div style={{ display: 'grid', gridTemplateColumns: ADMIN_ROW_GRID }} className="items-center px-4 h-9 bg-gray-50 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <div><input type="checkbox" checked={allChecked} onChange={toggleAll} className="w-3.5 h-3.5 accent-violet-600 cursor-pointer" /></div>
+                    <div>Negocio</div>
+                    <div>Plan</div>
+                    <div>Estado</div>
+                    <div>Ciclo</div>
+                    <div>Vence</div>
+                    <div className="text-right">Último pago</div>
+                    <div className="text-right">Pago pronosticado</div>
+                    <div />
+                </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredBusinesses.map((biz) => {
-                    const subInfo = subStatuses[biz.id];
-                    return (
-                        <div key={biz.id} className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-5 space-y-3">
-                            <div className="flex items-start justify-between">
+                {loading ? (
+                    <div className="px-4 py-10 text-center text-sm text-gray-400">Cargando...</div>
+                ) : rows.length === 0 ? (
+                    <div className="py-14 px-6 flex flex-col items-center gap-2 text-center">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">Ningún negocio coincide con el filtro</p>
+                        <button onClick={() => { setSearch(''); setStatus(''); setPage(1); }} className="mt-1 h-8 px-3 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Limpiar filtros</button>
+                    </div>
+                ) : (
+                    rows.map((row) => {
+                        const tone = ROW_TONE[getRowTone(row)];
+                        const planTone = getPlanTone(row.plan_name);
+                        const progress = computeMembershipProgress(row.cycle_start_date, row.cycle_end_date);
+                        const dueFg = row.status === 'expired' || row.status === 'cancelled' ? '#b91c1c' : (progress && !progress.isExpired && progress.daysRemaining <= 5 ? '#b45309' : '#9ca3af');
+                        return (
+                            <div
+                                key={row.id}
+                                onClick={() => toggleOne(row.id)}
+                                style={{ display: 'grid', gridTemplateColumns: ADMIN_ROW_GRID, background: selectedIds.has(row.id) ? '#faf8ff' : undefined }}
+                                className="items-center px-4 h-16 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/40"
+                            >
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <input type="checkbox" checked={selectedIds.has(row.id)} onChange={() => toggleOne(row.id)} className="w-3.5 h-3.5 accent-violet-600 cursor-pointer" />
+                                </div>
+                                <div className="min-w-0 pr-3">
+                                    <p className="text-[13.5px] font-semibold text-gray-900 dark:text-white truncate">{row.name}</p>
+                                    <p className="text-[11px] font-mono text-gray-400 truncate">{row.code}</p>
+                                </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white">{biz.name}</h3>
-                                    <span className="text-xs text-gray-400">ID: {biz.id}</span>
-                                    {subInfo?.typeName && (
-                                        <p className="text-xs text-gray-400 mt-0.5">Plan: {subInfo.typeName}</p>
+                                    <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-xs font-semibold" style={{ background: planTone.bg, color: planTone.fg, border: `1px solid ${planTone.bd}` }}>
+                                        {row.plan_name || '—'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="inline-flex items-center gap-1.5 h-[22px] pl-2 pr-2.5 rounded-full text-xs font-semibold" style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.bd}` }}>
+                                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: tone.dot }} />
+                                        {tone.label}
+                                    </span>
+                                </div>
+                                <div className="flex flex-col gap-1.5 pr-3">
+                                    {row.cycle_start_date && row.cycle_end_date ? (
+                                        <>
+                                            <div className="w-[130px] h-[5px] rounded-full bg-gray-100 dark:bg-gray-600 overflow-hidden">
+                                                <div className="h-full rounded-full" style={{ width: `${progress?.percent ?? 0}%`, background: tone.dot }} />
+                                            </div>
+                                            <span className="text-[11.5px] text-gray-500 dark:text-gray-400">{progress ? `Día ${progress.daysElapsed} de ${progress.totalDays}` : 'Sin ciclo'}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-[11.5px] text-gray-400">Sin ciclo activo</span>
                                     )}
                                 </div>
-                                {subInfo
-                                    ? <StatusBadge status={subInfo.status} />
-                                    : <span className="text-xs text-gray-400 animate-pulse">Cargando...</span>
-                                }
+                                <div className="flex flex-col gap-0.5 pr-3">
+                                    <span className="text-[12.5px] text-gray-700 dark:text-gray-300">{row.cycle_end_date ? formatDate(row.cycle_end_date) : '—'}</span>
+                                    <span className="text-[11.5px] font-medium" style={{ color: dueFg }}>{formatDueRel(row)}</span>
+                                </div>
+                                <div className="flex flex-col gap-0.5 text-right">
+                                    {row.last_payment_amount ? (
+                                        <>
+                                            <span className="font-mono text-[12.5px] text-gray-900 dark:text-white">{formatCurrency(row.last_payment_amount)}</span>
+                                            <span className="text-[11.5px] text-gray-400">{formatDate(row.last_payment_date)}</span>
+                                        </>
+                                    ) : <span className="text-[11.5px] text-gray-400">—</span>}
+                                </div>
+                                <div className="flex flex-col gap-0.5 text-right">
+                                    {row.forecasted_payment ? (
+                                        (() => {
+                                            const hasOverage = !!row.last_payment_amount && row.forecasted_payment > row.last_payment_amount;
+                                            return (
+                                                <>
+                                                    <span className={`font-mono text-[12.5px] ${hasOverage ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-900 dark:text-white'}`}>
+                                                        {formatCurrency(row.forecasted_payment)}
+                                                    </span>
+                                                    {hasOverage && <span className="text-[11.5px] text-amber-500 dark:text-amber-400">incluye excedentes</span>}
+                                                </>
+                                            );
+                                        })()
+                                    ) : <span className="text-[11.5px] text-gray-400">—</span>}
+                                </div>
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setActiveRow(row); }}
+                                        title="Ver detalle"
+                                        className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-700 dark:hover:text-gray-200"
+                                    >
+                                        ›
+                                    </button>
+                                </div>
                             </div>
+                        );
+                    })
+                )}
 
-                            {subInfo?.startDate && subInfo?.endDate && (
-                                <MembershipProgress startDate={subInfo.startDate} endDate={subInfo.endDate} />
-                            )}
-
-                            <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-600">
-                                {subInfo?.startDate && subInfo?.endDate && (
-                                    <Button size="sm" variant="outline-purple" onClick={() => openEditDates(biz)} className="flex-1 text-xs">
-                                        Editar
-                                    </Button>
-                                )}
-                                <Button size="sm" variant="success" onClick={() => setRegisterModal({ open: true, business: biz })} className="flex-1 text-xs">
-                                    Registrar Pago
-                                </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleDisable(biz)} loading={disablingId === biz.id} className="flex-1 text-xs">
-                                    Suspender
-                                </Button>
-                            </div>
+                {rows.length > 0 && (
+                    <div className="px-4 py-3 flex items-center justify-between">
+                        <span className="text-[12.5px] text-gray-500 dark:text-gray-400">
+                            Mostrando {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} de {total}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="h-7.5 px-2.5 rounded-md border border-gray-200 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-300 disabled:text-gray-300 disabled:cursor-not-allowed">← Anterior</button>
+                            {pageNumbers.map((n, i) => (
+                                <span key={n} className="flex items-center">
+                                    {i > 0 && pageNumbers[i - 1] !== n - 1 && <span className="text-xs text-gray-300 px-1">…</span>}
+                                    <button
+                                        onClick={() => setPage(n)}
+                                        className={`h-7.5 w-7.5 rounded-md text-xs font-medium ${n === page ? 'bg-violet-600 text-white' : 'border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}
+                                    >
+                                        {n}
+                                    </button>
+                                </span>
+                            ))}
+                            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="h-7.5 px-2.5 rounded-md border border-gray-200 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-300 disabled:text-gray-300 disabled:cursor-not-allowed">Siguiente →</button>
                         </div>
-                    );
-                })}
+                    </div>
+                )}
             </div>
 
-            <Modal isOpen={registerModal.open} onClose={() => setRegisterModal({ open: false })} title={`Registrar Pago — ${registerModal.business?.name}`} size="md">
+            {activeRow && (
+                <BusinessDetailDrawer
+                    business={activeRow}
+                    onClose={() => setActiveRow(null)}
+                    onChanged={() => { refreshRows(); refreshKpis(); }}
+                />
+            )}
+
+            <Modal isOpen={bulkPagoOpen} onClose={() => setBulkPagoOpen(false)} title={`Registrar pago (${selectedIds.size} negocios)`} size="md">
                 <div className="space-y-4 p-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo de suscripción</label>
-                        <select value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
+                        <select value={bulkTypeId} onChange={(e) => setBulkTypeId(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
                             <option value="">Selecciona un tipo</option>
                             {subscriptionTypes.map((t) => (
                                 <option key={t.id} value={t.id}>{t.name} — {formatCurrency(t.price)}/{t.billing_period === 'monthly' ? 'mes' : 'año'}</option>
@@ -408,64 +597,704 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses a habilitar</label>
-                        <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses</label>
+                        <select value={bulkMonths} onChange={(e) => setBulkMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
                             <option value="1">1 mes</option>
                             <option value="3">3 meses</option>
                             <option value="6">6 meses</option>
-                            <option value="12">12 meses (anual)</option>
+                            <option value="12">12 meses</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Fecha de inicio <span className="font-normal text-gray-400">(opcional — por defecto hoy, o el fin de la suscripción vigente)</span>
-                        </label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Método</label>
+                        <select value={bulkMethod} onChange={(e) => setBulkMethod(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="TRANSFER">Transferencia</option>
+                            <option value="CASH">Efectivo</option>
+                            <option value="WALLET">Wallet</option>
+                        </select>
                     </div>
-                    <Input label="Referencia de pago (opcional)" value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Nro. de transferencia, comprobante..." />
-                    <Input label="Notas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Observaciones internas..." />
+                    <Input label="Referencia (opcional)" value={bulkRef} onChange={(e) => setBulkRef(e.target.value)} />
+                    <Input label="Notas internas (opcional)" value={bulkNotes} onChange={(e) => setBulkNotes(e.target.value)} />
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="secondary" onClick={() => setRegisterModal({ open: false })}>Cancelar</Button>
-                        <Button variant="success" onClick={handleRegisterPayment} loading={loading} disabled={!selectedTypeId}>Confirmar Pago</Button>
+                        <Button variant="secondary" onClick={() => setBulkPagoOpen(false)}>Cancelar</Button>
+                        <Button variant="success" onClick={handleBulkRegisterPayment} loading={bulkBusy} disabled={!bulkTypeId}>Registrar pago</Button>
                     </div>
                 </div>
             </Modal>
 
-            <Modal isOpen={editDatesModal.open} onClose={() => setEditDatesModal({ open: false })} title={`Editar fechas — ${editDatesModal.business?.name}`} size="sm">
+            <Modal isOpen={bulkExtendOpen} onClose={() => setBulkExtendOpen(false)} title={`Extender días (${selectedIds.size} negocios)`} size="sm">
                 <div className="space-y-4 p-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Corrige la fecha de inicio o de vencimiento de la suscripción vigente, sin registrar un pago nuevo.
-                    </p>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de inicio</label>
-                        <input
-                            type="date"
-                            value={editStartDate}
-                            onChange={(e) => setEditStartDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Sin registrar pago. Se marca como cortesía en cada negocio.</p>
+                    <div className="flex gap-2">
+                        {[3, 7, 15, 30].map((d) => (
+                            <button
+                                key={d}
+                                onClick={() => setBulkDays(d)}
+                                className={`px-3 py-1.5 rounded-lg text-sm border ${bulkDays === d ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}
+                            >
+                                +{d}
+                            </button>
+                        ))}
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha de vencimiento</label>
-                        <input
-                            type="date"
-                            value={editEndDate}
-                            onChange={(e) => setEditEndDate(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        />
-                    </div>
+                    <Input label="Motivo (obligatorio)" value={bulkReason} onChange={(e) => setBulkReason(e.target.value)} />
                     <div className="flex justify-end gap-2 pt-2">
-                        <Button variant="secondary" onClick={() => setEditDatesModal({ open: false })}>Cancelar</Button>
-                        <Button variant="purple" onClick={handleEditDates} loading={editingDates} disabled={!editStartDate || !editEndDate}>Guardar cambios</Button>
+                        <Button variant="secondary" onClick={() => setBulkExtendOpen(false)}>Cancelar</Button>
+                        <Button variant="quaternary" onClick={handleBulkExtend} loading={bulkBusy} disabled={!bulkReason.trim()}>Extender</Button>
                     </div>
                 </div>
             </Modal>
+
+            <ConfirmModal
+                isOpen={bulkSuspendOpen}
+                onClose={() => setBulkSuspendOpen(false)}
+                onConfirm={handleBulkSuspend}
+                title={`¿Suspender ${selectedIds.size} negocios?`}
+                message="Los usuarios de estos negocios perderán acceso al panel de inmediato. Se pueden reactivar después sin perder datos."
+                confirmText="Sí, suspender"
+                type="danger"
+            />
         </div>
+    );
+}
+
+function buildMonthGrid(year: number, month: number) {
+    const first = new Date(year, month, 1);
+    const startOffset = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < startOffset; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+}
+
+const sameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const fmtDateInput = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+function SubscriptionCalendar({ cycleStartDate, cycleEndDate, onSave, saving }: {
+    cycleStartDate?: string;
+    cycleEndDate?: string;
+    onSave: (startDate: string, endDate: string) => Promise<void>;
+    saving?: boolean;
+}) {
+    const start = cycleStartDate ? new Date(cycleStartDate) : null;
+    const end = cycleEndDate ? new Date(cycleEndDate) : null;
+    const [viewDate, setViewDate] = useState(() => end ? new Date(end.getFullYear(), end.getMonth(), 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+    const [editing, setEditing] = useState(false);
+    const [pendingStart, setPendingStart] = useState<Date | null>(null);
+    const [pendingEnd, setPendingEnd] = useState<Date | null>(null);
+
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const cells = buildMonthGrid(year, month);
+    const today = new Date();
+
+    const inCycle = (day: number) => {
+        if (!start || !end) return false;
+        const d = new Date(year, month, day);
+        return d >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) && d <= new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    };
+
+    const inPending = (day: number) => {
+        if (!pendingStart || !pendingEnd) return false;
+        const d = new Date(year, month, day);
+        return d >= pendingStart && d <= pendingEnd;
+    };
+
+    const startEditing = () => {
+        setPendingStart(start);
+        setPendingEnd(end);
+        setEditing(true);
+    };
+
+    const cancelEditing = () => {
+        setEditing(false);
+        setPendingStart(null);
+        setPendingEnd(null);
+    };
+
+    const handleDayClick = (day: number) => {
+        if (!editing) return;
+        const clicked = new Date(year, month, day);
+        if (!pendingStart || pendingEnd) {
+            setPendingStart(clicked);
+            setPendingEnd(null);
+        } else if (clicked < pendingStart) {
+            setPendingStart(clicked);
+            setPendingEnd(null);
+        } else {
+            setPendingEnd(clicked);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!pendingStart || !pendingEnd) return;
+        await onSave(fmtDateInput(pendingStart), fmtDateInput(pendingEnd));
+        cancelEditing();
+    };
+
+    return (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+                <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">‹</button>
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 capitalize">{viewDate.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}</span>
+                <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">›</button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-gray-400 mb-1">
+                {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => <span key={i}>{d}</span>)}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+                {cells.map((day, i) => {
+                    if (!day) return <div key={i} className="aspect-square" />;
+                    const isToday = sameDay(new Date(year, month, day), today);
+                    const isEnd = end && sameDay(new Date(year, month, day), end);
+                    const isStart = start && sameDay(new Date(year, month, day), start);
+                    const highlighted = inCycle(day);
+                    const isPendingBoundary = Boolean(pendingStart && sameDay(new Date(year, month, day), pendingStart)) || Boolean(pendingEnd && sameDay(new Date(year, month, day), pendingEnd));
+                    const pendingHighlighted = inPending(day);
+                    return (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => handleDayClick(day)}
+                            disabled={!editing}
+                            className={`aspect-square flex items-center justify-center rounded-md text-[11px] ${editing ? 'cursor-pointer' : 'cursor-default'} ${isToday ? 'ring-1 ring-violet-600' : ''} ${
+                                editing
+                                    ? (isPendingBoundary
+                                        ? 'bg-amber-500 text-white font-semibold'
+                                        : pendingHighlighted
+                                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700')
+                                    : (isEnd || isStart
+                                        ? 'bg-violet-600 text-white font-semibold'
+                                        : highlighted
+                                            ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
+                                            : 'text-gray-600 dark:text-gray-300')
+                            }`}
+                        >
+                            {day}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {editing ? (
+                <div className="mt-3 space-y-2">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {!pendingStart ? 'Selecciona la fecha de inicio.' : !pendingEnd ? 'Ahora selecciona la fecha de vencimiento.' : `${fmtDateInput(pendingStart)} → ${fmtDateInput(pendingEnd)}`}
+                    </p>
+                    <div className="flex gap-2">
+                        <Button size="sm" variant="secondary" className="flex-1 !text-xs" onClick={cancelEditing}>Cancelar</Button>
+                        <Button size="sm" variant="purple" className="flex-1 !text-xs" onClick={handleSave} loading={saving} disabled={!pendingStart || !pendingEnd}>Guardar</Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="mt-2.5 flex items-center justify-between">
+                    {(!start || !end) ? <p className="text-[11px] text-gray-400">Sin ciclo asignado</p> : <span />}
+                    <button onClick={startEditing} className="text-[11px] font-semibold text-violet-600 hover:underline">Editar fechas</button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function BusinessDetailDrawer({ business, onClose, onChanged }: {
+    business: AdminBusinessRow;
+    onClose: () => void;
+    onChanged: () => void;
+}) {
+    const [subscription, setSubscription] = useState<BusinessSubscription | null>(null);
+    const [history, setHistory] = useState<BusinessSubscription[]>([]);
+    const [overrides, setOverrides] = useState<BusinessModuleOverride[]>([]);
+    const [auditLogs, setAuditLogs] = useState<SubscriptionAuditLog[]>([]);
+    const [subscriptionTypes, setSubscriptionTypes] = useState<SubscriptionType[]>([]);
+    const [customPlans, setCustomPlans] = useState<SubscriptionType[]>([]);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    const [registerOpen, setRegisterOpen] = useState(false);
+    const [selectedTypeId, setSelectedTypeId] = useState('');
+    const [months, setMonths] = useState('1');
+    const [paymentMethod, setPaymentMethod] = useState('TRANSFER');
+    const [payRef, setPayRef] = useState('');
+    const [notes, setNotes] = useState('');
+
+    const [extendOpen, setExtendOpen] = useState(false);
+    const [extendDays, setExtendDays] = useState(7);
+    const [extendReason, setExtendReason] = useState('');
+
+    const [suspendConfirmOpen, setSuspendConfirmOpen] = useState(false);
+
+    const [grantOpen, setGrantOpen] = useState(false);
+    const [grantModule, setGrantModule] = useState('');
+    const [grantExpiresAt, setGrantExpiresAt] = useState('');
+    const [grantNotes, setGrantNotes] = useState('');
+
+    const load = useCallback(async () => {
+        const [subRes, historyRes, overridesRes, auditRes] = await Promise.all([
+            getMySubscriptionAction(business.id),
+            listPaymentHistoryAction(business.id),
+            listOverridesAction(business.id),
+            listAuditLogsAction(business.id),
+        ]);
+        if (subRes.success) setSubscription(subRes.data || null);
+        if (historyRes.success) setHistory(historyRes.data || []);
+        if (overridesRes.success) setOverrides(overridesRes.data || []);
+        if (auditRes.success) setAuditLogs(auditRes.data || []);
+    }, [business.id]);
+
+    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        listSubscriptionTypesAction(true).then((res) => { if (res.success && res.data) setSubscriptionTypes(res.data); });
+        listCustomPlansAction(business.id).then((res) => { if (res.success && res.data) setCustomPlans(res.data); });
+        getModuleCatalogAction().then((res) => { if (res.success && res.data) setModuleCatalog(res.data); });
+    }, []);
+
+    const afterChange = async (successText: string) => {
+        setMessage({ type: 'success', text: successText });
+        await load();
+        onChanged();
+    };
+
+    const handleRegisterPayment = async () => {
+        if (!selectedTypeId) return;
+        setBusy(true);
+        const res = await registerSubscriptionPaymentAction({
+            businessId: business.id,
+            subscriptionTypeId: Number(selectedTypeId),
+            monthsToAdd: Number(months),
+            paymentMethod,
+            paymentReference: payRef || undefined,
+            notes: notes || undefined,
+        });
+        setBusy(false);
+        if (res.success) {
+            setRegisterOpen(false);
+            setSelectedTypeId(''); setMonths('1'); setPayRef(''); setNotes('');
+            await afterChange('Pago registrado.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al registrar el pago' });
+        }
+    };
+
+    const handleExtend = async () => {
+        if (extendDays <= 0 || !extendReason.trim()) return;
+        setBusy(true);
+        const res = await extendCourtesyAction({ businessId: business.id, days: extendDays, reason: extendReason.trim() });
+        setBusy(false);
+        if (res.success) {
+            setExtendOpen(false);
+            setExtendReason(''); setExtendDays(7);
+            await afterChange(`Se extendieron ${extendDays} días de cortesía.`);
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al extender la vigencia' });
+        }
+    };
+
+    const isSuspended = business.status === 'cancelled';
+
+    const handleSuspendOrReactivate = async () => {
+        setBusy(true);
+        const res = isSuspended
+            ? await reactivateSubscriptionAction(business.id)
+            : await disableSubscriptionAction(business.id);
+        setBusy(false);
+        if (res.success) {
+            await afterChange(isSuspended ? 'Suscripción reactivada.' : 'Suscripción suspendida.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'No se pudo completar la acción' });
+        }
+    };
+
+    const handleRevert = async (subscriptionId?: number) => {
+        if (!subscriptionId) return;
+        if (!confirm('¿Revertir este pago? La suscripción se recalculará con el pago anterior.')) return;
+        setBusy(true);
+        const res = await revertPaymentAction(subscriptionId);
+        setBusy(false);
+        if (res.success) {
+            await afterChange('Pago revertido.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'No se pudo revertir el pago' });
+        }
+    };
+
+    const handleGrantOverride = async () => {
+        if (!grantModule) return;
+        setBusy(true);
+        const res = await grantOverrideAction({
+            businessId: business.id,
+            moduleCode: grantModule,
+            notes: grantNotes || undefined,
+            expiresAt: grantExpiresAt || undefined,
+        });
+        setBusy(false);
+        if (res.success) {
+            setGrantOpen(false);
+            setGrantModule(''); setGrantExpiresAt(''); setGrantNotes('');
+            await afterChange('Acceso otorgado.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'No se pudo otorgar el acceso' });
+        }
+    };
+
+    const handleRevoke = async (moduleCode: string) => {
+        if (!confirm('¿Revocar este acceso adicional?')) return;
+        setBusy(true);
+        const res = await revokeOverrideAction(business.id, moduleCode);
+        setBusy(false);
+        if (res.success) {
+            await afterChange('Acceso revocado.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'No se pudo revocar el acceso' });
+        }
+    };
+
+    const cycleStart = subscription?.start_date ?? business.cycle_start_date;
+    const cycleEnd = subscription?.end_date ?? business.cycle_end_date;
+
+    const handleSaveDates = async (startDate: string, endDate: string) => {
+        setBusy(true);
+        const res = await editSubscriptionDatesAction({ businessId: business.id, startDate, endDate });
+        setBusy(false);
+        if (res.success) {
+            await afterChange('Fechas del ciclo actualizadas.');
+        } else {
+            setMessage({ type: 'error', text: res.error || 'Error al actualizar las fechas' });
+        }
+    };
+
+    const planName = subscription?.subscription_type_name || business.plan_name;
+    const isExpired = business.status === 'expired';
+    const heroTone = isExpired || isSuspended ? 'from-red-700 to-red-900' : 'from-violet-700 to-violet-900';
+    const heroTitle = isSuspended
+        ? 'Suscripción suspendida'
+        : isExpired
+            ? 'Suscripción vencida'
+            : planName
+                ? `${planName} · activa`
+                : 'Sin plan asignado';
+    const heroSub = cycleEnd
+        ? `${isExpired || isSuspended ? 'Venció el' : 'Vence el'} ${formatDate(cycleEnd)}`
+        : 'Sin ciclo asignado';
+    const progress = computeMembershipProgress(cycleStart, cycleEnd);
+    const dueRel = progress
+        ? (progress.isExpired ? `vencida ${Math.abs(progress.daysRemaining)} días` : progress.daysRemaining === 0 ? 'vence hoy' : `en ${progress.daysRemaining} días`)
+        : '—';
+    const paidTotal = history.filter((h) => h.status === 'paid').reduce((sum, h) => sum + h.amount, 0);
+    const initials = business.name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+    return (
+        <Modal isOpen onClose={onClose} showCloseButton={false} size="4xl" noPadding>
+            <div className="flex flex-col min-h-full">
+                <div className="sticky top-0 z-10 flex items-start gap-3.5 px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                        {initials || '—'}
+                    </div>
+                    <div className="min-w-0 flex-1 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[17px] font-semibold text-gray-900 dark:text-white">{business.name}</span>
+                            <StatusBadge status={business.status} />
+                            {planName && (
+                                <span className="inline-flex items-center h-[22px] px-2.5 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                    {planName}
+                                </span>
+                            )}
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono truncate">{business.code}</span>
+                    </div>
+                    <button onClick={onClose} className="ml-auto w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 flex-shrink-0">✕</button>
+                </div>
+
+                <div className="p-5 grid gap-4 lg:grid-cols-[1fr_290px]">
+                    <div className="flex flex-col gap-3.5 min-w-0">
+                        {message && <Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert>}
+
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">Historial de pagos</span>
+                                    <span className="text-xs text-gray-400">{history.length} movimiento{history.length !== 1 ? 's' : ''} · <span className="font-mono text-gray-600 dark:text-gray-300">{formatCurrency(paidTotal)}</span> acumulado</span>
+                                </div>
+                                <button onClick={() => setRegisterOpen(true)} className="h-7 px-2.5 rounded-md border border-green-200 bg-green-50 text-green-700 text-xs font-semibold hover:bg-green-100 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400">
+                                    + Registrar pago
+                                </button>
+                            </div>
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-gray-50 dark:bg-gray-900/40 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                        <th className="text-left px-4 py-2">Fecha</th>
+                                        <th className="text-left px-4 py-2">Concepto</th>
+                                        <th className="text-right px-4 py-2">Monto</th>
+                                        <th className="text-left px-4 py-2">Método</th>
+                                        <th className="text-left px-4 py-2">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {history.length === 0 && (
+                                        <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400 text-xs">Sin pagos registrados</td></tr>
+                                    )}
+                                    {history.map((h) => (
+                                        <tr key={h.id} className="border-t border-gray-100 dark:border-gray-700 align-top">
+                                            <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300">{formatDate(h.created_at)}</td>
+                                            <td className="px-4 py-2.5">
+                                                <p className="font-medium text-gray-900 dark:text-white">{h.subscription_type_name} · {h.months} {h.months === 1 ? 'mes' : 'meses'}</p>
+                                                {h.notes && <p className="text-xs text-gray-400 mt-0.5">{h.notes}</p>}
+                                            </td>
+                                            <td className={`px-4 py-2.5 text-right font-mono ${h.status === 'reverted' ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>{formatCurrency(h.amount)}</td>
+                                            <td className="px-4 py-2.5">
+                                                <p className="text-gray-600 dark:text-gray-300">{paymentMethodLabel(h.payment_method)}</p>
+                                                {h.payment_reference && <p className="text-[10px] font-mono text-gray-400 mt-0.5">{h.payment_reference}</p>}
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <PaymentStatusBadge status={h.status} />
+                                                    {h.status === 'paid' && (
+                                                        <button className="text-[11px] text-red-600 hover:underline" onClick={() => handleRevert(h.id)} disabled={busy}>
+                                                            Revertir
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                                <div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Módulos adicionales</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Accesos otorgados por fuera del plan{planName ? ` ${planName}` : ''}.</p>
+                                </div>
+                                <button onClick={() => setGrantOpen((v) => !v)} className="h-7 px-2.5 rounded-md border border-violet-200 bg-violet-50 text-violet-700 text-xs font-semibold hover:bg-violet-100 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-300 flex-shrink-0">
+                                    {grantOpen ? 'Cerrar' : '+ Otorgar módulo'}
+                                </button>
+                            </div>
+
+                            {grantOpen && (
+                                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/30 border-b border-gray-100 dark:border-gray-700 grid gap-2 sm:grid-cols-[1fr_130px_1.2fr_auto] items-end">
+                                    <label className="flex flex-col gap-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Módulo
+                                        <select value={grantModule} onChange={(e) => setGrantModule(e.target.value)} className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white">
+                                            <option value="">Selecciona</option>
+                                            {moduleCatalog.map((m) => <option key={m.code} value={m.code}>{m.name}</option>)}
+                                        </select>
+                                    </label>
+                                    <label className="flex flex-col gap-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Vence
+                                        <input type="date" value={grantExpiresAt} onChange={(e) => setGrantExpiresAt(e.target.value)} className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white" />
+                                    </label>
+                                    <label className="flex flex-col gap-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Notas internas
+                                        <input type="text" value={grantNotes} onChange={(e) => setGrantNotes(e.target.value)} placeholder="Motivo del acceso extra…" className="h-9 px-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white" />
+                                    </label>
+                                    <Button size="sm" variant="purple" onClick={handleGrantOverride} loading={busy} disabled={!grantModule}>Otorgar</Button>
+                                </div>
+                            )}
+
+                            {overrides.length === 0 ? (
+                                <div className="py-6 px-5 flex flex-col items-center gap-1.5 text-center">
+                                    <div className="w-8 h-8 rounded-lg border border-dashed border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-300 flex items-center justify-center text-sm">＋</div>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Sin módulos extra</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                                        Este negocio solo tiene lo incluido en su plan. Puedes otorgar acceso puntual a un módulo.
+                                    </p>
+                                </div>
+                            ) : (
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50 dark:bg-gray-900/40 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                            <th className="text-left px-4 py-2">Módulo</th>
+                                            <th className="text-left px-4 py-2">Otorgado</th>
+                                            <th className="text-left px-4 py-2">Notas</th>
+                                            <th className="text-left px-4 py-2"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {overrides.map((o) => (
+                                            <tr key={o.id} className="border-t border-gray-100 dark:border-gray-700 align-top">
+                                                <td className="px-4 py-2.5">
+                                                    <div className="flex items-start gap-2">
+                                                        <span className="w-1.5 h-1.5 mt-1.5 rounded-full bg-violet-500 flex-shrink-0" />
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900 dark:text-white">{moduleCatalog.find((m) => m.code === o.module_code)?.name || o.module_code}</p>
+                                                            <p className={`text-xs mt-0.5 ${o.expires_at ? 'text-gray-400' : 'text-green-600'}`}>{o.expires_at ? `Vence ${formatDate(o.expires_at)}` : 'Sin vencimiento'}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2.5 text-gray-600 dark:text-gray-300">{formatDate(o.created_at)}</td>
+                                                <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">{o.notes || '—'}</td>
+                                                <td className="px-4 py-2.5 text-right">
+                                                    <button className="h-[26px] px-2.5 rounded-md border border-red-200 bg-white dark:bg-gray-800 text-red-700 text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleRevoke(o.module_code)} disabled={busy}>
+                                                        Revocar
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <span className="text-sm font-semibold text-gray-900 dark:text-white">Auditoría</span>
+                            </div>
+                            <div className="px-4 py-3.5">
+                                {auditLogs.length === 0 && <p className="text-xs text-gray-400">Sin actividad registrada</p>}
+                                {auditLogs.map((log, i) => (
+                                    <div key={log.id} className="grid grid-cols-[14px_1fr] gap-2.5">
+                                        <div className="flex flex-col items-center">
+                                            <span className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ background: auditDotColor(log.action) }} />
+                                            {i < auditLogs.length - 1 && <span className="flex-1 w-px bg-gray-100 dark:bg-gray-700" />}
+                                        </div>
+                                        <div className="pb-3.5">
+                                            <p className="text-[12.5px] text-gray-900 dark:text-gray-100 leading-snug"><span className="font-semibold">{log.actor_label}</span> {log.description}</p>
+                                            <p className="text-[11.5px] text-gray-400 mt-0.5">{formatDate(log.created_at)}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 flex items-center gap-2">
+                            <Button variant="success" size="sm" className="flex-1 !text-xs" onClick={() => setRegisterOpen(true)}>Registrar pago</Button>
+                            <Button variant="quaternary" size="sm" className="flex-1 !text-xs" onClick={() => setExtendOpen(true)}>Días cortesía</Button>
+                            <Button variant="danger" size="sm" className="flex-1 !text-xs" onClick={() => setSuspendConfirmOpen(true)} loading={busy}>
+                                {isSuspended ? 'Reactivar' : 'Suspender'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <div className={`rounded-xl p-4 text-white bg-gradient-to-br ${heroTone}`}>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider opacity-80">Estado de suscripción</p>
+                            <p className="text-lg font-semibold mt-1.5">{heroTitle}</p>
+                            <p className="text-xs opacity-85 mt-0.5">{heroSub}</p>
+                            <div className="h-1.5 rounded-full bg-white/25 mt-3 overflow-hidden">
+                                <div className="h-full rounded-full bg-white" style={{ width: `${progress?.percent ?? (isExpired ? 100 : 0)}%` }} />
+                            </div>
+                            <div className="flex items-center justify-between text-[11.5px] opacity-85 mt-1.5">
+                                <span>{progress ? `Día ${progress.daysElapsed} de ${progress.totalDays}` : 'Sin ciclo'}</span>
+                                <span>{dueRel}</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3.5 flex flex-col gap-2 text-[12.5px]">
+                            <div className="grid grid-cols-[96px_1fr] gap-2 items-baseline">
+                                <span className="text-gray-500 dark:text-gray-400">Plan actual</span>
+                                <span className="font-semibold text-right text-gray-900 dark:text-white">{planName || '—'}</span>
+                            </div>
+                            <div className="grid grid-cols-[96px_1fr] gap-2 items-baseline">
+                                <span className="text-gray-500 dark:text-gray-400">Vencimiento</span>
+                                <span className={`font-semibold text-right ${isExpired ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>{formatDate(cycleEnd)}</span>
+                            </div>
+                            <div className="grid grid-cols-[96px_1fr] gap-2 items-baseline">
+                                <span className="text-gray-500 dark:text-gray-400">Último pago</span>
+                                <span className="font-semibold text-right font-mono text-gray-900 dark:text-white">{business.last_payment_amount ? formatCurrency(business.last_payment_amount) : '—'}</span>
+                            </div>
+                            <div className="grid grid-cols-[96px_1fr] gap-2 items-baseline">
+                                <span className="text-gray-500 dark:text-gray-400">Overrides</span>
+                                <span className={`font-semibold text-right ${overrides.length ? 'text-violet-600' : 'text-gray-400'}`}>{overrides.length} módulo{overrides.length !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+
+                        <SubscriptionCalendar
+                            cycleStartDate={cycleStart}
+                            cycleEndDate={cycleEnd}
+                            onSave={handleSaveDates}
+                            saving={busy}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <Modal isOpen={registerOpen} onClose={() => setRegisterOpen(false)} title="Registrar pago manual" size="md">
+                <div className="space-y-4 p-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Plan</label>
+                        <select value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="">Selecciona un tipo</option>
+                            {subscriptionTypes.length > 0 && (
+                                <optgroup label="Catálogo general">
+                                    {subscriptionTypes.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name} — {formatCurrency(t.price)}/{t.billing_period === 'monthly' ? 'mes' : 'año'}</option>
+                                    ))}
+                                </optgroup>
+                            )}
+                            {customPlans.length > 0 && (
+                                <optgroup label="Planes personalizados de este negocio">
+                                    {customPlans.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name} — {formatCurrency(t.price)}/{t.billing_period === 'monthly' ? 'mes' : 'año'}</option>
+                                    ))}
+                                </optgroup>
+                            )}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meses</label>
+                        <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="1">1 mes</option>
+                            <option value="3">3 meses</option>
+                            <option value="6">6 meses</option>
+                            <option value="12">12 meses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Método</label>
+                        <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white">
+                            <option value="TRANSFER">Transferencia</option>
+                            <option value="CASH">Efectivo</option>
+                            <option value="WALLET">Wallet</option>
+                        </select>
+                    </div>
+                    <Input label="Referencia (folio o SPEI)" value={payRef} onChange={(e) => setPayRef(e.target.value)} />
+                    <Input label="Notas internas (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="secondary" onClick={() => setRegisterOpen(false)}>Cancelar</Button>
+                        <Button variant="success" onClick={handleRegisterPayment} loading={busy} disabled={!selectedTypeId}>Registrar pago</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={extendOpen} onClose={() => setExtendOpen(false)} title="Extender vigencia (cortesía)" size="sm">
+                <div className="space-y-4 p-4">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Sin registrar pago. Se marca como cortesía.</p>
+                    <div className="flex gap-2">
+                        {[3, 7, 15, 30].map((d) => (
+                            <button
+                                key={d}
+                                onClick={() => setExtendDays(d)}
+                                className={`px-3 py-1.5 rounded-lg text-sm border ${extendDays === d ? 'bg-amber-500 text-white border-amber-500' : 'border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300'}`}
+                            >
+                                +{d}
+                            </button>
+                        ))}
+                    </div>
+                    <Input label="Motivo (obligatorio)" value={extendReason} onChange={(e) => setExtendReason(e.target.value)} />
+                    <div className="flex justify-end gap-2 pt-2">
+                        <Button variant="secondary" onClick={() => setExtendOpen(false)}>Cancelar</Button>
+                        <Button variant="quaternary" onClick={handleExtend} loading={busy} disabled={!extendReason.trim()}>Extender</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            <ConfirmModal
+                isOpen={suspendConfirmOpen}
+                onClose={() => setSuspendConfirmOpen(false)}
+                onConfirm={handleSuspendOrReactivate}
+                title={isSuspended ? `¿Reactivar la suscripción de ${business.name}?` : `¿Suspender la suscripción de ${business.name}?`}
+                message={isSuspended
+                    ? 'El negocio recupera acceso inmediato a la plataforma con los datos que tenía.'
+                    : 'Los usuarios del negocio perderán acceso al panel de inmediato. La suscripción se puede reactivar después sin perder datos.'}
+                confirmText={isSuspended ? 'Sí, reactivar' : 'Sí, suspender'}
+                type={isSuspended ? 'info' : 'danger'}
+            />
+        </Modal>
     );
 }
 
@@ -476,7 +1305,13 @@ function SubscriptionTypesAdminPanel() {
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [editModal, setEditModal] = useState<{ open: boolean; type?: SubscriptionType }>({ open: false });
 
-    const [form, setForm] = useState({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [] as string[], max_ecommerce_channels: '0' });
+    const emptyTypeForm = {
+        name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true,
+        module_codes: [] as string[], max_ecommerce_channels: '0',
+        included_shipments: '', shipment_overage_price: '', included_invoices: '', invoice_overage_price: '',
+        included_orders: '', order_overage_price: '',
+    };
+    const [form, setForm] = useState(emptyTypeForm);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -489,12 +1324,21 @@ function SubscriptionTypesAdminPanel() {
     useEffect(() => { load(); }, [load]);
 
     const openCreate = () => {
-        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [], max_ecommerce_channels: '0' });
+        setForm(emptyTypeForm);
         setEditModal({ open: true });
     };
 
     const openEdit = (t: SubscriptionType) => {
-        setForm({ name: t.name, code: t.code, description: t.description, price: String(t.price), billing_period: t.billing_period, active: t.active, module_codes: t.module_codes ?? [], max_ecommerce_channels: String(t.max_ecommerce_channels ?? 0) });
+        setForm({
+            name: t.name, code: t.code, description: t.description, price: String(t.price), billing_period: t.billing_period, active: t.active,
+            module_codes: t.module_codes ?? [], max_ecommerce_channels: String(t.max_ecommerce_channels ?? 0),
+            included_shipments: t.included_shipments != null ? String(t.included_shipments) : '',
+            shipment_overage_price: t.shipment_overage_price != null ? String(t.shipment_overage_price) : '',
+            included_invoices: t.included_invoices != null ? String(t.included_invoices) : '',
+            invoice_overage_price: t.invoice_overage_price != null ? String(t.invoice_overage_price) : '',
+            included_orders: t.included_orders != null ? String(t.included_orders) : '',
+            order_overage_price: t.order_overage_price != null ? String(t.order_overage_price) : '',
+        });
         setEditModal({ open: true, type: t });
     };
 
@@ -509,6 +1353,14 @@ function SubscriptionTypesAdminPanel() {
 
     const handleSave = async () => {
         if (!form.name || !form.price) return;
+
+        const includedShipments = form.included_shipments.trim() ? Number(form.included_shipments) : undefined;
+        const shipmentOveragePrice = form.shipment_overage_price.trim() ? Number(form.shipment_overage_price) : undefined;
+        const includedInvoices = form.included_invoices.trim() ? Number(form.included_invoices) : undefined;
+        const invoiceOveragePrice = form.invoice_overage_price.trim() ? Number(form.invoice_overage_price) : undefined;
+        const includedOrders = form.included_orders.trim() ? Number(form.included_orders) : undefined;
+        const orderOveragePrice = form.order_overage_price.trim() ? Number(form.order_overage_price) : undefined;
+
         const res = editModal.type
             ? await updateSubscriptionTypeAction(editModal.type.id, {
                 name: form.name,
@@ -518,6 +1370,12 @@ function SubscriptionTypesAdminPanel() {
                 active: form.active,
                 module_codes: form.module_codes,
                 max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
+                included_shipments: includedShipments,
+                shipment_overage_price: shipmentOveragePrice,
+                included_invoices: includedInvoices,
+                invoice_overage_price: invoiceOveragePrice,
+                included_orders: includedOrders,
+                order_overage_price: orderOveragePrice,
             })
             : await createSubscriptionTypeAction({
                 name: form.name,
@@ -527,6 +1385,12 @@ function SubscriptionTypesAdminPanel() {
                 billing_period: form.billing_period,
                 module_codes: form.module_codes,
                 max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
+                included_shipments: includedShipments,
+                shipment_overage_price: shipmentOveragePrice,
+                included_invoices: includedInvoices,
+                invoice_overage_price: invoiceOveragePrice,
+                included_orders: includedOrders,
+                order_overage_price: orderOveragePrice,
             });
 
         if (res.success) {
@@ -607,6 +1471,29 @@ function SubscriptionTypesAdminPanel() {
                                     <div className="text-xs text-gray-400 leading-tight">canales de ecommerce conectados</div>
                                 </div>
                             </div>
+
+                            {(t.included_shipments != null || t.included_invoices != null || t.included_orders != null) && (
+                                <div className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                    {t.included_shipments != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_shipments}</span> envíos/mes
+                                            {t.shipment_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.shipment_overage_price)}</span>/guía</>}
+                                        </p>
+                                    )}
+                                    {t.included_invoices != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_invoices}</span> facturas/mes
+                                            {t.invoice_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.invoice_overage_price)}</span>/factura</>}
+                                        </p>
+                                    )}
+                                    {t.included_orders != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{t.included_orders}</span> ordenes/mes
+                                            {t.order_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(t.order_overage_price)}</span>/orden</>}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="border-t border-violet-100 dark:border-violet-900/40 mx-6" />
@@ -736,6 +1623,84 @@ function SubscriptionTypesAdminPanel() {
                                 <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">Al superar el límite, el cliente no podrá conectar canales adicionales hasta cambiar de plan.</p>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Envíos incluidos <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_shipments}
+                                        onChange={(e) => setForm({ ...form, included_shipments: e.target.value })}
+                                        placeholder="ej: 100"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo envío extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.shipment_overage_price}
+                                            onChange={(e) => setForm({ ...form, shipment_overage_price: e.target.value })}
+                                            placeholder="ej: 600"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Facturas incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_invoices}
+                                        onChange={(e) => setForm({ ...form, included_invoices: e.target.value })}
+                                        placeholder="ej: 6000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo factura extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.invoice_overage_price}
+                                            onChange={(e) => setForm({ ...form, invoice_overage_price: e.target.value })}
+                                            placeholder="ej: 550"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Ordenes incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_orders}
+                                        onChange={(e) => setForm({ ...form, included_orders: e.target.value })}
+                                        placeholder="ej: 6000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo orden extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.order_overage_price}
+                                            onChange={(e) => setForm({ ...form, order_overage_price: e.target.value })}
+                                            placeholder="ej: 550"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <div className="flex items-center justify-between mb-2.5">
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Módulos incluidos</label>
@@ -783,10 +1748,13 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const [editModal, setEditModal] = useState<{ open: boolean; plan?: SubscriptionType }>({ open: false });
 
-    const [form, setForm] = useState({
+    const emptyForm = {
         name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true,
         module_codes: [] as string[], max_ecommerce_channels: '0', business_id: '', months: '1', notes: '',
-    });
+        included_shipments: '', shipment_overage_price: '', included_invoices: '', invoice_overage_price: '',
+        included_orders: '', order_overage_price: '',
+    };
+    const [form, setForm] = useState(emptyForm);
 
     const businessName = (id?: number) => businesses.find((b) => b.id === id)?.name ?? `Negocio ${id}`;
 
@@ -801,12 +1769,21 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
     useEffect(() => { load(); }, [load]);
 
     const openCreate = () => {
-        setForm({ name: '', code: '', description: '', price: '', billing_period: 'monthly', active: true, module_codes: [], max_ecommerce_channels: '0', business_id: '', months: '1', notes: '' });
+        setForm(emptyForm);
         setEditModal({ open: true });
     };
 
     const openEdit = (p: SubscriptionType) => {
-        setForm({ name: p.name, code: p.code, description: p.description, price: String(p.price), billing_period: p.billing_period, active: p.active, module_codes: p.module_codes ?? [], max_ecommerce_channels: String(p.max_ecommerce_channels ?? 0), business_id: String(p.business_id ?? ''), months: '1', notes: '' });
+        setForm({
+            name: p.name, code: p.code, description: p.description, price: String(p.price), billing_period: p.billing_period, active: p.active,
+            module_codes: p.module_codes ?? [], max_ecommerce_channels: String(p.max_ecommerce_channels ?? 0), business_id: String(p.business_id ?? ''), months: '1', notes: '',
+            included_shipments: p.included_shipments != null ? String(p.included_shipments) : '',
+            shipment_overage_price: p.shipment_overage_price != null ? String(p.shipment_overage_price) : '',
+            included_invoices: p.included_invoices != null ? String(p.included_invoices) : '',
+            invoice_overage_price: p.invoice_overage_price != null ? String(p.invoice_overage_price) : '',
+            included_orders: p.included_orders != null ? String(p.included_orders) : '',
+            order_overage_price: p.order_overage_price != null ? String(p.order_overage_price) : '',
+        });
         setEditModal({ open: true, plan: p });
     };
 
@@ -821,10 +1798,23 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
 
     const handleSave = async () => {
         if (!form.name || !form.price) return;
-        if (!editModal.plan && !form.business_id) {
-            setMessage({ type: 'error', text: 'Selecciona el negocio al que se atará este plan' });
-            return;
+        if (!editModal.plan) {
+            if (!form.business_id) {
+                setMessage({ type: 'error', text: 'Selecciona el negocio al que se atará este plan' });
+                return;
+            }
+            if (!form.code.trim()) {
+                setMessage({ type: 'error', text: 'El código es obligatorio y debe ser único (no puede repetir uno ya usado por otro plan)' });
+                return;
+            }
         }
+
+        const includedShipments = form.included_shipments.trim() ? Number(form.included_shipments) : undefined;
+        const shipmentOveragePrice = form.shipment_overage_price.trim() ? Number(form.shipment_overage_price) : undefined;
+        const includedInvoices = form.included_invoices.trim() ? Number(form.included_invoices) : undefined;
+        const invoiceOveragePrice = form.invoice_overage_price.trim() ? Number(form.invoice_overage_price) : undefined;
+        const includedOrders = form.included_orders.trim() ? Number(form.included_orders) : undefined;
+        const orderOveragePrice = form.order_overage_price.trim() ? Number(form.order_overage_price) : undefined;
 
         const res = editModal.plan
             ? await updateCustomPlanAction(editModal.plan.id, {
@@ -835,6 +1825,12 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                 active: form.active,
                 module_codes: form.module_codes,
                 max_ecommerce_channels: Number(form.max_ecommerce_channels) || 0,
+                included_shipments: includedShipments,
+                shipment_overage_price: shipmentOveragePrice,
+                included_invoices: includedInvoices,
+                invoice_overage_price: invoiceOveragePrice,
+                included_orders: includedOrders,
+                order_overage_price: orderOveragePrice,
             })
             : await createCustomPlanAction({
                 name: form.name,
@@ -847,6 +1843,12 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                 business_id: Number(form.business_id),
                 months: Number(form.months) || 1,
                 notes: form.notes || undefined,
+                included_shipments: includedShipments,
+                shipment_overage_price: shipmentOveragePrice,
+                included_invoices: includedInvoices,
+                invoice_overage_price: invoiceOveragePrice,
+                included_orders: includedOrders,
+                order_overage_price: orderOveragePrice,
             });
 
         if (res.success) {
@@ -854,7 +1856,13 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
             setEditModal({ open: false });
             load();
         } else {
-            setMessage({ type: 'error', text: res.error || 'Error al guardar' });
+            const isDuplicateCode = res.error?.includes('duplicate key') && res.error?.includes('idx_subscription_types_code');
+            setMessage({
+                type: 'error',
+                text: isDuplicateCode
+                    ? 'Ese código ya está en uso por otro plan (el código debe ser único en todo el sistema, no solo para este negocio). Prueba con otro.'
+                    : res.error || 'Error al guardar',
+            });
         }
     };
 
@@ -927,6 +1935,29 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                     <div className="text-xs text-gray-400 leading-tight">canales de ecommerce conectados</div>
                                 </div>
                             </div>
+
+                            {(p.included_shipments != null || p.included_invoices != null || p.included_orders != null) && (
+                                <div className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                    {p.included_shipments != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_shipments}</span> envíos/mes
+                                            {p.shipment_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.shipment_overage_price)}</span>/guía</>}
+                                        </p>
+                                    )}
+                                    {p.included_invoices != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_invoices}</span> facturas/mes
+                                            {p.invoice_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.invoice_overage_price)}</span>/factura</>}
+                                        </p>
+                                    )}
+                                    {p.included_orders != null && (
+                                        <p>
+                                            Hasta <span className="font-semibold text-gray-700 dark:text-gray-200">{p.included_orders}</span> ordenes/mes
+                                            {p.order_overage_price != null && <> · adicional: <span className="font-semibold text-gray-700 dark:text-gray-200">{formatCurrency(p.order_overage_price)}</span>/orden</>}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="border-t border-indigo-100 dark:border-indigo-900/40 mx-6" />
@@ -1079,6 +2110,84 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                     onChange={(e) => setForm({ ...form, max_ecommerce_channels: e.target.value })}
                                     className="w-32 px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Envíos incluidos <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_shipments}
+                                        onChange={(e) => setForm({ ...form, included_shipments: e.target.value })}
+                                        placeholder="ej: 100"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo envío extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.shipment_overage_price}
+                                            onChange={(e) => setForm({ ...form, shipment_overage_price: e.target.value })}
+                                            placeholder="ej: 600"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Facturas incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_invoices}
+                                        onChange={(e) => setForm({ ...form, included_invoices: e.target.value })}
+                                        placeholder="ej: 6000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo factura extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.invoice_overage_price}
+                                            onChange={(e) => setForm({ ...form, invoice_overage_price: e.target.value })}
+                                            placeholder="ej: 550"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Ordenes incluidas <span className="font-normal text-gray-400">/ mes</span></label>
+                                    <input
+                                        type="number"
+                                        value={form.included_orders}
+                                        onChange={(e) => setForm({ ...form, included_orders: e.target.value })}
+                                        placeholder="ej: 6000"
+                                        className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Costo orden extra</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={form.order_overage_price}
+                                            onChange={(e) => setForm({ ...form, order_overage_price: e.target.value })}
+                                            placeholder="ej: 550"
+                                            className="w-full pl-7 pr-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             <div>

@@ -407,7 +407,7 @@ func TestRevokeOverride_PasaNegocioYModulo(t *testing.T) {
 		},
 	}
 
-	err := newSubsUseCase(repo, nil, nil).RevokeOverride(context.Background(), 26, "storefront")
+	err := newSubsUseCase(repo, nil, nil).RevokeOverride(context.Background(), 26, "storefront", 1)
 
 	require.NoError(t, err)
 	assert.Equal(t, uint(26), vistoID)
@@ -420,7 +420,7 @@ func TestRevokeOverride_ErrorDelRepo_SePropaga(t *testing.T) {
 		DeleteOverrideFn: func(ctx context.Context, businessID uint, moduleCode string) error { return dbErr },
 	}
 
-	err := newSubsUseCase(repo, nil, nil).RevokeOverride(context.Background(), 26, "storefront")
+	err := newSubsUseCase(repo, nil, nil).RevokeOverride(context.Background(), 26, "storefront", 1)
 
 	assert.ErrorIs(t, err, dbErr)
 }
@@ -580,7 +580,7 @@ func TestCreateCustomPlan_ValidacionesDeEntrada(t *testing.T) {
 				},
 			}
 
-			_, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(), tc.dto)
+			_, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(), tc.dto, 1)
 
 			assert.ErrorIs(t, err, tc.wantErr)
 			assert.False(t, creado)
@@ -597,7 +597,7 @@ func TestCreateCustomPlan_PrecioCeroEsValido(t *testing.T) {
 	}
 
 	got, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(),
-		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "Cortesia", Code: "cortesia", Price: 0})
+		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "Cortesia", Code: "cortesia", Price: 0}, 1)
 
 	require.NoError(t, err, "un plan de cortesia a precio cero es valido, a diferencia del catalogo general")
 	assert.NotNil(t, got)
@@ -608,7 +608,7 @@ func TestCreateCustomPlan_ModuloInvalido_Rechaza(t *testing.T) {
 		dtos.CreateCustomPlanDTO{
 			BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100,
 			ModuleCodes: []string{"modulo_inventado"},
-		})
+		}, 1)
 
 	assert.ErrorIs(t, err, errs.ErrInvalidModuleCode)
 }
@@ -624,7 +624,7 @@ func TestCreateCustomPlan_QuedaAmarradoAlNegocio(t *testing.T) {
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(),
-		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 3, Name: "A Medida", Code: "medida", Price: 500})
+		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 3, Name: "A Medida", Code: "medida", Price: 500}, 1)
 
 	require.NoError(t, err)
 	require.NotNil(t, creado)
@@ -645,7 +645,7 @@ func TestCreateCustomPlan_RegistraElPagoDelPlanRecienCreado(t *testing.T) {
 		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
 			return &entities.SubscriptionType{ID: id, Code: "medida", Price: 500, Active: true}, nil
 		},
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			suscripcion = s
 			return nil
 		},
@@ -655,7 +655,7 @@ func TestCreateCustomPlan_RegistraElPagoDelPlanRecienCreado(t *testing.T) {
 		dtos.CreateCustomPlanDTO{
 			BusinessID: 26, Months: 3, Name: "A Medida", Code: "medida", Price: 500,
 			PaymentReference: &ref,
-		})
+		}, 1)
 
 	require.NoError(t, err)
 	require.NotNil(t, suscripcion)
@@ -670,7 +670,7 @@ func TestCreateCustomPlan_NoDebitaDeLaBilletera(t *testing.T) {
 	wallet := &mocks.WalletDebiterMock{}
 
 	_, err := newSubsUseCase(nil, wallet, nil).CreateCustomPlan(context.Background(),
-		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100})
+		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100}, 1)
 
 	require.NoError(t, err)
 	assert.Empty(t, wallet.DebitCalls)
@@ -679,13 +679,13 @@ func TestCreateCustomPlan_NoDebitaDeLaBilletera(t *testing.T) {
 func TestCreateCustomPlan_FallaElRegistroDelPago_SePropaga(t *testing.T) {
 	dbErr := stderrors.New("db caida")
 	repo := &mocks.RepositoryMock{
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			return dbErr
 		},
 	}
 
 	got, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(),
-		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100})
+		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100}, 1)
 
 	assert.ErrorIs(t, err, dbErr)
 	assert.Nil(t, got, "el plan quedo creado pero sin suscripcion, se reporta el fallo")
@@ -696,14 +696,14 @@ func TestCreateCustomPlan_FallaLaCreacionDelPlan_NoRegistraPago(t *testing.T) {
 	pagoRegistrado := false
 	repo := &mocks.RepositoryMock{
 		CreateSubscriptionTypeFn: func(ctx context.Context, s *entities.SubscriptionType) error { return dbErr },
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			pagoRegistrado = true
 			return nil
 		},
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).CreateCustomPlan(context.Background(),
-		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100})
+		dtos.CreateCustomPlanDTO{BusinessID: 26, Months: 1, Name: "X", Code: "x", Price: 100}, 1)
 
 	assert.ErrorIs(t, err, dbErr)
 	assert.False(t, pagoRegistrado)
@@ -926,15 +926,13 @@ func TestCheckExpiringSubscriptions_NoDuplicaAvisoSiYaHayUnoActivo(t *testing.T)
 
 func TestCheckExpiringSubscriptions_VencidosRecibenAvisoYQuedanExpired(t *testing.T) {
 	var marcados []uint
-	var estados []string
 	ann := &mocks.AnnouncementsGatewayMock{}
 	repo := &mocks.RepositoryMock{
 		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]uint, error) {
 			return []uint{26}, nil
 		},
-		UpdateBusinessSubscriptionStatusFn: func(ctx context.Context, businessID uint, status string, endDate *time.Time) error {
+		MarkExpiredIfStillActiveFn: func(ctx context.Context, businessID uint, before time.Time) error {
 			marcados = append(marcados, businessID)
-			estados = append(estados, status)
 			return nil
 		},
 	}
@@ -945,7 +943,6 @@ func TestCheckExpiringSubscriptions_VencidosRecibenAvisoYQuedanExpired(t *testin
 	require.Len(t, ann.CreatedAlerts, 1)
 	assert.Equal(t, "Tu suscripcion vencio", ann.CreatedAlerts[0].Title)
 	assert.Equal(t, []uint{26}, marcados)
-	assert.Equal(t, []string{"expired"}, estados)
 }
 
 func TestCheckExpiringSubscriptions_UsaElSuperAdminComoAutorDelAviso(t *testing.T) {
@@ -998,7 +995,7 @@ func TestCheckExpiringSubscriptions_FalloAlMarcarExpirado_NoAbortaElResto(t *tes
 		ListBusinessesJustExpiredFn: func(ctx context.Context, before time.Time) ([]uint, error) {
 			return []uint{26, 27}, nil
 		},
-		UpdateBusinessSubscriptionStatusFn: func(ctx context.Context, businessID uint, status string, endDate *time.Time) error {
+		MarkExpiredIfStillActiveFn: func(ctx context.Context, businessID uint, before time.Time) error {
 			intentos++
 			return stderrors.New("db caida")
 		},

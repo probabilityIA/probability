@@ -15,22 +15,31 @@ type IRepository interface {
 	ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
 	ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
 
-	CreateBusinessSubscription(ctx context.Context, subscription *entities.BusinessSubscription) error
+	CreateSubscriptionAndActivate(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error
 	GetLatestByBusinessID(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 	ListByBusinessID(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
-	UpdateBusinessCurrentSubscriptionType(ctx context.Context, businessID uint, subscriptionTypeID uint, status string, endDate time.Time) error
+	GetSubscriptionByID(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
+	RevertSubscriptionAndRecalculate(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
 	UpdateBusinessSubscriptionStatus(ctx context.Context, businessID uint, status string, endDate *time.Time) error
 	UpdateSubscriptionDates(ctx context.Context, id uint, startDate, endDate time.Time) error
 	UpdateBusinessSubscriptionEndDate(ctx context.Context, businessID uint, endDate time.Time) error
 	GetBusinessCurrentSubscriptionTypeID(ctx context.Context, businessID uint) (*uint, error)
 	ListBusinessesExpiringBetween(ctx context.Context, from, to time.Time) ([]uint, error)
 	ListBusinessesJustExpired(ctx context.Context, before time.Time) ([]uint, error)
+	MarkExpiredIfStillActive(ctx context.Context, businessID uint, before time.Time) error
 
 	CreateOverride(ctx context.Context, override *entities.BusinessModuleOverride) error
 	DeleteOverride(ctx context.Context, businessID uint, moduleCode string) error
 	ListOverridesByBusiness(ctx context.Context, businessID uint) ([]entities.BusinessModuleOverride, error)
 
+	CreateAuditLog(ctx context.Context, log *entities.SubscriptionAuditLog) error
+	ListAuditLogsByBusiness(ctx context.Context, businessID uint, limit int) ([]entities.SubscriptionAuditLog, error)
+
 	FindSuperAdminUserID(ctx context.Context) (uint, error)
+	ResolveUserLabel(ctx context.Context, userID uint) (string, error)
+
+	ListBusinessesForAdmin(ctx context.Context, page, pageSize int, search, statusFilter string) ([]entities.AdminBusinessRow, int64, error)
+	GetAdminKPIs(ctx context.Context) (entities.AdminKPIs, error)
 }
 
 type IWalletDebiter interface {

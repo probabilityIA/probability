@@ -13,6 +13,12 @@ type SubscriptionType struct {
 	ModuleCodes          []string
 	MaxEcommerceChannels int
 	BusinessID           *uint
+	IncludedShipments    *int
+	ShipmentOveragePrice *float64
+	IncludedInvoices     *int
+	InvoiceOveragePrice  *float64
+	IncludedOrders       *int
+	OrderOveragePrice    *float64
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 }

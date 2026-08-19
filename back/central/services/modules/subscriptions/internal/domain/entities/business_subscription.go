@@ -12,6 +12,7 @@ type BusinessSubscription struct {
 	StartDate            time.Time
 	EndDate              time.Time
 	Status               string
+	PaymentMethod        string
 	PaymentReference     *string
 	Notes                *string
 	CreatedAt            time.Time
@@ -22,6 +23,13 @@ const (
 	SubscriptionStatusPaid     = "paid"
 	SubscriptionStatusPending  = "pending"
 	SubscriptionStatusRejected = "rejected"
+	SubscriptionStatusReverted = "reverted"
+)
+
+const (
+	PaymentMethodWallet   = "WALLET"
+	PaymentMethodManual   = "MANUAL"
+	PaymentMethodCourtesy = "COURTESY"
 )
 
 const (

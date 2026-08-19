@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/moduleregistry"
 )
 
-func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPlanDTO) (*entities.SubscriptionType, error) {
+func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPlanDTO, actorUserID uint) (*entities.SubscriptionType, error) {
 	if dto.BusinessID == 0 {
 		return nil, errs.ErrBusinessRequired
 	}
@@ -42,6 +42,12 @@ func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPl
 		ModuleCodes:          dto.ModuleCodes,
 		MaxEcommerceChannels: dto.MaxEcommerceChannels,
 		BusinessID:           &businessID,
+		IncludedShipments:    dto.IncludedShipments,
+		ShipmentOveragePrice: dto.ShipmentOveragePrice,
+		IncludedInvoices:     dto.IncludedInvoices,
+		InvoiceOveragePrice:  dto.InvoiceOveragePrice,
+		IncludedOrders:       dto.IncludedOrders,
+		OrderOveragePrice:    dto.OrderOveragePrice,
 	}
 
 	if err := uc.repo.CreateSubscriptionType(ctx, subType); err != nil {
@@ -54,7 +60,7 @@ func (uc *UseCase) CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPl
 		Months:             dto.Months,
 		PaymentReference:   dto.PaymentReference,
 		Notes:              dto.Notes,
-	}); err != nil {
+	}, actorUserID); err != nil {
 		return nil, err
 	}
 

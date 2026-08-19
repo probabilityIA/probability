@@ -18,6 +18,7 @@ interface ModalProps {
   glass?: boolean; // Efecto glassmorphism
   transparent?: boolean; // NEW: Fondo transparente sin sombra
   zIndex?: number; // Z-index personalizado para el modal y backdrop
+  noPadding?: boolean; // Sin padding interno ni titulo por defecto, para layouts full-bleed que manejan su propio header/scroll
 }
 
 const sizeClasses = {
@@ -33,7 +34,7 @@ const sizeClasses = {
   'full': 'max-w-[95vw] w-[95vw]',
 };
 
-export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50 }: ModalProps) {
+export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50, noPadding = false }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   const [mounted, setMounted] = useState(false);
@@ -113,7 +114,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           </div>
         ) : (
           <div
-            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8')} ${size !== 'sm' && size !== 'md' && size !== '5xl' && size !== '6xl' && size !== '7xl' ? sizeClasses[size] : ''} max-h-[90vh] overflow-hidden flex flex-col`}
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : `bg-white dark:bg-gray-800 rounded-2xl shadow-2xl ${noPadding ? '' : 'p-6 sm:p-8'}`)} ${size !== 'sm' && size !== 'md' && size !== '5xl' && size !== '6xl' && size !== '7xl' ? sizeClasses[size] : ''} max-h-[90vh] overflow-hidden flex flex-col`}
             style={
               size === 'sm' || size === 'md'
                 ? {
@@ -148,7 +149,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             )}
 
             {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 -mr-1 sm:-mr-2 w-full max-w-full">{children}</div>
+            <div className={`flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full ${noPadding ? '' : 'pr-1 sm:pr-2 -mr-1 sm:-mr-2'}`}>{children}</div>
           </div>
         )}
       </div>

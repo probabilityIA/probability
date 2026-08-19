@@ -22,6 +22,12 @@ export interface SubscriptionType {
     module_codes: string[];
     max_ecommerce_channels: number;
     business_id?: number;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    included_orders?: number;
+    order_overage_price?: number;
     created_at?: string;
     updated_at?: string;
 }
@@ -36,6 +42,7 @@ export interface BusinessSubscription {
     start_date?: string;
     end_date?: string;
     status: string;
+    payment_method?: string;
     payment_reference?: string;
     notes?: string;
     created_at?: string;
@@ -47,7 +54,38 @@ export interface BusinessModuleOverride {
     module_code: string;
     granted_by_user_id: number;
     notes?: string;
+    expires_at?: string;
     created_at?: string;
+}
+
+export interface SubscriptionAuditLog {
+    id: number;
+    business_id: number;
+    actor_user_id?: number;
+    actor_label: string;
+    action: string;
+    description: string;
+    created_at: string;
+}
+
+export interface AdminBusinessRow {
+    id: number;
+    name: string;
+    code: string;
+    plan_name?: string;
+    status: string;
+    cycle_start_date?: string;
+    cycle_end_date?: string;
+    last_payment_amount?: number;
+    last_payment_date?: string;
+    forecasted_payment?: number;
+}
+
+export interface AdminKPIs {
+    active_count: number;
+    expiring_soon_count: number;
+    expired_or_suspended_count: number;
+    mrr: number;
 }
 
 export async function getMySubscriptionAction(businessId?: number): Promise<{ success: boolean; data?: BusinessSubscription; error?: string }> {
@@ -89,6 +127,12 @@ export async function createSubscriptionTypeAction(payload: {
     billing_period?: string;
     module_codes: string[];
     max_ecommerce_channels?: number;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    included_orders?: number;
+    order_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -115,6 +159,12 @@ export async function updateSubscriptionTypeAction(id: number, payload: {
     active: boolean;
     module_codes: string[];
     max_ecommerce_channels?: number;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    included_orders?: number;
+    order_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -174,6 +224,12 @@ export async function createCustomPlanAction(payload: {
     months: number;
     payment_reference?: string;
     notes?: string;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    included_orders?: number;
+    order_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -200,6 +256,12 @@ export async function updateCustomPlanAction(id: number, payload: {
     active: boolean;
     module_codes: string[];
     max_ecommerce_channels?: number;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    included_orders?: number;
+    order_overage_price?: number;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
@@ -305,6 +367,7 @@ export async function registerSubscriptionPaymentAction(payload: {
     businessId: number;
     subscriptionTypeId: number;
     monthsToAdd: number;
+    paymentMethod?: string;
     paymentReference?: string;
     notes?: string;
     startDate?: string;
@@ -318,6 +381,7 @@ export async function registerSubscriptionPaymentAction(payload: {
                 business_id: payload.businessId,
                 subscription_type_id: payload.subscriptionTypeId,
                 months: payload.monthsToAdd,
+                payment_method: payload.paymentMethod,
                 payment_reference: payload.paymentReference,
                 notes: payload.notes,
                 start_date: payload.startDate,
@@ -389,13 +453,19 @@ export async function grantOverrideAction(payload: {
     businessId: number;
     moduleCode: string;
     notes?: string;
+    expiresAt?: string;
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
         const res = await fetch(`${env.API_BASE_URL}/subscriptions/overrides`, {
             method: 'POST',
             headers: { ...headers, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ business_id: payload.businessId, module_code: payload.moduleCode, notes: payload.notes }),
+            body: JSON.stringify({
+                business_id: payload.businessId,
+                module_code: payload.moduleCode,
+                notes: payload.notes,
+                expires_at: payload.expiresAt,
+            }),
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
@@ -416,6 +486,130 @@ export async function revokeOverrideAction(businessId: number, moduleCode: strin
         });
         if (!res.ok) throw new Error(`Error ${res.status}`);
         return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function reactivateSubscriptionAction(businessId: number): Promise<{ success: boolean; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/reactivate`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: businessId }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function extendCourtesyAction(payload: {
+    businessId: number;
+    days: number;
+    reason: string;
+}): Promise<{ success: boolean; data?: BusinessSubscription; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/extend-days`, {
+            method: 'POST',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: payload.businessId, days: payload.days, reason: payload.reason }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function revertPaymentAction(subscriptionId: number): Promise<{ success: boolean; data?: BusinessSubscription; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/payments/${subscriptionId}/revert`, {
+            method: 'POST',
+            headers,
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err?.error || `Error ${res.status}`);
+        }
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function listPaymentHistoryAction(businessId: number): Promise<{ success: boolean; data?: BusinessSubscription[]; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/payments/${businessId}`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function listAuditLogsAction(businessId: number, limit = 50): Promise<{ success: boolean; data?: SubscriptionAuditLog[]; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/audit-logs/${businessId}?limit=${limit}`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function listAdminBusinessesAction(params: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    status?: string;
+}): Promise<{ success: boolean; data?: AdminBusinessRow[]; total?: number; page?: number; pageSize?: number; totalPages?: number; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const query = new URLSearchParams();
+        query.set('page', String(params.page || 1));
+        query.set('page_size', String(params.pageSize || 10));
+        if (params.search) query.set('search', params.search);
+        if (params.status) query.set('status', params.status);
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/admin/businesses?${query.toString()}`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return {
+            success: true,
+            data: json.data,
+            total: json.total,
+            page: json.page,
+            pageSize: json.page_size,
+            totalPages: json.total_pages,
+        };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+export async function getAdminKPIsAction(): Promise<{ success: boolean; data?: AdminKPIs; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/admin/kpis`, { headers, cache: 'no-store' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
     } catch (err: any) {
         return { success: false, error: err.message };
     }

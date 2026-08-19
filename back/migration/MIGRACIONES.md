@@ -35,6 +35,9 @@ entorno desde cero si algun dia hace falta.
 
 | Fecha | Migracion | Que hizo | Entorno |
 |-------|-----------|----------|---------|
+| 2026-08-18 | `migrateSubscriptionAuditLogs` + `migrateBusinessModuleOverrideExpiry` | Crea la tabla `subscription_audit_logs` (faltaba desde que se agrego el feature de auditoria de suscripciones, dejaba el endpoint de auditoria en 500 en silencio) y agrega `expires_at` a `business_module_overrides` | produccion |
+| 2026-08-18 | `migrateSubscriptionTypeOverage` | Agrega a `subscription_types` los campos `included_shipments`, `shipment_overage_price`, `included_invoices`, `invoice_overage_price` para modelar planes personalizados con cuota incluida + costo por unidad adicional (envios/facturas) | produccion |
+| 2026-08-19 | `migrateSubscriptionTypeOverage` (2da corrida, AutoMigrate agrego columnas nuevas) | Agrega a `subscription_types` `included_orders` y `order_overage_price`: el limite de "Sin intermediarios" es por ordenes creadas, no por facturas, asi que el excedente necesitaba su propio contador (paralelo a envios y facturas) | produccion |
 | 2026-08-06 | `fixVigaCodCalibracionFallida` | Ajusto `cod_total` y `cod_carrier_fee` de VIG-0071, VIG-0072 y VIG-0069 al valor que liquida EnvioClick (3 ordenes) | produccion |
 | 2026-08-12 | `migrateSyncRunItemParent` | Agrego `parent_ref`, `parent_label` y `variant_label` a `integration_sync_run_items` (+ indice en `parent_ref`) para agrupar variantes por publicacion en el comparativo | produccion |
 | 2026-08-12 | `migrateSyncRunChannelNoSKU` | Agrego `channel_no_sku` a `integration_sync_runs` para contar los items del canal que no tienen SKU y no se pueden emparejar | produccion |

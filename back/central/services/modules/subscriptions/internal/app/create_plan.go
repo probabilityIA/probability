@@ -34,6 +34,12 @@ func (uc *UseCase) CreateSubscriptionType(ctx context.Context, dto dtos.CreateSu
 		Active:               true,
 		ModuleCodes:          dto.ModuleCodes,
 		MaxEcommerceChannels: dto.MaxEcommerceChannels,
+		IncludedShipments:    dto.IncludedShipments,
+		ShipmentOveragePrice: dto.ShipmentOveragePrice,
+		IncludedInvoices:     dto.IncludedInvoices,
+		InvoiceOveragePrice:  dto.InvoiceOveragePrice,
+		IncludedOrders:       dto.IncludedOrders,
+		OrderOveragePrice:    dto.OrderOveragePrice,
 	}
 
 	if err := uc.repo.CreateSubscriptionType(ctx, subType); err != nil {

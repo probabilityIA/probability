@@ -90,7 +90,7 @@ func TestPurchaseSubscription_SaldoInsuficiente_NoDebitaNiCrea(t *testing.T) {
 		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
 			return planActivo(50000), nil
 		},
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			creada = true
 			return nil
 		},
@@ -197,7 +197,7 @@ func TestPurchaseSubscription_FallaElDebito_NoCreaSuscripcion(t *testing.T) {
 		},
 	}
 	repo := &mocks.RepositoryMock{
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			creada = true
 			return nil
 		},
@@ -216,7 +216,7 @@ func TestPurchaseSubscription_DebitoOKPeroFallaElRegistro_QuedaPlataCobradaSinSu
 		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
 	}
 	repo := &mocks.RepositoryMock{
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			return dbErr
 		},
 	}
@@ -242,7 +242,6 @@ func TestPurchaseSubscription_NaceEnEstadoPagada(t *testing.T) {
 }
 
 func TestPurchaseSubscription_MarcaElNegocioComoActivo(t *testing.T) {
-	var vistoStatus string
 	var vistoTipo uint
 	wallet := &mocks.WalletDebiterMock{
 		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
@@ -251,8 +250,8 @@ func TestPurchaseSubscription_MarcaElNegocioComoActivo(t *testing.T) {
 		GetSubscriptionTypeFn: func(ctx context.Context, id uint) (*entities.SubscriptionType, error) {
 			return planActivo(1000), nil
 		},
-		UpdateBusinessCurrentSubscriptionTypeFn: func(ctx context.Context, businessID uint, subscriptionTypeID uint, status string, endDate time.Time) error {
-			vistoStatus, vistoTipo = status, subscriptionTypeID
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
+			vistoTipo = subscriptionTypeID
 			return nil
 		},
 	}
@@ -261,7 +260,6 @@ func TestPurchaseSubscription_MarcaElNegocioComoActivo(t *testing.T) {
 		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
 
 	require.NoError(t, err)
-	assert.Equal(t, entities.BusinessStatusActive, vistoStatus)
 	assert.Equal(t, uint(3), vistoTipo)
 }
 
@@ -271,7 +269,7 @@ func TestPurchaseSubscription_FallaMarcarElNegocio_SePropaga(t *testing.T) {
 		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
 	}
 	repo := &mocks.RepositoryMock{
-		UpdateBusinessCurrentSubscriptionTypeFn: func(ctx context.Context, businessID uint, subscriptionTypeID uint, status string, endDate time.Time) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			return dbErr
 		},
 	}
@@ -352,22 +350,24 @@ func TestPurchaseSubscription_ConSuscripcionYaVencida_ArrancaDesdeAhora(t *testi
 		"una suscripcion vencida no encadena hacia atras")
 }
 
-func TestPurchaseSubscription_ErrorAlLeerLaVigente_ArrancaDesdeAhora(t *testing.T) {
-	antes := time.Now()
+func TestPurchaseSubscription_ErrorAlLeerLaVigente_SePropaga(t *testing.T) {
+	dbErr := stderrors.New("timeout")
 	wallet := &mocks.WalletDebiterMock{
 		GetBalanceFn: func(ctx context.Context, businessID uint) (float64, error) { return 1e9, nil },
 	}
 	repo := &mocks.RepositoryMock{
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
-			return nil, stderrors.New("timeout")
+			return nil, dbErr
 		},
 	}
 
-	got, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
+	_, err := newSubsUseCase(repo, wallet, nil).PurchaseSubscription(context.Background(),
 		dtos.PurchaseSubscriptionDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
 
-	require.NoError(t, err)
-	assert.False(t, got.StartDate.Before(antes))
+	assert.ErrorIs(t, err, dbErr,
+		"un error real de BD al leer la vigente no debe acortar silenciosamente el periodo pagado")
+	assert.Empty(t, wallet.DebitCalls,
+		"si no se puede calcular la ventana no debe cobrarse")
 }
 
 func TestPurchaseSubscription_DesactivaLosAvisosDeVencimiento(t *testing.T) {
@@ -427,8 +427,7 @@ func TestPurchaseSubscription_FalloAlDesactivarAviso_NoRompeLaCompra(t *testing.
 func TestRegisterPayment_MesesInvalidos_Rechaza(t *testing.T) {
 	for _, meses := range []int{0, -3} {
 		_, err := newSubsUseCase(nil, nil, nil).RegisterPayment(context.Background(),
-			dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: meses})
-
+			dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: meses}, 1)
 		assert.ErrorIs(t, err, errs.ErrInvalidMonths)
 	}
 }
@@ -441,8 +440,7 @@ func TestRegisterPayment_PlanInexistente_Rechaza(t *testing.T) {
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 404, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 404, Months: 1}, 1)
 	assert.ErrorIs(t, err, errs.ErrSubscriptionTypeNotFound)
 }
 
@@ -450,8 +448,7 @@ func TestRegisterPayment_NoTocaLaBilletera(t *testing.T) {
 	wallet := &mocks.WalletDebiterMock{}
 
 	_, err := newSubsUseCase(nil, wallet, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1}, 1)
 	require.NoError(t, err)
 	assert.Empty(t, wallet.DebitCalls,
 		"registrar un pago externo no debe descontar de la billetera")
@@ -465,8 +462,7 @@ func TestRegisterPayment_AceptaPlanInactivo(t *testing.T) {
 	}
 
 	got, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1}, 1)
 	require.NoError(t, err, "un pago manual sobre un plan viejo debe poder registrarse")
 	assert.NotNil(t, got)
 }
@@ -482,8 +478,7 @@ func TestRegisterPayment_ConFechaDeInicioManual_LaRespeta(t *testing.T) {
 	}
 
 	got, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 3, StartDate: timePtr(inicio)})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 3, StartDate: timePtr(inicio)}, 1)
 	require.NoError(t, err)
 	assert.Equal(t, inicio, got.StartDate)
 	assert.Equal(t, inicio.AddDate(0, 3, 0), got.EndDate)
@@ -495,7 +490,7 @@ func TestRegisterPayment_GuardaReferenciaYNotas(t *testing.T) {
 	notas := "pago por consignacion"
 	var creada *entities.BusinessSubscription
 	repo := &mocks.RepositoryMock{
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			creada = s
 			return nil
 		},
@@ -505,8 +500,7 @@ func TestRegisterPayment_GuardaReferenciaYNotas(t *testing.T) {
 		dtos.RegisterPaymentDTO{
 			BusinessID: 26, SubscriptionTypeID: 3, Months: 1,
 			PaymentReference: &ref, Notes: &notas,
-		})
-
+		}, 1)
 	require.NoError(t, err)
 	require.NotNil(t, creada)
 	require.NotNil(t, creada.PaymentReference)
@@ -519,28 +513,26 @@ func TestRegisterPayment_GuardaReferenciaYNotas(t *testing.T) {
 func TestRegisterPayment_ErrorAlPersistir_SePropaga(t *testing.T) {
 	dbErr := stderrors.New("db caida")
 	repo := &mocks.RepositoryMock{
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			return dbErr
 		},
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1}, 1)
 	assert.ErrorIs(t, err, dbErr)
 }
 
 func TestRegisterPayment_ErrorAlMarcarElNegocio_SePropaga(t *testing.T) {
 	dbErr := stderrors.New("db caida")
 	repo := &mocks.RepositoryMock{
-		UpdateBusinessCurrentSubscriptionTypeFn: func(ctx context.Context, businessID uint, subscriptionTypeID uint, status string, endDate time.Time) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			return dbErr
 		},
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1}, 1)
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -553,8 +545,7 @@ func TestRegisterPayment_ErrorAlLeerElPlan_SePropaga(t *testing.T) {
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).RegisterPayment(context.Background(),
-		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1})
-
+		dtos.RegisterPaymentDTO{BusinessID: 26, SubscriptionTypeID: 3, Months: 1}, 1)
 	assert.ErrorIs(t, err, dbErr)
 }
 
@@ -580,8 +571,7 @@ func TestEditSubscriptionDates_RangoInvalido_Rechaza(t *testing.T) {
 			}
 
 			_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-				dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: tc.inicio, EndDate: tc.fin})
-
+				dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: tc.inicio, EndDate: tc.fin}, 1)
 			assert.ErrorIs(t, err, errs.ErrInvalidDateRange)
 			assert.False(t, actualizado)
 		})
@@ -597,8 +587,7 @@ func TestEditSubscriptionDates_SinSuscripcion_Rechaza(t *testing.T) {
 	}
 
 	_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)})
-
+		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
 	assert.ErrorIs(t, err, errs.ErrSubscriptionNotFound)
 }
 
@@ -622,8 +611,7 @@ func TestEditSubscriptionDates_ActualizaAmbasTablasYDevuelveLasNuevas(t *testing
 	}
 
 	got, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: fin})
-
+		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: fin}, 1)
 	require.NoError(t, err)
 	assert.Equal(t, uint(9), vistoID)
 	assert.Equal(t, base, vistoInicio)
@@ -641,15 +629,14 @@ func TestEditSubscriptionDates_NoCreaRegistroDePago(t *testing.T) {
 		GetLatestByBusinessIDFn: func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 			return &entities.BusinessSubscription{ID: 9}, nil
 		},
-		CreateBusinessSubscriptionFn: func(ctx context.Context, s *entities.BusinessSubscription) error {
+		CreateSubscriptionAndActivateFn: func(ctx context.Context, s *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error {
 			creada = true
 			return nil
 		},
 	}
 
 	_, err := newSubsUseCase(repo, wallet, nil).EditSubscriptionDates(context.Background(),
-		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)})
-
+		dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
 	require.NoError(t, err)
 	assert.False(t, creada, "corregir fechas no es un pago nuevo")
 	assert.Empty(t, wallet.DebitCalls)
@@ -666,8 +653,8 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 			},
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)})
-		assert.ErrorIs(t, err, dbErr)
+			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
+			assert.ErrorIs(t, err, dbErr)
 	})
 
 	t.Run("al actualizar la suscripcion", func(t *testing.T) {
@@ -678,8 +665,8 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 			UpdateSubscriptionDatesFn: func(ctx context.Context, id uint, s, e time.Time) error { return dbErr },
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)})
-		assert.ErrorIs(t, err, dbErr)
+			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
+			assert.ErrorIs(t, err, dbErr)
 	})
 
 	t.Run("al actualizar el negocio", func(t *testing.T) {
@@ -692,8 +679,8 @@ func TestEditSubscriptionDates_ErroresDelRepo_SePropagan(t *testing.T) {
 			},
 		}
 		_, err := newSubsUseCase(repo, nil, nil).EditSubscriptionDates(context.Background(),
-			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)})
-		assert.ErrorIs(t, err, dbErr)
+			dtos.EditSubscriptionDatesDTO{BusinessID: 26, StartDate: base, EndDate: base.AddDate(0, 1, 0)}, 1)
+			assert.ErrorIs(t, err, dbErr)
 	})
 }
 
@@ -709,8 +696,7 @@ func TestDisableSubscription_MarcaCanceladoConFechaDeCorte(t *testing.T) {
 		},
 	}
 
-	err := newSubsUseCase(repo, nil, nil).DisableSubscription(context.Background(), 26)
-
+	err := newSubsUseCase(repo, nil, nil).DisableSubscription(context.Background(), 26, 1)
 	require.NoError(t, err)
 	assert.Equal(t, uint(26), vistoID)
 	assert.Equal(t, entities.BusinessStatusCancelled, vistoStatus)
@@ -726,8 +712,7 @@ func TestDisableSubscription_ErrorDelRepo_SePropaga(t *testing.T) {
 		},
 	}
 
-	err := newSubsUseCase(repo, nil, nil).DisableSubscription(context.Background(), 26)
-
+	err := newSubsUseCase(repo, nil, nil).DisableSubscription(context.Background(), 26, 1)
 	assert.ErrorIs(t, err, dbErr)
 }
 

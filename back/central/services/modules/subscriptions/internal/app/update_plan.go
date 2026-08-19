@@ -40,6 +40,12 @@ func (uc *UseCase) UpdateSubscriptionType(ctx context.Context, dto dtos.UpdateSu
 	existing.Active = dto.Active
 	existing.ModuleCodes = dto.ModuleCodes
 	existing.MaxEcommerceChannels = dto.MaxEcommerceChannels
+	existing.IncludedShipments = dto.IncludedShipments
+	existing.ShipmentOveragePrice = dto.ShipmentOveragePrice
+	existing.IncludedInvoices = dto.IncludedInvoices
+	existing.InvoiceOveragePrice = dto.InvoiceOveragePrice
+	existing.IncludedOrders = dto.IncludedOrders
+	existing.OrderOveragePrice = dto.OrderOveragePrice
 
 	if err := uc.repo.UpdateSubscriptionType(ctx, existing); err != nil {
 		return nil, err

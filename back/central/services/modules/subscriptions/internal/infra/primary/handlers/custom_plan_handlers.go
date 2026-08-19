@@ -55,7 +55,13 @@ func (h *Handlers) CreateCustomPlan(c *gin.Context) {
 		Months:               req.Months,
 		PaymentReference:     req.PaymentReference,
 		Notes:                req.Notes,
-	})
+		IncludedShipments:    req.IncludedShipments,
+		ShipmentOveragePrice: req.ShipmentOveragePrice,
+		IncludedInvoices:     req.IncludedInvoices,
+		InvoiceOveragePrice:  req.InvoiceOveragePrice,
+		IncludedOrders:       req.IncludedOrders,
+		OrderOveragePrice:    req.OrderOveragePrice,
+	}, c.GetUint("user_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -90,6 +96,12 @@ func (h *Handlers) UpdateCustomPlan(c *gin.Context) {
 		Active:               req.Active,
 		ModuleCodes:          req.ModuleCodes,
 		MaxEcommerceChannels: req.MaxEcommerceChannels,
+		IncludedShipments:    req.IncludedShipments,
+		ShipmentOveragePrice: req.ShipmentOveragePrice,
+		IncludedInvoices:     req.IncludedInvoices,
+		InvoiceOveragePrice:  req.InvoiceOveragePrice,
+		IncludedOrders:       req.IncludedOrders,
+		OrderOveragePrice:    req.OrderOveragePrice,
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

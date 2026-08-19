@@ -16,17 +16,22 @@ type IUseCase interface {
 	GetSubscriptionType(ctx context.Context, id uint) (*entities.SubscriptionType, error)
 	ListSubscriptionTypes(ctx context.Context, activeOnly bool) ([]entities.SubscriptionType, error)
 
-	CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPlanDTO) (*entities.SubscriptionType, error)
+	CreateCustomPlan(ctx context.Context, dto dtos.CreateCustomPlanDTO, actorUserID uint) (*entities.SubscriptionType, error)
 	ListCustomPlans(ctx context.Context, businessID *uint) ([]entities.SubscriptionType, error)
 
 	PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSubscriptionDTO) (*entities.BusinessSubscription, error)
-	RegisterPayment(ctx context.Context, dto dtos.RegisterPaymentDTO) (*entities.BusinessSubscription, error)
-	EditSubscriptionDates(ctx context.Context, dto dtos.EditSubscriptionDatesDTO) (*entities.BusinessSubscription, error)
-	DisableSubscription(ctx context.Context, businessID uint) error
+	RegisterPayment(ctx context.Context, dto dtos.RegisterPaymentDTO, actorUserID uint) (*entities.BusinessSubscription, error)
+	EditSubscriptionDates(ctx context.Context, dto dtos.EditSubscriptionDatesDTO, actorUserID uint) (*entities.BusinessSubscription, error)
+	DisableSubscription(ctx context.Context, businessID uint, actorUserID uint) error
+	ReactivateSubscription(ctx context.Context, businessID uint, actorUserID uint) error
+	ExtendCourtesy(ctx context.Context, dto dtos.ExtendCourtesyDTO, actorUserID uint) (*entities.BusinessSubscription, error)
+	RevertPayment(ctx context.Context, subscriptionID uint, actorUserID uint) (*entities.BusinessSubscription, error)
+	ListPaymentHistory(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
+	ListAuditLogs(ctx context.Context, businessID uint, limit int) ([]entities.SubscriptionAuditLog, error)
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
 
 	GrantOverride(ctx context.Context, dto dtos.GrantOverrideDTO) error
-	RevokeOverride(ctx context.Context, businessID uint, moduleCode string) error
+	RevokeOverride(ctx context.Context, businessID uint, moduleCode string, actorUserID uint) error
 	ListOverrides(ctx context.Context, businessID uint) ([]entities.BusinessModuleOverride, error)
 
 	HasModuleAccess(ctx context.Context, businessID uint, moduleCode string) (bool, error)
@@ -36,6 +41,9 @@ type IUseCase interface {
 	EcommerceChannelLimit(ctx context.Context, businessID uint) (int, error)
 
 	CheckExpiringSubscriptions(ctx context.Context) error
+
+	ListAdminBusinesses(ctx context.Context, page, pageSize int, search, statusFilter string) ([]entities.AdminBusinessRow, int64, error)
+	GetAdminKPIs(ctx context.Context) (entities.AdminKPIs, error)
 }
 
 type UseCase struct {

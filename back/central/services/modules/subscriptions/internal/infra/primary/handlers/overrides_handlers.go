@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
@@ -44,10 +45,21 @@ func (h *Handlers) GrantOverride(c *gin.Context) {
 		return
 	}
 
+	var expiresAt *time.Time
+	if req.ExpiresAt != nil && *req.ExpiresAt != "" {
+		parsed, err := time.Parse("2006-01-02", *req.ExpiresAt)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "vencimiento invalido, formato esperado YYYY-MM-DD"})
+			return
+		}
+		expiresAt = &parsed
+	}
+
 	err := h.uc.GrantOverride(c.Request.Context(), dtos.GrantOverrideDTO{
 		BusinessID:      req.BusinessID,
 		ModuleCode:      req.ModuleCode,
 		Notes:           req.Notes,
+		ExpiresAt:       expiresAt,
 		GrantedByUserID: userID,
 	})
 	if err != nil {
@@ -75,7 +87,8 @@ func (h *Handlers) RevokeOverride(c *gin.Context) {
 		return
 	}
 
-	if err := h.uc.RevokeOverride(c.Request.Context(), uint(businessID), moduleCode); err != nil {
+	userID, _ := middleware.GetUserID(c)
+	if err := h.uc.RevokeOverride(c.Request.Context(), uint(businessID), moduleCode, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to revoke override"})
 		return
 	}

@@ -20,6 +20,12 @@ func (r *Repository) CreateSubscriptionType(ctx context.Context, subType *entiti
 		Features:             marshalModuleCodes(subType.ModuleCodes),
 		MaxEcommerceChannels: subType.MaxEcommerceChannels,
 		BusinessID:           subType.BusinessID,
+		IncludedShipments:    subType.IncludedShipments,
+		ShipmentOveragePrice: subType.ShipmentOveragePrice,
+		IncludedInvoices:     subType.IncludedInvoices,
+		InvoiceOveragePrice:  subType.InvoiceOveragePrice,
+		IncludedOrders:       subType.IncludedOrders,
+		OrderOveragePrice:    subType.OrderOveragePrice,
 	}
 
 	if err := r.db.Conn(ctx).Create(typeDB).Error; err != nil {
@@ -41,6 +47,12 @@ func (r *Repository) UpdateSubscriptionType(ctx context.Context, subType *entiti
 		"active":                 subType.Active,
 		"features":               marshalModuleCodes(subType.ModuleCodes),
 		"max_ecommerce_channels": subType.MaxEcommerceChannels,
+		"included_shipments":     subType.IncludedShipments,
+		"shipment_overage_price": subType.ShipmentOveragePrice,
+		"included_invoices":      subType.IncludedInvoices,
+		"invoice_overage_price":  subType.InvoiceOveragePrice,
+		"included_orders":        subType.IncludedOrders,
+		"order_overage_price":    subType.OrderOveragePrice,
 	}
 	return r.db.Conn(ctx).Model(&models.SubscriptionType{}).Where("id = ?", subType.ID).Updates(updates).Error
 }

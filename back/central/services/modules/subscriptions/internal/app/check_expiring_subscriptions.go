@@ -29,7 +29,7 @@ func (uc *UseCase) CheckExpiringSubscriptions(ctx context.Context) error {
 		if err := uc.ensureExpiryAnnouncement(ctx, businessID, expiredTitle, expiredMessage, true); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("failed to ensure expired announcement")
 		}
-		if err := uc.repo.UpdateBusinessSubscriptionStatus(ctx, businessID, "expired", nil); err != nil {
+		if err := uc.repo.MarkExpiredIfStillActive(ctx, businessID, now); err != nil {
 			uc.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("failed to mark business as expired")
 		}
 	}

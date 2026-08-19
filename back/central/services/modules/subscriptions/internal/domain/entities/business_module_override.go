@@ -8,5 +8,6 @@ type BusinessModuleOverride struct {
 	ModuleCode      string
 	GrantedByUserID uint
 	Notes           *string
+	ExpiresAt       *time.Time
 	CreatedAt       time.Time
 }

@@ -29,9 +29,17 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		g.POST("/register-payment", h.RegisterPayment)
 		g.PUT("/edit-dates", h.EditSubscriptionDates)
 		g.POST("/disable", h.DisableSubscription)
+		g.POST("/reactivate", h.ReactivateSubscription)
+		g.POST("/extend-days", h.ExtendCourtesy)
+		g.POST("/payments/:id/revert", h.RevertPayment)
+		g.GET("/payments/:businessId", h.ListPaymentHistory)
+		g.GET("/audit-logs/:businessId", h.ListAuditLogs)
 
 		g.GET("/overrides/:businessId", h.ListOverrides)
 		g.POST("/overrides", h.GrantOverride)
 		g.DELETE("/overrides/:businessId/:moduleCode", h.RevokeOverride)
+
+		g.GET("/admin/businesses", h.ListAdminBusinesses)
+		g.GET("/admin/kpis", h.GetAdminKPIs)
 	}
 }

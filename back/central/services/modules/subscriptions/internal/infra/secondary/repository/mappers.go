@@ -37,6 +37,12 @@ func subscriptionTypeToEntity(m *models.SubscriptionType) *entities.Subscription
 		ModuleCodes:          unmarshalModuleCodes(m.Features),
 		MaxEcommerceChannels: m.MaxEcommerceChannels,
 		BusinessID:           m.BusinessID,
+		IncludedShipments:    m.IncludedShipments,
+		ShipmentOveragePrice: m.ShipmentOveragePrice,
+		IncludedInvoices:     m.IncludedInvoices,
+		InvoiceOveragePrice:  m.InvoiceOveragePrice,
+		IncludedOrders:       m.IncludedOrders,
+		OrderOveragePrice:    m.OrderOveragePrice,
 		CreatedAt:            m.CreatedAt,
 		UpdatedAt:            m.UpdatedAt,
 	}
@@ -67,6 +73,7 @@ func subscriptionToEntity(m *models.BusinessSubscription) *entities.BusinessSubs
 		StartDate:            m.StartDate,
 		EndDate:              m.EndDate,
 		Status:               m.Status,
+		PaymentMethod:        m.PaymentMethod,
 		PaymentReference:     m.PaymentReference,
 		Notes:                m.Notes,
 		CreatedAt:            m.CreatedAt,
@@ -81,6 +88,19 @@ func overrideToEntity(m *models.BusinessModuleOverride) *entities.BusinessModule
 		ModuleCode:      m.ModuleCode,
 		GrantedByUserID: m.GrantedByUserID,
 		Notes:           m.Notes,
+		ExpiresAt:       m.ExpiresAt,
 		CreatedAt:       m.CreatedAt,
+	}
+}
+
+func auditLogToEntity(m *models.SubscriptionAuditLog) *entities.SubscriptionAuditLog {
+	return &entities.SubscriptionAuditLog{
+		ID:          m.ID,
+		BusinessID:  m.BusinessID,
+		ActorUserID: m.ActorUserID,
+		ActorLabel:  m.ActorLabel,
+		Action:      m.Action,
+		Description: m.Description,
+		CreatedAt:   m.CreatedAt,
 	}
 }

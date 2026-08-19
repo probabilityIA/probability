@@ -27,6 +27,9 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 	if !subType.Active {
 		return nil, errs.ErrSubscriptionTypeInactive
 	}
+	if subType.BusinessID != nil && *subType.BusinessID != dto.BusinessID {
+		return nil, errs.ErrSubscriptionTypeNotFound
+	}
 
 	amount := subType.Price * float64(dto.Months)
 
@@ -38,7 +41,10 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrInsufficientBalance
 	}
 
-	start, endDate := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil)
+	start, endDate, err := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	reference := fmt.Sprintf("SUB-%d-%s-%dM", dto.BusinessID, subType.Code, dto.Months)
 	if err := uc.wallet.Debit(ctx, dto.BusinessID, amount, reference, walletConceptSubscription, dto.UserID); err != nil {
@@ -56,20 +62,12 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		Status:               entities.SubscriptionStatusPaid,
 	}
 
-	if err := uc.repo.CreateBusinessSubscription(ctx, sub); err != nil {
+	if err := uc.repo.CreateSubscriptionAndActivate(ctx, sub, subType.ID, endDate); err != nil {
 		uc.log.Error(ctx).Err(err).
 			Uint("business_id", dto.BusinessID).
 			Float64("amount", amount).
 			Str("reference", reference).
-			Msg("wallet debited for subscription but subscription record could not be created, requires manual reconciliation")
-		return nil, err
-	}
-
-	if err := uc.repo.UpdateBusinessCurrentSubscriptionType(ctx, dto.BusinessID, subType.ID, entities.BusinessStatusActive, endDate); err != nil {
-		uc.log.Error(ctx).Err(err).
-			Uint("business_id", dto.BusinessID).
-			Uint("subscription_type_id", subType.ID).
-			Msg("subscription created but business current subscription type could not be updated, requires manual reconciliation")
+			Msg("wallet debited for subscription but subscription could not be activated, requires manual reconciliation")
 		return nil, err
 	}
 
@@ -78,23 +76,22 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 	return sub, nil
 }
 
-// computeSubscriptionWindow calcula el inicio y fin de una ventana de suscripción.
-// Si startOverride viene seteado, se usa tal cual (permite registrar pagos con fecha
-// de inicio manual, ej. para reflejar un pago que ya se habia hecho antes). Si no,
-// se encadena desde el fin de la suscripción vigente o arranca desde ahora.
-func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time) (time.Time, time.Time) {
+func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time) (time.Time, time.Time, error) {
 	if startOverride != nil {
 		start := *startOverride
-		return start, start.AddDate(0, months, 0)
+		return start, start.AddDate(0, months, 0), nil
 	}
 
 	now := time.Now()
 	start := now
 
 	current, err := uc.repo.GetLatestByBusinessID(ctx, businessID)
-	if err == nil && current != nil && current.EndDate.After(now) {
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	if current != nil && current.EndDate.After(now) {
 		start = current.EndDate
 	}
 
-	return start, start.AddDate(0, months, 0)
+	return start, start.AddDate(0, months, 0), nil
 }

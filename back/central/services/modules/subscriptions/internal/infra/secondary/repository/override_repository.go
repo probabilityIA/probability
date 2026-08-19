@@ -13,6 +13,7 @@ func (r *Repository) CreateOverride(ctx context.Context, override *entities.Busi
 		ModuleCode:      override.ModuleCode,
 		GrantedByUserID: override.GrantedByUserID,
 		Notes:           override.Notes,
+		ExpiresAt:       override.ExpiresAt,
 	}
 
 	if err := r.db.Conn(ctx).Create(overrideDB).Error; err != nil {

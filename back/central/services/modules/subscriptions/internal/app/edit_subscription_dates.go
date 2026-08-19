@@ -2,15 +2,14 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
 	errs "github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/errors"
 )
 
-// EditSubscriptionDates corrige las fechas de la suscripcion vigente de un negocio,
-// sin crear un nuevo registro de pago (a diferencia de RegisterPayment/PurchaseSubscription).
-func (uc *UseCase) EditSubscriptionDates(ctx context.Context, dto dtos.EditSubscriptionDatesDTO) (*entities.BusinessSubscription, error) {
+func (uc *UseCase) EditSubscriptionDates(ctx context.Context, dto dtos.EditSubscriptionDatesDTO, actorUserID uint) (*entities.BusinessSubscription, error) {
 	if !dto.EndDate.After(dto.StartDate) {
 		return nil, errs.ErrInvalidDateRange
 	}
@@ -32,5 +31,7 @@ func (uc *UseCase) EditSubscriptionDates(ctx context.Context, dto dtos.EditSubsc
 
 	latest.StartDate = dto.StartDate
 	latest.EndDate = dto.EndDate
+	uc.recordAudit(ctx, dto.BusinessID, actorUserID, entities.AuditActionDatesEdited,
+		fmt.Sprintf("edito las fechas del ciclo: %s -> %s", dto.StartDate.Format("2006-01-02"), dto.EndDate.Format("2006-01-02")))
 	return latest, nil
 }

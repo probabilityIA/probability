@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/subscriptions/internal/domain/entities"
@@ -19,7 +20,14 @@ func (uc *UseCase) GrantOverride(ctx context.Context, dto dtos.GrantOverrideDTO)
 		ModuleCode:      dto.ModuleCode,
 		GrantedByUserID: dto.GrantedByUserID,
 		Notes:           dto.Notes,
+		ExpiresAt:       dto.ExpiresAt,
 	}
 
-	return uc.repo.CreateOverride(ctx, override)
+	if err := uc.repo.CreateOverride(ctx, override); err != nil {
+		return err
+	}
+
+	uc.recordAudit(ctx, dto.BusinessID, dto.GrantedByUserID, entities.AuditActionOverrideGranted,
+		fmt.Sprintf("otorgo acceso al modulo %s", dto.ModuleCode))
+	return nil
 }

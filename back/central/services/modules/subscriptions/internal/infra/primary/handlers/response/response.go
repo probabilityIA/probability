@@ -17,6 +17,12 @@ type SubscriptionTypeResponse struct {
 	ModuleCodes          []string  `json:"module_codes"`
 	MaxEcommerceChannels int       `json:"max_ecommerce_channels"`
 	BusinessID           *uint     `json:"business_id,omitempty"`
+	IncludedShipments    *int      `json:"included_shipments,omitempty"`
+	ShipmentOveragePrice *float64  `json:"shipment_overage_price,omitempty"`
+	IncludedInvoices     *int      `json:"included_invoices,omitempty"`
+	InvoiceOveragePrice  *float64  `json:"invoice_overage_price,omitempty"`
+	IncludedOrders       *int      `json:"included_orders,omitempty"`
+	OrderOveragePrice    *float64  `json:"order_overage_price,omitempty"`
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 }
@@ -33,6 +39,12 @@ func FromSubscriptionType(t *entities.SubscriptionType) SubscriptionTypeResponse
 		ModuleCodes:          t.ModuleCodes,
 		MaxEcommerceChannels: t.MaxEcommerceChannels,
 		BusinessID:           t.BusinessID,
+		IncludedShipments:    t.IncludedShipments,
+		ShipmentOveragePrice: t.ShipmentOveragePrice,
+		IncludedInvoices:     t.IncludedInvoices,
+		InvoiceOveragePrice:  t.InvoiceOveragePrice,
+		IncludedOrders:       t.IncludedOrders,
+		OrderOveragePrice:    t.OrderOveragePrice,
 		CreatedAt:            t.CreatedAt,
 		UpdatedAt:            t.UpdatedAt,
 	}
@@ -56,6 +68,7 @@ type SubscriptionResponse struct {
 	StartDate            time.Time `json:"start_date"`
 	EndDate              time.Time `json:"end_date"`
 	Status               string    `json:"status"`
+	PaymentMethod        string    `json:"payment_method"`
 	PaymentReference     *string   `json:"payment_reference,omitempty"`
 	Notes                *string   `json:"notes,omitempty"`
 	CreatedAt            time.Time `json:"created_at"`
@@ -72,10 +85,19 @@ func FromSubscription(s *entities.BusinessSubscription) SubscriptionResponse {
 		StartDate:            s.StartDate,
 		EndDate:              s.EndDate,
 		Status:               s.Status,
+		PaymentMethod:        s.PaymentMethod,
 		PaymentReference:     s.PaymentReference,
 		Notes:                s.Notes,
 		CreatedAt:            s.CreatedAt,
 	}
+}
+
+func FromSubscriptions(subs []entities.BusinessSubscription) []SubscriptionResponse {
+	result := make([]SubscriptionResponse, len(subs))
+	for i, s := range subs {
+		result[i] = FromSubscription(&s)
+	}
+	return result
 }
 
 type OverrideResponse struct {
@@ -84,11 +106,12 @@ type OverrideResponse struct {
 	ModuleCode      string    `json:"module_code"`
 	GrantedByUserID uint      `json:"granted_by_user_id"`
 	Notes           *string   `json:"notes,omitempty"`
+	ExpiresAt       *string   `json:"expires_at,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 
 func FromOverride(o *entities.BusinessModuleOverride) OverrideResponse {
-	return OverrideResponse{
+	resp := OverrideResponse{
 		ID:              o.ID,
 		BusinessID:      o.BusinessID,
 		ModuleCode:      o.ModuleCode,
@@ -96,6 +119,11 @@ func FromOverride(o *entities.BusinessModuleOverride) OverrideResponse {
 		Notes:           o.Notes,
 		CreatedAt:       o.CreatedAt,
 	}
+	if o.ExpiresAt != nil {
+		formatted := o.ExpiresAt.Format("2006-01-02")
+		resp.ExpiresAt = &formatted
+	}
+	return resp
 }
 
 func FromOverrides(overrides []entities.BusinessModuleOverride) []OverrideResponse {
@@ -104,4 +132,86 @@ func FromOverrides(overrides []entities.BusinessModuleOverride) []OverrideRespon
 		result[i] = FromOverride(&o)
 	}
 	return result
+}
+
+type AuditLogResponse struct {
+	ID          uint      `json:"id"`
+	BusinessID  uint      `json:"business_id"`
+	ActorUserID *uint     `json:"actor_user_id,omitempty"`
+	ActorLabel  string    `json:"actor_label"`
+	Action      string    `json:"action"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+func FromAuditLog(l *entities.SubscriptionAuditLog) AuditLogResponse {
+	return AuditLogResponse{
+		ID:          l.ID,
+		BusinessID:  l.BusinessID,
+		ActorUserID: l.ActorUserID,
+		ActorLabel:  l.ActorLabel,
+		Action:      l.Action,
+		Description: l.Description,
+		CreatedAt:   l.CreatedAt,
+	}
+}
+
+func FromAuditLogs(logs []entities.SubscriptionAuditLog) []AuditLogResponse {
+	result := make([]AuditLogResponse, len(logs))
+	for i, l := range logs {
+		result[i] = FromAuditLog(&l)
+	}
+	return result
+}
+
+type AdminBusinessRowResponse struct {
+	ID                uint       `json:"id"`
+	Name              string     `json:"name"`
+	Code              string     `json:"code"`
+	PlanName          string     `json:"plan_name,omitempty"`
+	Status            string     `json:"status"`
+	CycleStartDate    *time.Time `json:"cycle_start_date,omitempty"`
+	CycleEndDate      *time.Time `json:"cycle_end_date,omitempty"`
+	LastPaymentAmount *float64   `json:"last_payment_amount,omitempty"`
+	LastPaymentDate   *time.Time `json:"last_payment_date,omitempty"`
+	ForecastedPayment *float64   `json:"forecasted_payment,omitempty"`
+}
+
+func FromAdminBusinessRow(r *entities.AdminBusinessRow) AdminBusinessRowResponse {
+	return AdminBusinessRowResponse{
+		ID:                r.ID,
+		Name:              r.Name,
+		Code:              r.Code,
+		PlanName:          r.PlanName,
+		Status:            r.Status,
+		CycleStartDate:    r.CycleStartDate,
+		CycleEndDate:      r.CycleEndDate,
+		LastPaymentAmount: r.LastPaymentAmount,
+		LastPaymentDate:   r.LastPaymentDate,
+		ForecastedPayment: r.ForecastedPayment,
+	}
+}
+
+func FromAdminBusinessRows(rows []entities.AdminBusinessRow) []AdminBusinessRowResponse {
+	result := make([]AdminBusinessRowResponse, len(rows))
+	for i, r := range rows {
+		result[i] = FromAdminBusinessRow(&r)
+	}
+	return result
+}
+
+type AdminKPIsResponse struct {
+	ActiveCount             int64   `json:"active_count"`
+	ExpiringSoonCount       int64   `json:"expiring_soon_count"`
+	ExpiredOrSuspendedCount int64   `json:"expired_or_suspended_count"`
+	MRR                     float64 `json:"mrr"`
+}
+
+func FromAdminKPIs(k entities.AdminKPIs) AdminKPIsResponse {
+	return AdminKPIsResponse{
+		ActiveCount:             k.ActiveCount,
+		ExpiringSoonCount:       k.ExpiringSoonCount,
+		ExpiredOrSuspendedCount: k.ExpiredOrSuspendedCount,
+		MRR:                     k.MRR,
+	}
 }
