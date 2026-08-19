@@ -161,6 +161,13 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
+		// Una propina en $0 (cliente no dejo propina) no tiene precio referencial
+		// ni base gravable: la DIAN la rechaza. No tiene sentido facturar un item
+		// en $0, se omite del todo.
+		if isTipItemName(strings.ToLower(strings.TrimSpace(item.Name))) && item.UnitPrice == 0 {
+			continue
+		}
+
 		itemCode := resolveItemCode(item.SKU, item.Name, item.ProductID, itemMappings)
 
 		unitPrice := item.UnitPriceBase
@@ -429,10 +436,21 @@ func (c *Client) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, 
 	return nil
 }
 
+// isTipItemName detecta "tip"/"propina" como palabra completa, no como substring:
+// "Tip App Internal" debe matchear, pero "Makeup Tips" no.
+func isTipItemName(nameLower string) bool {
+	for _, word := range strings.Fields(nameLower) {
+		if word == "tip" || word == "propina" {
+			return true
+		}
+	}
+	return false
+}
+
 func resolveItemCode(itemSKU string, itemName string, productID *string, itemMappings map[string]interface{}) string {
 	if itemMappings != nil && itemName != "" {
 		nameLower := strings.ToLower(strings.TrimSpace(itemName))
-		if nameLower == "tip" || nameLower == "propina" {
+		if isTipItemName(nameLower) {
 			if code, ok := itemMappings["tip"].(string); ok && code != "" {
 				return code
 			}

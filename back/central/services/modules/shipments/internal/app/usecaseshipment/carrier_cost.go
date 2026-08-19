@@ -31,7 +31,7 @@ func (uc *UseCaseShipment) applyCarrierCost(ctx context.Context, shipment *domai
 	if carrierCode == "" {
 		return
 	}
-	carrierCode = strings.ToLower(carrierCode)
+	carrierCode = strings.ReplaceAll(strings.ToLower(carrierCode), " ", "")
 
 	businessID, err := uc.repo.GetOrderBusinessID(ctx, *shipment.OrderID)
 	if err != nil || businessID == 0 {
