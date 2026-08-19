@@ -51,8 +51,18 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 			}
 			return uc.GenerateCashReceipt(ctx, invoiceID)
 		}
-		// Factura ya creada y sin cash receipt fallido — no reintentar
-		return fmt.Errorf("invoice already has invoice_number %s — cannot re-create", invoice.InvoiceNumber)
+		// Factura ya creada en el proveedor y el recibo de caja tambien salio bien
+		// (o no aplica): el intento anterior si tuvo exito completo, solo quedo mal
+		// marcada como failed. Corregir el estado, no reintentar nada.
+		uc.log.Info(ctx).
+			Uint("invoice_id", invoiceID).
+			Str("invoice_number", invoice.InvoiceNumber).
+			Msg("Invoice already created and confirmed in provider — fixing status to issued")
+		invoice.Status = constants.InvoiceStatusIssued
+		if err := uc.repo.UpdateInvoice(ctx, invoice); err != nil {
+			return fmt.Errorf("invoice already has invoice_number %s but failed to fix status: %w", invoice.InvoiceNumber, err)
+		}
+		return nil
 	}
 
 	// 2.5. Lock optimista: marcar invoice como pending ANTES de llamar al proveedor.
