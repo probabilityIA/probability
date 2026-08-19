@@ -189,6 +189,15 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.fixVigaCodCalibracionFallida(ctx); err != nil {
 		return err
 	}
+	if err := r.FixVigaCodPromesaCorte52(ctx); err != nil {
+		return err
+	}
+	if err := r.FixVigaCodPromesaResto(ctx); err != nil {
+		return err
+	}
+	if err := r.FixVigaCodRevertConfirmadas(ctx); err != nil {
+		return err
+	}
 	if err := r.seedCodMarginAmount(ctx); err != nil {
 		return err
 	}

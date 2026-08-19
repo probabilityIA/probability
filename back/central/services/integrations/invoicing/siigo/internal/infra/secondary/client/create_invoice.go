@@ -86,8 +86,19 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			Credentials:    req.Credentials,
 		})
 		if err != nil {
-			c.log.Error(ctx).Err(err).Msg("Failed to create Siigo customer")
-			return result, fmt.Errorf("failed to create customer in Siigo: %w", err)
+			if req.Customer.DNI != "" {
+				if retry, lookupErr := c.GetCustomerByIdentification(ctx, req.Credentials, req.Customer.DNI); lookupErr == nil && retry != nil {
+					c.log.Warn(ctx).
+						Str("customer_id", retry.ID).
+						Str("identification", req.Customer.DNI).
+						Msg("La creacion fallo pero el cliente ya existia en Siigo: se reutiliza")
+					customerSiigoID = retry.ID
+				}
+			}
+			if customerSiigoID == "" {
+				c.log.Error(ctx).Err(err).Msg("Failed to create Siigo customer")
+				return result, fmt.Errorf("failed to create customer in Siigo: %w", err)
+			}
 		}
 		if newCustomer != nil {
 			customerSiigoID = newCustomer.ID

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { ConfigsClient } from '@/app/(auth)/invoicing/configs/ConfigsClient';
+import { InvoicingConfigForm } from './InvoicingConfigForm';
 import { getConfigsAction } from '../../infra/actions';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
@@ -41,11 +42,14 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
 
   if (!isOpen) return null;
 
+  const configUnica = configs.length === 1 ? configs[0] : null;
+  const titulo = configUnica ? 'Configuracion de Facturacion' : 'Configuraciones de Facturacion';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
         className="bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ width: '70vw', maxHeight: '85vh' }}
+        style={{ width: configUnica ? '46rem' : '70vw', maxHeight: '85vh' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
@@ -54,7 +58,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            Configuraciones de Facturación
+            {titulo}
           </h2>
           <button
             onClick={onClose}
@@ -69,6 +73,17 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
           {loading ? (
             <div className="flex items-center justify-center h-48 text-gray-500">
               Cargando configuraciones...
+            </div>
+          ) : configUnica ? (
+            <div className="p-6">
+              <InvoicingConfigForm
+                integrationIds={configUnica.integration_ids ?? []}
+                invoicingIntegrationId={configUnica.invoicing_integration_id ?? configUnica.invoicing_provider_id ?? 0}
+                businessId={configUnica.business_id}
+                initialData={configUnica}
+                onSuccess={() => { loadConfigs(); onClose(); }}
+                onCancel={onClose}
+              />
             </div>
           ) : (
             <ConfigsClient

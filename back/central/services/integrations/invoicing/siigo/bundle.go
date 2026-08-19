@@ -43,7 +43,7 @@ func New(
 
 	if router != nil && database != nil {
 		webhookLogRepo := siigorepo.New(database, logger)
-		webhookHandler := handlers.New(webhookLogRepo, coreIntegration, rabbit, logger)
+		webhookHandler := handlers.New(webhookLogRepo, coreIntegration, rabbit, useCase, logger)
 		webhookHandler.RegisterRoutes(router)
 
 		productHandler := handlers.NewProductHandler(useCase, logger)

@@ -8,6 +8,8 @@ import type {
 } from '@/services/modules/invoicing/domain/types';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
+import { getSiigoCatalogsAction, type SiigoCatalogs } from '@/services/integrations/invoicing/siigo/infra/actions';
+import { CampoCatalogo } from './CampoCatalogo';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
 import {
   requestListBankAccountsAction,
@@ -60,7 +62,17 @@ export function InvoicingConfigForm({
     siigo_cash_receipt_document_id: (initialData?.config?.cash_receipt_document_id as number | string) ?? '',
     siigo_cash_receipt_payment_id: (initialData?.config?.cash_receipt_payment_id as number | string) ?? '',
     siigo_credit_note_document_id: (initialData?.config?.credit_note_document_id as number | string) ?? '',
+    final_customer_when_no_id: initialData?.config?.final_customer_when_no_id ?? false,
+    inventory_exit_only: initialData?.config?.inventory_exit_only ?? false,
+    inventory_exit_document_id: (initialData?.config?.inventory_exit_document_id as number | string) ?? '',
+    inventory_exit_account_code: (initialData?.config?.inventory_exit_account_code as string) ?? '',
+    inventory_exit_offset_account_code: (initialData?.config?.inventory_exit_offset_account_code as string) ?? '',
+    inventory_exit_warehouse_id: (initialData?.config?.inventory_exit_warehouse_id as number | string) ?? '',
   });
+
+  const [catalogs, setCatalogs] = useState<SiigoCatalogs | null>(null);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
+  const [catalogsError, setCatalogsError] = useState<string | null>(null);
 
   const providerName = initialData?.provider_name ?? '';
   const providerImageUrl = initialData?.provider_image_url;
@@ -68,6 +80,30 @@ export function InvoicingConfigForm({
   const cashReceiptDesc = isSiigo
     ? 'Registra un recibo de caja en Siigo al crear la factura'
     : 'Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)';
+
+  useEffect(() => {
+    if (!isSiigo) return;
+    if (!invoicingIntegrationId) {
+      setCatalogsError('No se pudo identificar la integracion de Siigo de esta configuracion');
+      return;
+    }
+    let cancelado = false;
+    setLoadingCatalogs(true);
+    setCatalogsError(null);
+    getSiigoCatalogsAction(invoicingIntegrationId)
+      .then(res => {
+        if (cancelado) return;
+        if (res.success && res.data) {
+          setCatalogs(res.data);
+          if (res.data.errors?.length) setCatalogsError(res.data.errors.join(' | '));
+        } else {
+          setCatalogsError(res.message ?? 'No se pudieron cargar los catalogos de Siigo');
+        }
+      })
+      .catch(() => { if (!cancelado) setCatalogsError('No se pudieron cargar los catalogos de Siigo'); })
+      .finally(() => { if (!cancelado) setLoadingCatalogs(false); });
+    return () => { cancelado = true; };
+  }, [isSiigo, invoicingIntegrationId]);
 
   const [showItemMappings, setShowItemMappings] = useState(
     !!(initialData?.config?.item_mappings?.shipping ||
@@ -170,6 +206,16 @@ export function InvoicingConfigForm({
       if (formData.siigo_tax_id) invoiceConfig.tax_id = Number(formData.siigo_tax_id);
       if (formData.siigo_seller_id) invoiceConfig.seller_id = Number(formData.siigo_seller_id);
       if (formData.siigo_credit_note_document_id) invoiceConfig.credit_note_document_id = Number(formData.siigo_credit_note_document_id);
+      if (formData.final_customer_when_no_id) {
+        invoiceConfig.final_customer_when_no_id = true;
+      }
+      if (formData.inventory_exit_only) {
+        invoiceConfig.inventory_exit_only = true;
+        if (formData.inventory_exit_document_id) invoiceConfig.inventory_exit_document_id = Number(formData.inventory_exit_document_id);
+        if (formData.inventory_exit_account_code) invoiceConfig.inventory_exit_account_code = formData.inventory_exit_account_code;
+        if (formData.inventory_exit_offset_account_code) invoiceConfig.inventory_exit_offset_account_code = formData.inventory_exit_offset_account_code;
+        if (formData.inventory_exit_warehouse_id) invoiceConfig.inventory_exit_warehouse_id = Number(formData.inventory_exit_warehouse_id);
+      }
     }
 
     if (formData.send_cash_receipt) {
@@ -269,49 +315,126 @@ export function InvoicingConfigForm({
 
       {isSiigo && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Identificadores de Siigo</h4>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo de documento (FV)</label>
-              <input type="number" value={formData.siigo_document_id} onChange={(e) => setFormData({ ...formData, siigo_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago (factura)</label>
-              <input type="number" value={formData.siigo_payment_method_id} onChange={(e) => setFormData({ ...formData, siigo_payment_method_id: e.target.value })} placeholder="payment_method_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Impuesto (IVA) — opcional</label>
-              <input type="number" value={formData.siigo_tax_id} onChange={(e) => setFormData({ ...formData, siigo_tax_id: e.target.value })} placeholder="tax_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Vendedor — opcional</label>
-              <input type="number" value={formData.siigo_seller_id} onChange={(e) => setFormData({ ...formData, siigo_seller_id: e.target.value })} placeholder="seller_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo doc. Nota Crédito</label>
-              <input type="number" value={formData.siigo_credit_note_document_id} onChange={(e) => setFormData({ ...formData, siigo_credit_note_document_id: e.target.value })} placeholder="credit_note_document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-            </div>
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white">Identificadores de Siigo</h4>
+            {loadingCatalogs && <span className="text-xs text-gray-400">Cargando desde Siigo...</span>}
           </div>
-          <p className="text-xs text-gray-400 mt-2">IDs del catálogo de Siigo (consúltalos en tu cuenta Siigo).</p>
+
+          {catalogsError && (
+            <p className="mb-3 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              {catalogsError}. Puedes escribir los IDs a mano si conoces sus valores.
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <CampoCatalogo
+              etiqueta="Tipo de documento (FV)"
+              requerido
+              opciones={catalogs?.document_types_fv}
+              valor={formData.siigo_document_id}
+              onChange={(v) => setFormData({ ...formData, siigo_document_id: v })}
+              disabled={loading}
+            />
+            <CampoCatalogo
+              etiqueta="Medio de pago (factura)"
+              requerido
+              opciones={catalogs?.payment_types_fv}
+              valor={formData.siigo_payment_method_id}
+              onChange={(v) => setFormData({ ...formData, siigo_payment_method_id: v })}
+              disabled={loading}
+            />
+            <CampoCatalogo
+              etiqueta="Vendedor"
+              requerido
+              opciones={catalogs?.sellers}
+              valor={formData.siigo_seller_id}
+              onChange={(v) => setFormData({ ...formData, siigo_seller_id: v })}
+              disabled={loading}
+            />
+            <CampoCatalogo
+              etiqueta="Impuesto (IVA)"
+              opciones={catalogs?.taxes}
+              valor={formData.siigo_tax_id}
+              onChange={(v) => setFormData({ ...formData, siigo_tax_id: v })}
+              disabled={loading}
+            />
+            <CampoCatalogo
+              etiqueta="Tipo doc. Nota Credito"
+              opciones={catalogs?.document_types_nc}
+              valor={formData.siigo_credit_note_document_id}
+              onChange={(v) => setFormData({ ...formData, siigo_credit_note_document_id: v })}
+              disabled={loading}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Se leen de la cuenta Siigo del negocio. Los tres primeros son obligatorios: sin ellos Siigo rechaza la factura.</p>
         </div>
       )}
 
       {/* Facturación automática */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className={`flex items-center gap-3 ${formData.inventory_exit_only ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
           <input
             type="checkbox"
             checked={formData.auto_invoice}
-            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
-            disabled={loading}
+            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked, inventory_exit_only: e.target.checked ? false : formData.inventory_exit_only })}
+            disabled={loading || formData.inventory_exit_only}
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
             <span className="text-sm font-medium text-gray-900 dark:text-white">Facturación automática</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {formData.inventory_exit_only
+                ? 'Desactivada porque la salida de inventario sin facturar esta activa'
+                : 'Las órdenes que cumplan los filtros se facturarán automáticamente'}
+            </p>
           </div>
         </label>
       </div>
+
+      {/* Salida de inventario sin facturar */}
+      {isSiigo && (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className={`flex items-center gap-3 ${formData.auto_invoice ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+            <input
+              type="checkbox"
+              checked={formData.inventory_exit_only}
+              onChange={(e) => setFormData({ ...formData, inventory_exit_only: e.target.checked, auto_invoice: e.target.checked ? false : formData.auto_invoice })}
+              disabled={loading || formData.auto_invoice}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Salida de inventario sin facturar</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formData.auto_invoice
+                  ? 'Desactivada porque la facturación automática esta activa'
+                  : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturación automática para evitar el doble descargue.'}
+              </p>
+            </div>
+          </label>
+
+          {formData.inventory_exit_only && (
+            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo doc. Comprobante (CC)</label>
+                <input type="number" value={formData.inventory_exit_document_id} onChange={(e) => setFormData({ ...formData, inventory_exit_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bodega — opcional</label>
+                <input type="number" value={formData.inventory_exit_warehouse_id} onChange={(e) => setFormData({ ...formData, inventory_exit_warehouse_id: e.target.value })} placeholder="warehouse_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario (crédito)</label>
+                <input type="text" value={formData.inventory_exit_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_account_code: e.target.value })} placeholder="14350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida (débito)</label>
+                <input type="text" value={formData.inventory_exit_offset_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_offset_account_code: e.target.value })} placeholder="61350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <p className="col-span-2 text-xs text-gray-400">Los códigos de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filtros de Pago */}
       {formData.auto_invoice && (
@@ -350,6 +473,36 @@ export function InvoicingConfigForm({
         </label>
       </div>
 
+      {isSiigo && (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.final_customer_when_no_id}
+              onChange={(e) => setFormData({ ...formData, final_customer_when_no_id: e.target.checked })}
+              disabled={loading}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar a consumidor final sin cedula</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Si la orden no trae cedula, NIT ni documento del cliente, la factura se emite al tercero generico CONSUMIDOR FINAL. Siigo exige identificacion siempre.
+              </p>
+            </div>
+          </label>
+          {!formData.final_customer_when_no_id && (
+            <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              Desactivado: las ordenes sin documento del cliente quedaran en estado Fallida, con el motivo en el historial de sincronizacion. Hay que completar el documento en la orden y reintentar.
+            </p>
+          )}
+          {formData.final_customer_when_no_id && (
+            <p className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-[11px] leading-snug text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+              Activado: esas facturas no identifican al comprador y salen a nombre de CONSUMIDOR FINAL, no del cliente real.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Facturar como Consumidor Final */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="flex items-center gap-3 cursor-pointer">
@@ -386,14 +539,22 @@ export function InvoicingConfigForm({
           {formData.send_cash_receipt && isSiigo && (
             <div className="space-y-3 pl-8">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo doc. Recibo (RC)</label>
-                  <input type="number" value={formData.siigo_cash_receipt_document_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_document_id: e.target.value })} placeholder="cash_receipt_document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago (Siigo)</label>
-                  <input type="number" value={formData.siigo_cash_receipt_payment_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_payment_id: e.target.value })} placeholder="cash_receipt_payment_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
-                </div>
+                <CampoCatalogo
+                  etiqueta="Tipo doc. Recibo (RC)"
+                  requerido
+                  opciones={catalogs?.document_types_rc}
+                  valor={formData.siigo_cash_receipt_document_id}
+                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
+                  disabled={loading}
+                />
+                <CampoCatalogo
+                  etiqueta="Medio de pago (Siigo)"
+                  requerido
+                  opciones={catalogs?.payment_types_rc}
+                  valor={formData.siigo_cash_receipt_payment_id}
+                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
+                  disabled={loading}
+                />
               </div>
               <button type="button" onClick={handleFetchBankAccounts} disabled={loadingBankAccounts} className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50">
                 {loadingBankAccounts ? 'Consultando...' : 'Consultar medios de pago de Siigo'}

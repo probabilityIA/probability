@@ -17,8 +17,15 @@ func (c *InvoiceRequestConsumer) processCheckStatus(
 	if externalID == "" {
 		c.log.Warn(ctx).
 			Uint("invoice_id", request.InvoiceID).
-			Msg("external_id missing in check_status config - cannot query Siigo, keeping pending")
-		return c.pendingValidationResponse(request, startTime, "external_id no disponible para consultar estado en Siigo")
+			Msg("Sin external_id: la factura nunca se creo en Siigo, no hay nada que consultar en la DIAN")
+		return c.createOperationErrorResponse(
+			request,
+			"check_status",
+			"missing_external_id",
+			"la factura no existe en Siigo: nunca se creo, no esta esperando validacion de la DIAN",
+			startTime,
+			nil,
+		)
 	}
 
 	ictx, errCode, err := c.resolveIntegration(ctx, request)

@@ -67,9 +67,18 @@ func (uc *useCase) CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO
 		invoiceConfigData = config.InvoiceConfig
 	}
 	enableJournal, _ := invoiceConfigData["enable_journal"].(bool)
-	if !enableJournal {
-		uc.log.Info(ctx).Str("order_id", order.ID).Msg("enable_journal no está activo en config, omitiendo")
-		return nil, fmt.Errorf("enable_journal is not enabled in invoicing config")
+	inventoryExitOnly, _ := invoiceConfigData["inventory_exit_only"].(bool)
+	if !enableJournal && !inventoryExitOnly {
+		uc.log.Info(ctx).Str("order_id", order.ID).Msg("Comprobante contable no habilitado en config, omitiendo")
+		return nil, fmt.Errorf("journal is not enabled in invoicing config")
+	}
+	if inventoryExitOnly {
+		inventoryAccount, _ := invoiceConfigData["inventory_exit_account_code"].(string)
+		offsetAccount, _ := invoiceConfigData["inventory_exit_offset_account_code"].(string)
+		if inventoryAccount == "" || offsetAccount == "" {
+			uc.log.Warn(ctx).Str("order_id", order.ID).Msg("Salida de inventario sin cuentas contables configuradas")
+			return nil, fmt.Errorf("la salida de inventario requiere inventory_exit_account_code y inventory_exit_offset_account_code")
+		}
 	}
 
 	// 6. Validar que la orden tenga items

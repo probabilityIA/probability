@@ -3,6 +3,8 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
@@ -99,6 +101,52 @@ func resultAudit(result *siigoDtos.AnnulInvoiceResult) *siigoDtos.AuditData {
 func businessIDFromConfig(config map[string]interface{}) uint {
 	if bid, ok := config["business_id"].(float64); ok {
 		return uint(bid)
+	}
+	return 0
+}
+
+func defaultCustomerDNI(config map[string]interface{}) string {
+	if nit, ok := config["default_customer_nit"].(string); ok {
+		if trimmed := strings.TrimSpace(nit); trimmed != "" {
+			return trimmed
+		}
+	}
+	return "222222222222"
+}
+
+func camposDeConfiguracionFaltantes(config map[string]interface{}) []string {
+	requeridos := []struct {
+		clave    string
+		etiqueta string
+	}{
+		{"document_id", "Tipo de documento (FV)"},
+		{"seller_id", "Vendedor"},
+		{"payment_method_id", "Medio de pago"},
+	}
+
+	faltantes := make([]string, 0, len(requeridos))
+	for _, r := range requeridos {
+		if getIntFromConfigMap(config, r.clave) <= 0 {
+			faltantes = append(faltantes, r.etiqueta)
+		}
+	}
+	return faltantes
+}
+
+func getIntFromConfigMap(config map[string]interface{}, key string) int {
+	switch v := config[key].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case string:
+		n, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0
+		}
+		return n
 	}
 	return 0
 }

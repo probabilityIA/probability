@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
@@ -209,12 +210,52 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		DNI:     request.InvoiceData.Customer.DNI,
 		Address: request.InvoiceData.Customer.Address,
 	}
-	if forceFinal, _ := ictx.Config["force_default_customer"].(bool); forceFinal {
+	if faltantes := camposDeConfiguracionFaltantes(ictx.Config); len(faltantes) > 0 {
+		c.log.Error(ctx).
+			Uint("invoice_id", request.InvoiceID).
+			Str("order_number", request.InvoiceData.OrderNumber).
+			Strs("campos_faltantes", faltantes).
+			Msg("La configuracion de Siigo esta incompleta: Siigo exige estos identificadores de su catalogo para crear la factura")
+		return c.createOperationErrorResponse(
+			request,
+			"create",
+			"incomplete_siigo_config",
+			"falta configurar en la integracion de Siigo: "+strings.Join(faltantes, ", ")+". Son identificadores del catalogo de la cuenta Siigo del negocio y sin ellos la factura no se puede crear",
+			startTime,
+			nil,
+		)
+	}
+
+	forceFinal, _ := ictx.Config["force_default_customer"].(bool)
+	finalSinCedula, _ := ictx.Config["final_customer_when_no_id"].(bool)
+	sinIdentificacion := strings.TrimSpace(customer.DNI) == ""
+
+	if sinIdentificacion && !forceFinal && !finalSinCedula {
+		c.log.Error(ctx).
+			Uint("invoice_id", request.InvoiceID).
+			Str("order_number", request.InvoiceData.OrderNumber).
+			Str("customer_name", request.InvoiceData.Customer.Name).
+			Msg("La orden no trae cedula ni NIT del cliente y la facturacion a consumidor final esta desactivada en la configuracion")
+		return c.createOperationErrorResponse(
+			request,
+			"create",
+			"missing_customer_identification",
+			"la orden no trae cedula ni NIT del cliente: completa el documento en la orden, o activa \"Facturar a consumidor final sin cedula\" en la configuracion de Siigo",
+			startTime,
+			nil,
+		)
+	}
+
+	if forceFinal || sinIdentificacion {
 		customer = siigoDtos.CustomerData{
 			Name: "CONSUMIDOR FINAL",
-			DNI:  "222222222222",
+			DNI:  defaultCustomerDNI(ictx.Config),
 		}
-		c.log.Info(ctx).Uint("invoice_id", request.InvoiceID).Msg("Invoicing as CONSUMIDOR FINAL")
+		c.log.Info(ctx).
+			Uint("invoice_id", request.InvoiceID).
+			Bool("por_config", forceFinal).
+			Bool("por_falta_de_cedula", sinIdentificacion).
+			Msg("Facturando como CONSUMIDOR FINAL")
 	}
 
 	invoiceReq := &siigoDtos.CreateInvoiceRequest{

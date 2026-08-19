@@ -4,16 +4,17 @@ import "time"
 
 // Config es la respuesta de una configuración de facturación
 type Config struct {
-	ID                  uint                   `json:"id"`
-	CreatedAt           time.Time              `json:"created_at"`
-	UpdatedAt           time.Time              `json:"updated_at"`
-	BusinessID          uint                   `json:"business_id"`
-	IntegrationIDs      []uint                 `json:"integration_ids"`
-	InvoicingProviderID uint                   `json:"invoicing_provider_id"`
-	Enabled             bool                   `json:"enabled"`
-	AutoInvoice         bool                   `json:"auto_invoice"`
-	Filters             map[string]interface{} `json:"filters,omitempty"`
-	Config              map[string]interface{} `json:"config,omitempty"`
+	ID                     uint                   `json:"id"`
+	CreatedAt              time.Time              `json:"created_at"`
+	UpdatedAt              time.Time              `json:"updated_at"`
+	BusinessID             uint                   `json:"business_id"`
+	IntegrationIDs         []uint                 `json:"integration_ids"`
+	InvoicingProviderID    uint                   `json:"invoicing_provider_id"`
+	InvoicingIntegrationID uint                   `json:"invoicing_integration_id"`
+	Enabled                bool                   `json:"enabled"`
+	AutoInvoice            bool                   `json:"auto_invoice"`
+	Filters                map[string]interface{} `json:"filters,omitempty"`
+	Config                 map[string]interface{} `json:"config,omitempty"`
 
 	// Nombres de relaciones (para frontend)
 	IntegrationNames []string `json:"integration_names,omitempty"`

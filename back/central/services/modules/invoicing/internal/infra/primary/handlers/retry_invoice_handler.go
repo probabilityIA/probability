@@ -39,7 +39,7 @@ func (h *handler) RetryInvoice(c *gin.Context) {
 		err = h.useCase.CheckPendingInvoice(ctx, uint(id))
 	} else {
 		h.log.Info(ctx).Uint("invoice_id", uint(id)).Msg("Retrying failed invoice")
-		err = h.useCase.RetryInvoice(ctx, uint(id))
+		err = h.useCase.RetryInvoice(ctx, uint(id), true)
 	}
 
 	if err != nil {

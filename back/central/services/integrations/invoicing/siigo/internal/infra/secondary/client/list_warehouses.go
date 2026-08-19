@@ -2,16 +2,36 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 )
 
+type warehouseEntry struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 type listWarehousesResponse struct {
-	Results []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"results"`
+	Results []warehouseEntry `json:"results"`
+}
+
+func (r *listWarehousesResponse) UnmarshalJSON(data []byte) error {
+	var plano []warehouseEntry
+	if err := json.Unmarshal(data, &plano); err == nil {
+		r.Results = plano
+		return nil
+	}
+
+	var paginado struct {
+		Results []warehouseEntry `json:"results"`
+	}
+	if err := json.Unmarshal(data, &paginado); err != nil {
+		return err
+	}
+	r.Results = paginado.Results
+	return nil
 }
 
 func (c *Client) ListWarehouses(ctx context.Context, credentials dtos.Credentials) ([]dtos.WarehouseItem, error) {

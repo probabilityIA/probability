@@ -187,6 +187,17 @@ export interface InvoicingSettings {
   cash_receipt_document_id?: number;
   cash_receipt_payment_id?: number;
   credit_note_document_id?: number;
+
+  // Facturar a consumidor final cuando la orden no trae cedula/NIT
+  final_customer_when_no_id?: boolean;
+
+  // Salida de inventario sin facturar (Siigo: comprobante contable)
+  // Excluyente con auto_invoice: o descarga inventario, o factura.
+  inventory_exit_only?: boolean;
+  inventory_exit_document_id?: number;
+  inventory_exit_account_code?: string;
+  inventory_exit_offset_account_code?: string;
+  inventory_exit_warehouse_id?: number;
 }
 
 // ===================================

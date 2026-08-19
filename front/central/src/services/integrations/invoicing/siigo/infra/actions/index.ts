@@ -75,3 +75,54 @@ export async function applySiigoProductsAction(integrationId: number, businessId
     if (skus && skus.length > 0) body.skus = skus;
     return postWithAuth('/siigo/products/apply', body);
 }
+
+export interface SiigoCatalogItem {
+    id: number;
+    code?: string;
+    name: string;
+    detail?: string;
+    percent?: string;
+}
+
+export interface SiigoCatalogs {
+    document_types_fv: SiigoCatalogItem[];
+    document_types_nc: SiigoCatalogItem[];
+    document_types_rc: SiigoCatalogItem[];
+    document_types_cc: SiigoCatalogItem[];
+    payment_types_fv: SiigoCatalogItem[];
+    payment_types_rc: SiigoCatalogItem[];
+    sellers: SiigoCatalogItem[];
+    taxes: SiigoCatalogItem[];
+    cost_centers: SiigoCatalogItem[];
+    warehouses: SiigoCatalogItem[];
+    errors?: string[];
+}
+
+export async function getSiigoCatalogsAction(integrationId: number): Promise<{ success: boolean; message?: string; data?: SiigoCatalogs }> {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('session_token')?.value;
+    const businessToken = cookieStore.get('business_token')?.value;
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+    if (businessToken) headers['X-Business-Token'] = businessToken;
+
+    const response = await fetch(`${API_BASE_URL}/siigo/catalogs?integration_id=${integrationId}`, {
+        method: 'GET',
+        headers,
+        cache: 'no-store',
+    });
+
+    const text = await response.text();
+    let data: any = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        data = { message: text };
+    }
+
+    if (!response.ok) {
+        return { success: false, message: data.error || data.message || `Error ${response.status}` };
+    }
+    return { success: true, data: data.data as SiigoCatalogs };
+}
