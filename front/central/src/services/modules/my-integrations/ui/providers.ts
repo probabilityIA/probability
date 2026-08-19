@@ -6,6 +6,7 @@ import { syncWooInventoryAction, compareWooInventoryAction, reconcileWooProducts
 import { syncJumpsellerInventoryAction, reconcileJumpsellerProductsAction, associateJumpsellerProductsAction, applyJumpsellerProductsAction } from '@/services/integrations/ecommerce/jumpseller/infra/actions';
 import { syncSiigoInventoryAction, compareSiigoInventoryAction, startSiigoProductsReconcileAction, applySiigoProductsAction } from '@/services/integrations/invoicing/siigo/infra/actions';
 import { syncVTEXInventoryAction, reconcileVTEXProductsAction, associateVTEXProductsAction, applyVTEXProductsAction } from '@/services/integrations/ecommerce/vtex/infra/actions';
+import { syncTiendanubeInventoryAction, compareTiendanubeInventoryAction, reconcileTiendanubeProductsAction, associateTiendanubeProductsAction, applyTiendanubeProductsAction } from '@/services/integrations/ecommerce/tiendanube/infra/actions';
 import { ShopifyProductSyncModal } from '@/services/integrations/ecommerce/shopify/ui/components/ShopifyProductSyncModal';
 import { MercadoLibreProductSyncModal } from '@/services/integrations/ecommerce/mercadolibre/ui/components/MercadoLibreProductSyncModal';
 import { WooProductSyncModal } from '@/services/integrations/ecommerce/woocommerce/ui/components/WooProductSyncModal';
@@ -123,6 +124,23 @@ export const SYNC_PROVIDERS: Record<number, SyncProvider> = {
         },
         onlyInChannelField: 'only_in_siigo',
         channelNoSkuField: 'siigo_no_sku',
+    },
+    17: {
+        typeId: 17,
+        key: 'tiendanube',
+        label: 'Tiendanube',
+        inventoryEventPrefix: 'tiendanube',
+        syncInventory: syncTiendanubeInventoryAction,
+        compareInventory: compareTiendanubeInventoryAction,
+        reconcileProducts: reconcileTiendanubeProductsAction,
+        associateProducts: associateTiendanubeProductsAction,
+        apply: {
+            createInChannel: (id, bid, skus) => applyTiendanubeProductsAction(id, 'to_tiendanube', bid, 'create', skus),
+            createInProbability: (id, bid, skus) => applyTiendanubeProductsAction(id, 'to_probability', bid, 'create', skus),
+            updateInProbability: (id, bid, skus) => applyTiendanubeProductsAction(id, 'to_probability', bid, 'update', skus),
+        },
+        onlyInChannelField: 'only_in_tiendanube',
+        channelNoSkuField: 'tiendanube_no_sku',
     },
     33: {
         typeId: 33,

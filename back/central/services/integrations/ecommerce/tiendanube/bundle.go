@@ -7,30 +7,31 @@ import (
 	integrationcore "github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/primary/handlers"
+	tiendanubequeue "github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/secondary/client"
 	tncore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/secondary/queue"
+	tnproductrepo "github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// New inicializa el modulo de Tiendanube y retorna el provider para registrar en integrationCore.
-// type_id = 17 (IntegrationTypeTiendanube)
 func New(
 	router *gin.RouterGroup,
 	logger log.ILogger,
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
+	database db.IDatabase,
 	coreIntegration integrationcore.IIntegrationCore,
 ) integrationcore.IIntegrationContract {
 	logger = logger.WithModule("tiendanube")
 
-	// 1. Infraestructura secundaria
 	httpClient := client.New()
 	integrationService := tncore.NewIntegrationService(coreIntegration)
+	productRepo := tnproductrepo.New(database, logger)
 
-	// Publisher de ordenes a RabbitMQ (con fallback no-op si no hay conexion)
 	var orderPublisher = queue.NewNoOpPublisher(logger)
 	if rabbitMQ != nil {
 		orderPublisher = queue.New(rabbitMQ, logger, config)
@@ -39,13 +40,15 @@ func New(
 			Msg("RabbitMQ not available, Tiendanube orders will not be published to queue")
 	}
 
-	// 2. Casos de uso
-	uc := usecases.New(httpClient, integrationService, orderPublisher, logger)
+	uc := usecases.New(httpClient, integrationService, orderPublisher, productRepo, rabbitMQ, logger)
 
-	// 3. Handlers HTTP
 	handler := handlers.New(uc, logger)
 	handler.RegisterRoutes(router, logger)
 
-	// 4. Retornar provider para que el bundle padre lo registre en el core
+	if rabbitMQ != nil {
+		pushConsumer := tiendanubequeue.NewInventoryPushConsumer(rabbitMQ, uc, logger)
+		pushConsumer.Start(context.Background())
+	}
+
 	return tncore.New(uc)
 }

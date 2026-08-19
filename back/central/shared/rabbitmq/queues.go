@@ -183,6 +183,8 @@ const (
 
 	QueueVtexInventoryStockPush = "inventory.vtex.stock_push"
 
+	QueueTiendanubeInventoryStockPush = "inventory.tiendanube.stock_push"
+
 	QueueProductsProviderUpsert = "products.provider_upsert.requests"
 
 	QueueTiktokShopSnapshots = "integrations.tiktok.shop_snapshots"

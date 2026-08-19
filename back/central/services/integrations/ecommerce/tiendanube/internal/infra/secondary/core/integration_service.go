@@ -7,12 +7,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/domain"
 )
 
-// integrationServiceAdapter adapta core.IIntegrationService -> domain.IIntegrationService.
 type integrationServiceAdapter struct {
 	core integrationcore.IIntegrationService
 }
 
-// NewIntegrationService crea el adaptador de servicio de integracion para Tiendanube.
 func NewIntegrationService(core integrationcore.IIntegrationService) domain.IIntegrationService {
 	return &integrationServiceAdapter{core: core}
 }
@@ -26,12 +24,16 @@ func (a *integrationServiceAdapter) GetIntegrationByID(ctx context.Context, inte
 		return nil, nil
 	}
 	return &domain.Integration{
-		ID:              pub.ID,
-		BusinessID:      pub.BusinessID,
-		Name:            pub.Name,
-		StoreID:         pub.StoreID,
-		IntegrationType: pub.IntegrationType,
-		Config:          pub.Config,
+		ID:                pub.ID,
+		BusinessID:        pub.BusinessID,
+		Name:              pub.Name,
+		StoreID:           pub.StoreID,
+		IntegrationType:   pub.IntegrationType,
+		Config:            pub.Config,
+		IsTesting:         pub.IsTesting,
+		BaseURL:           pub.BaseURL,
+		BaseURLTest:       pub.BaseURLTest,
+		ProductMatchRules: pub.ProductMatchRules,
 	}, nil
 }
 
