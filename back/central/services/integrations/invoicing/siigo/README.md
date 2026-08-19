@@ -186,11 +186,55 @@ A diferencia de Factus y Softpymes, Siigo requiere gestión explícita de client
 
 ## Documentación de referencia
 
-- **Portal de desarrolladores Siigo:** https://developers.siigo.com
+### Donde esta la documentacion real
+
+La fuente de verdad de la API es el **API Blueprint** de Siigo. Es un solo
+archivo con TODOS los recursos, endpoints, payloads, enums y codigos de error:
+
+- **Apiary (render oficial):** https://siigoapi.docs.apiary.io/
+- **Blueprint crudo (`siigoapi.apib`, ~6.000 lineas), grepeable:**
+  https://github.com/jdlar1/siigo-mcp/blob/master/siigoapi.apib
+
+El crudo es mas util para responder "existe el endpoint X?" en 10 segundos:
+
+```bash
+git clone --depth 1 https://github.com/jdlar1/siigo-mcp /tmp/siigo-doc
+grep -n "^## .*\[\(GET\|POST\|PUT\|DELETE\)" /tmp/siigo-doc/siigoapi.apib  # todos los endpoints
+grep -in "<lo que busques>" /tmp/siigo-doc/siigoapi.apib
+```
+
+Es un mirror de terceros: verificar la fecha del ultimo commit antes de
+confiar en el para algo nuevo, y contrastar con Apiary si hay duda.
+
+- **Portal de desarrolladores:** https://developers.siigo.com
 - **API Reference:** https://developers.siigo.com/reference
 - **Autenticación:** https://developers.siigo.com/docs/autenticacion
 - **Facturas:** https://developers.siigo.com/docs/crear-factura-de-venta
 - **Clientes:** https://developers.siigo.com/docs/crear-cliente
+- **Soporte tecnico API:** soporteapi@siigo.com
+
+### Recursos que expone la API (blueprint del 2026-05-05)
+
+`/products` `/customers` `/quotations` `/invoices` `/purchases`
+`/credit-notes` `/vouchers` `/payment-receipts` `/journals`
+`/purchase-support-documents` + catalogos (`/document-types`, `/taxes`,
+`/payment-types`, `/cost-centers`, `/users`, `/warehouses`, `/price-lists`,
+`/fixed-assets`) + reportes + `/webhooks`.
+
+Enum `DocumentType`: `FV` (factura de venta), `RC` (recibo de caja),
+`NC` (nota credito), `FC` (factura de compra), `CC` (comprobante contable).
+Ademas `DS`, `RP` y `C` como valores de `/v1/document-types?type=`.
+
+### NO existe: remisiones
+
+**La API de Siigo no expone remisiones / salida de mercancia.** Verificado el
+2026-08-19 contra el blueprint completo: `grep -ic remis` devuelve 0, y no hay
+tipo de documento de remision en el enum. La remision si existe en el producto
+Siigo Nube, pero solo por UI.
+
+No volver a investigarlo sin revisar antes
+`.claude/plan/siigo-remision-salida.md`, que tiene la evidencia y las
+alternativas.
 
 ---
 
