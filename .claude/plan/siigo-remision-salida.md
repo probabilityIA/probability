@@ -2,7 +2,8 @@
 
 Fecha: 2026-08-19
 Modulo: `back/central/services/integrations/invoicing/siigo` + `services/modules/invoicing`
-Estado: investigacion cerrada con reserva, plan pendiente de decisiones del negocio
+Estado: **RESUELTO. La API de Siigo no expone remisiones.** Plan A descartado,
+aplica Plan B. Pendiente decision del negocio.
 
 ---
 
@@ -32,9 +33,66 @@ formulario de captacion de leads.
 
 ---
 
-## 2. Investigacion del endpoint
+## 2. Investigacion del endpoint: NO EXISTE
 
-### 2.1 Limitacion de esta sesion
+### 2.0 Conclusion (2026-08-19)
+
+**La API de Siigo no tiene endpoint de remisiones.** No hay que elegir un path
+ni un shape de payload: el recurso no esta expuesto.
+
+Fuente: el API Blueprint oficial completo de Siigo (`FORMAT: 1A`,
+`HOST: https://api.siigo.com`, 6.029 lineas), vendorizado como `siigoapi.apib`
+en `github.com/jdlar1/siigo-mcp` (commit del 2026-05-05). Es el mismo documento
+que sirve `siigoapi.docs.apiary.io`, que desde esta sesion esta bloqueado.
+
+Reproducir:
+
+```
+git clone --depth 1 https://github.com/jdlar1/siigo-mcp
+grep -ic remis siigo-mcp/siigoapi.apib      # -> 0
+grep -ic remission siigo-mcp/siigoapi.apib  # -> 0
+```
+
+La tabla de recursos del blueprint, completa:
+
+| Recurso | Endpoint |
+|---|---|
+| Productos o servicios | `/products` |
+| Clientes | `/customers` |
+| Cotizaciones | `/quotations` |
+| Facturas de venta | `/invoices` |
+| Facturas de compra | `/purchases` |
+| Notas credito | `/credit-notes` |
+| Recibos de caja | `/vouchers` |
+| Recibos de pago/egreso | `/payment-receipts` |
+| Comprobantes contables | `/journals` |
+| Documento soporte | `/purchase-support-documents` |
+| Reportes financieros | varios |
+
+Y el enum `DocumentType` del blueprint es exactamente:
+
+```
+FV - Factura de Venta
+RC - Recibo de Caja
+NC - Nota Credito
+FC - Factura de Compra
+CC - Comprobante Contable
+```
+
+(mas `DS`, `RP` y `C` como valores de consulta en `/v1/document-types?type=`).
+No hay tipo de remision.
+
+El blueprint esta al dia: incluye los cambios del sector salud vigentes desde
+el 2025-07-22, `/v1/invoices/batch`, `/v1/payment-receipts` y
+`/v1/purchase-support-documents`, todos posteriores al SDK oficial de 2023. Es
+decir, Siigo si viene agregando documentos nuevos a la API - remisiones no es
+uno de ellos.
+
+Residuo de incertidumbre: el blueprint tiene 3,5 meses. Si Siigo publicara
+remisiones entre mayo y hoy, no aparece aca. Es poco probable pero no
+imposible; se confirma con un correo a soporteapi@siigo.com.
+
+### 2.1 Limitacion de esta sesion (por que costo encontrarlo)
 
 La politica de egress de la organizacion bloquea el dominio de Siigo. Verificado:
 
@@ -46,64 +104,45 @@ WebFetch siigoapi.docs.apiary.io              -> EGRESS_BLOCKED
 ```
 
 Segun `/root/.ccr/README.md` un 403 del proxy es denegacion de politica: no se
-reintenta ni se rodea. Por eso la verificacion directa contra la documentacion
-oficial queda pendiente y hay que hacerla desde una maquina sin la restriccion.
+reintenta ni se rodea. GitHub, PyPI y npm si pasan, y por ahi salio la doc.
 
-### 2.2 Evidencia indirecta recogida
+### 2.2 Callejones sin salida (para no repetirlos)
 
-**SDK oficial de Siigo** (`github.com/SiigoSAS/siigo_sdk_javascript`, ultima
-actualizacion oct-2023, generado desde su OpenAPI). Expone 18 clases y ~46
-operaciones:
+- **El SDK oficial no sirve como referencia.**
+  `github.com/SiigoSAS/siigo_sdk_javascript` lista 18 clases y ~46 operaciones,
+  sin remisiones, pero es de **oct-2023** y esta desactualizado: no incluye
+  `/v1/webhooks`, que nuestro propio cliente ya consume. Ausencia ahi no
+  probaba nada. Igual con `saulmoralespa/siigo-api-php` y
+  `srdorado/siigo-client-php`.
+- **`siigodocs/siigo-api-docs`** (repo oficial) solo trae ejemplos de conexion,
+  1 commit, sin catalogo de recursos.
+- **Buscar en Google es contraproducente.** Todo lo que devuelve son paginas del
+  portal de CLIENTES sobre como elaborar una remision *desde la UI* de Siigo
+  Nube, o "documento tipo S - Nota de remision" de Siigo Pyme. Hace parecer que
+  la funcionalidad esta en la API cuando esta solo en el producto.
 
-```
-account-groups, accounts-payable, cost-centers, credit-notes, customers,
-available-documents, document-types, asset-groups, fixed-assets,
-invoices (+ /annul /pdf /stamp /mail /stamp/errors), journals, payment-types,
-price-lists, products, taxes, test-balance-report, users, vouchers, warehouses
-```
+### 2.3 Lo que si existe (y confunde)
 
-**No hay recurso de remisiones.** Tampoco lo tienen los clientes de terceros
-revisados (`saulmoralespa/siigo-api-php`, `srdorado/siigo-client-php`). El repo
-oficial `siigodocs/siigo-api-docs` solo trae ejemplos de conexion, sin catalogo
-de recursos.
-
-### 2.3 Por que esto no es concluyente
-
-El SDK esta desactualizado frente a la API real: nuestro propio cliente ya
-consume `POST /v1/webhooks`, que no figura en ese listado. "No esta en el SDK"
-es evidencia fuerte, no prueba.
-
-### 2.4 Lo que si esta confirmado
-
-La remision existe como documento del producto Siigo: Siigo Nube tiene
-"Configurar remisiones" y "Elaborar remisiones"; Siigo Pyme la llama "documento
-tipo S - Nota de remision". Siigo tambien soporta el cruce remision -> factura
-desde la UI ("Elaborar factura electronica con cruce de remision").
-
-Conclusion: es funcionalidad de producto. La duda es solo si esta expuesta
-por API.
+La remision existe como documento del producto Siigo: "Configurar remisiones" y
+"Elaborar remisiones" en Siigo Nube, "documento tipo S" en Siigo Pyme, e incluso
+el cruce remision -> factura ("Elaborar factura electronica con cruce de
+remision"). Todo eso es UI. Nada de eso esta expuesto por API.
 
 ---
 
-## 3. Paso 0 (bloqueante): confirmar el endpoint
+## 3. Paso 0: CERRADO
 
-Antes de escribir una linea de codigo, cualquiera de estas tres:
-
-- **A.** Abrir `developers.siigo.com/reference` desde una maquina sin la
-  restriccion de egress y buscar "remision" / "remission" en el listado de
-  recursos.
-- **B.** Probe autenticado contra la cuenta: `GET /v1/document-types` con el
-  token real y ver si aparece un tipo de documento de remision y con que
-  `type`. Es un GET, seguro con la cuenta prestada.
-- **C.** Escribir a soporteapi@siigo.com preguntando explicitamente por (1)
-  endpoint de remisiones y (2) si el `POST /v1/invoices` acepta referenciar
-  una remision para el cruce.
-
-Criterio: si no hay endpoint, se cae la Fase 2 en adelante y aplica el Plan B.
+Era: confirmar si la API expone remisiones. Resuelto en 2.0 con el blueprint
+oficial. **No las expone.** Queda un solo pendiente opcional: correo a
+soporteapi@siigo.com para (1) confirmar que no hay nada posterior a mayo 2026 y
+(2) pedirlo como feature. No bloquea el Plan B.
 
 ---
 
-## 4. Plan A - la API soporta remisiones
+## 4. Plan A - DESCARTADO (la API no soporta remisiones)
+
+Se conserva como referencia por si Siigo publica el recurso mas adelante. Hoy
+no es ejecutable: no hay endpoint contra el cual programar.
 
 Sigue el patron ya probado de `credit_note` y `create_journal`. Referencia
 directa: `modules/invoicing/internal/app/create_credit_note.go`.
