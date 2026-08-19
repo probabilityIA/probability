@@ -539,14 +539,22 @@ export function InvoicingConfigForm({
           {formData.send_cash_receipt && isSiigo && (
             <div className="space-y-3 pl-8">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Tipo doc. Recibo (RC)</label>
-                  <input type="number" value={formData.siigo_cash_receipt_document_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_document_id: e.target.value })} placeholder="cash_receipt_document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago (Siigo)</label>
-                  <input type="number" value={formData.siigo_cash_receipt_payment_id} onChange={(e) => setFormData({ ...formData, siigo_cash_receipt_payment_id: e.target.value })} placeholder="cash_receipt_payment_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50" />
-                </div>
+                <CampoCatalogo
+                  etiqueta="Tipo doc. Recibo (RC)"
+                  requerido
+                  opciones={catalogs?.document_types_rc}
+                  valor={formData.siigo_cash_receipt_document_id}
+                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
+                  disabled={loading}
+                />
+                <CampoCatalogo
+                  etiqueta="Medio de pago (Siigo)"
+                  requerido
+                  opciones={catalogs?.payment_types_rc}
+                  valor={formData.siigo_cash_receipt_payment_id}
+                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
+                  disabled={loading}
+                />
               </div>
               <button type="button" onClick={handleFetchBankAccounts} disabled={loadingBankAccounts} className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50">
                 {loadingBankAccounts ? 'Consultando...' : 'Consultar medios de pago de Siigo'}
