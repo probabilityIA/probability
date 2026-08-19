@@ -162,6 +162,7 @@ type IUseCase interface {
 
 	CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error)
 	CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO) (*entities.Invoice, error)
+	DispatchOrderInvoicing(ctx context.Context, orderID string) (*entities.Invoice, error)
 	RegisterManualInvoice(ctx context.Context, dto *dtos.RegisterManualInvoiceDTO) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error
 	MarkInvoiceAsCancelled(ctx context.Context, dto *dtos.MarkInvoiceAsCancelledDTO) error

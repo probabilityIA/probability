@@ -10,6 +10,12 @@ import (
 func BuildCreateJournalRequest(req *dtos.CreateJournalRequest) request.SiigoJournal {
 	config := req.Config
 
+	inventoryAccount := getStringFromConfig(config, "inventory_exit_account_code", "")
+	offsetAccount := getStringFromConfig(config, "inventory_exit_offset_account_code", "")
+	if inventoryAccount != "" && offsetAccount != "" {
+		return buildInventoryExitJournal(req, config, inventoryAccount, offsetAccount)
+	}
+
 	documentID := getIntFromConfig(config, "journal_document_id", 0)
 	defaultWarehouseID := getIntFromConfig(config, "default_warehouse_id", 0)
 	defaultAccountCode := getStringFromConfig(config, "default_account_code", "")
@@ -99,6 +105,80 @@ func BuildCreateJournalRequest(req *dtos.CreateJournalRequest) request.SiigoJour
 		}
 
 		items = append(items, journalItem)
+	}
+
+	journal := request.SiigoJournal{
+		Document:     request.SiigoDocument{ID: documentID},
+		Date:         date,
+		Items:        items,
+		Observations: req.Observations,
+	}
+
+	if currency != "COP" {
+		journal.Currency = &request.SiigoCurrency{Code: currency}
+	}
+
+	return journal
+}
+
+func buildInventoryExitJournal(req *dtos.CreateJournalRequest, config map[string]interface{}, inventoryAccount, offsetAccount string) request.SiigoJournal {
+	documentID := getIntFromConfig(config, "inventory_exit_document_id", 0)
+	if documentID == 0 {
+		documentID = getIntFromConfig(config, "journal_document_id", 0)
+	}
+
+	defaultWarehouseID := getIntFromConfig(config, "inventory_exit_warehouse_id", 0)
+	if defaultWarehouseID == 0 {
+		defaultWarehouseID = getIntFromConfig(config, "default_warehouse_id", 0)
+	}
+
+	costCenter := getIntFromConfig(config, "default_cost_center", 0)
+
+	currency := req.Currency
+	if currency == "" {
+		currency = "COP"
+	}
+
+	date := req.Date
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	items := make([]request.SiigoJournalItem, 0, len(req.Items)*2)
+	for _, item := range req.Items {
+		if item.SKU == "" || item.TotalPrice == 0 {
+			continue
+		}
+
+		warehouseID := item.WarehouseID
+		if warehouseID == 0 {
+			warehouseID = defaultWarehouseID
+		}
+
+		items = append(items, request.SiigoJournalItem{
+			Account: request.SiigoJournalAccount{
+				Code:     inventoryAccount,
+				Movement: "Credit",
+			},
+			Product: &request.SiigoJournalProduct{
+				Code:      item.SKU,
+				Quantity:  item.Quantity,
+				Warehouse: warehouseID,
+			},
+			Description: item.Name,
+			Value:       item.TotalPrice,
+			CostCenter:  costCenter,
+		})
+
+		items = append(items, request.SiigoJournalItem{
+			Account: request.SiigoJournalAccount{
+				Code:     offsetAccount,
+				Movement: "Debit",
+			},
+			Description: item.Name,
+			Value:       item.TotalPrice,
+			CostCenter:  costCenter,
+		})
 	}
 
 	journal := request.SiigoJournal{
