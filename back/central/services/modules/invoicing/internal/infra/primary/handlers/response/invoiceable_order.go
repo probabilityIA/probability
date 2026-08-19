@@ -5,14 +5,14 @@ import "time"
 // InvoiceableOrder representa una orden facturable en la respuesta HTTP
 type InvoiceableOrder struct {
 	ID           string    `json:"id"`
-	BusinessID   uint      `json:"business_id"`   // Para que super admin vea de qué business es
+	BusinessID   uint      `json:"business_id"` // Para que super admin vea de qué business es
 	OrderNumber  string    `json:"order_number"`
 	CustomerName string    `json:"customer_name"`
 	TotalAmount  float64   `json:"total_amount"`
 	Currency     string    `json:"currency"`
 	CreatedAt    time.Time `json:"created_at"`
-	Status       string    `json:"status"`   // Estado interno de la orden
-	IsPaid       bool      `json:"is_paid"`  // Si la orden está pagada
+	Status       string    `json:"status"`  // Estado interno de la orden
+	IsPaid       bool      `json:"is_paid"` // Si la orden está pagada
 }
 
 // PaginatedInvoiceableOrders representa la respuesta paginada de órdenes facturables

@@ -16,19 +16,19 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		// Facturas
 		invoices := invoicing.Group("/invoices")
 		{
-			invoices.POST("", middleware.JWT(), h.CreateInvoice)                     // Crear factura (envía al proveedor)
-		invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)       // Registrar factura externa (sin proveedor)
-			invoices.GET("", middleware.JWT(), h.ListInvoices)                       // Listar facturas
-			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)                     // Obtener factura
-			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)                      // Cancelar factura
+			invoices.POST("", middleware.JWT(), h.CreateInvoice)                                // Crear factura (envía al proveedor)
+			invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)                 // Registrar factura externa (sin proveedor)
+			invoices.GET("", middleware.JWT(), h.ListInvoices)                                  // Listar facturas
+			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)                                // Obtener factura
+			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)                     // Cancelar factura
 			invoices.POST("/:id/mark-as-cancelled", middleware.JWT(), h.MarkInvoiceAsCancelled) // Marcar como cancelada (sin enviar al proveedor)
-			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)                      // Reintentar factura
-			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)           // Cancelar reintentos pendientes
-			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)              // Habilitar reintentos automáticos
-			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt) // Generar recibo de caja para factura emitida
-			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                  // Eliminar factura pendiente (3+ consultas)
-			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)   // Historial de sincronización
-			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote) // Crear nota de crédito
+			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)                       // Reintentar factura
+			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)                      // Cancelar reintentos pendientes
+			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)                         // Habilitar reintentos automáticos
+			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt)         // Generar recibo de caja para factura emitida
+			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                          // Eliminar factura pendiente (3+ consultas)
+			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)              // Historial de sincronización
+			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote)            // Crear nota de crédito
 
 			// Creación masiva de facturas
 			invoices.GET("/invoiceable-orders", middleware.JWT(), h.ListInvoiceableOrders) // Listar órdenes facturables
@@ -36,12 +36,12 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.POST("/retry-failed", middleware.JWT(), h.RetryFailedInvoices)        // Reintento masivo de fallidas (reconcilia primero)
 
 			// Comparación con proveedor (auditoría esporádica)
-			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)                          // Iniciar comparación
-			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)            // Obtener resultado de comparación
-			invoices.POST("/sync-cancellations", middleware.JWT(), h.SyncCancellations)              // Sincronizar anuladas y liberar ordenes
-			invoices.POST("/items", middleware.JWT(), h.ListItems)                                   // Comparar ítems del proveedor vs productos del sistema
-			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)             // Obtener resultado de comparación de ítems
-			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)                     // Listar cuentas bancarias del proveedor
+			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)                               // Iniciar comparación
+			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)                // Obtener resultado de comparación
+			invoices.POST("/sync-cancellations", middleware.JWT(), h.SyncCancellations)                  // Sincronizar anuladas y liberar ordenes
+			invoices.POST("/items", middleware.JWT(), h.ListItems)                                       // Comparar ítems del proveedor vs productos del sistema
+			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)                // Obtener resultado de comparación de ítems
+			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)                        // Listar cuentas bancarias del proveedor
 			invoices.GET("/bank-accounts/:correlationId", middleware.JWT(), h.GetListBankAccountsResult) // Obtener resultado de cuentas bancarias
 		}
 

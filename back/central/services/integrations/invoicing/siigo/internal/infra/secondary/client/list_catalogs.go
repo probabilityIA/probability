@@ -9,11 +9,12 @@ import (
 )
 
 type documentTypeResponse struct {
-	ID          int    `json:"id"`
-	Code        string `json:"code"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Active      bool   `json:"active"`
+	ID            int    `json:"id"`
+	Code          string `json:"code"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Active        bool   `json:"active"`
+	ElectronicTyp string `json:"electronic_type"`
 }
 
 type userResponse struct {
@@ -51,24 +52,34 @@ func (c *Client) ListDocumentTypes(ctx context.Context, credentials dtos.Credent
 		if !r.Active {
 			continue
 		}
+		detalle := r.Description
+		if r.ElectronicTyp != "" {
+			if r.ElectronicTyp == "NoElectronic" {
+				detalle = detalle + " (no electronico)"
+			} else {
+				detalle = detalle + " (electronico)"
+			}
+		}
 		items = append(items, dtos.CatalogItem{
 			ID:     r.ID,
 			Code:   r.Code,
 			Name:   r.Name,
-			Detail: r.Description,
+			Detail: detalle,
 		})
 	}
 	return items, nil
 }
 
 func (c *Client) ListSellers(ctx context.Context, credentials dtos.Credentials) ([]dtos.CatalogItem, error) {
-	var listResp []userResponse
-	if err := c.getCatalog(ctx, credentials, "/v1/users", nil, &listResp); err != nil {
+	var paged struct {
+		Results []userResponse `json:"results"`
+	}
+	if err := c.getCatalog(ctx, credentials, "/v1/users", map[string]string{"page_size": "100"}, &paged); err != nil {
 		return nil, err
 	}
 
-	items := make([]dtos.CatalogItem, 0, len(listResp))
-	for _, r := range listResp {
+	items := make([]dtos.CatalogItem, 0, len(paged.Results))
+	for _, r := range paged.Results {
 		if !r.Active {
 			continue
 		}

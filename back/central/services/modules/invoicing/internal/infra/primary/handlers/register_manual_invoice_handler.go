@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 

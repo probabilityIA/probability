@@ -67,7 +67,7 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL str
 		XMLURL:              invoice.XMLURL,
 		Metadata:            invoice.Metadata,
 		ProviderResponse:    invoice.ProviderResponse, // Incluir respuesta completa del proveedor
-		ProviderName: invoice.ProviderName,
+		ProviderName:        invoice.ProviderName,
 	}
 
 	if invoice.ProviderLogoURL != nil {
@@ -168,17 +168,23 @@ func ConfigToResponse(config *entities.InvoicingConfig, baseURL string, bucket s
 		invoicingProviderID = *config.InvoicingProviderID
 	}
 
+	var invoicingIntegrationID uint
+	if config.InvoicingIntegrationID != nil {
+		invoicingIntegrationID = *config.InvoicingIntegrationID
+	}
+
 	resp := &response.Config{
-		ID:                  config.ID,
-		CreatedAt:           config.CreatedAt,
-		UpdatedAt:           config.UpdatedAt,
-		BusinessID:          config.BusinessID,
-		IntegrationIDs:      config.IntegrationIDs,
-		InvoicingProviderID: invoicingProviderID,
-		Enabled:             config.Enabled,
-		AutoInvoice:         config.AutoInvoice,
-		Filters:             config.Filters,
-		Config:              config.InvoiceConfig,
+		ID:                     config.ID,
+		CreatedAt:              config.CreatedAt,
+		UpdatedAt:              config.UpdatedAt,
+		BusinessID:             config.BusinessID,
+		IntegrationIDs:         config.IntegrationIDs,
+		InvoicingProviderID:    invoicingProviderID,
+		InvoicingIntegrationID: invoicingIntegrationID,
+		Enabled:                config.Enabled,
+		AutoInvoice:            config.AutoInvoice,
+		Filters:                config.Filters,
+		Config:                 config.InvoiceConfig,
 	}
 
 	// Incluir nombres de relaciones si están disponibles
@@ -242,20 +248,20 @@ func CreditNoteToResponse(note *entities.CreditNote) *response.CreditNote {
 // SyncLogToResponse convierte entidad de dominio a response
 func SyncLogToResponse(log *entities.InvoiceSyncLog) response.SyncLog {
 	return response.SyncLog{
-		ID:             log.ID,
-		InvoiceID:      log.InvoiceID,
-		OperationType:  log.OperationType,
-		Status:         log.Status,
-		ErrorMessage:   log.ErrorMessage,
-		ErrorCode:      log.ErrorCode,
-		RetryCount:     log.RetryCount,
-		MaxRetries:     log.MaxRetries,
-		NextRetryAt:    log.NextRetryAt,
-		TriggeredBy:    log.TriggeredBy,
-		Duration:       log.Duration,
-		StartedAt:      log.StartedAt,
-		CompletedAt:    log.CompletedAt,
-		CreatedAt:      log.CreatedAt,
+		ID:                        log.ID,
+		InvoiceID:                 log.InvoiceID,
+		OperationType:             log.OperationType,
+		Status:                    log.Status,
+		ErrorMessage:              log.ErrorMessage,
+		ErrorCode:                 log.ErrorCode,
+		RetryCount:                log.RetryCount,
+		MaxRetries:                log.MaxRetries,
+		NextRetryAt:               log.NextRetryAt,
+		TriggeredBy:               log.TriggeredBy,
+		Duration:                  log.Duration,
+		StartedAt:                 log.StartedAt,
+		CompletedAt:               log.CompletedAt,
+		CreatedAt:                 log.CreatedAt,
 		RequestPayload:            log.RequestPayload,
 		RequestURL:                log.RequestURL,
 		ResponseStatus:            log.ResponseStatus,

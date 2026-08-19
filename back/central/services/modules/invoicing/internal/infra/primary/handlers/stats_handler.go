@@ -49,7 +49,7 @@ func (h *handler) GetSummary(c *gin.Context) {
 	}
 	if !isValid {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error":          "período inválido",
+			"error":         "período inválido",
 			"valid_periods": validPeriods,
 		})
 		return

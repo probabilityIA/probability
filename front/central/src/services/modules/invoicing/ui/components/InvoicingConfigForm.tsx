@@ -82,7 +82,11 @@ export function InvoicingConfigForm({
     : 'Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)';
 
   useEffect(() => {
-    if (!isSiigo || !invoicingIntegrationId) return;
+    if (!isSiigo) return;
+    if (!invoicingIntegrationId) {
+      setCatalogsError('No se pudo identificar la integracion de Siigo de esta configuracion');
+      return;
+    }
     let cancelado = false;
     setLoadingCatalogs(true);
     setCatalogsError(null);
