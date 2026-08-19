@@ -30,10 +30,7 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 		idType = "13"
 	}
 
-	personType := strings.ToLower(req.PersonType)
-	if personType != "person" && personType != "company" {
-		personType = "person"
-	}
+	personType := normalizeSiigoPersonType(req.PersonType)
 
 	nameParts := buildSiigoCustomerName(req.Name, personType)
 

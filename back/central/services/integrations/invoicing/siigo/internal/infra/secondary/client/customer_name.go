@@ -67,3 +67,10 @@ func buildSiigoCustomerName(raw, personType string) []string {
 		return []string{strings.Join(parts[:mid], " "), strings.Join(parts[mid:], " ")}
 	}
 }
+
+func normalizeSiigoPersonType(raw string) string {
+	if strings.EqualFold(raw, "company") {
+		return "Company"
+	}
+	return "Person"
+}

@@ -80,3 +80,22 @@ func TestCadaCampoRespetaElMaximoDeCienCaracteres(t *testing.T) {
 		}
 	}
 }
+
+func TestPersonTypeVaCapitalizadoComoElEnumDeSiigo(t *testing.T) {
+	casos := map[string]string{
+		"person":  "Person",
+		"Person":  "Person",
+		"PERSON":  "Person",
+		"":        "Person",
+		"company": "Company",
+		"Company": "Company",
+		"COMPANY": "Company",
+	}
+
+	for entrada, esperado := range casos {
+		got := normalizeSiigoPersonType(entrada)
+		if got != esperado {
+			t.Errorf("person_type %q -> %q, se esperaba %q: Siigo responde parameters_exclusive con minusculas", entrada, got, esperado)
+		}
+	}
+}

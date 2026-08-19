@@ -15,6 +15,7 @@ import {
   cancelRetryAction,
   enableRetryAction,
   retryInvoiceAction,
+  getInvoiceByIdAction,
   deletePendingInvoiceAction,
   generateCashReceiptAction,
 } from '../../infra/actions';
@@ -32,7 +33,7 @@ interface InvoiceDetailModalProps {
 }
 
 export function InvoiceDetailModal({
-  invoice,
+  invoice: invoiceProp,
   isOpen,
   onClose,
   onCancel,
@@ -41,6 +42,8 @@ export function InvoiceDetailModal({
   businessId,
 }: InvoiceDetailModalProps) {
   const { showToast } = useToast();
+  const [freshInvoice, setFreshInvoice] = useState<Invoice | null>(null);
+  const invoice = freshInvoice ?? invoiceProp;
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [cancellingRetry, setCancellingRetry] = useState(false);
@@ -84,6 +87,7 @@ export function InvoiceDetailModal({
       setRetrying(false);
       setGeneratingCashReceipt(false);
       loadSyncLogs();
+      refreshInvoice();
       onRefresh();
     }
   }, [invoice, retrying]);
@@ -96,6 +100,7 @@ export function InvoiceDetailModal({
       setRetrying(false);
       setGeneratingCashReceipt(false);
       loadSyncLogs();
+      refreshInvoice();
       onRefresh();
     }
   }, [invoice, retrying]);
@@ -107,6 +112,7 @@ export function InvoiceDetailModal({
       setRetryResult('pending_validation');
       setRetrying(false);
       loadSyncLogs();
+      refreshInvoice();
       onRefresh();
     }
   }, [invoice, retrying]);
@@ -119,15 +125,17 @@ export function InvoiceDetailModal({
   });
 
   useEffect(() => {
-    if (isOpen && invoice) {
+    if (isOpen && invoiceProp) {
+      setFreshInvoice(null);
       loadSyncLogs();
       setRetrying(false);
       setRetryProgress(0);
       setRetryResult(null);
     } else {
       setSyncLogs([]);
+      setFreshInvoice(null);
     }
-  }, [isOpen, invoice?.id]);
+  }, [isOpen, invoiceProp?.id]);
 
   // Progreso simulado mientras espera SSE
   useEffect(() => {
@@ -141,6 +149,15 @@ export function InvoiceDetailModal({
     }, 500);
     return () => clearInterval(interval);
   }, [retrying]);
+
+  const refreshInvoice = async () => {
+    if (!invoiceProp) return;
+    try {
+      setFreshInvoice(await getInvoiceByIdAction(invoiceProp.id));
+    } catch {
+      setFreshInvoice(null);
+    }
+  };
 
   const loadSyncLogs = async () => {
     if (!invoice) return;
