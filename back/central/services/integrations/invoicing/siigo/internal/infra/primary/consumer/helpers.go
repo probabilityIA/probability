@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -111,4 +112,41 @@ func defaultCustomerDNI(config map[string]interface{}) string {
 		}
 	}
 	return "222222222222"
+}
+
+func camposDeConfiguracionFaltantes(config map[string]interface{}) []string {
+	requeridos := []struct {
+		clave    string
+		etiqueta string
+	}{
+		{"document_id", "Tipo de documento (FV)"},
+		{"seller_id", "Vendedor"},
+		{"payment_method_id", "Medio de pago"},
+	}
+
+	faltantes := make([]string, 0, len(requeridos))
+	for _, r := range requeridos {
+		if getIntFromConfigMap(config, r.clave) <= 0 {
+			faltantes = append(faltantes, r.etiqueta)
+		}
+	}
+	return faltantes
+}
+
+func getIntFromConfigMap(config map[string]interface{}, key string) int {
+	switch v := config[key].(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case string:
+		n, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0
+		}
+		return n
+	}
+	return 0
 }

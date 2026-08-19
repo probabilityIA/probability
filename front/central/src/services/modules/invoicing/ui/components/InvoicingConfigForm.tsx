@@ -60,6 +60,7 @@ export function InvoicingConfigForm({
     siigo_cash_receipt_document_id: (initialData?.config?.cash_receipt_document_id as number | string) ?? '',
     siigo_cash_receipt_payment_id: (initialData?.config?.cash_receipt_payment_id as number | string) ?? '',
     siigo_credit_note_document_id: (initialData?.config?.credit_note_document_id as number | string) ?? '',
+    final_customer_when_no_id: initialData?.config?.final_customer_when_no_id ?? false,
     inventory_exit_only: initialData?.config?.inventory_exit_only ?? false,
     inventory_exit_document_id: (initialData?.config?.inventory_exit_document_id as number | string) ?? '',
     inventory_exit_account_code: (initialData?.config?.inventory_exit_account_code as string) ?? '',
@@ -175,6 +176,9 @@ export function InvoicingConfigForm({
       if (formData.siigo_tax_id) invoiceConfig.tax_id = Number(formData.siigo_tax_id);
       if (formData.siigo_seller_id) invoiceConfig.seller_id = Number(formData.siigo_seller_id);
       if (formData.siigo_credit_note_document_id) invoiceConfig.credit_note_document_id = Number(formData.siigo_credit_note_document_id);
+      if (formData.final_customer_when_no_id) {
+        invoiceConfig.final_customer_when_no_id = true;
+      }
       if (formData.inventory_exit_only) {
         invoiceConfig.inventory_exit_only = true;
         if (formData.inventory_exit_document_id) invoiceConfig.inventory_exit_document_id = Number(formData.inventory_exit_document_id);
@@ -410,6 +414,36 @@ export function InvoicingConfigForm({
           </div>
         </label>
       </div>
+
+      {isSiigo && (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.final_customer_when_no_id}
+              onChange={(e) => setFormData({ ...formData, final_customer_when_no_id: e.target.checked })}
+              disabled={loading}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar a consumidor final sin cedula</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Si la orden no trae cedula, NIT ni documento del cliente, la factura se emite al tercero generico CONSUMIDOR FINAL. Siigo exige identificacion siempre.
+              </p>
+            </div>
+          </label>
+          {!formData.final_customer_when_no_id && (
+            <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              Desactivado: las ordenes sin documento del cliente quedaran en estado Fallida, con el motivo en el historial de sincronizacion. Hay que completar el documento en la orden y reintentar.
+            </p>
+          )}
+          {formData.final_customer_when_no_id && (
+            <p className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-[11px] leading-snug text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+              Activado: esas facturas no identifican al comprador y salen a nombre de CONSUMIDOR FINAL, no del cliente real.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Facturar como Consumidor Final */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
