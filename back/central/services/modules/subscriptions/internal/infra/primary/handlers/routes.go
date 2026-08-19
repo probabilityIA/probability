@@ -10,6 +10,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	g.Use(middleware.JWT())
 	{
 		g.GET("/me", h.GetCurrentSubscription)
+		g.GET("/me/usage", h.GetMySubscriptionUsage)
 		g.POST("/purchase", h.PurchaseSubscription)
 		g.GET("/module-codes", h.GetModuleCodes)
 		g.GET("/module-catalog", h.GetModuleCatalog)

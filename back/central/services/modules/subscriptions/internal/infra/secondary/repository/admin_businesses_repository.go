@@ -149,7 +149,7 @@ func (r *Repository) countShipmentsInRange(ctx context.Context, businessID uint,
 	var count int64
 	err := r.db.Conn(ctx).Table("shipments").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
-		Where("orders.business_id = ? AND shipments.deleted_at IS NULL AND shipments.created_at BETWEEN ? AND ?", businessID, start, end).
+		Where("orders.business_id = ? AND shipments.deleted_at IS NULL AND shipments.status <> 'failed' AND shipments.created_at BETWEEN ? AND ?", businessID, start, end).
 		Count(&count).Error
 	return count, err
 }
@@ -157,7 +157,7 @@ func (r *Repository) countShipmentsInRange(ctx context.Context, businessID uint,
 func (r *Repository) countInvoicesInRange(ctx context.Context, businessID uint, start, end time.Time) (int64, error) {
 	var count int64
 	err := r.db.Conn(ctx).Table("invoices").
-		Where("business_id = ? AND deleted_at IS NULL AND created_at BETWEEN ? AND ?", businessID, start, end).
+		Where("business_id = ? AND deleted_at IS NULL AND status <> 'failed' AND created_at BETWEEN ? AND ?", businessID, start, end).
 		Count(&count).Error
 	return count, err
 }

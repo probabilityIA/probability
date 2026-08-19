@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useImperativeHandle, forwardRef } from 'react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { Spinner, Button, Modal, Alert, Input, ConfirmModal } from '@/shared/ui';
 import {
     getMySubscriptionAction,
+    getMySubscriptionUsageAction,
     registerSubscriptionPaymentAction,
     editSubscriptionDatesAction,
     disableSubscriptionAction,
@@ -29,6 +30,7 @@ import {
     updateCustomPlanAction,
     deleteCustomPlanAction,
     BusinessSubscription,
+    SubscriptionUsage,
     SubscriptionType,
     BusinessModuleOverride,
     SubscriptionAuditLog,
@@ -2322,22 +2324,102 @@ interface BusinessSubscriptionViewProps {
     isSuperAdminView?: boolean;
 }
 
+function useCountUp(value: number, active: boolean, durationMs = 700) {
+    const [display, setDisplay] = useState(active ? 0 : value);
+
+    useEffect(() => {
+        if (!active) { setDisplay(value); return; }
+        let raf = 0;
+        const start = performance.now();
+        const from = 0;
+        const tick = (now: number) => {
+            const t = Math.min(1, (now - start) / durationMs);
+            const eased = 1 - Math.pow(1 - t, 3);
+            setDisplay(Math.round(from + (value - from) * eased));
+            if (t < 1) raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [value, active, durationMs]);
+
+    return display;
+}
+
+function UsageLimitRow({ label, used, included, overagePrice, unit, animate }: {
+    label: string; used: number; included: number; overagePrice?: number; unit: string; animate: boolean;
+}) {
+    const displayUsed = useCountUp(used, animate);
+    const pct = included > 0 ? Math.min(100, Math.round((used / included) * 100)) : 0;
+    const over = used > included;
+    const extra = Math.max(0, used - included);
+    const barColor = over ? 'bg-amber-500' : pct >= 80 ? 'bg-amber-400' : 'bg-violet-500';
+
+    return (
+        <div>
+            <div className="flex items-center justify-between text-xs mb-1">
+                <span className="font-medium text-gray-700 dark:text-gray-200">{label}</span>
+                <span className={over ? 'font-semibold text-amber-600 dark:text-amber-400' : 'text-gray-400'}>
+                    {displayUsed} / {included}
+                </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                <div
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${barColor}`}
+                    style={{ width: `${animate ? pct : 0}%` }}
+                />
+            </div>
+            {over && overagePrice != null && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                    {extra} {unit}{extra === 1 ? '' : 's'} de más · {formatCurrency(overagePrice)} c/u
+                </p>
+            )}
+        </div>
+    );
+}
+
 function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }: BusinessSubscriptionViewProps = {}) {
     const [subscription, setSubscription] = useState<BusinessSubscription | null>(null);
+    const [usage, setUsage] = useState<SubscriptionUsage | null>(null);
+    const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
+    const planCatalogRef = useRef<PlanCatalogHandle>(null);
 
     const fetchSub = useCallback(async () => {
         setLoading(true);
-        const res = await getMySubscriptionAction(businessId);
-        if (res.success && res.data) setSubscription(res.data);
+        setMounted(false);
+        const [subRes, usageRes, catalogRes] = await Promise.all([
+            getMySubscriptionAction(businessId),
+            getMySubscriptionUsageAction(businessId),
+            getModuleCatalogAction(),
+        ]);
+        if (subRes.success && subRes.data) setSubscription(subRes.data);
+        if (usageRes.success && usageRes.data) setUsage(usageRes.data);
+        if (catalogRes.success && catalogRes.data) setModuleCatalog(catalogRes.data);
         setLoading(false);
     }, [businessId]);
 
     useEffect(() => { fetchSub(); }, [fetchSub]);
+    useEffect(() => {
+        if (loading) return;
+        const t = setTimeout(() => setMounted(true), 30);
+        return () => clearTimeout(t);
+    }, [loading]);
 
     if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
 
     const isExpired = !subscription || ['pending', 'expired', 'cancelled'].includes(subscription.status);
+    const moduleName = (code: string) => moduleCatalog.find((m) => m.code === code)?.name ?? code;
+
+    const limitRows = usage
+        ? [
+            { label: 'Envíos', used: usage.shipments_used, included: usage.included_shipments, overagePrice: usage.shipment_overage_price, unit: 'envío' },
+            { label: 'Facturas', used: usage.invoices_used, included: usage.included_invoices, overagePrice: usage.invoice_overage_price, unit: 'factura' },
+            { label: 'Órdenes', used: usage.orders_used, included: usage.included_orders, overagePrice: usage.order_overage_price, unit: 'orden' },
+        ].filter((r): r is typeof r & { included: number } => r.included != null)
+        : [];
+
+    const hasOverage = !!(usage?.forecasted_payment != null && subscription && usage.forecasted_payment > subscription.amount);
 
     return (
         <div className="space-y-6">
@@ -2349,7 +2431,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                 </div>
             )}
 
-            <div className={`rounded-2xl p-6 text-white ${isExpired ? 'bg-gradient-to-br from-red-500 to-red-700' : 'bg-gradient-to-br from-violet-600 to-purple-800'} shadow-lg`}>
+            <div className={`rounded-2xl p-6 text-white ${isExpired ? 'bg-gradient-to-br from-red-500 to-red-700' : 'bg-gradient-to-br from-violet-600 to-purple-800'} shadow-lg transition-all duration-500 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
                         <p className="text-white/70 text-sm font-medium uppercase tracking-wider">Estado de Suscripción</p>
@@ -2358,6 +2440,15 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                             <p className="text-white/80 text-sm mt-1">Plan: {subscription.subscription_type_name}</p>
                         )}
                     </div>
+                    {subscription && (
+                        <Button
+                            variant="secondary"
+                            className="!bg-white !text-violet-700 hover:!bg-white/90 flex-shrink-0"
+                            onClick={() => planCatalogRef.current?.openCurrentPlanPurchase()}
+                        >
+                            {isExpired ? 'Renovar ahora' : 'Pagar / Extender'}
+                        </Button>
+                    )}
                 </div>
                 {subscription && (
                     <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/20">
@@ -2371,9 +2462,90 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         </div>
                     </div>
                 )}
+                {subscription && !isExpired && (
+                    <div className="mt-4 pt-4 border-t border-white/20">
+                        <div className="flex items-center justify-between text-[11px] text-white/70 mb-1">
+                            <span>Ciclo actual</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-white/20 overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-white transition-all duration-700 ease-out"
+                                style={{ width: `${mounted ? (computeMembershipProgress(subscription.start_date, subscription.end_date)?.percent ?? 0) : 0}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
-            <PlanCatalog businessId={businessId} onPurchased={fetchSub} currentSubscription={subscription} isCurrentActive={!isExpired} />
+            {usage && !isExpired && (limitRows.length > 0 || usage.module_codes.length > 0) && (
+                <div className={`grid gap-4 md:grid-cols-2 transition-all duration-500 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                    {usage.module_codes.length > 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Módulos incluidos</h3>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                {usage.module_codes.map((m) => (
+                                    <div key={m} className="flex items-center gap-2">
+                                        <span className="w-5 h-5 rounded-full bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300 flex items-center justify-center flex-shrink-0">
+                                            <CheckIcon />
+                                        </span>
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{moduleName(m)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {limitRows.length > 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Uso de este ciclo</h3>
+                            <div className="space-y-4">
+                                {limitRows.map((r) => (
+                                    <UsageLimitRow key={r.label} {...r} animate={mounted} />
+                                ))}
+                            </div>
+
+                            {hasOverage && usage.forecasted_payment != null && (
+                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Pago pronosticado</span>
+                                    <span className="text-sm font-bold text-amber-600 dark:text-amber-400">{formatCurrency(usage.forecasted_payment)}</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {usage && !isExpired && (
+                <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 transition-all duration-500 delay-150 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Detalle del plan</h3>
+                    <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                        <div>
+                            <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Plan</p>
+                            <p className="text-base font-bold text-gray-900 dark:text-white">{usage.plan_name}</p>
+                        </div>
+                        <div>
+                            <p className="text-[11px] text-gray-400 uppercase tracking-wide mb-0.5">Precio</p>
+                            <p className="text-base font-bold text-gray-900 dark:text-white">
+                                {formatCurrency(usage.plan_price)}
+                                <span className="text-xs font-medium text-gray-400"> /{usage.billing_period === 'monthly' ? 'mes' : 'año'}</span>
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                            <span className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-800/40 text-violet-600 dark:text-violet-300 flex items-center justify-center flex-shrink-0">
+                                <ChannelsIcon />
+                            </span>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">
+                                    {usage.max_ecommerce_channels > 0 ? `Hasta ${usage.max_ecommerce_channels}` : 'Ilimitados'}
+                                </p>
+                                <p className="text-[11px] text-gray-400 leading-tight">canales de ecommerce conectados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <PlanCatalog ref={planCatalogRef} businessId={businessId} onPurchased={fetchSub} currentSubscription={subscription} isCurrentActive={!isExpired} />
         </div>
     );
 }
@@ -2405,7 +2577,11 @@ interface PlanCatalogProps {
     isCurrentActive: boolean;
 }
 
-function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentActive }: PlanCatalogProps) {
+export interface PlanCatalogHandle {
+    openCurrentPlanPurchase: () => void | Promise<void>;
+}
+
+const PlanCatalog = forwardRef<PlanCatalogHandle, PlanCatalogProps>(function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentActive }, ref) {
     const [types, setTypes] = useState<SubscriptionType[]>([]);
     const [moduleCatalog, setModuleCatalog] = useState<ModuleInfo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -2440,6 +2616,22 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
         setPurchaseModal({ open: true, type: t });
         fetchBalance();
     };
+
+    useImperativeHandle(ref, () => ({
+        openCurrentPlanPurchase: async () => {
+            const targetId = currentSubscription?.subscription_type_id;
+            if (!targetId) return;
+            let current = types.find((t) => t.id === targetId);
+            if (!current) {
+                // El plan actual puede ser uno personalizado (no vive en el catalogo publico)
+                const customRes = await listCustomPlansAction(businessId);
+                if (customRes.success && customRes.data) {
+                    current = customRes.data.find((t) => t.id === targetId);
+                }
+            }
+            if (current) openPurchaseModal(current);
+        },
+    }));
 
     const handleBuy = async () => {
         if (!purchaseModal.type) return;
@@ -2636,7 +2828,7 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
 
                     return (
                         <div className="flex flex-col">
-                            <div className="bg-gradient-to-br from-violet-600 to-purple-800 rounded-t-2xl -m-6 mb-0 px-6 pt-6 pb-5 text-white">
+                            <div className="bg-gradient-to-br from-violet-600 to-purple-800 rounded-2xl px-5 py-4 text-white shadow-lg shadow-violet-900/25 mb-5">
                                 <div className="flex items-center gap-3">
                                     <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
                                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -2652,7 +2844,7 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
                                 </div>
                             </div>
 
-                            <div className="px-6 pt-5 pb-6 space-y-4">
+                            <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Duración</label>
                                     <select value={months} onChange={(e) => setMonths(e.target.value)} className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500">
@@ -2713,14 +2905,14 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
                                     )}
                                 </div>
 
-                                <div className="flex justify-end gap-2 pt-1">
-                                    <Button variant="secondary" onClick={() => setPurchaseModal({ open: false })}>Cancelar</Button>
+                                <div className="flex justify-end gap-2.5 pt-1">
+                                    <Button variant="outline-purple" onClick={() => setPurchaseModal({ open: false })}>Cancelar</Button>
                                     {!loadingBalance && !sufficient ? (
                                         <Button variant="purple" onClick={() => handleRechargeBold(missing)} loading={rechargingBold}>
                                             Recargar con Bold
                                         </Button>
                                     ) : (
-                                        <Button variant="success" onClick={handleBuy} loading={buying} disabled={loadingBalance}>Confirmar Compra</Button>
+                                        <Button variant="purple" onClick={handleBuy} loading={buying} disabled={loadingBalance}>Confirmar Compra</Button>
                                     )}
                                 </div>
                             </div>
@@ -2752,4 +2944,5 @@ function PlanCatalog({ businessId, onPurchased, currentSubscription, isCurrentAc
             />
         </div>
     );
-}
+});
+PlanCatalog.displayName = 'PlanCatalog';

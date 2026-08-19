@@ -88,6 +88,44 @@ export interface AdminKPIs {
     mrr: number;
 }
 
+export interface SubscriptionUsage {
+    plan_name: string;
+    plan_price: number;
+    billing_period: string;
+    module_codes: string[];
+    max_ecommerce_channels: number;
+    cycle_start_date: string;
+    cycle_end_date: string;
+    included_shipments?: number;
+    shipment_overage_price?: number;
+    shipments_used: number;
+    included_invoices?: number;
+    invoice_overage_price?: number;
+    invoices_used: number;
+    included_orders?: number;
+    order_overage_price?: number;
+    orders_used: number;
+    forecasted_payment?: number;
+}
+
+export async function getMySubscriptionUsageAction(businessId?: number): Promise<{ success: boolean; data?: SubscriptionUsage; error?: string }> {
+    try {
+        const headers = await buildHeaders();
+        const url = businessId
+            ? `${env.API_BASE_URL}/subscriptions/me/usage?business_id=${businessId}`
+            : `${env.API_BASE_URL}/subscriptions/me/usage`;
+        const res = await fetch(url, {
+            headers,
+            cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        const json = await res.json();
+        return { success: true, data: json.data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
 export async function getMySubscriptionAction(businessId?: number): Promise<{ success: boolean; data?: BusinessSubscription; error?: string }> {
     try {
         const headers = await buildHeaders();

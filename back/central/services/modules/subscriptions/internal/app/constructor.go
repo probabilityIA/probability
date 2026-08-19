@@ -29,6 +29,7 @@ type IUseCase interface {
 	ListPaymentHistory(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
 	ListAuditLogs(ctx context.Context, businessID uint, limit int) ([]entities.SubscriptionAuditLog, error)
 	GetBusinessSubscription(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
+	GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
 
 	GrantOverride(ctx context.Context, dto dtos.GrantOverrideDTO) error
 	RevokeOverride(ctx context.Context, businessID uint, moduleCode string, actorUserID uint) error

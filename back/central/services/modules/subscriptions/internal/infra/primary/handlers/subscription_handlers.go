@@ -31,6 +31,26 @@ func (h *Handlers) GetCurrentSubscription(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscription(sub)})
 }
 
+func (h *Handlers) GetMySubscriptionUsage(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
+		return
+	}
+
+	usage, err := h.uc.GetSubscriptionUsage(c.Request.Context(), businessID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch subscription usage"})
+		return
+	}
+	if usage == nil {
+		c.JSON(http.StatusOK, gin.H{"data": nil})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response.FromSubscriptionUsage(usage)})
+}
+
 func (h *Handlers) RegisterPayment(c *gin.Context) {
 	if !h.requireSuperAdmin(c) {
 		return
