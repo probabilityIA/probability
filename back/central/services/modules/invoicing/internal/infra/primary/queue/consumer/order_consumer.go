@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/queue/consumer/request"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -66,18 +64,15 @@ func (c *OrderConsumer) handleOrderEvent(message []byte) error {
 		return nil
 	}
 
-	// Crear factura automáticamente
-	invoice, err := c.createInvoiceForOrder(ctx, &event)
+	invoice, err := c.useCase.DispatchOrderInvoicing(ctx, event.OrderID)
 	if err != nil {
-		// No retornar error para no hacer requeue del mensaje
-		// El sistema de reintentos de invoicing manejará los fallos
 		return nil
 	}
 
 	c.log.Info(ctx).
 		Str("order_id", event.OrderID).
 		Str("invoice_number", invoice.InvoiceNumber).
-		Msg("✅ Factura creada exitosamente")
+		Msg("Documento de facturacion creado exitosamente")
 
 	return nil
 }
@@ -92,21 +87,4 @@ func (c *OrderConsumer) shouldProcessEvent(eventType string) bool {
 	}
 
 	return relevantEvents[eventType]
-}
-
-// createInvoiceForOrder crea una factura para una orden
-func (c *OrderConsumer) createInvoiceForOrder(ctx context.Context, event *request.OrderEvent) (*entities.Invoice, error) {
-	// Preparar DTO para crear factura
-	dto := &dtos.CreateInvoiceDTO{
-		OrderID:  event.OrderID,
-		IsManual: false, // Es automático desde el consumer
-	}
-
-	// Intentar crear la factura
-	invoice, err := c.useCase.CreateInvoice(ctx, dto)
-	if err != nil {
-		return nil, err
-	}
-
-	return invoice, nil
 }

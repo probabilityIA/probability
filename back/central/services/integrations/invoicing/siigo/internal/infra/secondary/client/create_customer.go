@@ -25,22 +25,17 @@ func (c *Client) CreateCustomer(ctx context.Context, credentials dtos.Credential
 		return nil, fmt.Errorf("failed to authenticate with Siigo: %w", err)
 	}
 
-	// Construir nombre en array
-	nameParts := strings.Fields(req.Name)
-	if len(nameParts) == 0 {
-		nameParts = []string{"Sin Nombre"}
-	}
-
-	// Tipo de documento
 	idType := req.IDType
 	if idType == "" {
-		idType = "13" // CC por defecto
+		idType = "13"
 	}
 
 	personType := strings.ToLower(req.PersonType)
 	if personType != "person" && personType != "company" {
 		personType = "person"
 	}
+
+	nameParts := buildSiigoCustomerName(req.Name, personType)
 
 	customerBody := struct {
 		Type                   string                              `json:"type"`

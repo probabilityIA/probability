@@ -60,6 +60,11 @@ export function InvoicingConfigForm({
     siigo_cash_receipt_document_id: (initialData?.config?.cash_receipt_document_id as number | string) ?? '',
     siigo_cash_receipt_payment_id: (initialData?.config?.cash_receipt_payment_id as number | string) ?? '',
     siigo_credit_note_document_id: (initialData?.config?.credit_note_document_id as number | string) ?? '',
+    inventory_exit_only: initialData?.config?.inventory_exit_only ?? false,
+    inventory_exit_document_id: (initialData?.config?.inventory_exit_document_id as number | string) ?? '',
+    inventory_exit_account_code: (initialData?.config?.inventory_exit_account_code as string) ?? '',
+    inventory_exit_offset_account_code: (initialData?.config?.inventory_exit_offset_account_code as string) ?? '',
+    inventory_exit_warehouse_id: (initialData?.config?.inventory_exit_warehouse_id as number | string) ?? '',
   });
 
   const providerName = initialData?.provider_name ?? '';
@@ -170,6 +175,13 @@ export function InvoicingConfigForm({
       if (formData.siigo_tax_id) invoiceConfig.tax_id = Number(formData.siigo_tax_id);
       if (formData.siigo_seller_id) invoiceConfig.seller_id = Number(formData.siigo_seller_id);
       if (formData.siigo_credit_note_document_id) invoiceConfig.credit_note_document_id = Number(formData.siigo_credit_note_document_id);
+      if (formData.inventory_exit_only) {
+        invoiceConfig.inventory_exit_only = true;
+        if (formData.inventory_exit_document_id) invoiceConfig.inventory_exit_document_id = Number(formData.inventory_exit_document_id);
+        if (formData.inventory_exit_account_code) invoiceConfig.inventory_exit_account_code = formData.inventory_exit_account_code;
+        if (formData.inventory_exit_offset_account_code) invoiceConfig.inventory_exit_offset_account_code = formData.inventory_exit_offset_account_code;
+        if (formData.inventory_exit_warehouse_id) invoiceConfig.inventory_exit_warehouse_id = Number(formData.inventory_exit_warehouse_id);
+      }
     }
 
     if (formData.send_cash_receipt) {
@@ -298,20 +310,69 @@ export function InvoicingConfigForm({
 
       {/* Facturación automática */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <label className="flex items-center gap-3 cursor-pointer">
+        <label className={`flex items-center gap-3 ${formData.inventory_exit_only ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
           <input
             type="checkbox"
             checked={formData.auto_invoice}
-            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
-            disabled={loading}
+            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked, inventory_exit_only: e.target.checked ? false : formData.inventory_exit_only })}
+            disabled={loading || formData.inventory_exit_only}
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
             <span className="text-sm font-medium text-gray-900 dark:text-white">Facturación automática</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {formData.inventory_exit_only
+                ? 'Desactivada porque la salida de inventario sin facturar esta activa'
+                : 'Las órdenes que cumplan los filtros se facturarán automáticamente'}
+            </p>
           </div>
         </label>
       </div>
+
+      {/* Salida de inventario sin facturar */}
+      {isSiigo && (
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className={`flex items-center gap-3 ${formData.auto_invoice ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+            <input
+              type="checkbox"
+              checked={formData.inventory_exit_only}
+              onChange={(e) => setFormData({ ...formData, inventory_exit_only: e.target.checked, auto_invoice: e.target.checked ? false : formData.auto_invoice })}
+              disabled={loading || formData.auto_invoice}
+              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Salida de inventario sin facturar</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formData.auto_invoice
+                  ? 'Desactivada porque la facturación automática esta activa'
+                  : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturación automática para evitar el doble descargue.'}
+              </p>
+            </div>
+          </label>
+
+          {formData.inventory_exit_only && (
+            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo doc. Comprobante (CC)</label>
+                <input type="number" value={formData.inventory_exit_document_id} onChange={(e) => setFormData({ ...formData, inventory_exit_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bodega — opcional</label>
+                <input type="number" value={formData.inventory_exit_warehouse_id} onChange={(e) => setFormData({ ...formData, inventory_exit_warehouse_id: e.target.value })} placeholder="warehouse_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario (crédito)</label>
+                <input type="text" value={formData.inventory_exit_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_account_code: e.target.value })} placeholder="14350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida (débito)</label>
+                <input type="text" value={formData.inventory_exit_offset_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_offset_account_code: e.target.value })} placeholder="61350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
+              </div>
+              <p className="col-span-2 text-xs text-gray-400">Los códigos de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filtros de Pago */}
       {formData.auto_invoice && (
