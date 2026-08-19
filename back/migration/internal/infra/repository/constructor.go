@@ -246,5 +246,8 @@ func (r *Repository) migrateHistorico(ctx context.Context) error {
 	if err := r.migrateBusinessModuleOverrideExpiry(ctx); err != nil {
 		return err
 	}
+	if err := r.migrateTiendanubeURLs(ctx); err != nil {
+		return err
+	}
 	return r.seedCommercialProspects(ctx)
 }

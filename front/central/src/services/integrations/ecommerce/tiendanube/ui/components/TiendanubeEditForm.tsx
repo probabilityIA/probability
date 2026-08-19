@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import { Button, Input, Alert, Select, Modal, SecretInput } from '@/shared/ui';
+import { Alert, Modal, SecretInput } from '@/shared/ui';
 import { TiendanubeCredentials, TiendanubeConfig } from '../../domain/types';
-import { updateIntegrationAction, testConnectionRawAction } from '@/services/integrations/core/infra/actions';
+import { updateIntegrationAction, testConnectionRawAction, getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
@@ -12,9 +12,22 @@ import {
     Cog6ToothIcon,
     ShoppingBagIcon,
     InformationCircleIcon,
-    ArrowLeftIcon,
     CheckBadgeIcon,
 } from '@heroicons/react/24/outline';
+import {
+    GREEN,
+    GREEN_DARK,
+    GREEN_SOFT,
+    GREEN_BORDER,
+    INPUT_BORDER,
+    fieldLabel,
+    fieldHint,
+    inputCls,
+    SectionCard,
+    Spinner,
+} from '@/services/integrations/invoicing/siigo/ui/components/SiigoFormKit';
+
+const TIENDANUBE_TYPE_ID = 17;
 
 interface TiendanubeEditFormProps {
     integrationId: number;
@@ -33,11 +46,14 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
-    // Business selection for super admins
+
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
     const [businesses, setBusinesses] = useState<Array<{ id: number; name: string }>>([]);
     const [selectedBusinessId] = useState<number | null>(initialData.business_id || null);
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [logoFailed, setLogoFailed] = useState(false);
 
     const [formData, setFormData] = useState({
         name: initialData.name,
@@ -45,7 +61,19 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
         access_token: initialData.credentials?.access_token || '',
     });
 
-    // Check if user is super admin and load businesses
+    useEffect(() => {
+        let cancelled = false;
+        getActiveIntegrationTypesAction()
+            .then((res: any) => {
+                if (cancelled) return;
+                const types = res?.data || [];
+                const tiendanube = types.find((t: any) => t.id === TIENDANUBE_TYPE_ID || /tiendanube/i.test(t.code || ''));
+                if (tiendanube?.image_url) setLogoUrl(tiendanube.image_url);
+            })
+            .catch(() => { });
+        return () => { cancelled = true; };
+    }, []);
+
     useEffect(() => {
         const checkUserAndLoadBusinesses = async () => {
             const permissions = TokenStorage.getPermissions();
@@ -116,7 +144,6 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
                 config: config,
             };
 
-            // Only include credentials if they were filled in
             if (formData.access_token) {
                 const credentials: TiendanubeCredentials = {
                     access_token: formData.access_token,
@@ -140,198 +167,195 @@ export function TiendanubeEditForm({ integrationId, initialData, onSuccess, onCa
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
-            {/* Header */}
-            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                        <ShoppingBagIcon className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Editar Tiendanube E-commerce
-                    </h2>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 ml-14">
-                    Actualiza la configuracion de tu integracion con Tiendanube.
-                </p>
-            </div>
-
-            {/* Configuracion General */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200 dark:text-gray-200" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Configuracion General
-                    </h3>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        Nombre de la Integracion <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ej: Tiendanube Tienda Principal"
-                        required
-                        className="bg-white dark:bg-gray-800"
-                    />
-                </div>
-
-                {/* Business info - Read only for super admins */}
-                {isSuperAdmin && (
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                            Negocio
-                        </label>
-                        {loadingBusinesses ? (
-                            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">Cargando negocios...</span>
-                            </div>
-                        ) : (
-                            <Select
-                                value={selectedBusinessId?.toString() || ''}
-                                onChange={() => {}}
-                                options={[
-                                    { value: '', label: '-- Sin negocio asignado --' },
-                                    ...businesses.map((business) => ({
-                                        value: business.id.toString(),
-                                        label: business.name,
-                                    })),
-                                ]}
-                                className="bg-white dark:bg-gray-800"
-                                disabled={true}
+        <form onSubmit={handleSubmit} className="space-y-3 w-full" autoComplete="off">
+            <div
+                className="flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between dark:bg-gray-800/60"
+                style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}` }}
+            >
+                <div className="flex items-center gap-3">
+                    <span
+                        className="flex h-11 w-11 items-center justify-center rounded-xl overflow-hidden shrink-0 bg-white dark:bg-gray-900"
+                        style={{ border: `1px solid ${GREEN_BORDER}`, ...(logoUrl && !logoFailed ? {} : { backgroundColor: GREEN }) }}
+                    >
+                        {logoUrl && !logoFailed ? (
+                            <img
+                                src={logoUrl}
+                                alt="Tiendanube"
+                                className="h-8 w-8 object-contain"
+                                onError={() => setLogoFailed(true)}
                             />
+                        ) : (
+                            <ShoppingBagIcon className="h-6 w-6 text-white" />
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
-                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                            <span>El negocio no puede ser modificado despues de la creacion</span>
+                    </span>
+                    <div>
+                        <h2 className="text-base font-bold text-gray-900 dark:text-white leading-tight">Editar Tiendanube</h2>
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                            Actualiza la configuracion de tu integracion con Tiendanube.
                         </p>
                     </div>
-                )}
+                </div>
             </div>
 
-            {/* Credenciales */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 space-y-4 border border-blue-100">
-                <div className="flex items-center gap-2 mb-4">
-                    <KeyIcon className="w-5 h-5 text-blue-700" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Credenciales de Acceso
-                    </h3>
-                </div>
-                <p className="text-sm text-blue-900 -mt-2 mb-4 flex items-start gap-2">
-                    <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <span>
-                        Aqui se muestran las credenciales actuales. Puedes modificarlas si necesitas actualizarlas.
-                        Todos los campos deben estar completos para actualizar las credenciales.
-                    </span>
-                </p>
+            <SectionCard icon={<Cog6ToothIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Configuracion General">
+                <div className="space-y-3">
+                    <div>
+                        <label className={fieldLabel}>
+                            Nombre de la Integracion <span style={{ color: GREEN }}>*</span>
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            placeholder="Ej: Tiendanube Tienda Principal"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className={inputCls}
+                            style={{ borderColor: INPUT_BORDER }}
+                        />
+                        <p className={fieldHint}>
+                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <span>Nombre descriptivo para identificar esta integracion</span>
+                        </p>
+                    </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        Store ID
-                    </label>
-                    <Input
-                        type="text"
-                        value={formData.store_id}
-                        onChange={(e) => setFormData({ ...formData, store_id: e.target.value })}
-                        placeholder="Ej: 1234567"
-                        autoComplete="off"
-                        data-1p-ignore
-                        className="bg-white dark:bg-gray-800 text-sm"
-                    />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
-                        ID de tu tienda en Tiendanube (opcional)
-                    </p>
+                    {isSuperAdmin && (
+                        <div>
+                            <label className={fieldLabel}>Negocio</label>
+                            {loadingBusinesses ? (
+                                <div className="flex items-center gap-2 rounded-lg px-3 py-2 bg-white dark:bg-gray-800" style={{ border: `1px solid ${INPUT_BORDER}` }}>
+                                    <Spinner className="animate-spin h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
+                                </div>
+                            ) : (
+                                <select
+                                    value={selectedBusinessId?.toString() || ''}
+                                    onChange={() => { }}
+                                    disabled
+                                    className={`${inputCls} opacity-70 cursor-not-allowed`}
+                                    style={{ borderColor: INPUT_BORDER }}
+                                >
+                                    <option value="">-- Sin negocio asignado --</option>
+                                    {businesses.map((business) => (
+                                        <option key={business.id} value={business.id.toString()}>{business.name}</option>
+                                    ))}
+                                </select>
+                            )}
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>El negocio no puede ser modificado despues de la creacion</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
+            </SectionCard>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
-                        Access Token
-                    </label>
-                    <SecretInput
-                        value={formData.access_token}
-                        onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
-                        placeholder="Access Token de Tiendanube"
-                        className="bg-white dark:bg-gray-800 font-mono text-sm"
-                    />
-                </div>
+            <SectionCard icon={<KeyIcon style={{ color: GREEN, width: 16, height: 16 }} />} title="Credenciales de Acceso">
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <div>
+                            <label className={fieldLabel}>Store ID</label>
+                            <input
+                                type="text"
+                                value={formData.store_id}
+                                onChange={(e) => setFormData({ ...formData, store_id: e.target.value })}
+                                placeholder="Ej: 1234567"
+                                autoComplete="off"
+                                data-1p-ignore
+                                className={inputCls}
+                                style={{ borderColor: INPUT_BORDER }}
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>ID de tu tienda en Tiendanube (opcional)</span>
+                            </p>
+                        </div>
+                        <div>
+                            <label className={fieldLabel}>Access Token</label>
+                            <SecretInput
+                                value={formData.access_token}
+                                onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
+                                placeholder="Access Token de Tiendanube"
+                                autoComplete="off"
+                                data-1p-ignore
+                                className="w-full bg-white dark:bg-gray-800 font-mono text-sm rounded-lg"
+                            />
+                            <p className={fieldHint}>
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Dejalo como esta si no necesitas cambiarlo</span>
+                            </p>
+                        </div>
+                    </div>
 
-                {/* Test Connection Button */}
-                <div className="pt-2">
-                    <Button
+                    <button
                         type="button"
-                        variant="outline"
-                        className="w-full bg-white dark:bg-gray-800 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
                         onClick={handleTestConnection}
                         disabled={testingConnection || loading || !formData.access_token}
+                        className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold bg-white dark:bg-gray-800 disabled:opacity-50"
+                        style={{ border: `1px solid ${GREEN_BORDER}`, color: GREEN_DARK }}
                     >
                         {testingConnection ? (
                             <>
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
+                                <Spinner className="animate-spin h-4 w-4" />
                                 Probando...
                             </>
                         ) : (
                             <>
-                                <CheckBadgeIcon className="w-4 h-4 mr-2" />
+                                <CheckBadgeIcon className="w-4 h-4" />
                                 Probar Conexion
                             </>
                         )}
-                    </Button>
-                </div>
-            </div>
+                    </button>
 
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="rounded-lg p-3" style={{ backgroundColor: GREEN_SOFT, border: `1px solid ${GREEN_BORDER}` }}>
+                        <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <InformationCircleIcon className="w-4 h-4" style={{ color: GREEN }} />
+                            Como obtener tus credenciales
+                        </h4>
+                        <ol className="text-[11px] text-gray-600 dark:text-gray-300 space-y-1 list-decimal list-inside ml-1">
+                            <li>Ingresa al panel de administracion de tu tienda en <strong>Tiendanube</strong></li>
+                            <li>Ve a <strong>Aplicaciones</strong> y luego a <strong>Credenciales de API</strong></li>
+                            <li>Genera un nuevo <strong>Access Token</strong> y copialo</li>
+                        </ol>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <div className="flex flex-col-reverse gap-2.5 pt-3 border-t border-gray-100 dark:border-gray-700 sm:flex-row sm:justify-end sm:items-center">
                 {onCancel && (
-                    <Button
+                    <button
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
+                        className="px-5 py-2 text-[13px] font-semibold rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        style={{ border: `1px solid ${INPUT_BORDER}` }}
                     >
-                        <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar
-                    </Button>
+                    </button>
                 )}
-                <Button
+                <button
                     type="submit"
-                    variant="primary"
                     disabled={loading}
-                    className="min-w-[200px] bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="px-5 py-2 text-[13px] font-semibold rounded-lg text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                    style={{ backgroundColor: GREEN }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN_DARK; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = GREEN; }}
                 >
                     {loading ? (
                         <>
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <Spinner className="animate-spin h-4 w-4 text-white" />
                             Actualizando...
                         </>
                     ) : (
                         <>
-                            <CheckBadgeIcon className="w-5 h-5 mr-2" />
+                            <CheckBadgeIcon className="w-4 h-4" />
                             Actualizar Integracion
                         </>
                     )}
-                </Button>
+                </button>
             </div>
-            {/* Error Modal */}
+
             {errorModal && (
-                <Modal
-                    isOpen={!!errorModal}
-                    onClose={() => setErrorModal(null)}
-                    title="Error"
-                    size="sm"
-                >
+                <Modal isOpen={!!errorModal} onClose={() => setErrorModal(null)} title="Error" size="sm">
                     <div className="p-4">
                         <Alert type="error">{errorModal}</Alert>
                     </div>

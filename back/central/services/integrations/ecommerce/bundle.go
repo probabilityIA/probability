@@ -39,7 +39,7 @@ func New(
 	vtexProvider := vtex.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeVTEX, vtexProvider)
 
-	tiendanubeProvider := tiendanube.New(router, logger, config, rabbitMQ, integrationCore)
+	tiendanubeProvider := tiendanube.New(router, logger, config, rabbitMQ, database, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeTiendanube, tiendanubeProvider)
 
 	magentoProvider := magento.New(router, logger, config, rabbitMQ, integrationCore)

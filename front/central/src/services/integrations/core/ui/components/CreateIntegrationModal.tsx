@@ -134,6 +134,7 @@ export function CreateIntegrationModal({
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.MERCADO_LIBRE) return '4xl';
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.JUMPSELLER) return '2xl';
                 if (selectedProvider?.id === INTEGRATION_TYPE_IDS.VTEX) return '2xl';
+                if (selectedProvider?.id === INTEGRATION_TYPE_IDS.TIENDANUBE) return '2xl';
                 return 'full';
             default:
                 return '4xl';
@@ -344,6 +345,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     <TiendanubeConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 

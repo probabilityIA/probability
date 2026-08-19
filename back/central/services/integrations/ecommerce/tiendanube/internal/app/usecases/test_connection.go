@@ -2,17 +2,15 @@ package usecases
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube/internal/domain"
 )
 
-// TestConnection verifica que las credenciales de Tiendanube sean validas.
-// Extrae store_url (config) y access_token (credentials).
 func (uc *tiendanubeUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	storeURL, err := extractString(config, "store_url")
+	baseURL, err := testConnectionBaseURL(config)
 	if err != nil {
-		return domain.ErrMissingStoreURL
+		uc.logger.Error(ctx).Err(err).Msg("El tipo de integracion Tiendanube no tiene la URL configurada en base de datos")
+		return err
 	}
 
 	accessToken, err := extractString(credentials, "access_token")
@@ -20,24 +18,43 @@ func (uc *tiendanubeUseCase) TestConnection(ctx context.Context, config map[stri
 		return domain.ErrMissingAccessToken
 	}
 
-	if err := uc.client.TestConnection(ctx, storeURL, accessToken); err != nil {
-		uc.logger.Error(ctx).Err(err).Msg("Tiendanube test connection failed")
-		return fmt.Errorf("tiendanube: test connection failed: %w", err)
+	storeID := resolveStoreID(config, "")
+	if storeID == "" {
+		return domain.ErrMissingStoreID
 	}
 
-	uc.logger.Info(ctx).Msg("Tiendanube test connection successful")
+	cred := domain.Credential{
+		AccessToken: accessToken,
+		StoreID:     storeID,
+		BaseURL:     baseURL,
+		UserAgent:   optionalString(config, configUserAgent),
+	}
+
+	storeInfo, err := uc.client.GetStoreInfo(ctx, cred)
+	if err != nil {
+		uc.logger.Error(ctx).Err(err).Msg("Tiendanube test connection failed")
+		return err
+	}
+
+	uc.logger.Info(ctx).
+		Str("store_name", storeInfo.Name).
+		Str("store_url", storeInfo.URL).
+		Msg("Tiendanube test connection successful")
+
 	return nil
 }
 
-// extractString extrae un campo string de un mapa, retornando error si falta o es vacio.
-func extractString(m map[string]interface{}, key string) (string, error) {
-	v, ok := m[key]
-	if !ok {
-		return "", fmt.Errorf("missing field: %s", key)
+func testConnectionBaseURL(config map[string]interface{}) (string, error) {
+	if isTesting, _ := config["is_testing"].(bool); isTesting {
+		url, err := extractString(config, "base_url_test")
+		if err != nil {
+			return "", domain.ErrMissingBaseURLTest
+		}
+		return url, nil
 	}
-	s, ok := v.(string)
-	if !ok || s == "" {
-		return "", fmt.Errorf("field %s must be a non-empty string", key)
+	url, err := extractString(config, "base_url")
+	if err != nil {
+		return "", domain.ErrMissingBaseURL
 	}
-	return s, nil
+	return url, nil
 }

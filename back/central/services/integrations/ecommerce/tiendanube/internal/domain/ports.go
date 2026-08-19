@@ -6,23 +6,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 )
 
-// ITiendanubeClient define las operaciones del cliente HTTP de Tiendanube.
-// Implementado en infra/secondary/client.
 type ITiendanubeClient interface {
-	// TestConnection verifica que las credenciales sean validas
-	TestConnection(ctx context.Context, storeURL, accessToken string) error
+	TestConnection(ctx context.Context, cred Credential) error
+	GetStoreInfo(ctx context.Context, cred Credential) (*StoreInfo, error)
+	GetProducts(ctx context.Context, cred Credential) ([]TiendanubeProduct, error)
+	ResolveStockTarget(ctx context.Context, cred Credential, sku string) (*StockTarget, error)
+	SetVariantStock(ctx context.Context, cred Credential, productID, variantID int64, stock int) error
+	GetProductsStock(ctx context.Context, cred Credential, externalIDs []string) ([]ChannelStock, error)
+	CreateProduct(ctx context.Context, cred Credential, input CreateProductInput) (int64, int64, error)
+	UpdateProduct(ctx context.Context, cred Credential, productID int64, input UpdateProductInput) error
+	UpdateVariant(ctx context.Context, cred Credential, productID, variantID int64, input UpdateVariantInput) error
 }
 
-// IIntegrationService define las operaciones del core de integraciones
-// que el modulo de Tiendanube necesita.
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error
 }
 
-// OrderPublisher publica ordenes al canal canonico de RabbitMQ.
-// Implementado en infra/secondary/queue.
 type OrderPublisher interface {
 	Publish(ctx context.Context, order *canonical.ProbabilityOrderDTO) error
 }

@@ -23,6 +23,8 @@ func ecommerceStockPushQueue(integrationTypeCode string) (string, bool) {
 		return rabbitmq.QueueJumpsellerInventoryStockPush, true
 	case "vtex":
 		return rabbitmq.QueueVtexInventoryStockPush, true
+	case "tiendanube", "nuvemshop":
+		return rabbitmq.QueueTiendanubeInventoryStockPush, true
 	}
 	return "", false
 }

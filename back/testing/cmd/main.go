@@ -18,6 +18,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/siigo"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
+	"github.com/secamc93/probability/back/testing/integrations/tiendanube"
 	"github.com/secamc93/probability/back/testing/integrations/tiktok"
 	"github.com/secamc93/probability/back/testing/integrations/vtex"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
@@ -148,6 +149,16 @@ func main() {
 		}
 	}()
 
+	tiendanubePort := getEnv("TIENDANUBE_MOCK_PORT", "9102")
+	tiendanubeServer := tiendanube.New(logger, tiendanubePort)
+
+	go func() {
+		if err := tiendanubeServer.Start(); err != nil {
+			logger.Error().Msgf("Error starting Tiendanube mock: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
 	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
 
@@ -181,6 +192,7 @@ func main() {
 	fmt.Printf("WooCommerce HTTP:  http://localhost:%s\n", woocommercePort)
 	fmt.Printf("Jumpseller HTTP:   http://localhost:%s\n", jumpsellerPort)
 	fmt.Printf("TikTok HTTP:       http://localhost:%s\n", tiktokPort)
+	fmt.Printf("Tiendanube HTTP:   http://localhost:%s\n", tiendanubePort)
 	fmt.Printf("MercadoLibre HTTP: http://localhost:%s\n", meliPort)
 	fmt.Printf("VTEX HTTP:         http://localhost:%s\n", vtexPort)
 	fmt.Printf("Shipit HTTP:       http://localhost:%s\n", shipitPort)
