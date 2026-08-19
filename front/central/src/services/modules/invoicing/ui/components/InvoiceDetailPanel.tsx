@@ -241,10 +241,9 @@ export function InvoiceDetailModal({
 
   // Calcular estado de reintentos desde el último sync log
   const lastLog = syncLogs.length > 0 ? syncLogs[0] : null;
-  // Para pending (check_status): sin límite práctico. Para failed (retry): límite normal.
-  const maxRetriesReached = invoice?.status === 'pending'
-    ? false
-    : (lastLog ? lastLog.retry_count >= lastLog.max_retries : false);
+  const autoRetriesExhausted = invoice?.status !== 'pending' && lastLog
+    ? lastLog.retry_count >= lastLog.max_retries
+    : false;
   const retriesUsed = lastLog ? lastLog.retry_count : 0;
   const maxRetries = lastLog ? lastLog.max_retries : 3;
 
@@ -609,6 +608,12 @@ export function InvoiceDetailModal({
               </div>
             )}
 
+            {autoRetriesExhausted && (
+              <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">
+                Los reintentos automaticos se agotaron ({retriesUsed} de {maxRetries}). El reintento manual sigue disponible y se ejecuta una vez por clic.
+              </p>
+            )}
+
             {/* Acciones */}
             <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
               {invoice.status === 'failed' && !cashReceiptFailed && (
@@ -616,7 +621,7 @@ export function InvoiceDetailModal({
                   variant="primary"
                   size="sm"
                   onClick={handleRetry}
-                  disabled={retrying || maxRetriesReached}
+                  disabled={retrying}
                 >
                   {retrying ? 'Reintentando...' : 'Reintentar Factura'}
                 </Button>
@@ -626,7 +631,7 @@ export function InvoiceDetailModal({
                   variant="secondary"
                   size="sm"
                   onClick={handleRetry}
-                  disabled={retrying || maxRetriesReached}
+                  disabled={retrying}
                 >
                   {retrying ? 'Consultando...' : 'Consultar Estado DIAN'}
                 </Button>
