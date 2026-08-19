@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	siigoDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
@@ -101,4 +102,13 @@ func businessIDFromConfig(config map[string]interface{}) uint {
 		return uint(bid)
 	}
 	return 0
+}
+
+func defaultCustomerDNI(config map[string]interface{}) string {
+	if nit, ok := config["default_customer_nit"].(string); ok {
+		if trimmed := strings.TrimSpace(nit); trimmed != "" {
+			return trimmed
+		}
+	}
+	return "222222222222"
 }

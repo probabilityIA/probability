@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
@@ -209,12 +210,18 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		DNI:     request.InvoiceData.Customer.DNI,
 		Address: request.InvoiceData.Customer.Address,
 	}
-	if forceFinal, _ := ictx.Config["force_default_customer"].(bool); forceFinal {
+	forceFinal, _ := ictx.Config["force_default_customer"].(bool)
+	sinIdentificacion := strings.TrimSpace(customer.DNI) == ""
+	if forceFinal || sinIdentificacion {
 		customer = siigoDtos.CustomerData{
 			Name: "CONSUMIDOR FINAL",
-			DNI:  "222222222222",
+			DNI:  defaultCustomerDNI(ictx.Config),
 		}
-		c.log.Info(ctx).Uint("invoice_id", request.InvoiceID).Msg("Invoicing as CONSUMIDOR FINAL")
+		c.log.Info(ctx).
+			Uint("invoice_id", request.InvoiceID).
+			Bool("por_config", forceFinal).
+			Bool("por_falta_de_cedula", sinIdentificacion).
+			Msg("Facturando como CONSUMIDOR FINAL")
 	}
 
 	invoiceReq := &siigoDtos.CreateInvoiceRequest{
