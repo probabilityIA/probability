@@ -62,6 +62,15 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint, manual bool
 		if err := uc.repo.UpdateInvoice(ctx, invoice); err != nil {
 			return fmt.Errorf("invoice already has invoice_number %s but failed to fix status: %w", invoice.InvoiceNumber, err)
 		}
+		// El frontend espera el resultado por SSE, no por la respuesta HTTP del retry
+		// (este flujo es sincrono, no pasa por la cola ni por el consumer que
+		// normalmente publica estos eventos), asi que hay que emitirlos aca.
+		if err := uc.eventPublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
+			uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event")
+		}
+		if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
+			uc.log.Error(ctx).Err(err).Msg("Failed to publish SSE event")
+		}
 		return nil
 	}
 
