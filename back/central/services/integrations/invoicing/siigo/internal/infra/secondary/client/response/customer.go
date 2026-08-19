@@ -29,10 +29,10 @@ type FiscalResponsibility struct {
 }
 
 type CustomerContact struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name,omitempty"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone,omitempty"`
+	FirstName string         `json:"first_name"`
+	LastName  string         `json:"last_name,omitempty"`
+	Email     string         `json:"email"`
+	Phone     *CustomerPhone `json:"phone,omitempty"`
 }
 
 type CustomerPhone struct {
