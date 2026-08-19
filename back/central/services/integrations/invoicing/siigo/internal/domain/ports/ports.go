@@ -32,6 +32,14 @@ type ISiigoClient interface {
 
 	ListPaymentTypes(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
 
+	ListDocumentTypes(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.CatalogItem, error)
+
+	ListSellers(ctx context.Context, credentials dtos.Credentials) ([]dtos.CatalogItem, error)
+
+	ListTaxes(ctx context.Context, credentials dtos.Credentials) ([]dtos.CatalogItem, error)
+
+	ListCostCenters(ctx context.Context, credentials dtos.Credentials) ([]dtos.CatalogItem, error)
+
 	CreateCashReceipt(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
 
 	CreateCreditNote(ctx context.Context, req *dtos.CreateCreditNoteRequest) (*dtos.CreateCreditNoteResult, error)
@@ -49,6 +57,8 @@ type IInvoiceUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 
 	ListWebhooks(ctx context.Context, integrationID string) ([]dtos.WebhookItem, error)
+
+	ListCatalogs(ctx context.Context, integrationID uint) (*dtos.Catalogs, error)
 	CreateWebhooks(ctx context.Context, integrationID string, baseURL string) (*WebhookCreateResult, error)
 	DeleteWebhook(ctx context.Context, integrationID string, webhookID string) error
 	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]dtos.WebhookItem, error)

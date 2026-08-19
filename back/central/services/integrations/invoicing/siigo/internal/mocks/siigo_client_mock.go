@@ -194,3 +194,32 @@ func (m *SiigoClientMock) CreateJournal(
 	}
 	return &dtos.CreateJournalResult{}, nil
 }
+
+func (m *SiigoClientMock) ListDocumentTypes(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	documentType string,
+) ([]dtos.CatalogItem, error) {
+	return nil, nil
+}
+
+func (m *SiigoClientMock) ListSellers(
+	ctx context.Context,
+	credentials dtos.Credentials,
+) ([]dtos.CatalogItem, error) {
+	return nil, nil
+}
+
+func (m *SiigoClientMock) ListTaxes(
+	ctx context.Context,
+	credentials dtos.Credentials,
+) ([]dtos.CatalogItem, error) {
+	return nil, nil
+}
+
+func (m *SiigoClientMock) ListCostCenters(
+	ctx context.Context,
+	credentials dtos.Credentials,
+) ([]dtos.CatalogItem, error) {
+	return nil, nil
+}
