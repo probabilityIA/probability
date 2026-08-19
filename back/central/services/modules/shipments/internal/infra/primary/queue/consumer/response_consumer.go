@@ -874,9 +874,9 @@ func (c *ResponseConsumer) recalcCarrierCost(ctx context.Context, shipment *doma
 		return
 	}
 
-	carrierCode := strings.TrimSpace(strings.ToLower(realCarrier))
+	carrierCode := normalizeCarrierCode(realCarrier)
 	if carrierCode == "" && shipment.Carrier != nil {
-		carrierCode = strings.TrimSpace(strings.ToLower(*shipment.Carrier))
+		carrierCode = normalizeCarrierCode(*shipment.Carrier)
 	}
 	if carrierCode == "" {
 		return
