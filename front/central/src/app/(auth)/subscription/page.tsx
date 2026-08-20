@@ -1354,7 +1354,18 @@ function SubscriptionTypesAdminPanel() {
     };
 
     const handleSave = async () => {
-        if (!form.name || !form.price) return;
+        if (!form.name.trim()) {
+            setMessage({ type: 'error', text: 'El nombre es obligatorio' });
+            return;
+        }
+        if (!editModal.type && !form.code.trim()) {
+            setMessage({ type: 'error', text: 'El código (único) es obligatorio' });
+            return;
+        }
+        if (form.price.trim() === '' || Number.isNaN(Number(form.price)) || Number(form.price) < 0) {
+            setMessage({ type: 'error', text: 'El precio debe ser un número mayor o igual a 0' });
+            return;
+        }
 
         const includedShipments = form.included_shipments.trim() ? Number(form.included_shipments) : undefined;
         const shipmentOveragePrice = form.shipment_overage_price.trim() ? Number(form.shipment_overage_price) : undefined;
@@ -1553,6 +1564,8 @@ function SubscriptionTypesAdminPanel() {
                         </button>
                     </div>
 
+                    {message && <div className="mb-4"><Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert></div>}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                         <div className="space-y-4">
                             <div className="flex items-baseline justify-between">
@@ -1560,14 +1573,14 @@ function SubscriptionTypesAdminPanel() {
                                 <span className="text-xs text-gray-400">Cómo se cobra</span>
                             </div>
 
-                            <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                            <Input label="Nombre *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                             {!editModal.type && (
-                                <Input label="Código (único)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: pro-mensual" className="font-mono" />
+                                <Input label="Código (único) *" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: pro-mensual" className="font-mono" />
                             )}
                             <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio</label>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio *</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
                                     <input
@@ -1799,7 +1812,14 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
     };
 
     const handleSave = async () => {
-        if (!form.name || !form.price) return;
+        if (!form.name.trim()) {
+            setMessage({ type: 'error', text: 'El nombre es obligatorio' });
+            return;
+        }
+        if (form.price.trim() === '' || Number.isNaN(Number(form.price)) || Number(form.price) < 0) {
+            setMessage({ type: 'error', text: 'El precio debe ser un número mayor o igual a 0' });
+            return;
+        }
         if (!editModal.plan) {
             if (!form.business_id) {
                 setMessage({ type: 'error', text: 'Selecciona el negocio al que se atará este plan' });
@@ -2015,6 +2035,8 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                         </button>
                     </div>
 
+                    {message && <div className="mb-4"><Alert type={message.type} onClose={() => setMessage(null)}>{message.text}</Alert></div>}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                         <div className="space-y-4">
                             <div className="flex items-baseline justify-between">
@@ -2023,7 +2045,7 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Negocio</label>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Negocio *</label>
                                 <select
                                     value={form.business_id}
                                     onChange={(e) => setForm({ ...form, business_id: e.target.value })}
@@ -2037,14 +2059,14 @@ function CustomPlansAdminPanel({ businesses }: { businesses: Array<{ id: number;
                                 </select>
                             </div>
 
-                            <Input label="Nombre" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                            <Input label="Nombre *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                             {!editModal.plan && (
-                                <Input label="Código (único)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: vip-negocio-x" className="font-mono" />
+                                <Input label="Código (único) *" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="ej: vip-negocio-x" className="font-mono" />
                             )}
                             <Input label="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio</label>
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Precio *</label>
                                 <div className="relative">
                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
                                     <input
