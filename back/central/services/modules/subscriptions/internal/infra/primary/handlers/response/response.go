@@ -207,6 +207,52 @@ type AdminKPIsResponse struct {
 	MRR                     float64 `json:"mrr"`
 }
 
+type SubscriptionUsageResponse struct {
+	PlanName             string    `json:"plan_name"`
+	PlanPrice            float64   `json:"plan_price"`
+	BillingPeriod        string    `json:"billing_period"`
+	ModuleCodes          []string  `json:"module_codes"`
+	MaxEcommerceChannels int       `json:"max_ecommerce_channels"`
+	CycleStartDate       time.Time `json:"cycle_start_date"`
+	CycleEndDate         time.Time `json:"cycle_end_date"`
+
+	IncludedShipments    *int     `json:"included_shipments,omitempty"`
+	ShipmentOveragePrice *float64 `json:"shipment_overage_price,omitempty"`
+	ShipmentsUsed        int64    `json:"shipments_used"`
+
+	IncludedInvoices    *int     `json:"included_invoices,omitempty"`
+	InvoiceOveragePrice *float64 `json:"invoice_overage_price,omitempty"`
+	InvoicesUsed        int64    `json:"invoices_used"`
+
+	IncludedOrders    *int     `json:"included_orders,omitempty"`
+	OrderOveragePrice *float64 `json:"order_overage_price,omitempty"`
+	OrdersUsed        int64    `json:"orders_used"`
+
+	ForecastedPayment *float64 `json:"forecasted_payment,omitempty"`
+}
+
+func FromSubscriptionUsage(u *entities.SubscriptionUsage) SubscriptionUsageResponse {
+	return SubscriptionUsageResponse{
+		PlanName:             u.PlanName,
+		PlanPrice:            u.PlanPrice,
+		BillingPeriod:        u.BillingPeriod,
+		ModuleCodes:          u.ModuleCodes,
+		MaxEcommerceChannels: u.MaxEcommerceChannels,
+		CycleStartDate:       u.CycleStartDate,
+		CycleEndDate:         u.CycleEndDate,
+		IncludedShipments:    u.IncludedShipments,
+		ShipmentOveragePrice: u.ShipmentOveragePrice,
+		ShipmentsUsed:        u.ShipmentsUsed,
+		IncludedInvoices:     u.IncludedInvoices,
+		InvoiceOveragePrice:  u.InvoiceOveragePrice,
+		InvoicesUsed:         u.InvoicesUsed,
+		IncludedOrders:       u.IncludedOrders,
+		OrderOveragePrice:    u.OrderOveragePrice,
+		OrdersUsed:           u.OrdersUsed,
+		ForecastedPayment:    u.ForecastedPayment,
+	}
+}
+
 func FromAdminKPIs(k entities.AdminKPIs) AdminKPIsResponse {
 	return AdminKPIsResponse{
 		ActiveCount:             k.ActiveCount,

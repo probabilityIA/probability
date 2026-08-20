@@ -20,6 +20,7 @@ type RepositoryMock struct {
 
 	CreateSubscriptionAndActivateFn        func(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error
 	GetLatestByBusinessIDFn                func(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
+	GetSubscriptionUsageFn                 func(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
 	ListByBusinessIDFn                     func(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
 	GetSubscriptionByIDFn                  func(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
 	RevertSubscriptionAndRecalculateFn     func(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
@@ -99,6 +100,13 @@ func (m *RepositoryMock) CreateSubscriptionAndActivate(ctx context.Context, subs
 func (m *RepositoryMock) GetLatestByBusinessID(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error) {
 	if m.GetLatestByBusinessIDFn != nil {
 		return m.GetLatestByBusinessIDFn(ctx, businessID)
+	}
+	return nil, nil
+}
+
+func (m *RepositoryMock) GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error) {
+	if m.GetSubscriptionUsageFn != nil {
+		return m.GetSubscriptionUsageFn(ctx, businessID)
 	}
 	return nil, nil
 }

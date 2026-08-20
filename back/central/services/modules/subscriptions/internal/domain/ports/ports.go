@@ -17,6 +17,7 @@ type IRepository interface {
 
 	CreateSubscriptionAndActivate(ctx context.Context, subscription *entities.BusinessSubscription, subscriptionTypeID uint, endDate time.Time) error
 	GetLatestByBusinessID(ctx context.Context, businessID uint) (*entities.BusinessSubscription, error)
+	GetSubscriptionUsage(ctx context.Context, businessID uint) (*entities.SubscriptionUsage, error)
 	ListByBusinessID(ctx context.Context, businessID uint) ([]entities.BusinessSubscription, error)
 	GetSubscriptionByID(ctx context.Context, id uint) (*entities.BusinessSubscription, error)
 	RevertSubscriptionAndRecalculate(ctx context.Context, subscriptionID uint) (*entities.BusinessSubscription, error)
