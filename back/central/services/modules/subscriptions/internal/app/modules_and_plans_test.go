@@ -449,7 +449,6 @@ func TestCreateSubscriptionType_CamposObligatorios(t *testing.T) {
 	}{
 		{"sin nombre", dtos.CreateSubscriptionTypeDTO{Code: "pro", Price: 1000}},
 		{"sin codigo", dtos.CreateSubscriptionTypeDTO{Name: "Pro", Price: 1000}},
-		{"precio cero", dtos.CreateSubscriptionTypeDTO{Name: "Pro", Code: "pro", Price: 0}},
 		{"precio negativo", dtos.CreateSubscriptionTypeDTO{Name: "Pro", Code: "pro", Price: -1}},
 	}
 
@@ -751,7 +750,6 @@ func TestUpdateSubscriptionType_CamposObligatorios(t *testing.T) {
 		dto    dtos.UpdateSubscriptionTypeDTO
 	}{
 		{"sin nombre", dtos.UpdateSubscriptionTypeDTO{ID: 3, Price: 100}},
-		{"precio cero", dtos.UpdateSubscriptionTypeDTO{ID: 3, Name: "X", Price: 0}},
 		{"precio negativo", dtos.UpdateSubscriptionTypeDTO{ID: 3, Name: "X", Price: -5}},
 	}
 

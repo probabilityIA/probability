@@ -10,7 +10,7 @@ import (
 )
 
 func (uc *UseCase) CreateSubscriptionType(ctx context.Context, dto dtos.CreateSubscriptionTypeDTO) (*entities.SubscriptionType, error) {
-	if dto.Name == "" || dto.Code == "" || dto.Price <= 0 {
+	if dto.Name == "" || dto.Code == "" || dto.Price < 0 {
 		return nil, errs.ErrInvalidSubscriptionType
 	}
 

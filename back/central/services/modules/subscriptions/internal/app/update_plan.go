@@ -18,7 +18,7 @@ func (uc *UseCase) UpdateSubscriptionType(ctx context.Context, dto dtos.UpdateSu
 		return nil, errs.ErrSubscriptionTypeNotFound
 	}
 
-	if dto.Name == "" || dto.Price <= 0 {
+	if dto.Name == "" || dto.Price < 0 {
 		return nil, errs.ErrInvalidSubscriptionType
 	}
 
