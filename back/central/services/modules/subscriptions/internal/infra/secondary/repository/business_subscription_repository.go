@@ -222,10 +222,10 @@ func (r *Repository) ListBusinessesExpiringBetween(ctx context.Context, from, to
 		ID   uint
 		Code string
 	}
-	err := r.db.Conn(ctx).Table("businesses").
-		Select("businesses.id, subscription_types.code").
-		Joins("LEFT JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
-		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date BETWEEN ? AND ?",
+	err := r.db.Conn(ctx).Table("business").
+		Select("business.id, subscription_types.code").
+		Joins("LEFT JOIN subscription_types ON subscription_types.id = business.subscription_type_id").
+		Where("business.deleted_at IS NULL AND business.subscription_status = ? AND business.subscription_end_date BETWEEN ? AND ?",
 			entities.BusinessStatusActive, from, to).
 		Find(&rows).Error
 	if err != nil {
@@ -276,9 +276,9 @@ func (r *Repository) ListBusinessesWithEndedFreeCycle(ctx context.Context, befor
 
 func (r *Repository) ListBusinessesWithExpiredTrial(ctx context.Context, before time.Time) ([]uint, error) {
 	var businesses []models.Business
-	err := r.db.Conn(ctx).Select("businesses.id").
-		Joins("JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
-		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date < ? AND subscription_types.code = ?",
+	err := r.db.Conn(ctx).Select("business.id").
+		Joins("JOIN subscription_types ON subscription_types.id = business.subscription_type_id").
+		Where("business.deleted_at IS NULL AND business.subscription_status = ? AND business.subscription_end_date < ? AND subscription_types.code = ?",
 			entities.BusinessStatusActive, before, "trial").
 		Find(&businesses).Error
 	if err != nil {
@@ -297,10 +297,10 @@ func (r *Repository) ListBusinessesJustExpired(ctx context.Context, before time.
 		ID   uint
 		Code string
 	}
-	err := r.db.Conn(ctx).Table("businesses").
-		Select("businesses.id, subscription_types.code").
-		Joins("LEFT JOIN subscription_types ON subscription_types.id = businesses.subscription_type_id").
-		Where("businesses.deleted_at IS NULL AND businesses.subscription_status = ? AND businesses.subscription_end_date < ?",
+	err := r.db.Conn(ctx).Table("business").
+		Select("business.id, subscription_types.code").
+		Joins("LEFT JOIN subscription_types ON subscription_types.id = business.subscription_type_id").
+		Where("business.deleted_at IS NULL AND business.subscription_status = ? AND business.subscription_end_date < ?",
 			entities.BusinessStatusActive, before).
 		Find(&rows).Error
 	if err != nil {
