@@ -20,6 +20,7 @@ export function InvoicingConfigFormPage() {
   const { permissions } = usePermissions();
 
   const [selectedInvoicingIntegrationId, setSelectedInvoicingIntegrationId] = useState<number | null>(null);
+  const [proveedorSeleccionado, setProveedorSeleccionado] = useState<{ nombre: string; imagenUrl?: string } | undefined>(undefined);
   const [selectedEcommerceIntegrationIds, setSelectedEcommerceIntegrationIds] = useState<number[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [currentCategory, setCurrentCategory] = useState<string>('invoicing');
@@ -34,6 +35,8 @@ export function InvoicingConfigFormPage() {
     loading: integrationsLoading,
     setFilterCategory,
   } = useIntegrations('', effectiveBusinessId);
+
+
   const { businesses, loading: businessesLoading } = useBusinessesSimple();
 
   useEffect(() => {
@@ -147,6 +150,7 @@ export function InvoicingConfigFormPage() {
                 onClick={() => {
                   setSelectedBusinessId(null);
                   setSelectedInvoicingIntegrationId(null);
+                  setProveedorSeleccionado(undefined);
                 }}
               >
                 Cambiar negocio
@@ -180,7 +184,11 @@ export function InvoicingConfigFormPage() {
                   key={integration.id}
                   onClick={() => {
                     setSelectedInvoicingIntegrationId(integration.id);
-                    setCurrentCategory('ecommerce,platform'); // Cambiar a e-commerce + plataforma para el siguiente paso
+                    setProveedorSeleccionado({
+                      nombre: integration.integration_type?.name || integration.name || '',
+                      imagenUrl: integration.integration_type?.image_url,
+                    });
+                    setCurrentCategory('ecommerce,platform');
                   }}
                   className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all"
                 >
@@ -225,6 +233,7 @@ export function InvoicingConfigFormPage() {
               size="sm"
               onClick={() => {
                 setSelectedInvoicingIntegrationId(null);
+                setProveedorSeleccionado(undefined);
                 setSelectedEcommerceIntegrationIds([]);
                 setCurrentCategory('invoicing');
               }}
@@ -342,7 +351,7 @@ export function InvoicingConfigFormPage() {
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                 <p className="text-xs text-green-600 font-medium mb-1">PROVEEDOR DE FACTURACIÓN</p>
                 <p className="font-semibold text-gray-900 dark:text-white">
-                  {integrations.find((i) => i.id === selectedInvoicingIntegrationId)?.name}
+                  {proveedorSeleccionado?.nombre || integrations.find((i) => i.id === selectedInvoicingIntegrationId)?.name}
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                   Emitirá las facturas electrónicas
@@ -387,6 +396,7 @@ export function InvoicingConfigFormPage() {
               size="sm"
               onClick={() => {
                 setSelectedInvoicingIntegrationId(null);
+                setProveedorSeleccionado(undefined);
                 setSelectedEcommerceIntegrationIds([]);
                 setCurrentCategory('invoicing');
               }}
@@ -399,6 +409,7 @@ export function InvoicingConfigFormPage() {
             integrationIds={selectedEcommerceIntegrationIds}
             invoicingIntegrationId={selectedInvoicingIntegrationId}
             businessId={effectiveBusinessId}
+            proveedor={proveedorSeleccionado}
             onSuccess={handleSuccess}
             onCancel={handleCancel}
           />

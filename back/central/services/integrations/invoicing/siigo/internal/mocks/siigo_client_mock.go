@@ -16,6 +16,7 @@ type SiigoClientMock struct {
 	GetStampErrorsFn              func(ctx context.Context, credentials dtos.Credentials, invoiceID string) ([]dtos.StampError, error)
 	AnnulInvoiceFn                func(ctx context.Context, credentials dtos.Credentials, invoiceID string) (*dtos.AnnulInvoiceResult, error)
 	ListProductsFn                func(ctx context.Context, credentials dtos.Credentials, page, pageSize int) ([]dtos.ProductItem, error)
+	SearchProductsFn              func(ctx context.Context, credentials dtos.Credentials, termino string, limite int) ([]dtos.ProductItem, error)
 	ListWarehousesFn              func(ctx context.Context, credentials dtos.Credentials) ([]dtos.WarehouseItem, error)
 	ListPaymentTypesFn            func(ctx context.Context, credentials dtos.Credentials, documentType string) ([]dtos.PaymentTypeItem, error)
 	CreateCashReceiptFn           func(ctx context.Context, req *dtos.CreateCashReceiptRequest) (*dtos.CreateCashReceiptResult, error)
@@ -150,6 +151,18 @@ func (m *SiigoClientMock) ListProducts(
 ) ([]dtos.ProductItem, error) {
 	if m.ListProductsFn != nil {
 		return m.ListProductsFn(ctx, credentials, page, pageSize)
+	}
+	return nil, nil
+}
+
+func (m *SiigoClientMock) SearchProducts(
+	ctx context.Context,
+	credentials dtos.Credentials,
+	termino string,
+	limite int,
+) ([]dtos.ProductItem, error) {
+	if m.SearchProductsFn != nil {
+		return m.SearchProductsFn(ctx, credentials, termino, limite)
 	}
 	return nil, nil
 }

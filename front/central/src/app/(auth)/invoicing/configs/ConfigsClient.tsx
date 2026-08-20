@@ -452,7 +452,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
         isOpen={showEditModal}
         onClose={() => { setShowEditModal(false); setEditingConfig(null); }}
         title="Editar Configuración"
-        size="md"
+        size="4xl"
       >
         {editingConfig && (
           <div className="p-4">

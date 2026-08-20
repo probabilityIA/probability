@@ -126,3 +126,37 @@ export async function getSiigoCatalogsAction(integrationId: number): Promise<{ s
     }
     return { success: true, data: data.data as SiigoCatalogs };
 }
+
+export async function searchSiigoProductsAction(
+    integrationId: number,
+    termino: string,
+): Promise<{ success: boolean; message?: string; data?: SiigoCatalogItem[] }> {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('session_token')?.value;
+    const businessToken = cookieStore.get('business_token')?.value;
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+    if (businessToken) headers['X-Business-Token'] = businessToken;
+
+    const params = new URLSearchParams({ integration_id: String(integrationId), q: termino });
+
+    const response = await fetch(`${API_BASE_URL}/siigo/products/search?${params.toString()}`, {
+        method: 'GET',
+        headers,
+        cache: 'no-store',
+    });
+
+    const text = await response.text();
+    let data: any = {};
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch {
+        data = { message: text };
+    }
+
+    if (!response.ok) {
+        return { success: false, message: data.error || data.message || `Error ${response.status}` };
+    }
+    return { success: true, data: (data.data ?? []) as SiigoCatalogItem[] };
+}
