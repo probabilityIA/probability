@@ -10,16 +10,25 @@ import type { Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { getSiigoCatalogsAction, type SiigoCatalogs } from '@/services/integrations/invoicing/siigo/infra/actions';
 import { CampoCatalogo } from './CampoCatalogo';
+import { CampoServicio } from './CampoServicio';
+import { FilaSwitch } from './FilaSwitch';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
 import {
   requestListBankAccountsAction,
   getListBankAccountsResultAction,
 } from '@/services/modules/invoicing/infra/actions';
 
+interface ProveedorFacturador {
+  nombre: string;
+  imagenUrl?: string;
+}
+
 interface InvoicingConfigFormProps {
   integrationIds: number[];
   invoicingIntegrationId: number;
   businessId: number;
+  proveedor?: ProveedorFacturador;
+  alturaFija?: boolean;
   onSuccess?: () => void;
   onCancel?: () => void;
   initialData?: InvoicingConfig;
@@ -29,6 +38,8 @@ export function InvoicingConfigForm({
   integrationIds,
   invoicingIntegrationId,
   businessId,
+  proveedor,
+  alturaFija,
   onSuccess,
   onCancel,
   initialData,
@@ -50,11 +61,9 @@ export function InvoicingConfigForm({
     payment_bonus_code: (initialData?.config?.payment_bonus_code as string) ?? '',
     payment_bank_name: (initialData?.config?.payment_bank_name as string) ?? '',
     payment_account_number: (initialData?.config?.payment_account_number as string) ?? '',
-    // Item mappings
     item_mappings_shipping: (initialData?.config?.item_mappings?.shipping as string) ?? '',
     item_mappings_membership: (initialData?.config?.item_mappings?.membership as string) ?? '',
     item_mappings_tip: (initialData?.config?.item_mappings?.tip as string) ?? '',
-    // Siigo-specific ids
     siigo_document_id: (initialData?.config?.document_id as number | string) ?? '',
     siigo_payment_method_id: (initialData?.config?.payment_method_id as number | string) ?? '',
     siigo_tax_id: (initialData?.config?.tax_id as number | string) ?? '',
@@ -74,8 +83,8 @@ export function InvoicingConfigForm({
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
   const [catalogsError, setCatalogsError] = useState<string | null>(null);
 
-  const providerName = initialData?.provider_name ?? '';
-  const providerImageUrl = initialData?.provider_image_url;
+  const providerName = initialData?.provider_name ?? proveedor?.nombre ?? '';
+  const providerImageUrl = initialData?.provider_image_url ?? proveedor?.imagenUrl;
   const isSiigo = providerName.toLowerCase().includes('siigo') || (providerImageUrl ?? '').toLowerCase().includes('siigo');
   const cashReceiptDesc = isSiigo
     ? 'Registra un recibo de caja en Siigo al crear la factura'
@@ -111,7 +120,7 @@ export function InvoicingConfigForm({
        initialData?.config?.item_mappings?.tip)
   );
 
-  // Selección de integraciones de origen
+
   const initialSelected = initialData?.integration_ids?.length
     ? initialData.integration_ids
     : integrationIds;
@@ -120,12 +129,8 @@ export function InvoicingConfigForm({
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-
-  // Bank accounts state
   const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<BankAccountResult[] | null>(null);
-
-  // Cargar integraciones de origen disponibles del negocio (ecommerce + platform)
   useEffect(() => {
     if (!businessId) return;
     setLoadingIntegrations(true);
@@ -152,8 +157,6 @@ export function InvoicingConfigForm({
     try {
       const result = await requestListBankAccountsAction(businessId);
       const correlationId = result.correlation_id;
-
-      // Poll every 2 seconds for up to 30 seconds
       let attempts = 0;
       const maxAttempts = 15;
       const poll = setInterval(async () => {
@@ -166,7 +169,6 @@ export function InvoicingConfigForm({
             clearInterval(poll);
           }
         } catch {
-          // Ignore polling errors
         }
         if (attempts >= maxAttempts) {
           setLoadingBankAccounts(false);
@@ -183,7 +185,7 @@ export function InvoicingConfigForm({
     setError(null);
 
     if (selectedIntegrationIds.length === 0) {
-      setError('Debes seleccionar al menos una integración de origen de órdenes');
+      setError('Debes seleccionar al menos una integracion de origen de ordenes');
       return;
     }
 
@@ -194,8 +196,6 @@ export function InvoicingConfigForm({
     if (formData.invoice_cod) {
       filters.invoice_cod = true;
     }
-
-    // Build invoice_config with cash receipt settings
     const invoiceConfig: Record<string, any> = {};
     if (formData.force_default_customer) {
       invoiceConfig.force_default_customer = true;
@@ -242,8 +242,6 @@ export function InvoicingConfigForm({
         }
       }
     }
-
-    // Build item_mappings
     const itemMappings: Record<string, string> = {};
     if (formData.item_mappings_shipping) itemMappings.shipping = formData.item_mappings_shipping;
     if (formData.item_mappings_membership) itemMappings.membership = formData.item_mappings_membership;
@@ -263,7 +261,7 @@ export function InvoicingConfigForm({
         if (result.success) {
           onSuccess?.();
         } else {
-          setError(result.error || 'Error al actualizar configuración');
+          setError(result.error || 'Error al actualizar configuracion');
         }
       } else {
         const createData: CreateConfigDTO = {
@@ -281,7 +279,7 @@ export function InvoicingConfigForm({
         if (result.success) {
           onSuccess?.();
         } else {
-          setError(result.error || 'Error al crear la configuración');
+          setError(result.error || 'Error al crear la configuracion');
         }
       }
     } catch (err) {
@@ -289,32 +287,57 @@ export function InvoicingConfigForm({
     }
   };
 
+  const claseForm = alturaFija ? 'flex h-full min-h-0 flex-col' : 'space-y-4';
+  const claseEncabezado = alturaFija
+    ? 'shrink-0 space-y-3 border-b border-gray-200 px-6 py-4 dark:border-gray-700'
+    : 'space-y-4';
+  const claseCuerpo = alturaFija ? 'min-h-0 flex-1 overflow-y-auto px-6 py-4' : '';
+  const mostrarEncabezado = !!error || (!!providerName && !alturaFija);
+  const clasePie = alturaFija
+    ? 'shrink-0 flex items-center justify-end gap-3 border-t border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-800'
+    : 'flex items-center justify-end gap-3 pt-2 border-t';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className={claseForm}>
+      {mostrarEncabezado && (
+      <div className={claseEncabezado}>
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}
 
-      {providerName && (
-        <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-gray-800 dark:to-gray-800 p-3 rounded-lg border border-blue-100 dark:border-gray-700">
+      {providerName && !alturaFija && (
+        <div
+          className="flex items-center gap-3 p-3 rounded-lg border dark:bg-gray-800 dark:border-gray-700"
+          style={{
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, white)',
+            borderColor: 'color-mix(in srgb, var(--color-primary) 20%, white)',
+          }}>
           {providerImageUrl ? (
             <img src={providerImageUrl} alt={providerName} className="w-8 h-8 object-contain flex-shrink-0" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
+              style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, #fff)' }}>
               {providerName.charAt(0)}
             </div>
           )}
           <div className="min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400">Facturador electrónico</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Facturador electronico</p>
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{providerName}</p>
           </div>
         </div>
       )}
 
+      </div>
+      )}
+
+      <div className={claseCuerpo}>
+      <div className="grid grid-cols-1 gap-4 items-start lg:grid-cols-2">
+
       {isSiigo && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-[#fafafd] dark:bg-gray-800/60 p-4 rounded-xl border border-[#eceaf3] dark:border-gray-700 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <h4 className="text-sm font-medium text-gray-900 dark:text-white">Identificadores de Siigo</h4>
             {loadingCatalogs && <span className="text-xs text-gray-400">Cargando desde Siigo...</span>}
@@ -330,6 +353,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Tipo de documento (FV)"
               requerido
+              ayuda="La resolucion de facturacion de venta con la que la DIAN te autorizo numerar. En Siigo esta en Configuracion > Tipos de comprobante > Factura de venta."
               opciones={catalogs?.document_types_fv}
               valor={formData.siigo_document_id}
               onChange={(v) => setFormData({ ...formData, siigo_document_id: v })}
@@ -338,6 +362,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Medio de pago (factura)"
               requerido
+              ayuda="Con que forma de pago queda registrada la factura en Siigo. Es el valor por defecto: se aplica a todas las facturas de esta configuracion."
               opciones={catalogs?.payment_types_fv}
               valor={formData.siigo_payment_method_id}
               onChange={(v) => setFormData({ ...formData, siigo_payment_method_id: v })}
@@ -346,6 +371,7 @@ export function InvoicingConfigForm({
             <CampoCatalogo
               etiqueta="Vendedor"
               requerido
+              ayuda="El vendedor al que Siigo le atribuye la venta. Si manejas comisiones, elige el que corresponda a las ventas por canal digital."
               opciones={catalogs?.sellers}
               valor={formData.siigo_seller_id}
               onChange={(v) => setFormData({ ...formData, siigo_seller_id: v })}
@@ -353,6 +379,7 @@ export function InvoicingConfigForm({
             />
             <CampoCatalogo
               etiqueta="Impuesto (IVA)"
+              ayuda="Se aplica solo a los productos que en la orden ya traen impuesto. Si lo dejas vacio, las facturas salen sin IVA."
               opciones={catalogs?.taxes}
               valor={formData.siigo_tax_id}
               onChange={(v) => setFormData({ ...formData, siigo_tax_id: v })}
@@ -360,6 +387,7 @@ export function InvoicingConfigForm({
             />
             <CampoCatalogo
               etiqueta="Tipo doc. Nota Credito"
+              ayuda="Necesario para anular. Sin el, una factura ya emitida no se puede reversar desde Probability."
               opciones={catalogs?.document_types_nc}
               valor={formData.siigo_credit_note_document_id}
               onChange={(v) => setFormData({ ...formData, siigo_credit_note_document_id: v })}
@@ -369,436 +397,379 @@ export function InvoicingConfigForm({
           <p className="text-xs text-gray-400 mt-2">Se leen de la cuenta Siigo del negocio. Los tres primeros son obligatorios: sin ellos Siigo rechaza la factura.</p>
         </div>
       )}
+      <div className="bg-[#fafafd] dark:bg-gray-800/60 p-4 rounded-xl border border-[#eceaf3] dark:border-gray-700 lg:col-span-2">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Opciones de facturacion</h4>
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Que se factura, a nombre de quien y que se registra ademas de la factura.</p>
 
-      {/* Facturación automática */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <label className={`flex items-center gap-3 ${formData.inventory_exit_only ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-          <input
-            type="checkbox"
+        <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-700">
+          <FilaSwitch
+            titulo="Facturacion automatica"
+            descripcion={formData.inventory_exit_only
+              ? 'Desactivada porque la salida de inventario sin facturar esta activa'
+              : 'Las ordenes que cumplan los filtros se facturaran automaticamente'}
             checked={formData.auto_invoice}
-            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked, inventory_exit_only: e.target.checked ? false : formData.inventory_exit_only })}
+            onToggle={(v) => setFormData({ ...formData, auto_invoice: v, inventory_exit_only: v ? false : formData.inventory_exit_only })}
             disabled={loading || formData.inventory_exit_only}
-            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-          />
-          <div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturación automática</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {formData.inventory_exit_only
-                ? 'Desactivada porque la salida de inventario sin facturar esta activa'
-                : 'Las órdenes que cumplan los filtros se facturarán automáticamente'}
-            </p>
-          </div>
-        </label>
-      </div>
+          >
+            {formData.auto_invoice && (
+              <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700 sm:max-w-md">
+            <div>
+              <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Estado de pago</label>
+              <p className="mb-1 text-[11px] leading-snug text-gray-400">Que ordenes entran a la facturacion automatica segun como esten pagadas. Las contra entrega se controlan aparte, con el interruptor de mas abajo.</p>
+              <select
+                value={formData.payment_status}
+                onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+              >
+                <option value="">Sin filtro (todas las ordenes)</option>
+                <option value="paid">Solo pagadas</option>
+                <option value="unpaid">Solo sin pagar</option>
+                <option value="partial">Pago parcial</option>
+              </select>
+            </div>
+              </div>
+            )}
+          </FilaSwitch>
 
-      {/* Salida de inventario sin facturar */}
-      {isSiigo && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <label className={`flex items-center gap-3 ${formData.auto_invoice ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-            <input
-              type="checkbox"
+          {isSiigo && (
+            <FilaSwitch
+              titulo="Salida de inventario sin facturar"
+              descripcion={formData.auto_invoice
+                ? 'Desactivada porque la facturacion automatica esta activa'
+                : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturacion automatica para evitar el doble descargue.'}
               checked={formData.inventory_exit_only}
-              onChange={(e) => setFormData({ ...formData, inventory_exit_only: e.target.checked, auto_invoice: e.target.checked ? false : formData.auto_invoice })}
+              onToggle={(v) => setFormData({ ...formData, inventory_exit_only: v, auto_invoice: v ? false : formData.auto_invoice })}
               disabled={loading || formData.auto_invoice}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Salida de inventario sin facturar</span>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formData.auto_invoice
-                  ? 'Desactivada porque la facturación automática esta activa'
-                  : 'Descarga el inventario en Siigo con un comprobante contable, sin emitir factura. Excluyente con la facturación automática para evitar el doble descargue.'}
-              </p>
-            </div>
-          </label>
-
-          {formData.inventory_exit_only && (
-            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo doc. Comprobante (CC)</label>
-                <input type="number" value={formData.inventory_exit_document_id} onChange={(e) => setFormData({ ...formData, inventory_exit_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bodega — opcional</label>
-                <input type="number" value={formData.inventory_exit_warehouse_id} onChange={(e) => setFormData({ ...formData, inventory_exit_warehouse_id: e.target.value })} placeholder="warehouse_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario (crédito)</label>
-                <input type="text" value={formData.inventory_exit_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_account_code: e.target.value })} placeholder="14350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida (débito)</label>
-                <input type="text" value={formData.inventory_exit_offset_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_offset_account_code: e.target.value })} placeholder="61350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" />
-              </div>
-              <p className="col-span-2 text-xs text-gray-400">Los códigos de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Filtros de Pago */}
-      {formData.auto_invoice && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Filtros de Pago</h4>
-          <div>
-            <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Estado de pago</label>
-            <select
-              value={formData.payment_status}
-              onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
-              disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              <option value="">Sin filtro (todas las órdenes)</option>
-              <option value="paid">Solo pagadas</option>
-              <option value="unpaid">Solo sin pagar</option>
-              <option value="partial">Pago parcial</option>
-            </select>
-          </div>
-        </div>
-      )}
+            {formData.inventory_exit_only && (
+              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Tipo doc. Comprobante (CC)</label>
+                  <input type="number" value={formData.inventory_exit_document_id} onChange={(e) => setFormData({ ...formData, inventory_exit_document_id: e.target.value })} placeholder="document_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">El comprobante contable donde queda la salida. En Siigo: Configuracion &gt; Tipos de comprobante &gt; Comprobante contable.</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Bodega - opcional</label>
+                  <input type="number" value={formData.inventory_exit_warehouse_id} onChange={(e) => setFormData({ ...formData, inventory_exit_warehouse_id: e.target.value })} placeholder="warehouse_id" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">De cual bodega de Siigo se descuenta. Vacio = la bodega por defecto de la cuenta.</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cuenta de inventario (credito)</label>
+                  <input type="text" value={formData.inventory_exit_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_account_code: e.target.value })} placeholder="14350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">La cuenta del PUC de donde sale la mercancia. Suele empezar en 1435.</p>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Contrapartida (debito)</label>
+                  <input type="text" value={formData.inventory_exit_offset_account_code} onChange={(e) => setFormData({ ...formData, inventory_exit_offset_account_code: e.target.value })} placeholder="61350501" disabled={loading} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50" />
+                  <p className="mt-1 text-[11px] leading-snug text-gray-400">Contra que cuenta se registra la salida, normalmente el costo de venta (61xx). Confirmalo con tu contador.</p>
+                </div>
+                <p className="col-span-2 text-xs text-gray-400">Los codigos de cuenta los define el contador y deben existir y estar activos en Siigo.</p>
+              </div>
+            )}
+            </FilaSwitch>
+          )}
 
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+          <FilaSwitch
+            titulo="Facturar contra entrega"
+            descripcion="Permite facturar ordenes de pago contra entrega aunque no esten pagadas. Si esta desactivado, las contra entrega se bloquean."
             checked={formData.invoice_cod}
-            onChange={(e) => setFormData({ ...formData, invoice_cod: e.target.checked })}
+            onToggle={(v) => setFormData({ ...formData, invoice_cod: v })}
             disabled={loading}
-            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
-          <div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar contra entrega</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Permite facturar ordenes de pago contra entrega aunque no esten pagadas. Si esta desactivado, las contra entrega se bloquean.</p>
-          </div>
-        </label>
-      </div>
 
-      {isSiigo && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
+          {isSiigo && (
+            <FilaSwitch
+              titulo="Facturar a consumidor final sin cedula"
+              descripcion="Si la orden no trae cedula, NIT ni documento del cliente, la factura se emite al tercero generico CONSUMIDOR FINAL. Siigo exige identificacion siempre."
               checked={formData.final_customer_when_no_id}
-              onChange={(e) => setFormData({ ...formData, final_customer_when_no_id: e.target.checked })}
+              onToggle={(v) => setFormData({ ...formData, final_customer_when_no_id: v })}
               disabled={loading}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar a consumidor final sin cedula</span>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Si la orden no trae cedula, NIT ni documento del cliente, la factura se emite al tercero generico CONSUMIDOR FINAL. Siigo exige identificacion siempre.
+            >
+            {!formData.final_customer_when_no_id && (
+              <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                Desactivado: las ordenes sin documento del cliente quedaran en estado Fallida, con el motivo en el historial de sincronizacion. Hay que completar el documento en la orden y reintentar.
               </p>
-            </div>
-          </label>
-          {!formData.final_customer_when_no_id && (
-            <p className="mt-2 rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-              Desactivado: las ordenes sin documento del cliente quedaran en estado Fallida, con el motivo en el historial de sincronizacion. Hay que completar el documento en la orden y reintentar.
-            </p>
+            )}
+            {formData.final_customer_when_no_id && (
+              <p className="mt-2 rounded px-2 py-1.5 text-[11px] leading-snug" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, white)', color: 'color-mix(in srgb, var(--color-primary) 80%, black)' }}>
+                Activado: esas facturas no identifican al comprador y salen a nombre de CONSUMIDOR FINAL, no del cliente real.
+              </p>
+            )}
+            </FilaSwitch>
           )}
-          {formData.final_customer_when_no_id && (
-            <p className="mt-2 rounded bg-blue-50 px-2 py-1.5 text-[11px] leading-snug text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-              Activado: esas facturas no identifican al comprador y salen a nombre de CONSUMIDOR FINAL, no del cliente real.
-            </p>
-          )}
-        </div>
-      )}
 
-      {/* Facturar como Consumidor Final */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+          <FilaSwitch
+            titulo="Facturar como Consumidor Final"
+            descripcion="Todas las facturas se generan a nombre de CONSUMIDOR FINAL (222222222222), sin importar los datos del cliente"
             checked={formData.force_default_customer}
-            onChange={(e) => setFormData({ ...formData, force_default_customer: e.target.checked })}
+            onToggle={(v) => setFormData({ ...formData, force_default_customer: v })}
             disabled={loading}
-            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
-          <div>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar como Consumidor Final</span>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Todas las facturas se generan a nombre de CONSUMIDOR FINAL (222222222222), sin importar los datos del cliente</p>
-          </div>
-        </label>
-      </div>
 
-      {/* Recibo de Caja */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <label className="flex items-center gap-3 cursor-pointer mb-3">
-            <input
-              type="checkbox"
-              checked={formData.send_cash_receipt}
-              onChange={(e) => setFormData({ ...formData, send_cash_receipt: e.target.checked })}
-              disabled={loading}
-              className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">Enviar recibo de caja</span>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{cashReceiptDesc}</p>
-            </div>
-          </label>
-
-          {formData.send_cash_receipt && isSiigo && (
-            <div className="space-y-3 pl-8">
-              <div className="grid grid-cols-2 gap-3">
-                <CampoCatalogo
-                  etiqueta="Tipo doc. Recibo (RC)"
-                  requerido
-                  opciones={catalogs?.document_types_rc}
-                  valor={formData.siigo_cash_receipt_document_id}
-                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
-                  disabled={loading}
-                />
-                <CampoCatalogo
-                  etiqueta="Medio de pago (Siigo)"
-                  requerido
-                  opciones={catalogs?.payment_types_rc}
-                  valor={formData.siigo_cash_receipt_payment_id}
-                  onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
-                  disabled={loading}
-                />
-              </div>
-              <button type="button" onClick={handleFetchBankAccounts} disabled={loadingBankAccounts} className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50">
-                {loadingBankAccounts ? 'Consultando...' : 'Consultar medios de pago de Siigo'}
-              </button>
-              {bankAccounts && bankAccounts.length > 0 && (
-                <div className="space-y-1">
-                  {bankAccounts.map((account, idx) => (
-                    <button key={idx} type="button" onClick={() => setFormData({ ...formData, siigo_cash_receipt_payment_id: account.account_number })} className={`w-full text-left p-2 rounded text-xs border ${String(formData.siigo_cash_receipt_payment_id) === String(account.account_number) ? 'border-green-500 bg-green-50' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}>
-                      <span className="font-medium">{account.account_number}</span>
-                      <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {formData.send_cash_receipt && !isSiigo && (
-            <div className="space-y-3 pl-8">
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago</label>
-                <select
-                  value={formData.payment_type}
-                  onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                >
-                  <option value="EF">EF — Efectivo</option>
-                  <option value="TR">TR — Transferencia bancaria</option>
-                  <option value="TC">TC — Tarjeta de credito</option>
-                  <option value="TD">TD — Tarjeta de debito</option>
-                  <option value="CH">CH — Cheque</option>
-                  <option value="BN">BN — Bonos</option>
-                </select>
-              </div>
-
-              {/* TR: bankAccountId */}
-              {formData.payment_type === 'TR' && (
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria</label>
-                  <input
-                    type="text"
-                    value={formData.payment_bank_account_id}
-                    onChange={(e) => setFormData({ ...formData, payment_bank_account_id: e.target.value })}
-                    placeholder="Ej: 1"
-                    disabled={loading}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Numero de cuenta registrada en Softpymes (consultar en Utilidades → Buscar cuentas bancarias)
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleFetchBankAccounts}
-                    disabled={loadingBankAccounts}
-                    className="mt-2 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50"
-                  >
-                    {loadingBankAccounts ? 'Consultando...' : 'Consultar cuentas en Softpymes'}
-                  </button>
-
-                  {bankAccounts && bankAccounts.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {bankAccounts.map((account, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, payment_bank_account_id: account.account_number })}
-                          className={`w-full text-left p-2 rounded text-xs border ${
-                            formData.payment_bank_account_id === account.account_number
-                              ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <span className="font-medium">{account.account_number}</span>
-                          <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
-                          <span className="text-gray-400 ml-1">({account.name_type})</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* CH: accountNumber + bankName */}
-              {formData.payment_type === 'CH' && (
+          <FilaSwitch
+            titulo="Enviar recibo de caja"
+            descripcion={cashReceiptDesc}
+            checked={formData.send_cash_receipt}
+            onToggle={(v) => setFormData({ ...formData, send_cash_receipt: v })}
+            disabled={loading}
+          >
+            {formData.send_cash_receipt && isSiigo && (
+              <div className="space-y-3 pl-8">
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta</label>
-                    <input
-                      type="text"
-                      value={formData.payment_account_number}
-                      onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
-                      placeholder="Numero de cuenta"
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Nombre del banco</label>
-                    <input
-                      type="text"
-                      value={formData.payment_bank_name}
-                      onChange={(e) => setFormData({ ...formData, payment_bank_name: e.target.value })}
-                      placeholder="Ej: Bancolombia"
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TC/TD: finantialEntityId */}
-              {(formData.payment_type === 'TC' || formData.payment_type === 'TD') && (
-                <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">ID Entidad Financiera (Softpymes)</label>
-                  <input
-                    type="number"
-                    value={formData.payment_financial_entity_id}
-                    onChange={(e) => setFormData({ ...formData, payment_financial_entity_id: e.target.value })}
-                    placeholder="ID numerico de la entidad"
+                  <CampoCatalogo
+                    etiqueta="Tipo doc. Recibo (RC)"
+                    requerido
+                    ayuda="El comprobante de recibo de caja en Siigo. Es distinto del de la factura: Configuracion > Tipos de comprobante > Recibo de caja."
+                    opciones={catalogs?.document_types_rc}
+                    valor={formData.siigo_cash_receipt_document_id}
+                    onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_document_id: v })}
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  />
+                  <CampoCatalogo
+                    etiqueta="Medio de pago (Siigo)"
+                    requerido
+                    ayuda="La cuenta o caja donde entra la plata. Usa el boton de abajo para traer las cuentas reales de Siigo y elegir una."
+                    opciones={catalogs?.payment_types_rc}
+                    valor={formData.siigo_cash_receipt_payment_id}
+                    onChange={(v) => setFormData({ ...formData, siigo_cash_receipt_payment_id: v })}
+                    disabled={loading}
                   />
                 </div>
-              )}
-
-              <div className="border-t pt-3 mt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.cod_use_alternate_bank}
-                    onChange={(e) => setFormData({ ...formData, cod_use_alternate_bank: e.target.checked })}
-                    disabled={loading}
-                    className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">Usar cuenta alterna para contra entrega</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Si esta activo, el recibo de caja de las ordenes contra entrega se registra en otra cuenta bancaria.</p>
-                  </div>
-                </label>
-
-                {formData.cod_use_alternate_bank && (
-                  <div className="mt-3">
-                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria contra entrega</label>
-                    <input
-                      type="text"
-                      value={formData.cod_payment_bank_account_id}
-                      onChange={(e) => setFormData({ ...formData, cod_payment_bank_account_id: e.target.value })}
-                      placeholder="Ej: 2"
-                      disabled={loading}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Numero de cuenta registrada en Softpymes que se usara solo para ordenes contra entrega.
-                    </p>
+                <button type="button" onClick={handleFetchBankAccounts} disabled={loadingBankAccounts} className="px-3 py-1.5 text-xs font-medium rounded-md border disabled:opacity-50"
+                style={{ color: 'var(--color-primary)', borderColor: 'color-mix(in srgb, var(--color-primary) 30%, white)', backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, white)' }}>
+                  {loadingBankAccounts ? 'Consultando...' : 'Consultar medios de pago de Siigo'}
+                </button>
+                {bankAccounts && bankAccounts.length > 0 && (
+                  <div className="space-y-1">
+                    {bankAccounts.map((account, idx) => (
+                      <button key={idx} type="button" onClick={() => setFormData({ ...formData, siigo_cash_receipt_payment_id: account.account_number })} className={`w-full text-left p-2 rounded text-xs border ${String(formData.siigo_cash_receipt_payment_id) === String(account.account_number) ? 'border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_10%,white)]' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}>
+                        <span className="font-medium">{account.account_number}</span>
+                        <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
+            )}
 
-              {/* BN: code */}
-              {formData.payment_type === 'BN' && (
+            {formData.send_cash_receipt && !isSiigo && (
+              <div className="space-y-3 pl-8">
                 <div>
-                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Codigo del bono</label>
-                  <input
-                    type="text"
-                    value={formData.payment_bonus_code}
-                    onChange={(e) => setFormData({ ...formData, payment_bonus_code: e.target.value })}
-                    placeholder="Codigo identificador"
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago</label>
+                  <select
+                    value={formData.payment_type}
+                    onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
                     disabled={loading}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
-                  />
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                  >
+                    <option value="EF">EF - Efectivo</option>
+                    <option value="TR">TR - Transferencia bancaria</option>
+                    <option value="TC">TC - Tarjeta de credito</option>
+                    <option value="TD">TD - Tarjeta de debito</option>
+                    <option value="CH">CH - Cheque</option>
+                    <option value="BN">BN - Bonos</option>
+                  </select>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+                {formData.payment_type === 'TR' && (
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria</label>
+                    <input
+                      type="text"
+                      value={formData.payment_bank_account_id}
+                      onChange={(e) => setFormData({ ...formData, payment_bank_account_id: e.target.value })}
+                      placeholder="Ej: 1"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">
+                      Numero de cuenta registrada en Softpymes (consultar en Utilidades &gt; Buscar cuentas bancarias)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleFetchBankAccounts}
+                      disabled={loadingBankAccounts}
+                      className="mt-2 px-3 py-1.5 text-xs font-medium rounded-md border disabled:opacity-50"
+                    style={{ color: 'var(--color-primary)', borderColor: 'color-mix(in srgb, var(--color-primary) 30%, white)', backgroundColor: 'color-mix(in srgb, var(--color-primary) 8%, white)' }}
+                    >
+                      {loadingBankAccounts ? 'Consultando...' : 'Consultar cuentas en Softpymes'}
+                    </button>
 
-      {/* Mapeo de Servicios */}
-        <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+                    {bankAccounts && bankAccounts.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {bankAccounts.map((account, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, payment_bank_account_id: account.account_number })}
+                            className={`w-full text-left p-2 rounded text-xs border ${
+                              formData.payment_bank_account_id === account.account_number
+                                ? 'border-[var(--color-primary)] bg-[color-mix(in_srgb,var(--color-primary)_10%,white)]'
+                                : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="font-medium">{account.account_number}</span>
+                            <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
+                            <span className="text-gray-400 ml-1">({account.name_type})</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {formData.payment_type === 'CH' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta</label>
+                      <input
+                        type="text"
+                        value={formData.payment_account_number}
+                        onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
+                        placeholder="Numero de cuenta"
+                        disabled={loading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Nombre del banco</label>
+                      <input
+                        type="text"
+                        value={formData.payment_bank_name}
+                        onChange={(e) => setFormData({ ...formData, payment_bank_name: e.target.value })}
+                        placeholder="Ej: Bancolombia"
+                        disabled={loading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                )}
+                {(formData.payment_type === 'TC' || formData.payment_type === 'TD') && (
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">ID Entidad Financiera (Softpymes)</label>
+                    <input
+                      type="number"
+                      value={formData.payment_financial_entity_id}
+                      onChange={(e) => setFormData({ ...formData, payment_financial_entity_id: e.target.value })}
+                      placeholder="ID numerico de la entidad"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                    />
+                  </div>
+                )}
+
+                <div className="border-t pt-1 mt-2">
+                  <FilaSwitch
+                    titulo="Usar cuenta alterna para contra entrega"
+                    descripcion="Si esta activo, el recibo de caja de las ordenes contra entrega se registra en otra cuenta bancaria."
+                    checked={formData.cod_use_alternate_bank}
+                    onToggle={(v) => setFormData({ ...formData, cod_use_alternate_bank: v })}
+                    disabled={loading}
+                  />
+
+                  {formData.cod_use_alternate_bank && (
+                    <div className="mt-3">
+                      <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria contra entrega</label>
+                      <input
+                        type="text"
+                        value={formData.cod_payment_bank_account_id}
+                        onChange={(e) => setFormData({ ...formData, cod_payment_bank_account_id: e.target.value })}
+                        placeholder="Ej: 2"
+                        disabled={loading}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Numero de cuenta registrada en Softpymes que se usara solo para ordenes contra entrega.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {formData.payment_type === 'BN' && (
+                  <div>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Codigo del bono</label>
+                    <input
+                      type="text"
+                      value={formData.payment_bonus_code}
+                      onChange={(e) => setFormData({ ...formData, payment_bonus_code: e.target.value })}
+                      placeholder="Codigo identificador"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </FilaSwitch>
+        </div>
+      </div>
+
+      
+        <div className="bg-[#fafafd] dark:bg-gray-800/60 p-4 rounded-xl border border-[#eceaf3] dark:border-gray-700 lg:col-span-2">
           <div className="flex items-center justify-between">
             <div>
               <span className="text-sm font-medium text-gray-900 dark:text-white">Mapeo de servicios</span>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Probability traduce internamente conceptos como envío, membresía y propina. Aquí defines con qué código se facturan.
+                Probability traduce internamente conceptos como envio, membresia y propina. Aqui defines con que codigo se facturan.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowItemMappings(!showItemMappings)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ml-4 ${showItemMappings ? 'bg-purple-500' : 'bg-gray-200'}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ml-4 ${showItemMappings ? '' : 'bg-gray-200'}`}
+              style={{ backgroundColor: showItemMappings ? 'var(--color-primary)' : undefined }}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${showItemMappings ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
 
           {showItemMappings && (
-            <div className="space-y-3 mt-4">
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Envío</label>
-                <input
-                  type="text"
-                  value={formData.item_mappings_shipping}
-                  onChange={(e) => setFormData({ ...formData, item_mappings_shipping: e.target.value })}
-                  placeholder="Ej: SE02001 (vacío = SHIPPING)"
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-                />
-                <p className="text-xs text-gray-400 mt-1">Código con el que se factura el costo de envío</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Membresía</label>
-                <input
-                  type="text"
-                  value={formData.item_mappings_membership}
-                  onChange={(e) => setFormData({ ...formData, item_mappings_membership: e.target.value })}
-                  placeholder="Ej: SE01001"
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-                />
-                <p className="text-xs text-gray-400 mt-1">Código con el que se facturan las membresías</p>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Propina</label>
-                <input
-                  type="text"
-                  value={formData.item_mappings_tip}
-                  onChange={(e) => setFormData({ ...formData, item_mappings_tip: e.target.value })}
-                  placeholder="Ej: SE03001"
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
-                />
-                <p className="text-xs text-gray-400 mt-1">Código con el que se facturan las propinas</p>
+            <div className="mt-4 space-y-3">
+              <p className="rounded bg-amber-50 px-2 py-1.5 text-[11px] leading-snug text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                {isSiigo
+                  ? 'Busca por nombre o codigo la cuenta que ya tienes creada en tu facturador. Lo recomendado es que sea un servicio dedicado al flete. Si el codigo no existe alla, el facturador rechaza la factura completa, no solo esa linea.'
+                  : 'Estos codigos tienen que existir antes en tu facturador, creados como producto de tipo servicio. No los creamos nosotros. Si el codigo no existe, el facturador rechaza la factura completa, no solo esa linea.'}
+              </p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <CampoServicio
+                etiqueta="Servicio de Envio"
+                valor={formData.item_mappings_shipping}
+                onChange={(v) => setFormData({ ...formData, item_mappings_shipping: v })}
+                disabled={loading}
+                placeholder="Ej: SE02001"
+                ayuda="El costo del envio se factura como una linea aparte, con este codigo y cantidad 1. Se agrega sola cuando la orden trae flete."
+                advertencia="Sin elegir: mandaremos el codigo literal SHIPPING. Si no existe un servicio con ese codigo exacto, toda orden con envio va a fallar al facturar."
+                integrationId={invoicingIntegrationId}
+                buscable={isSiigo}
+              />
+              <CampoServicio
+                etiqueta="Servicio de Membresia"
+                valor={formData.item_mappings_membership}
+                onChange={(v) => setFormData({ ...formData, item_mappings_membership: v })}
+                disabled={loading}
+                placeholder="Ej: SE01001"
+                ayuda="Solo aplica si vendes membresias o suscripciones. Si no las manejas, dejalo vacio."
+                integrationId={invoicingIntegrationId}
+                buscable={isSiigo}
+              />
+              <CampoServicio
+                etiqueta="Servicio de Propina"
+                valor={formData.item_mappings_tip}
+                onChange={(v) => setFormData({ ...formData, item_mappings_tip: v })}
+                disabled={loading}
+                placeholder="Ej: SE03001"
+                ayuda="Solo aplica si tus ordenes traen propina. Si no las manejas, dejalo vacio."
+                integrationId={invoicingIntegrationId}
+                buscable={isSiigo}
+              />
               </div>
             </div>
           )}
         </div>
-
-      {/* Integraciones de origen de órdenes */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="bg-[#fafafd] dark:bg-gray-800/60 p-4 rounded-xl border border-[#eceaf3] dark:border-gray-700 lg:col-span-2">
         <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-          Fuentes de órdenes
+          Fuentes de ordenes
         </h4>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          Selecciona las integraciones desde las cuales se facturarán las órdenes
+          Selecciona las integraciones desde las cuales se facturaran las ordenes
         </p>
 
         {loadingIntegrations ? (
@@ -817,7 +788,7 @@ export function InvoicingConfigForm({
                   checked={selectedIntegrationIds.includes(integration.id)}
                   onChange={() => toggleIntegration(integration.id)}
                   disabled={loading}
-                  className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                  className="w-4 h-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)] disabled:opacity-50"
                 />
                 <div className="flex items-center gap-2 min-w-0">
                   {integration.integration_type?.image_url && (
@@ -837,9 +808,11 @@ export function InvoicingConfigForm({
           </div>
         )}
       </div>
+      </div>
 
-      {/* Acciones */}
-      <div className="flex items-center gap-3 pt-2 border-t">
+      </div>
+
+      <div className={clasePie}>
         {onCancel && (
           <button
             type="button"
@@ -853,9 +826,10 @@ export function InvoicingConfigForm({
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ backgroundColor: 'var(--color-primary)', color: 'var(--color-on-primary, #fff)' }}
         >
-          {loading ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear Configuración'}
+          {loading ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear Configuracion'}
         </button>
       </div>
     </form>

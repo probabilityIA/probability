@@ -29,6 +29,7 @@ type AnnulInvoiceResult struct {
 type ProductItem struct {
 	ID                string
 	Code              string
+	Type              string
 	Barcode           string
 	Name              string
 	Description       string

@@ -39,5 +39,6 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		group.POST("/webhook", h.HandleWebhook)
 		group.GET("/catalogs", middleware.JWT(), h.ListCatalogs)
+		group.GET("/products/search", middleware.JWT(), h.SearchProducts)
 	}
 }

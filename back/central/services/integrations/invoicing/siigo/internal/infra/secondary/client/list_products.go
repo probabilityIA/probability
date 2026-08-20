@@ -17,6 +17,7 @@ type listProductsResponse struct {
 	Results []struct {
 		ID          string `json:"id"`
 		Code        string `json:"code"`
+		Type        string `json:"type"`
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Prices      []struct {
@@ -100,6 +101,7 @@ func (c *Client) ListProducts(ctx context.Context, credentials dtos.Credentials,
 		items = append(items, dtos.ProductItem{
 			ID:                r.ID,
 			Code:              r.Code,
+			Type:              r.Type,
 			Name:              r.Name,
 			Description:       r.Description,
 			Barcode:           r.AdditionalFields.Barcode,

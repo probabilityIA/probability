@@ -9,6 +9,7 @@ interface CampoCatalogoProps {
   onChange: (valor: string) => void;
   disabled?: boolean;
   requerido?: boolean;
+  ayuda?: string;
 }
 
 export function CampoCatalogo({
@@ -18,9 +19,10 @@ export function CampoCatalogo({
   onChange,
   disabled,
   requerido,
+  ayuda,
 }: CampoCatalogoProps) {
   const clases =
-    'w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50';
+    'w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:opacity-50';
   const faltante = requerido && !valor;
   const borde = faltante ? 'border-amber-400' : 'border-gray-300';
 
@@ -30,7 +32,7 @@ export function CampoCatalogo({
     <div>
       <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">
         {etiqueta}
-        {requerido ? <span className="text-amber-600"> *</span> : <span className="text-gray-400"> — opcional</span>}
+        {requerido ? <span className="text-amber-600"> *</span> : <span className="text-gray-400"> - opcional</span>}
       </label>
 
       {sinCatalogo ? (
@@ -54,11 +56,13 @@ export function CampoCatalogo({
             <option key={o.id} value={o.id}>
               {o.name}
               {o.percent ? ` (${o.percent}%)` : ''}
-              {o.detail && !o.percent ? ` — ${o.detail}` : ''}
+              {o.detail && !o.percent ? ` - ${o.detail}` : ''}
             </option>
           ))}
         </select>
       )}
+
+      {ayuda && <p className="mt-1 text-[11px] leading-snug text-gray-400">{ayuda}</p>}
     </div>
   );
 }

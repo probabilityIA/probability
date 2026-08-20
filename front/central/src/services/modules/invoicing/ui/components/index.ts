@@ -11,3 +11,4 @@ export { MultiSelect } from './MultiSelect';
 
 // Componente de creación masiva de facturas
 export { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
+export { FilaSwitch } from './FilaSwitch';
