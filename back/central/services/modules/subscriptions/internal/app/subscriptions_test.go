@@ -33,7 +33,7 @@ func timePtr(v time.Time) *time.Time { return &v }
 
 func planActivo(price float64) *entities.SubscriptionType {
 	return &entities.SubscriptionType{
-		ID: 3, Name: "Pro", Code: "pro", Price: price, Active: true,
+		ID: 3, Name: "Pro", Code: "pro", Price: price, Active: true, Payable: true,
 		ModuleCodes: []string{"orders", "shipments"}, MaxEcommerceChannels: 5,
 	}
 }

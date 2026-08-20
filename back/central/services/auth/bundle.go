@@ -21,7 +21,8 @@ import (
 // Este bundle coordina la inicialización de todos los submódulos de auth
 // (login, permissions, roles, users, business, actions, resources)
 type Bundle struct {
-	Demo *demo.Bundle
+	Demo     *demo.Bundle
+	Business *business.Bundle
 }
 
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3Service storage.IS3Service, queue rabbitmq.IQueue) *Bundle {
@@ -41,7 +42,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	users.New(router, database, logger, environment, s3Service)
 
 	// Inicializar módulo de business
-	business.New(router, database, logger, environment, s3Service)
+	businessBundle := business.New(router, database, logger, environment, s3Service)
 
 	// Inicializar módulo de actions
 	actions.New(database, logger, router)
@@ -49,5 +50,5 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de resources
 	resources.New(database, logger, router)
 
-	return &Bundle{Demo: demoBundle}
+	return &Bundle{Demo: demoBundle, Business: businessBundle}
 }

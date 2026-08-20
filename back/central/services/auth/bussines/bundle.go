@@ -1,6 +1,8 @@
 package business
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/app/usecasebusiness"
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/app/usecasebusinesstype"
@@ -13,8 +15,16 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
+type Bundle struct {
+	UseCase usecasebusiness.IUseCaseBusiness
+}
+
+func (b *Bundle) SetOnBusinessCreated(hook func(ctx context.Context, businessID uint)) {
+	b.UseCase.SetOnBusinessCreated(hook)
+}
+
 // New inicializa el módulo de business
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, cfg env.IConfig, s3Service domain.IS3Service) {
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, cfg env.IConfig, s3Service domain.IS3Service) *Bundle {
 	// 1. Inicializar Repositorio
 	repo := repository.New(db, logger)
 
@@ -29,4 +39,6 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, cfg env.I
 	// 4. Registrar Rutas
 	businessH.RegisterRoutes(router, businessH)
 	businesstypehandler.RegisterRoutes(router, businessTypeH)
+
+	return &Bundle{UseCase: businessUC}
 }

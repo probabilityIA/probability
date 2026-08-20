@@ -79,7 +79,7 @@ func (m *RepositoryMock) GetSubscriptionType(ctx context.Context, id uint) (*ent
 	if m.GetSubscriptionTypeFn != nil {
 		return m.GetSubscriptionTypeFn(ctx, id)
 	}
-	return &entities.SubscriptionType{ID: id, Active: true, Price: 100}, nil
+	return &entities.SubscriptionType{ID: id, Active: true, Payable: true, Price: 100}, nil
 }
 
 func (m *RepositoryMock) GetSubscriptionTypeByCode(ctx context.Context, code string) (*entities.SubscriptionType, error) {

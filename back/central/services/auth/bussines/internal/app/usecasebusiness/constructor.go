@@ -20,13 +20,15 @@ type IUseCaseBusiness interface {
 	ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error
 	GetFiscalProfile(ctx context.Context, businessID uint) (*domain.FiscalProfile, error)
 	UpsertFiscalProfile(ctx context.Context, profile *domain.FiscalProfile) (*domain.FiscalProfile, error)
+	SetOnBusinessCreated(hook func(ctx context.Context, businessID uint))
 }
 
 type BusinessUseCase struct {
-	repository domain.IBusinessRepository
-	log        log.ILogger
-	s3         domain.IS3Service
-	env        env.IConfig
+	repository        domain.IBusinessRepository
+	log               log.ILogger
+	s3                domain.IS3Service
+	env               env.IConfig
+	onBusinessCreated func(ctx context.Context, businessID uint)
 }
 
 func New(repository domain.IBusinessRepository, log log.ILogger, s3 domain.IS3Service, env env.IConfig) IUseCaseBusiness {
@@ -36,4 +38,8 @@ func New(repository domain.IBusinessRepository, log log.ILogger, s3 domain.IS3Se
 		s3:         s3,
 		env:        env,
 	}
+}
+
+func (uc *BusinessUseCase) SetOnBusinessCreated(hook func(ctx context.Context, businessID uint)) {
+	uc.onBusinessCreated = hook
 }

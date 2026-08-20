@@ -210,6 +210,10 @@ func (uc *BusinessUseCase) CreateBusiness(ctx context.Context, request domain.Bu
 			Msg("Failed to auto-create platform integration")
 	}
 
+	if uc.onBusinessCreated != nil {
+		uc.onBusinessCreated(ctx, businessID)
+	}
+
 	// Obtener el negocio creado
 	created, err := uc.repository.GetBusinessByID(ctx, businessID)
 	if err != nil {

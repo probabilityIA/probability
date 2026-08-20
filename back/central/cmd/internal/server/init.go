@@ -84,8 +84,10 @@ func Init(ctx context.Context) error {
 	// Initialize Order Module (and others) — receives integrationCore for shared platform-credentials access
 	modulesBundle := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient, integrationCore, dianEmitter)
 
-	// Todo negocio nuevo registrado via demo signup arranca en el plan de prueba
+	// Todo negocio nuevo (autoregistro publico o creado desde el backoffice de admin)
+	// arranca en el plan de prueba
 	authBundle.Demo.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
+	authBundle.Business.SetOnBusinessCreated(modulesBundle.Subscriptions.UseCase.AssignTrialSubscription)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

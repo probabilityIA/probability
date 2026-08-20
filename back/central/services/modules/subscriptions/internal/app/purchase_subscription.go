@@ -27,6 +27,9 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 	if !subType.Active {
 		return nil, errs.ErrSubscriptionTypeInactive
 	}
+	if !subType.Payable {
+		return nil, errs.ErrSubscriptionTypeNotPayable
+	}
 	if subType.BusinessID != nil && *subType.BusinessID != dto.BusinessID {
 		return nil, errs.ErrSubscriptionTypeNotFound
 	}
@@ -41,7 +44,7 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 		return nil, errs.ErrInsufficientBalance
 	}
 
-	start, endDate, err := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil)
+	start, endDate, err := uc.computeSubscriptionWindow(ctx, dto.BusinessID, dto.Months, nil, subType)
 	if err != nil {
 		return nil, err
 	}
@@ -76,10 +79,21 @@ func (uc *UseCase) PurchaseSubscription(ctx context.Context, dto dtos.PurchaseSu
 	return sub, nil
 }
 
-func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time) (time.Time, time.Time, error) {
+// computeSubscriptionWindow calcula el inicio/fin de un periodo de suscripcion.
+// Los planes con TrialDurationDays configurado (ej. el plan "trial") se miden
+// en dias, no en meses: asignarlos manualmente con "Months" produce fechas
+// incorrectas (1 mes calendario no son los dias de duracion del trial).
+func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uint, months int, startOverride *time.Time, subType *entities.SubscriptionType) (time.Time, time.Time, error) {
+	addPeriod := func(start time.Time) time.Time {
+		if subType != nil && subType.TrialDurationDays != nil && *subType.TrialDurationDays > 0 {
+			return start.AddDate(0, 0, *subType.TrialDurationDays)
+		}
+		return start.AddDate(0, months, 0)
+	}
+
 	if startOverride != nil {
 		start := *startOverride
-		return start, start.AddDate(0, months, 0), nil
+		return start, addPeriod(start), nil
 	}
 
 	now := time.Now()
@@ -93,5 +107,5 @@ func (uc *UseCase) computeSubscriptionWindow(ctx context.Context, businessID uin
 		start = current.EndDate
 	}
 
-	return start, start.AddDate(0, months, 0), nil
+	return start, addPeriod(start), nil
 }

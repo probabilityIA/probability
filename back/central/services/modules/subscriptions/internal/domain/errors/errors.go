@@ -18,4 +18,5 @@ var (
 	ErrNothingToReactivate         = errors.New("subscription has no prior state to reactivate")
 	ErrInvalidDays                 = errors.New("days must be greater than zero")
 	ErrNoOverageDue                = errors.New("no hay cargo de excedente pendiente de pago")
+	ErrSubscriptionTypeNotPayable  = errors.New("este plan no se puede comprar, se asigna automaticamente")
 )
