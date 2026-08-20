@@ -80,7 +80,7 @@ func BuildCreateJournalRequest(req *dtos.CreateJournalRequest) request.SiigoJour
 
 		if item.SKU != "" {
 			journalItem.Product = &request.SiigoJournalProduct{
-				Code:      item.SKU,
+				Code:      sanitizeSiigoCode(item.SKU),
 				Quantity:  item.Quantity,
 				Warehouse: warehouseID,
 			}
@@ -161,7 +161,7 @@ func buildInventoryExitJournal(req *dtos.CreateJournalRequest, config map[string
 				Movement: "Credit",
 			},
 			Product: &request.SiigoJournalProduct{
-				Code:      item.SKU,
+				Code:      sanitizeSiigoCode(item.SKU),
 				Quantity:  item.Quantity,
 				Warehouse: warehouseID,
 			},

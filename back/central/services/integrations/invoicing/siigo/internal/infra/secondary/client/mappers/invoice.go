@@ -1,6 +1,7 @@
 package mappers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
@@ -21,7 +22,7 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 	items := make([]request.SiigoItem, 0, len(req.Items))
 	for _, item := range req.Items {
 		siigoItem := request.SiigoItem{
-			Code:        item.SKU,
+			Code:        sanitizeSiigoCode(item.SKU),
 			Description: item.Name,
 			Quantity:    float64(item.Quantity),
 			Price:       item.UnitPrice,
@@ -89,6 +90,10 @@ func BuildCreateInvoiceRequest(req *dtos.CreateInvoiceRequest, customerID string
 	}
 
 	return invoice
+}
+
+func sanitizeSiigoCode(sku string) string {
+	return strings.Join(strings.Fields(sku), "")
 }
 
 func buildOrderObservation(orderID, orderNumber string) string {
